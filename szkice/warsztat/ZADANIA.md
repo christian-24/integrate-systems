@@ -29,5 +29,5 @@
 
 ## Do rozplanowania
 
-- [ ] K16 według `docs/plan-paludarium.md`, po zgodzie na K15 | kto: claude | gdzie: pc | wymaga: zgoda
+- [ ] K16 według `docs/plan-paludarium.md`, po zgodzie na K15 | kto: claude | gdzie: chmura | wymaga: zgoda
 - [ ] Przegląd `PARKING.md` przy retro kamienia | kto: claude | wymaga: odbiór

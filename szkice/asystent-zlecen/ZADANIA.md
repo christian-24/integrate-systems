@@ -12,10 +12,10 @@
 - [x] Rozszerzenie „Asystent aut OLX + OTOMOTO” do wersji 2.12.0 (indeks, analiza AI, harmonogram)
 - [x] Przejście analiz z OpenAI API na Codex CLI
 - [x] Panel „Garaż”
-- [~] Codzienny przegląd ogłoszeń aut | kto: codex | gdzie: pc
+- [~] Codzienny przegląd ogłoszeń aut | kto: codex | gdzie: mac
 
 ## Do rozplanowania
 
 - [x] Rozdział: szukanie auta osobno, Useme do Oprogramowani (2026-11-14)
-- [ ] Wydzielić część aut z folderu Zlecenia do osobnego folderu z repozytorium git | kto: ty | gdzie: pc | wymaga: zgoda | czas: 20
-- [ ] Opisać uruchomienie i harmonogram w README | kto: codex | gdzie: pc
+- [x] Część aut w osobnym repozytorium szukanie-auta (2026-11-16)
+- [ ] Opisać uruchomienie i harmonogram w README | kto: claude | gdzie: chmura

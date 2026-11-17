@@ -1,0 +1,9 @@
+[Unit]
+Description=Zapis kart IntegrateSystems do GitHuba
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=panel
+Environment=HOME=/home/panel
+ExecStart=/usr/local/bin/zapis-kart

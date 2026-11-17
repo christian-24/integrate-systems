@@ -34,8 +34,8 @@
 - [~] Plan 4 tygodni od 2026-10-28: 10 ofert, 3 rozmowy, 1 zlecenie; do 14.11 bez postępu | kto: ty
 - [ ] Opisać nowy kanał rozmów z klientami | kto: ty | czas: 10
 - [x] Oferta na Useme: 2500 zł, 7 dni (bez odpowiedzi do 14.11)
-- [~] Asystent Useme i FB: automatyczne oferty, 6 wysłanych do 04.11 | kto: claude | gdzie: pc
-- [ ] Przegląd skuteczności asystenta Useme (wysłane oferty, odpowiedzi, odrzucone zlecenia) | kto: claude | gdzie: pc | wymaga: odbiór
+- [~] Asystent Useme i FB: automatyczne oferty, 6 wysłanych do 04.11 | kto: claude | gdzie: mac
+- [ ] Przegląd skuteczności asystenta Useme (wysłane oferty, odpowiedzi, odrzucone zlecenia) | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] Przeprowadzić 5–10 rozmów walidacyjnych | kto: ty
 - [ ] Konsultacja u radcy prawnego IT | kto: ty | wymaga: zgoda
 - [ ] Walidacja cen i narzędzi u znajomej firmy z branży | kto: ty
@@ -52,7 +52,7 @@
 ## Do rozplanowania
 
 - [x] Zebrać nowsze materiały z PC (audyt 2026-11-14)
-- [ ] Zacommitować nieśledzone pliki w CompanyAudits (analiza rynku, ogłoszenia, szkice postów) | kto: ty | gdzie: pc | czas: 10
-- [ ] Wydzielić część Useme z folderu Zlecenia do tego projektu, z własnym repozytorium git | kto: ty | gdzie: pc | wymaga: zgoda | czas: 20
+- [x] Zacommitować nieśledzone pliki w CompanyAudits (commit „wip: migracja z PC”, 2026-11-16)
+- [x] Część Useme w osobnym repozytorium asystent-useme (2026-11-16)
 - [ ] Materiał o infrastrukturze IT dla klienta 2: niewysłany; zdecydować, czy wysyłać | kto: ty
 - [x] Strona oprogramowani.com, nowa wersja (2026-11-04)

@@ -22,13 +22,13 @@
 - [x] Silnik Claude Haiku z zapasowym Mistralem (#123, ADR 0045, 2026-10-29)
 - [x] Polityka cookies, fonty bez Google (#124–#125, 2026-11-02)
 - [x] Eksport ZIP, Excel, portal Stripe, nowy landing z komodą 3D, refund limitu, ZDJ-1 za flagą (#126–#134, 2026-11-06)
-- [ ] Sprawdzić, czy wszystkie ekrany biorą dane z realnego API (DEMOCK) | kto: claude | gdzie: pc | wymaga: odbiór
+- [ ] Sprawdzić, czy wszystkie ekrany biorą dane z realnego API (DEMOCK) | kto: claude | gdzie: chmura | wymaga: odbiór
 
 ## Etap: Bezpieczeństwo przed płacącymi
 
 - [x] SEC-3, SEC-5, SEC-1: zależności, sekrety i RODO, SAST backendu (2026-06-16)
-- [ ] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); stan po VI nieznany | kto: claude | gdzie: pc | wymaga: odbiór
-- [ ] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; stan po VI nieznany | kto: claude | gdzie: pc | wymaga: odbiór
+- [ ] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
+- [ ] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
 
 ## Etap: Testy
 
@@ -54,16 +54,16 @@ termin: 2026-12-23
 - [x] Opublikować pierwsze posty LinkedIn (2026-06-08, 2026-06-12)
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [~] Publikacje z planu T1–T8 (2026-11-03 do 2026-12-23) | kto: ty
-- [ ] Uzupełnić metryki (metryki.md pusty od 27.10) | kto: claude | gdzie: pc | kiedy: 2026-11-17
+- [ ] Uzupełnić metryki (metryki.md pusty od 27.10) | kto: claude | gdzie: chmura | kiedy: 2026-11-17
 - [ ] Plan promocji produktu z szacunkiem zwrotu (koszt pozyskania konta, przychód przy 3 płacących) | kto: claude | wymaga: odbiór
 - [ ] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30 | wymaga: zgoda
 - [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23 | wymaga: zgoda
 
 ## Do rozplanowania
 
-- [ ] Uporządkować pliki zadań w repo: ZDJ-1 opisane jako bez merge, tasks/README z czerwca | kto: claude | gdzie: pc
-- [ ] Widok „Pokaz” (PoC na gałęzi feat/pokaz-opisarnia, 778 zmian): dopracować UI i zacommitować | kto: claude | gdzie: pc | wymaga: odbiór
-- [ ] Lokalny master na 26.10: zsynchronizować z origin | kto: ty | gdzie: pc | czas: 5
+- [ ] Uporządkować pliki zadań w repo: ZDJ-1 opisane jako bez merge, tasks/README z czerwca | kto: claude | gdzie: chmura
+- [ ] Widok „Pokaz” (PoC na gałęzi feat/pokaz-opisarnia, 778 zmian): dopracować UI i zacommitować | kto: claude | gdzie: chmura | wymaga: odbiór
+- [ ] Lokalny master na 26.10: zsynchronizować z origin | kto: ty | czas: 5
 - [ ] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
 - [ ] Dług a11y: drawer overlay i aria-modal, role menu w nawigacji | kto: claude
 - [ ] Dług zależności: vite 5.x i wyjątek pip w gate CI | kto: claude

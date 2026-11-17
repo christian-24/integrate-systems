@@ -33,7 +33,7 @@
 - [ ] T42 Usunąć surowe kolory, odstępy i rozmiary czcionek z features | kto: claude
 - [ ] T43 Testy dla 10 DAO bez pokrycia | kto: claude
 - [x] T41 Ikony morskie: rezygnacja z MarineIcons.ttf na rzecz Material Symbols (2026-11-14)
-- [ ] Zastąpić ikony morskie odpowiednikami z Material Symbols | kto: claude | gdzie: pc | wymaga: odbiór
+- [ ] Zastąpić ikony morskie odpowiednikami z Material Symbols | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] T44 Manualny plan testów TC-01..TC-20 na urządzeniu | kto: ty | wymaga: odbiór
 
 ## Etap: RC1 i zamknięty test Google Play
@@ -42,10 +42,10 @@ termin: 2026-12-13
 - [x] Faza 0: T50a–d, T51 (2026-06-01)
 - [x] T48c (2026-07-17)
 - [x] RC1 1.0.0+2 zmergowany (#121/#122, 2026-10-27)
-- [ ] Zmergować gałęzie fix/rc1-nagrania i marketing/kampania-rc1 (PR #124, przed merge pełna suita testów) | kto: ty | gdzie: pc | wymaga: zgoda
+- [ ] Zmergować gałęzie fix/rc1-nagrania i marketing/kampania-rc1 (PR #124, przed merge pełna suita testów) | kto: ty | wymaga: zgoda
 - [ ] Naprawić check CI claude-review (odrzucony klucz API) | kto: ty | czas: 10
 - [ ] Zdecydować, czy materiały marketingowe trzymać w repozytorium | kto: ty | czas: 5
-- [ ] Keystore i podpisany build | kto: ty | gdzie: pc
+- [ ] Keystore i podpisany build | kto: ty | gdzie: mac
 - [ ] Polityka prywatności | kto: claude | wymaga: odbiór
 - [ ] Test akceptacyjny RC1 | kto: ty | wymaga: odbiór
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
@@ -57,7 +57,7 @@ termin: 2026-12-13
 
 - [x] Zebrać nowsze materiały z PC (audyt 2026-11-14)
 - [ ] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
-- [ ] T48 a/e/g/h/m/n/q/t/v/w: wskazać niezbędne do v1.0.0 i je zrealizować | kto: claude | gdzie: pc | wymaga: odbiór
+- [ ] T48 a/e/g/h/m/n/q/t/v/w: wskazać niezbędne do v1.0.0 i je zrealizować | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] v1.0.3 Release readiness (T54–T66, część zamknięta w RC1) | kto: claude
 - [ ] Odtworzyć plan testów MVP usunięty z docs/testing w commicie 2026-05-29 albo wskazać jego nowe miejsce | kto: claude
 - [ ] Cel: 500 instalacji do 2027-04-30 | kto: ty
