@@ -34,7 +34,11 @@
 - [~] Plan 4 tygodni od 2026-10-28: 10 ofert, 3 rozmowy, 1 zlecenie; do 14.11 bez postępu | kto: ty
 - [ ] Opisać nowy kanał rozmów z klientami | kto: ty | czas: 10
 - [x] Oferta na Useme: 2500 zł, 7 dni (bez odpowiedzi do 14.11)
-- [~] Asystent Useme i FB: automatyczne oferty, 6 wysłanych do 04.11 | kto: claude | gdzie: mac
+- [x] Asystent Useme na serwerze: usługa, 188 testów, bez automatycznej wysyłki i komentarzy (2026-11-17)
+- [ ] Hasło do panelu zleceń: `ssh -t ops@2.29.181.133 sudo ustaw-haslo-zlecen` | kto: ty | czas: 2
+- [ ] Przykładowy e-mail od Useme o nowym zleceniu (do napisania odczytu) | kto: ty | czas: 5
+- [ ] Odczyt e-maili Useme na serwerze: zlecenia do asystenta, powiadomienie ntfy | kto: claude | gdzie: chmura
+- [ ] Przenieść historię zleceń (data/jobs.db) z kopii PC na serwer | kto: claude | gdzie: chmura
 - [ ] Przegląd skuteczności asystenta Useme (wysłane oferty, odpowiedzi, odrzucone zlecenia) | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] Przeprowadzić 5–10 rozmów walidacyjnych | kto: ty
 - [ ] Konsultacja u radcy prawnego IT | kto: ty | wymaga: zgoda

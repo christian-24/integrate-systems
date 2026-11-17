@@ -19,6 +19,7 @@
 - [ ] Połączenie SSH „Serwer” w aplikacji Claude na Macu (użytkownik panel) | kto: ty | czas: 5
 - [ ] Zapis kart z serwera do GitHuba co 15 min: instalacja `uruchom/serwer/zainstaluj-zapis-kart.sh` | kto: ty | czas: 2
 - [x] Pole „gdzie:” w zadaniach po D13: chmura, mac; pc tylko dla Windows i migracji (2026-11-17)
+- [x] Automat, raport PM o 7:00, powiadomienia ntfy (2026-11-17)
 - [ ] Synchronizacja rozmów z Maca i dziennik aktywności | kto: claude | gdzie: chmura
 
 ## Etap: Migracja z PC

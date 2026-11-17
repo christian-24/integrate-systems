@@ -54,7 +54,7 @@ termin: 2026-12-23
 - [x] Opublikować pierwsze posty LinkedIn (2026-06-08, 2026-06-12)
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [~] Publikacje z planu T1–T8 (2026-11-03 do 2026-12-23) | kto: ty
-- [~] Uzupełnić metryki (metryki.md pusty od 27.10) | kto: claude | gdzie: chmura | kiedy: 2026-11-17 | wymaga: odbiór
+- [ ] Uzupełnić metryki (utworzyć metryki.md; w repozytorium go nie ma) | kto: claude | gdzie: chmura | kiedy: 2026-11-18
 - [ ] Plan promocji produktu z szacunkiem zwrotu (koszt pozyskania konta, przychód przy 3 płacących) | kto: claude | wymaga: odbiór
 - [ ] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30 | wymaga: zgoda
 - [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23 | wymaga: zgoda
