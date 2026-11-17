@@ -36,6 +36,24 @@ class Dowiazania(Baza):
             self.assertIn("- [~] Zadanie B", f.read())
         self.assertEqual(self.task("Zadanie B")["state"], "doing")
 
+    def test_agent_dostaje_folder_karty(self):
+        cel = projekt.CARDS
+        self.link(cel)
+        self.set_mode("zostaw")
+        code, err, extra = self.run_task("Zadanie A")
+        self.assertEqual(code, 200, err)
+        self.wait(extra["id"])
+        argv = self.calls()[-1]["argv"]
+        self.assertIn("--add-dir", argv)
+        self.assertEqual(argv[argv.index("--add-dir") + 1], os.path.realpath(cel))
+
+    def test_bez_dowiazan_bez_add_dir(self):
+        self.set_mode("zostaw")
+        code, err, extra = self.run_task("Zadanie A")
+        self.assertEqual(code, 200, err)
+        self.wait(extra["id"])
+        self.assertNotIn("--add-dir", self.calls()[-1]["argv"])
+
 
 if __name__ == "__main__":
     unittest.main()

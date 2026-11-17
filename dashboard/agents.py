@@ -104,6 +104,21 @@ def describe_tool(name, data, cwd=""):
     return _short("%s: %s" % (name, detail) if detail else str(name), 120)
 
 
+STANDARD_LINKS = ("KARTA.md", "ZADANIA.md", "DECYZJE.md")
+
+
+def _card_dirs(folder):
+    """--add-dir dla kart podpiętych dowiązaniem spoza folderu projektu (inaczej agent bez okna ich nie przeczyta)."""
+    root = os.path.realpath(folder)
+    dirs = []
+    for name in STANDARD_LINKS:
+        target = os.path.realpath(os.path.join(folder, name))
+        where = os.path.dirname(target)
+        if os.path.exists(target) and os.path.commonpath([root, target]) != root and where not in dirs:
+            dirs.append(where)
+    return [x for d in dirs for x in ("--add-dir", d)]
+
+
 class Manager:
     """Kolejka i przebieg uruchomień jednego węzła."""
 
@@ -502,7 +517,7 @@ class Manager:
                 args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                          "-C", folder, "-"]
             else:
-                args = self._claude_args(path, self.model)
+                args = self._claude_args(path, self.model, _card_dirs(folder))
             self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "folder": folder})
             return 200, "", {"id": rec["id"]}
 
