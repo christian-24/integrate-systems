@@ -12,10 +12,10 @@
 - [x] Klucz serwera dodany w GitHubie (2026-11-17)
 - [x] Prywatne repozytorium integrate-systems (2026-11-17)
 - [x] IntegrateSystems wypchnięty, skan sekretów czysty (2026-11-17)
-- [ ] Logowanie Claude na serwerze | kto: ty | czas: 5
+- [x] Claude zalogowany na serwerze (Max); test połączenia z panelu przeszedł (2026-11-17)
 - [x] Adres panelu: https://2-29-181-133.sslip.io (bez domen Opisarni i Oprogramowani)
 - [x] Panel jako usługa systemd za Caddy z HTTPS (2026-11-17)
-- [ ] Hasło panelu: `ssh -t ops@2.29.181.133 sudo ustaw-haslo-panelu` | kto: ty | czas: 2
+- [x] Hasło panelu ustawione (2026-11-17)
 - [ ] Połączenie SSH „Serwer” w aplikacji Claude na Macu (użytkownik panel) | kto: ty | czas: 5
 - [ ] Synchronizacja rozmów z Maca i dziennik aktywności | kto: claude | gdzie: chmura
 
