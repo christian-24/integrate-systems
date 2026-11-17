@@ -88,6 +88,9 @@ def read(path):
 
 
 def write_atomic(path, text):
+    # Plik standardu może być dowiązaniem (repozytorium projektu → karta w IntegrateSystems/szkice):
+    # zapis trafia do pliku docelowego, a dowiązanie zostaje.
+    path = os.path.realpath(path)
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-")
     with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
         f.write(text)
@@ -471,12 +474,21 @@ def describe():
 
 
 # ---------- zapis: wiersz zadania, nowe zadanie, termin etapu, pola kampanii ----------
+CARDS = os.path.join(ROOT, "szkice")
+
+
+def _linked_card(path):
+    """Plik standardu z dowiązania do kart w IntegrateSystems/szkice (repozytorium projektu na serwerze)."""
+    cards = os.path.realpath(CARDS)
+    return os.path.commonpath([cards, path]) == cards
+
+
 def _task_file(root, file_rel):
     if file_rel != "ZADANIA.md" and not re.match(r"^kampanie/[^/\\]+\.md$", file_rel):
         raise ValueError("niedozwolony plik")
     root = os.path.realpath(os.path.expanduser(root))
     path = os.path.realpath(os.path.join(root, file_rel))
-    if os.path.commonpath([root, path]) != root:
+    if os.path.commonpath([root, path]) != root and not _linked_card(path):
         raise ValueError("plik poza projektem")
     return path
 
