@@ -55,9 +55,9 @@ termin: 2026-12-23
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [~] Publikacje z planu T1–T8 (2026-11-03 do 2026-12-23) | kto: ty
 - [~] Uzupełnić metryki (utworzyć metryki.md; w repozytorium go nie ma) | kto: claude | gdzie: chmura | kiedy: 2026-11-18 | wymaga: odbiór
-- [ ] Plan promocji produktu z szacunkiem zwrotu (koszt pozyskania konta, przychód przy 3 płacących) | kto: claude | wymaga: odbiór
-- [ ] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30 | wymaga: zgoda
-- [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23 | wymaga: zgoda
+- [x] Plan promocji produktu z szacunkiem zwrotu (koszt pozyskania konta, przychód przy 3 płacących) | kto: claude
+- [ ] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30
+- [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23
 
 ## Do rozplanowania
 
@@ -68,4 +68,4 @@ termin: 2026-12-23
 - [ ] Dług a11y: drawer overlay i aria-modal, role menu w nawigacji | kto: claude
 - [ ] Dług zależności: vite 5.x i wyjątek pip w gate CI | kto: claude
 - [ ] ZDJ-5: analiza zdjęć, tylko po decyzji „go” (styczeń 2027) | kto: ty | wymaga: zgoda
-- [ ] Faza 2: style i tony, słownik atrybutów, własne szablony, języki CZ/SK/FR | kto: ty | wymaga: zgoda
+- [ ] Faza 2: style i tony, słownik atrybutów, własne szablony, języki CZ/SK/FR | kto: ty

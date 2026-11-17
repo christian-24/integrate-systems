@@ -30,7 +30,7 @@
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
 - [ ] Wybrać pierwsze 10 firm z listy LeadyV2 i przygotować szkice wiadomości | kto: claude | wymaga: odbiór
-- [ ] Kontakt z wybranymi firmami z listy LeadyV2 | kto: ty | wymaga: zgoda
+- [ ] Kontakt z wybranymi firmami z listy LeadyV2 | kto: ty
 - [~] Plan 4 tygodni od 2026-10-28: 10 ofert, 3 rozmowy, 1 zlecenie; do 14.11 bez postępu | kto: ty
 - [ ] Opisać nowy kanał rozmów z klientami | kto: ty | czas: 10
 - [x] Oferta na Useme: 2500 zł, 7 dni (bez odpowiedzi do 14.11)
@@ -41,7 +41,7 @@
 - [ ] Przenieść historię zleceń (data/jobs.db) z kopii PC na serwer | kto: claude | gdzie: chmura
 - [ ] Przegląd skuteczności asystenta Useme (wysłane oferty, odpowiedzi, odrzucone zlecenia) | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] Przeprowadzić 5–10 rozmów walidacyjnych | kto: ty
-- [ ] Konsultacja u radcy prawnego IT | kto: ty | wymaga: zgoda
+- [ ] Konsultacja u radcy prawnego IT | kto: ty
 - [ ] Walidacja cen i narzędzi u znajomej firmy z branży | kto: ty
 - [ ] Zaktualizować białe plamy i decyzje po rozmowach | kto: claude | wymaga: odbiór
 

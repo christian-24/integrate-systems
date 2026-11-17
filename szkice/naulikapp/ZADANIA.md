@@ -46,12 +46,12 @@ termin: 2026-12-13
 - [ ] Naprawić check CI claude-review (odrzucony klucz API) | kto: ty | czas: 10
 - [ ] Zdecydować, czy materiały marketingowe trzymać w repozytorium | kto: ty | czas: 5
 - [ ] Keystore i podpisany build | kto: ty | gdzie: mac
-- [ ] Polityka prywatności | kto: claude | wymaga: odbiór
+- [x] Polityka prywatności | kto: claude
 - [ ] Test akceptacyjny RC1 | kto: ty | wymaga: odbiór
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
 - [ ] Zebrać 12 testerów; test trwa 14 dni, więc start najpóźniej 29.11 | kto: ty | kiedy: 2026-11-29
 - [ ] Zamknięty test (12+ testerów × 14 dni) | kto: ty | wymaga: zgoda
-- [ ] Wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-13 | wymaga: zgoda
+- [ ] Wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-13
 
 ## Do rozplanowania
 
@@ -61,5 +61,5 @@ termin: 2026-12-13
 - [ ] v1.0.3 Release readiness (T54–T66, część zamknięta w RC1) | kto: claude
 - [ ] Odtworzyć plan testów MVP usunięty z docs/testing w commicie 2026-05-29 albo wskazać jego nowe miejsce | kto: claude
 - [ ] Cel: 500 instalacji do 2027-04-30 | kto: ty
-- [ ] Projekt modułów infrastrukturalnych: sync, subskrypcja, OAuth, powiadomienia | kto: claude | wymaga: odbiór
+- [x] Projekt modułów infrastrukturalnych: sync, subskrypcja, OAuth, powiadomienia | kto: claude
 - [ ] Finalizacja przypisań funkcji do wersji v1.1.0–v4.0.0 | kto: ty
