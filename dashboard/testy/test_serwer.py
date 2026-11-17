@@ -278,6 +278,28 @@ class Dostep(Serwer):
         self.assertEqual(self.request("GET", "/api/data?k=" + key, headers=REMOTE)[0], 401)
         self.assertEqual(self.request("GET", "/api/data", headers=dict(REMOTE, Cookie="panel_sesja=" + key))[0], 401)
 
+    def test_pliki_aplikacji_bez_logowania(self):
+        server.TOKEN = "haslo-do-testow"
+        status, headers, text = self.request("GET", "/app/manifest.webmanifest", headers=REMOTE)
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "application/manifest+json")
+        man = json.loads(text)
+        self.assertEqual((man["start_url"], man["display"]), ("/", "standalone"))
+        self.assertEqual(self.request("GET", "/app/ikona.svg", headers=REMOTE)[0], 200)
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=15)
+        conn.request("GET", "/app/ikona-180.png", headers=REMOTE)
+        resp = conn.getresponse()
+        self.assertEqual((resp.status, resp.getheader("Content-Type"), resp.read()[:4]), (200, "image/png", b"\x89PNG"))
+        conn.close()
+        self.assertEqual(self.request("GET", "/app/nie-ma.png", headers=REMOTE)[0], 303)       # tylko znane pliki
+        self.assertEqual(self.request("GET", "/app/../projekty.json", headers=REMOTE)[0], 303)
+        status, _, page = self.request("GET", "/wejscie", headers=REMOTE)
+        self.assertIn('rel="manifest"', page)
+        self.assertIn('rel="apple-touch-icon"', page)
+        self.assertNotIn("@@APP@@", page)
+        status, _, page = self.request("GET", "/")
+        self.assertIn('rel="manifest"', page)
+
     def test_limit_prob(self):
         server.TOKEN = "haslo-do-testow"
         for _ in range(10):

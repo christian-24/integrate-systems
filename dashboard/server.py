@@ -566,6 +566,7 @@ def login_blocked(add=False):
 
 LOGIN_PAGE = """<!doctype html><html lang="pl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel projektów</title>
+@@APP@@
 <link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 html,body{height:100%%;margin:0}
@@ -585,7 +586,7 @@ button{margin-top:12px;background:#e2b347;color:#0b1020;border:0;font-weight:700
 
 
 def login_page(error=""):
-    return LOGIN_PAGE % ('<p class="blad" role="alert">%s</p>' % error if error else "")
+    return (LOGIN_PAGE % ('<p class="blad" role="alert">%s</p>' % error if error else "")).replace("@@APP@@", APP_HEAD, 1)
 
 
 # ---------- eksport terminów do kalendarza (ICS) ----------
@@ -656,8 +657,19 @@ def build_ics():
 
 
 # ---------- strona ----------
+APP_HEAD = ('<link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#0b1020">'
+            '<link rel="icon" href="/app/ikona.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/app/ikona-180.png">'
+            '<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">'
+            '<meta name="apple-mobile-web-app-title" content="Projekty"><meta name="apple-mobile-web-app-status-bar-style" content="black">')
+# Pliki aplikacji (ikona, manifest): bez danych, dostępne bez logowania, żeby system mógł dodać panel jako aplikację.
+APP_DIR = os.path.join(HERE, "app")
+APP_FILES = {"manifest.webmanifest": "application/manifest+json", "ikona.svg": "image/svg+xml",
+             "ikona-180.png": "image/png", "ikona-192.png": "image/png", "ikona-512.png": "image/png"}
+
+
 SHELL = ('<!doctype html><html lang="pl"><head><meta charset="utf-8">'
-         '<meta name="viewport" content="width=device-width,initial-scale=1"></head><body>%s</body></html>')
+         '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Panel projektów</title>' + APP_HEAD +
+         '</head><body>%s</body></html>')
 
 
 def page_html(preview=None):
@@ -741,7 +753,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(403, "Dostęp z innego urządzenia wymaga hasła: ustaw PANEL_TOKEN na serwerze.",
                        "text/plain; charset=utf-8")
             return False
-        if path == "/wejscie" or self._has_session():
+        if path == "/wejscie" or self._has_session() or self._app_file(path):
             return True
         if path == "/terminy.ics":
             key = (parse_qs(query).get("k") or [""])[0]
@@ -755,12 +767,17 @@ class Handler(BaseHTTPRequestHandler):
             self._redirect("/wejscie")
         return False
 
+    @staticmethod
+    def _app_file(path):
+        return path.startswith("/app/") and path[5:] in APP_FILES
+
     def _send(self, code, body, ctype, headers=()):
         raw = body.encode("utf-8") if isinstance(body, str) else body
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(raw)))
-        self.send_header("Cache-Control", "no-store")
+        if not any(name.lower() == "cache-control" for name, _ in headers):
+            self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         for name, value in headers:
             self.send_header(name, value)
@@ -809,6 +826,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(build_data(), ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if self._app_file(path):
+            with open(os.path.join(APP_DIR, path[5:]), "rb") as f:
+                return self._send(200, f.read(), APP_FILES[path[5:]], [("Cache-Control", "max-age=86400")])
         if path == "/favicon.ico":
             return self._send(204, b"", "image/x-icon")       # bez ikony; przeglądarka nie zgłasza błędu 404
         return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
