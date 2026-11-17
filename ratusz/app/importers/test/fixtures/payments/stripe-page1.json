@@ -1,0 +1,5 @@
+{"object":"list","url":"/v1/balance_transactions","has_more":true,"data":[
+{"id":"txn_charge1","object":"balance_transaction","amount":14990,"fee":465,"net":14525,"currency":"pln","type":"charge","created":1700000000,"description":"Zamowienie 1001","source":"ch_1"},
+{"id":"txn_refund1","object":"balance_transaction","amount":-2000,"fee":0,"net":-2000,"currency":"pln","type":"refund","created":1700100000,"description":"Zwrot za 1001","source":"re_1"},
+{"id":"txn_payout1","object":"balance_transaction","amount":-12525,"fee":0,"net":-12525,"currency":"pln","type":"payout","created":1700200000,"description":"STRIPE PAYOUT","source":"po_1"}
+]}

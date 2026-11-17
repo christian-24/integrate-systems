@@ -1,0 +1,957 @@
+<title>Panel agentów</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--night:#0b1020;--panel:#141a30;--panel2:#1d2543;--edge:#e2b347;--edge-dim:#8a6f2e;--black:#05070f;--ink:#f2ecdc;--dim:#a9a293;--ok:#6ee08a;--wait:#f2c45a;--bad:#ff7a6a;--violet:#c9a7ff;--cyan:#7fe3ff;--parch:#efe2c6;--parch2:#cdb994;--inkdark:#1b1b2a;--px:"Pixelify Sans","Courier New",monospace;--body:"Alegreya Sans","Segoe UI",system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--night);color:var(--ink);font:17px/1.5 var(--body);
+  background-image:radial-gradient(#f2ecdc55 1px,transparent 1.2px),radial-gradient(#e2b34744 1px,transparent 1.2px);background-size:140px 110px,230px 190px;background-position:20px 30px,90px 120px}
+.page{max-width:1180px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-right,0px)) 70px max(16px,env(safe-area-inset-left,0px))}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
+h1,h2,h3,h4{font-family:var(--px);font-weight:700;margin:0;line-height:1.15}
+.kicker{font:600 13px/1 var(--px);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(30px,6vw,46px);color:var(--edge);text-shadow:3px 3px 0 var(--black);margin:8px 0 8px}
+.lead{max-width:68ch;margin:0 0 6px;color:var(--ink);text-wrap:pretty}
+.lead.s{color:var(--dim);font-size:15px}
+code{font:13px/1.3 ui-monospace,Menlo,Consolas,monospace;background:var(--black);color:var(--cyan);padding:1px 5px;overflow-wrap:anywhere}
+
+.btn{font:600 14px/1 var(--px);padding:9px 12px;border:3px solid var(--black);background:var(--panel2);color:var(--ink);box-shadow:inset -3px -3px 0 rgba(0,0,0,.35),inset 3px 3px 0 rgba(255,255,255,.09);cursor:pointer;border-radius:0}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:translate(1px,1px)}
+.btn:focus-visible,.tab:focus-visible,.dot:focus-visible,.seg button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.go{background:var(--edge);color:var(--inkdark)}
+.btn.ok{background:var(--ok);color:var(--inkdark)}
+.btn.no{background:var(--bad);color:var(--inkdark)}
+.btn.sm{font-size:12px;padding:6px 8px}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 16px}
+.tab{font:600 14px/1.1 var(--px);text-align:left;padding:8px 12px;border:3px solid var(--black);background:var(--panel);color:var(--dim);cursor:pointer;box-shadow:0 0 0 2px var(--edge-dim);border-radius:0}
+.tab small{display:block;font:500 12px/1.2 var(--body);color:var(--dim);margin-top:3px}
+.tab[aria-selected="true"]{background:var(--edge);color:var(--inkdark);box-shadow:0 0 0 2px var(--edge)}
+.tab[aria-selected="true"] small{color:#4a3a14}
+
+.console{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:24px;align-items:start}
+@media (max-width:940px){.console{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;background:var(--black);border:3px solid var(--edge);box-shadow:0 0 0 3px var(--black);overflow:hidden}
+.view{position:relative;margin:0 auto;overflow:hidden}
+.view canvas{display:block;width:100%;height:100%}
+.tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;white-space:nowrap;font:600 11px/1 var(--px);padding:2px 4px;background:rgba(5,7,15,.8);color:var(--ink);transform:translate(-50%,0)}
+.tag.b{color:var(--edge);transform:translate(-50%,-100%)}
+.tag.e{color:var(--ok);transform:translate(-50%,-100%)}
+.tag.a{border-bottom:2px solid var(--cyan)}
+.tag.a.mac{border-color:var(--edge)}
+.tag.a.cloud{border-color:var(--violet)}
+.tag.a.none{border-color:var(--ink)}
+.tag.pop{background:none;color:var(--edge);font-size:15px;text-shadow:2px 2px 0 var(--black);transform:translate(-50%,-100%);animation:pop 2.4s ease-out forwards}
+@keyframes pop{from{margin-top:0;opacity:1}80%{opacity:1}to{margin-top:-34px;opacity:0}}
+.s1 .tag{font-size:9px;padding:1px 3px}
+.hud{position:absolute;left:6px;top:6px;right:6px;display:flex;gap:6px;flex-wrap:wrap;pointer-events:none}
+.hchip{font:600 12px/1 var(--px);background:rgba(5,7,15,.82);color:var(--ink);padding:4px 6px;border:2px solid var(--edge-dim);display:inline-flex;align-items:center;gap:5px}
+.s1 .hchip{font-size:10px;padding:3px 4px}
+.d{display:inline-block;width:8px;height:8px;background:var(--dim);flex:none}
+.d.ok{background:var(--ok)}.d.wait{background:var(--wait)}.d.bad{background:var(--bad)}.d.cy{background:var(--cyan)}.d.go{background:var(--edge)}.d.vi{background:var(--violet)}
+
+.dlg{display:flex;gap:12px;margin-top:14px;background:var(--panel);border:3px solid var(--edge);box-shadow:0 0 0 3px var(--black);padding:12px;min-height:150px;cursor:default}
+.dlg canvas{width:72px;height:72px;flex:none;border:3px solid var(--black);background:var(--panel2)}
+.dlg-body{min-width:0;flex:1}
+.who{font:700 14px/1.2 var(--px);color:var(--edge)}
+.stepno{font:600 12px/1 var(--px);color:var(--dim);float:right;margin-left:8px}
+#say{margin:5px 0 10px;min-height:4.5em;text-wrap:pretty}
+.ctl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.dots{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
+.dot{width:16px;height:16px;padding:0;border:3px solid var(--black);background:var(--panel2);box-shadow:0 0 0 2px var(--edge-dim);cursor:pointer;border-radius:0}
+.dot.on{background:var(--edge);box-shadow:0 0 0 2px var(--edge)}
+.dot.seen{background:var(--edge-dim)}
+.hint{font-size:14px;color:var(--wait);min-height:1.5em;margin:8px 0 0;text-align:center}
+
+.win{background:var(--panel);border:3px solid var(--edge);box-shadow:0 0 0 3px var(--black),7px 7px 0 3px rgba(0,0,0,.35);min-width:0}
+.win-h{background:var(--edge);color:var(--inkdark);font:700 14px/1.2 var(--px);padding:6px 10px;display:flex;justify-content:space-between;gap:10px}
+.win-b{padding:14px;font-size:15.5px;line-height:1.4}
+.win-b p{margin:0 0 10px}
+.win-b h4{font-size:13px;color:var(--edge);letter-spacing:.05em;text-transform:uppercase;margin:12px 0 5px}
+.win-b h4:first-child{margin-top:0}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;margin:0 0 10px}
+.kv dt{color:var(--dim)}.kv dd{margin:0}
+.ul{list-style:none;padding:0;margin:0 0 6px}
+.ul li{padding-left:16px;position:relative;margin:4px 0}
+.ul li .d{position:absolute;left:0;top:.42em}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.note-s{font-size:13.5px;color:var(--dim);margin-top:10px}
+.pt{width:48px;height:48px;border:3px solid var(--black);background:var(--panel2);flex:none}
+.head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.head b{font:700 15px/1.2 var(--px);display:block}
+.head span{font-size:14px;color:var(--dim)}
+.chip{font:600 11px/1 var(--px);padding:3px 6px;border:2px solid currentColor;display:inline-block;vertical-align:middle;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.chip.fork{color:var(--ok)}.chip.prop{color:var(--wait)}
+.chip.rule{color:var(--bad);text-transform:none;font-family:ui-monospace,Menlo,monospace;font-weight:400;margin:2px 3px 2px 0}
+.seg{display:inline-flex;border:3px solid var(--black);flex-wrap:wrap}
+.seg button{font:600 12px/1 var(--px);padding:7px 9px;background:var(--panel2);color:var(--dim);border:0;cursor:pointer;border-radius:0}
+.seg button.on{background:var(--edge);color:var(--inkdark)}
+.scroll{background:var(--parch);color:var(--inkdark);padding:12px 14px;border:3px solid #9a6b2a;box-shadow:inset 0 0 0 2px var(--parch2);margin-top:10px}
+.scroll h4{color:#8e2b25}
+.scroll code{background:rgba(27,27,42,.13);color:var(--inkdark)}
+.scroll .foot{font-size:13.5px;border-top:2px dashed #9a6b2a;padding-top:8px;margin:10px 0 0}
+.scroll .chip.prop{color:#8a5a0a}
+.tblw{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th{font:600 12px/1.2 var(--px);text-align:left;color:var(--edge);text-transform:uppercase;letter-spacing:.04em}
+th,td{padding:6px 8px;border-bottom:2px solid var(--panel2);vertical-align:top}
+.pre{font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;background:var(--black);color:var(--cyan);padding:8px 10px;margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.tl{list-style:none;padding:0;margin:4px 0 0 7px;border-left:3px solid var(--edge-dim)}
+.tl li{position:relative;padding:0 0 14px 16px}
+.tl li::before{content:"";position:absolute;left:-8px;top:.3em;width:13px;height:13px;background:var(--edge);border:3px solid var(--black)}
+.tl li.bad::before{background:var(--bad)}.tl li.okk::before{background:var(--ok)}
+.tl b{font:700 13px/1.2 var(--px);color:var(--edge);display:block}
+.phone{width:min(260px,100%);margin:0 auto;border:5px solid var(--black);outline:2px solid #3a4268;border-radius:30px;background:linear-gradient(#2b3566,#12173a);padding:16px 10px 20px;text-align:center}
+.phone .time{font:700 36px/1 var(--px);margin:8px 0 2px}
+.phone .date{font-size:13px;color:#c9cfee;margin-bottom:14px}
+.note{background:rgba(242,236,220,.95);color:var(--inkdark);border-radius:12px;padding:9px 10px;text-align:left;font-size:14px;line-height:1.3}
+.note .app{font:600 11px/1 var(--px);color:#5e3b22;display:flex;justify-content:space-between;margin-bottom:4px}
+.note b{display:block}
+.note .acts{margin-top:9px;gap:6px}
+.chat{text-align:left;font-size:14px;line-height:1.35}
+.chat .m{background:rgba(242,236,220,.95);color:var(--inkdark);border-radius:12px;padding:8px 10px;margin:0 22px 8px 0}
+.chat .m.me{background:var(--edge);margin:0 0 8px 40px}
+.chat .in{border:2px solid #5a648f;border-radius:14px;padding:7px 10px;color:#aab2dc;font-size:13px}
+.chain{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font:600 12px/1 var(--px);margin-top:8px}
+.chain span{background:var(--panel2);border:2px solid var(--edge-dim);padding:4px 6px}
+.chain i{color:var(--edge);font-style:normal}
+.field{background:var(--black);border:2px solid var(--edge-dim);padding:7px 9px;margin:0 0 10px}
+.lbl{font:600 12px/1 var(--px);color:var(--dim);text-transform:uppercase;letter-spacing:.05em;display:block;margin:0 0 5px}
+.steps4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:4px 0 12px}
+.steps4 span{font:600 11px/1.2 var(--px);padding:6px 4px;text-align:center;background:var(--panel2);color:var(--dim);border:2px solid var(--black)}
+.steps4 span.done{background:var(--ok);color:var(--inkdark)}.steps4 span.now{background:var(--edge);color:var(--inkdark)}
+.chk{display:flex;gap:9px;align-items:flex-start;margin:6px 0}
+.chk input{width:20px;height:20px;accent-color:var(--edge);margin:1px 0 0;flex:none}
+.box{width:16px;height:16px;border:3px solid var(--black);background:var(--ok);flex:none;margin-top:2px;box-shadow:0 0 0 1px var(--ok)}
+.xp{height:14px;border:3px solid var(--black);background:var(--panel2);box-shadow:0 0 0 2px var(--edge-dim);margin:8px 2px}
+.xp i{display:block;height:100%;background:var(--edge);transition:width 1.2s}
+.pips{display:inline-flex;gap:3px;vertical-align:middle}
+.pips i{width:12px;height:12px;border:2px solid var(--inkdark);background:transparent}
+.pips i.on{background:#8e2b25}
+
+.hood{margin-top:18px;border:2px dashed var(--edge-dim);padding:10px 12px;font-size:15px;color:var(--dim);max-width:none}
+.hood b{font:700 12px/1 var(--px);color:var(--ink);text-transform:uppercase;letter-spacing:.06em;margin-right:8px}
+
+.doc{margin-top:54px}
+.doc h2{font-size:26px;color:var(--edge);text-shadow:2px 2px 0 var(--black);margin-bottom:6px}
+.doc>p{max-width:70ch;color:var(--dim);margin:0 0 16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--panel);border:3px solid var(--black);box-shadow:0 0 0 2px var(--edge-dim);padding:12px 14px}
+.card h3{font-size:16px;color:var(--ink);margin-bottom:4px}
+.card p{margin:0 0 10px;font-size:15px;color:var(--dim)}
+.card .rec{color:var(--ink);border-left:4px solid var(--edge);padding-left:9px;margin:8px 0 0}
+.mapw{overflow-x:auto;border:3px solid var(--edge);box-shadow:0 0 0 3px var(--black);background:var(--black)}
+.map{position:relative;min-width:576px}
+.map canvas{display:block;width:100%;height:auto}
+.map .tag{font-size:12px}
+.leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-top:16px}
+.li{display:flex;gap:10px;align-items:center;background:var(--panel);border:3px solid var(--black);padding:8px 10px}
+.li canvas{flex:none;background:#6ea93b;border:2px solid var(--black)}
+.li b{font:700 14px/1.2 var(--px);display:block}
+.li span{font-size:14px;color:var(--dim);line-height:1.25;display:block}
+.sub{font:700 14px/1 var(--px);color:var(--ink);text-transform:uppercase;letter-spacing:.06em;margin:22px 0 0}
+@media (prefers-reduced-motion:reduce){.tag.pop{animation:none}.xp i{transition:none}}
+</style>
+
+<div class="page">
+  <header>
+    <div class="kicker">Panel agentów · makieta interfejsu</div>
+    <h1>Panel agentów</h1>
+    <p class="lead">Makieta panelu do nadzoru nad agentami Claude Code i Codex na trzech maszynach. Mapa w pixel arcie pokazuje, kto nad czym pracuje, a okna obok służą do raportów i decyzji. Pięć scenariuszy pokazuje typowy dzień, od porannego „proszę raport” po wieczorny odbiór pracy.</p>
+    <p class="lead s">Grafika pochodzi ze sprite’ów, które już leżą we wtyczce. Nazwy sesji, projekty i liczby to dane przykładowe.</p>
+  </header>
+
+  <div class="tabs" id="tabs" role="tablist" aria-label="Scenariusze"></div>
+
+  <section class="console" aria-label="Demo">
+    <div>
+      <div class="stage" id="stage">
+        <div class="view" id="view">
+          <canvas id="cv" width="320" height="180" role="img" aria-label="Mapa agentów w pixel arcie"></canvas>
+          <div class="tags" id="tags"></div>
+        </div>
+        <div class="hud" id="hud"></div>
+      </div>
+      <div class="dlg" id="dlg">
+        <canvas id="port" width="24" height="24" aria-hidden="true"></canvas>
+        <div class="dlg-body">
+          <span class="stepno" id="stepno"></span>
+          <div class="who" id="who"></div>
+          <p id="say"></p>
+          <div id="act"></div>
+        </div>
+      </div>
+      <div class="ctl">
+        <button class="btn" id="prev" type="button">◀ Wstecz</button>
+        <div class="dots" id="dots"></div>
+        <button class="btn go" id="next" type="button">Dalej ▶</button>
+      </div>
+      <p class="hint" id="hint" role="status"></p>
+    </div>
+    <aside class="win" id="win" aria-live="polite"></aside>
+  </section>
+  <div class="hood" id="hood"></div>
+
+  <section class="doc" id="ekrany">
+    <h2>Ekrany</h2>
+    <p>Każdy ekran z demo osobno. Przycisk przenosi do miejsca w scenariuszu, w którym ten ekran się pojawia.</p>
+    <div class="cards" id="screens"></div>
+  </section>
+
+  <section class="doc" id="legenda">
+    <h2>Legenda mapy</h2>
+    <p>Cała mapa naraz. Budynek oznacza rodzaj pracy, którą agent właśnie wykonuje. Znacznik nad agentem pokazuje, czy potrzebna jest Twoja decyzja. Kolor postaci to narzędzie, a kreska pod nazwą to maszyna. Liczba przy projekcie to zamknięte zadania.</p>
+    <div class="mapw"><div class="map" id="map"><canvas id="mapcv" width="576" height="324" role="img" aria-label="Cała mapa"></canvas></div></div>
+    <h3 class="sub">Budynki: rodzaj pracy</h3>
+    <div class="leg" id="legB"></div>
+    <h3 class="sub">Postacie: narzędzia i role</h3>
+    <div class="leg" id="legA"></div>
+    <h3 class="sub">Stany i maszyny</h3>
+    <div class="leg" id="legS"></div>
+  </section>
+
+  <section class="doc" id="stan">
+    <h2>Stan prac</h2>
+    <p>Co z tego demo ma już kod w forku wtyczki, a co jest dopiero propozycją. Nic z forka nie zostało jeszcze uruchomione, bo na Macu nie ma Node.js.</p>
+    <div class="tblw"><table>
+      <thead><tr><th>Element</th><th>Status</th><th>Uwagi</th></tr></thead>
+      <tbody>
+        <tr><td>Sprite’y pixel art: 9 budynków, 2 postacie, przyroda</td><td><span class="chip fork">jest w forku</span></td><td>Leżą w <code>ratusz/pixels</code>. Aplikacja ich nie używa, widok wtyczki jest dziś w 3D.</td></tr>
+        <tr><td>Skrót stanu do raportu</td><td><span class="chip fork">jest w forku</span></td><td><code>GET /api/digest</code>. Nieuruchomione.</td></tr>
+        <tr><td>Prośby o zgodę i bramka na komendy</td><td><span class="chip fork">jest w forku</span></td><td>Tylko komendy Bash w Claude Code. Codex nie ma takiej bramki.</td></tr>
+        <tr><td>Powiadomienia z przyciskami</td><td><span class="chip fork">jest w forku</span></td><td>Przez ntfy. Wymaga konfiguracji tematu i Tailscale.</td></tr>
+        <tr><td>Karta projektu</td><td><span class="chip fork">jest w forku</span></td><td>Plik <code>KARTA.md</code> w repozytorium projektu.</td></tr>
+        <tr><td>Zdarzenia z innych maszyn</td><td><span class="chip fork">jest w forku</span></td><td>Haki Claude Code i <code>notify</code> Codexa.</td></tr>
+        <tr><td>Mapa w pikselach jako ekran</td><td><span class="chip prop">propozycja</span></td><td>To demo jest jej makietą.</td></tr>
+        <tr><td>Komenda „proszę raport” i okno raportu</td><td><span class="chip prop">propozycja</span></td><td>Dane już są, brakuje ekranu.</td></tr>
+        <tr><td>Wykrywanie zablokowanej sesji</td><td><span class="chip prop">propozycja</span></td><td>Ten sam błąd trzy razy albo cisza przez 30 minut.</td></tr>
+        <tr><td>Zlecenia z panelu</td><td><span class="chip prop">propozycja</span></td><td>Start sesji na wybranej maszynie.</td></tr>
+        <tr><td>Odbiór pracy z licznikiem zadań</td><td><span class="chip prop">propozycja</span></td><td>Dziś postęp projektu rośnie bez odbioru.</td></tr>
+        <tr><td>Koszt nocy</td><td><span class="chip prop">propozycja</span></td><td>Tokeny i dolary z sesji.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="doc" id="decyzje">
+    <h2>Do decyzji</h2>
+    <p>Trzy decyzje, których wymaga dalsza praca.</p>
+    <div class="cards">
+      <div class="card"><h3>Piksele zamiast 3D czy obok?</h3><p>Piksele są lekkie, czytelne w wąskim panelu i na telefonie. Widok 3D lepiej wygląda na dużym ekranie.</p><p class="rec">Rekomendacja: piksele w panelu Claude i na iPhonie, 3D zostaje w przeglądarce.</p></div>
+      <div class="card"><h3>Gdzie działa panel?</h3><p>Poranny raport działa tylko wtedy, gdy panel zbierał zdarzenia całą noc. Mac jest w nocy uśpiony.</p><p class="rec">Rekomendacja: panel na PC z Windows, Mac i iPhone mają do niego dostęp.</p></div>
+      <div class="card"><h3>Raport na żądanie czy automatyczny?</h3><p>Automatyczny raport o stałej porze łatwo zignorować. Raport na żądanie pojawia się wtedy, gdy zaczynasz pracę.</p><p class="rec">Rekomendacja: na żądanie, plus skrót na iPhonie.</p></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(()=>{
+'use strict';
+const ATLAS={"alchemist":{"w":48,"h":48,"anchor":[24,46],"palette":{"o":"#1b1b2a","s":"#00000055","r":"#c8463a","R":"#8e2b25","l":"#e8735f","p":"#efe2c6","P":"#cdb994","w":"#8a5a34","W":"#5e3b22","x":"#b07a4a","k":"#9b9384","K":"#6c665c","c":"#c4bdae","y":"#ffd36b","Y":"#ff9b3d","g":"#6ee08a","v":"#9a6ad8","b":"#7fe3ff","G":"#38a85a","L":"#c9f7d2","n":"#3b3b4f"},"frames":[["..................................GG...Lg.......",".............................g...LLgg..GG.......",".................................Lggg...........","...............................LL.GG............","..............................GggG...L..........","............................ooooooo.............","...........................occkkkkko............","...........................oKKKKKKKo............","............................ockkkKo.............","......................o.....ockKkKo.............","................ooooooroooooocKkkKo.............",".............ooolllllrrrrrrrrkkkKo..............","...........oolllllllrrpprrrrrrrrKo..............","..........olllllllrrrpppprrrrrrrrro.............",".........olppplllrrrrpppPrrrrrrrrrro............",".......oolppppprrrrrrrPPrrrrrrrrrrrro...........","......ollpppppPPrrrrrrrrrrrrrrrrrrrro...........",".....ollllpppPPrrrrrrrrrrrrrrrrrrrrrRo..........","....olllllrpPPrrrrrrrrrrrrrrrrrrrrrrRRo.........","...olllllrrrrrrrrrrrrrrrrrrrrrrrrrrrRRRo........","...olllrrrrrrrrrrrrrrrrrrrrrpppprrrrRRRo........","..olllrrrrrrrrrrrpppprrrrrrrpppPrrrrRRRRo.......","..olrrrrrrrrrrrrrppPPrrrrrrrppPPrrrRRRRRo.......",".oorpppprrrrrrrrrrrrrrrrrrrrrrrrrRRRRRRRo.......","orrrppPPrrrrrrrrrrrrrrrrrrrrrrrRRRRRpRRRo.......","orrrrrrrrrrrrrrrrrrrrrrppprrrRRRRRRppPRRo.......","orrrrrrrrrrrrrrrrrrrrrrppPrrRRRRRRRRPRRRo.......","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRo...g...","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRo.......",".oooooooPPPPPPPPPPPPPPPPPPPPPPPPPooooooL........",".......owPPPPPPPPPPPPPPPPPPPPPPPWo..............",".......owxppoxxoppppppppppppppPwWo........Lg....",".......owxpxxWxwwpppooooopppppowWo........gG....",".......owxoxYWypwopoowWwoopopowwWo....oooooo....",".......owxxWWWWWwwpoxwWwwoowoogwWo.ooooookkkooo.",".......owxxxyWyywwpoxwWwwooPoogwWooccoLggoGGGkko",".......owxowyWyywopoxwWwwoovoLgwWoocggGGGgLgggko",".......owxpwwwwwwppoWWWWWoLvvggbWooKKKKggggKKKKo",".......owxppowwopppoxwWwyovvvgGbWo.oKKKKKKKKooo.",".......owxpPpppppppoxwWwwoxxxxxxWo.oKKKnnnnnoo..",".......owxppPppppppoxwWwwoWWWWWWWooKKKnnnnnnooo.",".......owxpppppppppoxwWwwoooooowWooKKKnnnnnnooo.",".......owxwwwwwwwwwoxwWwwowwwwwwWo.oKnnnnnnnoo..",".......oWWWWWWWWWWWWWWWWWWWWWWWWWo.onnnnnnnnoo..","........oooooooooockkkkkkkKoooooo...oooooooooo..",".....sssssssssssssooooooooossssssssonooYyYYoono.",".....sssssssssssssssssssssssssssssssoowooooWoo..",".................sssssssssssssss......o....o...."],["..............................L.....GLgG........","................................GLLGGggG........","................................Lggg.GG.........","................................GggG............","..............................Lgg........g......","............................ooooooo.............","...........................occkkkkko............","...........................oKKKKKKKo............","............................ockkkKo.............","......................o.....ockKkKo.............","................ooooooroooooocKkkKo.............",".............ooolllllrrrrrrrrkkkKo..............","...........oolllllllrrpprrrrrrrrKo..............","..........olllllllrrrpppprrrrrrrrro.............",".........olppplllrrrrpppPrrrrrrrrrro............",".......oolppppprrrrrrrPPrrrrrrrrrrrro...........","......ollpppppPPrrrrrrrrrrrrrrrrrrrro...........",".....ollllpppPPrrrrrrrrrrrrrrrrrrrrrRo..........","....olllllrpPPrrrrrrrrrrrrrrrrrrrrrrRRo.........","...olllllrrrrrrrrrrrrrrrrrrrrrrrrrrrRRRo........","...olllrrrrrrrrrrrrrrrrrrrrrpppprrrrRRRo........","..olllrrrrrrrrrrrpppprrrrrrrpppPrrrrRRRRo.......","..olrrrrrrrrrrrrrppPPrrrrrrrppPPrrrRRRRRo.......",".oorpppprrrrrrrrrrrrrrrrrrrrrrrrrRRRRRRRo.......","orrrppPPrrrrrrrrrrrrrrrrrrrrrrrRRRRRpRRRo.......","orrrrrrrrrrrrrrrrrrrrrrppprrrRRRRRRppPRRo.......","orrrrrrrrrrrrrrrrrrrrrrppPrrRRRRRRRRPRRRog......","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRo.......","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRo..L....",".oooooooPPPPPPPPPPPPPPPPPPPPPPPPPooooooo........",".......owPPPPPPPPPPPPPPPPPPPPPPPWo..............",".......owxppoxxoppppppppppppppPwWo.....Lg.......",".......owxpxxWxwwpppooooopppppowWo.....gG.......",".......owxoxYWypwopoowWwoopopowwWo....oooooo....",".......owxxWWWWWwwpoxwWwwoowoogwWo.oookkkkkkooo.",".......owxxxyWyywwpoxwWwwooPoogwWooccGLGGGLGGkko",".......owxowyWyywopoxwWwwoovoLgwWoocgggLgggLggko",".......owxpwwwwwwppoWWWWWoLvvggbWooKKKKggggKKKKo",".......owxppowwopppoxwWwyovvvgGbWo.oKKKKKKKKooo.",".......owxpPpppppppoxwWwwoxxxxxxWo.oKKKnnnnnoo..",".......owxppPppppppoxwWwwoWWWWWWWooKKKnnnnnnooo.",".......owxpppppppppoxwWwwoooooowWooKKKnnnnnnooo.",".......owxwwwwwwwwwoxwWwwowwwwwwWo.oKnnnnnnnoo..",".......oWWWWWWWWWWWWWWWWWWWWWWWWWo.onnnnnnnnoo..","........oooooooooockkkkkkkKoooooo...ooooyooooo..",".....sssssssssssssooooooooossssssssonooYYyYoono.",".....sssssssssssssssssssssssssssssssoowooooWoo..",".................sssssssssssssss......o....o...."],["...................................GG..GG.GgG...","..............................L...GLgGGLgG......","...................................gg..GG.......","...............................LLg..............","...............................Lgg..L...........","............................ooooooo.............","...........................occkkkkko............","...........................oKKKKKKKo............","............................ockkkKo.............","......................o.....ockKkKo.............","................ooooooroooooocKkkKo.............",".............ooolllllrrrrrrrrkkkKo..............","...........oolllllllrrpprrrrrrrrKo..............","..........olllllllrrrpppprrrrrrrrro.............",".........olppplllrrrrpppPrrrrrrrrrro............",".......oolppppprrrrrrrPPrrrrrrrrrrrro...........","......ollpppppPPrrrrrrrrrrrrrrrrrrrro...........",".....ollllpppPPrrrrrrrrrrrrrrrrrrrrrRo..........","....olllllrpPPrrrrrrrrrrrrrrrrrrrrrrRRo.........","...olllllrrrrrrrrrrrrrrrrrrrrrrrrrrrRRRo........","...olllrrrrrrrrrrrrrrrrrrrrrpppprrrrRRRo........","..olllrrrrrrrrrrrpppprrrrrrrpppPrrrrRRRRo.......","..olrrrrrrrrrrrrrppPPrrrrrrrppPPrrrRRRRRo.......",".oorpppprrrrrrrrrrrrrrrrrrrrrrrrrRRRRRRRo.......","orrrppPPrrrrrrrrrrrrrrrrrrrrrrrRRRRRpRRRo.......","orrrrrrrrrrrrrrrrrrrrrrppprrrRRRRRRppPRRo.......","orrrrrrrrrrrrrrrrrrrrrrppPrrRRRRRRRRPRRRo.......","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRLg......","oRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRgG......",".oooooooPPPPPPPPPPPPPPPPPPPPPPPPPooooooo........",".......owPPPPPPPPPPPPPPPPPPPPPPPWo..........L...",".......owxppoxxoppppppppppppppPwWo..............",".......owxpxxWxwwpppooooopppppowWo...g..........",".......owxoxYWypwopoowWwoopopowwWo....oooooo....",".......owxxWWWWWwwpoxwWwwoowoogwWo.oookkkoooooo.",".......owxxxyWyywwpoxwWwwooPoogwWooccGGGoLggokko",".......owxowyWyywopoxwWwwoovoLgwWoocgLgggGGGggko",".......owxpwwwwwwppoWWWWWoLvvggbWooKKKKggggKKKKo",".......owxppowwopppoxwWwyovvvgGbWo.oKKKKKKKKooo.",".......owxpPpppppppoxwWwwoxxxxxxWo.oKKKnnnnnoo..",".......owxppPppppppoxwWwwoWWWWWWWooKKKnnnnnnooo.",".......owxpppppppppoxwWwwoooooowWooKKKnnnnnnooo.",".......owxwwwwwwwwwoxwWwwowwwwwwWo.oKnnnnnnnoo..",".......oWWWWWWWWWWWWWWWWWWWWWWWWWo.onnnnnnnnoo..","........oooooooooockkkkkkkKoooooo...oooooooooo..",".....sssssssssssssooooooooossssssssonooyyYyoono.",".....sssssssssssssssssssssssssssssssoowooooWoo..",".................sssssssssssssss......o....o...."]]},"arena":{"w":64,"h":48,"anchor":[32,44],"palette":{"o":"#1b1b2a","s":"#00000055","t":"#e8c170","T":"#c3933f","u":"#9a6b2a","h":"#f3dd9a","w":"#8a5a34","W":"#5e3b22","x":"#b07a4a","g":"#9b9384","G":"#6c665c","l":"#c4bdae","n":"#8a6a45","N":"#6e5233","E":"#a3825a","R":"#c8463a","e":"#8e2b25","f":"#e8735f","p":"#efe2c6","d":"#2a2030"},"frames":[["................................................................","................................................................","................................................................","................................................................","................................................................","................................................................",".......................o.oo.oo.oo.oo.oo.........................",".................o.oo.otohtohtootohtohtooo.oo...................",".............oo.otohtohtuhtuhtotooooootuhtohtooo.o..............","..........ooohtohtuhtWWWWWWWWWoWRRRRRfoWWWuhtohtoho.o...........","........oohtohtuWWWWWWwwWwwWwwoWRRRRRRfowwWWopotuhtoho..........",".......otohtuooowwWwwWwwWwwWwwoWeRRRRRoWwwWolplooWoootooo.......",".....oohtuWWopppowWwwWwwWwwWwwoWeeRRoowWwwWoGlGopolgxouhto......","....otuhWWwopopoloWwwWwwWwwWwwoWeoooWwwWwwWwwxowlglgxoWhtoo.....","...ohtuWwWwoppRploWwwgggGgggGgoWogggGgggGgWwwxowlglgxoWWtuho....","..oohtWwwWwopppploggGgggGgggGgoWogggGgggGgggGxowlglGxoWwWuhto...",".otuhWWwwWowooWoogogGNNNNNNNNNoWoNNNNNNNNNoooxoolgooxoowwWhto...",".otuWwWwwotottttTotoNEEEEEEEEEoWoEnEEEEEEowwwxwwlgwwxwwowWWtuo..",".otuwwWwGowwttttTwwonEEEEEEEEEoWoEEEEnEEEEoWoxoolgooxWowwWwtuo..",".oTuwwWgGgoottttTooEEEEnEEEEEEoWoEEEEEEEnEoWoxoElgoNxWoooowTuo..",".oTuwwGGNNEouuuuuoEEEEEEEEnEEEoWoEEEEEEEEEoWoxoElgoExWoftRoTuo..",".oTuTGGNEEEottttToEEEEEEEEEEEooWoooEEEEEEEoWoxouuuuoxWoRtRoTuo..",".oWuTTNEEEEottttToEEEEEEEEEEouuouuuoEEEEEEoWoxoEWWoExWoRtRoTWo..",".owWTTuEEEEottttTonEEEEEEEEohhhhhtttoEEEEEoWoxooWWooxWoRtRoWWo..",".owWxTuTEEEottttToEEEnEEEEotttttttTTTonEEEowwwwwwwwwwwoRtRowWo..",".owWxWuTTuEEooWooEEEEEEEnEoTTTTTTTTuuuoEEnoWoooooooooWoeteowWo..",".owWxwWxTuTTuoWoEEEEEEEEEohhhhhhhhhtttoEEEoWoEEEEETuoWoooowwWo..",".olWxwWxWWTTuoWoEEEEEEEEotttttttttttTTToEEEoEEETuTTuToWwwWwwGos.",".oglxwWxwWxWWTouTTuTTEEoTTTTTTTTTTTTTuuuoEuTTuTTuTWWxwWwwWwgGo..","..ogGlWxwWxwWxWWxTuTTuTohhhhhhhhhhhhhhtttouTTuxWWxwWwwWwwggGo...","...oGglxwWxwWxwWxWWxWWotttttttttttttttTTToWxWWwwWwwWwwWwGGGo.s..","....ogGlGWxwWxwWxwWxwoTuTuTuTuTuTuTuTuTuTuoxwWwwWwwWwwggGGo.s...",".....oggGlllWxwWxwWxwWouoouoouoouoouoouoooWxwWwwWwwgGgGGGo.s....","......ooggGgGllWxwWxwWxolGooxoxxoxxoogoGowWxwWwwGggGGGGoo.ss....","........ooggGgglGlllwWxolggoxpxxxxpwoGGGowWlGlggGGGGGoo.sss.....",".........sooogGgggGgGllolggoxxlxxlxwogGGollgggGGGGooo.ssss......","...........ssoooogggGggolGgoxxxllxxwogGGogggGgoooo.sssss........",".............ssssooooooolggoxxululxwoGGGoooooo..ssssss..........","................sssssssolggowWwwwwWwogGGo.sssssssss.............","...................ssssolGgwooooooooWgGGosssssss................",".......................olggwdNNNNNNdWGGGos......................",".......................olggwdNEEEENdWgGGo.......................",".......................olGgwdNEEEENdWgGGo.......................",".......................olggwdNEEEENdWGGGo.......................","........................ooooooooooooooooss......................",".........................sssssssssssssssss......................","................................................................","................................................................"],["................................................................","................................................................","................................................................","................................................................","................................................................","................................................................",".......................o.oo.oo.oo.oo.oo.........................",".................o.oo.otohtohtootohtohtooo.oo...................",".............oo.otohtohtuhtuhtotoootuhtuhtohtooo.o..............","..........ooohtohtuhtWWWWWWWWWoWRRRoooWWWWuhtohtoho.o...........","........oohtohtuWWWWWWwwWwwWwwoWRRRRRfoWwwWWopotuhtoho..........",".......otohtuooowwWwwWwwWwwWwwoWeRRRRRfowwWolplooWoootooo.......",".....oohtuWWopppowWwwWwwWwwWwwoWeeRRRRfowwWoGlGopolgxouhto......","....otuhWWwopopoloWwwWwwWwwWwwoWooeeRooWwwWwwxowlglgxoWhtoo.....","...ohtuWwWwoppRploWwwgggGgggGgoWogooogggGgWwwxowlglgxoWWtuho....","..oohtWwwWwopppploggGgggGgggGgoWogggGgggGgggGxowlglGxoWwWuhto...",".otuhWWwwWowooWoogogGNNNNNNNNNoWoNNNNNNNNNoooxoolgooxoowwWhto...",".otuWwWwwotottttTotoNEEEEEEEEEoWoEnEEEEEEowwwxwwlgwwxwwowWWtuo..",".otuwwWwGowwttttTwwonEEEEEEEEEoWoEEEEnEEEEoWoxoolgooxWowwWwtuo..",".oTuwwWgGgoottttTooEEEEnEEEEEEoWoEEEEEEEnEoWoxoElgoNxWoooowTuo..",".oTuwwGGNNEouuuuuoEEEEEEEEnEEEoWoEEEEEEEEEoWoxoElgoExWoftRoTuo..",".oTuTGGNEEEottttToEEEEEEEEEEEooWoooEEEEEEEoWoxouuuuoxWoRtRoTuo..",".oWuTTNEEEEottttToEEEEEEEEEEouuouuuoEEEEEEoWoxoEWWoExWoRtRoTWo..",".owWTTuEEEEottttTonEEEEEEEEohhhhhtttoEEEEEoWoxooWWooxWoRtRoWWo..",".owWxTuTEEEottttToEEEnEEEEotttttttTTTonEEEowwwwwwwwwwwoRtRowWo..",".owWxWuTTuEEooWooEEEEEEEnEoTTTTTTTTuuuoEEnoWoooooooooWoeteowWo..",".owWxwWxTuTTuoWoEEEEEEEEEohhhhhhhhhtttoEEEoWoEEEEETuoWoooowwWo..",".olWxwWxWWTTuoWoEEEEEEEEotttttttttttTTToEEEoEEETuTTuToWwwWwwGos.",".oglxwWxwWxWWTouTTuTTEEoTTTTTTTTTTTTTuuuoEuTTuTTuTWWxwWwwWwgGo..","..ogGlWxwWxwWxWWxTuTTuTohhhhhhhhhhhhhhtttouTTuxWWxwWwwWwwggGo...","...oGglxwWxwWxwWxWWxWWotttttttttttttttTTToWxWWwwWwwWwwWwGGGo.s..","....ogGlGWxwWxwWxwWxwoTuTuTuTuTuTuTuTuTuTuoxwWwwWwwWwwggGGo.s...",".....oggGlllWxwWxwWxwWouoouoouoouoouoouoooWxwWwwWwwgGgGGGo.s....","......ooggGgGllWxwWxwWxolGooxoxxoxxoogoGowWxwWwwGggGGGGoo.ss....","........ooggGgglGlllwWxolggoxpxxxxpwoGGGowWlGlggGGGGGoo.sss.....",".........sooogGgggGgGllolggoxxlxxlxwogGGollgggGGGGooo.ssss......","...........ssoooogggGggolGgoxxxllxxwogGGogggGgoooo.sssss........",".............ssssooooooolggoxxululxwoGGGoooooo..ssssss..........","................sssssssolggowWwwwwWwogGGo.sssssssss.............","...................ssssolGgwooooooooWgGGosssssss................",".......................olggwdNNNNNNdWGGGos......................",".......................olggwdNEEEENdWgGGo.......................",".......................olGgwdNEEEENdWgGGo.......................",".......................olggwdNEEEENdWGGGo.......................","........................ooooooooooooooooss......................",".........................sssssssssssssssss......................","................................................................","................................................................"]]},"bush":{"w":12,"h":10,"anchor":[6,9],"palette":{"o":"#1b1b2a","A":"#8bc34a","B":"#6ea93b","C":"#4f8a2b","D":"#3b6b22","p":"#e8735f","P":"#c8463a","s":"#00000055"},"frames":[["...oooooo...","..oAABAABo..","..oABBABBCo.",".oBBCPBACDo.","oAACADCCDpCo","oBBBDCpBBCCo","oBCpDDBCCDDo",".oCDDCDCDDo.","..oooooooo..","..ssssssss.."]]},"castle":{"w":64,"h":48,"anchor":[32,46],"palette":{"o":"#1b1b2a","s":"#00000055","b":"#4fa3c7","B":"#3a7fa0","n":"#28597a","c":"#8fd1e6","w":"#8a5a34","W":"#5e3b22","x":"#b07a4a","r":"#c8463a","R":"#8e2b25","e":"#e8735f","y":"#ffd36b","Y":"#ff9b3d","t":"#e8c170","T":"#c3933f","k":"#6c665c","K":"#9b9384"},"frames":[["........toooo.........................................tooo......","........oeerrro.......ooo..ooo..ooo..ooo..............oerrooo...","........orrrRRRo.....occcoocccoocccooccco.............orrrrRRo..","........oRRRoo.......obbBoobbBoobbBoobbBo.............oRRRRRo...",".ooo..oooooooo..o....obbBoobbBoobbBoobbBoo.....ooo..oooooooo..o.","occcooccooocccooco...occcccccccccccccccccco...occcooccooocccooco","obbBoobbooobbBoono...oBBBBBBBBBBBBBBBBBBnno...obbBoobbooobbBoono","obbBoobbBoobbBoono...ocbbbbBbbbbbBbbbbbBnno...obbBoobbBoobbBoono","occcccccccccccccco...ocbbbbBbbbbbBbbbbbBnno...occcccccccccccccco","oBBBBBBBBBBBBBBnno...ocBBBBBBBBBBBBBBBBBnno...oBBBBBBBBBBBBBBnno",".oooooooooooooooo....ocbBccnnbBbbbbnnbbBnno....oooooooooooooooo.","..oooooooooooooo.....ocbBbboobBbbbboobbBnno.....oooooooooooooo..",".onbnbnBnbnbnBnno....ocBBBoYyoBBBBoYyoBBnno....onbnbnBnbnbnBnno.",".ocBBBBBBBBBBBnno....ocbbboyyobbbcoyyobBnno....ocBBBBBBBBBBBnno.",".ocbBbbbbbBbbBnno..ooocbbboyYobbbBoyYobBnno.oooocbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnncooccccBcccoocccBBcccoBcccoocccocbBbbbbbBbbBnno.",".ocBBcooooBBBBnnBoobbBcbbbBbcbbBbbbbBbbbbBoobbBocBBcooooBBBBnno.",".ocbbboYyobbbBnnBoobbBoobbBoobbBoobbBoobbBoobbBocbbboYyobbbBnno.",".ocbbboyyobbbBnncccccccccccccccccccccccccccccccccbbboyyobbbBnno.",".ocBBBoyyoBBBBnnBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBcBBBoyyoBBBBnno.",".ocbBboyyoBbbBnnbbbBbbbbbBbbbbbBbbbbbBbbbbbBbbbBcbBboyyoBbbBnno.",".ocbBboyYoBbbBnnBBbBbbbbbBbbbboooobbbBbbbbbBbbbBcbBboyYoBbbBnno.",".ocBBBooooBBBBnnBoooooooBBBBBBoYyoBBBBBBoooooooBcBBBooooBBBBnno.",".ocbbbccccbbbBnnotWWWWWtobbbBboyyoBbbbbotWWWWWtocbbbccccbbbBnno.",".ocbbbbBbbbbbBnnBoerrrRobbbbccooooBbbbbboerrrRoBcbbbbBbbbbbBnno.",".ocBBBBBBBBBBBnnBoerrrRoBBBBBBBccBBBBBBBoerrrRoBcBBBBBBBBBBBnno.",".ocbBbbbbbBbbBnnnoerrrRobBbcKcccKKkKKBbboerrrRoBcbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnnBoertrRobBcKccKcKkKKkKbboertrRoBcbBbbbbbBbbBnno.",".ocBBBooooBBBBnnBooetTTRocKooooooooooKkBoetTTRoBcBBBooooBBBBnno.",".ocbbboYyobbbBnnnBoerTRRoKowWxwWowWxwoKboeeTrRoBcbbboYyobbbBnno.",".ocbbboyyobbbBnnBBoerrRRocxwWxwWowWxwWKkoeerrRoBcbbboyyobbbBnno.",".ocBBBoyyoccBBnnBBoerrRRooxwWxwWowWxwWooeerrRooBcBBBoyyoccBBnno.",".ocbBboyyoBbbBnnnBoerrRRooxwWxwWowWxwWooeerrRobBcbBboyyoBbbBnno.",".ocbBboyYoBbbBnnBBoeroRRooxwWxwWowWxwWooeeorRobBcbBboyYoBbbBnno.",".ocBBBooooBBBBnnBBoeoBoRoooKoKoooooKKoooeoBoRoBBcBBBooooBBBBnno.",".ocbbbccccbbbBnnnBbobbBocoxwWxwWowWxwWoKobbbobBBcbbbccccbbbBnno.",".ocbbbbBbbbbbBnnBBbbbbBbKoxwWxwWowWxwWokBbbbbbBBcbbbbBbbbbbBnno.",".ocBBBccBBBBBBnnBBBBBBBBcoxwWxtWowtxwWoKBBBBBBBBcBBBccBBBBBBnno.",".ocbBbbbbbBbbBnnnBbBbbbbcoxwWxTWowTxwWoKbbbBbbbBcbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnnBBbBbbbbKoxwWxwWowWxwWokbbbBbbbBcbBbbbbbBbbBnno.",".ocBBBBBBBBBBBnnBBcBBBBBcooKoKoooooKKooKBBBBBBBBcBBBBBBBBBBBnno.",".ocbbbbBbbbbbBnnnBbbbbBbcoxwWxwWowWxwWoKBbbbbbBBcbbbbBbbbbbBnno.",".ocbbbbBbbbbbBnnBBbbbbBbKoxwWxwWowWxwWokBbbbbbBBcbbbbBbbbbbBnno.","ocBBBBBBBBBBBBBBBBnnnnnncoxwWxwWowWxwWoKnnnnnnncBBBBBBBBBBBBBBBo","onnnnnnnnnnnnnnnnBnnnnnncoWWWWWWWWWWWWoKnnnnnnnnnnnnnnnnnnnnnnno",".ooooooooooooooooooooooocKKKKKKKKKKKKKKKooooooooooooooooooooooo.","..ssssssssssssssssssssssoooooooooooooooosssssssssssssssssssssss.","...............sssssssssssssssssssssssssssssssssss.............."],["........tooo..........................................toooo.....","........oerrooo.......ooo..ooo..ooo..ooo..............oeerrro...","........orrrrRRo.....occcoocccoocccooccco.............orrrRRRo..","........oRRRRRo......obbBoobbBoobbBoobbBo.............oRRRoo....",".ooo..oooooooo..o....obbBoobbBoobbBoobbBoo.....ooo..oooooooo..o.","occcooccooocccooco...occcccccccccccccccccco...occcooccooocccooco","obbBoobbooobbBoono...oBBBBBBBBBBBBBBBBBBnno...obbBoobbooobbBoono","obbBoobbBoobbBoono...ocbbbbBbbbbbBbbbbbBnno...obbBoobbBoobbBoono","occcccccccccccccco...ocbbbbBbbbbbBbbbbbBnno...occcccccccccccccco","oBBBBBBBBBBBBBBnno...ocBBBBBBBBBBBBBBBBBnno...oBBBBBBBBBBBBBBnno",".oooooooooooooooo....ocbBccnnbBbbbbnnbbBnno....oooooooooooooooo.","..oooooooooooooo.....ocbBbboobBbbbboobbBnno.....oooooooooooooo..",".onbnbnBnbnbnBnno....ocBBBoYyoBBBBoYyoBBnno....onbnbnBnbnbnBnno.",".ocBBBBBBBBBBBnno....ocbbboyyobbbcoyyobBnno....ocBBBBBBBBBBBnno.",".ocbBbbbbbBbbBnno..ooocbbboyYobbbBoyYobBnno.oooocbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnncooccccBcccoocccBBcccoBcccoocccocbBbbbbbBbbBnno.",".ocBBcooooBBBBnnBoobbBcbbbBbcbbBbbbbBbbbbBoobbBocBBcooooBBBBnno.",".ocbbboYyobbbBnnBoobbBoobbBoobbBoobbBoobbBoobbBocbbboYyobbbBnno.",".ocbbboyyobbbBnncccccccccccccccccccccccccccccccccbbboyyobbbBnno.",".ocBBBoyyoBBBBnnBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBcBBBoyyoBBBBnno.",".ocbBboyyoBbbBnnbbbBbbbbbBbbbbbBbbbbbBbbbbbBbbbBcbBboyyoBbbBnno.",".ocbBboyYoBbbBnnBBbBbbbbbBbbbboooobbbBbbbbbBbbbBcbBboyYoBbbBnno.",".ocBBBooooBBBBnnBoooooooBBBBBBoYyoBBBBBBoooooooBcBBBooooBBBBnno.",".ocbbbccccbbbBnnotWWWWWtobbbBboyyoBbbbbotWWWWWtocbbbccccbbbBnno.",".ocbbbbBbbbbbBnnBoerrrRobbbbccooooBbbbbboerrrRoBcbbbbBbbbbbBnno.",".ocBBBBBBBBBBBnnBoerrrRoBBBBBBBccBBBBBBBoerrrRoBcBBBBBBBBBBBnno.",".ocbBbbbbbBbbBnnnoerrrRobBbcKcccKKkKKBbboerrrRoBcbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnnBoertrRobBcKccKcKkKKkKbboertrRoBcbBbbbbbBbbBnno.",".ocBBBooooBBBBnnBoetTTRoBcKooooooooooKkBooetTTRocBBBooooBBBBnno.",".ocbbboYyobbbBnnnoeeTrRobKowWxwWowWxwoKbBoerTRRocbbboYyobbbBnno.",".ocbbboyyobbbBnnBoeerrRoKcxwWxwWowWxwWKkBoerrRRocbbboyyobbbBnno.",".ocBBBoyyoccBBnnoeerrRoocoxwWxwWowWxwWoKBoerrRRocBBBoyyoccBBnno.",".ocbBboyyoBbbBnnoeerrRobcoxwWxwWowWxwWoKboerrRRocbBboyyoBbbBnno.",".ocbBboyYoBbbBnnoeeorRobKoxwWxwWowWxwWokboeroRRocbBboyYoBbbBnno.",".ocBBBooooBBBBnnoeoBoRoBcooKoKoooooKKooKBoeoBoRocBBBooooBBBBnno.",".ocbbbccccbbbBnnnobbboBbcoxwWxwWowWxwWoKBbobbboBcbbbccccbbbBnno.",".ocbbbbBbbbbbBnnBBbbbbBbKoxwWxwWowWxwWokBbbbbbBBcbbbbBbbbbbBnno.",".ocBBBccBBBBBBnnBBBBBBBBcoxwWxtWowtxwWoKBBBBBBBBcBBBccBBBBBBnno.",".ocbBbbbbbBbbBnnnBbBbbbbcoxwWxTWowTxwWoKbbbBbbbBcbBbbbbbBbbBnno.",".ocbBbbbbbBbbBnnBBbBbbbbKoxwWxwWowWxwWokbbbBbbbBcbBbbbbbBbbBnno.",".ocBBBBBBBBBBBnnBBcBBBBBcooKoKoooooKKooKBBBBBBBBcBBBBBBBBBBBnno.",".ocbbbbBbbbbbBnnnBbbbbBbcoxwWxwWowWxwWoKBbbbbbBBcbbbbBbbbbbBnno.",".ocbbbbBbbbbbBnnBBbbbbBbKoxwWxwWowWxwWokBbbbbbBBcbbbbBbbbbbBnno.","ocBBBBBBBBBBBBBBBBnnnnnncoxwWxwWowWxwWoKnnnnnnncBBBBBBBBBBBBBBBo","onnnnnnnnnnnnnnnnBnnnnnncoWWWWWWWWWWWWoKnnnnnnnnnnnnnnnnnnnnnnno",".ooooooooooooooooooooooocKKKKKKKKKKKKKKKooooooooooooooooooooooo.","..ssssssssssssssssssssssoooooooooooooooosssssssssssssssssssssss.","...............sssssssssssssssssssssssssssssssssss.............."]]},"chapel":{"w":48,"h":48,"anchor":[24,46],"palette":{"o":"#1b1b2a","s":"#00000055","w":"#8a5a34","W":"#5e3b22","l":"#b07a4a","g":"#9b9384","G":"#6c665c","h":"#c4bdae","y":"#ffd36b","Y":"#ff9b3d","t":"#e8c170","T":"#c3933f","u":"#9a6b2a","U":"#f3dd9a","b":"#4fa3c7","B":"#3a7fa0","n":"#28597a","c":"#8fd1e6","v":"#9a6ad8","X":"#fff6d8"},"frames":[["......................otTo......................","......................occo......................",".....................occBBo.....................",".....................occBBo.....................","....................occbBBno....................","....................occbBBno....................","...................occbbBBBno...................","..................obBBBBBnnnno..................","...................olwwwwwwWo...................","...................olootTooWo...................","...................olotUtToWo...................","...................olottTuoWo...................","...................oloTTuuoWo...................","...................olwwwwwwWo...................","...................olwwcbwwWo...................","....................oobbnBoo....................",".....................oBBnno.....................","....................occoobbo....................","...................oBbbooBnBo...................","..................oBBBoWwonnno..................","..................occowWwwobbo..................",".................oBbooooooooBBo.................","................oBBBoovYYvoonnno................","...............occcoovyYYyvoobbbo...............","..............obbBoovvyyyyvvooBBno..............","..............oBBBooYYYyyYYYoonnno..............",".............occcolovvyyyyvvoWobbbo.............","............obbBoWlwovyYYyvowWwoBnBo............","...........oBBBowWlwoovYYvoowWwWonnno...........","...........occcowWlwWoooooowwWwWobbbo...........","..........oBbbolwWlwWwwWwwWwwWwWWoBnBo..........",".........oBBBBolwWlwWwwWwwWwwWwWWonnnno.........",".........oooooolwWlwWwwWwwWwwWwWWoooooo.........","..............olwoowWwoooowwwoowWo..............","..............oloYyoWoowWoowoYyoWo..............","..............oloyYoWowlWWowoyYoWo..............","..............oloyyoWowlWWowoyyoWo..............","..............oloyyoWowlWWowoyyoWo..............","..............oloyYoWowlWtowoyYoWo..............","..............olooooWowlWWowooooWo..............","..............olwWlwWowlWWowwWwWWo..............",".............ohhhGhhhowlWWohhGhhhGos............",".............ogGgggGghhhhhhggggGggos............","..............ooooohhhhhhhhhhoooooss............","..................oGGGGGGGGGGo...sss............",".................oggggggggggggo..sss............","...............ssoGGGGGGGGGGGGossssssss.........",".................soooooooooooosssss............."],["......................otTo......................","......................occo......................",".....................occBBo.....................",".....................occBBo.....................","....................occbBBno....................","....................occbBBno....................","...................occbbBBBno...................","..................obBBBBBnnnno..................","...................olwwwwwwWo...................","...................olootTooWo...................","...................olotUtToWo...................","...................olottTuoWo...................","...................oloTTuuoWo...................","...................olwwwwwwWo...................","...................olwwcbwwWo...................","....................oobbnBoo....................",".....................oBBnno.....................","....................occoobbo....................","...................oBbbooBnBo...................","..................oBBBoWwonnno..................","..................occowWwwobbo..................",".................oBbooooooooBBo.................","................oBBBooYyyYoonnno................","...............occcooYUXXUYoobbbo...............","..............obbBooYYUXXUYYooBBno..............","..............oBBBooyXXXXXXyoonnno..............",".............occcoloYYUXXUYYoWobbbo.............","............obbBoWlwoYUXXUYowWwoBnBo............","...........oBBBowWlwooYyyYoowWwWonnno...........","...........occcowWlwWoooooowwWwWobbbo...........","..........oBbbolwWlwWwwWwwWwwWwWWoBnBo..........",".........oBBBBolwWlwWwwWwwWwwWwWWonnnno.........",".........oooooolwWlwWwwWwwWwwWwWWoooooo.........","..............olwoowWwoooowwwoowWo..............","..............oloYyoWoowWoowoYyoWo..............","..............oloyYoWowlWWowoyYoWo..............","..............oloyyoWowlWWowoyyoWo..............","..............oloyyoWowlWWowoyyoWo..............","..............oloyYoWowlWtowoyYoWo..............","..............olooooWowlWWowooooWo..............","..............olwWlwWowlWWowwWwWWo..............",".............ohhhGhhhowlWWohhGhhhGos............",".............ogGgggGghhhhhhggggGggos............","..............ooooohhhhhhhhhhoooooss............","..................oGGGGGGGGGGo...sss............",".................oggggggggggggo..sss............","...............ssoGGGGGGGGGGGGossssssss.........",".................soooooooooooosssss............."]]},"flowers":{"w":8,"h":8,"anchor":[4,7],"palette":{"y":"#ffd36b","w":"#ffffff","p":"#f29bc0","c":"#ff9b3d","g":"#4f8a2b","l":"#a9d65a"},"frames":[[".y...w..","ycy.wcw.",".y...w..",".g...g..",".gl.pgl.","..gpcp..",".lg.pg..","..g.g.g."]]},"forge":{"w":48,"h":48,"anchor":[24,44],"palette":{"o":"#1b1b2a","s":"#00000055","t":"#e8c170","T":"#c3933f","u":"#9a6b2a","h":"#f3dd9a","w":"#8a5a34","W":"#5e3b22","x":"#b07a4a","g":"#9b9384","G":"#6c665c","l":"#c4bdae","y":"#ffd36b","r":"#ff9b3d","R":"#c8463a","E":"#8e2b25","p":"#efe2c6","P":"#cdb994","d":"#2a2030","m":"#4a4a5e"},"frames":[[".................................p.l............","..................................l.............","................................................",".............................pl.................","............................pllG................",".............................lG.................","..........................oooooooo..............",".........................ollddddllo.............",".........................oggggggggo.............","............ooooooooooooooolggGgGo..............","...........oTTTTTTTTTTTTTTolggGgGo..............","..........ouuuuuuuuuuuuuuuolGGGGGo..............",".........ohhhhhhhhhhhhhtttolgGggGo..............","........otttTttttttttTttTTolgGggGo..............","........ottttttTttttttttuTolGGGGGo..............",".......oTuTTTTTTTTuTTTTTTuolggGgGo..............",".......ohhhhhhhhhhhhhhhhhtolggGgGo..............","......ottttttttTttttttttTtolGGGGGo..............","......ottTttttttttTtttttttolgGggGo..............",".....oTTTTTTuTTTTTTTTuTTTTolgGggGo..............",".....ohhhhhhhhhhhhhhhhhhhhhooooooo..............","....ottttTttttttttTttttttttTTTTTTo..............","...ottttttttTttttttttTtttttttTuTTTo.............","...oTTuTTTTTTTTuTTTTTTTTuTTTTuuuuuo.............","..ohhhhhhhhhhhhhhhhhhhhhhhhhhhttttto............","..oTttttttttTttttttttTttttttttuTTTTo............",".ottttTttttttttTttttttttTttttttTTuTTo...........",".oTTTTTTTTTTTTTTTTTTTTTTTTTTTTTuuuuuo...........","ouTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTo..........",".ooooooouoouoouoouoouoouoouoouoouoouo...........","oWWWWWowowwoxxoxxoxxoxxoxxowwowwowoo............",".oGoooGoWWWWWWWWWWWWWWWWWWWWWWWWWWo..ooooooooo..","oxxxxxxwoppwdddddddddddddwpppppppWooolllryrlllo.","oxlllmxwoppwdddddddddddddwpwwwwwpWoGGGGGGGGGGGo.","oxmmmmmwoppwdddlllGllldddwpwyrywpWoooGGGGGGGGmo.","oxxxWxxwoppwddlgggggggGddwpwwwwwpWo..oooGGmooo..","oxxxWxxwompwddlgggggggGddwpwyrywpWo...ooGGmooo..","oxxxWxxwoppwddlgddyddgGddwpwwwwwpWo..oGGGGGGmmo.","oxxxxxxwoppwddlgdyyrdgGddwpppppppWo...oooooooo..","owwwwwwwollldrlgryyyrgGrdlllllllllo..ooooooooo..",".ooooooogggGddlgRyhyrgGddggGgggGggo.oxxxxxxxxxo.","...ogGgggGggWdlgRrrrRgGdWGgggGgggGo.owwWwwwwwWo.","...oGGGGGGGGdElgggggggGEdGGGGGGGGGo.owwwwwwWwWo.","....oooooooooooooooooooooooooooooo..owwwwWwwwWo.",".....ssssssssssssssssssssssssssssssssooooooooos.","........sssssssssssssssssssssssssss.............","................................................","................................................"],["................................................",".............................ppl................","............................pplll...............","............................plllG...............",".............................lGG................","................................................","..........................oooooooo..............",".........................ollddddllo.............",".........................oggggggggo.............","............ooooooooooooooolggGgGo..............","...........oTTTTTTTTTTTTTTolggGgGo..............","..........ouuuuuuuuuuuuuuuolGGGGGo..............",".........ohhhhhhhhhhhhhtttolgGggGo..............","........otttTttttttttTttTTolgGggGo..............","........ottttttTttttttttuTolGGGGGo..............",".......oTuTTTTTTTTuTTTTTTuolggGgGo..............",".......ohhhhhhhhhhhhhhhhhtolggGgGo..............","......ottttttttTttttttttTtolGGGGGo..............","......ottTttttttttTtttttttolgGggGo..............",".....oTTTTTTuTTTTTTTTuTTTTolgGggGo..............",".....ohhhhhhhhhhhhhhhhhhhhhooooooo..............","....ottttTttttttttTttttttttTTTTTTo..............","...ottttttttTttttttttTtttttttTuTTTo.............","...oTTuTTTTTTTTuTTTTTTTTuTTTTuuuuuo.............","..ohhhhhhhhhhhhhhhhhhhhhhhhhhhttttto............","..oTttttttttTttttttttTttttttttuTTTTo............",".ottttTttttttttTttttttttTttttttTTuTTo...........",".oTTTTTTTTTTTTTTTTTTTTTTTTTTTTTuuuuuo...........","ouTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTo..........",".ooooooouoouoouoouoouoouoouoouoouoouo...........","oWWWWWowowwoxxoxxoxxoxxoxxowwowwowoo...y........",".oGoooGoWWWWWWWWWWWWWWWWWWWWWWWWWWo..oooooooro..","oxxxxxxwoppwdddddddddddddwpppppppWooolllyyrlllo.","oxlllmxwoppwdddddddddddddwpwwwwwpWoGGGGGGGGGGGo.","oxmmmmmwoppwdddlllGllldddwpwyrywpWoooGGGGGGGGmo.","oxxxWxxwoppwddlgggggggGddwpwwwwwpWo..oooGGmooo..","oxxxWxxwompwddlgggggggGddwpwyrywpWo...ooGGmooo..","oxxxWxxwoppwddlgdydddgGddwpwwwwwpWo..oGGGGGGmmo.","oxxxxxxwoppwddlgdrydygGrdwpppppppWo...oooooooo..","owwwwwwwolllddlgryyyrgGddlllllllllo..ooooooooo..",".ooooooogggGdrlgryhyRgGddggGgggGggo.oxxxxxxxxxo.","...ogGgggGggWdlgRrrrRgGdWGgggGgggGo.owwWwwwwwWo.","...oGGGGGGGGEdlgggggggGdEGGGGGGGGGo.owwwwwwWwWo.","....oooooooooooooooooooooooooooooo..owwwwWwwwWo.",".....ssssssssssssssssssssssssssssssssooooooooos.","........sssssssssssssssssssssssssss.............","................................................","................................................"],["................................pl..............","...............................pplll............","..............................pplllG............","...............................lllG.............","................................GG..............",".............................pl.................","..........................oooooooo..............",".........................ollddddllo.............",".........................oggggggggo.............","............ooooooooooooooolggGgGo..............","...........oTTTTTTTTTTTTTTolggGgGo..............","..........ouuuuuuuuuuuuuuuolGGGGGo..............",".........ohhhhhhhhhhhhhtttolgGggGo..............","........otttTttttttttTttTTolgGggGo..............","........ottttttTttttttttuTolGGGGGo..............",".......oTuTTTTTTTTuTTTTTTuolggGgGo..............",".......ohhhhhhhhhhhhhhhhhtolggGgGo..............","......ottttttttTttttttttTtolGGGGGo..............","......ottTttttttttTtttttttolgGggGo..............",".....oTTTTTTuTTTTTTTTuTTTTolgGggGo..............",".....ohhhhhhhhhhhhhhhhhhhhhooooooo..............","....ottttTttttttttTttttttttTTTTTTo..............","...ottttttttTttttttttTtttttttTuTTTo.............","...oTTuTTTTTTTTuTTTTTTTTuTTTTuuuuuo.............","..ohhhhhhhhhhhhhhhhhhhhhhhhhhhttttto............","..oTttttttttTttttttttTttttttttuTTTTo............",".ottttTttttttttTttttttttTttttttTTuTTo...........",".oTTTTTTTTTTTTTTTTTTTTTTTTTTTTTuuuuuo...........","ouTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTo..........",".ooooooouoouoouoouoouoouoouoouoouoouo.r......y..","oWWWWWowowwoxxoxxoxxoxxoxxowwowwowoo............",".oGoooGoWWWWWWWWWWWWWWWWWWWWWWWWWWo..ooooooooo..","oxxxxxxwoppwdddddddddddddwpppppppWooolllryylllo.","oxlllmxwoppwdddddddddddddwpwwwwwpWoGGGGGGGGGGGo.","oxmmmmmwoppwdddlllGllldddwpwyrywpWoooGGGGGGGGmo.","oxxxWxxwoppwddlgggggggGddwpwwwwwpWo..oooGGmooo..","oxxxWxxwompwddlgggggggGddwpwyrywpWo...ooGGmooo..","oxxxWxxwoppwddlgdddydgGddwpwwwwwpWo..oGGGGGGmmo.","oxxxxxxwoppwddlgydyrdgGddwpppppppWo...oooooooo..","owwwwwwwollldrlgryyyrgGrdlllllllllo..ooooooooo..",".ooooooogggGddlgRyhyrgGddggGgggGggo.oxxxxxxxxxo.","...ogGgggGggWdlgRrrRRgGdWGgggGgggGo.owwWwwwwwWo.","...oGGGGGGGGdElgggggggGEdGGGGGGGGGo.owwwwwwWwWo.","....oooooooooooooooooooooooooooooo..owwwwWwwwWo.",".....ssssssssssssssssssssssssssssssssooooooooos.","........sssssssssssssssssssssssssss.............","................................................","................................................"]]},"grass":{"w":16,"h":16,"anchor":[8,15],"palette":{"A":"#a9d65a","B":"#8bc34a","C":"#6ea93b","D":"#4f8a2b"},"frames":[["BBBBBBBBBBBBBBBA","BBBBBBBBBCCABABB","BBBBBBBABBBDCDBB","BBCCBBBBBBBBDBBB","BBBABABBBBBBBBBB","BBBDCDBBBBBBBBBB","BBBBDBBCBBBBBCCB","BBBBBBBBABABBBBB","BABBBBBBDCDBBBBB","BBBBBBBBBDBBBBBB","BBBBBCCBBBBBBABA","BABABBBBBBBBBDCD","BDCDBBBBBBBCCBDB","BBDBBBBBBBBBBBBB","CBBBBBABBBBBBBBC","BBBBBBBBBBBABBBB"]]},"herald":{"w":48,"h":48,"anchor":[24,44],"palette":{"o":"#1b1b2a","s":"#00000055","w":"#8a5a34","W":"#5e3b22","l":"#b07a4a","g":"#9b9384","G":"#6c665c","h":"#c4bdae","p":"#efe2c6","P":"#cdb994","y":"#ffd36b","Y":"#ff9b3d","t":"#e8c170","T":"#c3933f","u":"#9a6b2a","U":"#f3dd9a","r":"#c8463a","R":"#8e2b25","e":"#e8735f","V":"#a57cc8","M":"#7a4fa0","N":"#4f3070"},"frames":[["...................................oUo..........","...................................otooo........","...................................oGeeeooooo...",".........................o.........oGrrreeeeeoo.",".......................ooTo........oGrrrrrrrrrro","..............o......ooUUuo........oGRRRRRRoooo.",".........oooootooooooUUtTuo........oGRRoooo.....","........outUttTttUttttttTuo........oGoo.........","........ouTTTTTTTTTTTTTTTuo........oGo..........",".........ooooouoooooouuTTuo........oGo..........","..............o...o..oouuuo........oGo..........",".................oWo...ooTo........oGo..........","..........ooooooooWWooooooooooooooooGo..........",".........oNNNNNNNNNNNNNNNNNNNNNNNNNNNNo.........","........oVVMNMMMNMMMNMMMNMMMNMMMNMMMNMMo........","........oNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMo........",".......oVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMo.......",".......oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.......","......oNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMo......",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.....",".....oMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNo.....",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMo.....",".....oNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNo.....",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.....","...oooMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNo.....","..oVVVVVVVVVVVVVNNNNNNNNNNNNNNNNNNNNNNoooo......",".oMMMMMMMMMMMMMMMGGGGVVVVtVGGGGGGGGGGGo.........","oNNNNNNNNNNNNNNNNNGGGMTttMMGGGGGGGGGGGo.........",".oWWWWWWWWWWWWWWWggggGhggggGhggggGhgGGo.........",".oluuuuuuprPuuuuWggggoooooogggooooooGGo.........",".oluprpPuGGPuuuuWGGGoowwwwooGGoyWyyoGGo.........",".oluGGGPuppPprPuWgGholwWlwWoggoWWWWoGho.........",".olupppPuuuuGGPuWgGgolwWlwWoggoyWyYoGGo.........",".oluGGGPupePppPuWGGGolwWlwWoGGoyWYYoGGo.........",".oluuuuuuGGPGGPuWgggolwWltWohgooooooGGo.........",".oluuppPuppPuuuuWgggolwWlwWoggMVVVVMGGo.........",".oluuGGPuuuuuuuuWGGGolwWlwWoGGGGGGGGGGo.........",".oWWWWWWWWWWWWWWWgGholwWlwWoggGhggggGho.........","..ooWwooooggGgWwggGgolwWlwWoggGgggggGGo.........","...oWwo..oGGGGWwGGGGhhhhhhhhGGGGGGGGGGo.........","...oWwo...ooooWwoooggggggggggooooooooo..........","..soWwossssssoWwossoooooooooossssssssssssss.....","....oossssssssoossssssssssssssssssssssss........","................................................","................................................"],["...................................oUo..........","...................................otooooo......","...................................oGeeeeeooo...",".........................o.........oGrrrrreeeo..",".......................ooTo........oGRRRrrrrro..","..............o......ooUUuo........oGRRRRRRrrro.",".........oooootooooooUUtTuo........oGRRooooooo..","........outUttTttUttttttTuo........oGoo.........","........ouTTTTTTTTTTTTTTTuo........oGo..........",".........ooooouoooooouuTTuo........oGo..........","..............o...o..oouuuo........oGo..........",".................oWo...ooTo........oGo..........","..........ooooooooWWooooooooooooooooGo..........",".........oNNNNNNNNNNNNNNNNNNNNNNNNNNNNo.........","........oVVMNMMMNMMMNMMMNMMMNMMMNMMMNMMo........","........oNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMo........",".......oVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMo.......",".......oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.......","......oNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMo......",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.....",".....oMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNo.....",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMo.....",".....oNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNNNMNo.....",".....oVVVVVVVVVVVVVVMMMMMMMMMMMMMMMMMMMMMMo.....",".....oVVNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMMMNMo.....","...oooMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNMNo.....","..oVVVVVVVVVVVVVNNNNNNNNNNNNNNNNNNNNNNoooo......",".oMMMMMMMMMMMMMMMGGGGVVVVtVGGGGGGGGGGGo.........","oNNNNNNNNNNNNNNNNNGGGMTttMMGGGGGGGGGGGo.........",".oWWWWWWWWWWWWWWWggggGhggggGhggggGhgGGo.........",".oluuuuuuprPuuuuWggggoooooogggooooooGGo.........",".oluprpPuGGPuuuuWGGGoowwwwooGGoyWyyoGGo.........",".oluGGGPuppPprPuWgGholwWlwWoggoWWWWoGho.........",".olupppPuuuuGGPuWgGgolwWlwWoggoyWyYoGGo.........",".oluGGGPupePppPuWGGGolwWlwWoGGoyWYYoGGo.........",".oluuuuuuGGPGGPuWgggolwWltWohgooooooGGo.........",".oluuppPuppPuuuuWgggolwWlwWoggMVVVVMGGo.........",".oluuGGPuuuuuuuuWGGGolwWlwWoGGGGGGGGGGo.........",".oWWWWWWWWWWWWWWWgGholwWlwWoggGhggggGho.........","..ooWwooooggGgWwggGgolwWlwWoggGgggggGGo.........","...oWwo..oGGGGWwGGGGhhhhhhhhGGGGGGGGGGo.........","...oWwo...ooooWwoooggggggggggooooooooo..........","..soWwossssssoWwossoooooooooossssssssssssss.....","....oossssssssoossssssssssssssssssssssss........","................................................","................................................"]]},"hero":{"w":12,"h":16,"anchor":[6,15],"palette":{"o":"#1b1b2a","R":"#c8463a","r":"#8e2b25","h":"#8a5a34","k":"#f1c9a0","e":"#1b1b2a","t":"#efe2c6","T":"#cdb994","b":"#9a6b2a","y":"#ffd36b","D":"#5e3b22","W":"#8a5a34","c":"#ffffff","C":"#7fe3ff","s":"#00000055"},"frames":[["............",".....oo.....","....oRRo...o","...oRRRRo.oc","..oRRRRRrooC","..oRhhhhro.o","..oRkekero.W","..orkkkkro.W",".oRRrrrrRRoW","oRrtttTrrroW","oRkbbybbrrkW","oRrttTTrrroW",".orrrrrrro.W","..oDo.oDo..W",".oDDo.ooo..W","..ssssssss.."],[".....oo.....","....oRRo...o","...oRRRRo.oc","..oRRRRRrooC","..oRhhhhro.o","..oRkekero.W","..orkkkkro.W",".oRRrrrrRRoW","oRrtttTrrroW","oRkbbybbrrkW","oRrttTTrrroW",".orrrrrrro.W","...oDooDo..W","...oDooDo..W","..oDDoooo..W","..ssssssss.."],["............",".....oo.....","....oRRo...o","...oRRRRo.oc","..oRRRRRrooC","..oRhhhhro.o","..oRkekero.W","..orkkkkro.W",".oRRrrrrRRoW","oRrtttTrrroW","oRkbbybbrrkW","oRrttTTrrroW",".orrrrrrro.W","..oDo.oDo..W","..ooo.oDDo.W","..ssssssss.."],[".....oo.....","....oRRo...o","...oRRRRo.oc","..oRRRRRrooC","..oRhhhhro.o","..oRkekero.W","..orkkkkro.W",".oRRrrrrRRoW","oRrtttTrrroW","oRkbbybbrrkW","oRrttTTrrroW",".orrrrrrro.W","...oDooDo..W","...oDooDo..W","...oooDDo..W","..ssssssss.."]]},"library":{"w":48,"h":48,"anchor":[24,46],"palette":{"o":"#1b1b2a","s":"#00000055","H":"#f3dd9a","a":"#e8c170","t":"#c3933f","T":"#9a6b2a","W":"#8a5a34","D":"#5e3b22","V":"#b07a4a","w":"#ff9b3d","y":"#ffd36b","p":"#efe2c6","q":"#cdb994","L":"#c4bdae","g":"#9b9384","G":"#6c665c","r":"#8e2b25","R":"#c8463a","b":"#3a7fa0","B":"#4fa3c7","e":"#1f5f45","E":"#3f9a6e"},"frames":[[".......................oo.......................","......................oVWo......................",".....................oHttTo.....................","....................oaatTTTo....................","....................oHHaTtTo....................","...................oHHaHatTTo...................","..................oHHHaaattTTo..................",".................oaaattttTTTTTo.................",".................oHHHaaaatTtTto.................","................oHHHHtaaatttTTTo................","...............oaHHHHaaaattTtTTTo...............","..............oaaaaatttttTTTTTTTTo..............",".............oHHHaHHaaaaHtttTtTTTTo.............",".............oHHHHHaaaataaatttTTTTo.............","............oHHHHHaaaaaaaattaTtTTTTo............","...........oaaaaaaatttttttTTTTTTTTTTo...........","..........oHHHHHHHaaaaaaaattttTttTTTTo..........","..........oHHHaHHHaaaHaaatttttttTTtTTo..........",".........oaHHHHHHHaataaHaatttttTtTTTtTo.........","........oHHaaaaaatttttttttTTTTTTTTTTTTto........",".......oHHaHHHHHHaaaataaaatattttTTTTTTTTo.......","......oHHHHHHHHHHaaaaaaaaatTtattttTTTTTTTo......","......oaaaaaHHHHaaHaaataaaattttatTTTTTTTTo......",".....oaHHHHaaaaatttttttttttTTTTTTTTTTTTTTTo.....","....oHHHHHHHaHHaaaaaaaHtaaatttttttTtTTTTTTTo....","...oHaaaHHHHHHHaaataaaaaHaattTttttttTtTTTTTTo...","...oTHHaaaaHHHHaaaaaaaaataHttttttttTTTTTTTTto...","oooooooooHHaaaattttttttttttTTTTTTTTTTTTTTtTo....","WWWWWWWWDoHHHHaaaHaaaaaaatatttatttttTTTtTto.....","WWWWWWWWDoTtTtTaaaaHtaaaaaattttTatTtTtTooo......","WppWoWppDooooootTtTtTtTtTtTtTtTtToooooo.........","WpppoppqDoppWooooooooooooooooooooooDqqo.........","WqpqoqqqDoppoWWWopWppppppppppWpoWWWoqqo.........","WWqqoqqWDopoWHDyWoWpppoooopppWoWHDyWoqo..ooooo..","WWWWrWWWDopoWDDDWoWppoWWWWoppWoWDDDWoqo.oBBBBpo.","DDDWDDDDDopoWyDyWoWpoWVWDDWopWoWyDyWoqo.obbbbpo.","oooWDoooooDpoWWWopWpoWVWDDWopWpoWWWoqDooRRRRRRpo","..oWDo.oooGDWoooppWpoWVWDDWopWpqoooDDGoorrrrrrpo","..oWDooqqoooDDDDppWpoWVWDDWopWpqDDDDGGoaaaaaaapo","..oWDoopqoqqoGGGDDDDoWVWDDWoDDDDGGGGGGotttttttpo","..oWDoopqrpqoGLLGggGoWVWDyWoGggGGGGGGGooEEEEEpo.","..oWDotpqrpqtoLLGggGoWVWDDWoGggGGGooooooeeeeepo.","..oWDotatattToLGGGGGoWVWDDWoGGGGGoEEEEpoRRRRRRpo","..oWDoatataTtoLLLggLoWVWDDWogggGGoeeeeporrrrrrpo","..oWDotatattToooooooooooooooooooooRRRRpoBBBBBBpo","..soosotataTossssssoLLLLggggossssorrrrpobbbbbbpo","....sssooooossssssssoooooooossssssooooooooooooo.","..........sssssssssssssssssssssssssssss........."],[".......................oo.......................","......................oVWo......................",".....................oHttTo.....................","....................oaatTTTo....................","....................oHHaTtTo....................","...................oHHaHatTTo...................","..................oHHHaaattTTo..................",".................oaaattttTTTTTo.................",".................oHHHaaaatTtTto.................","................oHHHHtaaatttTTTo................","...............oaHHHHaaaattTtTTTo...............","..............oaaaaatttttTTTTTTTTo..............",".............oHHHaHHaaaaHtttTtTTTTo.............",".............oHHHHHaaaataaatttTTTTo.............","............oHHHHHaaaaaaaattaTtTTTTo............","...........oaaaaaaatttttttTTTTTTTTTTo...........","..........oHHHHHHHaaaaaaaattttTttTTTTo..........","..........oHHHaHHHaaaHaaatttttttTTtTTo..........",".........oaHHHHHHHaataaHaatttttTtTTTtTo.........","........oHHaaaaaatttttttttTTTTTTTTTTTTto........",".......oHHaHHHHHHaaaataaaatattttTTTTTTTTo.......","......oHHHHHHHHHHaaaaaaaaatTtattttTTTTTTTo......","......oaaaaaHHHHaaHaaataaaattttatTTTTTTTTo......",".....oaHHHHaaaaatttttttttttTTTTTTTTTTTTTTTo.....","....oHHHHHHHaHHaaaaaaaHtaaatttttttTtTTTTTTTo....","...oHaaaHHHHHHHaaataaaaaHaattTttttttTtTTTTTTo...","...oTHHaaaaHHHHaaaaaaaaataHttttttttTTTTTTTTto...","oooooooooHHaaaattttttttttttTTTTTTTTTTTTTTtTo....","WWWWWWWWDoHHHHaaaHaaaaaaatatttatttttTTTtTto.....","WWWWWWWWDoTtTtTaaaaHtaaaaaattttTatTtTtTooo......","WppWoWppDooooootTtTtTtTtTtTtTtTtToooooo.........","WpppoppqDoppWooooooooooooooooooooooDqqo.........","WqpqoqqqDoppoWWWopWppppppppppWpoWWWoqqo.........","WWqqoqqWDopoWyDwWoWpppoooopppWoWyDwWoqo..ooooo..","WWWWrWWWDopoWDDDWoWppoWWWWoppWoWDDDWoqo.oBBBBpo.","DDDWDDDDDopoWwDwWoWpoWVWDDWopWoWwDwWoqo.obbbbpo.","oooWDoooooDpoWWWopWpoWVWDDWopWpoWWWoqDooRRRRRRpo","..oWDo.oooGDWoooppWpoWVWDDWopWpqoooDDGoorrrrrrpo","..oWDooqqoooDDDDppWpoWVWDDWopWpqDDDDGGoaaaaaaapo","..oWDoopqoqqoGGGDDDDoWVWDDWoDDDDGGGGGGotttttttpo","..oWDoopqrpqoGLLGggGoWVWDyWoGggGGGGGGGooEEEEEpo.","..oWDotpqrpqtoLLGggGoWVWDDWoGggGGGooooooeeeeepo.","..oWDotatattToLGGGGGoWVWDDWoGGGGGoEEEEpoRRRRRRpo","..oWDoatataTtoLLLggLoWVWDDWogggGGoeeeeporrrrrrpo","..oWDotatattToooooooooooooooooooooRRRRpoBBBBBBpo","..soosotataTossssssoLLLLggggossssorrrrpobbbbbbpo","....sssooooossssssssoooooooossssssooooooooooooo.","..........sssssssssssssssssssssssssssss........."]]},"pine":{"w":16,"h":24,"anchor":[8,22],"palette":{"o":"#1b1b2a","H":"#3f9a6e","L":"#3f9a6e","M":"#2e7d5b","D":"#1f5f45","N":"#14453a","w":"#8a5a34","W":"#5e3b22","s":"#00000055"},"frames":[[".......o........","......oMo.......","......oMo.......",".....oHMDo......",".....oLMDo......","....oLLMDDo.....","....oLLDDDo.....","....oHNDDNo.....","...oLNMNNDDo....","...oLLHMMDDo....","..oLLLMDDDDDo...","..oLHNMDNDDo....","...oNLNNMNNo....","..oLLLMMMDDDo...",".oLLLLDDDDDDDo..",".oLHNLDNDDNDDo..","..oNHNNMNNDNo...",".oLLLLMMMMDDDo..","oLLLLMDDDDDDDDo.","oLLoLMowWoDDoDo.",".oo.ooowWWoo.o..",".....owwWWo.....","...sssoooosss...","....ssssssss...."]]},"rock":{"w":10,"h":8,"anchor":[5,7],"palette":{"o":"#1b1b2a","L":"#c4bdae","M":"#9b9384","D":"#6c665c","m":"#6ea93b","n":"#a9d65a","s":"#00000055"},"frames":[["..oooooo..",".oLmnmMMo.","oLmmMMMMMo","oLLMMMDMDo","oMMMMMDDDo","oMMDMDDDDo",".oMDDDDDo.",".soooooos."]]},"sprite":{"w":12,"h":16,"anchor":[6,15],"palette":{"o":"#1b1b2a","R":"#c8463a","r":"#8e2b25","h":"#8a5a34","k":"#f1c9a0","e":"#1b1b2a","t":"#efe2c6","T":"#cdb994","D":"#5e3b22","y":"#ffd36b","Y":"#ff9b3d","g":"#ffd36b55","s":"#00000055"},"frames":[["............","............","............","............","............","...oo.......","..oRRo......",".oRRRRo.....",".oRhhhro....",".oRekero....",".orkkkro....","oRRttrrkoog.","oRrtTrrooyog",".orrrrogoYog","..oDoDoggogg","..ssssssggg."],["............","............","............","............","...oo.......","..oRRo......",".oRRRRo.....",".oRhhhro....",".oRekero....",".orkkkro....","oRRttrrkogog","oRrtTrrogoyo",".orrrro.goYo","..oDooo.ggog","..oDo....ggg","..ssssss...."],["............","............","............","............","............","...oo.......","..oRRo......",".oRRRRo.....",".oRhhhro....",".oRekero....",".orkkkro....","oRRttrrkoog.","oRrtTrrooyog",".orrrrogoYog","..oDoDoggogg","..ssssssggg."],["............","............","............","............","...oo.......","..oRRo......",".oRRRRo.....",".oRhhhro....",".oRekero....",".orkkkro....","oRRttrrkog..","oRrtTrroyog.",".orrrrooYog.","..oooDogogg.","....oDoggg..","..ssssss...."]]},"tavern":{"w":48,"h":48,"anchor":[24,44],"palette":{"o":"#1b1b2a","s":"#00000055","w":"#8a5a34","W":"#5e3b22","l":"#b07a4a","g":"#9b9384","G":"#6c665c","h":"#c4bdae","p":"#efe2c6","P":"#cdb994","y":"#ffd36b","Y":"#ff9b3d","t":"#e8c170","T":"#c3933f","u":"#9a6b2a","U":"#f3dd9a","D":"#6e5233","E":"#a3825a","F":"#fdf6e3"},"frames":[[".....................................hFh........","..................................hhh.g.........","..................................hFh...........","..................................ggg...........","................................hhhg............","...............................hhFhh............","...............................hFFhh............","..............................oogggoo...........",".............................ohhoooggo..........",".............................oGGGGGGGo..........","..............................ohgggGo...........","...........oooooooooooooooooooohGGGGo...........",".........oouuuuuuuuuuuuuuuuuuuuhgggGuoo.........","........oUUtTttTttTttTttTttTttThgGgGTTTo........",".......oTUtttttTttttttTttttttTtGGGGGTtTTo.......","......oUTtTtTtTtTtTTTtTtTtTtTtTtTTTtTtTTTo......",".....oUTUttUttUttUttUTtUttUtTUttUttUttUtTTo.....",".....oUUtTttttttTttttttTttttttTttttttTttTTo.....",".....oTUtttttTttttttTttttttTttttttTtttttTTo.....",".....oTUTtTtTtTTTtTtTtTtTtTtTTTtTtTtTtTtTTo.....",".....oUUttUttUttUTtUttUtTUttUttUttUttUTtTTo.....",".....oUTttttttTttttttTttttttTttttttTttttTTo.....",".....oUUtTttttttTttttttTttttttTttttttTttTTo.....",".....oTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuo.....",".....oTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuo.....","......ooouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuooo......","........oWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWo........","........owpoooooopWppppWWppppWpooooooPWo........","..ooooooowpoyyWYopWppppWWpPppWpoyyWYoPWo........",".owWWWWWWWpoyyWYopWpppWPpWpppWpoyyWYoPWo........",".oooooooowpoWWWWopWpPWppppWppWpoWWWWoPWo........","ollllllllwpoYYWYoPWpWppppppWPWpoYYWYoPWo........","olwFFFwwWwplwwwwwpWWpppppPppWWplwwwwwPWo........","olFFpFPwWWwwwwwwwwWwwwwwwwwwwWwwwwwwwwWo........","oltUtTTTWWWWWWWWWWWWWWWooWWWWWWWWWWWWWWo........","oltUtTwTWWooooooopWpWooooooWpWpoooooooWooooo....","oltUtTTTWWoyyWyYopWpoowwwwoopWpoyyWyYoWoWDEWo...","olTTuTWWWWoyyWyYopWpolwWwWWopWpoyyWyYoWwlwwwWo..",".ooooooooWoWWWWWopWpolwWwWWopWpoWWWWWoWGGGGGGo..","........oWoYYWYYopWpoWWWWWWopWpoYYWYYoWlwwwWWo..","........oWlwwwwwwpWpolwWtWWopWplwwwwwwWlwwwWWo..","........oWllllllllWpolwWwWWopWpPppppPPWGGGGGGo..","........oWwwwwwwwwWpolwWwWWoPWppppppPPWwwwwWWo..","........oGgWGggGWgGghhhhhhhhggGggGggGggowwWWo...",".........ooWooooWoohgggggggggoooooooooo.oooo....",".........ssossssossoooooooooossssssssssssssssss.","............sssssssssssssssssssssssssssssssss...","................................................"],["..................................Fhhhh.........","...................................hFhh.........","...................................hFhh.........","................................hhhhgg..........","................................hFhh............","...............................hhFhhh...........","................................hFhh............","..............................oogggoo...........",".............................ohhoooggo..........",".............................oGGGGGGGo..........","..............................ohgggGo...........","...........oooooooooooooooooooohGGGGo...........",".........oouuuuuuuuuuuuuuuuuuuuhgggGuoo.........","........oUUtTttTttTttTttTttTttThgGgGTTTo........",".......oTUtttttTttttttTttttttTtGGGGGTtTTo.......","......oUTtTtTtTtTtTTTtTtTtTtTtTtTTTtTtTTTo......",".....oUTUttUttUttUttUTtUttUtTUttUttUttUtTTo.....",".....oUUtTttttttTttttttTttttttTttttttTttTTo.....",".....oTUtttttTttttttTttttttTttttttTtttttTTo.....",".....oTUTtTtTtTTTtTtTtTtTtTtTTTtTtTtTtTtTTo.....",".....oUUttUttUttUTtUttUtTUttUttUttUttUTtTTo.....",".....oUTttttttTttttttTttttttTttttttTttttTTo.....",".....oUUtTttttttTttttttTttttttTttttttTttTTo.....",".....oTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuo.....",".....oTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuTuo.....","......ooouuuuuuuuuuuuuuuuuuuuuuuuuuuuuuooo......","........oWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWo........","........owpoooooopWppppWWppppWpooooooPWo........","..ooooooowpoyyWYopWppppWWpPppWpoyyWYoPWo........",".owWWWWWWWpoyyWYopWpppWPpWpppWpoyyWYoPWo........",".oooooooowpoWWWWopWpPWppppWppWpoWWWWoPWo........","ollllllllwpoYYWYoPWpWppppppWPWpoYYWYoPWo........","olwFFFwwWwplwwwwwpWWpppppPppWWplwwwwwPWo........","olFFpFPwWWwwwwwwwwWwwwwwwwwwwWwwwwwwwwWo........","oltUtTTTWWWWWWWWWWWWWWWooWWWWWWWWWWWWWWo........","oltUtTwTWWooooooopWpWooooooWpWpoooooooWooooo....","oltUtTTTWWoyyWyYopWpoowwwwoopWpoyyWyYoWoWDEWo...","olTTuTWWWWoyyWyYopWpolwWwWWopWpoyyWyYoWwlwwwWo..",".ooooooooWoWWWWWopWpolwWwWWopWpoWWWWWoWGGGGGGo..","........oWoYYWYYopWpoWWWWWWopWpoYYWYYoWlwwwWWo..","........oWlwwwwwwpWpolwWtWWopWplwwwwwwWlwwwWWo..","........oWllllllllWpolwWwWWopWpPppppPPWGGGGGGo..","........oWwwwwwwwwWpolwWwWWoPWppppppPPWwwwwWWo..","........oGgWGggGWgGghhhhhhhhggGggGggGggowwWWo...",".........ooWooooWoohgggggggggoooooooooo.oooo....",".........ssossssossoooooooooossssssssssssssssss.","............sssssssssssssssssssssssssssssssss...","................................................"]]},"tree":{"w":16,"h":20,"anchor":[8,18],"palette":{"o":"#1b1b2a","A":"#a9d65a","B":"#8bc34a","C":"#6ea93b","D":"#4f8a2b","E":"#3b6b22","w":"#8a5a34","W":"#5e3b22","s":"#00000055"},"frames":[[".....ooAAoo.....","...ooAAABBBo....","..oAAABBBCCBo...",".oAABBBBCCCBBo..",".oABBABCCDDCCCo.",".oBBBCCCDDCCCDo.",".oBBCCCDDCCDDCo.","oAACCDDAACDDDBo.","oAABDAAABBDBBCCo","oBBBCABBBBCBCCCo","oBBCABBBCECCCDDo",".oCCBBBCCCDCEDo.","..oDDBECDDDDDDo.","...oCCCDDDDDoo..","....ooDDDWoo....",".....owwWWo.....",".....owwWWo.....",".....owwWWo.....","...sssoooosss...","....ssssssss...."]]},"watchtower":{"w":48,"h":48,"anchor":[24,46],"palette":{"o":"#1b1b2a","s":"#00000055","K":"#8fd1e6","L":"#4fa3c7","A":"#4fa3c7","M":"#3a7fa0","N":"#28597a","C":"#c4bdae","X":"#9b9384","Y":"#6c665c","R":"#c8463a","P":"#e8735f","W":"#8a5a34","D":"#5e3b22","V":"#b07a4a","H":"#f3dd9a","y":"#ffd36b","w":"#ff9b3d","c":"#7fe3ff"},"frames":[["........................yooooooooo..............",".......................oWoPPPRRRRRo.............",".......................oWoRRRRRRoo..............",".......................oWoRRRooo.....o..........",".......................oWoooo......ooDo.........",".......................oWo.......ooyVco.........","..............oo.ooooooooooooooooVywDDo.........",".............oKKoKoooKoooLoooooHHDwooo..........",".............oLALoKKLoKKLoKKoyyyyoo.............","............ooLAMoLAMoLAMoLAowwoooNo............","............ooLAMoLAMoLAMoLAMooAMoNo............","............oLooMoLAMoLAMoLAMooooNNo............","............oLLLoLoooAoooAoooMMNNNNo............",".............oLLLLLAAAAAAAMMMMMNNNo.............",".............ooooLLAAAAAAAMMMMMoooo.............",".............oAoAooooooooooooooNNo..............","..............ooooLooAooAooMooNoo...............","...............oLLAAMMMMNNNNNNNNo...............","...............oALLLAAAKoMMMMNNNo...............","...............oAALLAAAAoMMMMNNNo...............","...............oALAAMMMMoNNNNNNNo...............","...............oALLLAAAAoNMMMNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLNAAAAMMMMNNNo...............","...............oAALKoAAAAMMMMNNNo...............","...............oALAAoMMMMNNNNNNNo...............","...............oALLLoAAAAMMMMNNNo...............","...............oLALLoNAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLAAAAAMKoMNNNo...............","...............oAALLAAAAAMMoMNNNo...............","...............oALAAMMMMMNNoNNNNo...............","...............oALLLAAAAAMMoNNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMoooNNNNNNo...............","...............oALLLAAoWDVoMMNNNo...............","...............oAALLAoWWDVVoMNNNo...............","...............oALAAMoWWDVVoNNNNo...............","...............oALLLAoDDDDDoMNNNo...............","...............oLALLAoWWDyVoMNNNo...............","..............oXXXXXXoWWDVVoXXXXXo..............","..............oCCCCCXoDDDDDoYYYYYo..............","...............oCCCCXoWWDVVoYYYYo...............",".............sssooCCXoWWDVVoYYoossss............","...........sssssssoooooooooooossssssss..........",".............sssssssssssssssssssssss............",".................sssssssssssssss................"],["........................yoooooo.................",".......................oWoPPPRRooo..............",".......................oWoRRRRRRRRo.............",".......................oWoRRRRRooo...o..........",".......................oWoooooo....ooDo.........",".......................oWo.......ooyVco.........","..............oo.ooooooooooooooooVywDDo.........",".............oKKoKoooKoooLoooooHHDwooo..........",".............oLALoKKLoKKLoKKoyyyyoo.............","............ooLAMoLAMoLAMoLAowwoooNo............","............ooLAMoLAMoLAMoLAMooAMoNo............","............oLooMoLAMoLAMoLAMooooNNo............","............oLLLoLoooAoooAoooMMNNNNo............",".............oLLLLLAAAAAAAMMMMMNNNo.............",".............ooooLLAAAAAAAMMMMMoooo.............",".............oAoAooooooooooooooNNo..............","..............ooooLooAooAooMooNoo...............","...............oLLAAMMMMNNNNNNNNo...............","...............oALLLAAAKoMMMMNNNo...............","...............oAALLAAAAoMMMMNNNo...............","...............oALAAMMMMoNNNNNNNo...............","...............oALLLAAAAoNMMMNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLNAAAAMMMMNNNo...............","...............oAALKoAAAAMMMMNNNo...............","...............oALAAoMMMMNNNNNNNo...............","...............oALLLoAAAAMMMMNNNo...............","...............oLALLoNAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLAAAAAMKoMNNNo...............","...............oAALLAAAAAMMoMNNNo...............","...............oALAAMMMMMNNoNNNNo...............","...............oALLLAAAAAMMoNNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMoooNNNNNNo...............","...............oALLLAAoWDVoMMNNNo...............","...............oAALLAoWWDVVoMNNNo...............","...............oALAAMoWWDVVoNNNNo...............","...............oALLLAoDDDDDoMNNNo...............","...............oLALLAoWWDyVoMNNNo...............","..............oXXXXXXoWWDVVoXXXXXo..............","..............oCCCCCXoDDDDDoYYYYYo..............","...............oCCCCXoWWDVVoYYYYo...............",".............sssooCCXoWWDVVoYYoossss............","...........sssssssoooooooooooossssssss..........",".............sssssssssssssssssssssss............",".................sssssssssssssss................"],["........................yoooo...................",".......................oWoPPPooo................",".......................oWoRRRRRRoo..............",".......................oWoRRRRRRRRo..o..........",".......................oWooooooooo.ooDo.........",".......................oWo.......ooyVco.........","..............oo.ooooooooooooooooVywDDo.........",".............oKKoKoooKoooLoooooHHDwooo..........",".............oLALoKKLoKKLoKKoyyyyoo.............","............ooLAMoLAMoLAMoLAowwoooNo............","............ooLAMoLAMoLAMoLAMooAMoNo............","............oLooMoLAMoLAMoLAMooooNNo............","............oLLLoLoooAoooAoooMMNNNNo............",".............oLLLLLAAAAAAAMMMMMNNNo.............",".............ooooLLAAAAAAAMMMMMoooo.............",".............oAoAooooooooooooooNNo..............","..............ooooLooAooAooMooNoo...............","...............oLLAAMMMMNNNNNNNNo...............","...............oALLLAAAKoMMMMNNNo...............","...............oAALLAAAAoMMMMNNNo...............","...............oALAAMMMMoNNNNNNNo...............","...............oALLLAAAAoNMMMNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLNAAAAMMMMNNNo...............","...............oAALKoAAAAMMMMNNNo...............","...............oALAAoMMMMNNNNNNNo...............","...............oALLLoAAAAMMMMNNNo...............","...............oLALLoNAAAMMMMNNNo...............","...............oLLAAMMMMMNNNNNNNo...............","...............oALLLAAAAAMKoMNNNo...............","...............oAALLAAAAAMMoMNNNo...............","...............oALAAMMMMMNNoNNNNo...............","...............oALLLAAAAAMMoNNNNo...............","...............oLALLAAAAAMMMMNNNo...............","...............oLLAAMMMoooNNNNNNo...............","...............oALLLAAoWDVoMMNNNo...............","...............oAALLAoWWDVVoMNNNo...............","...............oALAAMoWWDVVoNNNNo...............","...............oALLLAoDDDDDoMNNNo...............","...............oLALLAoWWDyVoMNNNo...............","..............oXXXXXXoWWDVVoXXXXXo..............","..............oCCCCCXoDDDDDoYYYYYo..............","...............oCCCCXoWWDVVoYYYYo...............",".............sssooCCXoWWDVVoYYoossss............","...........sssssssoooooooooooossssssss..........",".............sssssssssssssssssssssss............",".................sssssssssssssss................"]]}};
+const $=s=>document.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const RM=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const WW=576,WH=324,MAINX=288;
+let VW=320,VH=180;
+
+/* ================= sprites ================= */
+function bake(sp,swap){
+  const pal=Object.assign({},sp.palette,swap||{});
+  return sp.frames.map(rows=>{
+    const c=document.createElement('canvas');c.width=sp.w;c.height=sp.h;
+    const g=c.getContext('2d');
+    rows.forEach((row,y)=>{for(let x=0;x<row.length;x++){const ch=row[x];if(ch==='.'||!pal[ch])continue;g.fillStyle=pal[ch];g.fillRect(x,y,1,1);}});
+    return c;
+  });
+}
+const SPR={};
+for(const k in ATLAS){const s=ATLAS[k];SPR[k]={w:s.w,h:s.h,ax:s.anchor[0],ay:s.anchor[1],f:bake(s)};}
+const SKINS={claude:null,codex:{R:'#3f9a6e',r:'#1f5f45'},you:{R:'#e2b347',r:'#9a6b2a'},kanc:{R:'#9a6ad8',r:'#5e3f96'}};
+const HERO={};
+for(const k in SKINS)HERO[k]=bake(ATLAS.hero,SKINS[k]);
+HERO.sprite=SPR.sprite.f;
+
+/* ================= world ================= */
+const B={
+  castle:{x:288,y:104,sy:150,n:'Panel',d:'raporty, zgody, odbiór pracy'},
+  library:{x:150,y:120,sy:150,n:'Czytanie',d:'kod i dokumentacja'},
+  watchtower:{x:430,y:118,sy:150,n:'Sieć',d:'wyszukiwanie i przeglądarka'},
+  herald:{x:366,y:200,sy:214,n:'Powiadomienia',d:'wysyłka na telefon'},
+  chapel:{x:92,y:204,sy:214,n:'Planowanie',d:'plan pracy przed zmianami'},
+  forge:{x:190,y:204,sy:214,n:'Kod',d:'pisanie i edycja kodu'},
+  alchemist:{x:330,y:296,sy:308,n:'Testy',d:'uruchamianie testów'},
+  arena:{x:420,y:268,sy:308,n:'Komendy',d:'polecenia w terminalu'},
+  tavern:{x:130,y:300,sy:308,n:'Oczekiwanie',d:'czeka na Ciebie albo bez zadania'}
+};
+const E={e1:{x:64,y:76,sy:150,n:'sklep-api'},e2:{x:530,y:76,sy:150,n:'apka-ios'},e3:{x:215,y:292,sy:308,n:'landing'}};
+const LOC={gate:{x:288,y:342,sy:308},plaza:{x:288,y:216,sy:214},pier:{x:504,y:214,sy:214}};
+for(const k in B)LOC[k]={x:B[k].x,y:B[k].y+6,sy:B[k].sy};
+for(const k in E)LOC[k]={x:E[k].x,y:E[k].y+8,sy:E[k].sy};
+const PATHS=[[288,108,288,324],[64,150,530,150],[150,124,150,150],[430,122,430,150],[64,78,64,150],[530,78,530,150],
+  [92,214,476,214],[92,207,92,214],[366,203,366,214],[190,207,190,214],
+  [130,308,420,308],[130,303,130,308],[330,299,330,308],[420,271,420,308],[215,294,215,308]];
+const SHIP={x:548,y:238};
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const isWater=(x,y)=>x>=486+4*Math.sin(y/15)&&y>=172+4*Math.sin(x/11);
+
+const ground=document.createElement('canvas');ground.width=WW;ground.height=WH;
+function fence(g,x,y,w,h,gx){
+  g.fillStyle='#8a5a34';
+  g.fillRect(x,y,w,1);g.fillRect(x,y,1,h);g.fillRect(x+w-1,y,1,h);
+  g.fillRect(x,y+h-1,gx-5-x,1);g.fillRect(gx+5,y+h-1,x+w-gx-5,1);
+  const post=(px,py)=>{g.fillStyle='#5e3b22';g.fillRect(px,py-2,2,4);g.fillStyle='#b07a4a';g.fillRect(px,py-2,2,1);};
+  for(let i=0;i<=w-2;i+=9){post(x+i,y);if(Math.abs(x+i+1-gx)>6)post(x+i,y+h-1);}
+  for(let j=9;j<h-3;j+=9){post(x,y+j);post(x+w-2,y+j);}
+}
+function buildGround(){
+  const g=ground.getContext('2d'),R=rng(7),gt=SPR.grass.f[0];
+  for(let y=0;y<WH;y+=16)for(let x=0;x<WW;x+=16)g.drawImage(gt,x,y);
+  for(let i=0;i<420;i++){const x=R()*WW|0,y=R()*WH|0;g.fillStyle=R()<.5?'#a9d65a':'#6ea93b';g.fillRect(x,y,R()<.3?2:1,1);}
+  for(let y=160;y<WH;y++)for(let x=470;x<WW;x++){
+    if(isWater(x,y)){g.fillStyle=((x*7+y*13)%61<3)?'#4fa3c7':(x>540+((y*5)%9)?'#33708f':'#3a7fa0');g.fillRect(x,y,1,1);}
+    else if(isWater(x+4,y+4)){g.fillStyle=((x+y*3)%7===0)?'#c3933f':'#e8c170';g.fillRect(x,y,1,1);}
+  }
+  const seg=(c,w)=>{g.fillStyle=c;for(const p of PATHS)g.fillRect(Math.min(p[0],p[2])-w,Math.min(p[1],p[3])-w,Math.abs(p[2]-p[0])+2*w,Math.abs(p[3]-p[1])+2*w);};
+  seg('#6e5233',5);seg('#a3825a',4);
+  for(const p of PATHS){const L=Math.abs(p[2]-p[0])+Math.abs(p[3]-p[1]);
+    for(let i=0;i<L/2;i++){const t=R(),x=p[0]+(p[2]-p[0])*t+(R()*7-3.5),y=p[1]+(p[3]-p[1])*t+(R()*7-3.5);g.fillStyle=R()<.5?'#8a6a45':'#b8976b';g.fillRect(x|0,y|0,R()<.3?2:1,1);}}
+  /* plac */
+  g.fillStyle='#6c665c';g.fillRect(261,197,54,36);
+  g.fillStyle='#9b9384';g.fillRect(262,198,52,34);
+  for(let y=198;y<232;y+=5){g.fillStyle='#857e71';g.fillRect(262,y+4,52,1);for(let x=262+((y/5|0)%2)*4;x<314;x+=8)g.fillRect(x,y,1,4);}
+  for(let i=0;i<40;i++){g.fillStyle='#c4bdae';g.fillRect(263+(R()*50|0),199+(R()*32|0),2,1);}
+  /* studnia */
+  g.fillStyle='#1b1b2a';g.fillRect(282,208,12,10);g.fillStyle='#8fd1e6';g.fillRect(283,209,10,8);g.fillStyle='#4fa3c7';g.fillRect(284,210,8,6);g.fillStyle='#28597a';g.fillRect(285,212,6,3);g.fillStyle='#8fd1e6';g.fillRect(286,212,2,1);
+  /* posiadłości */
+  for(const k in E){const e=E[k],x=e.x-28,y=e.y-44;
+    g.fillStyle='#4f8a2b';g.fillRect(x-1,y-1,58,46);
+    g.fillStyle='#7fba45';g.fillRect(x,y,56,44);
+    g.fillStyle='#6ea93b';for(let r=y+8;r<y+42;r+=11)g.fillRect(x+4,r,48,2);
+    for(let i=0;i<26;i++){g.fillStyle='#a9d65a';g.fillRect(x+2+(R()*52|0),y+2+(R()*40|0),1,1);}
+    fence(g,x,y,56,44,e.x);
+  }
+  /* pomost */
+  g.fillStyle='#1b1b2a';g.fillRect(469,207,58,14);
+  g.fillStyle='#8a5a34';g.fillRect(470,208,56,12);
+  g.fillStyle='#5e3b22';for(let x=474;x<526;x+=5)g.fillRect(x,208,1,12);
+  g.fillStyle='#b07a4a';g.fillRect(470,208,56,1);
+  g.fillStyle='#1b1b2a';[[494,219],[521,219],[521,204]].forEach(p=>g.fillRect(p[0],p[1],4,5));
+  g.fillStyle='#5e3b22';[[495,220],[522,220],[522,205]].forEach(p=>g.fillRect(p[0],p[1],2,3));
+}
+const statics=[];
+function buildDecor(){
+  const R=rng(23);let ph=0;
+  for(const k in B)statics.push({k,x:B[k].x,y:B[k].y,ph:(ph++)*1.3});
+  for(let x=6;x<WW;x+=11+(R()*6|0)){
+    const y=20+(R()*10|0);
+    let inPlot=false;for(const k in E)if(Math.abs(x-E[k].x)<36&&E[k].y<100&&y>24)inPlot=true;
+    statics.push({k:R()<.8?'pine':'tree',x,y:inPlot?20:y,ph:0});
+  }
+  const rects=[[256,192,64,46]];
+  for(const k in B){const s=SPR[k];rects.push([B[k].x-s.ax-6,B[k].y-s.ay-2,s.w+12,s.h+10]);}
+  for(const k in E)rects.push([E[k].x-36,E[k].y-52,72,64]);
+  const bad=(x,y)=>{
+    if(y<40||y>WH-3||x<5||x>WW-5)return true;
+    if(isWater(x+10,y+8)||(x>458&&y>196&&y<228))return true;
+    for(const r of rects)if(x>r[0]&&x<r[0]+r[2]&&y>r[1]&&y<r[1]+r[3])return true;
+    for(const p of PATHS){const x1=Math.min(p[0],p[2])-11,x2=Math.max(p[0],p[2])+11,y1=Math.min(p[1],p[3])-9,y2=Math.max(p[1],p[3])+16;if(x>x1&&x<x2&&y>y1&&y<y2)return true;}
+    return false;
+  };
+  const placed=[];
+  for(let i=0;i<900&&placed.length<96;i++){
+    const x=6+(R()*(WW-12)|0),y=40+(R()*(WH-44)|0);
+    if(bad(x,y))continue;
+    let near=false;for(const p of placed)if(Math.abs(p[0]-x)<13&&Math.abs(p[1]-y)<9){near=true;break;}
+    if(near)continue;
+    const r=R(),k=r<.3?'tree':r<.5?'pine':r<.7?'bush':r<.9?'flowers':'rock';
+    placed.push([x,y]);statics.push({k,x,y,ph:0});
+  }
+}
+let plants=[];
+function buildPlants(lv){
+  plants=[];
+  for(const k in E){const e=E[k],n=3*(lv[k]||1);
+    for(let i=0;i<n&&i<18;i++){
+      const kind=(i%3===0&&i>=6)?'tree':(i%3===1?'bush':'flowers');
+      plants.push({k:kind,x:e.x-21+Math.round((i%6)*8.4),y:e.y-27+((i/6)|0)*11+(i%2),ph:0});
+    }
+  }
+}
+
+/* ================= cast and state ================= */
+const CAST={
+  ty:{n:'Ty',skin:'you',mach:'none'},
+  kanc:{n:'Asystent',skin:'kanc',mach:'mac'},
+  ada:{n:'Claude 1',skin:'claude',mach:'pc'},
+  borys:{n:'Codex 1',skin:'codex',mach:'pc'},
+  cela:{n:'Claude 2',skin:'claude',mach:'pc'},
+  emil:{n:'Claude 3',skin:'claude',mach:'pc'},
+  goniec:{n:'prośba',skin:'sprite',mach:'none',spd:130}
+};
+const agents={};
+for(const id in CAST)agents[id]={id,agent:true,x:0,y:0,path:[],bub:null,vis:false,skin:CAST[id].skin,mach:CAST[id].mach,walk:false,flip:false};
+const DEF={pet:'approve',tel:'approve',odb:'accept',exec:'claude',mach:'pc',rep:'scroll'};
+const choice={};
+const C=k=>choice[k]||DEF[k];
+const EXEC={claude:'Claude Code',codex:'Codex'};
+const MACH={pc:'PC z Windows',mac:'Mac',cloud:'Chmura'};
+
+const K={at:'castle',d:[22,0]};
+const emilN=()=>C('exec')==='codex'?'Codex 2':'Claude 3';
+const MACHS={pc:'PC',mac:'Mac',cloud:'chmura'};
+const SC=[
+{id:'raport',n:'1. Raport',sub:'stan po nocy',
+ base:{time:'night',clock:'08:41',ag:{kanc:K,ada:{at:'tavern',d:[12,4],bub:'ask'},borys:{at:'castle',d:[-26,4],bub:'done'},cela:{at:'alchemist',d:[-10,4],bub:'block'},ty:{at:'gate'}}},
+ steps:[
+  {t:'Stan o 08:42',who:'nar',focus:'castle',win:'intro',a:{time:'dawn',clock:'08:42'},
+   say:'Poniedziałek, 08:42. Mac został właśnie otwarty. PC z Windows pracował całą noc. Trzy sesje mają status, który wymaga uwagi.',
+   hood:['fork','Znaczniki nad agentami to stany sesji. Fork już je zbiera: haki Claude Code i <code>notify</code> Codexa wysyłają zdarzenia do panelu. Żeby dane z nocy były dostępne rano, panel musi działać na włączonym PC, a nie na Macu, który jest uśpiony.']},
+  {t:'Polecenie',who:'ty',focus:'@ty',win:'intro',a:{ag:{ty:{at:'castle',d:[-2,14]}}},
+   say:'Zamiast przeglądać po kolei okna terminali, wydajesz jedno polecenie w swojej sesji Claude.',
+   act:{l:'„Proszę raport”',next:1},
+   hood:['prop','„Proszę raport” to zwykłe zdanie do Claude w Twojej sesji. Propozycja: komenda, która pobiera skrót z panelu i pokazuje go jako okno zamiast długiego tekstu.']},
+  {t:'Raport',who:'kanc',focus:'castle',win:'report',a:{time:'day',clock:'08:43'},
+   say:'Podsumowanie nocy: dwa zadania ukończone, dwie sprawy czekają na decyzję, jedna sesja stoi. Szczegóły są w oknie raportu.',
+   hood:['mix','Skrót danych istnieje w forku jako <code>GET /api/digest</code>: sesje, prośby o zgodę i ostatnie zdarzenia. Okno raportu w dwóch wariantach i koszt nocy to propozycje.']},
+  {t:'Sesja zablokowana',who:'kanc',focus:'@cela',win:'agent',
+   say:'Claude 2 stoi na testach projektu landing. Od 02:10 powtarza te same trzy nieudane testy. Sesja o nic nie pyta, więc sama nie wysłałaby powiadomienia.',
+   hood:['prop','Wykrywanie blokady to propozycja. Reguła: ten sam błąd testów trzy razy z rzędu albo brak zdarzeń przez 30 minut przy otwartej sesji. Wtedy czerwony znacznik i wpis w raporcie.']},
+  {t:'Sesja czeka',who:'ada',focus:'@ada',win:'waiting',
+   say:'Sesja czeka od 06:55 na zgodę na migrację bazy. Nocna prośba wygasła po godzinie, więc w sesji jest teraz otwarte standardowe pytanie o zgodę.',
+   hood:['fork','Tak działa fork: hak czeka na decyzję 10 minut, prośba jest ważna 60. Potem decyzja wraca do standardowego okna zgody w sesji. Brak odpowiedzi nigdy nie oznacza zgody.']},
+  {t:'Podsumowanie',who:'kanc',focus:'castle',win:'sum',
+   say:'Poranny przegląd to jedno polecenie, jedno okno i trzy decyzje. Pozostałe sesje pracują dalej bez Twojego udziału.',
+   act:{l:'Dalej: zgoda ▶',go:'zgoda:0'},
+   hood:['mix','Ten scenariusz wymaga trzech elementów z forka (panel na PC, adaptery, Tailscale) i jednego nowego: okna raportu.']}
+ ]},
+{id:'zgoda',n:'2. Zgoda',sub:'agent prosi o zgodę',
+ base:{time:'day',clock:'10:14',ag:{kanc:K,ty:{at:'castle',d:[-2,14]},ada:{at:'arena',d:[-6,4]},borys:{at:'forge',d:[6,4]},cela:{at:'chapel',d:[4,4]},goniec:{at:'castle',d:[8,6],vis:false}}},
+ steps:[
+  {t:'Prośba',who:'ada',focus:'@ada',win:'gate',a:{ag:{ada:{bub:'ask'}}},
+   say:'Sesja chce uruchomić npm run migrate na bazie sklep-api. Karta projektu wymaga Twojej zgody na migracje, więc komenda zostaje wstrzymana.',
+   hood:['fork','Hak <code>PreToolUse</code> wysyła komendę do panelu przed jej wykonaniem. Reguła z Karty pasuje, więc powstaje prośba o zgodę, a sesja czeka. Działa dla komend Bash w Claude Code. Codex nie ma takiej bramki.']},
+  {t:'Powiadomienie',who:'nar',focus:[322,168],win:'herald',a:{clock:'10:15',ag:{ada:{at:'castle',d:[-26,4]},goniec:{vis:true,from:'castle',at:'herald',d:[-8,4]}}},
+   say:'Prośba trafia do panelu i do modułu powiadomień. Powiadomienie idzie na telefon i do panelu w Claude.',
+   hood:['fork','Powiadomienia wysyła ntfy z przyciskami akcji. Ta sama prośba jest widoczna w trzech miejscach: na iPhonie, w panelu obok rozmowy i w panelu w przeglądarce.']},
+  {t:'Decyzja',who:'kanc',focus:'castle',win:'petition',need:'pet',
+   say:'Prośba od Claude 1. Okno pokazuje komendę, uzasadnienie i regułę, która ją wstrzymała. Decyzja to jeden przycisk.',
+   hood:['mix','Komenda, opis od agenta i reguła są w forku. Ocena ryzyka to propozycja.']},
+  {t:'Skutek',who:'ada',focus:'@ada',win:'petres',
+   a:c=>c('pet')==='approve'?{clock:'10:16',ag:{ada:{at:'arena',d:[-6,4],bub:null},goniec:{vis:false}}}:{clock:'10:16',ag:{ada:{at:'chapel',d:[-10,4],bub:null},goniec:{vis:false}}},
+   say:c=>c('pet')==='approve'?'Zgoda dotarła do sesji. Migracja zostaje uruchomiona.':'Odmowa dotarła do sesji razem z powodem. Agent wraca do planowania i szuka rozwiązania bez migracji.',
+   hood:['fork','Hak dostaje odpowiedź z panelu i zwraca ją Claude Code jako <code>permissionDecision</code>. Przy odmowie agent widzi powód i może zmienić plan.']},
+  {t:'Brak odpowiedzi',who:'kanc',focus:'castle',win:'timeline',
+   say:'Brak odpowiedzi nie uruchamia niczego automatycznie. Prośba czeka, a potem decyzja wraca do standardowego okna zgody w sesji.',
+   act:{l:'Dalej: telefon ▶',go:'telefon:0'},
+   hood:['fork','Limity z forka: 10 minut czekania haka, 60 minut ważności prośby. Obie wartości są w konfiguracji.']}
+ ]},
+{id:'telefon',n:'3. Telefon',sub:'decyzja poza biurem',
+ base:{time:'dusk',clock:'17:39',ag:{kanc:K,ada:{at:'forge',d:[6,4]},borys:{at:'arena',d:[-6,4]},cela:{at:'library',d:[4,4]},goniec:{at:'castle',d:[8,6],vis:false},ty:{at:'gate'}}},
+ steps:[
+  {t:'Poza biurem',who:'nar',focus:[322,168],win:'phone',a:{ag:{ada:{at:'castle',d:[-26,4],bub:'ask'},goniec:{vis:true,from:'castle',at:'herald',d:[-8,4]}}},
+   say:'17:39. Jesteś poza biurem, Mac jest uśpiony, PC pracuje dalej. Claude 1 skończył zadanie i prosi o zgodę na wdrożenie na staging.',
+   hood:['fork','Panel działa na PC i jest dostępny z iPhone’a przez Tailscale. Powiadomienie ma przyciski, które wywołują panel bez otwierania aplikacji.']},
+  {t:'Ekran blokady',who:'nar',focus:'castle',win:'phone2',need:'tel',a:{clock:'17:40'},
+   say:'Po przytrzymaniu powiadomienia pojawiają się trzy przyciski. Nie trzeba odblokowywać komputera ani szukać właściwego okna.',
+   hood:['fork','Przyciski akcji ntfy wysyłają żądanie HTTP do panelu. Telefon musi być w sieci Tailscale, inaczej żądanie nie dotrze do PC.']},
+  {t:'Skutek',who:'nar',focus:'@ada',win:'telres',
+   a:c=>c('tel')==='approve'?{ag:{ada:{at:'arena',d:[8,4],bub:null},goniec:{vis:false}}}:{ag:{ada:{at:'tavern',d:[12,4],bub:'wait'},goniec:{vis:false}}},
+   say:c=>c('tel')==='approve'?'Panel odbiera decyzję. Hak w sesji Claude 1 dostaje zgodę w ciągu sekundy i wdrożenie rusza.':'Panel odbiera odmowę. Wdrożenie zostaje odłożone, a sesja czeka na Twój powrót.',
+   hood:['fork','Droga decyzji: iPhone, Tailscale, panel na PC, hak w sesji. Nic nie przechodzi przez publiczny internet poza samym powiadomieniem ntfy.']},
+  {t:'Rozmowa',who:'nar',focus:'castle',win:'remote',
+   say:'Przycisk nie wystarcza, gdy agent zadaje pytanie otwarte. Wtedy powiadomienie otwiera rozmowę z tą sesją.',
+   act:{l:'Dalej: zlecenie ▶',go:'zlecenie:0'},
+   hood:['mix','Dla Claude Code to Remote Control w aplikacji Claude. Codex w terminalu na PC nie ma zdalnej rozmowy: zostaje zadanie w chmurze albo pulpit zdalny.']}
+ ]},
+{id:'zlecenie',n:'4. Zlecenie',sub:'nowe zadanie z panelu',
+ base:{time:'day',clock:'11:02',ag:{kanc:K,ty:{at:'castle',d:[-2,14]},ada:{at:'arena',d:[-6,4]},borys:{at:'forge',d:[10,4]},cela:{at:'library',d:[4,4]},emil:{at:'castle',d:[-22,6],vis:false}}},
+ steps:[
+  {t:'Nowe zadanie',who:'ty',focus:'castle',win:'order',
+   say:'Potrzebny jest eksport zamówień do CSV w sklep-api. Zamiast łączyć się z PC i otwierać terminal, wypełniasz formularz zlecenia w panelu.',
+   hood:['prop','Zlecenia to propozycja. Formularz wybiera projekt, wykonawcę i maszynę. Panel uruchamia sesję tam, gdzie leży repozytorium.']},
+  {t:'Karta projektu',who:'kanc',focus:'e1',win:'charter',
+   say:'Przed startem panel sprawdza Kartę projektu. Karta określa zakres, definicję ukończenia i komendy, które wymagają Twojej zgody.',
+   hood:['fork','Karta to plik <code>KARTA.md</code> w repozytorium. Fork czyta ją i pokazuje w osobnej zakładce. Reguły zgody z Karty zasilają bramkę.']},
+  {t:'Start sesji',who:'emil',focus:'@emil',win:'run1',
+   a:c=>({clock:'11:04',ag:{emil:{vis:true,from:c('mach')==='cloud'?'pier':'castle',at:'chapel',d:[6,4]}}}),
+   say:c=>c('mach')==='cloud'?'Nowa sesja wystartowała w chmurze i przyjęła zlecenie. Najpierw plan, potem kod.':'Nowa sesja przyjęła zlecenie. Najpierw plan, potem kod.',
+   hood:['prop','Start sesji: panel uruchamia <code>claude -p</code> albo <code>codex exec</code> w katalogu projektu na wybranej maszynie. Nowa sesja od razu zgłasza się przez haki.']},
+  {t:'Praca',who:'nar',focus:'@emil',win:'run2',a:{clock:'11:19',ag:{emil:{at:'forge',d:[-6,4]}}},
+   say:'Plan jest gotowy i sesja przechodzi do pisania kodu. Od tej chwili jest widoczna na mapie jak każda inna.',
+   act:{l:'Dalej: odbiór ▶',go:'odbior:0'},
+   hood:['fork','Przejścia między budynkami wynikają z narzędzi, których agent używa. To mapowanie jest już w skanerze wtyczki.']}
+ ]},
+{id:'odbior',n:'5. Odbiór',sub:'przyjęcie pracy',
+ base:{time:'dusk',clock:'18:19',ag:{kanc:K,ty:{at:'castle',d:[-2,14]},borys:{at:'castle',d:[-26,4],bub:'done'},ada:{at:'forge',d:[6,4]},cela:{at:'alchemist',d:[-10,4]}}},
+ steps:[
+  {t:'Zgłoszenie',who:'borys',focus:'castle',win:'review',need:'odb',
+   say:'PR #17 jest gotowy: ekran logowania w apka-ios. Testy 22 z 22. Sesja prosi o odbiór.',
+   hood:['prop','Odbiór to propozycja. Lista pochodzi z pola „Ukończone gdy” w Karcie. Część punktów panel sprawdza sam, resztę zaznaczasz ręcznie.']},
+  {t:'Wynik',who:'kanc',focus:c=>c('odb')==='accept'?'e2':'@borys',win:'revres',
+   a:c=>c('odb')==='accept'?{clock:'18:24',lv:{e2:5},ag:{borys:{at:'tavern',d:[12,4],bub:'rest'}}}:{clock:'18:24',ag:{borys:{at:'forge',d:[-8,4],bub:null}}},
+   say:c=>c('odb')==='accept'?'Praca przyjęta. Projekt apka-ios ma teraz 5 z 8 zadań zamkniętych, co widać na jego polu na mapie. Codex 1 czeka na następne zlecenie.':'Uwagi wróciły do sesji Codex 1. Agent wraca do kodu i zgłosi pracę ponownie. Licznik zadań bez zmian.',
+   hood:['prop','Dziś postęp projektu rośnie z samej aktywności. Propozycja: zadanie liczy się dopiero po Twoim odbiorze, żeby mapa pokazywała pracę przyjętą, a nie tylko wykonaną.']},
+  {t:'Noc',who:'nar',focus:[288,176],win:'night',a:{time:'night',clock:'22:30',ag:{ty:{at:'gate'}}},
+   say:'22:30. Mac zostaje zamknięty. PC pracuje dalej, powiadomienia działają, a rano wystarczy jedno polecenie.',
+   act:{l:'Wróć do raportu ↺',go:'raport:0'},
+   hood:['mix','Praca w nocy wymaga, żeby PC nie przechodził w uśpienie i żeby panel startował razem z systemem. Tryb cichy powiadomień to propozycja.']}
+ ]}
+];
+const SPEAK={nar:'Sytuacja',ty:'Ty',kanc:'Asystent · Claude w Twojej sesji',ada:'Claude 1 · sklep-api · PC',borys:'Codex 1 · apka-ios · PC',cela:'Claude 2 · landing · PC'};
+const val=v=>typeof v==='function'?v(C):v;
+function delta(sc,i){return val(sc.steps[i].a)||{};}
+function stateAt(sc,i){
+  const st={time:'day',clock:'',ag:{},lv:{e1:4,e2:4,e3:2}};
+  const put=d=>{
+    if(d.time)st.time=d.time;if(d.clock)st.clock=d.clock;if(d.lv)Object.assign(st.lv,d.lv);
+    for(const id in(d.ag||{})){const n=d.ag[id],o=Object.assign({},st.ag[id],n);if('at'in n&&!('d'in n))o.d=null;delete o.from;st.ag[id]=o;}
+  };
+  put(sc.base);for(let k=0;k<=i;k++)put(delta(sc,k));
+  return st;
+}
+const posOf=n=>{const L=LOC[n.at];return{x:L.x+(n.d?n.d[0]:0),y:L.y+(n.d?n.d[1]:0),sy:L.sy};};
+function route(a,b){
+  const pts=a.sy===b.sy?[[a.x,a.sy],[b.x,b.sy]]:[[a.x,a.sy],[MAINX,a.sy],[MAINX,b.sy],[b.x,b.sy]];
+  pts.push([b.x,b.y]);
+  const out=[];let px=a.x,py=a.y;
+  for(const p of pts){if(p[0]!==px||p[1]!==py){out.push(p);px=p[0];py=p[1];}}
+  return out;
+}
+
+/* ================= drawing ================= */
+const stage=$('#stage'),view=$('#view'),cv=$('#cv'),g=cv.getContext('2d');
+const cam={x:128,y:20};let snap=true,T=0;
+const TINT={night:[11,16,40,.54],dawn:[255,150,80,.17],day:[255,220,160,0],dusk:[120,70,160,.25]};
+const TNAME={night:'noc',dawn:'świt',day:'dzień',dusk:'zmierzch'};
+let tint=TINT.night.slice(),tintTo=TINT.night;
+const fx=[];
+const GLY={
+  ask:['..#..','..#..','..#..','..#..','.....','..#..'],
+  block:['..#..','..#..','..#..','..#..','.....','..#..'],
+  done:['.....','....#','...#.','#.#..','.#...','.....'],
+  wait:['.....','.....','.....','#.#.#','.....','.....'],
+  rest:['####.','...#.','..#..','.#...','####.','.....']
+};
+const BCOL={ask:'#d98a00',block:'#d8352a',done:'#1f9a4a',wait:'#6c665c',rest:'#6c665c'};
+function drawBubble(c,x,y,kind,bob){
+  const col=BCOL[kind];if(!col)return;
+  if(bob&&!RM&&(kind==='ask'||kind==='block'))y-=Math.abs(Math.round(Math.sin(T*4)*2));
+  const bx=x-4,by=y-11;
+  c.fillStyle='#1b1b2a';c.fillRect(bx,by+1,9,8);c.fillRect(bx+1,by,7,10);c.fillRect(x-1,by+10,2,1);
+  c.fillStyle=kind==='block'?'#ffe1dc':'#fffbe9';c.fillRect(bx+1,by+1,7,8);
+  c.fillStyle=col;
+  GLY[kind].forEach((r,j)=>{for(let i=0;i<5;i++)if(r[i]==='#')c.fillRect(bx+2+i,by+2+j,1,1);});
+}
+function drawShip(c,x,y,t){
+  y+=Math.round(Math.sin(t*1.5));
+  const o='#1b1b2a';
+  c.fillStyle=o;c.fillRect(x-16,y-8,32,3);c.fillRect(x-15,y-5,30,3);c.fillRect(x-13,y-2,26,2);
+  c.fillStyle='#b07a4a';c.fillRect(x-15,y-7,30,1);
+  c.fillStyle='#8a5a34';c.fillRect(x-15,y-6,30,1);c.fillRect(x-14,y-5,28,2);
+  c.fillStyle='#5e3b22';c.fillRect(x-13,y-3,26,1);c.fillRect(x-12,y-2,24,1);
+  c.fillStyle='#ffd36b';c.fillRect(x-9,y-5,2,1);c.fillRect(x-1,y-5,2,1);c.fillRect(x+7,y-5,2,1);
+  c.fillStyle=o;c.fillRect(x-1,y-30,3,23);
+  c.fillStyle='#8a5a34';c.fillRect(x,y-29,1,21);
+  c.fillStyle=o;c.fillRect(x+2,y-27,14,17);
+  c.fillStyle='#efe2c6';c.fillRect(x+3,y-26,12,15);
+  c.fillStyle='#cdb994';c.fillRect(x+13,y-26,2,15);c.fillRect(x+3,y-13,12,2);
+  c.fillStyle='#9a6ad8';c.fillRect(x+6,y-22,5,5);c.fillStyle='#c9a7ff';c.fillRect(x+7,y-21,2,2);
+  c.fillStyle=o;c.fillRect(x-12,y-22,11,12);
+  c.fillStyle='#efe2c6';c.fillRect(x-11,y-21,9,10);
+  c.fillStyle='#cdb994';c.fillRect(x-11,y-13,9,2);
+  c.fillStyle=o;c.fillRect(x+1,y-34,8,5);
+  c.fillStyle='#c9a7ff';c.fillRect(x+2,y-33,6,3);
+  c.fillStyle='#8fd1e6';c.fillRect(x-18,y,5,1);c.fillRect(x+12,y,6,1);c.fillRect(x-6,y+1,9,1);
+}
+function paint(c,cx,cy,vw,vh,live){
+  c.drawImage(ground,-cx,-cy);
+  if(live&&!RM){c.fillStyle='#8fd1e6';for(let i=0;i<16;i++){const x=492+((i*37+Math.floor(T*1.5+i)*3)%80),y=178+((i*53)%142);if(isWater(x-2,y-2)&&isWater(x+4,y))c.fillRect(x-cx,y-cy,3,1);}}
+  drawShip(c,SHIP.x-cx,SHIP.y-cy,live&&!RM?T:0);
+  const list=statics.concat(plants);
+  if(live)for(const id in agents){if(agents[id].vis)list.push(agents[id]);}
+  list.sort((p,q)=>p.y-q.y);
+  for(const o of list){
+    let fr,ax,ay;
+    if(o.agent){fr=HERO[o.skin][o.walk?Math.floor(T*8)%4:1];ax=6;ay=15;}
+    else{const s=SPR[o.k];fr=s.f[live?Math.floor(T*4+o.ph)%s.f.length:0];ax=s.ax;ay=s.ay;}
+    const x=Math.round(o.x)-ax-cx,y=Math.round(o.y)-ay-cy;
+    if(x>vw||y>vh||x<-64||y<-48)continue;
+    if(o.agent&&o.flip){c.save();c.translate(x+12,y);c.scale(-1,1);c.drawImage(fr,0,0);c.restore();}
+    else c.drawImage(fr,x,y);
+  }
+}
+function draw(){
+  const cx=Math.round(cam.x),cy=Math.round(cam.y);
+  g.imageSmoothingEnabled=false;
+  paint(g,cx,cy,VW,VH,true);
+  if(tint[3]>.004){g.fillStyle='rgba('+(tint[0]|0)+','+(tint[1]|0)+','+(tint[2]|0)+','+tint[3].toFixed(3)+')';g.fillRect(0,0,VW,VH);}
+  for(const p of fx){g.fillStyle=p.c;g.fillRect(Math.round(p.x)-cx,Math.round(p.y)-cy,p.s,p.s);}
+  for(const id in agents){const a=agents[id];if(a.vis&&a.bub)drawBubble(g,Math.round(a.x)-cx,Math.round(a.y)-cy-16,a.bub,true);}
+  /* minimapa */
+  const mw=64,mh=36,mx=VW-mw-4,my=VH-mh-4,k=mw/WW;
+  g.fillStyle='#05070f';g.fillRect(mx-2,my-2,mw+4,mh+4);
+  g.fillStyle='#e2b347';g.fillRect(mx-1,my-1,mw+2,mh+2);
+  g.drawImage(ground,0,0,WW,WH,mx,my,mw,mh);
+  g.fillStyle='rgba(5,7,15,.35)';g.fillRect(mx,my,mw,mh);
+  g.fillStyle='#e8c170';for(const b in B)g.fillRect(mx+Math.round(B[b].x*k)-1,my+Math.round(B[b].y*k)-2,3,2);
+  for(const id in agents){const a=agents[id];if(!a.vis||a.y>WH)continue;
+    g.fillStyle=a.bub==='ask'?'#f2c45a':a.bub==='block'?'#ff7a6a':a.bub==='done'?'#6ee08a':'#ffffff';
+    g.fillRect(mx+Math.round(a.x*k)-1,my+Math.round(a.y*k)-1,2,2);}
+  g.strokeStyle='#f2ecdc';g.lineWidth=1;g.strokeRect(mx+Math.round(cx*k)+.5,my+Math.round(cy*k)+.5,Math.round(VW*k)-1,Math.round(VH*k)-1);
+}
+
+/* ================= tags ================= */
+const tagBox=$('#tags');let tags=[];
+function mkTag(cls,text,pos){const e=el('div','tag '+cls);e.textContent=text;e.style.display='none';tagBox.appendChild(e);const t={e,pos,last:''};tags.push(t);return t;}
+const estTag={},agTag={};
+function buildTags(){
+  for(const k in B)mkTag('b',B[k].n,()=>({x:B[k].x,y:B[k].y-SPR[k].ay-1}));
+  for(const k in E)estTag[k]=mkTag('e',E[k].n,()=>({x:E[k].x,y:E[k].y-47}));
+  mkTag('b','Chmura',()=>({x:SHIP.x-26,y:SHIP.y-36}));
+  for(const id in agents)agTag[id]=mkTag('a',CAST[id].n,()=>agents[id].vis?{x:agents[id].x,y:agents[id].y+2}:null);
+}
+function updTags(){
+  const cx=Math.round(cam.x),cy=Math.round(cam.y);
+  for(const t of tags){
+    const p=t.pos();let s='display:none';
+    if(p&&p.x>cx-6&&p.x<cx+VW+6&&p.y>cy+2&&p.y<cy+VH+2&&!(p.x>cx+VW-92&&p.y>cy+VH-44))s='left:'+((Math.round(p.x)-cx)/VW*100).toFixed(2)+'%;top:'+((Math.round(p.y)-cy)/VH*100).toFixed(2)+'%';
+    if(s!==t.last){t.e.style.cssText=s;t.last=s;}
+  }
+}
+function pop(text,x,y){
+  const t=mkTag('pop',text,()=>({x,y}));
+  setTimeout(()=>{t.e.remove();tags=tags.filter(q=>q!==t);},2500);
+}
+
+/* ================= engine ================= */
+const cur={s:0,i:0};
+const seen={};
+const curStep=()=>SC[cur.s].steps[cur.i];
+function focusPt(f){
+  f=val(f);if(!f)return{x:288,y:120};
+  if(Array.isArray(f))return{x:f[0],y:f[1]};
+  if(f[0]==='@'){const a=agents[f.slice(1)];return{x:a.x,y:Math.min(a.y,WH)-12};}
+  if(B[f])return{x:B[f].x,y:B[f].y-14};
+  if(E[f])return{x:E[f].x,y:E[f].y-10};
+  return LOC[f];
+}
+function tick(dt){
+  for(const id in agents){
+    const a=agents[id];a.walk=false;if(!a.path.length)continue;
+    let d=(CAST[id].spd||85)*dt;a.walk=true;
+    while(d>0&&a.path.length){
+      const tx=a.path[0][0],ty=a.path[0][1],dx=tx-a.x,dy=ty-a.y,L=Math.hypot(dx,dy);
+      if(L<=d){a.x=tx;a.y=ty;a.path.shift();d-=L;}
+      else{a.x+=dx/L*d;a.y+=dy/L*d;if(Math.abs(dx)>.5)a.flip=dx<0;d=0;}
+    }
+    if(!a.path.length)a.flip=false;
+  }
+  const f=focusPt(curStep().focus),tx=clamp(f.x-VW/2,0,WW-VW),ty=clamp(f.y-VH/2,0,WH-VH);
+  if(snap||RM){cam.x=tx;cam.y=ty;snap=false;}
+  else{const k=Math.min(1,dt*3);cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;}
+  const tk=RM?1:Math.min(1,dt*1.6);
+  for(let i=0;i<4;i++)tint[i]+=(tintTo[i]-tint[i])*tk;
+  for(let i=fx.length-1;i>=0;i--){const p=fx[i];p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.life<=0)fx.splice(i,1);}
+}
+let lastTs=0;
+function frame(ts){
+  const dt=Math.min(.05,lastTs?(ts-lastTs)/1000:0);lastTs=ts;
+  if(!RM)T+=dt;
+  tick(dt);draw();updTags();
+  requestAnimationFrame(frame);
+}
+function apply(animate){
+  const sc=SC[cur.s],st=stateAt(sc,cur.i),prev=cur.i>0?stateAt(sc,cur.i-1):null,own=delta(sc,cur.i).ag||{};
+  for(const id in agents){
+    const a=agents[id],n=st.ag[id];
+    if(!n||!n.at||n.vis===false){a.vis=false;a.path=[];a.bub=null;continue;}
+    const dst=posOf(n);
+    a.vis=true;a.bub=n.bub||null;a.skin=CAST[id].skin;a.mach=CAST[id].mach;
+    if(id==='emil'){a.skin=C('exec')==='codex'?'codex':'claude';a.mach=C('mach');agTag.emil.e.textContent=emilN();}
+    agTag[id].e.className='tag a '+a.mach;
+    let from=null;
+    if(animate&&!RM){
+      const p=prev&&prev.ag[id];
+      if(own[id]&&own[id].from)from=posOf({at:own[id].from});
+      else if(p&&p.at&&p.vis!==false)from=posOf(p);
+    }
+    if(from&&(from.x!==dst.x||from.y!==dst.y)){a.x=from.x;a.y=from.y;a.path=route(from,dst);}
+    else{a.x=dst.x;a.y=dst.y;a.path=[];a.flip=false;}
+  }
+  tintTo=TINT[st.time];
+  buildPlants(st.lv);
+  for(const k in E){
+    estTag[k].e.textContent=E[k].n+' · '+st.lv[k]+'/8';
+    if(animate&&prev&&st.lv[k]>prev.lv[k]){
+      pop('Przyjęto · '+st.lv[k]+'/8',E[k].x,E[k].y-20);
+      if(!RM)for(let i=0;i<46;i++)fx.push({x:E[k].x-26+Math.random()*52,y:E[k].y-4-Math.random()*40,vx:(Math.random()-.5)*10,vy:-14-Math.random()*22,life:.8+Math.random()*1.4,s:Math.random()<.3?2:1,c:Math.random()<.6?'#ffd36b':'#fffbe9'});
+    }
+  }
+  let ask=0,block=0,done=0;
+  for(const id in agents){const b=agents[id].vis&&agents[id].bub;if(b==='ask')ask++;else if(b==='block')block++;else if(b==='done')done++;}
+  $('#hud').innerHTML='<span class="hchip">'+st.clock+' · '+TNAME[st.time]+'</span><span class="hchip"><i class="d wait"></i>'+ask+' czeka<i class="d bad"></i>'+block+' stoi<i class="d ok"></i>'+done+' gotowe</span>';
+}
+
+/* ================= UI ================= */
+function orb(c,time){
+  c.fillStyle=time==='day'?'#4fa3c7':time==='dawn'?'#c8735f':time==='dusk'?'#5e3f96':'#141a30';c.fillRect(0,0,24,24);
+  const sun=time==='day'||time==='dawn';
+  for(let y=0;y<24;y++)for(let x=0;x<24;x++){
+    const d=(x-11.5)*(x-11.5)+(y-11.5)*(y-11.5);
+    if(d<42){if(!sun&&(x-15)*(x-15)+(y-9)*(y-9)<34)continue;c.fillStyle=sun?(d<24?'#ffd36b':'#ff9b3d'):'#efe2c6';c.fillRect(x,y,1,1);}
+  }
+  if(!sun){c.fillStyle='#fffbe9';[[3,4],[19,17],[5,19],[20,4]].forEach(p=>c.fillRect(p[0],p[1],1,1));}
+}
+function face(c,skin){
+  const x=c.getContext('2d');x.imageSmoothingEnabled=false;x.clearRect(0,0,24,24);
+  x.fillStyle='#1d2543';x.fillRect(0,0,24,24);
+  x.drawImage(HERO[skin][1],0,0,12,12,0,0,24,24);
+}
+let tw=null;
+function say(text){
+  const p=$('#say');clearInterval(tw);tw=null;
+  if(RM){p.textContent=text;return;}
+  let n=0;p.textContent='';
+  tw=setInterval(()=>{n+=2;p.textContent=text.slice(0,n);if(n>=text.length){clearInterval(tw);tw=null;}},24);
+}
+$('#dlg').addEventListener('click',e=>{if(tw&&!e.target.closest('button')){clearInterval(tw);tw=null;$('#say').textContent=val(curStep().say);}});
+function paintWin(){
+  const s=curStep(),w=$('#win');
+  w.innerHTML=WIN[s.win](s);
+  w.querySelectorAll('canvas[data-skin]').forEach(c=>face(c,c.dataset.skin==='emil'?(C('exec')==='codex'?'codex':'claude'):c.dataset.skin));
+}
+function paintUI(){
+  const sc=SC[cur.s],s=curStep(),st=stateAt(sc,cur.i);
+  document.querySelectorAll('.tab').forEach((b,i)=>{b.setAttribute('aria-selected',i===cur.s?'true':'false');b.tabIndex=i===cur.s?0:-1;});
+  const dots=$('#dots');dots.innerHTML='';
+  sc.steps.forEach((q,i)=>{const b=el('button','dot'+(i===cur.i?' on':seen[sc.id+i]?' seen':''));b.type='button';b.title=q.t;b.setAttribute('aria-label','Krok '+(i+1)+': '+q.t);if(i===cur.i)b.setAttribute('aria-current','step');b.onclick=()=>go(cur.s,i,i===cur.i+1);dots.appendChild(b);});
+  seen[sc.id+cur.i]=1;
+  const pc=$('#port').getContext('2d');pc.imageSmoothingEnabled=false;
+  if(s.who==='nar')orb(pc,st.time);
+  else face($('#port'),s.who==='emil'?(C('exec')==='codex'?'codex':'claude'):CAST[s.who].skin);
+  $('#who').textContent=s.who==='emil'?emilN()+' · sklep-api · '+MACHS[C('mach')]:SPEAK[s.who];
+  $('#stepno').textContent=(cur.i+1)+'/'+sc.steps.length+' · '+s.t;
+  say(val(s.say));
+  const act=$('#act');act.innerHTML='';
+  if(s.act){const b=el('button','btn go');b.type='button';b.textContent=s.act.l;b.onclick=()=>{if(s.act.go){const p=s.act.go.split(':');goId(p[0],+p[1]);}else next();};act.appendChild(b);}
+  paintWin();
+  const lab={fork:'<span class="chip fork">jest w forku</span>',prop:'<span class="chip prop">propozycja</span>'};
+  $('#hood').innerHTML='<b>Jak to działa</b>'+(s.hood[0]==='mix'?lab.fork+' '+lab.prop:lab[s.hood[0]])+' &nbsp;'+s.hood[1];
+  $('#prev').disabled=cur.s===0&&cur.i===0;
+  const lastStep=cur.i===sc.steps.length-1,nx=$('#next');
+  nx.textContent=lastStep?(cur.s<SC.length-1?'Następny scenariusz ▶':'Od początku ↺'):'Dalej ▶';
+  $('#hint').textContent=s.need&&!choice[s.need]?'Najpierw podejmij decyzję w oknie.':'';
+}
+function go(s,i,animate){
+  const changed=s!==cur.s;
+  cur.s=s;cur.i=i;if(changed)snap=true;
+  apply(animate&&!changed);paintUI();
+  try{history.replaceState(null,'','#'+SC[s].id);}catch(e){}
+}
+function goId(id,i){const s=SC.findIndex(q=>q.id===id);if(s>=0)go(s,i||0,false);}
+function next(){
+  const sc=SC[cur.s],s=curStep();
+  if(s.need&&!choice[s.need]){const h=$('#hint');h.textContent='Najpierw podejmij decyzję w oknie.';return;}
+  if(cur.i<sc.steps.length-1)go(cur.s,cur.i+1,true);
+  else go((cur.s+1)%SC.length,0,false);
+}
+function prev(){
+  if(cur.i>0)go(cur.s,cur.i-1,false);
+  else if(cur.s>0)go(cur.s-1,SC[cur.s-1].steps.length-1,false);
+}
+$('#next').onclick=next;$('#prev').onclick=prev;
+document.addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('input,textarea,select'))return;
+  if(e.key==='ArrowRight'){next();}else if(e.key==='ArrowLeft'){prev();}
+});
+$('#win').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||b.disabled)return;
+  if(b.dataset.pick){const p=b.dataset.pick.split(':');choice[p[0]]=p[1];
+    if(b.dataset.next!=null)next();else{paintWin();if(p[0]==='exec'||p[0]==='mach')apply(false);}}
+  else if(b.dataset.go){const p=b.dataset.go.split(':');goId(p[0],+p[1]);}
+  else if(b.dataset.next!=null)next();
+});
+$('#win').addEventListener('change',e=>{if(e.target.id==='chk-manual'){choice.chk=e.target.checked?'1':'';const b=$('#btn-accept');if(b)b.disabled=!choice.chk;}});
+
+/* ================= windows ================= */
+const H=(t,r,b)=>'<div class="win-h"><span>'+t+'</span><span>'+(r||'')+'</span></div><div class="win-b">'+b+'</div>';
+const pt=s=>'<canvas class="pt" data-skin="'+s+'" width="24" height="24" aria-hidden="true"></canvas>';
+const head=(s,n,sub)=>'<div class="head">'+pt(s)+'<div><b>'+n+'</b><span>'+sub+'</span></div></div>';
+const prop='<span class="chip prop">propozycja</span>';
+const demoNote='<p class="note-s">Przyciski w tym oknie są poglądowe.</p>';
+const WIN={
+intro:()=>H('Stan maszyn','pon. 08:42',
+  '<h4>Maszyny</h4><ul class="ul"><li><i class="d cy"></i><b>PC z Windows</b> · pracuje od 23:30, 3 sesje</li><li><i class="d go"></i><b>Mac</b> · właśnie wybudzony</li><li><i class="d vi"></i><b>Chmura</b> · 0 sesji</li></ul>'+
+  '<h4>Jak czytać mapę</h4><ul class="ul"><li><i class="d wait"></i>Bursztynowy znacznik: agent czeka na Twoją zgodę.</li><li><i class="d bad"></i>Czerwony znacznik: sesja stoi.</li><li><i class="d ok"></i>Zielony znacznik: praca gotowa do odbioru.</li><li><i class="d"></i>Miniatura w rogu pokazuje całą mapę i położenie kamery.</li></ul>'+
+  '<p class="note-s">Strzałki na klawiaturze przełączają kroki.</p>'),
+report:()=>{
+  const sc=C('rep')==='scroll';
+  const seg='<div class="seg" role="group" aria-label="Wygląd raportu"><button type="button" data-pick="rep:scroll" class="'+(sc?'on':'')+'">Lista</button><button type="button" data-pick="rep:table" class="'+(sc?'':'on')+'">Tabela</button></div>';
+  const body=sc?
+   '<div class="scroll"><h4>Ukończone w nocy</h4><ul class="ul"><li><i class="d ok"></i><b>Codex 1</b> · apka-ios · ekran logowania, PR #17, testy 22/22</li><li><i class="d ok"></i><b>Claude 1</b> · sklep-api · rabaty w koszyku, 6 commitów</li></ul>'+
+   '<h4>Czeka na decyzję</h4><ul class="ul"><li><i class="d wait"></i><b>Claude 1</b> · zgoda na <code>npm run migrate</code> · od 06:55</li><li><i class="d wait"></i><b>Codex 1</b> · odbiór PR #17</li></ul>'+
+   '<h4>Stoi</h4><ul class="ul"><li><i class="d bad"></i><b>Claude 2</b> · landing · testy formularza, 3 z 14 nieudane · od 02:10</li></ul>'+
+   '<p class="foot">Koszt nocy: ok. 4,10 $ · 1,9 mln tokenów '+prop+'</p></div>':
+   '<div class="tblw"><table><thead><tr><th>Sesja</th><th>Projekt</th><th>Stan</th><th>Twój ruch</th></tr></thead><tbody>'+
+   '<tr><td>Claude 1</td><td>sklep-api</td><td><i class="d wait"></i> czeka od 06:55</td><td>zgoda na migrację</td></tr>'+
+   '<tr><td>Codex 1</td><td>apka-ios</td><td><i class="d ok"></i> PR #17 gotowy</td><td>odbiór</td></tr>'+
+   '<tr><td>Claude 2</td><td>landing</td><td><i class="d bad"></i> stoi od 02:10</td><td>wskazówka</td></tr>'+
+   '</tbody></table></div><p class="note-s">Tabela pokazuje tylko sprawy, które wymagają Twojego ruchu. Zadania ukończone bez pytań są na liście.</p>';
+  return H('Raport poranny','pon. 08:43',seg+body);
+},
+agent:()=>H('Karta sesji','stoi',
+  head('claude','Claude 2','Claude Code · PC z Windows')+
+  '<dl class="kv"><dt>Projekt</dt><dd>landing</dd><dt>Etap</dt><dd>Testy</dd><dt>Stan</dt><dd><i class="d bad"></i> stoi od 02:10</dd><dt>Zadanie</dt><dd>formularz kontaktowy</dd></dl>'+
+  '<h4>Ostatnie zdarzenia</h4><div class="pre">02:10  npm test   3/14 nieudane\n02:31  npm test   3/14 nieudane\n02:58  npm test   3/14 nieudane\n03:02  koniec tury, brak pytań</div>'+
+  '<div class="acts"><button type="button" class="btn sm go">Otwórz sesję</button><button type="button" class="btn sm">Daj wskazówkę</button><button type="button" class="btn sm no">Zatrzymaj</button></div>'+demoNote),
+waiting:()=>H('Czeka na decyzję','od 06:55',
+  head('claude','Claude 1','Claude Code · sklep-api · PC')+
+  '<p>Sesja chce uruchomić <code>npm run migrate</code>.</p>'+
+  '<ul class="tl"><li><b>06:55</b>Prośba o zgodę i powiadomienie na telefon. Bez odpowiedzi.</li><li><b>07:05</b>Hak przestał czekać. W sesji pojawiło się standardowe pytanie o zgodę.</li><li class="bad"><b>07:55</b>Prośba wygasła i zniknęła z listy.</li><li class="okk"><b>08:43</b>Raport przypomina, że sesja nadal czeka. Odpowiadasz w tej sesji przez Remote Control.</li></ul>'+
+  '<div class="acts"><button type="button" class="btn go" data-go="zgoda:0">Zobacz, jak działa zgoda ▶</button></div>'),
+sum:()=>H('Wymagania','raport poranny',
+  '<ul class="ul"><li><i class="d ok"></i><b>Panel na PC.</b> Mac jest w nocy uśpiony, więc nie zbierałby zdarzeń.</li><li><i class="d ok"></i><b>Adaptery na PC.</b> Haki Claude Code i <code>notify</code> Codexa zgłaszają każdą zmianę stanu.</li><li><i class="d ok"></i><b>Tailscale.</b> Mac i iPhone mają dostęp do panelu bez wystawiania go do internetu.</li><li><i class="d wait"></i><b>Okno raportu.</b> Dane są dostępne, ekranu jeszcze nie ma.</li></ul>'+
+  '<p class="note-s">Zielone punkty mają kod w forku. Bursztynowy to propozycja.</p>'),
+gate:()=>H('Bramka zgód','10:14',
+  '<dl class="kv"><dt>Sesja</dt><dd>Claude 1 · sklep-api · PC</dd><dt>Narzędzie</dt><dd>Bash</dd><dt>Komenda</dt><dd><code>npm run migrate</code></dd><dt>Reguła</dt><dd><span class="chip rule">migrate</span> z Karty projektu</dd><dt>Wynik</dt><dd><i class="d wait"></i> prośba #42, sesja czeka</dd></dl>'+
+  '<p class="note-s">Komendy, które nie pasują do żadnej reguły, przechodzą bez pytania. Bramka nie spowalnia zwykłej pracy.</p>'),
+herald:()=>H('Powiadomienie','10:15',
+  '<p>Jedna prośba, trzy miejsca:</p><ul class="ul"><li><i class="d vi"></i><b>iPhone</b> · powiadomienie z przyciskami</li><li><i class="d go"></i><b>Panel w Claude</b> · lista próśb obok rozmowy</li><li><i class="d cy"></i><b>Panel w przeglądarce</b> · zakładka z prośbami</li></ul>'+
+  '<div class="note" style="margin-top:10px"><div class="app"><span>PANEL AGENTÓW</span><span>teraz</span></div><b>Claude 1 prosi o zgodę</b>sklep-api: npm run migrate</div>'+
+  '<p class="note-s">Odpowiedź w jednym miejscu zamyka prośbę we wszystkich.</p>'),
+petition:()=>H('Prośba o zgodę #42','wygasa za 58 min',
+  head('claude','Claude 1','Claude Code · sklep-api · PC')+
+  '<span class="lbl">Komenda</span><div class="field"><code>npm run migrate</code></div>'+
+  '<span class="lbl">Uzasadnienie od agenta</span><p>Nowa kolumna discount_code w tabeli orders. Bez migracji testy koszyka nie przejdą.</p>'+
+  '<span class="lbl">Reguła</span><p><span class="chip rule">migrate</span> Karta projektu, „wymaga zgody”</p>'+
+  '<span class="lbl">Ryzyko '+prop+'</span><p>Zmienia schemat bazy deweloperskiej. Da się cofnąć przez migrate:down.</p>'+
+  '<div class="acts"><button type="button" class="btn ok" data-pick="pet:approve" data-next>Zatwierdź</button><button type="button" class="btn no" data-pick="pet:reject" data-next>Odrzuć</button></div>'),
+petres:()=>{const ok=C('pet')==='approve';return H('Prośba o zgodę #42',ok?'zatwierdzona':'odrzucona',
+  '<p><i class="d '+(ok?'ok':'bad')+'"></i> '+(ok?'Zatwierdzono o 10:16. Sesja kontynuuje pracę.':'Odrzucono o 10:16. Agent dostał powód i zmienia plan.')+'</p>'+
+  '<span class="lbl">Odpowiedź haka do Claude Code</span><div class="pre">{\n  "hookSpecificOutput": {\n    "hookEventName": "PreToolUse",\n    "permissionDecision": "'+(ok?'allow':'deny')+'"'+(ok?'':',\n    "permissionDecisionReason": "Odrzucone w panelu"')+'\n  }\n}</div>'+
+  '<div class="acts"><button type="button" class="btn sm" data-go="zgoda:2">◀ Zmień decyzję</button></div>');},
+timeline:()=>H('Brak odpowiedzi','prośba o zgodę',
+  '<ul class="tl"><li><b>0 min</b>Prośba powstaje. Powiadomienie idzie na telefon i do panelu.</li><li><b>10 min</b>Hak przestaje czekać. Claude Code pokazuje standardowe pytanie o zgodę w sesji.</li><li class="bad"><b>60 min</b>Prośba wygasa i znika z listy.</li><li class="okk"><b>Zawsze</b>Brak odpowiedzi nigdy nie jest zgodą. Sesja czeka.</li></ul>'),
+phone:()=>H('iPhone','ekran blokady',
+  '<div class="phone"><div class="time">17:39</div><div class="date">poniedziałek, 9 listopada</div>'+
+  '<div class="note"><div class="app"><span>PANEL AGENTÓW</span><span>teraz</span></div><b>Claude 1 prosi o zgodę</b>sklep-api: wdrożenie na staging</div></div>'),
+phone2:()=>H('iPhone','ekran blokady',
+  '<div class="phone"><div class="time">17:40</div><div class="date">poniedziałek, 9 listopada</div>'+
+  '<div class="note"><div class="app"><span>PANEL AGENTÓW</span><span>1 min temu</span></div><b>Claude 1 prosi o zgodę</b>sklep-api: <code>npm run deploy:staging</code><br>Rabaty w koszyku, testy 48/48 zaliczone.'+
+  '<div class="acts"><button type="button" class="btn sm ok" data-pick="tel:approve" data-next>Zatwierdź</button><button type="button" class="btn sm no" data-pick="tel:reject" data-next>Odrzuć</button><button type="button" class="btn sm" data-go="telefon:3">Otwórz sesję</button></div></div></div>'),
+telres:()=>{const ok=C('tel')==='approve';return H('Droga decyzji','17:40',
+  '<p><i class="d '+(ok?'ok':'bad')+'"></i> '+(ok?'Zatwierdzone z ekranu blokady.':'Odrzucone z ekranu blokady.')+'</p>'+
+  '<div class="chain"><span>iPhone</span><i>▶</i><span>Tailscale</span><i>▶</i><span>panel na PC</span><i>▶</i><span>hak w sesji</span></div>'+
+  '<p class="note-s">'+(ok?'Wdrożenie zostało uruchomione. Wynik będzie w następnym raporcie albo w kolejnym powiadomieniu.':'Sesja czeka. Wdrożenie wróci jako punkt w jutrzejszym raporcie.')+'</p>'+
+  '<div class="acts"><button type="button" class="btn sm" data-go="telefon:1">◀ Zmień decyzję</button></div>');},
+remote:()=>H('iPhone','rozmowa z sesją',
+  '<div class="phone"><div class="chat"><div class="m"><b>Claude 1</b> Są dwa sposoby na eksport: strumień albo plik tymczasowy. Który wybrać?</div><div class="m me">Strumień. Pliki tymczasowe zostają po awarii.</div><div class="m"><b>Claude 1</b> Wdrażam strumień. Zgłoszę pracę do odbioru.</div><div class="in">Napisz do sesji…</div></div></div>'+
+  '<p class="note-s">Panel nie buduje własnego czatu. Otwiera istniejącą sesję w aplikacji Claude.</p>'),
+order:()=>{
+  const sg=(k,opts)=>'<div class="seg" role="group">'+opts.map(o=>'<button type="button" data-pick="'+k+':'+o[0]+'" class="'+(C(k)===o[0]?'on':'')+'">'+o[1]+'</button>').join('')+'</div>';
+  return H('Nowe zlecenie','11:02',
+  '<span class="lbl">Projekt</span><div class="field">sklep-api</div>'+
+  '<span class="lbl">Treść</span><div class="field">Dodaj eksport zamówień do CSV.</div>'+
+  '<span class="lbl">Wykonawca</span><p>'+sg('exec',[['claude','Claude Code'],['codex','Codex']])+'</p>'+
+  '<span class="lbl">Maszyna</span><p>'+sg('mach',[['pc','PC Windows'],['mac','Mac'],['cloud','Chmura']])+'</p>'+
+  '<div class="acts"><button type="button" class="btn go" data-next>Wyślij zlecenie ▶</button></div>'+
+  '<p class="note-s">Wybór zmienia kolor i podpis nowej sesji w następnych krokach.</p>');},
+charter:()=>H('Karta projektu','sklep-api',
+  '<div class="scroll" style="margin-top:0"><h4>Cel</h4><p>API sklepu: koszyk, zamówienia, płatności testowe.</p>'+
+  '<h4>W zakresie</h4><p>Endpointy zamówień, eksporty, testy.</p>'+
+  '<h4>Poza zakresem</h4><p>Panel administratora, baza produkcyjna.</p>'+
+  '<h4>Ukończone gdy</h4><p>Testy zaliczone, PR otwarty z opisem, brak zmian poza zakresem.</p>'+
+  '<h4>Autonomia</h4><p><span class="pips"><i class="on"></i><i class="on"></i><i></i></span> &nbsp;2 z 3: pyta przy ryzykownych komendach.</p>'+
+  '<h4>Wymaga zgody</h4><p><code>git push --force</code> <code>rm -rf</code> <code>DROP TABLE</code> <code>deploy</code> <code>migrate</code></p></div>'+
+  '<p class="note-s">Plik <code>KARTA.md</code> w repozytorium projektu.</p>'),
+run1:()=>WIN.run(1),run2:()=>WIN.run(2),
+run:n=>{
+  const cloud=C('mach')==='cloud';
+  const cmd=cloud?'sesja w chmurze, repozytorium z GitHuba':'<code>'+(C('exec')==='codex'?'codex exec "Dodaj eksport zamówień do CSV"':'claude -p "Dodaj eksport zamówień do CSV"')+'</code>';
+  const cls=i=>i<n?'done':i===n?'now':'';
+  return H('Zlecenie #7',n===1?'plan':'w pracy',
+  head('emil',emilN(),EXEC[C('exec')]+' · '+MACH[C('mach')])+
+  '<div class="steps4"><span class="'+cls(0)+'">Przyjęte</span><span class="'+cls(1)+'">Plan</span><span class="'+cls(2)+'">Praca</span><span class="'+cls(3)+'">Odbiór</span></div>'+
+  '<dl class="kv"><dt>Projekt</dt><dd>sklep-api</dd><dt>Etap</dt><dd>'+(n===1?'Planowanie':'Kod')+'</dd><dt>Start</dt><dd>'+cmd+'</dd></dl>'+
+  (C('exec')==='codex'?'<p class="note-s">Codex nie ma bramki na komendy. Reguły zgody z Karty działają u niego tylko jako instrukcja.</p>':'<p class="note-s">Reguły zgody z Karty działają od pierwszej komendy.</p>'));},
+review:()=>H('Odbiór · PR #17','apka-ios',
+  head('codex','Codex 1','Codex · apka-ios · PC')+
+  '<span class="lbl">Ukończone gdy (z Karty)</span>'+
+  '<div class="chk"><i class="box"></i><span>Testy zaliczone: 22 z 22</span></div>'+
+  '<div class="chk"><i class="box"></i><span>PR otwarty z opisem</span></div>'+
+  '<div class="chk"><i class="box"></i><span>Brak zmian poza zakresem</span></div>'+
+  '<label class="chk" for="chk-manual"><input type="checkbox" id="chk-manual"'+(choice.chk?' checked':'')+'><span>Sprawdziłem logowanie na iPhonie <b>(ręcznie)</b></span></label>'+
+  '<div class="acts"><button type="button" class="btn ok" id="btn-accept" data-pick="odb:accept" data-next'+(choice.chk?'':' disabled')+'>Przyjmij</button><button type="button" class="btn no" data-pick="odb:fix" data-next>Do poprawki</button></div>'+
+  '<p class="note-s">„Przyjmij” odblokuje się po zaznaczeniu punktu ręcznego.</p>'),
+revres:()=>{const ok=C('odb')==='accept';return H(ok?'Przyjęte':'Do poprawki','18:24',ok?
+  '<p><i class="d ok"></i> <b>apka-ios</b>: zamknięte zadania 4/8 ▶ 5/8</p><div class="xp"><i style="width:62.5%"></i></div>'+
+  '<ul class="ul"><li><i class="d ok"></i>PR #17 oznaczony jako przyjęty</li><li><i class="d go"></i>licznik projektu na mapie: 5/8</li><li><i class="d"></i>Codex 1 bez zadania, czeka na zlecenie</li></ul>'+
+  '<div class="acts"><button type="button" class="btn sm" data-go="odbior:0">◀ Zmień decyzję</button></div>':
+  '<p><i class="d wait"></i> Uwagi wróciły do sesji Codex 1.</p><div class="xp"><i style="width:50%"></i></div>'+
+  '<ul class="ul"><li><i class="d"></i>licznik zadań bez zmian: 4/8</li><li><i class="d wait"></i>Codex 1 wraca do kodu</li></ul>'+
+  '<div class="acts"><button type="button" class="btn sm" data-go="odbior:0">◀ Zmień decyzję</button></div>');},
+night:()=>H('Tryb nocny','22:30',
+  '<ul class="ul"><li><i class="d cy"></i><b>PC z Windows</b> · pracuje dalej, sesje pozostają aktywne</li><li><i class="d go"></i><b>Mac</b> · uśpiony</li><li><i class="d vi"></i><b>Powiadomienia</b> · w nocy tylko pilne '+prop+'</li><li><i class="d ok"></i><b>Rano</b> · „proszę raport”</li></ul>')
+};
+
+/* ================= docs ================= */
+function buildDocs(){
+  const SCREENS=[
+    ['Raport poranny','Lista albo tabela: ukończone, czeka, stoi.','raport:2'],
+    ['Karta sesji','Projekt, etap, stan i ostatnie zdarzenia.','raport:3'],
+    ['Prośba o zgodę','Komenda, uzasadnienie, reguła i dwa przyciski.','zgoda:2'],
+    ['Oś czasu zgody','Co się dzieje przy braku odpowiedzi.','zgoda:4'],
+    ['Powiadomienie','Decyzja z ekranu blokady iPhone’a.','telefon:1'],
+    ['Rozmowa z sesją','Gdy przycisk nie wystarcza.','telefon:3'],
+    ['Nowe zlecenie','Projekt, wykonawca, maszyna.','zlecenie:0'],
+    ['Karta projektu','Zakres, definicja ukończenia, reguły zgody.','zlecenie:1'],
+    ['Odbiór','Lista kontrolna z Karty i licznik zadań.','odbior:0']
+  ];
+  const box=$('#screens');
+  SCREENS.forEach(s=>{const c=el('div','card','<h3>'+s[0]+'</h3><p>'+s[1]+'</p>');const b=el('button','btn sm go');b.type='button';b.textContent='Pokaż ▶';b.onclick=()=>{const p=s[2].split(':');goId(p[0],+p[1]);$('#tabs').scrollIntoView({behavior:RM?'auto':'smooth',block:'start'});};c.appendChild(b);box.appendChild(c);});
+  /* mapa */
+  const mc=$('#mapcv').getContext('2d');mc.imageSmoothingEnabled=false;
+  buildPlants({e1:4,e2:4,e3:2});paint(mc,0,0,WW,WH,false);
+  const map=$('#map');
+  const lab=(cls,t,x,y)=>{const e=el('div','tag '+cls);e.textContent=t;e.style.left=(x/WW*100)+'%';e.style.top=(y/WH*100)+'%';map.appendChild(e);};
+  for(const k in B)lab('b',B[k].n,B[k].x,B[k].y-SPR[k].ay-1);
+  for(const k in E)lab('e',E[k].n+' · '+({e1:4,e2:4,e3:2})[k]+'/8',E[k].x,E[k].y-47);
+  lab('b','Chmura',SHIP.x-26,SHIP.y-36);
+  /* legendy */
+  const item=(box,cv2,n,d)=>{const li=el('div','li');li.appendChild(cv2);li.appendChild(el('div','', '<b>'+n+'</b><span>'+d+'</span>'));box.appendChild(li);};
+  const spriteCv=(fr,w,h,sc)=>{const c=document.createElement('canvas');c.width=w;c.height=h;c.style.width=w*sc+'px';c.style.height=h*sc+'px';const x=c.getContext('2d');x.drawImage(fr,0,0);return c;};
+  for(const k in B)item($('#legB'),spriteCv(SPR[k].f[0],SPR[k].w,SPR[k].h,k==='castle'||k==='arena'?1:1),B[k].n,B[k].d);
+  const who=[['claude','Claude Code','kolor czerwony'],['codex','Codex','kolor zielony'],['you','Ty','kolor złoty'],['kanc','Asystent','Claude w Twojej sesji, podaje raport'],['sprite','Prośba','w drodze do wysyłki powiadomień']];
+  who.forEach(w=>item($('#legA'),spriteCv(HERO[w[0]][1],12,16,3),w[1],w[2]));
+  const bub=[['ask','Czeka na zgodę','prośba o zgodę albo pytanie w sesji'],['block','Stoi','zablokowana, sama nie wyśle powiadomienia'],['done','Gotowe','czeka na odbiór'],['wait','Czeka','na Twój powrót'],['rest','Bez zadania','sesja wolna']];
+  bub.forEach(b=>{const c=document.createElement('canvas');c.width=13;c.height=14;c.style.width='39px';c.style.height='42px';drawBubble(c.getContext('2d'),6,13,b[0],false);item($('#legS'),c,b[1],b[2]);});
+  [['#7fe3ff','PC z Windows','błękitna kreska pod nazwą'],['#e2b347','Mac','złota kreska pod nazwą'],['#c9a7ff','Chmura','fioletowa kreska pod nazwą']].forEach(m=>{const c=document.createElement('canvas');c.width=13;c.height=14;c.style.width='39px';c.style.height='42px';const x=c.getContext('2d');x.fillStyle='#05070f';x.fillRect(1,4,11,6);x.fillStyle='#f2ecdc';x.fillRect(3,6,7,1);x.fillStyle=m[0];x.fillRect(1,10,11,2);item($('#legS'),c,m[1],m[2]);});
+}
+
+/* ================= boot ================= */
+function fit(){
+  const w=stage.clientWidth;if(!w)return;
+  const s=Math.max(1,Math.floor(w/300));
+  VW=Math.min(WW,Math.floor(w/s));VH=Math.min(WH,Math.round(VW*(s===1?.62:.5625)));
+  cv.width=VW;cv.height=VH;view.style.width=VW*s+'px';view.style.height=VH*s+'px';
+  stage.classList.toggle('s1',s===1);snap=true;
+}
+buildGround();buildDecor();buildTags();buildDocs();
+const tabs=$('#tabs');
+SC.forEach((sc,i)=>{const b=el('button','tab');b.type='button';b.setAttribute('role','tab');b.innerHTML=sc.n+'<small>'+sc.sub+'</small>';b.onclick=()=>go(i,0,false);tabs.appendChild(b);});
+fit();
+if(window.ResizeObserver)new ResizeObserver(fit).observe(stage);else window.addEventListener('resize',fit);
+const h0=(location.hash||'').slice(1);
+const s0=SC.findIndex(q=>q.id===h0);
+go(s0>=0?s0:0,0,false);
+window.addEventListener('hashchange',()=>{const id=(location.hash||'').slice(1),s=SC.findIndex(q=>q.id===id);if(s>=0&&s!==cur.s)go(s,0,false);});
+requestAnimationFrame(frame);
+})();
+
+</script>

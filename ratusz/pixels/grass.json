@@ -1,0 +1,35 @@
+{
+ "name": "grass",
+ "w": 16,
+ "h": 16,
+ "anchor": [
+  8,
+  15
+ ],
+ "palette": {
+  "A": "#a9d65a",
+  "B": "#8bc34a",
+  "C": "#6ea93b",
+  "D": "#4f8a2b"
+ },
+ "frames": [
+  [
+   "BBBBBBBBBBBBBBBA",
+   "BBBBBBBBBCCABABB",
+   "BBBBBBBABBBDCDBB",
+   "BBCCBBBBBBBBDBBB",
+   "BBBABABBBBBBBBBB",
+   "BBBDCDBBBBBBBBBB",
+   "BBBBDBBCBBBBBCCB",
+   "BBBBBBBBABABBBBB",
+   "BABBBBBBDCDBBBBB",
+   "BBBBBBBBBDBBBBBB",
+   "BBBBBCCBBBBBBABA",
+   "BABABBBBBBBBBDCD",
+   "BDCDBBBBBBBCCBDB",
+   "BBDBBBBBBBBBBBBB",
+   "CBBBBBABBBBBBBBC",
+   "BBBBBBBBBBBABBBB"
+  ]
+ ]
+}

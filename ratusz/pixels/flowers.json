@@ -1,0 +1,29 @@
+{
+ "name": "flowers",
+ "w": 8,
+ "h": 8,
+ "anchor": [
+  4,
+  7
+ ],
+ "palette": {
+  "y": "#ffd36b",
+  "w": "#ffffff",
+  "p": "#f29bc0",
+  "c": "#ff9b3d",
+  "g": "#4f8a2b",
+  "l": "#a9d65a"
+ },
+ "frames": [
+  [
+   ".y...w..",
+   "ycy.wcw.",
+   ".y...w..",
+   ".g...g..",
+   ".gl.pgl.",
+   "..gpcp..",
+   ".lg.pg..",
+   "..g.g.g."
+  ]
+ ]
+}

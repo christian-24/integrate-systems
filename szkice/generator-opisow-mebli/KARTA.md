@@ -1,0 +1,73 @@
+# Opisarnia (generator opisów mebli)
+
+- faza: marketing
+- klient: nie
+- próg: pełna
+- stan: aktywny
+- maszyna: pc
+- repozytorium: PC `C:\Users\Guest\Desktop\generator-opisow-mebli` (gałąź feat/pokaz-opisarnia, 778 niezacommitowanych zmian); kopia na Macu nieaktualna (2026-06-21)
+
+Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`). Od 21.06: 101 commitów na master (PR #60–#134),
+ostatni commit 2026-11-05; w 14 dniach do 14.11: 38 commitów i 8 sesji Claude.
+Odpowiedzi właściciela z 2026-11-14: produkcja aktualna (deploy #126–#134, silnik Haiku działa od 13.11), JDG w CEIDG, Stripe live działa.
+Faza od 2026-11-14: marketing — promocja produktu i ocena zwrotu.
+
+Karta jest umową między właścicielem a agentami pracującymi w tym projekcie. Agent czyta ją na początku każdej sesji.
+
+## Cel
+Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla generuje gotowe opisy produktowe po polsku i po niemiecku, dopasowane do wymogów marketplace'u (Allegro, Empik, Mirakl/XXXLutz). Jest przeznaczona dla polskich sprzedawców mebli, zwłaszcza eksportujących do Niemiec, i ma skrócić im czas wystawiania ofert oraz poprawić jakość opisów. Pierwszym celem jest walidacja popytu przez darmowy generator i listę mailową, a potem pierwszy płacący klient.
+
+## Zakres
+- Generator opisu PL i DE z atrybutów mebla, z profilem marketplace (ogólny, Allegro), edycją wyniku, kopiowaniem i eksportem CSV.
+- Konto użytkownika: rejestracja z weryfikacją e-mail, logowanie (cookie httpOnly), onboarding, ustawienia, historia opisów (Centrum opisów).
+- Limity: 1 darmowy opis dla anonima, limit planu dla zalogowanego, quota egzekwowana przed wywołaniem LLM.
+- Płatności: Stripe Billing (subskrypcje, Customer Portal, webhooki), faktury lokalne z interfejsem pod KSeF; plany Free/Solo/Pro/Max (0/49/149/399 zł).
+- Import katalogu (CSV/XLSX) z mapowaniem kolumn i generacja wsadowa (Celery), tabela wyników.
+- RODO: retencja historii 90 dni, eksport i usunięcie konta, anonimizacja faktur.
+- Warstwa LLM za jednym interfejsem `LLMProvider.generate(attrs, lang, marketplace)`; od 13.11 silnik Claude Haiku z zapasowym Mistralem (ADR 0045); harness ewaluacji i strojenia promptu offline.
+- Eksport pod Allegro i ZIP, EAN/GTIN, korektor anty-halucynacyjny, landing z komodą 3D; analiza zdjęć ZDJ-1 za flagą.
+- Marketing walidacyjny: posty LinkedIn (publikacja ręczna) i outreach wyłącznie do osób ze zgodą.
+
+## Poza zakresem
+- Wypychanie ofert przez API marketplace'ów (tylko eksport i kopiowanie).
+- Analiza zdjęć i automatyczne atrybuty poza ZDJ-1 za flagą (ZDJ-5 tylko po decyzji „go”).
+- Integracja z ERP i BaseLinkerem.
+- Pełne mapowanie taksonomii kategorii Mirakla.
+- Aplikacja natywna (tylko responsywny web).
+
+## Definicja ukończenia
+- Użytkownik wpisuje atrybuty i w mniej niż 10 s dostaje sensowny opis PL i DE, który kopiuje na Allegro (plan projektu, sekcja 1).
+- Płaci, gdy przekroczy darmowy limit: płatność przez Stripe w trybie produkcyjnym działa.
+- Aplikacja działa produkcyjnie na Hetzner (region DE) z HTTPS, monitoringiem błędów, monitoringiem dostępności i nocnym backupem z testem przywrócenia.
+- Audyt bezpieczeństwa SEC-1..SEC-5 zamknięty (CRITICAL i HIGH naprawione) przed wejściem płacących użytkowników.
+- Walidacja do 2026-12-23 (plan z 27.10, zastąpił bramkę 200 adresów z ADR 0001): 40 kont Free, 20 aktywnych, 3 płacących.
+  Checkpoint 2026-11-30: przy mniej niż 10 kontach zmiana kanałów.
+
+## Zasady pracy agentów
+- Poziom swobody: 2 (agent pracuje sam, pyta przed operacjami ryzykownymi).
+- Wymagają zgody właściciela: wdrożenie, publikacja, wysyłka wiadomości, migracja danych, `git push --force`, usuwanie danych, wydatki.
+- Merge PR robi właściciel albo auto-merge przy zielonym CI; znalezisko CRITICAL z audytu bezpieczeństwa wymaga akceptacji właściciela przed mergem.
+- Agent nie publikuje postów i nie wysyła maili; przygotowuje drafty. Mailing tylko do adresów z udokumentowaną zgodą (rejestr zgód).
+- Twarde zasady techniczne z CLAUDE.md projektu: log generacji z kosztem per użytkownik, quota i limit długości wejścia przed wywołaniem LLM, brak sekretów w repo, provider LLM tylko za interfejsem, płatności tylko realnie przez Stripe.
+- Stan pracy agent zapisuje w ZADANIA.md, decyzje w DECYZJE.md.
+
+## Zasoby i ograniczenia
+- Właściciel buduje solo, po godzinach; priorytet: szybkie MVP, walidacja, niskie koszty stałe.
+- Usługi: GitHub (repo, CI), Hetzner Cloud CX22, Cloudflare DNS, Stripe (live), Anthropic API (Haiku), Mistral API (zapas), Sentry, UptimeRobot, OpenAI (tylko sędzia w ewaluacji offline), domena opisarnia.pl.
+- Koszt stały szacowany w planie na ok. 800–1 100 zł/mc przy 80 płacących.
+- Praca toczy się na PC; kopia na Macu wymaga `git pull`.
+- Marketing: plan publikacji T1–T8 na 03.11–23.12; 10.11 zaplanowano 3 publikacje (LinkedIn, Facebook, Reels) i filmy o przejściu na modele Anthropic.
+- JDG zarejestrowana, Stripe w trybie live (potwierdził właściciel 2026-11-14).
+- _Do uzupełnienia: budżet na promocję._
+
+## Pytania do właściciela
+1. Czy przyjmujesz terminy etapów: deploy #126–#134 z kluczem Anthropic 17.11, test płatności za 2 zł 17.11, checkpoint 30.11, go/no-go 23.12, ZDJ-5 tylko po „go” w styczniu 2027?
+   Odpowiedź: tak
+2. Czy po 06.11 był deploy #126–#134 i czy backend produkcyjny ma klucz Anthropic (przełączenie silnika miało ruszyć 13.11)?
+   Odpowiedź: tak i ruszylo
+3. Czy JDG jest w CEIDG i czy Stripe działa w trybie live?
+   Odpowiedź: Tak
+4. Faza: zostaje „budowa”, czy przechodzimy na „utrzymanie + walidacja” (rekomendacja z 27.10)?
+   Odpowiedź: Tak, powinnismy zarządzać marketingiem i może pójść w rozpromowanie produktu i jego potencjalny zwrot
+5. Co jest w 778 niezacommitowanych zmianach na gałęzi `feat/pokaz-opisarnia` i czy ta gałąź ma trafić na origin?
+   Odpowiedź: Pokaz to było nowy widok i poc, docelowo jeszcze będzie rozwijane ale nadal UI mnie się nie podobało wiec trzeba będzie to podrasować

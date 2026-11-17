@@ -1,0 +1,44 @@
+{
+ "name": "tree",
+ "w": 16,
+ "h": 20,
+ "anchor": [
+  8,
+  18
+ ],
+ "palette": {
+  "o": "#1b1b2a",
+  "A": "#a9d65a",
+  "B": "#8bc34a",
+  "C": "#6ea93b",
+  "D": "#4f8a2b",
+  "E": "#3b6b22",
+  "w": "#8a5a34",
+  "W": "#5e3b22",
+  "s": "#00000055"
+ },
+ "frames": [
+  [
+   ".....ooAAoo.....",
+   "...ooAAABBBo....",
+   "..oAAABBBCCBo...",
+   ".oAABBBBCCCBBo..",
+   ".oABBABCCDDCCCo.",
+   ".oBBBCCCDDCCCDo.",
+   ".oBBCCCDDCCDDCo.",
+   "oAACCDDAACDDDBo.",
+   "oAABDAAABBDBBCCo",
+   "oBBBCABBBBCBCCCo",
+   "oBBCABBBCECCCDDo",
+   ".oCCBBBCCCDCEDo.",
+   "..oDDBECDDDDDDo.",
+   "...oCCCDDDDDoo..",
+   "....ooDDDWoo....",
+   ".....owwWWo.....",
+   ".....owwWWo.....",
+   ".....owwWWo.....",
+   "...sssoooosss...",
+   "....ssssssss...."
+  ]
+ ]
+}

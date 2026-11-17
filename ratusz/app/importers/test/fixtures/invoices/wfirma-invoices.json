@@ -1,0 +1,7 @@
+{"invoices":{
+ "0":{"invoice":{"id":"5001","fullnumber":"FV 1/2026","type":"normal","date":"2026-10-06","total":"615.00","currency":"PLN","contractor":{"id":"1","name":"Klient Pierwszy"}}},
+ "1":{"invoice":{"id":"5002","fullnumber":"PRO 1/2026","type":"proforma","date":"2026-10-05","total":"100.00","currency":"PLN","contractor":{"name":"Proforma"}}},
+ "2":{"invoice":{"id":"5003","fullnumber":"FV 2/2026","type":"normal","date":"2026-10-04","total":"20.00","currency":"USD","contractor":{"name":"Client Third"}}},
+ "3":{"invoice":{"id":"5004","fullnumber":"FV 0/2026","type":"normal","date":"2026-06-04","total":"20.00","currency":"PLN","contractor":{"name":"Stary"}}},
+ "parameters":{"limit":"100","page":"1","total":"4"}},
+ "status":{"code":"OK"}}

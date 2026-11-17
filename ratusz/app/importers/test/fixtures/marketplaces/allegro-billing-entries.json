@@ -1,0 +1,5 @@
+{"billingEntries":[
+{"id":"bill-1","occurredAt":"2026-03-10T10:20:00.000Z","type":{"id":"SUC","name":"Opłata za sprzedaż"},"offer":{"id":"111","name":"Stolik dębowy"},"value":{"amount":"-18.45","currency":"PLN"},"tax":{"percentage":"23.00"},"balance":{"amount":"-18.45","currency":"PLN"},"order":{"id":"ord-1"}},
+{"id":"bill-2","occurredAt":"2026-03-09T09:00:00.000Z","type":{"id":"REF","name":"Zwrot opłaty"},"value":{"amount":"3.00","currency":"PLN"}},
+{"id":"bill-old","occurredAt":"2026-01-02T09:00:00.000Z","type":{"id":"LIS","name":"Opłata za wystawienie"},"value":{"amount":"-1.00","currency":"PLN"}}
+]}

@@ -1,0 +1,4 @@
+{"expenses":{
+ "0":{"expense":{"id":"6001","fullnumber":"FZ 77/2026","date":"2026-10-03","total":"123.00","currency":"PLN","contractor":{"name":"Dostawca Energii"}}},
+ "parameters":{"limit":"100","page":"1","total":"1"}},
+ "status":{"code":"OK"}}

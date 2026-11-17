@@ -1,0 +1,7 @@
+{"paymentOperations":[
+{"id":"op-1","type":"CONTRIBUTION","group":"INCOME","wallet":{"type":"AVAILABLE","paymentOperator":"PAYU"},"value":{"amount":"249.90","currency":"PLN"},"occurredAt":"2026-03-10T10:15:00.000Z","participant":{"login":"kupujacy_1"},"payment":{"id":"pay-100"}},
+{"id":"op-2","type":"PAYOUT","group":"OUTCOME","wallet":{"type":"AVAILABLE","paymentOperator":"PAYU"},"value":{"amount":"-200.00","currency":"PLN"},"occurredAt":"2026-03-09T08:00:00.000Z"},
+{"id":"op-3","type":"REFUND_CHARGE","group":"REFUND","wallet":{"type":"AVAILABLE","paymentOperator":"PAYU"},"value":{"amount":"-50.00","currency":"PLN"},"occurredAt":"2026-03-08T12:00:00.000Z","participant":{"login":"kupujacy_2"},"payment":{"id":"pay-90"}},
+{"id":"op-old","type":"CONTRIBUTION","group":"INCOME","value":{"amount":"10.00","currency":"PLN"},"occurredAt":"2026-01-01T12:00:00.000Z"},
+{"type":"CONTRIBUTION","group":"INCOME","value":{"amount":"1.00","currency":"PLN"},"occurredAt":"2026-03-07T12:00:00.000Z"}
+],"count":5,"totalCount":5}

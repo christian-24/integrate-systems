@@ -1,0 +1,13 @@
+{
+  "name": "ratusz-mods",
+  "owner": {
+    "name": "Krystian Stryjakiewicz"
+  },
+  "plugins": [
+    {
+      "name": "ratusz",
+      "source": "./"
+    }
+  ],
+  "description": "Ratusz: Agent Quest z petycjami, kartami posiadłości i portem dla innych maszyn."
+}

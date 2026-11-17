@@ -1,0 +1,48 @@
+{
+ "name": "pine",
+ "w": 16,
+ "h": 24,
+ "anchor": [
+  8,
+  22
+ ],
+ "palette": {
+  "o": "#1b1b2a",
+  "H": "#3f9a6e",
+  "L": "#3f9a6e",
+  "M": "#2e7d5b",
+  "D": "#1f5f45",
+  "N": "#14453a",
+  "w": "#8a5a34",
+  "W": "#5e3b22",
+  "s": "#00000055"
+ },
+ "frames": [
+  [
+   ".......o........",
+   "......oMo.......",
+   "......oMo.......",
+   ".....oHMDo......",
+   ".....oLMDo......",
+   "....oLLMDDo.....",
+   "....oLLDDDo.....",
+   "....oHNDDNo.....",
+   "...oLNMNNDDo....",
+   "...oLLHMMDDo....",
+   "..oLLLMDDDDDo...",
+   "..oLHNMDNDDo....",
+   "...oNLNNMNNo....",
+   "..oLLLMMMDDDo...",
+   ".oLLLLDDDDDDDo..",
+   ".oLHNLDNDDNDDo..",
+   "..oNHNNMNNDNo...",
+   ".oLLLLMMMMDDDo..",
+   "oLLLLMDDDDDDDDo.",
+   "oLLoLMowWoDDoDo.",
+   ".oo.ooowWWoo.o..",
+   ".....owwWWo.....",
+   "...sssoooosss...",
+   "....ssssssss...."
+  ]
+ ]
+}

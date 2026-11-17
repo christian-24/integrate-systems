@@ -1,0 +1,4 @@
+﻿Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+CARD_PAYMENT,Current,2026-04-01 09:15:00,2026-04-02 10:00:00,Hosting Co,-20.00,0.00,EUR,COMPLETED,480.00
+TOPUP,Current,2026-04-03 12:00:00,2026-04-03 12:00:05,"Payment from Client, Ltd",100.00,1.50,EUR,COMPLETED,578.50
+CARD_PAYMENT,Current,2026-04-04 12:00:00,,Declined Shop,-9.00,0.00,EUR,DECLINED,

@@ -1,0 +1,28 @@
+{
+  "_uwaga": "Przykładowe wydarzenia. Panel pokazuje je tylko wtedy, gdy nie ma dostępu do prawdziwego kalendarza.",
+  "calendars": [
+    {"id": "praca", "title": "Praca", "color": "#7fe3ff"},
+    {"id": "dom", "title": "Dom", "color": "#c9a7ff"},
+    {"id": "rodzina", "title": "Rodzina", "color": "#f08cc0"}
+  ],
+  "events": [
+    {"title": "Stand-up", "calendarId": "praca", "start": "+0T09:30", "end": "+0T09:45"},
+    {"title": "Spotkanie z klientem", "calendarId": "praca", "start": "+0T11:00", "end": "+0T12:00", "location": "Teams"},
+    {"title": "Siłownia", "calendarId": "dom", "start": "+0T18:30", "end": "+0T19:45"},
+    {"title": "Stand-up", "calendarId": "praca", "start": "+1T09:30", "end": "+1T09:45"},
+    {"title": "Przegląd sprintu", "calendarId": "praca", "start": "+1T13:00", "end": "+1T14:30"},
+    {"title": "Dentysta", "calendarId": "dom", "start": "+1T16:00", "end": "+1T17:00", "location": "ul. Długa 12"},
+    {"title": "Stand-up", "calendarId": "praca", "start": "+2T09:30", "end": "+2T09:45"},
+    {"title": "Warsztat z zespołem", "calendarId": "praca", "start": "+2T10:00", "end": "+2T13:00"},
+    {"title": "Rozmowa z księgową", "calendarId": "praca", "start": "+2T14:00", "end": "+2T15:00"},
+    {"title": "Zebranie w szkole", "calendarId": "rodzina", "start": "+2T17:00", "end": "+2T18:30"},
+    {"title": "Stand-up", "calendarId": "praca", "start": "+3T09:30", "end": "+3T09:45"},
+    {"title": "Demo dla klienta", "calendarId": "praca", "start": "+3T15:00", "end": "+3T16:00"},
+    {"title": "Wyjazd do Gdańska", "calendarId": "rodzina", "allDay": true, "start": "+5", "end": "+6"},
+    {"title": "Stand-up", "calendarId": "praca", "start": "+7T09:30", "end": "+7T09:45"},
+    {"title": "Planowanie tygodnia", "calendarId": "praca", "start": "+7T10:00", "end": "+7T11:00"},
+    {"title": "Przegląd bety", "calendarId": "praca", "start": "+9T12:00", "end": "+9T13:00"},
+    {"title": "Urodziny Marty", "calendarId": "rodzina", "allDay": true, "start": "+10", "end": "+10"},
+    {"title": "Konferencja", "calendarId": "praca", "allDay": true, "start": "+15", "end": "+16"}
+  ]
+}

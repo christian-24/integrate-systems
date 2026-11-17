@@ -1,0 +1,396 @@
+<title>Ratusz Agent Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<style>
+/* Layout: one dark island night; glass panels with a gold edge like the Agent Quest ledger. Single theme by choice,
+   to match the plugin. Device identity: a small colored rune per machine, used on every card. */
+:root{
+  --sky:#0b1020; --sky-2:#121a30; --glass:rgba(18,20,28,.86); --glass-2:rgba(255,255,255,.05); --edge:rgba(226,179,71,.35); --edge-2:rgba(255,255,255,.09);
+  --gold:#e2b347; --gold-2:#f3d27a; --ink:#f2ecdc; --dim:#a9a293;
+  --ok:#6ee08a; --wait:#f2c45a; --rest:#8d8a80; --bad:#ff7a6a; --violet:#c9a7ff; --cyan:#7fe3ff;
+  --pc:#7fb0ff; --mac:#6ee0c8; --ios:#ff9fcf; --cloud:#c9a7ff;
+  --display:"Cinzel",Georgia,serif; --body:"Alegreya Sans","Segoe UI",system-ui,sans-serif; --mono:Consolas,ui-monospace,SFMono-Regular,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky) radial-gradient(1200px 600px at 50% -10%,#1d2a52 0%,var(--sky) 60%);color:var(--ink);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 72px}
+.wrap{max-width:1160px;margin:0 auto}
+h1,h2,h3,h4{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(30px,4.6vw,48px);font-weight:900;color:var(--gold);letter-spacing:.04em}
+h2{font-size:clamp(22px,3vw,30px);font-weight:700;color:var(--gold)}
+h3{font-size:17px;font-weight:700;color:var(--ink)}
+h4{font:700 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+p{margin:0}
+.lead{font-size:18px;color:var(--dim);max-width:64ch}
+section{padding-block:40px;border-top:1px solid var(--edge-2)}
+header.top{padding-block:44px 34px;display:grid;gap:18px}
+.crest{display:inline-flex;align-items:baseline;gap:14px;background:var(--glass);border:1px solid var(--edge);border-radius:10px;padding:8px 16px;width:fit-content;backdrop-filter:blur(6px)}
+.crest span{color:var(--dim);font-size:14px}.crest b{color:var(--ink)}
+.sec-head{display:grid;gap:8px;margin-bottom:24px}
+.eyebrow{font:700 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.08);white-space:nowrap;color:var(--ink)}
+.chip.ok{background:rgba(110,224,138,.18);color:var(--ok)} .chip.wait{background:rgba(242,196,90,.18);color:var(--wait)} .chip.rest{color:var(--rest)}
+.chip.bad{background:rgba(255,122,106,.18);color:var(--bad)} .chip.violet{background:rgba(154,106,216,.25);color:var(--violet)} .chip.cyan{background:rgba(127,227,255,.12);color:var(--cyan)}
+.rune{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--dim);white-space:nowrap}
+.rune::before{content:"";width:8px;height:8px;transform:rotate(45deg);background:var(--c);box-shadow:0 0 6px var(--c)}
+.rune.pc{--c:var(--pc)} .rune.mac{--c:var(--mac)} .rune.ios{--c:var(--ios)} .rune.cloud{--c:var(--cloud)}
+.panel{background:var(--glass);border:1px solid var(--edge);border-radius:14px;backdrop-filter:blur(8px);box-shadow:0 20px 50px rgba(0,0,0,.45);min-width:0;overflow:hidden}
+.panel > header{padding:16px 18px 10px;border-bottom:1px solid var(--edge);display:grid;gap:4px}
+.panel .sub{color:var(--dim);font-size:13.5px}
+.tabs{display:flex;gap:2px;padding:8px 12px 0;flex-wrap:wrap;border-bottom:1px solid var(--edge-2)}
+.tab{font:700 13px var(--body);color:var(--dim);padding:6px 8px;border-bottom:2px solid transparent}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.body{padding:14px 18px 18px;display:grid;gap:12px;align-content:start}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.stat{background:var(--glass-2);border:1px solid var(--edge-2);border-radius:10px;padding:8px 10px}
+.stat b{display:block;font:700 20px var(--display);color:var(--ink);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--dim)}
+.stat.ok b{color:var(--ok)} .stat.wait b{color:var(--wait)} .stat.bad b{color:var(--bad)}
+.progress{height:10px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,#6ee08a,#e2b347)}
+.progress.xp i{background:linear-gradient(90deg,#7fe3ff,#c9a7ff)}
+.level{display:flex;align-items:center;gap:12px}
+.level .badge{font:900 22px var(--display);color:#1b1b2a;background:radial-gradient(circle at 35% 30%,#fff3c4,#e2b347 60%,#a9781e);width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.level .grow{flex:1;display:grid;gap:4px;font-size:13px;color:var(--dim);min-width:0}
+.list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.list li{background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;font-size:14.5px;overflow-wrap:anywhere}
+.list li small{color:var(--dim);display:block;font-size:12.5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font:700 13px var(--body);color:var(--ink);background:var(--glass-2);border:1px solid var(--edge);border-radius:8px;padding:6px 12px;white-space:nowrap}
+.btn.primary{background:linear-gradient(180deg,#f3d27a,#e2b347);color:#1b1b2a;border-color:transparent}
+.btn.ok{color:var(--ok);border-color:rgba(110,224,138,.5)} .btn.no{color:var(--bad);border-color:rgba(255,122,106,.5)}
+.btn.small{padding:3px 8px;font-size:12px}
+.mono{font:12.5px var(--mono);color:var(--dim)}
+.kv{display:grid;grid-template-columns:minmax(120px,160px) minmax(0,1fr);gap:6px 14px;font-size:14.5px}
+.kv dt{color:var(--dim)} .kv dd{margin:0;overflow-wrap:anywhere}
+@media (max-width:520px){.kv{grid-template-columns:1fr}.kv dt{margin-top:6px}}
+.said{background:rgba(255,255,255,.04);border-left:3px solid var(--edge);padding:8px 10px;border-radius:0 8px 8px 0;font-size:14px}
+/* development tree */
+.tree{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.tree .tree{margin-left:18px;padding-left:10px;border-left:1px dashed rgba(226,179,71,.35);margin-top:4px}
+.node>div{display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:6px 8px}
+.orb{width:20px;height:20px;border-radius:50%;border:2px solid var(--rest);flex:none}
+.orb.doing{border-color:var(--wait);background:radial-gradient(circle,var(--wait) 35%,transparent 40%)}
+.orb.done{border-color:var(--ok);background:var(--ok);box-shadow:0 0 8px rgba(110,224,138,.6)}
+.node .t{flex:1;overflow-wrap:anywhere;font-size:14.5px}.node .t.done{color:var(--dim);text-decoration:line-through}
+/* two-column grids */
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;align-items:start}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+/* journey */
+.journey{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;counter-reset:st}
+.stage{background:var(--glass);border:1px solid var(--edge-2);border-radius:12px;padding:14px 12px;display:grid;gap:8px;align-content:start;position:relative;min-width:0}
+.stage .n{font:900 24px var(--display);color:var(--gold);line-height:1}
+.stage .name{font:700 15px var(--display);color:var(--ink)}
+.stage .where{display:flex;gap:8px;flex-wrap:wrap}
+.stage .see{font-size:13.5px;color:var(--dim)}
+.stage .see b{color:var(--ink);font-weight:500}
+.stage .do{font-size:13.5px;border-top:1px dashed var(--edge-2);padding-top:6px}
+/* have / add */
+.have li::before{content:"✓ ";color:var(--ok);font-weight:700}
+.add li::before{content:"+ ";color:var(--gold);font-weight:700}
+/* island */
+.island{display:block;width:100%;height:auto;max-width:100%}
+.island text{font-family:var(--body);fill:var(--ink)}
+.island .lab{font-family:var(--display);font-weight:700;letter-spacing:.08em;fill:#fff7e0}
+.island .sub{fill:var(--dim);font-size:11px}
+/* phone */
+.phone{width:100%;max-width:280px;aspect-ratio:9/19;border:8px solid #1a1d26;border-radius:38px;background:var(--sky-2);position:relative;overflow:hidden;display:flex;flex-direction:column;margin:0 auto}
+.phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:92px;height:22px;border-radius:12px;background:#1a1d26;z-index:2}
+.phone .bar{padding:48px 12px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.phone .bar b{font:900 15px var(--display);color:var(--gold)}
+.phone .sheet{margin-top:auto;background:var(--glass);border-top:1px solid var(--edge);border-radius:16px 16px 0 0;padding:12px 12px 16px;display:grid;gap:8px;height:74%}
+.phone .list li{padding:7px 9px;font-size:13px}
+.phone .btn{font-size:12px;padding:5px 9px}
+.cap{font-size:13.5px;color:var(--dim);text-align:center;margin-top:10px}
+/* autonomy */
+.auto{display:grid;gap:6px}
+.auto .scale{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.auto .lv{font-size:12.5px;text-align:center;padding:6px 4px;border-radius:8px;background:rgba(255,255,255,.04);color:var(--dim);border:1px solid transparent}
+.auto .lv.on{border-color:var(--gold);color:var(--gold);background:rgba(226,179,71,.12);font-weight:700}
+.petition{display:grid;gap:8px;background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;border-left:3px solid var(--wait)}
+.petition.bad{border-left-color:var(--bad)} .petition.violet{border-left-color:var(--violet)}
+.petition .who{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--dim)}
+.petition .what{font-size:15px}
+.petition .cmd{font:13px var(--mono);background:rgba(0,0,0,.35);padding:5px 8px;border-radius:6px;overflow-x:auto;white-space:nowrap;color:var(--ink)}
+.order{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px}
+.order .role{width:10px;height:28px;border-radius:3px;background:var(--r)}
+.order .r-backend{--r:#c8463a}.order .r-testers{--r:#2f9fa8}.order .r-marketing{--r:#9a6ad8}.order .r-finance{--r:#d4a017}
+.order .t{font-size:14.5px;min-width:0}.order .t small{display:block;color:var(--dim);font-size:12.5px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--edge-2);vertical-align:top}
+th{font:700 11.5px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.foot{font-size:13.5px;color:var(--dim);max-width:70ch}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="crest"><h1 style="font-size:20px">Agent Quest</h1><span><b>Ratusz</b> · projekt rozszerzenia · 8 listopada 2026</span></div>
+  <h1>Ratusz: jedna wyspa, wszystkie maszyny</h1>
+  <p class="lead">Agent Quest już pokazuje agentów jako drużynę i projekty jako posiadłości. Ratusz dokłada to, czego wioska nie ma: kartę każdej posiadłości (zakres, wymagania, swoboda agentów), rozdział pracy z Ratusza do gildii, tablicę petycji z decyzjami i port, do którego przypływają wieści z PC, chmury i Codexa.</p>
+  <div class="chips">
+    <span class="chip ok">4 pracuje</span><span class="chip wait">3 czeka na Ciebie</span><span class="chip">6 posiadłości</span>
+    <span class="rune pc">PC Windows</span><span class="rune mac">Mac</span><span class="rune ios">iPhone</span><span class="rune cloud">Chmura</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">1 · Co już stoi, co dobudowujemy</div><h2>Wioska jest, brakuje Ratusza</h2>
+    <p class="lead">Plugin skanuje sesje Claude na tym Macu i rysuje z nich wioskę. Produkt powstaje przez dołożenie zaplecza (Hub) i czterech nowych widoków, nie przez pisanie wszystkiego od nowa.</p></div>
+  <div class="two">
+    <div class="panel"><header><h3>Już stoi w Agent Quest</h3><div class="sub">to zostaje i dostaje dane z całej wyspy</div></header>
+      <div class="body"><ul class="list have">
+        <li>Drużyna: sesje i subagenci jako postacie z gildii Backend, Testerzy, Marketing, Skarbnik<small>stan: pracuje · czeka na Ciebie · odpoczywa · skończył</small></li>
+        <li>Posiadłości: jeden dom na projekt, ogród rośnie z postępem, poziom 1–10 z doświadczenia<small>postęp liczony z drzewa planu lub zadań</small></li>
+        <li>Drzewo planu i zadania do odhaczenia, plany pisane przez agentów w trybie planowania</li>
+        <li>Skarbiec: przychody i koszty per projekt, import z banku, Stripe, Allegro, wFirma</li>
+        <li>Dom Heroldów: posty marketingowe szkic → zatwierdzony → opublikowany</li>
+        <li>Panel obok czatu i tryb telefonu w sieci domowej</li>
+      </ul></div></div>
+    <div class="panel"><header><h3>Dobudowujemy</h3><div class="sub">cztery widoki i jedno zaplecze</div></header>
+      <div class="body"><ul class="list add">
+        <li><b>Port</b>: wieści z PC Windows, chmury Claude, Codexa i GitHuba płyną do Huba, a Hub karmi wioskę<small>dziś skaner widzi tylko ten Mac</small></li>
+        <li><b>Karta posiadłości</b>: cel, zakres, wymagania ukończenia, swoboda agentów, budżet, maszyna domyślna<small>każdy projekt gra na własnych zasadach</small></li>
+        <li><b>Rozdział pracy</b>: zlecenia z Ratusza do gildii, z przypisaną maszyną i terminem</li>
+        <li><b>Tablica petycji</b>: decyzje od agentów w jednej kolejce, z przyciskami także w powiadomieniu na telefonie</li>
+        <li><b>Dziennik odbioru</b>: PR, testy, warunki ukończenia odhaczone zanim posiadłość awansuje</li>
+      </ul></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">2 · Przepływ produktu</div><h2>Od założenia posiadłości do odbioru</h2>
+    <p class="lead">Siedem etapów. Pod każdym: gdzie się dzieje, co widzisz w wiosce i co robisz Ty.</p></div>
+  <div class="journey">
+    <div class="stage"><div class="n">1</div><div class="name">Założenie</div><div class="where"><span class="rune mac">Mac</span></div>
+      <div class="see">Nowa posiadłość z <b>kartą</b>: cel, zakres, wymagania, swoboda, budżet, maszyna.</div><div class="do">Wypełniasz kartę raz. Agenci czytają ją na starcie każdej sesji.</div></div>
+    <div class="stage"><div class="n">2</div><div class="name">Plan</div><div class="where"><span class="rune mac">Mac</span><span class="rune cloud">Chmura</span></div>
+      <div class="see">Agent w trybie planowania pisze <b>drzewo kamieni milowych</b>; kule świecą w miarę postępu.</div><div class="do">Zatwierdzasz plan w Ratuszu albo odsyłasz z uwagą.</div></div>
+    <div class="stage"><div class="n">3</div><div class="name">Rozdział pracy</div><div class="where"><span class="rune mac">Mac</span><span class="rune ios">iPhone</span></div>
+      <div class="see"><b>Zlecenia</b> idą do gildii: Backend na PC, Testerzy w chmurze, Heroldzi na Macu.</div><div class="do">Przeciągasz zlecenie na gildię i maszynę, albo zostawiasz regułę z karty.</div></div>
+    <div class="stage"><div class="n">4</div><div class="name">Praca</div><div class="where"><span class="rune pc">PC</span><span class="rune cloud">Chmura</span><span class="rune mac">Mac</span></div>
+      <div class="see">Postacie chodzą między <b>Kuźnią, Biblioteką, Areną</b>; port przyjmuje wieści z innych maszyn.</div><div class="do">Nic. Patrzysz, gdy chcesz.</div></div>
+    <div class="stage"><div class="n">5</div><div class="name">Petycje</div><div class="where"><span class="rune ios">iPhone</span><span class="rune mac">Mac</span></div>
+      <div class="see">Agent staje przed Ratuszem z <b>petycją</b>; herold wysyła push z przyciskami.</div><div class="do">Zatwierdzasz, odrzucasz, albo otwierasz rozmowę przez Remote Control.</div></div>
+    <div class="stage"><div class="n">6</div><div class="name">Odbiór</div><div class="where"><span class="rune cloud">GitHub</span><span class="rune mac">Mac</span></div>
+      <div class="see"><b>Dziennik odbioru</b>: PR, testy Gildii Testerów, warunki z karty odhaczone.</div><div class="do">Robisz review. Posiadłość awansuje dopiero po odbiorze.</div></div>
+    <div class="stage"><div class="n">7</div><div class="name">Skarbiec</div><div class="where"><span class="rune pc">PC</span></div>
+      <div class="see">Koszt tokenów i godzin agentów kontra przychód projektu; <b>stos złota</b> rośnie lub maleje.</div><div class="do">Decydujesz, które posiadłości dostają więcej budżetu.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">3 · Makieta</div><h2>Karta posiadłości</h2>
+    <p class="lead">To jest odpowiedź na „każdy projekt działa w innym zakresie”. Karta jest umową między Tobą a agentami tego projektu i trafia do nich jako kontekst na starcie sesji.</p></div>
+  <div class="two">
+    <div class="panel">
+      <header><h2 style="font-size:20px">sklep-api</h2><div class="sub">posiadłość · Backend + Testerzy · PC Windows · github.com/krystian/sklep-api</div></header>
+      <div class="tabs"><span class="tab on">Karta</span><span class="tab">Plan</span><span class="tab">Zlecenia</span><span class="tab">Petycje</span><span class="tab">Odbiór</span><span class="tab">Skarbiec</span></div>
+      <div class="body">
+        <div class="level"><div class="badge">6</div><div class="grow"><span>Poziom 6 · 1 240 / 1 960 XP do poziomu 7</span><div class="progress xp"><i style="width:63%"></i></div><span>Ogród: 7 z 11 kamieni milowych</span><div class="progress"><i style="width:64%"></i></div></div></div>
+        <h4>Cel</h4>
+        <p class="said">Migracja płatności z własnej integracji na Przelewy24 i Stripe bez przerwy w sprzedaży. Gotowe, gdy stary moduł można usunąć.</p>
+        <h4>Zakres</h4>
+        <dl class="kv">
+          <dt>W zakresie</dt><dd>moduł płatności, webhooki, migracja danych zamówień, testy e2e koszyka</dd>
+          <dt>Poza zakresem</dt><dd>frontend sklepu, panel admina, zmiany w fakturowaniu</dd>
+        </dl>
+        <h4>Wymagania ukończenia</h4>
+        <ul class="list">
+          <li>Testy koszyka i płatności zielone na CI <small>Gildia Testerów potwierdza, nie agent od kodu</small></li>
+          <li>Rollback możliwy przez 7 dni po wdrożeniu</li>
+          <li>PR zreviewowany przez Ciebie; żaden merge bez odbioru</li>
+        </ul>
+        <h4>Swoboda agentów</h4>
+        <div class="auto">
+          <div class="scale"><span class="lv">Pyta o wszystko</span><span class="lv on">Pracuje sam, pyta o ryzyko</span><span class="lv">Pełna swoboda w repo</span></div>
+          <p class="mono">petycja wymagana: git push --force · migracje bazy · deploy · usuwanie plików poza build/ · wydatek powyżej 50 zł</p>
+        </div>
+        <h4>Zasoby</h4>
+        <dl class="kv">
+          <dt>Maszyna domyślna</dt><dd><span class="rune pc">PC Windows</span> (środowisko z bazą testową); testy e2e <span class="rune cloud">Codex cloud</span></dd>
+          <dt>Budżet tygodnia</dt><dd>120 zł tokenów · wykorzystane 68 zł</dd>
+          <dt>Termin</dt><dd>22 listopada 2026 · blok przeglądu codziennie 18:30</dd>
+        </dl>
+      </div>
+    </div>
+    <div style="display:grid;gap:18px">
+      <div class="panel"><header><h3>Plan</h3><div class="sub">drzewo kamieni milowych, jak dziś w Agent Quest</div></header>
+        <div class="body"><ul class="tree">
+          <li class="node"><div><span class="orb done"></span><span class="t done">Inwentaryzacja starego modułu płatności</span></div></li>
+          <li class="node"><div><span class="orb done"></span><span class="t done">Adapter Przelewy24</span></div>
+            <ul class="tree"><li class="node"><div><span class="orb done"></span><span class="t done">webhook potwierdzenia</span></div></li><li class="node"><div><span class="orb done"></span><span class="t done">zwroty</span></div></li></ul></li>
+          <li class="node"><div><span class="orb doing"></span><span class="t">Adapter Stripe</span></div>
+            <ul class="tree"><li class="node"><div><span class="orb done"></span><span class="t done">płatność jednorazowa</span></div></li><li class="node"><div><span class="orb doing"></span><span class="t">subskrypcje</span></div></li><li class="node"><div><span class="orb"></span><span class="t">webhooki sporów</span></div></li></ul></li>
+          <li class="node"><div><span class="orb"></span><span class="t">Migracja zamówień w toku</span></div></li>
+          <li class="node"><div><span class="orb"></span><span class="t">Usunięcie starego modułu</span></div></li>
+        </ul></div></div>
+      <div class="panel"><header><h3>Zlecenia</h3><div class="sub">rozdział pracy: gildia, maszyna, stan</div></header>
+        <div class="body">
+          <div class="order"><span class="role r-backend"></span><div class="t">Subskrypcje Stripe: model i endpointy<small>Backend · <span class="rune pc">PC</span> · Claude Code · tura 14</small></div><span class="chip ok">pracuje</span></div>
+          <div class="order"><span class="role r-testers"></span><div class="t">Testy e2e koszyka po migracji<small>Testerzy · <span class="rune cloud">Codex cloud</span> · PR #42</small></div><span class="chip violet">PR do review</span></div>
+          <div class="order"><span class="role r-backend"></span><div class="t">Napraw CI na PR #40<small>Backend · <span class="rune pc">PC</span> · Codex CLI</small></div><span class="chip bad">CI czerwone</span></div>
+          <div class="order"><span class="role r-marketing"></span><div class="t">Notka o nowych metodach płatności<small>Heroldzi · <span class="rune mac">Mac</span> · po odbiorze</small></div><span class="chip rest">czeka na etap 6</span></div>
+          <div class="row"><span class="btn primary small">Nowe zlecenie</span><span class="btn small">Przypisz z reguły karty</span></div>
+        </div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">4 · Makieta</div><h2>Tablica petycji w Ratuszu</h2>
+    <p class="lead">Jedna kolejka ze wszystkich maszyn i obu dostawców. Każda petycja wie, z której posiadłości pochodzi i którą regułę karty uruchomiła.</p></div>
+  <div class="two">
+    <div class="panel">
+      <header><h3>Petycje</h3><div class="sub">3 czekają · najstarsza 41 min</div></header>
+      <div class="body">
+        <div class="petition">
+          <div class="who"><span class="rune pc">PC Windows</span>Claude Code · Backend · <b style="color:var(--ink)">sklep-api</b> · 2 min · reguła: <i>git push --force</i></div>
+          <div class="what">Prosi o zgodę na wypchnięcie z nadpisaniem gałęzi</div>
+          <div class="cmd">git push --force origin feat/stripe-subscriptions</div>
+          <div class="row"><span class="btn ok">Zatwierdź</span><span class="btn no">Odrzuć</span><span class="btn">Porozmawiaj (Remote Control)</span></div>
+        </div>
+        <div class="petition violet">
+          <div class="who"><span class="rune cloud">Codex cloud</span>Testerzy · <b style="color:var(--ink)">sklep-api</b> · 18 min · etap 6: odbiór</div>
+          <div class="what">PR #42 gotowy: testy e2e koszyka, 48 testów zielonych</div>
+          <div class="row"><span class="btn primary">Otwórz PR</span><span class="btn">Odłóż na 18:30</span></div>
+        </div>
+        <div class="petition">
+          <div class="who"><span class="rune mac">Mac</span>Claude Code · Backend · <b style="color:var(--ink)">raporty</b> · 41 min · pytanie</div>
+          <div class="what">„Cache w Postgresie czy w SQLite? Karta nie rozstrzyga.”</div>
+          <div class="row"><span class="btn">Odpowiedz w Claude</span><span class="btn small">Dopisz do karty jako regułę</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;gap:18px">
+      <div class="panel"><header><h3>Drużyna na wyspie</h3><div class="sub">wszystkie maszyny · 4 pracuje · 3 czeka</div></header>
+        <div class="body"><ul class="list">
+          <li class="row"><span class="rune pc"></span>Backend · sklep-api <span class="chip ok">pracuje</span><small style="flex-basis:100%">Kuźnia · Claude Code · 2 min</small></li>
+          <li class="row"><span class="rune pc"></span>Backend · sklep-api <span class="chip bad">CI czerwone</span><small style="flex-basis:100%">Arena · Codex CLI · 9 min</small></li>
+          <li class="row"><span class="rune mac"></span>Backend · raporty <span class="chip wait">czeka na Ciebie</span><small style="flex-basis:100%">przed Ratuszem · 41 min</small></li>
+          <li class="row"><span class="rune cloud"></span>Testerzy · sklep-api <span class="chip violet">skończył · PR #42</span><small style="flex-basis:100%">Gildia Testerów · Codex cloud</small></li>
+          <li class="row"><span class="rune cloud"></span>Heroldzi · landing <span class="chip ok">pracuje</span><small style="flex-basis:100%">Dom Heroldów · Claude cloud · 12 min</small></li>
+          <li class="row"><span class="rune pc"></span>Skarbnik · wszystkie <span class="chip rest">odpoczywa</span><small style="flex-basis:100%">Skarbiec · sync z banku o 6:00</small></li>
+        </ul></div></div>
+      <div class="panel"><header><h3>Skarbiec tygodnia</h3><div class="sub">koszt agentów kontra przychód posiadłości</div></header>
+        <div class="body"><div class="stats">
+          <div class="stat ok"><b>3 420 zł</b><span>przychód sklep-api</span></div>
+          <div class="stat bad"><b>68 zł</b><span>tokeny sklep-api</span></div>
+          <div class="stat wait"><b>212 zł</b><span>tokeny wszystkie</span></div>
+          <div class="stat"><b>4 / 6</b><span>posiadłości w budżecie</span></div>
+        </div></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">5 · Mapa wyspy</div><h2>Port: skąd płyną wieści</h2>
+    <p class="lead">Dziś wioska widzi tylko ten Mac. Port to Hub: przyjmuje zdarzenia ze wszystkich maszyn, a wioska rysuje je jak dotąd. Jedna wyspa, więcej statków.</p></div>
+  <div class="panel" style="padding:10px">
+    <svg class="island" viewBox="0 0 920 420" role="img" aria-label="Mapa wyspy: Ratusz w środku, gildie na północy, posiadłości na południu, port na zachodzie, do którego płyną wieści z PC, chmury i GitHuba">
+      <defs><radialGradient id="sea" cx="50%" cy="50%" r="70%"><stop offset="0" stop-color="#17305a"/><stop offset="1" stop-color="#0b1020"/></radialGradient></defs>
+      <rect x="0" y="0" width="920" height="420" fill="url(#sea)" rx="12"/>
+      <ellipse cx="560" cy="215" rx="300" ry="170" fill="#2e5d3a" stroke="#c9a85a" stroke-opacity=".5" stroke-width="2"/>
+      <ellipse cx="560" cy="215" rx="282" ry="154" fill="#3f7a46"/>
+      <!-- roads -->
+      <g stroke="#b08a5a" stroke-width="6" stroke-linecap="round" fill="none" opacity=".9">
+        <path d="M560 215 L440 120"/><path d="M560 215 L560 95"/><path d="M560 215 L690 120"/>
+        <path d="M560 215 L430 320"/><path d="M560 215 L560 340"/><path d="M560 215 L700 320"/><path d="M560 215 L330 215"/>
+      </g>
+      <!-- hall -->
+      <g transform="translate(560 215)"><rect x="-34" y="-30" width="68" height="60" rx="6" fill="#efe2c6" stroke="#1b1b2a" stroke-width="2"/><polygon points="-40,-30 0,-62 40,-30" fill="#c8463a" stroke="#1b1b2a" stroke-width="2"/><rect x="-6" y="-80" width="12" height="20" fill="#e2b347" stroke="#1b1b2a" stroke-width="1.5"/></g>
+      <text class="lab" x="560" y="268" text-anchor="middle" font-size="14">RATUSZ</text>
+      <text class="sub" x="560" y="284" text-anchor="middle">karta · zlecenia · petycje · odbiór</text>
+      <!-- guilds north -->
+      <g fill="#efe2c6" stroke="#1b1b2a" stroke-width="2">
+        <rect x="412" y="95" width="56" height="40" rx="5"/><rect x="532" y="68" width="56" height="40" rx="5"/><rect x="662" y="95" width="56" height="40" rx="5"/>
+      </g>
+      <g stroke="#1b1b2a" stroke-width="2"><polygon points="408,95 440,72 472,95" fill="#c8463a"/><polygon points="528,68 560,45 592,68" fill="#2f7f86"/><polygon points="658,95 690,72 722,95" fill="#7a4fa0"/></g>
+      <text class="lab" x="440" y="152" text-anchor="middle" font-size="11">KOSZARY</text><text class="sub" x="440" y="165" text-anchor="middle">Backend</text>
+      <text class="lab" x="560" y="125" text-anchor="middle" font-size="11">GILDIA TESTERÓW</text>
+      <text class="lab" x="690" y="152" text-anchor="middle" font-size="11">DOM HEROLDÓW</text><text class="sub" x="690" y="165" text-anchor="middle">Marketing</text>
+      <!-- treasury east -->
+      <g transform="translate(790 215)"><rect x="-26" y="-18" width="52" height="36" rx="5" fill="#9b9384" stroke="#1b1b2a" stroke-width="2"/><polygon points="-30,-18 0,-40 30,-18" fill="#d4a017" stroke="#1b1b2a" stroke-width="2"/></g>
+      <text class="lab" x="790" y="240" text-anchor="middle" font-size="11">SKARBIEC</text>
+      <!-- estates south -->
+      <g fill="#efe2c6" stroke="#1b1b2a" stroke-width="2"><rect x="406" y="300" width="48" height="34" rx="5"/><rect x="536" y="322" width="48" height="34" rx="5"/><rect x="676" y="300" width="48" height="34" rx="5"/></g>
+      <g stroke="#1b1b2a" stroke-width="2"><polygon points="402,300 430,280 458,300" fill="#3a6fb0"/><polygon points="532,322 560,302 588,322" fill="#d08a2c"/><polygon points="672,300 700,280 728,300" fill="#5f8f3a"/></g>
+      <g fill="#8bc34a" stroke="#4f8a2b"><rect x="400" y="338" width="60" height="14" rx="3"/><rect x="530" y="360" width="60" height="14" rx="3"/><rect x="670" y="338" width="60" height="14" rx="3"/></g>
+      <text class="lab" x="430" y="368" text-anchor="middle" font-size="11">sklep-api · 6</text>
+      <text class="lab" x="560" y="390" text-anchor="middle" font-size="11">integrate-systems · 3</text>
+      <text class="lab" x="700" y="368" text-anchor="middle" font-size="11">landing · 4</text>
+      <!-- port west -->
+      <g transform="translate(300 215)"><rect x="-30" y="-14" width="60" height="28" rx="4" fill="#8a5a34" stroke="#1b1b2a" stroke-width="2"/><rect x="-60" y="-6" width="34" height="12" fill="#5e3b22" stroke="#1b1b2a" stroke-width="2"/></g>
+      <text class="lab" x="300" y="245" text-anchor="middle" font-size="12">PORT</text>
+      <text class="sub" x="300" y="260" text-anchor="middle">Hub: POST /events</text>
+      <!-- ships -->
+      <g font-size="12">
+        <g transform="translate(110 110)"><polygon points="0,10 60,10 52,24 8,24" fill="#8a5a34" stroke="#1b1b2a" stroke-width="2"/><rect x="28" y="-18" width="3" height="28" fill="#5e3b22"/><polygon points="31,-18 31,6 54,6" fill="#7fb0ff"/><text class="lab" x="30" y="44" text-anchor="middle" font-size="11">PC WINDOWS</text><text class="sub" x="30" y="58" text-anchor="middle">hooki Claude · notify Codex</text></g>
+        <g transform="translate(70 215)"><polygon points="0,10 60,10 52,24 8,24" fill="#8a5a34" stroke="#1b1b2a" stroke-width="2"/><rect x="28" y="-18" width="3" height="28" fill="#5e3b22"/><polygon points="31,-18 31,6 54,6" fill="#c9a7ff"/><text class="lab" x="30" y="44" text-anchor="middle" font-size="11">CHMURA</text><text class="sub" x="30" y="58" text-anchor="middle">Claude cloud · Codex cloud</text></g>
+        <g transform="translate(110 320)"><polygon points="0,10 60,10 52,24 8,24" fill="#8a5a34" stroke="#1b1b2a" stroke-width="2"/><rect x="28" y="-18" width="3" height="28" fill="#5e3b22"/><polygon points="31,-18 31,6 54,6" fill="#b3bcc6"/><text class="lab" x="30" y="44" text-anchor="middle" font-size="11">GITHUB</text><text class="sub" x="30" y="58" text-anchor="middle">PR · CI · review, co 5 min</text></g>
+      </g>
+      <g stroke="#e2b347" stroke-width="2" stroke-dasharray="6 6" fill="none" opacity=".8">
+        <path d="M175 125 Q 240 170 268 205"/><path d="M135 222 L 240 218"/><path d="M175 320 Q 240 270 268 228"/>
+      </g>
+      <!-- phone herald -->
+      <g transform="translate(830 60)"><rect x="-22" y="-32" width="44" height="72" rx="8" fill="#1a1d26" stroke="#e2b347" stroke-width="2"/><rect x="-16" y="-24" width="32" height="54" rx="3" fill="#121a30"/><circle cx="8" cy="-18" r="5" fill="#f2c45a"/></g>
+      <text class="lab" x="830" y="120" text-anchor="middle" font-size="11">HEROLD</text><text class="sub" x="830" y="134" text-anchor="middle">push z przyciskami</text>
+      <path d="M560 180 Q 700 40 808 50" stroke="#f2c45a" stroke-width="2" stroke-dasharray="4 6" fill="none" opacity=".8"/>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">6 · Makieta</div><h2>Ratusz na telefonie</h2>
+    <p class="lead">Agent Quest ma już tryb telefonu w sieci domowej. Z Tailscale działa wszędzie; Ratusz pojawia się jako pierwsza zakładka.</p></div>
+  <div class="three">
+    <div>
+      <div class="phone"><div class="notch"></div>
+        <div class="bar"><b>Agent Quest</b><span class="mono">4 pracuje · 3 czeka</span></div>
+        <div class="sheet">
+          <div class="tabs" style="padding:0;border:0"><span class="tab on">Petycje 3</span><span class="tab">Drużyna</span><span class="tab">Posiadłości</span></div>
+          <ul class="list">
+            <li><span class="rune pc">PC</span> · sklep-api · 2 min<br>Zgoda: git push --force<div class="row" style="margin-top:6px"><span class="btn ok">Zatwierdź</span><span class="btn no">Odrzuć</span></div></li>
+            <li><span class="rune cloud">Chmura</span> · sklep-api · 18 min<br>PR #42 do review<div class="row" style="margin-top:6px"><span class="btn primary">Otwórz PR</span></div></li>
+            <li><span class="rune mac">Mac</span> · raporty · 41 min<br>Pytanie o cache<div class="row" style="margin-top:6px"><span class="btn">Otwórz w Claude</span></div></li>
+          </ul>
+        </div>
+      </div>
+      <p class="cap">Zakładka Petycje jako start. Te same przyciski, co w powiadomieniu.</p>
+    </div>
+    <div class="panel"><header><h3>Powiadomienie herolda</h3><div class="sub">ntfy · ekran blokady</div></header>
+      <div class="body">
+        <div class="said"><b>Herold · sklep-api</b><br>Backend z PC Windows prosi o zgodę: <span class="mono" style="color:var(--ink)">git push --force origin feat/stripe-subscriptions</span><div class="row" style="margin-top:8px"><span class="btn ok small">Zatwierdź</span><span class="btn no small">Odrzuć</span><span class="btn small">Otwórz</span></div></div>
+        <div class="said"><b>Herold · wyspa</b><br>Wróciłeś do domu: 3 petycje · 4 pracuje · 6 niedokończonych</div>
+        <p class="foot">Powiadomienie idzie tylko dla petycji, blokady i czerwonego CI. Koniec tury nie brzęczy.</p>
+      </div></div>
+    <div class="panel"><header><h3>Co widzisz po wejściu do domu</h3><div class="sub">digest z Ratusza</div></header>
+      <div class="body"><div class="stats">
+        <div class="stat wait"><b>3</b><span>petycje</span></div><div class="stat ok"><b>4</b><span>pracuje</span></div><div class="stat"><b>6</b><span>niedokończone</span></div><div class="stat bad"><b>1</b><span>CI czerwone</span></div>
+      </div>
+      <ul class="list"><li>sklep-api <small>2 petycje · PR #42 czeka · CI #40 czerwone</small></li><li>raporty <small>agent czeka z pytaniem 41 min</small></li><li>landing <small>branch bez ruchu 3 dni</small></li></ul>
+      </div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><div class="eyebrow">7 · Jak to zbudować</div><h2>Rozszerzenie pluginu, nie nowy produkt obok</h2>
+    <p class="lead">Agent Quest ma serwer, skaner, dane projektów poza folderem pluginu i tryb telefonu. Ratusz to nowe trasy w tym serwerze, nowe zakładki w panelu i zaplecze na PC, które karmi wioskę z innych maszyn.</p></div>
+  <div class="panel"><div class="tbl"><table>
+    <thead><tr><th>Element</th><th>Gdzie powstaje</th><th>Co dokładnie</th><th>Faza</th></tr></thead>
+    <tbody>
+      <tr><td><b>Port</b> (Hub)</td><td><span class="rune pc">PC Windows</span></td><td>serwis przyjmujący <span class="mono">POST /events</span> z hooków Claude Code, notify Codexa i crona repozytoriów; odpytuje GitHub; SQLite; udostępnia <span class="mono">/api/world</span> w formacie, który wioska już rozumie</td><td>1</td></tr>
+      <tr><td><b>Wioska czyta z Portu</b></td><td>serwer Agent Quest</td><td>skaner lokalny zostaje; dochodzi drugie źródło agentów i projektów z Huba, oznaczone maszyną</td><td>1</td></tr>
+      <tr><td><b>Karta posiadłości</b></td><td>zakładka „Karta” w panelu projektu</td><td>plik <span class="mono">~/.claude/agent-quest/charters.json</span>, obok todos i plans; eksport karty do CLAUDE.md projektu, żeby agenci ją czytali</td><td>2</td></tr>
+      <tr><td><b>Tablica petycji</b></td><td>Ratusz w wiosce + zakładka</td><td>Hub trzyma decyzje; hook PreToolUse czeka na odpowiedź; przyciski w ntfy i w panelu wołają <span class="mono">POST /decisions/:id</span></td><td>2</td></tr>
+      <tr><td><b>Zlecenia</b></td><td>zakładka „Zlecenia”</td><td>zadania z gildią, maszyną i terminem; agent dostaje zlecenie jako pierwszy prompt sesji; reguły domyślne z karty</td><td>3</td></tr>
+      <tr><td><b>Dziennik odbioru</b></td><td>zakładka „Odbiór”</td><td>warunki ukończenia z karty + PR-y i CI z GitHuba; awans poziomu dopiero po odhaczeniu</td><td>3</td></tr>
+      <tr><td><b>Herold</b></td><td>ntfy</td><td>push tylko dla petycji, blokad i czerwonego CI; digest po wejściu do domu przez Shortcuts</td><td>0</td></tr>
+    </tbody>
+  </table></div></div>
+  <p class="foot" style="margin-top:14px">Styl zostaje w stu procentach: te same czcionki, złota obwódka, kule postępu, ogrody. Nowe są tylko budynki Port i tablica w Ratuszu oraz zakładki w panelu.</p>
+</section>
+</div>

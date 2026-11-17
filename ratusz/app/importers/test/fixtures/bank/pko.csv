@@ -1,0 +1,4 @@
+"Data operacji","Data waluty","Typ transakcji","Kwota","Waluta","Saldo po transakcji","Opis transakcji","","","",""
+"2026-02-03","2026-02-03","Przelew z rachunku","+2500.00","PLN","+3500.00","Rachunek nadawcy: 11 2222 3333 4444","Nazwa nadawcy: FIRMA TESTOWA, SP. Z O.O.","Tytuł: Faktura 12/2026","",""
+"2026-02-04","2026-02-04","Płatność kartą","-49.99","PLN","+3450.01","Lokalizacja: Kraj: POLSKA Miasto: KRAKÓW Adres: SKLEP TESTOWY","Operacja: 123456","","",""
+"2026-02-05","2026-02-05","Przelew na rachunek","-100,00","PLN","+3350.01","Nazwa odbiorcy: JAN, Kowalski","Tytuł: Zwrot za bilety","","",""

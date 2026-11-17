@@ -1,0 +1,3 @@
+"Numer rachunku/karty","Data transakcji","Data rozliczenia","Rodzaj transakcji","Na konto/Z konta","Odbiorca/Nadawca","Opis","Obciążenia","Uznania","Saldo","Waluta"
+"11 2222","2026-06-01","2026-06-01","Przelew","","KLIENT SA","Faktura 6/2026","","1 000,00","2 000,00","PLN"
+"11 2222","2026-06-02","2026-06-02","Karta","","SKLEP","Zakup","-30,00","","1 970,00","PLN"

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Model preview</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #9fd3f0; overflow: hidden; font: 13px system-ui, sans-serif; }
+  #info { position: fixed; left: 8px; top: 8px; background: rgba(0,0,0,.65); color: #fff; padding: 6px 10px; border-radius: 6px; white-space: pre; }
+</style>
+</head>
+<body>
+<div id="info">loading…</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+// Model preview: /models/preview.html?model=house  (or characters, hall, nature)
+// Each model file exports preview(scene) that adds its variants side by side and returns
+// an optional update(dt, t) function. The page renders on a timer too, so screenshots stay fresh
+// even when the browser pane is hidden.
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const name = new URLSearchParams(location.search).get("model") || "house";
+const info = document.getElementById("info");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(1.5, devicePixelRatio));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#9fd3f0");
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+const view = new URLSearchParams(location.search).get("view") || "front";
+const dist = Number(new URLSearchParams(location.search).get("dist") || 22);
+camera.position.set(view === "top" ? 0 : dist * 0.55, view === "top" ? dist * 1.4 : dist * 0.55, view === "top" ? 0.01 : dist);
+const controls = new OrbitControls(camera, renderer.domElement); controls.target.set(0, 2, 0);
+scene.add(new THREE.HemisphereLight("#dff3ff", "#5a7a3a", 0.9));
+const sun = new THREE.DirectionalLight("#fff1d6", 2.2); sun.position.set(-20, 30, 15); sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30 }); scene.add(sun);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: "#7fb84e" }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+
+function size() { renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+addEventListener("resize", size); size();
+
+let update = null;
+try {
+  const mod = await import(`./${name}.js?v=${Date.now()}`);
+  update = mod.preview(scene) || null;
+} catch (e) { info.textContent = "ERROR\n" + (e.stack || e); throw e; }
+
+let last = performance.now(), frames = 0, fpsAt = last;
+function frame() {
+  const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
+  update?.(dt, now / 1000);
+  controls.update(); renderer.render(scene, camera); frames++;
+  if (now - fpsAt > 1000) {
+    info.textContent = `${name}  ·  draw calls ${renderer.info.render.calls}  ·  triangles ${renderer.info.render.triangles}  ·  ${Math.round(frames * 1000 / (now - fpsAt))} fps`;
+    frames = 0; fpsAt = now;
+  }
+}
+renderer.setAnimationLoop(frame);
+setInterval(frame, 250); // keeps rendering while the pane is hidden
+</script>
+</body>
+</html>

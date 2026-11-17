@@ -1,0 +1,7 @@
+{
+  "name": "ratusz",
+  "version": "0.1.0",
+  "author": { "name": "Krystian Stryjakiewicz" },
+  "description": "Agent Quest z Ratuszem: karta posiadłości, petycje agentów ze wszystkich maszyn, port dla PC Windows, Codexa i chmury, herold na telefon.",
+  "types": "./types/index.d.ts"
+}

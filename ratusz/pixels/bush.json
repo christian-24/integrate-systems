@@ -1,0 +1,33 @@
+{
+ "name": "bush",
+ "w": 12,
+ "h": 10,
+ "anchor": [
+  6,
+  9
+ ],
+ "palette": {
+  "o": "#1b1b2a",
+  "A": "#8bc34a",
+  "B": "#6ea93b",
+  "C": "#4f8a2b",
+  "D": "#3b6b22",
+  "p": "#e8735f",
+  "P": "#c8463a",
+  "s": "#00000055"
+ },
+ "frames": [
+  [
+   "...oooooo...",
+   "..oAABAABo..",
+   "..oABBABBCo.",
+   ".oBBCPBACDo.",
+   "oAACADCCDpCo",
+   "oBBBDCpBBCCo",
+   "oBCpDDBCCDDo",
+   ".oCDDCDCDDo.",
+   "..oooooooo..",
+   "..ssssssss.."
+  ]
+ ]
+}

@@ -1,0 +1,468 @@
+<title>Centrum dowodzenia agentami</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of sections; device identity carried by a fixed color per machine everywhere on the page. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#e9edf2; --fg:#182230; --muted:#5a6b7d; --line:#d3dbe4; --accent:#0b6e8a;
+  --pc:#2f62d6; --mac:#11957f; --ios:#d1306a; --cloud:#6f45e0; --gh:#4b5563;
+  --good:#2b8a3e; --warn:#d9480f; --crit:#c92a2a;
+  --display:"Bricolage Grotesque","Manrope",system-ui,sans-serif;
+  --body:"Manrope",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#171e26; --surface-2:#202a35; --fg:#e7ecf1; --muted:#9aa9b8; --line:#2c3845; --accent:#55b9d8;
+  --pc:#7a9cf2; --mac:#3fc4ad; --ios:#f36b9b; --cloud:#a083fb; --gh:#b3bcc6;
+  --good:#5fd271; --warn:#ff9a4a; --crit:#ff7676; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#171e26; --surface-2:#202a35; --fg:#e7ecf1; --muted:#9aa9b8; --line:#2c3845; --accent:#55b9d8;
+  --pc:#7a9cf2; --mac:#3fc4ad; --ios:#f36b9b; --cloud:#a083fb; --gh:#b3bcc6;
+  --good:#5fd271; --warn:#ff9a4a; --crit:#ff7676; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(30px,4.5vw,46px);font-weight:700}
+h2{font-size:clamp(22px,3vw,30px);font-weight:700}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+.lead{font-size:17px;color:var(--muted);max-width:62ch}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+section{padding-block:40px;border-top:1px solid var(--line)}
+header.top{padding-block:40px 32px;display:grid;gap:18px}
+.legend{display:flex;flex-wrap:wrap;gap:10px}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2);color:var(--fg);white-space:nowrap}
+.tag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--gh))}
+.tag.pc{--c:var(--pc)} .tag.mac{--c:var(--mac)} .tag.ios{--c:var(--ios)} .tag.cloud{--c:var(--cloud)} .tag.gh{--c:var(--gh)} .tag.hub{--c:var(--accent)}
+.sec-head{display:grid;gap:8px;margin-bottom:24px}
+.muted{color:var(--muted)}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+
+/* devices */
+.devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.dev{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:10px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.dev.pc{--c:var(--pc)} .dev.mac{--c:var(--mac)} .dev.ios{--c:var(--ios)} .dev.cloud{--c:var(--cloud)}
+.dev .role{font-size:13px;color:var(--muted)}
+.dev ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.dev li{display:flex;gap:8px;align-items:baseline;font-size:14px}
+.dev li::before{content:"";flex:none;width:6px;height:6px;border-radius:2px;background:var(--c);transform:translateY(-2px)}
+.dev li.hub::before{background:var(--accent)}
+.badge{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--muted)}
+.badge.on{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+
+/* flows */
+.flow{margin-top:28px;display:grid;gap:12px}
+.flow:first-of-type{margin-top:0}
+.flow-title{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.flow-title .k{font-family:var(--display);font-weight:700;font-size:22px;color:var(--accent)}
+.steps{display:flex;gap:0;overflow-x:auto;padding-bottom:6px}
+.step{flex:0 0 220px;min-width:0;position:relative;padding-right:28px}
+.step:last-child{padding-right:0}
+.step .card{height:100%;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:8px;padding:12px 12px 12px 14px;display:grid;gap:6px;align-content:start}
+.step.pc{--c:var(--pc)} .step.mac{--c:var(--mac)} .step.ios{--c:var(--ios)} .step.cloud{--c:var(--cloud)} .step.hub{--c:var(--accent)} .step.gh{--c:var(--gh)}
+.step .where{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c)}
+.step .what{font-size:14px;font-weight:600}
+.step .how{font-size:12.5px;color:var(--muted)}
+.step:not(:last-child)::after{content:"";position:absolute;right:6px;top:50%;width:16px;height:16px;border-top:2px solid var(--line);border-right:2px solid var(--line);transform:translateY(-50%) rotate(45deg)}
+.flow .note{font-size:13px;color:var(--muted);max-width:70ch}
+@media (max-width:640px){
+  .steps{flex-direction:column;overflow:visible}
+  .step{flex:none;padding-right:0;padding-bottom:22px}
+  .step:last-child{padding-bottom:0}
+  .step:not(:last-child)::after{right:auto;left:22px;top:auto;bottom:3px;transform:rotate(135deg)}
+}
+
+/* mockups */
+.mock-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:28px}
+.frame{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.titlebar{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:5px}.dots i{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.url{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:3px 8px;font-family:var(--mono);font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.topbar .brand{font-family:var(--display);font-weight:700;font-size:17px}
+.kpis{display:flex;gap:8px;flex-wrap:wrap}
+.kpi{display:flex;align-items:baseline;gap:6px;padding:4px 10px;border-radius:6px;background:var(--surface-2);font-size:13px}
+.kpi b{font-family:var(--display);font-size:18px;font-variant-numeric:tabular-nums}
+.kpi.crit b{color:var(--crit)}.kpi.warn b{color:var(--warn)}.kpi.good b{color:var(--good)}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+.col{padding:14px;border-right:1px solid var(--line);min-width:0;display:grid;gap:10px;align-content:start}
+.col:last-child{border-right:0}
+.col h3{display:flex;justify-content:space-between;align-items:center}
+.col h3 .n{font-size:12px;color:var(--muted);font-weight:600}
+@media (max-width:860px){.cols{grid-template-columns:1fr}.col{border-right:0;border-bottom:1px solid var(--line)}.col:last-child{border-bottom:0}}
+.item{border:1px solid var(--line);border-radius:8px;padding:10px 11px;display:grid;gap:6px;background:var(--bg)}
+.item .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.item .t{font-size:13.5px;font-weight:600;line-height:1.35}
+.item .cmd{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:5px 8px;border-radius:5px;overflow-x:auto;white-space:nowrap}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn{font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:default}
+.btn.ok{background:var(--good);border-color:var(--good);color:#fff}
+.btn.no{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 45%,transparent)}
+.btn.acc{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.state{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600}
+.state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--s)}
+.state.run{--s:var(--good)} .state.wait{--s:var(--warn)} .state.idle{--s:var(--muted)} .state.done{--s:var(--accent)}
+.agent{display:grid;gap:4px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.agent:last-child{border-bottom:0}
+.agent .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.agent .name{font-weight:600;font-size:13.5px}
+.agent .sub{font-size:12px;color:var(--muted)}
+.machine{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--c);margin-top:6px}
+.machine.pc{--c:var(--pc)}.machine.mac{--c:var(--mac)}.machine.cloud{--c:var(--cloud)}
+.proj{display:grid;gap:4px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.proj:last-child{border-bottom:0}
+.proj .name{font-weight:700;font-size:13.5px;font-family:var(--mono)}
+.proj .u{display:flex;gap:8px;align-items:baseline;font-size:12.5px}
+.proj .u::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--s);transform:translateY(-2px)}
+.proj .u.warn{--s:var(--warn)} .proj .u.crit{--s:var(--crit)} .proj .u.idle{--s:var(--muted)}
+
+/* phones */
+.phones{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;align-items:start}
+.phone-wrap{display:grid;gap:10px;justify-items:center}
+.phone-wrap .cap{font-size:13px;color:var(--muted);text-align:center;max-width:32ch}
+.phone{width:100%;max-width:300px;aspect-ratio:9/19;border:8px solid #22282f;border-radius:38px;background:var(--surface);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:96px;height:24px;border-radius:14px;background:#22282f;z-index:2}
+.lock{flex:1;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 35%,var(--bg)),color-mix(in srgb,var(--ios) 25%,var(--bg)));padding:56px 12px 12px;display:grid;gap:10px;align-content:start}
+.clock{text-align:center;font-family:var(--display);font-weight:500;font-size:54px;line-height:1;color:var(--fg)}
+.date{text-align:center;font-size:13px;color:var(--fg);opacity:.8;margin-top:-4px}
+.notif{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(8px);border-radius:14px;padding:10px 12px;display:grid;gap:6px;font-size:12.5px}
+.notif .h{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.notif .h b{color:var(--fg)}
+.notif .b{line-height:1.35}
+.notif .acts{display:flex;gap:6px;margin-top:2px}
+.notif .acts span{flex:1;text-align:center;font-size:12px;font-weight:600;padding:6px;border-radius:8px;background:var(--surface-2)}
+.notif .acts span.ok{background:var(--good);color:#fff}
+.notif .acts span.no{color:var(--crit)}
+.app{flex:1;display:flex;flex-direction:column;padding-top:44px}
+.app .bar{padding:6px 14px 10px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)}
+.app .bar b{font-family:var(--display);font-size:16px}
+.tabs{display:flex;border-bottom:1px solid var(--line);font-size:12.5px}
+.tabs span{flex:1;text-align:center;padding:8px 4px;color:var(--muted);font-weight:600}
+.tabs span.on{color:var(--accent);border-bottom:2px solid var(--accent)}
+.list{padding:10px;display:grid;gap:8px;overflow:hidden}
+.list .item{padding:9px 10px}
+.list .item .t{font-size:12.5px}
+.list .btn{font-size:11.5px;padding:4px 8px}
+
+/* table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td .mono{white-space:nowrap}
+
+/* phases */
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:8px;align-content:start;min-width:0}
+.phase .k{font-family:var(--display);font-weight:700;font-size:20px;color:var(--accent)}
+.phase .time{font-size:12px;color:var(--muted)}
+.phase ul{margin:0;padding-left:16px;font-size:13.5px;display:grid;gap:3px}
+.phase .out{font-size:13px;padding-top:6px;border-top:1px dashed var(--line);color:var(--muted)}
+
+.decisions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.dec{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:6px;min-width:0}
+.dec .q{font-weight:700}
+.dec .r{font-size:13.5px}
+.dec .r b{color:var(--accent)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">Mapa procesów · wersja 1 · 8 listopada 2026</div>
+  <h1>Centrum dowodzenia agentami</h1>
+  <p class="lead">Jak wygląda jeden panel nad Claude i Codexem na Macu, PC z Windows, iPhonie i w chmurze: gdzie co się dzieje, jak płyną zdarzenia i decyzje, jak wyglądają ekrany.</p>
+  <div class="legend">
+    <span class="tag pc">PC Windows</span>
+    <span class="tag mac">Mac</span>
+    <span class="tag ios">iPhone</span>
+    <span class="tag cloud">Chmura Claude / Codex</span>
+    <span class="tag gh">GitHub</span>
+    <span class="tag hub">Hub (na PC)</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">1 · Gdzie co się dzieje</div>
+    <h2>Cztery miejsca, jedna prawda</h2>
+    <p class="lead">Hub stoi na PC, bo PC i tak musi pracować. Reszta urządzeń to klienci Huba, nie osobne „centra”.</p>
+  </div>
+  <div class="devices">
+    <div class="dev pc">
+      <div><h3>PC Windows</h3><div class="role">serwer roboczy i Hub</div></div>
+      <div><span class="badge on">zawsze włączony</span></div>
+      <ul>
+        <li class="hub">Hub: API zdarzeń, kolejka decyzji, SQLite, dashboard</li>
+        <li>Claude Code (sesje lokalne)</li>
+        <li>Codex CLI</li>
+        <li>Środowiska buildowe, dane</li>
+        <li>ntfy (opcjonalnie własny serwer)</li>
+        <li>RDP + OpenSSH przez Tailscale</li>
+        <li>cron: stan repozytoriów co 15 min</li>
+      </ul>
+    </div>
+    <div class="dev mac">
+      <div><h3>Mac</h3><div class="role">stacja decyzyjna i robotnik w drodze</div></div>
+      <div><span class="badge">włączony, gdy pracujesz</span></div>
+      <ul>
+        <li>Claude Code desktop (sesje lokalne)</li>
+        <li>Dashboard w przeglądarce (zakładka zawsze otwarta)</li>
+        <li>Hooki Claude Code → Hub</li>
+        <li>Sync terminów do Reminders (raz dziennie)</li>
+        <li>cron: stan repozytoriów co 15 min</li>
+      </ul>
+    </div>
+    <div class="dev ios">
+      <div><h3>iPhone</h3><div class="role">pilot</div></div>
+      <div><span class="badge">zawsze przy Tobie</span></div>
+      <ul>
+        <li>ntfy: push z przyciskami Zatwierdź / Odrzuć</li>
+        <li>Dashboard jako aplikacja (PWA) na ekranie głównym</li>
+        <li>Aplikacja Claude: Remote Control sesji</li>
+        <li>Aplikacja ChatGPT: zadania Codex</li>
+        <li>Shortcuts: „wróciłem do domu” → digest</li>
+        <li>Tailscale jako VPN na żądanie</li>
+      </ul>
+    </div>
+    <div class="dev cloud">
+      <div><h3>Chmura</h3><div class="role">robotnicy „odpal i zapomnij”</div></div>
+      <div><span class="badge">niezależna od Twoich maszyn</span></div>
+      <ul>
+        <li>Claude Code cloud: zadanie → branch → PR</li>
+        <li>Codex cloud: zadanie → branch → PR</li>
+        <li>GitHub: PR-y, Issues, CI (stan projektów kodowych)</li>
+        <li>Hub odpytuje GitHub co 5 min</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">2 · Mapa procesów</div>
+    <h2>Cztery przepływy, które pokrywają 90% dnia</h2>
+    <p class="lead">Kolor kroku mówi, na którym urządzeniu się dzieje. Strzałka to jedno wywołanie HTTP wewnątrz Tailscale albo push.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-title"><span class="k">A</span><h3>Agent skończył turę</h3><span class="muted">· bez pusha, trafia do digestu</span></div>
+    <div class="steps">
+      <div class="step pc"><div class="card"><div class="where">PC Windows</div><div class="what">Claude Code kończy turę</div><div class="how">hook <code>Stop</code> odpala skrypt</div></div></div>
+      <div class="step hub"><div class="card"><div class="where">Hub</div><div class="what">Zapisuje <code>turn_finished</code></div><div class="how">POST /events, sesja → „bezczynna”</div></div></div>
+      <div class="step mac"><div class="card"><div class="where">Mac</div><div class="what">Dashboard odświeża kolumnę „Agenci teraz”</div><div class="how">SSE, bez przeładowania</div></div></div>
+      <div class="step ios"><div class="card"><div class="where">iPhone</div><div class="what">Nic nie brzęczy</div><div class="how">zobaczysz w digeście po powrocie</div></div></div>
+    </div>
+    <p class="note">To samo dla Codexa (<code>notify</code> w config.toml) i dla sesji na Macu. Jedna ścieżka, różne źródła.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-title"><span class="k">B</span><h3>Agent potrzebuje decyzji, a Ty jesteś poza domem</h3><span class="muted">· jedno kliknięcie z ekranu blokady</span></div>
+    <div class="steps">
+      <div class="step pc"><div class="card"><div class="where">PC Windows</div><div class="what">Agent chce uruchomić groźną komendę</div><div class="how">hook <code>PreToolUse</code> wysyła <code>needs_decision</code> i czeka</div></div></div>
+      <div class="step hub"><div class="card"><div class="where">Hub</div><div class="what">Tworzy decyzję „pending”</div><div class="how">push przez ntfy z dwoma przyciskami</div></div></div>
+      <div class="step ios"><div class="card"><div class="where">iPhone</div><div class="what">Klikasz „Zatwierdź” na ekranie blokady</div><div class="how">ntfy robi POST /decisions/:id przez Tailscale</div></div></div>
+      <div class="step hub"><div class="card"><div class="where">Hub</div><div class="what">Decyzja → „approved”</div><div class="how">hook odpytuje co 2 s i dostaje odpowiedź</div></div></div>
+      <div class="step pc"><div class="card"><div class="where">PC Windows</div><div class="what">Agent jedzie dalej</div><div class="how">hook zwraca <code>allow</code>; brak odpowiedzi w 10 min = <code>deny</code></div></div></div>
+    </div>
+    <p class="note">Bramka dotyczy krótkiej listy: <code>rm -rf</code>, <code>git push --force</code>, <code>DROP</code>, deploy. Reszta zgód zostaje w zwykłym trybie uprawnień, inaczej telefon będzie brzęczał co 30 sekund.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-title"><span class="k">C</span><h3>Chcesz porozmawiać z agentem, nie tylko kliknąć</h3><span class="muted">· Hub tylko linkuje, rozmowa idzie natywnie</span></div>
+    <div class="steps">
+      <div class="step ios"><div class="card"><div class="where">iPhone</div><div class="what">Na dashboardzie przy sesji: „Otwórz w Claude”</div><div class="how">deep link do sesji z Remote Control</div></div></div>
+      <div class="step cloud"><div class="card"><div class="where">Anthropic</div><div class="what">Aplikacja Claude łączy się z sesją na PC</div><div class="how">przekaźnik dostawcy, poza Hubem</div></div></div>
+      <div class="step pc"><div class="card"><div class="where">PC Windows</div><div class="what">Odpowiadasz agentowi, on pracuje</div><div class="how">hooki nadal raportują do Huba</div></div></div>
+      <div class="step pc"><div class="card"><div class="where">PC Windows</div><div class="what">Gdy trzeba czegoś poza agentem</div><div class="how">RDP lub SSH przez Tailscale</div></div></div>
+    </div>
+    <p class="note">Dla Codexa ten sam schemat przez aplikację ChatGPT. Nie budujesz własnego czatu z agentem; dostawcy robią to lepiej.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-title"><span class="k">D</span><h3>Wracasz do domu</h3><span class="muted">· trzy liczby zanim zdejmiesz kurtkę</span></div>
+    <div class="steps">
+      <div class="step ios"><div class="card"><div class="where">iPhone</div><div class="what">Shortcuts: automatyzacja „Przyjazd: dom”</div><div class="how">GET /digest przez Tailscale</div></div></div>
+      <div class="step hub"><div class="card"><div class="where">Hub</div><div class="what">Składa digest</div><div class="how">decyzje · agenci aktywni · niedokończone</div></div></div>
+      <div class="step ios"><div class="card"><div class="where">iPhone</div><div class="what">Powiadomienie z trzema liczbami i otwarte PWA</div><div class="how">decydujesz, co bierzesz na Maca</div></div></div>
+      <div class="step mac"><div class="card"><div class="where">Mac</div><div class="what">Siadasz do dashboardu, który i tak jest otwarty</div><div class="how">kolumna „Decyzje” u góry</div></div></div>
+    </div>
+    <p class="note">Wieczorem, osobno: Hub wypisuje rzeczy z terminem do Reminders, a w kalendarzu stoi stały blok „Przegląd agentów” z linkiem do dashboardu.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">3 · Makiety</div>
+    <h2>Dashboard na Macu i PC</h2>
+    <p class="lead">Jedna strona, trzy kolumny, dane przykładowe. Kolumna „Decyzje” jest pierwsza, bo to jedyne, co wymaga Ciebie.</p>
+  </div>
+  <div class="mock-grid">
+    <div class="frame">
+      <div class="titlebar"><div class="dots"><i></i><i></i><i></i></div><div class="url">http://win-pc.tailnet:7777/</div><span class="tag hub">Hub</span></div>
+      <div class="topbar">
+        <div class="brand">Centrum dowodzenia</div>
+        <div class="kpis">
+          <div class="kpi crit"><b>3</b> decyzje</div>
+          <div class="kpi good"><b>4</b> agentów aktywnych</div>
+          <div class="kpi warn"><b>6</b> niedokończonych</div>
+          <div class="kpi"><b>2</b> maszyny online</div>
+        </div>
+      </div>
+      <div class="cols">
+        <div class="col">
+          <h3>Decyzje <span class="n">czekają na Ciebie</span></h3>
+          <div class="item">
+            <div class="meta"><span class="tag pc">PC</span> Claude Code · <span class="mono">integrate-systems</span> · 2 min</div>
+            <div class="t">Zgoda na uruchomienie</div>
+            <div class="cmd">git push --force origin feat/hub</div>
+            <div class="btns"><span class="btn ok">Zatwierdź</span><span class="btn no">Odrzuć</span><span class="btn acc">Otwórz sesję</span></div>
+          </div>
+          <div class="item">
+            <div class="meta"><span class="tag cloud">Codex cloud</span> <span class="mono">sklep-api</span> · 18 min</div>
+            <div class="t">PR #42 gotowy do review: migracja płatności</div>
+            <div class="btns"><span class="btn acc">Otwórz PR</span><span class="btn">Odłóż na wieczór</span></div>
+          </div>
+          <div class="item">
+            <div class="meta"><span class="tag mac">Mac</span> Claude Code · <span class="mono">raporty</span> · 41 min</div>
+            <div class="t">Pytanie: cache w Postgresie czy w SQLite?</div>
+            <div class="btns"><span class="btn acc">Odpowiedz w Claude</span></div>
+          </div>
+        </div>
+        <div class="col">
+          <h3>Agenci teraz <span class="n">per maszyna</span></h3>
+          <div class="machine pc">PC Windows</div>
+          <div class="agent"><div class="row"><span class="name">Claude Code · integrate-systems</span><span class="state wait">czeka na zgodę</span></div><div class="sub">tura 14 · ostatnia aktywność 2 min temu</div></div>
+          <div class="agent"><div class="row"><span class="name">Codex CLI · sklep-api</span><span class="state run">pracuje</span></div><div class="sub">„napraw testy koszyka” · 9 min</div></div>
+          <div class="machine mac">Mac</div>
+          <div class="agent"><div class="row"><span class="name">Claude Code · raporty</span><span class="state idle">bezczynny</span></div><div class="sub">zadał pytanie 41 min temu</div></div>
+          <div class="machine cloud">Chmura</div>
+          <div class="agent"><div class="row"><span class="name">Codex cloud · sklep-api</span><span class="state done">zakończone</span></div><div class="sub">wynik: PR #42</div></div>
+          <div class="agent"><div class="row"><span class="name">Claude cloud · landing</span><span class="state run">pracuje</span></div><div class="sub">„sekcja cennika” · 12 min</div></div>
+        </div>
+        <div class="col">
+          <h3>Niedokończone <span class="n">per projekt</span></h3>
+          <div class="proj"><div class="name">integrate-systems</div><div class="u warn">2 pliki niezacommitowane na PC</div><div class="u warn">branch feat/hub bez PR od 4 h</div></div>
+          <div class="proj"><div class="name">sklep-api</div><div class="u warn">PR #42 czeka na review 18 min</div><div class="u crit">CI czerwone na PR #40</div></div>
+          <div class="proj"><div class="name">raporty</div><div class="u idle">sesja na Macu z otwartym pytaniem</div></div>
+          <div class="proj"><div class="name">landing</div><div class="u idle">branch bez aktywności od 3 dni</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">3 · Makiety</div>
+    <h2>iPhone: ekran blokady i aplikacja</h2>
+    <p class="lead">Najczęstsza interakcja to jedno dotknięcie przycisku w powiadomieniu. Aplikację otwierasz, gdy chcesz zobaczyć całość.</p>
+  </div>
+  <div class="phones">
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div>
+        <div class="lock">
+          <div class="clock">18:42</div>
+          <div class="date">sobota, 8 listopada</div>
+          <div class="notif">
+            <div class="h"><b>ntfy · Hub</b><span>teraz</span></div>
+            <div class="b"><b>Claude Code (PC) prosi o zgodę</b><br>integrate-systems: <span class="mono">git push --force origin feat/hub</span></div>
+            <div class="acts"><span class="ok">Zatwierdź</span><span class="no">Odrzuć</span><span>Otwórz</span></div>
+          </div>
+          <div class="notif">
+            <div class="h"><b>ntfy · Hub</b><span>18 min</span></div>
+            <div class="b"><b>Codex cloud skończył</b><br>sklep-api: PR #42 gotowy do review</div>
+          </div>
+          <div class="notif">
+            <div class="h"><b>Shortcuts</b><span>18:40</span></div>
+            <div class="b"><b>Wróciłeś do domu</b><br>3 decyzje · 4 agentów aktywnych · 6 niedokończonych</div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">Przepływ B i D. Przyciski w powiadomieniu wołają Hub bez otwierania czegokolwiek.</p>
+    </div>
+    <div class="phone-wrap">
+      <div class="phone"><div class="notch"></div>
+        <div class="app">
+          <div class="bar"><b>Centrum</b><span class="tag hub">2 maszyny</span></div>
+          <div class="tabs"><span class="on">Decyzje · 3</span><span>Agenci</span><span>Projekty</span></div>
+          <div class="list">
+            <div class="item">
+              <div class="meta"><span class="tag pc">PC</span> 2 min</div>
+              <div class="t">Zgoda: git push --force (integrate-systems)</div>
+              <div class="btns"><span class="btn ok">Zatwierdź</span><span class="btn no">Odrzuć</span></div>
+            </div>
+            <div class="item">
+              <div class="meta"><span class="tag cloud">Codex cloud</span> 18 min</div>
+              <div class="t">PR #42 do review: migracja płatności</div>
+              <div class="btns"><span class="btn acc">Otwórz PR</span></div>
+            </div>
+            <div class="item">
+              <div class="meta"><span class="tag mac">Mac</span> 41 min</div>
+              <div class="t">Pytanie: cache w Postgresie czy SQLite?</div>
+              <div class="btns"><span class="btn acc">Otwórz w Claude</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="cap">Dashboard jako PWA. Te same trzy kolumny co na Macu, jako zakładki. „Otwórz w Claude” uruchamia Remote Control.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">4 · Komunikacja</div>
+    <h2>Kto z kim rozmawia i jak</h2>
+    <p class="lead">Wszystko poza przekaźnikiem Remote Control i pushem Apple biegnie wewnątrz Tailscale. Na routerze nic nie otwierasz.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Od</th><th>Do</th><th>Kanał</th><th>Kiedy</th><th>Treść</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag pc">PC</span> / <span class="tag mac">Mac</span> hook Claude Code</td><td>Hub</td><td><span class="mono">POST /events</span> · Tailscale · token</td><td>start, koniec tury, prośba o zgodę, koniec sesji</td><td>JSON: źródło, maszyna, projekt, sesja, typ, tytuł</td></tr>
+        <tr><td><span class="tag pc">PC</span> Codex <span class="mono">notify</span></td><td>Hub</td><td><span class="mono">POST /events</span></td><td>koniec tury, prośba o zgodę</td><td>ten sam JSON</td></tr>
+        <tr><td><span class="tag pc">PC</span> / <span class="tag mac">Mac</span> cron</td><td>Hub</td><td><span class="mono">POST /events</span></td><td>co 15 min</td><td><span class="mono">repo_dirty</span>: pliki bez commita, branch bez PR</td></tr>
+        <tr><td>Hub</td><td><span class="tag gh">GitHub</span></td><td>API GitHub · <span class="mono">gh</span></td><td>co 5 min</td><td>PR-y otwarte, review, CI (Hub jest w sieci prywatnej, więc odpytuje zamiast webhooka)</td></tr>
+        <tr><td>Hub</td><td><span class="tag ios">iPhone</span> ntfy</td><td>push (ntfy.sh lub własny)</td><td>tylko <span class="mono">needs_decision</span>, <span class="mono">blocked</span>, <span class="mono">ci_failed</span></td><td>tytuł + przyciski z adresem decyzji</td></tr>
+        <tr><td><span class="tag ios">iPhone</span> przycisk ntfy</td><td>Hub</td><td><span class="mono">POST /decisions/:id</span> · Tailscale</td><td>na dotknięcie</td><td><span class="mono">approved</span> / <span class="mono">rejected</span></td></tr>
+        <tr><td><span class="tag pc">PC</span> hook (czeka)</td><td>Hub</td><td><span class="mono">GET /decisions/:id</span> co 2 s</td><td>do 10 min</td><td>stan decyzji → <span class="mono">allow</span> / <span class="mono">deny</span></td></tr>
+        <tr><td><span class="tag ios">iPhone</span> Shortcuts</td><td>Hub</td><td><span class="mono">GET /digest</span></td><td>przyjazd do domu, 18:30</td><td>trzy liczby + lista</td></tr>
+        <tr><td><span class="tag mac">Mac</span> / <span class="tag ios">iPhone</span> przeglądarka</td><td>Hub</td><td>HTML + SSE</td><td>zawsze otwarte</td><td>dashboard na żywo</td></tr>
+        <tr><td><span class="tag ios">iPhone</span> aplikacja Claude</td><td><span class="tag pc">PC</span> / <span class="tag mac">Mac</span> sesja</td><td>Remote Control (przekaźnik Anthropic)</td><td>gdy chcesz rozmawiać</td><td>poza Hubem; Hub tylko daje link</td></tr>
+        <tr><td><span class="tag ios">iPhone</span> / <span class="tag mac">Mac</span></td><td><span class="tag pc">PC</span></td><td>RDP, SSH · Tailscale</td><td>awaryjnie</td><td>pełna kontrola nad maszyną</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">5 · Kolejność budowy</div>
+    <h2>Pięć faz, każda daje coś działającego</h2>
+  </div>
+  <div class="phases">
+    <div class="phase"><div class="k">0</div><div class="time">jeden wieczór</div><ul><li>Tailscale na Mac, PC, iPhone</li><li>RDP + OpenSSH na Windows</li><li>ntfy na iPhonie</li><li>hooki Claude Code i notify Codex → ntfy</li><li>Remote Control włączony</li></ul><div class="out">Push, gdy ktokolwiek czeka. Przejęcie sesji z telefonu.</div></div>
+    <div class="phase"><div class="k">1</div><div class="time">weekend</div><ul><li>Hub na PC: API, SQLite, dashboard</li><li>adaptery przekierowane na Hub</li><li>cron stanu repozytoriów</li><li>Shortcut „Przyjazd: dom”</li></ul><div class="out">Jeden ekran z trzema kolumnami.</div></div>
+    <div class="phase"><div class="k">2</div><div class="time">kilka wieczorów</div><ul><li>tabela decyzji</li><li>przyciski w ntfy</li><li>bramka PreToolUse z krótką listą komend</li><li>linki do Remote Control przy sesjach</li></ul><div class="out">Decyzje z ekranu blokady.</div></div>
+    <div class="phase"><div class="k">3</div><div class="time">kilka wieczorów</div><ul><li>Hub odpytuje GitHub</li><li>widok „Niedokończone”</li><li>terminy → Reminders</li><li>blok „Przegląd agentów” w kalendarzu</li></ul><div class="out">Projekty lokalne i chmurowe w jednej liście.</div></div>
+    <div class="phase"><div class="k">4</div><div class="time">opcjonalnie</div><ul><li>Hub + ntfy na VPS</li><li>zmiana jednego adresu w adapterach</li></ul><div class="out">Panel żyje, nawet gdy PC jest wyłączony.</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head">
+    <div class="eyebrow">6 · Do rozstrzygnięcia</div>
+    <h2>Trzy decyzje przed startem</h2>
+  </div>
+  <div class="decisions">
+    <div class="dec"><div class="q">Hub na PC czy od razu na VPS?</div><div class="r"><b>PC.</b> Zero kosztu, zero nowej infrastruktury. Przeprowadzka to faza 4.</div></div>
+    <div class="dec"><div class="q">ntfy.sh czy własny serwer ntfy?</div><div class="r"><b>ntfy.sh</b> z długim losowym tematem. Własny, gdy w powiadomieniach pojawi się kod klientów.</div></div>
+    <div class="dec"><div class="q">Hub w TypeScript czy Pythonie?</div><div class="r"><b>TypeScript</b> (Hono + SQLite). Dashboard i SSE wychodzą naturalnie. Dla architektury bez znaczenia.</div></div>
+  </div>
+</section>
+</div>

@@ -1,0 +1,6 @@
+{"object":"list","url":"/v1/balance_transactions","has_more":false,"data":[
+{"id":"txn_payment2","object":"balance_transaction","amount":2500,"fee":100,"net":2400,"currency":"eur","type":"payment","created":1700300000,"description":null,"source":"py_2"},
+{"id":"txn_stripefee","object":"balance_transaction","amount":-50,"fee":50,"net":-50,"currency":"eur","type":"stripe_fee","created":1700310000,"description":"Billing usage fee","source":"ufe_1"},
+{"id":"txn_old","object":"balance_transaction","amount":9999,"fee":300,"net":9699,"currency":"pln","type":"charge","created":1690000000,"description":"Stary","source":"ch_0"},
+{"broken":true}
+]}

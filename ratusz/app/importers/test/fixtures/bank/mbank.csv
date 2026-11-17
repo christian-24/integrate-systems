@@ -1,0 +1,20 @@
+mBank S.A. BankowoúÊ Detaliczna;
+SkrÛcony elektroniczny wyciπg z rachunku;
+
+#Klient;
+JAN PR”BNY;
+
+#Za okres:;
+Od 2026-01-01 do 2026-01-31;
+
+#Waluta;
+PLN;
+
+#Data operacji;#Opis operacji;#Rachunek;#Kategoria;#Kwota;
+2026-01-05;"ZAKUP PRZY UØYCIU KARTY; SKLEP ØABKA £”Dè";"Konto Testowe 11 2222 3333";"ØywnoúÊ";-12,50 PLN;
+2026-01-10;"PRZELEW PRZYCHODZ•CY ZA FAKTUR  7/2026";"Konto Testowe 11 2222 3333";"Wp≥ywy";1 234,56 PLN;
+2026-01-10;"ZAKUP KART• KAWIARNIA";"Konto Testowe 11 2222 3333";"Jedzenie";-8,00 PLN;
+2026-01-10;"ZAKUP KART• KAWIARNIA";"Konto Testowe 11 2222 3333";"Jedzenie";-8,00 PLN;
+
+#Saldo koÒcowe;
+1 000,00 PLN;

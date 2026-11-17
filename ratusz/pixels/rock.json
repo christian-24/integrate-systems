@@ -1,0 +1,30 @@
+{
+ "name": "rock",
+ "w": 10,
+ "h": 8,
+ "anchor": [
+  5,
+  7
+ ],
+ "palette": {
+  "o": "#1b1b2a",
+  "L": "#c4bdae",
+  "M": "#9b9384",
+  "D": "#6c665c",
+  "m": "#6ea93b",
+  "n": "#a9d65a",
+  "s": "#00000055"
+ },
+ "frames": [
+  [
+   "..oooooo..",
+   ".oLmnmMMo.",
+   "oLmmMMMMMo",
+   "oLLMMMDMDo",
+   "oMMMMMDDDo",
+   "oMMDMDDDDo",
+   ".oMDDDDDo.",
+   ".soooooos."
+  ]
+ ]
+}

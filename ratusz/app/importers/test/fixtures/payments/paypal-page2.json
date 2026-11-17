@@ -1,0 +1,4 @@
+{"transaction_details":[
+{"transaction_info":{"transaction_id":"TX006","transaction_event_code":"T0006","transaction_initiation_date":"2024-03-07T08:00:00+0000","transaction_amount":{"currency_code":"PLN","value":"50.00"},"fee_amount":{"currency_code":"PLN","value":"-2.00"},"transaction_status":"S"}},
+{"nonsense":1}
+],"total_items":2,"total_pages":2,"page":2}

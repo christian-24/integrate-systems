@@ -1,0 +1,7 @@
+{"href":"https://apiz.ebay.com/sell/finances/v1/transaction?limit=200&offset=0","total":5,"limit":200,"offset":0,"transactions":[
+{"transactionId":"tx-1","transactionType":"SALE","transactionDate":"2026-03-10T10:00:00.000Z","bookingEntry":"CREDIT","orderId":"12-34567-89012","buyer":{"username":"buyer_a"},"amount":{"value":"120.00","currency":"EUR"},"totalFeeAmount":{"value":"15.60","currency":"EUR"},"transactionStatus":"FUNDS_AVAILABLE_FOR_PAYOUT"},
+{"transactionId":"tx-2","transactionType":"REFUND","transactionDate":"2026-03-09T10:00:00.000Z","bookingEntry":"DEBIT","orderId":"12-34567-89000","buyer":{"username":"buyer_b"},"amount":{"value":"40.00","currency":"EUR"}},
+{"transactionId":"tx-3","transactionType":"NON_SALE_CHARGE","transactionDate":"2026-03-08T10:00:00.000Z","bookingEntry":"DEBIT","feeType":"AD_FEE","amount":{"value":"2.50","currency":"EUR"}},
+{"transactionId":"tx-4","transactionType":"PAYOUT","transactionDate":"2026-03-07T10:00:00.000Z","amount":{"value":"500.00","currency":"EUR"}},
+{"transactionId":"tx-old","transactionType":"SALE","transactionDate":"2026-01-05T10:00:00.000Z","amount":{"value":"9.00","currency":"EUR"}}
+]}

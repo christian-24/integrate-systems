@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ratusz">
+<title>Agent Quest · Ratusz</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: a full-window 3D island under a slim top bar. Two districts: the Guild (agents' homes and
+   the guild halls) to the north of the Hall, the Projects (estates with gardens) to the south. A side
+   ledger opens for whatever is clicked; labels float over the scene. */
+:root {
+  --glass: rgba(18, 20, 28, .86); --edge: rgba(226, 179, 71, .35); --gold: #e2b347; --ink: #f2ecdc; --dim: #a9a293;
+  --ok: #6ee08a; --wait: #f2c45a; --rest: #8d8a80; --bad: #ff7a6a; --violet: #c9a7ff;
+  --display: "Cinzel", Georgia, serif; --body: "Alegreya Sans", "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1020; color: var(--ink); font: 15px/1.45 var(--body); }
+#scene { position: fixed; inset: 0; }
+.bar { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; gap: 8px; align-items: center; pointer-events: none; z-index: 3; flex-wrap: wrap; }
+.bar > * { pointer-events: auto; }
+.crest { background: var(--glass); border: 1px solid var(--edge); border-radius: 10px; padding: 7px 14px; display: flex; gap: 14px; align-items: baseline; backdrop-filter: blur(6px); }
+.crest h1 { font: 900 18px var(--display); color: var(--gold); margin: 0; letter-spacing: .06em; }
+.crest span { color: var(--dim); font-size: 14px; white-space: nowrap; }
+.crest b { color: var(--ink); }
+.btn { font: 700 13px var(--body); color: var(--ink); background: var(--glass); border: 1px solid var(--edge); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--gold); }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.btn:focus-visible, .tab:focus-visible, .node button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.spacer { flex: 1; }
+.hint { position: fixed; left: 10px; bottom: 10px; background: var(--glass); border: 1px solid var(--edge); border-radius: 8px; padding: 6px 12px; color: var(--dim); font-size: 13px; z-index: 3; }
+.panel { position: fixed; top: 64px; right: 10px; bottom: 10px; width: min(480px, calc(100vw - 20px)); background: var(--glass); border: 1px solid var(--edge);
+  border-radius: 14px; backdrop-filter: blur(8px); display: flex; flex-direction: column; z-index: 4; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.panel[hidden] { display: none; }
+.panel header { padding: 16px 18px 10px; border-bottom: 1px solid var(--edge); position: relative; }
+.panel h2 { font: 700 20px/1.2 var(--display); margin: 0 30px 6px 0; color: var(--gold); overflow-wrap: anywhere; }
+.panel .sub { color: var(--dim); font-size: 13px; overflow-wrap: anywhere; }
+.x { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--edge); background: transparent; color: var(--ink); cursor: pointer; font-size: 16px; }
+.tabs { display: flex; gap: 2px; padding: 8px 12px 0; flex-wrap: wrap; }
+.tab { font: 700 13px var(--body); color: var(--dim); background: transparent; border: 0; border-bottom: 2px solid transparent; padding: 6px 7px; cursor: pointer; }
+.tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); }
+.body { padding: 14px 18px 18px; overflow: auto; flex: 1; display: grid; align-content: start; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.08); white-space: nowrap; }
+.chip.working, .chip.OPEN, .chip.pass, .chip.published { background: rgba(110,224,138,.18); color: var(--ok); }
+.chip.waiting, .chip.approved, .chip.doing { background: rgba(242,196,90,.18); color: var(--wait); }
+.chip.resting, .chip.done-agent, .chip.CLOSED, .chip.draft, .chip.todo { color: var(--rest); }
+.chip.MERGED { background: rgba(154,106,216,.25); color: var(--violet); }
+.chip.fail { background: rgba(255,122,106,.18); color: var(--bad); }
+.chip.tech { background: rgba(127,227,255,.12); color: #9fe6ff; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 8px 10px; }
+.stat b { display: block; font: 700 20px var(--display); color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--dim); }
+.progress { height: 10px; border-radius: 6px; background: rgba(255,255,255,.08); overflow: hidden; }
+.progress i { display: block; height: 100%; background: linear-gradient(90deg, #6ee08a, #e2b347); }
+.progress.xp i { background: linear-gradient(90deg, #7fe3ff, #c9a7ff); }
+.level { display: flex; align-items: center; gap: 12px; }
+.level .badge { font: 900 22px var(--display); color: #1b1b2a; background: radial-gradient(circle at 35% 30%, #fff3c4, #e2b347 60%, #a9781e); width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; flex: none; box-shadow: 0 0 0 2px rgba(0,0,0,.4); }
+.level .grow { flex: 1; display: grid; gap: 4px; font-size: 13px; color: var(--dim); }
+h3 { font: 700 12px var(--display); letter-spacing: .1em; color: var(--dim); margin: 6px 0 0; text-transform: uppercase; }
+.list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.list li { background: rgba(255,255,255,.04); border-radius: 8px; padding: 7px 10px; font-size: 14px; overflow-wrap: anywhere; }
+.list li small { color: var(--dim); display: block; }
+.list li.click { cursor: pointer; }
+.list li.click:hover { background: rgba(226,179,71,.12); }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mono { font: 12px Consolas, ui-monospace, monospace; color: var(--dim); }
+.said { background: rgba(255,255,255,.04); border-left: 3px solid var(--edge); padding: 8px 10px; border-radius: 0 8px 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.doc { line-height: 1.55; overflow-wrap: anywhere; }
+.doc h1, .doc h2, .doc h3 { font-family: var(--display); color: var(--gold); text-transform: none; letter-spacing: 0; }
+.doc pre { background: rgba(0,0,0,.35); padding: 10px; border-radius: 8px; overflow: auto; }
+.doc code { font-family: Consolas, monospace; font-size: 13px; }
+.doc a { color: var(--gold); }
+.doc table { border-collapse: collapse; display: block; overflow-x: auto; }
+.doc td, .doc th { border: 1px solid rgba(255,255,255,.12); padding: 4px 8px; }
+/* task rows: the checkbox keeps its own size and place next to wrapping text */
+.list li.todo { display: grid; grid-template-columns: 20px minmax(0, 1fr) 24px; gap: 10px; align-items: start; }
+.todo input[type=checkbox] { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--gold); flex: none; cursor: pointer; }
+.todo span { overflow-wrap: anywhere; min-width: 0; }
+.money-in { color: var(--ok); } .money-out { color: var(--bad); }
+.advice { background: rgba(154,106,216,.14); border: 1px solid rgba(154,106,216,.4); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.chip.new { background: rgba(127,227,255,.2); color: #9fe6ff; }
+input[type=date] { font: 13px var(--body); color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid var(--edge); border-radius: 6px; padding: 3px 6px; }
+.todo span.done { text-decoration: line-through; color: var(--dim); }
+.todo button, .node .del { background: none; border: 0; color: var(--dim); cursor: pointer; font-size: 16px; }
+form.add { display: flex; gap: 6px; flex-wrap: wrap; }
+form.add input, form.add select, form.add textarea, select.role {
+  flex: 1; min-width: 0; font: 14px var(--body); color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid var(--edge); border-radius: 8px; padding: 7px 10px; }
+form.add textarea { flex-basis: 100%; min-height: 80px; resize: vertical; }
+/* development tree: nested milestones with a status orb */
+.tree { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.tree .tree { margin-left: 18px; padding-left: 10px; border-left: 1px dashed rgba(226,179,71,.35); margin-top: 4px; }
+.node > div { display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,.04); border-radius: 8px; padding: 6px 8px; }
+.node .orb { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--rest); background: transparent; cursor: pointer; flex: none; padding: 0; }
+.node .orb.doing { border-color: var(--wait); background: radial-gradient(circle, var(--wait) 35%, transparent 40%); }
+.node .orb.done { border-color: var(--ok); background: var(--ok); box-shadow: 0 0 8px rgba(110,224,138,.6); }
+.node .t { flex: 1; overflow-wrap: anywhere; }
+.node .t.done { color: var(--dim); text-decoration: line-through; }
+.node .plus { background: none; border: 1px solid var(--edge); color: var(--gold); border-radius: 6px; cursor: pointer; font-size: 12px; padding: 1px 6px; }
+.label { pointer-events: none; text-align: center; transform: translateY(-6px); }
+.label .n { font: 700 14px var(--display); color: #fff7e0; text-shadow: 0 2px 4px #000, 0 0 2px #000; white-space: nowrap; }
+.label .v { font: 700 12px var(--body); color: var(--wait); text-shadow: 0 1px 3px #000; white-space: nowrap; }
+.label .lv { font: 700 11px var(--body); color: #9fe6ff; text-shadow: 0 1px 3px #000; }
+.label .bar2 { width: 74px; height: 6px; margin: 3px auto 0; border-radius: 3px; background: rgba(0,0,0,.5); overflow: hidden; }
+.label .bar2 i { display: block; height: 100%; background: linear-gradient(90deg, #6ee08a, #e2b347); }
+.district { pointer-events: none; font: 900 20px var(--display); color: rgba(255,247,224,.85); letter-spacing: .14em; text-shadow: 0 2px 6px #000; white-space: nowrap; }
+.alabel { pointer-events: none; font: 700 11px var(--body); color: #fff; text-shadow: 0 1px 3px #000; white-space: nowrap; text-align: center; }
+.alabel em { display: block; font-style: normal; color: var(--ok); font-size: 10px; }
+.qr { background: #fff; border-radius: 12px; padding: 14px; justify-self: center; line-height: 0; }
+.qr svg { width: 220px; height: 220px; }
+/* phones: a slim bar, the ledger as a sheet from the bottom, bigger touch targets */
+@media (max-width: 700px) {
+  .bar { top: max(6px, env(safe-area-inset-top)); left: 6px; right: 6px; gap: 5px; }
+  .crest { padding: 5px 10px; gap: 8px; } .crest h1 { font-size: 15px; } .crest span { font-size: 12px; }
+  #fps, #qualityBtn, #phoneBtn { display: none; }
+  .btn { padding: 8px 10px; }
+  .hint { display: none; }
+  .panel { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 72vh; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tab { padding: 9px 9px; white-space: nowrap; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .x { width: 36px; height: 36px; }
+  form.add input, form.add select, form.add textarea, select.role, input[type=date] { font-size: 16px; } /* iOS zooms in on smaller text fields */
+  .todo input[type=checkbox] { width: 22px; height: 22px; }
+  .list li.todo { grid-template-columns: 24px minmax(0, 1fr) 32px; }
+}
+.chip.machine { background: rgba(127,176,255,.16); color: #9cc0ff; }
+.petition pre { margin: 6px 0; white-space: pre-wrap; background: rgba(0,0,0,.35); padding: 6px 8px; border-radius: 6px; color: var(--ink); }
+form.charter { display: grid; gap: 8px; } form.charter textarea { min-height: 56px; } form.charter label { font-size: 12px; color: var(--dim); margin-top: 4px; }
+.empty { color: var(--dim); }
+.loading { position: fixed; inset: 0; display: grid; place-items: center; font: 700 18px var(--display); color: var(--gold); z-index: 9; background: #0b1020; }
+.loading[hidden] { display: none; }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div class="bar">
+  <div class="crest"><h1>Agent Quest</h1><span id="counts">Łączenie…</span></div>
+  <div class="spacer"></div>
+  <span class="crest" id="fps" title="Klatki na sekundę">– fps</span>
+  <button class="btn" id="phoneBtn" title="Otwórz wioskę na telefonie">Telefon</button>
+  <button class="btn" id="qualityBtn" title="Zmień jakość grafiki">Jakość</button>
+  <button class="btn" id="hallBtn">Ratusz</button>
+  <button class="btn" id="guildBtn">Gildia</button>
+  <button class="btn" id="projectsBtn">Projekty</button>
+  <button class="btn" id="homeBtn">Cała wyspa</button>
+</div>
+<div class="hint" id="hint">Przeciągnij: obrót · prawy przycisk: przesuwanie · kółko: zoom · WASD: ruch · kliknij budynek lub agenta</div>
+<aside class="panel" id="panel" hidden aria-live="polite"></aside>
+<div class="loading" id="loading">Budowanie wioski…</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "marked": "https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.esm.js",
+  "dompurify": "https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.es.mjs"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
+
+// ---------- models, each from its own file; a plain block stands in if one fails to load ----------
+const load = async n => { try { return await import(`./models/${n}.js`); } catch (e) { console.warn(`model ${n} not loaded`, e); return null; } };
+const [M_CHAR, M_HALL, M_NATURE, M_ESTATE, M_BARRACKS, M_GUILDS, M_MARKETING, M_TREASURY] =
+  await Promise.all(["characters", "hall", "nature", "estate", "barracks", "guilds", "marketing-hall", "treasury"].map(load));
+
+// ---------- quality: Claude's browser pane may draw WebGL without the graphics card ----------
+// Measured there: a frame with live shadows ~47 ms, without ~2.4 ms; at 1400x900 the pixel count
+// matters too. With no GPU the village drops shadows and antialiasing, uses Lambert materials,
+// a lighter island and 0.65 of the screen resolution.
+function detectSoftware() {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl2") || document.createElement("canvas").getContext("webgl");
+    const ext = gl?.getExtension("WEBGL_debug_renderer_info");
+    const name = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "";
+    return { name, isSoftware: /basic render|swiftshader|llvmpipe|software|softpipe/i.test(name) };
+  } catch { return { name: "", isSoftware: false }; }
+}
+const GPU = detectSoftware();
+let savedQuality = "auto";
+try { savedQuality = localStorage.getItem("aq-quality") || "auto"; } catch {}
+const QUALITY = savedQuality === "auto" ? (GPU.isSoftware ? "low" : "high") : savedQuality;
+const HIGH = QUALITY === "high";
+
+// ---------- renderer, scene, camera ----------
+const host = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ antialias: HIGH && devicePixelRatio < 1.5, powerPreference: "high-performance" });
+renderer.setPixelRatio(HIGH ? Math.min(1.5, devicePixelRatio) : Math.min(1, devicePixelRatio) * 0.6);
+renderer.shadowMap.enabled = HIGH;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false; // buildings and trees never move: shadows are drawn once
+const refreshShadows = () => { renderer.shadowMap.needsUpdate = true; };
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+host.appendChild(renderer.domElement);
+const labels = new CSS2DRenderer();
+labels.domElement.style.position = "absolute"; labels.domElement.style.inset = "0"; labels.domElement.style.pointerEvents = "none";
+host.appendChild(labels.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#9fd3f0");
+scene.fog = new THREE.Fog("#b9e0f2", 80, 170);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 400);
+const HOME_VIEW = { target: new THREE.Vector3(0, 0, 4), cam: new THREE.Vector3(0, 58, 70) };
+camera.position.copy(HOME_VIEW.cam);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.46; controls.minDistance = 8; controls.maxDistance = 130;
+controls.target.copy(HOME_VIEW.target);
+
+scene.add(new THREE.HemisphereLight("#dff3ff", "#5a7a3a", 0.9));
+const sun = new THREE.DirectionalLight("#fff1d6", 2.2);
+sun.position.set(-40, 60, 30); sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0006;
+Object.assign(sun.shadow.camera, { left: -62, right: 62, top: 62, bottom: -62, near: 10, far: 160 });
+scene.add(sun);
+
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h); labels.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener("resize", resize); resize();
+
+// ---------- helpers ----------
+const rnd = (i, s = 1) => { const x = Math.sin(i * 127.1 + s * 311.7) * 43758.5453; return x - Math.floor(x); };
+const hash = s => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const matCache = new Map();
+const mat = (color, opts = {}) => {
+  const key = color + JSON.stringify(opts);
+  if (!matCache.has(key)) matCache.set(key, new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true, ...opts }));
+  return matCache.get(key);
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const ago = iso => { if (!iso) return ""; const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000); return s < 60 ? "teraz" : s < 3600 ? `${Math.floor(s / 60)} min temu` : s < 86400 ? `${Math.floor(s / 3600)} h temu` : `${Math.floor(s / 86400)} d temu`; };
+// null when the server refuses (a bad amount, an unknown project), instead of a thrown error
+const api = async (url, body) => { const r = await fetch(url, body ? { method: "POST", body: JSON.stringify(body) } : { cache: "no-store" }); return r.ok ? r.json() : null; };
+const ROOFS = ["#c8463a", "#2f7f86", "#7a4fa0", "#d08a2c", "#3a6fb0", "#5f8f3a", "#b0476e", "#8a5a34"];
+const ROLE_COLOR = { backend: "#c8463a", testers: "#2f9fa8", marketing: "#9a6ad8", finance: "#d4a017" };
+const ROLE_PL = { backend: "Backend", testers: "Testerzy", marketing: "Marketing", finance: "Skarbnik" };
+const money = n => `${(Math.round(n * 100) / 100).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} zł`;
+// a small bar chart as inline SVG; `bars` are { label, a, b? } (b drawn as a second, red bar)
+function barChart(bars, { h = 90, colorA = "#6ee08a", colorB = "#ff7a6a", fmt = v => v } = {}) {
+  const max = Math.max(1, ...bars.flatMap(x => [x.a, x.b ?? 0]));
+  const w = 100 / bars.length, pad = w * 0.15, bw = (w - pad * 2) / (bars.some(x => x.b != null) ? 2 : 1);
+  return `<svg viewBox="0 0 100 ${h + 14}" preserveAspectRatio="none" style="width:100%;height:${h + 30}px" role="img">` + bars.map((x, i) => {
+    const ha = x.a / max * h, hb = (x.b ?? 0) / max * h, x0 = i * w + pad;
+    return `<rect x="${x0}" y="${h - ha}" width="${bw}" height="${ha}" fill="${colorA}" rx="0.6"><title>${esc(x.label)}: ${esc(fmt(x.a))}</title></rect>` +
+      (x.b != null ? `<rect x="${x0 + bw}" y="${h - hb}" width="${bw}" height="${hb}" fill="${colorB}" rx="0.6"><title>${esc(x.label)}: ${esc(fmt(x.b))}</title></rect>` : "") +
+      `<text x="${i * w + w / 2}" y="${h + 11}" font-size="4.2" fill="#a9a293" text-anchor="middle">${esc(x.label)}</text>`;
+  }).join("") + `</svg>`;
+}
+// a line of how a number grew, inline SVG
+function sparkline(values, color = "#7fe3ff") {
+  if (values.length < 2) return `<span class="empty">Historia zbiera się od dziś: wykres pojawi się po kilku dniach.</span>`;
+  const max = Math.max(...values), min = Math.min(...values), span = Math.max(1, max - min);
+  const pts = values.map((v, i) => `${(i / (values.length - 1) * 100).toFixed(2)},${(36 - (v - min) / span * 32).toFixed(2)}`).join(" ");
+  return `<svg viewBox="0 0 100 40" preserveAspectRatio="none" style="width:100%;height:60px"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.2" vector-effect="non-scaling-stroke"/></svg>`;
+}
+const STATE_PL = { working: "pracuje", waiting: "czeka na Ciebie", resting: "odpoczywa", done: "skończył" };
+const POST_PL = { draft: "szkic", approved: "zatwierdzony", published: "opublikowany" };
+const PLAN_PL = { todo: "do zrobienia", doing: "w toku", done: "zrobione" };
+const KIND_PL = { approval: "prośba o zgodę", review: "do odbioru", question: "pytanie" };
+const STATUS_PL = { pending: "czeka", approved: "zatwierdzona", rejected: "odrzucona", expired: "wygasła" };
+const AUTONOMY_PL = { 1: "Pyta o wszystko", 2: "Pracuje sam, pyta o ryzyko", 3: "Pełna swoboda w repo" };
+const DEFAULT_RULES = ["git push --force", "rm -rf", "DROP TABLE", "deploy", "migrate"];
+// petitions: what agents ask you for; the same list in the Hall, in a project and on the phone
+function petitionsHtml(list, empty = "Brak petycji. Agenci pracują bez pytań.") {
+  return `<ul class="list">${list.map(d => `<li class="petition"><div class="row"><span class="chip machine">${esc(d.machine)}</span><span class="chip">${esc(d.agent || d.source)}</span>${d.project ? `<b>${esc(d.project)}</b>` : ""}<span class="empty">${ago(d.at)}</span>${d.rule ? `<span class="chip waiting">reguła: ${esc(d.rule)}</span>` : `<span class="chip">${KIND_PL[d.kind] ?? d.kind}</span>`}</div>
+    <div style="margin-top:4px">${esc(d.title)}</div>${d.command ? `<pre class="mono">${esc(d.command)}</pre>` : ""}
+    <div class="row" style="margin-top:6px">${d.kind === "approval" ? `<button class="btn small" data-decide="${esc(d.id)}" data-status="approved" style="color:var(--ok)">Zatwierdź</button><button class="btn small" data-decide="${esc(d.id)}" data-status="rejected" style="color:var(--bad)">Odrzuć</button>` : `<button class="btn small" data-decide="${esc(d.id)}" data-status="approved">Załatwione</button>`}${d.url ? `<a class="btn small" href="${esc(d.url)}" target="_blank" rel="noopener">Otwórz</a>` : ""}</div></li>`).join("") || `<li class="empty">${empty}</li>`}</ul>`;
+}
+function wirePetitions(b, again) {
+  b.querySelectorAll("[data-decide]").forEach(x => x.onclick = async () => { x.disabled = true; await api(`/api/decisions/${x.dataset.decide}`, { status: x.dataset.status }); await refresh(); again(); });
+}
+function makeLabel(html, cls) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; return new CSS2DObject(d); }
+
+// a soft dark patch on the ground: blob shadows for agents, and for buildings when there are no shadows
+const BLOB_GEO = new THREE.CircleGeometry(0.55, 16);
+const BLOB_MAT = new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.25, depthWrite: false });
+const SHADE_MAT = new THREE.MeshBasicMaterial({ color: "#000000", transparent: true, opacity: 0.16, depthWrite: false });
+function groundShade(w, d, material = SHADE_MAT) {
+  const m = new THREE.Mesh(BLOB_GEO, material);
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.04; m.scale.set(w / 1.1, d / 1.1, 1);
+  return m;
+}
+function fallbackBuilding(color, w = 5, h = 4) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, w * 0.8), mat("#efe2c6")); body.position.y = h / 2; g.add(body);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(w * 0.75, 2.4, 4), mat(color)); roof.rotation.y = Math.PI / 4; roof.position.y = h + 1.2; g.add(roof);
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return g;
+}
+
+// ---------- the layout: Hall in the middle, Guild district north, Projects district south ----------
+const ISLAND = 64;
+const deg = d => d * Math.PI / 180;
+const polar = (r, a) => ({ x: Math.cos(deg(a)) * r, z: Math.sin(deg(a)) * r });
+const GUILD_SPOTS = { barracks: polar(26, 208), testers: polar(27, 239), tech: polar(28, 270), marketing: polar(27, 301), treasury: polar(26, 332), port: polar(33, 178) };
+function projectSpots(n) {
+  // up to 6 estates on an arc south of the Hall, the rest on an outer arc
+  const out = [];
+  const inner = Math.min(6, n), outer = n - inner;
+  for (let i = 0; i < inner; i++) out.push(polar(36, 30 + (inner === 1 ? 60 : (120 * i) / (inner - 1))));
+  for (let i = 0; i < outer; i++) out.push(polar(51, 18 + (outer === 1 ? 72 : (144 * i) / (outer - 1))));
+  return out;
+}
+
+// ---------- world state ----------
+const pickables = [];
+const guilds = {};             // key -> { group, update, setStatus, label, spot, door }
+const projects = new Map();    // root -> { group, estate, label, puffs, data, door }
+const agents = new Map();      // id -> { group, label, anim, data, target, wanderAt, home }
+let world = { projects: [], agents: [], tools: [] };
+let petitions = []; // pending decisions, refreshed with the world
+let hallGroup = null, hallUpdate = null, natureUpdate = null, built = false;
+const facing = (g, x, z) => { g.position.set(x, 0, z); g.rotation.y = Math.atan2(-x, -z); };
+const doorOf = (x, z, out = 7) => { const d = Math.hypot(x, z); return new THREE.Vector3(x - x / d * out, 0, z - z / d * out); };
+const markPick = (obj, pick) => { obj.traverse(o => { if (o.isMesh) o.userData.pick = pick; }); pickables.push(obj); };
+
+function road(from, to, width = 2.2) {
+  const len = from.distanceTo(to);
+  const m = new THREE.Mesh(new THREE.BoxGeometry(width, 0.06, len), mat("#b08a5a"));
+  m.position.copy(from).add(to).multiplyScalar(0.5); m.position.y = 0.03;
+  m.lookAt(to.x, 0.03, to.z); m.receiveShadow = true;
+  scene.add(m);
+}
+
+function buildGuilds() {
+  const defs = {
+    barracks: { name: "Koszary", sub: "dom agentów backendu", make: () => M_BARRACKS?.createBarracks(), color: "#c8463a" },
+    testers: { name: "Gildia Testerów", sub: "testy i poprawność", make: () => M_GUILDS?.createTestersGuild(), color: "#2f7f86" },
+    tech: { name: "Akademia Technologii", sub: "technologie projektów", make: () => M_GUILDS?.createTechAcademy(), color: "#3a6fb0" },
+    marketing: { name: "Dom Heroldów", sub: "marketing i posty", make: () => (M_MARKETING?.createMarketingHall ?? M_GUILDS?.createMarketingHall)?.(), color: "#7a4fa0" },
+    treasury: { name: "Skarbiec", sub: "przychody i koszty projektów", make: () => M_TREASURY?.createTreasury(), color: "#d4a017" },
+    port: { name: "Port", sub: "wieści z innych maszyn", make: () => null, color: "#8a5a34" },
+  };
+  for (const [key, d] of Object.entries(defs)) {
+    const { x, z } = GUILD_SPOTS[key];
+    let made = null; try { made = d.make(); } catch (e) { console.warn(key, e); }
+    const group = new THREE.Group();
+    group.add(made?.group ?? fallbackBuilding(d.color));
+    if (!HIGH) group.add(groundShade(13, 11));
+    facing(group, x, z);
+    const label = makeLabel(`<div class="n">${esc(d.name)}</div><div class="v">${esc(d.sub)}</div>`, "label");
+    label.position.set(0, 13, 0); group.add(label);
+    markPick(group, { kind: "guild", key });
+    scene.add(group);
+    road(new THREE.Vector3(x, 0, z).multiplyScalar(0.62), new THREE.Vector3(x, 0, z).multiplyScalar(0.36));
+    guilds[key] = { ...d, group, label, update: made?.update ?? null, setStatus: made?.setStatus ?? null, setWealth: made?.setWealth ?? null, door: doorOf(x, z, 7.5) };
+  }
+}
+
+function syncProjects() {
+  const list = world.projects;
+  const spots = projectSpots(list.length);
+  const seen = new Set();
+  list.forEach((p, i) => {
+    seen.add(p.root);
+    const { x, z } = spots[i];
+    let e = projects.get(p.root);
+    if (!e) {
+      const group = new THREE.Group();
+      const color = ROOFS[hash(p.root) % ROOFS.length];
+      let estate = null; try { estate = M_ESTATE?.createEstate({ color, floors: p.sessions >= 4 ? 3 : p.sessions >= 2 ? 2 : 1, seed: hash(p.root) }); } catch (err) { console.warn("estate", err); }
+      group.add(estate?.group ?? fallbackBuilding(color));
+      if (!HIGH) group.add(groundShade(10, 12));
+      facing(group, x, z);
+      const label = makeLabel("", "label"); label.position.set(0, 11, 0); group.add(label);
+      const puffs = [];
+      for (let k = 0; k < 3; k++) { const pf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.35, 0), new THREE.MeshBasicMaterial({ color: "#eeeeee", transparent: true, opacity: 0 })); group.add(pf); puffs.push(pf); }
+      markPick(group, { kind: "project", root: p.root });
+      scene.add(group);
+      road(new THREE.Vector3(x, 0, z).multiplyScalar(Math.max(0.6, 1 - 9 / Math.hypot(x, z))), new THREE.Vector3(x, 0, z).multiplyScalar(10 / Math.hypot(x, z)));
+      e = { group, estate, label, puffs, door: doorOf(x, z, 6), lastGrowth: -1, lastLevel: -1 };
+      projects.set(p.root, e);
+      refreshShadows();
+    }
+    e.data = p;
+    if (e.estate && e.lastGrowth !== p.growth) { e.estate.setGrowth?.(p.growth); e.lastGrowth = p.growth; refreshShadows(); }
+    if (e.estate && e.lastLevel !== p.level) { e.estate.setLevel?.(p.level); e.lastLevel = p.level; }
+    const pct = Math.round(p.growth * 100);
+    e.label.element.innerHTML = `<div class="n">${esc(p.name)}</div><div class="lv">Poziom ${p.level} · postęp ${pct}%</div>` +
+      (p.active ? `<div class="v">${p.active} ${p.active === 1 ? "agent pracuje" : "agentów pracuje"}</div>` : "") +
+      `<div class="bar2"><i style="width:${pct}%"></i></div>`;
+  });
+  for (const [root, e] of projects) if (!seen.has(root)) { scene.remove(e.group); projects.delete(root); }
+}
+
+// ---------- agents: they live in their guild and walk to a project's estate to work on it ----------
+const homeKey = a => ({ testers: "testers", marketing: "marketing", finance: "treasury" })[a.role] ?? "barracks";
+function makeCharacter(a) {
+  const small = a.kind === "subagent", s = small ? 0.65 : 1;
+  let group, anim = null;
+  if (M_CHAR) { anim = M_CHAR.createCharacter({ role: a.role, small }); group = anim.group; group.traverse(o => { if (o.isMesh) o.castShadow = false; }); }
+  else {
+    group = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32 * s, 0.6 * s, 4, 8), mat(ROLE_COLOR[a.role] ?? ROLE_COLOR.backend)); body.position.y = 0.75 * s; group.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.27 * s, 10, 8), mat("#f1c9a0")); head.position.y = 1.45 * s; group.add(head);
+  }
+  const blob = groundShade(1.1 * s, 1.1 * s, BLOB_MAT); group.add(blob);
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.45 * s, 0.6 * s, 24), new THREE.MeshBasicMaterial({ color: "#e2b347", side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.05; ring.visible = false; group.add(ring);
+  group.userData.ring = ring;
+  return { group, anim };
+}
+function syncAgents() {
+  const seen = new Set();
+  for (const a of world.agents) {
+    seen.add(a.id);
+    let e = agents.get(a.id);
+    if (!e || e.data.role !== a.role) {
+      if (e) { scene.remove(e.group); const i = pickables.indexOf(e.group); if (i >= 0) pickables.splice(i, 1); }
+      const { group, anim } = makeCharacter(a);
+      const start = (a.parent && agents.get(a.parent)?.group.position) || guilds[homeKey(a)]?.door || new THREE.Vector3();
+      group.position.copy(start).add(new THREE.Vector3((rnd(hash(a.id)) - 0.5) * 3, 0, (rnd(hash(a.id), 2) - 0.5) * 3));
+      const label = makeLabel("", "alabel"); label.position.set(0, a.kind === "subagent" ? 1.7 : 2.6, 0); group.add(label);
+      markPick(group, { kind: "agent", id: a.id });
+      scene.add(group);
+      e = { group, anim, label, target: group.position.clone(), wanderAt: 0 };
+      agents.set(a.id, e);
+    }
+    e.data = a;
+    e.anim?.setState(a.state === "working" ? "working" : a.state);
+    const showName = a.kind === "session" && (a.state === "working" || selected?.id === a.id);
+    e.label.element.innerHTML = showName ? `${esc(a.name.length > 26 ? a.name.slice(0, 25) + "…" : a.name)}<em>${esc(a.verb)}${projects.has(a.root) ? " · " + esc(projects.get(a.root).data.name) : ""}${a.machine ? " · " + esc(a.machine) : ""}</em>` : "";
+  }
+  for (const [id, e] of agents) if (!seen.has(id)) { scene.remove(e.group); agents.delete(id); const i = pickables.indexOf(e.group); if (i >= 0) pickables.splice(i, 1); }
+}
+// where an agent wants to be: at work in a project's garden, or at home by its guild
+function nextTarget(e, t) {
+  const a = e.data, seed = hash(a.id), step = Math.floor(t / 5);
+  const working = a.state === "working" && projects.has(a.root);
+  const base = working ? projects.get(a.root).door : guilds[homeKey(a)]?.door ?? new THREE.Vector3();
+  const spread = working ? 3.2 : a.state === "waiting" ? 2.4 : 1.6;
+  const ang = rnd(seed, working ? step : 1) * Math.PI * 2, r = 0.8 + rnd(seed, (working ? step : 1) + 9) * spread;
+  return base.clone().add(new THREE.Vector3(Math.cos(ang) * r, 0, Math.sin(ang) * r));
+}
+
+// ---------- interaction ----------
+const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
+let selected = null, downAt = null;
+renderer.domElement.addEventListener("pointerdown", e => { downAt = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener("pointerup", e => {
+  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  const hit = pick(e);
+  if (hit?.kind === "project") openProject(hit.root);
+  else if (hit?.kind === "agent") openAgent(hit.id);
+  else if (hit?.kind === "guild") openGuild(hit.key);
+  else if (hit?.kind === "hall") openHall();
+});
+renderer.domElement.addEventListener("pointermove", e => { renderer.domElement.style.cursor = pick(e) ? "pointer" : "grab"; });
+function pick(e) {
+  pointer.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(pointer, camera);
+  return ray.intersectObjects(pickables, true).find(h => h.object.userData.pick)?.object.userData.pick ?? null;
+}
+const keys = new Set();
+addEventListener("keydown", e => { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; keys.add(e.key.toLowerCase()); if (e.key === "Escape") closePanel(); });
+addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+let flyTo = null;
+function focus(pos, dist = 24) {
+  const out = new THREE.Vector3(pos.x, 0, pos.z);
+  if (out.lengthSq() < 1) out.set(0, 0, 1);
+  out.normalize();
+  flyTo = { target: pos.clone(), cam: pos.clone().add(out.multiplyScalar(dist)).add(new THREE.Vector3(0, dist * 0.65, 0)) };
+}
+document.getElementById("homeBtn").onclick = () => { flyTo = { ...HOME_VIEW }; closePanel(); };
+document.getElementById("hallBtn").onclick = () => openHall();
+document.getElementById("guildBtn").onclick = () => { flyTo = { target: new THREE.Vector3(0, 0, -22), cam: new THREE.Vector3(0, 34, 12) }; };
+document.getElementById("projectsBtn").onclick = () => { flyTo = { target: new THREE.Vector3(0, 0, 30), cam: new THREE.Vector3(0, 40, 74) }; };
+// touch screens: the hint speaks of fingers
+if (matchMedia("(pointer: coarse)").matches) document.getElementById("hint").textContent = "Jeden palec: obrót · dwa palce: zoom i przesuwanie · stuknij budynek lub agenta";
+// phone access is switched on from this computer only; the phone itself never sees the button
+const phoneBtn = document.getElementById("phoneBtn");
+if (!/^(127\.0\.0\.1|localhost)$/.test(location.hostname)) phoneBtn.remove(); else phoneBtn.onclick = () => openPhone();
+let qrLib = null;
+const loadQr = () => qrLib ??= new Promise((ok, fail) => {
+  const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js";
+  s.onload = () => ok(window.qrcode); s.onerror = fail; document.head.appendChild(s);
+});
+async function openPhone() {
+  select(null);
+  shell("Wioska na telefonie", "iPhone lub Android w tym samym Wi-Fi co ten komputer", [], "", async (_, b) => {
+    const draw = async v => {
+      if (!v) { b.innerHTML = `<div class="empty">Serwer wioski nie odpowiada.</div>`; return; }
+      if (!v.enabled) {
+        b.innerHTML = `<p>Teraz wioska działa tylko na tym komputerze. Po włączeniu będzie też dostępna w Twojej sieci domowej, ale tylko z tajnym kluczem z kodu QR.</p>
+          <button class="btn" id="phoneOn">Włącz dostęp z telefonu</button>
+          <p class="empty">Windows może zapytać, czy pozwolić Node.js na dostęp do sieci: zaznacz <b>sieci prywatne</b> (domowe) i kliknij Zezwól.</p>`;
+        b.querySelector("#phoneOn").onclick = async () => { b.innerHTML = `<div class="empty">Włączanie…</div>`; draw(await api("/api/phone", { enabled: true })); };
+        return;
+      }
+      if (!v.urls.length) b.innerHTML = `<div class="empty">Ten komputer nie jest podłączony do sieci domowej (brak adresu w Wi-Fi lub kablem).</div>`;
+      else {
+        b.innerHTML = `<p>Zeskanuj kod aparatem iPhone'a i stuknij link. Telefon musi być w tym samym Wi-Fi.</p><div class="qr" id="qr"></div>
+          <p class="empty">W Safari: Udostępnij → <b>Do ekranu początkowego</b>, a wioska będzie miała własną ikonę.</p>
+          <p class="empty">Telefon się nie łączy? Windows blokuje połączenia w sieci oznaczonej jako <b>publiczna</b>. Ustawienia → Sieć i Internet → Wi-Fi → Twoja sieć → Typ profilu sieciowego: <b>Prywatna</b>. Potem zezwól Node.js w oknie zapory.</p>
+          <h3>Adres</h3><div class="mono" style="overflow-wrap:anywhere">${esc(v.urls[0])}</div>
+          ${v.urls.length > 1 ? `<details><summary class="empty">Inne adresy tego komputera</summary>${v.urls.slice(1).map(u => `<div class="mono">${esc(u)}</div>`).join("")}</details>` : ""}`;
+        try { const q = (await loadQr())(0, "M"); q.addData(v.urls[0]); q.make(); b.querySelector("#qr").innerHTML = q.createSvgTag({ cellSize: 6, margin: 0, scalable: true }); }
+        catch { b.querySelector("#qr").replaceWith(Object.assign(document.createElement("div"), { className: "empty", textContent: "Kod QR się nie wczytał: wpisz adres w Safari." })); }
+      }
+      b.insertAdjacentHTML("beforeend", `<button class="btn" id="phoneOff">Wyłącz dostęp z telefonu</button><p class="empty">Wyłączenie unieważnia klucz: stary kod QR przestanie działać.</p>`);
+      b.querySelector("#phoneOff").onclick = async () => draw(await api("/api/phone", { enabled: false }));
+    };
+    b.innerHTML = `<div class="empty">Wczytywanie…</div>`;
+    draw(await api("/api/phone"));
+  });
+}
+const QUALITY_PL = { auto: "auto", low: "niska", high: "wysoka" };
+const qBtn = document.getElementById("qualityBtn");
+qBtn.textContent = `Jakość: ${QUALITY_PL[savedQuality]}${savedQuality === "auto" ? ` (${QUALITY_PL[QUALITY]})` : ""}`;
+qBtn.title = `Grafika: ${GPU.name || "nieznana"}`;
+qBtn.onclick = () => { const next = { auto: "low", low: "high", high: "auto" }[savedQuality]; try { localStorage.setItem("aq-quality", next); } catch {} location.reload(); };
+
+// ---------- the ledger panel ----------
+const panel = document.getElementById("panel");
+function closePanel() { panel.hidden = true; select(null); }
+function select(sel) {
+  selected = sel;
+  for (const [id, e] of agents) e.group.userData.ring.visible = sel?.kind === "agent" && sel.id === id;
+}
+function shell(title, sub, tabs, active, render) {
+  panel.hidden = false;
+  panel.innerHTML = `<header><h2>${esc(title)}</h2><div class="sub">${sub}</div><button class="x" aria-label="Zamknij">×</button></header>` +
+    (tabs.length ? `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${k === active}">${l}</button>`).join("")}</div>` : "") +
+    `<div class="body" id="pbody"></div>`;
+  panel.querySelector(".x").onclick = closePanel;
+  panel.querySelectorAll(".tab").forEach(b => b.onclick = () => shell(title, sub, tabs, b.dataset.k, render));
+  render(active, document.getElementById("pbody"));
+}
+const levelBlock = p => `<div class="level"><div class="badge">${p.level}</div><div class="grow">
+  <span>Poziom ${p.level}${p.level >= 10 ? " (maksymalny)" : ""} · ${p.xp} XP${p.level < 10 ? ` · do następnego ${p.levelTo - p.xp} XP` : ""}</span>
+  <div class="progress xp"><i style="width:${p.level >= 10 ? 100 : Math.round(100 * (p.xp - p.levelFrom) / Math.max(1, p.levelTo - p.levelFrom))}%"></i></div>
+  <span>Postęp ogrodu: ${Math.round(p.growth * 100)}% ${p.plan.total ? `(drzewko ${p.plan.done}/${p.plan.total})` : p.todos.total ? `(zadania ${p.todos.done}/${p.todos.total})` : "(z poziomu)"}</span>
+  <div class="progress"><i style="width:${Math.round(p.growth * 100)}%"></i></div></div></div>`;
+
+async function openProject(root, tab = "overview") {
+  const e = projects.get(root); if (!e) return;
+  select({ kind: "project", root }); focus(e.group.position);
+  shell(e.data.name, esc(root), [], "", (_, b) => { b.innerHTML = `<div class="empty">Wczytywanie projektu…</div>`; });
+  const p = await api(`/api/project?root=${encodeURIComponent(root)}`);
+  const tabs = [["overview", "Przegląd"], ["charter", "Karta"], ["petitions", "Petycje"], ["plans", "Plany"], ["plan", "Drzewko"], ["finance", "Finanse"], ["marketing", "Marketing"], ["git", "Git"], ["agents", "Agenci"], ["tests", "Testy"], ["docs", "Dokumenty"], ["todos", "Zadania"]];
+  shell(p.name, esc(root) + (p.branch ? ` · gałąź <b>${esc(p.branch)}</b>` : ""), tabs, tab, (k, b) => renderProject(p, k, b));
+}
+function renderProject(p, k, b) {
+  const reopen = tab => openProject(p.root, tab);
+  if (k === "charter") {
+    const c = p.charter ?? {};
+    const ta = (id, label, v, ph) => `<label for="${id}">${label}</label><textarea id="${id}" placeholder="${ph}">${esc(Array.isArray(v) ? v.join("\n") : v ?? "")}</textarea>`;
+    b.innerHTML = levelBlock(p) + `<p class="empty" style="margin:0">Karta to umowa między Tobą a agentami tej posiadłości: po co, w jakim zakresie, kiedy gotowe i o co mają pytać. „Zapisz i wyślij” tworzy KARTA.md w projekcie i dopisuje <span class="mono">@KARTA.md</span> do CLAUDE.md, więc każda sesja ją czyta.</p>
+      <form class="add charter" id="charterForm">
+        ${ta("cGoal", "Cel", c.goal, "Po co istnieje ten projekt i kiedy jest skończony")}
+        ${ta("cIn", "W zakresie (jedna rzecz w wierszu)", c.inScope, "moduł płatności\nwebhooki")}
+        ${ta("cOut", "Poza zakresem", c.outScope, "frontend sklepu")}
+        ${ta("cDone", "Wymagania ukończenia", c.done, "testy zielone na CI\nPR zreviewowany przeze mnie")}
+        <label for="cAuto">Swoboda agentów</label><select id="cAuto">${[1, 2, 3].map(n => `<option value="${n}" ${(c.autonomy ?? 2) === n ? "selected" : ""}>${n} · ${AUTONOMY_PL[n]}</option>`).join("")}</select>
+        ${ta("cRules", "Operacje wymagające petycji (jedna w wierszu; bramka PreToolUse je sprawdza)", c.rules ?? DEFAULT_RULES, "git push --force\nrm -rf")}
+        <div class="row"><input id="cMachine" placeholder="Maszyna domyślna, np. PC Windows" value="${esc(c.machine ?? "")}"><input id="cBudget" placeholder="Budżet tygodnia, np. 120 zł" value="${esc(c.budget ?? "")}"><input id="cDeadline" type="date" value="${esc(c.deadline ?? "")}"></div>
+        ${ta("cNotes", "Uwagi", c.notes, "")}
+        <div class="row"><button class="btn" data-save="0">Zapisz</button><button class="btn" data-save="1" style="border-color:var(--gold);color:var(--gold)">Zapisz i wyślij do projektu</button>${c.updatedAt ? `<span class="empty">zapisana ${ago(c.updatedAt)}</span>` : ""}</div></form>`;
+    const v = id => b.querySelector("#" + id).value;
+    b.querySelectorAll("[data-save]").forEach(btn => btn.onclick = async ev => {
+      ev.preventDefault();
+      const r = await api("/api/charter", { root: p.root, export: btn.dataset.save === "1", charter: { goal: v("cGoal"), inScope: v("cIn"), outScope: v("cOut"), done: v("cDone"), autonomy: Number(v("cAuto")), rules: v("cRules"), machine: v("cMachine"), budget: v("cBudget"), deadline: v("cDeadline"), notes: v("cNotes") } });
+      p.charter = r?.charter ?? p.charter; renderProject(p, "charter", b);
+      if (r?.export) { const n = document.createElement("div"); n.className = "advice"; n.textContent = r.export.ok ? "Zapisano KARTA.md i dopisano @KARTA.md do CLAUDE.md w projekcie." : `Nie wysłano: ${r.export.reason}.`; b.prepend(n); }
+    });
+  }
+  if (k === "petitions") {
+    b.innerHTML = `<h3>Czekają na Ciebie</h3>` + petitionsHtml(petitions.filter(d => d.project === p.name));
+    wirePetitions(b, () => renderProject(p, "petitions", b));
+    api("/api/decisions").then(all => {
+      const done = (all?.recent ?? []).filter(d => d.project === p.name).slice(0, 10);
+      if (done.length) b.insertAdjacentHTML("beforeend", `<h3>Ostatnio rozstrzygnięte</h3><ul class="list">${done.map(d => `<li><span class="chip ${d.status === "approved" ? "working" : d.status === "rejected" ? "fail" : "resting"}">${STATUS_PL[d.status] ?? d.status}</span> ${esc(d.title)}<small>${esc(d.machine)} · ${ago(d.answeredAt ?? d.at)}</small></li>`).join("")}</ul>`);
+    });
+  }
+  if (k === "overview") {
+    const openPrs = p.pulls.filter(x => x.state === "OPEN").length;
+    const here = world.agents.filter(a => a.root === p.root);
+    const passed = p.tests.filter(t => !t.failed).length, failed = p.tests.filter(t => t.failed).length;
+    b.innerHTML = levelBlock(p) + `<div class="stats">
+      <div class="stat"><b>${here.filter(a => a.state === "working").length}</b><span>agentów pracuje</span></div>
+      <div class="stat"><b>${openPrs}</b><span>otwarte PR-y</span></div>
+      <div class="stat"><b>${p.stats?.merged ?? 0}</b><span>zmergowane PR-y</span></div>
+      <div class="stat"><b>${p.commitsThisWeek}</b><span>commity w 7 dni</span></div>
+      <div class="stat"><b>${p.changed}</b><span>niezapisane zmiany</span></div>
+      <div class="stat"><b>${passed}<span style="font-size:13px"> / ${failed}</span></b><span>testy OK / błędy</span></div></div>
+      <h3>Commity tydzień po tygodniu (12 tygodni)</h3>${barChart(p.weeks.map(x => ({ label: x.from.slice(5), a: x.commits })), { fmt: v => `${v} commitów` })}
+      <h3>Rozwój: XP dzień po dniu</h3>${sparkline(p.history.map(x => x.xp))}
+      <h3>Finanse</h3><div class="row"><span class="money-in">+${money(p.finance.income)}</span><span class="money-out">−${money(p.finance.cost)}</span><b>= ${money(p.finance.profit)}</b></div>
+      <h3>Technologie</h3><div class="chips">${p.tech.map(t => `<span class="chip tech">${esc(t)}</span>`).join("") || `<span class="empty">Nie rozpoznano.</span>`}</div>
+      <h3>Ostatnio</h3>
+      <ul class="list">${p.commits.slice(0, 4).map(c => `<li>${esc(c.subject)}<small>${esc(c.hash)} · ${esc(c.author)} · ${esc(c.when)}</small></li>`).join("") || `<li class="empty">Brak commitów.</li>`}</ul>
+      ${p.sessions[0]?.lastText ? `<h3>Ostatnie słowa agenta</h3><div class="said">${esc(p.sessions[0].lastText)}</div>` : ""}`;
+  }
+  if (k === "plan") {
+    const tree = p.planTree, kids = parent => tree.filter(n => (n.parent ?? null) === parent);
+    const nodeHtml = n => `<li class="node"><div><button class="orb ${n.status}" data-cycle="${n.id}" aria-label="Status: ${PLAN_PL[n.status]}" title="${PLAN_PL[n.status]} (kliknij, żeby zmienić)"></button>
+      <span class="t ${n.status === "done" ? "done" : ""}">${esc(n.title)}</span><button class="plus" data-child="${n.id}" title="Dodaj gałąź">+ gałąź</button><button class="del" data-del="${n.id}" aria-label="Usuń">×</button></div>
+      ${kids(n.id).length ? `<ul class="tree">${kids(n.id).map(nodeHtml).join("")}</ul>` : ""}</li>`;
+    b.innerHTML = levelBlock(p) + `<h3>Drzewko rozwoju</h3><p class="empty" style="margin:0">Kamienie milowe projektu. Kółko zmienia status: do zrobienia → w toku → zrobione. Zrobione dają po 25 XP i rozwijają ogród.</p>
+      <form class="add" id="addRoot"><input id="rootTitle" placeholder="Nowy kamień milowy, np. „Wersja 1.0”" maxlength="120"><button class="btn">Dodaj</button></form>
+      <form class="add" id="addChild" hidden><input id="childTitle" maxlength="120"><button class="btn">Dodaj gałąź</button></form>
+      <ul class="tree">${kids(null).map(nodeHtml).join("") || `<li class="empty">Drzewko jest puste. Dodaj pierwszy kamień milowy.</li>`}</ul>`;
+    const send = async body => { p.planTree = await api("/api/plan", { root: p.root, ...body }); refresh(); reopen("plan"); };
+    let parent = null;
+    b.querySelector("#addRoot").onsubmit = ev => { ev.preventDefault(); const v = b.querySelector("#rootTitle").value; if (v.trim()) send({ action: "add", title: v }); };
+    const childForm = b.querySelector("#addChild");
+    childForm.onsubmit = ev => { ev.preventDefault(); const v = b.querySelector("#childTitle").value; if (v.trim()) send({ action: "add", title: v, parent }); };
+    b.querySelectorAll("[data-child]").forEach(x => x.onclick = () => { parent = x.dataset.child; childForm.hidden = false; const i = b.querySelector("#childTitle"); i.placeholder = `Gałąź pod „${tree.find(n => n.id === parent)?.title}”`; i.focus(); });
+    b.querySelectorAll("[data-cycle]").forEach(x => x.onclick = () => send({ action: "cycle", id: x.dataset.cycle }));
+    b.querySelectorAll("[data-del]").forEach(x => x.onclick = () => send({ action: "delete", id: x.dataset.del }));
+  }
+  if (k === "git") {
+    b.innerHTML = `<h3>Pull requesty</h3><ul class="list">${p.pulls.map(x => `<li class="click" data-url="${esc(x.url)}"><span class="chip ${esc(x.state)}">${esc(x.state)}</span> #${x.number} ${esc(x.title)}<small>${esc(x.headRefName)} · ${ago(x.updatedAt)}</small></li>`).join("") || `<li class="empty">Brak PR-ów (albo projekt nie ma GitHuba).</li>`}</ul>
+      <h3>Commity</h3><ul class="list">${p.commits.map(c => `<li>${esc(c.subject)}<small class="mono">${esc(c.hash)} · ${esc(c.author)} · ${esc(c.when)}</small></li>`).join("") || `<li class="empty">${p.git ? "Brak commitów." : "To nie jest repozytorium git."}</li>`}</ul>`;
+    b.querySelectorAll("[data-url]").forEach(li => li.onclick = () => window.open(li.dataset.url, "_blank"));
+  }
+  if (k === "agents") {
+    b.innerHTML = `<ul class="list">${p.sessions.map(s => `<li class="click" data-id="${esc(s.id)}"><b>${esc(s.name)}</b> <span class="chip ${esc(s.state)}">${STATE_PL[s.state] ?? s.state}</span><small>${ago(s.lastAt)}</small>${s.lastPrompt ? `<small>Prośba: ${esc(s.lastPrompt)}</small>` : ""}</li>`).join("")}</ul>`;
+    b.querySelectorAll("[data-id]").forEach(li => li.onclick = () => agents.has(li.dataset.id) && openAgent(li.dataset.id));
+  }
+  if (k === "tests") {
+    b.innerHTML = `<ul class="list">${p.tests.map(t => `<li><span class="chip ${t.failed ? "fail" : "pass"}">${t.failed ? "błąd" : "OK"}</span> ${esc(t.command)}<small>${esc(t.who)} · ${ago(t.at)}</small></li>`).join("") || `<li class="empty">Agenci nie uruchamiali tu testów w ciągu 60 dni.</li>`}</ul>`;
+  }
+  if (k === "plans") {
+    const reader = async (title, text) => {
+      b.innerHTML = `<button class="btn" id="back">← Plany</button><div class="sub">${esc(title)}</div><article class="doc">${DOMPurify.sanitize(marked.parse(text))}</article>`;
+      b.querySelector("#back").onclick = () => renderProject(p, "plans", b);
+      b.querySelectorAll(".doc a").forEach(a => a.target = "_blank");
+    };
+    b.innerHTML = `<h3>Plany agentów</h3><p class="empty" style="margin:0">Plany, które sesje Claude napisały w trybie planowania dla tego projektu.</p>
+      <ul class="list">${p.plans.map((x, i) => `<li class="click" data-plan="${i}"><div class="row"><b>${esc(x.title)}</b>${x.isNew ? `<span class="chip new">nowy</span>` : ""}</div><small>${esc(x.who)} · ${ago(x.at)}</small></li>`).join("") || `<li class="empty">Brak planów z trybu planowania w ostatnich 60 dniach.</li>`}</ul>
+      <h3>Dokumenty z planami</h3><ul class="list">${p.planDocs.map(d => `<li class="click" data-f="${esc(d.file)}"><div class="row"><b>${esc(d.file)}</b>${Date.now() - Date.parse(d.mtime) < 7 * 86400000 ? `<span class="chip new">nowy</span>` : ""}</div><small>zmieniony ${ago(d.mtime)}</small></li>`).join("") || `<li class="empty">Brak plików z „plan”, „roadmap” lub „strategia” w nazwie.</li>`}</ul>`;
+    b.querySelectorAll("[data-plan]").forEach(li => li.onclick = () => { const x = p.plans[+li.dataset.plan]; reader(`${x.title} · ${x.who}`, x.text); });
+    b.querySelectorAll("[data-f]").forEach(li => li.onclick = async () => reader(li.dataset.f, await (await fetch(`/api/doc?root=${encodeURIComponent(p.root)}&file=${encodeURIComponent(li.dataset.f)}`)).text()));
+  }
+  if (k === "finance") {
+    const f = p.finance;
+    b.innerHTML = `<div class="stats"><div class="stat"><b class="money-in" style="font-size:16px">${money(f.income)}</b><span>przychody</span></div>
+      <div class="stat"><b class="money-out" style="font-size:16px">${money(f.cost)}</b><span>koszty</span></div><div class="stat"><b style="font-size:16px">${money(f.profit)}</b><span>zysk</span></div></div>
+      ${treasuryForm(null)}
+      <ul class="list">${f.entries.map(e => entryRow(e)).join("") || `<li class="empty">Brak wpisów. Dodaj przychód albo koszt powyżej.</li>`}</ul>`;
+    wireTreasury(b, p.root, () => reopen("finance"));
+  }
+  if (k === "marketing") {
+    const m = p.marketing;
+    b.innerHTML = `<div class="advice"><b>Co dalej:</b> ${esc(m.advice)}</div>
+      <div class="row"><span class="chip">ostatni post: ${m.lastPublished ? esc(m.lastPublished) : "brak"}</span><span class="chip approved">następny: ${m.next ? `${esc(m.next.planned)} · ${esc(m.next.title)}` : "niezaplanowany"}</span><span class="chip tech">poziom ${p.level} · postęp ${Math.round(p.growth * 100)}%</span></div>
+      <h3>Pomysły z postępów projektu</h3><ul class="list">${m.ideas.map((x, i) => `<li><div class="row"><span class="chip">${esc(x.source)}</span><span style="flex:1">${esc(x.title)}</span><button class="btn small" data-idea="${i}">Szkic</button></div></li>`).join("") || `<li class="empty">Brak świeżych wydarzeń (PR-y i kamienie milowe z 21 dni).</li>`}</ul>
+      ${m.docs.length ? `<h3>Dokumenty marketingowe projektu</h3><ul class="list">${m.docs.map(d => `<li class="click" data-f="${esc(d.file)}">${esc(d.file)}<small>${ago(d.mtime)}</small></li>`).join("")}</ul>` : ""}
+      <h3>Posty</h3><div id="posts"></div>`;
+    const postsBox = b.querySelector("#posts");
+    renderPosts(postsBox, p.posts, p.root, () => reopen("marketing"));
+    b.querySelectorAll("[data-idea]").forEach(x => x.onclick = () => { postsBox.querySelector("#pTitle").value = m.ideas[+x.dataset.idea].title; postsBox.querySelector("#pTitle").focus(); });
+    b.querySelectorAll("[data-f]").forEach(li => li.onclick = async () => {
+      const text = await (await fetch(`/api/doc?root=${encodeURIComponent(p.root)}&file=${encodeURIComponent(li.dataset.f)}`)).text();
+      b.innerHTML = `<button class="btn" id="back">← Marketing</button><div class="sub">${esc(li.dataset.f)}</div><article class="doc">${DOMPurify.sanitize(marked.parse(text))}</article>`;
+      b.querySelector("#back").onclick = () => reopen("marketing");
+    });
+  }
+  if (k === "docs") {
+    b.innerHTML = `<ul class="list">${p.docs.map(d => `<li class="click" data-f="${esc(d.file)}">${esc(d.file)}<small>${ago(d.mtime)} · ${Math.ceil(d.size / 1024)} KB</small></li>`).join("") || `<li class="empty">Brak dokumentów .md.</li>`}</ul>`;
+    b.querySelectorAll("[data-f]").forEach(li => li.onclick = async () => {
+      const text = await (await fetch(`/api/doc?root=${encodeURIComponent(p.root)}&file=${encodeURIComponent(li.dataset.f)}`)).text();
+      b.innerHTML = `<button class="btn" id="back">← Dokumenty</button><div class="sub">${esc(li.dataset.f)}</div><article class="doc">${DOMPurify.sanitize(marked.parse(text))}</article>`;
+      b.querySelector("#back").onclick = () => renderProject(p, "docs", b);
+      b.querySelectorAll(".doc a").forEach(a => a.target = "_blank");
+    });
+  }
+  if (k === "todos") {
+    const draw = () => {
+      b.innerHTML = `<form class="add"><input id="todoText" placeholder="Nowe zadanie dla projektu…" maxlength="300"><button class="btn">Dodaj</button></form>
+        <ul class="list">${p.todoList.map(t => `<li class="todo"><input type="checkbox" data-id="${t.id}" ${t.done ? "checked" : ""} aria-label="Zrobione"><span class="${t.done ? "done" : ""}">${esc(t.text)}</span><button data-del="${t.id}" aria-label="Usuń">×</button></li>`).join("") || `<li class="empty">Brak zadań.</li>`}</ul>`;
+      const send = async body => { p.todoList = await api("/api/todos", { root: p.root, ...body }); draw(); refresh(); };
+      b.querySelector("form").onsubmit = ev => { ev.preventDefault(); const v = b.querySelector("#todoText").value; if (v.trim()) send({ action: "add", text: v }); };
+      b.querySelectorAll("[data-id]").forEach(c => c.onchange = () => send({ action: "toggle", id: c.dataset.id }));
+      b.querySelectorAll("[data-del]").forEach(c => c.onclick = () => send({ action: "delete", id: c.dataset.del }));
+    };
+    draw();
+  }
+}
+
+// posts: a list with status changes, a planned date per post, and a form for a new draft;
+// `root` fixes the project, else a project select is shown
+function renderPosts(b, posts, root, again, projectsList = null) {
+  b.innerHTML = `<form class="add" id="newPost">
+      <input id="pTitle" placeholder="Tytuł posta" maxlength="200" required>
+      <select id="pChannel" aria-label="Kanał">${["LinkedIn", "Facebook", "Instagram", "X", "Newsletter", "Blog", "TikTok"].map(c => `<option>${c}</option>`).join("")}</select>
+      ${projectsList ? `<select id="pProject" aria-label="Projekt">${projectsList.map(p => `<option value="${esc(p.root)}">${esc(p.name)}</option>`).join("")}</select>` : ""}
+      <label class="row empty" style="gap:6px">Planowana data <input type="date" id="pPlanned"></label>
+      <textarea id="pText" placeholder="Treść posta…"></textarea><button class="btn">Zapisz szkic</button></form>
+    <p class="empty" style="margin:0">Posty to pliki .md w C:\\Users\\Guest\\.claude\\agent-quest\\marketing. Nic nie jest publikowane automatycznie: status zmieniasz sam.</p>
+    <ul class="list">${posts.map(x => `<li><div class="row"><b>${esc(x.title)}</b><span class="chip ${esc(x.status)}">${POST_PL[x.status] ?? x.status}</span><span class="chip">${esc(x.channel)}</span>${x.planned ? `<span class="chip approved">na ${esc(x.planned)}</span>` : ""}</div>
+      <small>napisany ${esc(x.date ?? "")}${!root && x.project ? " · " + esc(x.project.split(/[\\/]/).pop()) : ""}</small>${x.body ? `<div class="said" style="margin-top:6px">${esc(x.body.slice(0, 400))}</div>` : ""}
+      <div class="row" style="margin-top:6px">${["draft", "approved", "published"].filter(s => s !== x.status).map(s => `<button class="btn small" data-file="${esc(x.file)}" data-status="${s}">→ ${POST_PL[s]}</button>`).join("")}
+        <label class="row empty" style="gap:4px">plan <input type="date" data-plan-file="${esc(x.file)}" value="${esc(x.planned ?? "")}"></label><button class="btn small" data-delete="${esc(x.file)}">Usuń</button></div></li>`).join("") || `<li class="empty">Brak postów.</li>`}</ul>`;
+  b.querySelector("#newPost").onsubmit = async ev => {
+    ev.preventDefault();
+    await api("/api/marketing", { action: "add", root: root ?? b.querySelector("#pProject").value, title: b.querySelector("#pTitle").value, channel: b.querySelector("#pChannel").value, text: b.querySelector("#pText").value, planned: b.querySelector("#pPlanned").value });
+    again();
+  };
+  b.querySelectorAll("[data-status]").forEach(x => x.onclick = async () => { await api("/api/marketing", { action: "status", file: x.dataset.file, status: x.dataset.status }); again(); });
+  b.querySelectorAll("[data-plan-file]").forEach(x => x.onchange = async () => { await api("/api/marketing", { action: "plan", file: x.dataset.planFile, planned: x.value }); again(); });
+  b.querySelectorAll("[data-delete]").forEach(x => x.onclick = async () => { await api("/api/marketing", { action: "delete", file: x.dataset.delete }); again(); });
+}
+
+// treasury: a form for an income or a cost, a row per entry; `projectsList` adds a project select
+function treasuryForm(projectsList) {
+  return `<form class="add" id="newEntry">
+    <select id="tKind" aria-label="Rodzaj"><option value="income">Przychód</option><option value="cost">Koszt</option></select>
+    <input id="tAmount" inputmode="decimal" placeholder="Kwota, np. 1499,00" required>
+    <input type="date" id="tDate" aria-label="Data">
+    ${projectsList ? `<select id="tProject" aria-label="Projekt">${projectsList.map(p => `<option value="${esc(p.root)}">${esc(p.name)}</option>`).join("")}</select>` : ""}
+    <input id="tCategory" placeholder="Kategoria, np. abonament, hosting, reklama" maxlength="60">
+    <input id="tNote" placeholder="Notatka" maxlength="300"><button class="btn">Zapisz</button></form>`;
+}
+const entryRow = (e, withProject = false) => `<li><div class="row"><b class="${e.kind === "income" ? "money-in" : "money-out"}">${e.kind === "income" ? "+" : "−"}${money(e.amount)}</b>
+  <span>${esc(e.category || (e.kind === "income" ? "przychód" : "koszt"))}</span><span style="flex:1"></span><button class="btn small" data-entry="${esc(e.id)}" aria-label="Usuń wpis">Usuń</button></div>
+  <small>${esc(e.date)}${withProject ? " · " + esc((world.projects.find(p => p.root === e.root)?.name) ?? "") : ""}${e.note ? " · " + esc(e.note) : ""}</small></li>`;
+function wireTreasury(b, root, again) {
+  b.querySelector("#newEntry").onsubmit = async ev => {
+    ev.preventDefault();
+    const res = await api("/api/treasury", { action: "add", root: root ?? b.querySelector("#tProject").value, kind: b.querySelector("#tKind").value,
+      amount: b.querySelector("#tAmount").value, date: b.querySelector("#tDate").value, category: b.querySelector("#tCategory").value, note: b.querySelector("#tNote").value });
+    if (res) { refresh(); again(); }
+  };
+  b.querySelectorAll("[data-entry]").forEach(x => x.onclick = async () => { await api("/api/treasury", { action: "delete", id: x.dataset.entry }); refresh(); again(); });
+}
+
+async function openGuild(key) {
+  const gd = guilds[key]; if (!gd) return;
+  select({ kind: "guild", key }); focus(gd.group.position, 22);
+  shell(gd.name, esc(gd.sub), [], "", (_, b) => { b.innerHTML = `<div class="empty">Wczytywanie…</div>`; });
+  if (key === "barracks") {
+    const g = await api("/api/guild?kind=barracks");
+    shell(gd.name, "Wszyscy agenci z ostatnich 12 godzin. Rola decyduje, w której gildii mieszka agent.", [], "", (_, b) => {
+      b.innerHTML = `<ul class="list">${g.agents.filter(a => a.kind === "session").map(a => `<li><div class="row"><b class="click" data-open="${esc(a.id)}" style="cursor:pointer">${esc(a.name)}</b><span class="chip ${esc(a.state)}">${STATE_PL[a.state] ?? a.state}</span></div>
+        <small>${esc(a.verb)} · ${esc(a.project)} · ${ago(a.lastAt)}</small>
+        <div class="row" style="margin-top:6px"><label class="empty" for="r-${esc(a.id)}">Rola</label><select class="role" id="r-${esc(a.id)}" data-role="${esc(a.id)}">${Object.entries(ROLE_PL).map(([r, l]) => `<option value="${r}" ${r === a.role ? "selected" : ""}>${l}</option>`).join("")}</select></div></li>`).join("")}</ul>`;
+      b.querySelectorAll("[data-role]").forEach(s => s.onchange = async () => { await api("/api/role", { id: s.dataset.role, role: s.value }); setTimeout(refresh, 300); });
+      b.querySelectorAll("[data-open]").forEach(x => x.onclick = () => openAgent(x.dataset.open));
+    });
+  }
+  if (key === "port") {
+    const [st, ev] = await Promise.all([api("/api/ratusz"), api("/api/events?limit=60")]);
+    shell(gd.name, "Wieści z innych maszyn: PC Windows, chmura, Codex, GitHub. Ten serwer jest Hubem.", [], "", (_, b) => {
+      const machines = [...new Set((ev ?? []).map(e => e.machine))];
+      b.innerHTML = `<div class="stats"><div class="stat"><b>${machines.length}</b><span>maszyn melduje</span></div><div class="stat"><b>${(ev ?? []).length}</b><span>ostatnich wieści</span></div><div class="stat"><b>${st?.ntfy ? "tak" : "nie"}</b><span>herold (ntfy)</span></div></div>
+        <div class="advice">${st?.token ? `Port otwarty. Inne maszyny wysyłają zdarzenia z tokenem na <b>${esc(st.publicBase || `adres tej maszyny w Tailscale, port ${location.port}`)}</b>.` : `Port zamknięty. Wpisz <b>token</b>, <b>publicBase</b> i <b>ntfy</b> w <span class="mono">${esc(st?.file ?? "~/.claude/agent-quest/ratusz.json")}</span> i uruchom serwer ponownie. Instrukcja: <span class="mono">adapters/README.md</span> w pluginie.`}</div>
+        <div class="row"><button class="btn small" id="heraldTest" ${st?.ntfy ? "" : "disabled"}>Wyślij próbne powiadomienie na telefon</button></div>
+        <h3>Ostatnie wieści</h3><ul class="list">${(ev ?? []).map(e => `<li><div class="row"><span class="chip machine">${esc(e.machine)}</span><span class="chip">${esc(e.type)}</span>${e.project ? `<b>${esc(e.project)}</b>` : ""}<span class="empty">${ago(e.ts)}</span></div><small>${esc(e.title)}</small></li>`).join("") || `<li class="empty">Jeszcze nic nie przypłynęło. Skonfiguruj adaptery na PC (adapters/README.md).</li>`}</ul>`;
+      b.querySelector("#heraldTest").onclick = async ev2 => { ev2.target.disabled = true; const r = await api("/api/ratusz", {}); ev2.target.textContent = r?.ok ? "Wysłano" : `Nie udało się${r?.reason ? ": " + r.reason : ""}`; };
+    });
+  }
+  if (key === "testers") {
+    const rows = await api("/api/guild?kind=testers");
+    shell(gd.name, "Testy uruchamiane przez agentów w ciągu 60 dni, po projektach.", [], "", (_, b) => {
+      b.innerHTML = rows.map(r => `<h3>${esc(r.name)}</h3><div class="row"><span class="chip pass">${r.passed} OK</span><span class="chip fail">${r.failed} z błędami</span></div>
+        <ul class="list">${r.last.map(t => `<li><span class="chip ${t.failed ? "fail" : "pass"}">${t.failed ? "błąd" : "OK"}</span> ${esc(t.command)}<small>${esc(t.who)} · ${ago(t.at)}</small></li>`).join("")}</ul>`).join("") || `<div class="empty">Agenci nie uruchamiali testów w ciągu 60 dni.</div>`;
+    });
+  }
+  if (key === "tech") {
+    const rows = await api("/api/guild?kind=tech");
+    const byTech = new Map(); rows.forEach(r => r.tech.forEach(t => byTech.set(t, [...(byTech.get(t) ?? []), r.name])));
+    shell(gd.name, "Technologie rozpoznane w plikach projektów (package.json, pubspec.yaml, requirements.txt…).", [["projects", "Projekty"], ["tech", "Technologie"]], "projects", (k, b) => {
+      if (k === "projects") b.innerHTML = rows.map(r => `<h3 class="click" data-root="${esc(r.root)}" style="cursor:pointer">${esc(r.name)}</h3><div class="chips">${r.tech.map(t => `<span class="chip tech">${esc(t)}</span>`).join("") || `<span class="empty">Nie rozpoznano.</span>`}</div>`).join("");
+      else b.innerHTML = `<ul class="list">${[...byTech].sort((x, y) => y[1].length - x[1].length).map(([t, ps]) => `<li><b>${esc(t)}</b><small>${ps.map(esc).join(", ")}</small></li>`).join("")}</ul>`;
+      b.querySelectorAll("[data-root]").forEach(x => x.onclick = () => openProject(x.dataset.root));
+    });
+  }
+  if (key === "marketing") {
+    const g = await api("/api/guild?kind=marketing");
+    const upcoming = g.posts.filter(x => x.planned && x.status !== "published").sort((a, b) => a.planned.localeCompare(b.planned));
+    shell(gd.name, `Marketing wszystkich projektów · agenci marketingu: ${g.agents.length}`, [["plan", "Co dalej"], ["calendar", "Kalendarz"], ["posts", "Posty"]], "plan", (k, b) => {
+      if (k === "plan") b.innerHTML = g.projects.map(p => `<h3 class="click" data-root="${esc(p.root)}" style="cursor:pointer">${esc(p.name)} · poziom ${p.level} · postęp ${Math.round(p.growth * 100)}%</h3>
+        <div class="advice">${esc(p.advice)}</div>${p.ideas.slice(0, 3).map(i => `<div class="row" style="margin-top:4px"><span class="chip">${esc(i.source)}</span><span>${esc(i.title)}</span></div>`).join("")}`).join("") || `<div class="empty">Brak projektów.</div>`;
+      if (k === "calendar") b.innerHTML = `<ul class="list">${upcoming.map(x => `<li><div class="row"><span class="chip approved">${esc(x.planned)}</span><b>${esc(x.title)}</b><span class="chip">${esc(x.channel)}</span></div><small>${esc((x.project ?? "").split(/[\\/]/).pop())} · ${POST_PL[x.status] ?? x.status}</small></li>`).join("") || `<li class="empty">Nic nie jest zaplanowane. Ustaw datę przy poście w zakładce Posty.</li>`}</ul>`;
+      if (k === "posts") renderPosts(b, g.posts, null, () => openGuild("marketing"), g.projects.map(p => ({ root: p.root, name: p.name })));
+      b.querySelectorAll("[data-root]").forEach(x => x.onclick = () => openProject(x.dataset.root, "marketing"));
+    });
+  }
+  if (key === "treasury") {
+    const t = await api("/api/guild?kind=treasury");
+    const tabsT = [["summary", "Podsumowanie"], ["entries", "Wpisy"], ["unassigned", `Do przypisania (${t.unassigned.length})`], ["sources", "Źródła"]];
+    shell(gd.name, `Przychody i koszty projektów · skarbnicy: ${t.treasurers.length}`, tabsT, t.unassigned.length ? "unassigned" : "summary", (k, b) => {
+      if (k === "unassigned") {
+        b.innerHTML = `<p class="empty" style="margin:0">Wpisy zaimportowane ze źródeł, których żadna reguła nie przypisała do projektu. Wybierz projekt; jeśli wpiszesz słowo z tytułu, podobne wpisy trafią tam same.</p>
+          <ul class="list">${t.unassigned.map(e => `<li>${entryRow(e).replace(/^<li>|<\/li>$/g, "")}
+            <div class="row" style="margin-top:6px"><select class="role" data-assign="${esc(e.id)}" aria-label="Projekt"><option value="">— projekt —</option>${t.projects.map(p => `<option value="${esc(p.root)}">${esc(p.name)}</option>`).join("")}</select>
+            <input class="role" data-remember="${esc(e.id)}" placeholder="zapamiętaj słowo (opcjonalnie)" maxlength="80"><button class="btn small" data-do="${esc(e.id)}">Przypisz</button></div></li>`).join("") || `<li class="empty">Wszystko przypisane.</li>`}</ul>`;
+        b.querySelectorAll("[data-do]").forEach(x => x.onclick = async () => {
+          const id = x.dataset.do, root = b.querySelector(`[data-assign="${CSS.escape(id)}"]`).value;
+          if (!root) return;
+          await api("/api/treasury", { action: "assign", id, root, note: b.querySelector(`[data-remember="${CSS.escape(id)}"]`).value });
+          refresh(); openGuild("treasury");
+        });
+        b.querySelectorAll("[data-entry]").forEach(x => x.onclick = async () => { await api("/api/treasury", { action: "delete", id: x.dataset.entry }); openGuild("treasury"); });
+        return;
+      }
+      if (k === "sources") {
+        const s = t.sources;
+        b.innerHTML = `<div class="row"><button class="btn" id="syncNow">Synchronizuj teraz</button><span class="empty">Automatycznie co 15 minut.</span></div>
+          <p class="said" style="margin:0">Klucze API wpisujesz sam w pliku <b>${esc(s.configFile)}</b> (otwórz go w Notatniku). Plik zostaje na tym komputerze, a klucze trafiają tylko do API danej usługi. Pole „projekt” przy źródle przypisuje do projektu wszystko z tego źródła.</p>
+          ${s.configBroken ? `<div class="advice">Plik konfiguracji ma błąd składni JSON. Popraw go, a źródła wrócą.</div>` : ""}
+          <ul class="list">${s.sources.map(x => `<li><div class="row"><b style="flex:1">${esc(x.label)}</b><span class="chip ${x.lastError ? "fail" : x.configured ? "pass" : "draft"}">${x.lastError ? "błąd" : x.configured ? "włączone" : "wyłączone"}</span></div>
+            <small>${x.configured ? `ostatnio: ${x.lastSync ? ago(x.lastSync) : "jeszcze nie"} · dodano łącznie ${x.total ?? 0}${x.pendingRates ? ` · ${x.pendingRates} czeka na kurs NBP` : ""}` : `uzupełnij: ${x.fields.filter(f => !f.filled && !/^(sandbox|sessionIds|companyId)$/.test(f.name)).map(f => esc(f.name)).join(", ") || "—"}`}</small>
+            ${x.lastError ? `<div class="said" style="margin-top:6px">${esc(x.lastError)}</div>` : ""}</li>`).join("")}</ul>
+          <h3>Reguły przypisywania</h3><ul class="list">${s.rules.filter(r => r.zawiera).map(r => `<li>„${esc(r.zawiera)}” → ${esc(String(r.projekt).split(/[\\/]/).pop())}</li>`).join("") || `<li class="empty">Brak reguł. Dodasz je przy przypisywaniu wpisów albo w pliku.</li>`}</ul>`;
+        b.querySelector("#syncNow").onclick = async ev => { ev.target.disabled = true; ev.target.textContent = "Synchronizuję…"; await api("/api/treasury-sync", {}); refresh(); openGuild("treasury"); };
+        return;
+      }
+      if (k === "summary") b.innerHTML = `<div class="stats"><div class="stat"><b class="money-in" style="font-size:16px">${money(t.totals.income)}</b><span>przychody</span></div>
+          <div class="stat"><b class="money-out" style="font-size:16px">${money(t.totals.cost)}</b><span>koszty</span></div><div class="stat"><b style="font-size:16px">${money(t.totals.profit)}</b><span>zysk</span></div></div>
+        <h3>Ostatnie 12 miesięcy (zielone: przychody, czerwone: koszty)</h3>${barChart(t.byMonth.map(m => ({ label: m.month.slice(5), a: m.income, b: m.cost })), { fmt: money })}
+        <h3>Projekty</h3><ul class="list">${t.projects.map(p => `<li class="click" data-root="${esc(p.root)}"><div class="row"><b style="flex:1">${esc(p.name)}</b><span class="money-in">+${money(p.income)}</span><span class="money-out">−${money(p.cost)}</span><b>${money(p.profit)}</b></div></li>`).join("")}</ul>
+        <h3>Skarbnicy</h3><p class="empty" style="margin:0">${t.treasurers.length ? t.treasurers.map(a => esc(a.name)).join(", ") : "Brak. W Koszarach ustaw agentowi rolę „Skarbnik”, a zamieszka tutaj."} Agent może też sam dopisywać wpisy: POST http://127.0.0.1:4790/api/treasury z {"action":"add","root":"…","kind":"income","amount":100}.</p>`;
+      if (k === "entries") { b.innerHTML = treasuryForm(t.projects) + `<ul class="list">${t.entries.map(e => entryRow(e, true)).join("") || `<li class="empty">Brak wpisów.</li>`}</ul>`; wireTreasury(b, null, () => openGuild("treasury")); }
+      b.querySelectorAll("[data-root]").forEach(x => x.onclick = () => openProject(x.dataset.root, "finance"));
+    });
+  }
+}
+
+function openAgent(id) {
+  const e = agents.get(id); if (!e) return;
+  const a = e.data;
+  select({ kind: "agent", id }); focus(e.group.position, 12);
+  const subs = world.agents.filter(x => x.parent === a.id);
+  shell(a.name, `${a.kind === "subagent" ? "Subagent" : "Sesja"} · ${esc(a.project)} · ${ago(a.lastAt)}`, [], "", (_, b) => {
+    b.innerHTML = `<div class="chips"><span class="chip ${a.state}">${STATE_PL[a.state] ?? a.state}</span><span class="chip">${esc(a.verb)}</span><span class="chip">${ROLE_PL[a.role] ?? a.role}</span>${a.machine ? `<span class="chip machine">${esc(a.machine)}</span>` : ""}</div>
+      <div class="said">${a.state === "working" && projects.has(a.root) ? `Pracuje w posiadłości <b>${esc(projects.get(a.root).data.name)}</b>.` : `Jest w ${esc(guilds[homeKey(a)]?.name ?? "Gildii")}.`}</div>
+      ${a.kind === "session" ? `<div class="row"><label class="empty" for="agentRole">Rola</label><select class="role" id="agentRole">${Object.entries(ROLE_PL).map(([r, l]) => `<option value="${r}" ${r === a.role ? "selected" : ""}>${l}</option>`).join("")}</select></div>` : ""}
+      ${a.lastPrompt ? `<h3>Ostatnia prośba</h3><div class="said">${esc(a.lastPrompt)}</div>` : ""}
+      ${a.lastText ? `<h3>Ostatnio powiedział</h3><div class="said">${esc(a.lastText)}</div>` : ""}
+      <h3>Ostatnie kroki</h3><ul class="list">${[...a.feed].reverse().map(f => `<li><b>${esc(f.tool)}</b> ${esc(f.detail)}<small>${ago(f.at)}</small></li>`).join("") || `<li class="empty">Brak kroków.</li>`}</ul>
+      ${subs.length ? `<h3>Subagenci</h3><ul class="list">${subs.map(s => `<li class="click" data-id="${esc(s.id)}">${esc(s.name)} <span class="chip ${s.state}">${STATE_PL[s.state] ?? s.state}</span><small>${esc(s.verb)}</small></li>`).join("")}</ul>` : ""}
+      ${a.parent ? `<button class="btn" id="parent">← Agent nadrzędny</button>` : ""}
+      ${a.root && projects.has(a.root) ? `<button class="btn" id="proj">Otwórz projekt ${esc(a.project)}</button>` : ""}`;
+    b.querySelectorAll("[data-id]").forEach(li => li.onclick = () => openAgent(li.dataset.id));
+    b.querySelector("#parent")?.addEventListener("click", () => openAgent(a.parent));
+    b.querySelector("#proj")?.addEventListener("click", () => openProject(a.root));
+    b.querySelector("#agentRole")?.addEventListener("change", async ev => { await api("/api/role", { id: a.id, role: ev.target.value }); setTimeout(refresh, 300); });
+  });
+}
+
+function openHall() {
+  select({ kind: "hall" }); focus(new THREE.Vector3(0, 0, 0), 28);
+  const ps = world.projects;
+  const working = world.agents.filter(a => a.state === "working").length;
+  shell("Ratusz", "Petycje, projekty i gildie w jednym miejscu", [], "", (_, b) => {
+    b.innerHTML = `<div class="stats"><div class="stat"><b style="${petitions.length ? "color:var(--wait)" : ""}">${petitions.length}</b><span>petycje</span></div><div class="stat"><b>${ps.filter(p => !p.isScratch).length}</b><span>projekty</span></div>
+      <div class="stat"><b>${working}</b><span>agentów pracuje</span></div><div class="stat"><b>${world.agents.length}</b><span>w wiosce (12 h)</span></div></div>
+      <h3>Petycje</h3>${petitionsHtml(petitions)}
+      <h3>Projekty</h3><ul class="list">${ps.map(p => `<li class="click" data-root="${esc(p.root)}"><div class="row"><b>${esc(p.name)}</b><span class="chip tech">poziom ${p.level}</span>${p.active ? `<span class="chip working">${p.active} pracuje</span>` : ""}</div>
+        <small>${p.sessions} sesji · ostatnio ${ago(p.lastAt)} · ${p.xp} XP · drzewko ${p.plan.done}/${p.plan.total} · zadania ${p.todos.done}/${p.todos.total}</small>
+        <div class="progress" style="margin-top:6px"><i style="width:${Math.round(p.growth * 100)}%"></i></div></li>`).join("")}</ul>
+      <h3>Gildia</h3><ul class="list">${Object.entries(guilds).map(([k, g]) => `<li class="click" data-guild="${k}"><b>${esc(g.name)}</b><small>${esc(g.sub)} · mieszka tu ${world.agents.filter(a => homeKey(a) === k).length} agentów</small></li>`).join("")}</ul>
+      ${world.tools.length ? `<h3>Inne narzędzia AI</h3><div class="chips">${world.tools.map(t => `<span class="chip working">${esc(t)} działa</span>`).join("")}</div>` : ""}
+      <h3>Skarbiec</h3><div class="row click" data-guild="treasury" style="cursor:pointer"><span class="money-in">+${money(world.treasury.income)}</span><span class="money-out">−${money(world.treasury.cost)}</span><b>= ${money(world.treasury.profit)}</b></div>
+      <h3>Nowe plany</h3><div id="hallPlans" class="empty">Wczytywanie planów…</div>`;
+    b.querySelectorAll("[data-root]").forEach(li => li.onclick = () => openProject(li.dataset.root));
+    b.querySelectorAll("[data-guild]").forEach(li => li.onclick = () => openGuild(li.dataset.guild));
+    wirePetitions(b, openHall);
+    // the newest plans across projects: from agents in plan mode and from plan documents
+    api("/api/plans").then(pl => {
+      const box = b.querySelector("#hallPlans"); if (!box || !pl) return;
+      const rows = [...pl.agentPlans.map(x => ({ at: x.at, title: x.title, by: `${x.who} · ${x.project}`, isNew: x.isNew, root: x.root })),
+        ...pl.docs.map(d => ({ at: d.mtime, title: d.file, by: `dokument · ${d.project}`, isNew: d.isNew, root: d.root }))]
+        .sort((x, y) => y.at.localeCompare(x.at)).slice(0, 10);
+      box.className = "";
+      box.innerHTML = `<ul class="list">${rows.map(r => `<li class="click" data-plans="${esc(r.root)}"><div class="row"><b>${esc(r.title)}</b>${r.isNew ? `<span class="chip new">nowy</span>` : ""}</div><small>${esc(r.by)} · ${ago(r.at)}</small></li>`).join("") || `<li class="empty">Brak planów.</li>`}</ul>`;
+      box.querySelectorAll("[data-plans]").forEach(li => li.onclick = () => projects.has(li.dataset.plans) && openProject(li.dataset.plans, "plans"));
+    });
+  });
+}
+
+// ---------- building the island once ----------
+function buildWorld() {
+  hallGroup = new THREE.Group();
+  let h = null; try { h = M_HALL?.createHall(); } catch (e) { console.warn("hall", e); }
+  hallGroup.add(h?.group ?? fallbackBuilding("#3a6fb0", 8, 6)); hallUpdate = h?.update ?? null;
+  if (!HIGH) hallGroup.add(groundShade(16, 14));
+  markPick(hallGroup, { kind: "hall" });
+  const hl = makeLabel(`<div class="n">Ratusz postępu</div>`, "label"); hl.position.set(0, 15, 0); hallGroup.add(hl);
+  scene.add(hallGroup);
+  buildGuilds();
+  for (const [text, x, z] of [["Dzielnica Gildii", 0, -50], ["Dzielnica Projektów", 0, 60]]) {
+    const d = makeLabel(esc(text), "district"); d.position.set(x, 1, z); scene.add(d);
+  }
+  const spots = [...Object.values(GUILD_SPOTS), ...projectSpots(Math.max(world.projects.length, 6))];
+  const keepClear = (x, z) => Math.hypot(x, z) < 12.5 || spots.some(s => Math.hypot(s.x - x, s.z - z) < 10.5) ||
+    spots.some(s => { const d = Math.hypot(s.x, s.z); const t = (x * s.x + z * s.z) / (d * d); return t >= 0 && t <= 1 && Math.hypot(x - s.x * t, z - s.z * t) < 2.6; });
+  if (M_NATURE) { const n = M_NATURE.createNature({ radius: ISLAND, keepClear, detail: HIGH ? 1 : 0.35 }); scene.add(n.group); natureUpdate = n.update ?? null; }
+  else { const g = new THREE.Mesh(new THREE.CylinderGeometry(ISLAND, ISLAND + 3, 2, 48), mat("#7fb84e")); g.position.y = -1; g.receiveShadow = true; scene.add(g); }
+  refreshShadows();
+  built = true;
+}
+
+// Lambert materials in low quality: per-vertex light, the same colours, far cheaper per pixel
+const lambertOf = new Map();
+function lambertize(root) {
+  if (HIGH) return;
+  const conv = m => {
+    if (!m?.isMeshStandardMaterial) return m;
+    if (!lambertOf.has(m)) lambertOf.set(m, new THREE.MeshLambertMaterial({ color: m.color, map: m.map, emissive: m.emissive, emissiveIntensity: m.emissiveIntensity,
+      vertexColors: m.vertexColors, flatShading: m.flatShading, transparent: m.transparent, opacity: m.opacity, side: m.side, depthWrite: m.depthWrite }));
+    return lambertOf.get(m);
+  };
+  root.traverse(o => { if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(conv) : conv(o.material); });
+}
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+let frameNo = 0, fpsFrames = 0, fpsAt = performance.now();
+const fpsEl = document.getElementById("fps");
+function tick() {
+  const dt = Math.min(0.1, clock.getDelta()), t = clock.elapsedTime;
+  const move = new THREE.Vector3();
+  if (keys.has("w") || keys.has("arrowup")) move.z -= 1;
+  if (keys.has("s") || keys.has("arrowdown")) move.z += 1;
+  if (keys.has("a") || keys.has("arrowleft")) move.x -= 1;
+  if (keys.has("d") || keys.has("arrowright")) move.x += 1;
+  if (move.lengthSq()) {
+    const yaw = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
+    move.applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw).normalize().multiplyScalar(dt * 22);
+    camera.position.add(move); controls.target.add(move); flyTo = null;
+  }
+  if (flyTo) { controls.target.lerp(flyTo.target, 0.08); camera.position.lerp(flyTo.cam, 0.06); if (camera.position.distanceTo(flyTo.cam) < 0.3) flyTo = null; }
+  controls.update();
+
+  for (const e of agents.values()) {
+    if (t > e.wanderAt) { e.target = nextTarget(e, t); e.wanderAt = t + (e.data.state === "working" ? 4 + rnd(hash(e.data.id), Math.floor(t)) * 3 : 7); }
+    const g = e.group, d = e.target.clone().sub(g.position); d.y = 0;
+    const dist = d.length(), speed = e.data.kind === "subagent" ? 3.6 : 3.0;
+    const moving = dist > 0.1;
+    if (moving) { g.position.add(d.normalize().multiplyScalar(Math.min(dist, speed * dt))); g.rotation.y = Math.atan2(d.x, d.z); }
+    e.anim?.update(dt, t, moving);
+  }
+  for (const e of projects.values()) {
+    const busy = e.data?.active > 0;
+    for (const w of e.estate?.windows ? [].concat(e.estate.windows) : []) if (w?.material) w.material.emissiveIntensity = busy ? 1.5 : 0.15;
+    const top = e.estate?.chimneyTop;
+    e.puffs.forEach((p, i) => {
+      const k = (t * 0.35 + i / e.puffs.length) % 1;
+      if (top) p.position.set(top.x + k * 0.8, top.y + k * 3, top.z);
+      p.material.opacity = busy && top ? (1 - k) * 0.7 : 0; p.scale.setScalar(0.6 + k * 1.6);
+    });
+  }
+  hallUpdate?.(dt, t); natureUpdate?.(dt, t);
+  for (const g of Object.values(guilds)) g.update?.(dt, t);
+  renderer.render(scene, camera);
+  if (frameNo++ % 3 === 0) labels.render(scene, camera); // labels are DOM: every third frame is plenty
+  fpsFrames++;
+  if (performance.now() - fpsAt > 1000) { fpsEl.textContent = `${Math.round(fpsFrames * 1000 / (performance.now() - fpsAt))} fps`; fpsFrames = 0; fpsAt = performance.now(); }
+}
+
+let lastTesters = 0;
+async function refresh() {
+  try {
+    world = await api("/api/world");
+    petitions = (await api("/api/decisions"))?.pending ?? [];
+    if (!built) buildWorld();
+    syncProjects(); syncAgents();
+    lambertize(scene);
+    const n = s => world.agents.filter(a => a.state === s).length;
+    document.getElementById("counts").innerHTML = `<b style="${petitions.length ? "color:var(--wait)" : ""}">${petitions.length}</b> petycji · <b>${n("working")}</b> pracuje · <b>${n("waiting")}</b> czeka · <b>${world.projects.filter(p => !p.isScratch).length}</b> projektów · <b>${world.agents.filter(a => a.kind === "subagent" && a.state === "working").length}</b> subagentów`;
+    document.getElementById("loading").hidden = true;
+    // the treasury's gold pile: 0 with no profit, full at about 100 000 zł (log scale)
+    const profit = world.treasury?.profit ?? 0;
+    const wealth = profit > 0 ? Math.min(1, Math.log10(1 + profit) / 5) : 0;
+    if (guilds.treasury?.setWealth && guilds.treasury.lastWealth !== wealth) { guilds.treasury.setWealth(wealth); guilds.treasury.lastWealth = wealth; refreshShadows(); }
+    // the testers' lamp: red when the latest test run in any project failed, green when it passed
+    if (guilds.testers?.setStatus && Date.now() - lastTesters > 15000) {
+      lastTesters = Date.now();
+      const rows = await api("/api/guild?kind=testers");
+      const latest = rows.flatMap(r => r.last).sort((x, y) => y.at.localeCompare(x.at))[0];
+      guilds.testers.setStatus(!latest ? "none" : latest.failed ? "fail" : "pass");
+    }
+  } catch (e) {
+    console.warn(e);
+    document.getElementById("counts").textContent = "Brak połączenia z serwerem wioski";
+  }
+}
+await refresh();
+setInterval(refresh, 3000);
+renderer.setAnimationLoop(tick);
+window.__aq = { renderer, scene, camera, tick, QUALITY, GPU, openGuild, openProject, openHall, openAgent }; // for checks from the console
+</script>
+</body>
+</html>

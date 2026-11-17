@@ -1,0 +1,8 @@
+[
+  {"id":1001,"number":"FV 1/10/2026","kind":"vat","status":"issued","issue_date":"2026-10-05","price_net":"1000.00","price_gross":"1230.00","currency":"PLN","buyer_name":"Przykładowa Sp. z o.o.","seller_name":"Moja Firma"},
+  {"id":1002,"number":"FV 2/10/2026","kind":"vat","status":"paid","issue_date":"2026-10-02","price_gross":"100.50","currency":"EUR","buyer_name":"Beispiel GmbH"},
+  {"id":1003,"number":"PRO 1/10/2026","kind":"proforma","status":"issued","issue_date":"2026-10-01","price_gross":"500.00","currency":"PLN","buyer_name":"Proforma Klient"},
+  {"id":1004,"number":"FV 3/10/2026","kind":"vat","status":"rejected","issue_date":"2026-10-01","price_gross":"700.00","currency":"PLN","buyer_name":"Odrzucony Klient"},
+  {"id":1005,"number":"FV 0/09/2026","kind":"vat","status":"issued","issue_date":"2026-08-01","price_gross":"50.00","currency":"PLN","buyer_name":"Stary Klient"},
+  {"id":1006,"kind":"vat","issue_date":"2026-10-03","currency":"PLN","buyer_name":"Bez kwoty"}
+]

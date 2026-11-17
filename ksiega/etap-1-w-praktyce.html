@@ -1,0 +1,420 @@
+<title>Etap 1 w praktyce</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Układ: pasek przepływu Mac → GitHub → PC → telefon u góry, pod nim scenariusz dnia z ekranem urządzenia i opisem.
+   Jeden ciemny wygląd, jak panel projektów (złoto na granacie). */
+:root{
+  color-scheme:dark;
+  --bg:#0b1020; --surface:#121624; --raised:#181d2e; --line:rgba(242,236,220,.10); --edge:rgba(226,179,71,.38);
+  --ink:#f2ecdc; --dim:#a9a293; --mute:#837f74; --gold:#e2b347; --gold-soft:rgba(226,179,71,.14);
+  --ok:#6ee08a; --wait:#f2c45a; --bad:#ff7a6a; --info:#7fe3ff;
+  --chat:#0e1322; --bubble-bot:#1d2336; --bubble-me:#3a3014;
+  --display:"Alegreya Sans",system-ui,sans-serif; --text:"Alegreya Sans",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--ink)}
+body{font:16px/1.45 var(--text);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance}
+h1{font-size:30px;font-weight:800;letter-spacing:.2px}
+h2{font-size:20px;font-weight:700}
+h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--dim)}
+p{margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:13px}
+.dim{color:var(--dim)} .mute{color:var(--mute)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top .lead{color:var(--dim);max-width:62ch}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--gold);border:1px solid var(--edge);border-radius:999px;padding:3px 10px;background:var(--gold-soft)}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+nav.tabs button{background:none;border:1px solid transparent;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--dim);font-weight:700}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--edge);background:var(--gold-soft)}
+nav.tabs kbd{font-family:var(--mono);font-size:11px;color:var(--mute);margin-left:6px}
+
+/* przepływ */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;position:relative}
+.node{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;display:grid;gap:2px;transition:border-color .2s,background .2s,opacity .2s;opacity:.5;position:relative}
+.node b{font-size:15px}
+.node span{font-size:13px;color:var(--dim)}
+.node.on{opacity:1;border-color:var(--edge);background:var(--raised)}
+.node.on::after{content:"";position:absolute;right:10px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.node.bad{opacity:1;border-color:rgba(255,122,106,.55)}
+.node.bad::after{content:"";position:absolute;right:10px;top:12px;width:8px;height:8px;border-radius:50%;background:var(--bad)}
+.node:not(:last-child)::before{content:"→";position:absolute;right:-10px;top:50%;transform:translate(50%,-50%);color:var(--mute);font-size:14px;z-index:1}
+.watch{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--dim);border:1px dashed var(--line);border-radius:var(--r);padding:8px 12px;opacity:.55;transition:opacity .2s,border-color .2s}
+.watch.on{opacity:1;border-color:var(--edge)}
+.watch.bad{opacity:1;border-color:rgba(255,122,106,.55)}
+.watch b{color:var(--ink)}
+
+/* dzień */
+.day{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;align-items:start}
+.list{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.list button{width:100%;text-align:left;display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;align-items:baseline;
+  background:none;border:1px solid transparent;border-radius:10px;padding:8px 10px;cursor:pointer}
+.list button:hover{background:var(--surface)}
+.list button[aria-current="true"]{background:var(--raised);border-color:var(--edge)}
+.list .t{font-family:var(--mono);font-size:12px;color:var(--gold);font-variant-numeric:tabular-nums}
+.list .n{font-weight:700;line-height:1.2}
+.list .d{grid-column:2;font-size:12px;color:var(--mute)}
+
+.stage{display:grid;gap:14px;min-width:0}
+.stagehead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.steps{display:flex;align-items:center;gap:6px}
+.steps button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:700}
+.steps button:disabled{opacity:.35;cursor:default}
+.dots{display:flex;gap:5px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--gold)}
+.scene{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:16px;align-items:start}
+
+/* telefon */
+.phone{border:1px solid var(--line);border-radius:28px;background:#05070e;padding:10px;max-width:340px;width:100%}
+.screen{border-radius:20px;background:var(--chat);overflow:hidden;display:grid;grid-template-rows:auto minmax(300px,auto)}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#141a2b;border-bottom:1px solid var(--line)}
+.ava{width:30px;height:30px;border-radius:50%;background:var(--gold-soft);border:1px solid var(--edge);display:grid;place-items:center;font-weight:800;color:var(--gold);font-size:13px}
+.bar b{font-size:14px;display:block;line-height:1.1}
+.bar small{font-size:11px;color:var(--mute)}
+.msgs{display:flex;flex-direction:column;gap:8px;padding:12px;justify-content:flex-end}
+.msg{max-width:88%;border-radius:12px;padding:7px 10px 5px;font-size:14px;line-height:1.35;white-space:pre-wrap;word-break:break-word}
+.msg.bot{background:var(--bubble-bot);align-self:flex-start;border-top-left-radius:4px}
+.msg.me{background:var(--bubble-me);align-self:flex-end;border-top-right-radius:4px}
+.msg.hc{background:#2a1618;align-self:flex-start;border:1px solid rgba(255,122,106,.35);border-top-left-radius:4px}
+.msg .who{display:block;font-size:11px;font-weight:700;color:var(--gold);margin-bottom:2px}
+.msg.hc .who{color:var(--bad)}
+.msg time{display:block;text-align:right;font-size:10px;color:var(--mute);margin-top:2px;font-family:var(--mono)}
+.msg .btns{display:flex;gap:6px;margin-top:6px}
+.msg .btns span{flex:1;text-align:center;font-size:13px;font-weight:700;border:1px solid var(--edge);border-radius:8px;padding:4px 8px;color:var(--gold)}
+.msg.new{animation:pop .25s ease-out}
+.sys{align-self:center;font-size:11px;color:var(--mute);background:rgba(255,255,255,.04);border-radius:999px;padding:2px 10px}
+.empty{align-self:center;color:var(--mute);font-size:13px;text-align:center;padding:30px 10px}
+@keyframes pop{from{transform:translateY(6px);opacity:.3}to{transform:none;opacity:1}}
+
+/* terminal */
+.term{border:1px solid var(--line);border-radius:var(--r);background:#070a12;overflow:hidden;min-width:0}
+.term .tb{display:flex;gap:6px;align-items:center;padding:7px 10px;background:#11151f;border-bottom:1px solid var(--line);font-size:12px;color:var(--mute)}
+.term .tb i{width:9px;height:9px;border-radius:50%;background:#2a2f3d}
+.term pre{margin:0;padding:12px;font:12.5px/1.5 var(--mono);color:#d6d0c0;white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.term .c{color:var(--gold)} .term .a{color:var(--ok)}
+
+.notes{display:grid;gap:10px;min-width:0}
+.note{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:10px 12px;display:grid;gap:4px}
+.note p{color:var(--ink)}
+.note.you{border-color:var(--edge)}
+.note ul{margin:0;padding-left:18px;display:grid;gap:2px}
+
+/* stany */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.state{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:12px;display:grid;gap:8px;align-content:start}
+.state header{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.pill{font-size:12px;font-weight:800;letter-spacing:.04em;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill.ok{color:var(--ok);background:rgba(110,224,138,.12)}
+.pill.wait{color:var(--wait);background:rgba(242,196,90,.12)}
+.pill.bad{color:var(--bad);background:rgba(255,122,106,.12)}
+.pill.info{color:var(--info);background:rgba(127,227,255,.10)}
+.state dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:14px}
+.state dt{color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.state dd{margin:0}
+.state button{justify-self:start;background:none;border:1px solid var(--edge);color:var(--gold);border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:700;font-size:13px}
+
+.life{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.life span{border:1px solid var(--line);border-radius:8px;padding:4px 9px;background:var(--surface);font-size:14px}
+.life span.main{border-color:var(--edge)}
+.life em{color:var(--mute);font-style:normal}
+
+/* polecenia */
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+td code{font-family:var(--mono);font-size:12.5px;color:var(--gold);white-space:nowrap}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+section[hidden]{display:none}
+.foot{font-size:13px;color:var(--mute)}
+
+@media (max-width:900px){
+  .day{grid-template-columns:minmax(0,1fr)}
+  .list{grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);overflow-x:auto;padding-bottom:4px}
+  .scene{grid-template-columns:minmax(0,1fr)}
+  .phone{margin:0 auto}
+  .cols{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .node:nth-child(2)::before{display:none}
+  h1{font-size:25px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div style="display:grid;gap:6px">
+      <span class="tag">Dane przykładowe</span>
+      <h1>Etap 1 w praktyce</h1>
+      <p class="lead">Co zobaczysz na telefonie i na Macu, co robisz Ty, a co robi system. Teksty wiadomości są takie jak w kodzie bota.</p>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Widoki">
+    <button role="tab" id="tab-dzien" aria-selected="true" data-tab="dzien">Dzień<kbd>1</kbd></button>
+    <button role="tab" id="tab-stany" aria-selected="false" data-tab="stany">Stany systemu<kbd>2</kbd></button>
+    <button role="tab" id="tab-polecenia" aria-selected="false" data-tab="polecenia">Polecenia<kbd>3</kbd></button>
+  </nav>
+
+  <div class="flow" id="flow" aria-label="Przepływ danych">
+    <div class="node" data-n="mac"><b>Mac</b><span>zbieracz co godzinę</span></div>
+    <div class="node" data-n="gh"><b>GitHub</b><span>prywatne repozytorium stanu</span></div>
+    <div class="node" data-n="pc"><b>PC</b><span>serce co 5 min, raport 7:00</span></div>
+    <div class="node" data-n="tg"><b>Telefon</b><span>bot w Telegramie</span></div>
+  </div>
+  <div class="watch" id="watch" data-n="hc"><b>healthchecks.io</b> pilnuje serca (10 min), zbieracza (26 h) i raportu; gdy coś milknie, pisze na Telegram i e-mail</div>
+
+  <section id="v-dzien" aria-labelledby="tab-dzien">
+    <div class="day">
+      <ul class="list" id="list" aria-label="Scenariusze dnia"></ul>
+      <div class="stage">
+        <div class="stagehead">
+          <h2 id="sTitle"></h2>
+          <div class="steps">
+            <button id="prev" aria-label="Poprzedni krok">←</button>
+            <div class="dots" id="dots"></div>
+            <button id="next" aria-label="Następny krok">→</button>
+          </div>
+        </div>
+        <div class="scene">
+          <div id="device"></div>
+          <div class="notes" id="notes"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-stany" aria-labelledby="tab-stany" hidden>
+    <div style="display:grid;gap:16px">
+      <div class="grid" id="states"></div>
+      <div style="display:grid;gap:8px">
+        <h3>Stany projektu</h3>
+        <div class="life">
+          <span>kandydat</span><em>→ decyzja na Macu →</em>
+          <span class="main">w realizacji</span><span>backlog</span><span>w przygotowaniu</span><span>archiwum</span><span>wykluczony</span><span>scalony</span>
+        </div>
+        <p class="dim" style="font-size:14px">Kandydata znajduje zbieracz. Stan nadajesz Ty poleceniem <span class="mono">kwalifikuj</span>; agent nigdy nie zmienia stanu projektu. Projekt kliencki poza Makiem widać tylko pod aliasem.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="v-polecenia" aria-labelledby="tab-polecenia" hidden>
+    <div class="cols">
+      <div style="display:grid;gap:8px">
+        <h3>Telefon, czat z botem</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Wpisujesz</th><th>Dostajesz</th></tr></thead>
+          <tbody>
+            <tr><td><code>/stan</code></td><td>projekty w realizacji z liczbami, backlog, liczba kandydatów, godzina danych z Maca</td></tr>
+            <tr><td><code>/pomysl tekst</code></td><td>„Zapisano pomysł.” i przycisk Cofnij (działa 24 h)</td></tr>
+            <tr><td>inny tekst</td><td>lista komend</td></tr>
+            <tr><td>zdjęcie, głos, plik</td><td>„Obsługuję tylko tekst.”</td></tr>
+          </tbody>
+        </table></div>
+        <h3 style="margin-top:8px">Bot pisze sam</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Kiedy</th><th>Wiadomość</th></tr></thead>
+          <tbody>
+            <tr><td>7:00</td><td>Raport</td></tr>
+            <tr><td>problem z GitHubem</td><td>„Pilne: …” (najwyżej 5 dziennie, w ciszy nocnej czeka do 7:00)</td></tr>
+            <tr><td>cykl nieudany od 30 min</td><td>„System nie działa: …” (zawsze, także w nocy)</td></tr>
+            <tr><td>po przerwie dłuższej niż 24 h</td><td>„System działa ponownie od …”</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div style="display:grid;gap:8px;align-content:start">
+        <h3>Mac, terminal w folderze IntegrateSystems</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Polecenie</th><th>Kiedy</th></tr></thead>
+          <tbody>
+            <tr><td><code>python3 system/zbieracz.py kwalifikuj</code></td><td>nowi kandydaci; nadajesz stan, „klient” i alias</td></tr>
+            <tr><td><code>python3 system/zbieracz.py kandydaci</code></td><td>lista kandydatów z prawdziwymi nazwami (tylko na ekranie)</td></tr>
+            <tr><td><code>python3 system/zbieracz.py podglad</code></td><td>sprawdzenie bez wysyłania, same liczby</td></tr>
+            <tr><td><code>python3 system/zbieracz.py</code></td><td>zebranie od razu, bez czekania na pełną godzinę</td></tr>
+          </tbody>
+        </table></div>
+        <h3 style="margin-top:8px">PC</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>Polecenie</th><th>Kiedy</th></tr></thead>
+          <tbody>
+            <tr><td><code>python system\serce.py raz</code></td><td>ręczny cykl i odpowiedź na wiadomości</td></tr>
+            <tr><td><code>python system\serce.py chat</code></td><td>odczyt Twojego chat_id przy instalacji</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Klawisze: 1–3 widoki, ↑ ↓ scenariusz, ← → krok. Nazwy projektów są przykładowe: Backend-A i Testy-B to aliasy projektów klienckich, Turtle czeka w backlogu. Wiadomości od healthchecks pokazane w przybliżeniu: usługa pisze po angielsku.</p>
+</div>
+
+<script>
+(function(){
+const STAN_RANO = "Raport 07:00 · dane z Maca 23:12\nW realizacji\nBackend-A — otwarte 4 · czeka na Ciebie 1 · po terminie 0\nTesty-B — brak ZADANIA.md\nBacklog: Turtle\nKandydaci bez decyzji: 8\nPomysły z doby: 1\nOdrzucone wiersze z doby: 0";
+const STAN_TRAMWAJ = "Stan 08:15 · dane z Maca 08:02\nW realizacji\nBackend-A — otwarte 4 · czeka na Ciebie 1 · po terminie 0\nTesty-B — brak ZADANIA.md\nBacklog: Turtle\nKandydaci bez decyzji: 8";
+const bot=(tekst,czas,extra)=>Object.assign({od:"bot",tekst,czas},extra||{});
+const me=(tekst,czas)=>({od:"me",tekst,czas});
+const hc=(tekst,czas)=>({od:"hc",tekst,czas});
+const sys=(tekst)=>({od:"sys",tekst});
+
+const S=[
+ {id:"raport",czas:"07:00",tytul:"Raport poranny",d:"telefon",kroki:[
+   {on:["mac","gh","pc","tg"],tel:[sys("dziś"),bot(STAN_RANO,"07:00")],
+    widzisz:"Jedną wiadomość z raportem. Projekty klienckie tylko pod aliasem.",
+    robisz:"Nic. Czytasz, gdy masz chwilę.",
+    system:["PC o 7:00 bierze stan z GitHuba (ostatnie dane z Maca z wieczora) i wysyła raport.","Po wysłaniu pinguje kontrolę „raport” w healthchecks."]}
+ ]},
+ {id:"tramwaj",czas:"08:15",tytul:"Stan w tramwaju",d:"telefon",kroki:[
+   {on:["tg"],tel:[sys("dziś"),me("/stan","08:15")],
+    widzisz:"Swoją wiadomość.",robisz:"Wpisujesz /stan.",system:["Bot na PC odbiera wiadomość w ciągu kilku sekund."]},
+   {on:["mac","gh","pc","tg"],tel:[sys("dziś"),me("/stan","08:15"),bot(STAN_TRAMWAJ,"08:15")],
+    widzisz:"Stan w niecałą minutę. „Dane z Maca 08:02” mówi, jak świeże są liczby.",
+    robisz:"Nic więcej.",
+    system:["Liczy skrypt, bez modelu językowego, więc nie zużywa limitu Claude.","Liczby pochodzą z plików ZADANIA.md, które zbieracz przeczytał na Macu o 08:02."]}
+ ]},
+ {id:"pomysl",czas:"12:40",tytul:"Pomysł z telefonu",d:"telefon",kroki:[
+   {on:["pc","tg"],tel:[sys("dziś"),me("/pomysl Oferta na serwis dla klienta z Gdańska","12:40"),bot("Zapisano pomysł.","12:40",{btns:["Cofnij"]})],
+    widzisz:"Potwierdzenie z przyciskiem Cofnij.",robisz:"Wpisujesz /pomysl i treść.",
+    system:["PC dopisuje wiersz do pomysly.md i przy najbliższym cyklu (do 5 min) wysyła go na GitHub.","Pomysł przeniesiesz do projektu przy kwalifikacji."]},
+   {on:["pc","gh","tg"],tel:[sys("dziś"),me("/pomysl Oferta na serwis dla klienta z Gdańska","12:40"),bot("Pomysł cofnięty.","12:40")],
+    widzisz:"Wiadomość zmienia się na „Pomysł cofnięty.”; na chwilę pojawia się „Cofnięto.”",robisz:"Dotykasz Cofnij (działa przez 24 h).",
+    system:["Wpis znika z pomysly.md; zmiana idzie na GitHub w kolejnym cyklu."]}
+ ]},
+ {id:"kwalifikacja",czas:"17:30",tytul:"Nowy projekt na Macu",d:"mac",kroki:[
+   {on:["mac"],term:'<span class="c">$</span> python3 system/zbieracz.py kwalifikuj\n\n[1/1] sklep-nowy  ~/Projects/sklep-nowy\n      commity 3, sesje 2, ostatnio 2026-11-12\nStan (1 w realizacji, 2 backlog, 3 w przygotowaniu, 4 archiwum, 5 wykluczony, 6 scalony; Enter pomiń, k koniec): <span class="a">1</span>\nKlient? [T/n]: <span class="a">t</span>\nAlias [K-3f9a]: <span class="a">Sklep-C</span>\n\nZapisano decyzji: 1.',
+    widzisz:"Kandydata z prawdziwą nazwą i ścieżką. Te dane są tylko na Macu.",
+    robisz:"Wybierasz stan, czy to projekt kliencki, i alias widoczny poza Makiem. Raz na projekt, około minuty.",
+    system:["Zbieracz zapisał kandydata godzinę wcześniej, bo w folderze pojawiło się repozytorium git.","Decyzja trafia do mac/decyzje.jsonl, a na GitHub tylko alias, stan i liczby."]},
+   {on:["mac","gh","pc","tg"],tel:[sys("dziś"),me("/stan","17:36"),bot("Stan 17:36 · dane z Maca 17:31\nW realizacji\nBackend-A — otwarte 4 · czeka na Ciebie 1 · po terminie 0\nTesty-B — brak ZADANIA.md\nSklep-C — brak ZADANIA.md\nBacklog: Turtle\nKandydaci bez decyzji: 8","17:36")],
+    widzisz:"Nowy projekt w /stan pod aliasem Sklep-C.",robisz:"Nic. Gdy dodasz ZADANIA.md, pojawią się liczby.",
+    system:["PC w ciągu 5 min przepisuje decyzję do projekty.json."]}
+ ]},
+ {id:"cisza",czas:"23:10",tytul:"Problem z GitHubem w nocy",d:"telefon",kroki:[
+   {on:["pc"],bad:["gh"],tel:[sys("dziś"),sys("cisza nocna 22:00–7:00")],
+    widzisz:"Nic. Trwa cisza nocna.",robisz:"Śpisz.",
+    system:["Wypchnięcie na GitHub nie udaje się 3 razy (np. wygasł dostęp).","Wiadomość „Pilne” czeka w kolejce do 7:00."]},
+   {on:["pc","tg"],bad:["gh"],tel:[sys("dziś"),sys("cisza nocna 22:00–7:00"),bot("System nie działa: cykl git nieudany od 23:10.","23:40")],
+    widzisz:"Jedną wiadomość mimo ciszy nocnej.",robisz:"Rano sprawdzasz dostęp PC do GitHuba. W nocy nic nie musisz.",
+    system:["Po 30 minutach nieudanych cykli serce pisze „System nie działa” poza ciszą i limitem. Tylko raz na awarię."]},
+   {on:["pc","tg"],bad:["gh"],tel:[sys("dziś"),sys("cisza nocna 22:00–7:00"),bot("System nie działa: cykl git nieudany od 23:10.","23:40"),sys("jutro"),bot("Pilne: push do GitHuba nieudany po 3 próbach. Zmiany czekają lokalnie.","07:00"),bot("Raport 07:00 · dane z Maca 22:48\nW realizacji\nBackend-A — otwarte 4 · czeka na Ciebie 1 · po terminie 0\n…","07:00")],
+    widzisz:"O 7:00 zaległe „Pilne” i raport.",robisz:"Naprawiasz dostęp; zmiany czekające na PC same trafią na GitHub w kolejnym cyklu.",
+    system:["Pierwszy udany cykl wysyła wszystko, co czekało lokalnie, i wraca do normy."]}
+ ]},
+ {id:"pc",czas:"14:05",tytul:"PC przestaje działać",d:"telefon",kroki:[
+   {on:["mac","gh"],bad:["pc"],hc:"bad",tel:[sys("dziś"),hc("Kontrola „serce” nie odpowiada (brak sygnału od 13:52).","14:05")],
+    widzisz:"Wiadomość z healthchecks na Telegramie i e-mail. Bot nie odpowiada.",robisz:"Sprawdzasz PC: prąd, aktualizacja Windows, zadanie w Harmonogramie.",
+    system:["Serce pinguje healthchecks po każdym udanym cyklu. Brak pingu przez 15 min to alarm.","Mac dalej zbiera dane i wysyła je na GitHub; nic nie ginie."]},
+   {on:["mac","gh","pc","tg"],hc:"on",tel:[sys("dziś"),hc("Kontrola „serce” nie odpowiada (brak sygnału od 13:52).","14:05"),hc("Kontrola „serce” znów działa.","14:31")],
+    widzisz:"Potwierdzenie z healthchecks, że serce wróciło.",robisz:"Nic.",
+    system:["Po restarcie zadanie startuje samo, bez logowania do Windows.","Przerwa krótsza niż 24 h, więc bot nie wysyła komunikatu o możliwej utracie wiadomości."]}
+ ]},
+ {id:"przerwa",czas:"09:02",tytul:"Powrót po dłuższej przerwie",d:"telefon",kroki:[
+   {on:["mac","gh","pc","tg"],tel:[sys("dziś"),bot("System działa ponownie od 09:02. Wiadomości wysłane w czasie przerwy mogły zginąć.","09:02"),bot("Raport 09:02 · dane z Maca 08:55\nW realizacji\n…","09:02")],
+    widzisz:"Komunikat o przerwie i jeden zaległy raport, bez dubli.",robisz:"Jeśli w czasie przerwy wysłałeś /pomysl, wyślij go jeszcze raz.",
+    system:["Telegram przechowuje nieodebrane wiadomości tylko 24 h; dłuższa przerwa może je zgubić."]}
+ ]},
+ {id:"mac",czas:"07:00",tytul:"Mac w podróży",d:"telefon",kroki:[
+   {on:["gh","pc","tg"],bad:["mac"],hc:"bad",tel:[sys("dziś"),bot("Raport 07:00 · dane z Maca 10.11 22:05\nW realizacji\nBackend-A — otwarte 4 · czeka na Ciebie 1 · po terminie 0\nTesty-B — brak ZADANIA.md\nBacklog: Turtle\nKandydaci bez decyzji: 8\nUwaga: dane z Maca starsze niż 26 h\nPomysły z doby: 0\nOdrzucone wiersze z doby: 0","07:00"),hc("Kontrola „zbieracz Maca” nie odpowiada.","07:20")],
+    widzisz:"Raport z datą ostatnich danych i ostrzeżeniem. Osobno informacja z healthchecks.",robisz:"Nic, jeśli wiesz, że Mac jest zamknięty. Liczby zaktualizują się po otwarciu.",
+    system:["Zbieracz działa tylko, gdy Mac nie śpi. Po otwarciu nadrabia w ciągu godziny."]}
+ ]},
+ {id:"obcy",czas:"19:20",tytul:"Ktoś obcy pisze do bota",d:"telefon",kroki:[
+   {on:["pc"],tel:[sys("dziś"),sys("Twój czat bez zmian")],term:'<span class="c">dziennik.log na PC</span>\n2026-11-12 19:20 odrzucono wiadomość: chat_id=840… typ=private',
+    widzisz:"Nic. Bot odpowiada tylko na Twoje konto.",robisz:"Nic. Wpis zostaje w dzienniku na PC.",
+    system:["Wiadomości z innych kont i z grup bot pomija i zapisuje w dzienniku, bez tokenu."]},
+   {on:["pc","tg"],tel:[sys("dziś"),me("[zdjęcie]","19:25"),bot("Obsługuję tylko tekst.","19:25")],
+    widzisz:"Krótką odpowiedź, gdy wyślesz zdjęcie albo głosówkę.",robisz:"Piszesz tekstem.",system:["Etap 1 obsługuje tylko tekst."]}
+ ]}
+];
+
+const STANY=[
+ {p:"ok",n:"Działa",kiedy:"Mac zbiera co godzinę, PC co 5 min, raport o 7:00",widzisz:"Raport rano, odpowiedzi na /stan i /pomysl",robisz:"Nic",s:"tramwaj"},
+ {p:"wait",n:"Cisza nocna",kiedy:"22:00–7:00",widzisz:"Nic; wiadomości czekają do 7:00",robisz:"Nic. Awaria i tak przyjdzie od razu",s:"cisza"},
+ {p:"wait",n:"Dane z Maca nieaktualne",kiedy:"Mac śpi albo jest w podróży ponad 26 h",widzisz:"Raport z datą danych i „Uwaga: dane z Maca starsze niż 26 h”",robisz:"Otwórz Maca; nadrobi w ciągu godziny",s:"mac"},
+ {p:"bad",n:"GitHub nie przyjmuje zmian",kiedy:"Wygasły dostęp albo brak sieci na PC",widzisz:"„Pilne: push do GitHuba nieudany…”, po 30 min „System nie działa…”",robisz:"Napraw dostęp PC do GitHuba",s:"cisza"},
+ {p:"bad",n:"PC nie odpowiada",kiedy:"PC wyłączony, zawieszony albo zadanie zatrzymane",widzisz:"Wiadomość z healthchecks w ciągu 15 min (Telegram i e-mail); bot milczy",robisz:"Sprawdź PC; zadanie startuje samo po restarcie",s:"pc"},
+ {p:"info",n:"Po przerwie dłuższej niż 24 h",kiedy:"PC wrócił po długim przestoju",widzisz:"„System działa ponownie od …” i jeden raport",robisz:"Wyślij ponownie pomysły z czasu przerwy",s:"przerwa"},
+ {p:"info",n:"Limit pilnych",kiedy:"Więcej niż 5 pilnych w ciągu dnia",widzisz:"Kolejne „Pilne” już nie przychodzą; zostają w dzienniku na PC",robisz:"Sprawdź dziennik, jeśli coś się powtarza",s:null},
+ {p:"info",n:"Obce konto",kiedy:"Ktoś znalazł bota",widzisz:"Nic",robisz:"Nic",s:"obcy"}
+];
+
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let cur=0, step=0, tab="dzien";
+try{const z=JSON.parse(localStorage.getItem("etap1")||"{}"); if(z.cur!=null&&S[z.cur]) cur=z.cur; if(["dzien","stany","polecenia"].includes(z.tab)) tab=z.tab;}catch(e){}
+const save=()=>{try{localStorage.setItem("etap1",JSON.stringify({cur,tab}))}catch(e){}};
+
+function list(){
+  $("#list").innerHTML=S.map((s,i)=>`<li><button data-i="${i}" ${i===cur?'aria-current="true"':''}><span class="t">${s.czas}</span><span class="n">${esc(s.tytul)}</span><span class="d">${s.d==="mac"?"Mac, terminal":"telefon"} · ${s.kroki.length} ${s.kroki.length===1?"krok":"kroki"}</span></button></li>`).join("");
+}
+function phone(msgs,prevLen){
+  const body=msgs.map((m,i)=>{
+    const nw=i>=prevLen?" new":"";
+    if(m.od==="sys") return `<div class="sys">${esc(m.tekst)}</div>`;
+    const who=m.od==="bot"?'<span class="who">Bot</span>':m.od==="hc"?'<span class="who">healthchecks</span>':"";
+    const btns=m.btns?`<div class="btns">${m.btns.map(b=>`<span>${esc(b)}</span>`).join("")}</div>`:"";
+    return `<div class="msg ${m.od}${nw}">${who}${esc(m.tekst)}${btns}<time>${m.czas||""}</time></div>`;
+  }).join("");
+  return `<div class="phone" aria-label="Ekran telefonu"><div class="screen"><div class="bar"><div class="ava">IS</div><div><b>Bot projektów</b><small>Telegram · tylko Ty</small></div></div><div class="msgs">${body||'<div class="empty">Brak nowych wiadomości</div>'}</div></div></div>`;
+}
+function term(t){return `<div class="term"><div class="tb"><i></i><i></i><i></i><span>Terminal</span></div><pre>${t}</pre></div>`}
+function render(){
+  const s=S[cur], k=s.kroki[step];
+  $("#sTitle").textContent=s.czas+" · "+s.tytul;
+  const prev=step>0?(s.kroki[step-1].tel||[]).length:0;
+  let dev="";
+  if(k.tel) dev+=phone(k.tel,prev);
+  if(k.term) dev+=(dev?'<div style="height:12px"></div>':"")+term(k.term);
+  $("#device").innerHTML=dev;
+  $("#notes").innerHTML=`<div class="note"><h3>Widzisz</h3><p>${esc(k.widzisz)}</p></div><div class="note you"><h3>Robisz</h3><p>${esc(k.robisz)}</p></div><div class="note"><h3>System</h3><ul>${k.system.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`;
+  $("#dots").innerHTML=s.kroki.map((_,i)=>`<i class="${i===step?"on":""}"></i>`).join("");
+  $("#prev").disabled=step===0; $("#next").disabled=step===s.kroki.length-1;
+  flow(k);
+}
+function flow(k){
+  document.querySelectorAll(".node").forEach(n=>{const id=n.dataset.n;n.classList.toggle("on",(k.on||[]).includes(id));n.classList.toggle("bad",(k.bad||[]).includes(id));});
+  const w=$("#watch");w.classList.toggle("on",k.hc==="on");w.classList.toggle("bad",k.hc==="bad");
+}
+function states(){
+  $("#states").innerHTML=STANY.map(x=>`<article class="state"><header><h2 style="font-size:17px">${esc(x.n)}</h2><span class="pill ${x.p}">${{ok:"w normie",wait:"czeka",bad:"awaria",info:"informacja"}[x.p]}</span></header><dl><dt>Kiedy</dt><dd>${esc(x.kiedy)}</dd><dt>Widzisz</dt><dd>${esc(x.widzisz)}</dd><dt>Robisz</dt><dd>${esc(x.robisz)}</dd></dl>${x.s?`<button data-go="${x.s}">Pokaż scenariusz</button>`:""}</article>`).join("");
+}
+function show(t){
+  tab=t;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t)));
+  ["dzien","stany","polecenia"].forEach(v=>{$("#v-"+v).hidden=v!==t;});
+  if(t==="dzien") render(); else flow({on:["mac","gh","pc","tg"],hc:"on"});
+  save();
+}
+function pick(i){cur=(i+S.length)%S.length;step=0;list();render();save();}
+
+$("#list").addEventListener("click",e=>{const b=e.target.closest("button[data-i]");if(b)pick(+b.dataset.i);});
+$("#prev").addEventListener("click",()=>{if(step>0){step--;render();}});
+$("#next").addEventListener("click",()=>{if(step<S[cur].kroki.length-1){step++;render();}});
+document.querySelector("nav.tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)show(b.dataset.tab);});
+$("#states").addEventListener("click",e=>{const b=e.target.closest("button[data-go]");if(!b)return;const i=S.findIndex(s=>s.id===b.dataset.go);show("dzien");pick(i);});
+document.addEventListener("keydown",e=>{
+  if(e.target.closest&&e.target.closest("input,textarea")) return;
+  if(e.key==="1")show("dzien"); else if(e.key==="2")show("stany"); else if(e.key==="3")show("polecenia");
+  else if(tab==="dzien"){
+    if(e.key==="ArrowDown"){e.preventDefault();pick(cur+1);}
+    else if(e.key==="ArrowUp"){e.preventDefault();pick(cur-1);}
+    else if(e.key==="ArrowRight"&&step<S[cur].kroki.length-1){step++;render();}
+    else if(e.key==="ArrowLeft"&&step>0){step--;render();}
+  }
+});
+list();states();show(tab);
+})();
+</script>
