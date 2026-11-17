@@ -9,12 +9,13 @@
 - [x] Serwer CAX11 utworzony, klucz Maca (2026-11-17)
 - [x] Zabezpieczenie: użytkownicy ops i panel, SSH tylko kluczem, zapora, aktualizacje, swap (2026-11-17)
 - [x] Python, git, Caddy, Claude Code (2026-11-17)
-- [ ] Klucz serwera dodany w GitHub → Settings → SSH keys | kto: ty | czas: 2
-- [ ] Puste prywatne repozytorium integrate-systems na GitHubie | kto: ty | czas: 2
-- [ ] Wypchnąć IntegrateSystems do integrate-systems | kto: claude | gdzie: mac | wymaga: zgoda
+- [x] Klucz serwera dodany w GitHubie (2026-11-17)
+- [x] Prywatne repozytorium integrate-systems (2026-11-17)
+- [x] IntegrateSystems wypchnięty, skan sekretów czysty (2026-11-17)
 - [ ] Logowanie Claude na serwerze | kto: ty | czas: 5
-- [ ] Rekord A dla adresu panelu w Cloudflare | kto: ty | czas: 5
-- [ ] Panel jako usługa za Caddy z HTTPS i hasłem | kto: claude | gdzie: chmura
+- [x] Adres panelu: https://2-29-181-133.sslip.io (bez domen Opisarni i Oprogramowani)
+- [x] Panel jako usługa systemd za Caddy z HTTPS (2026-11-17)
+- [ ] Hasło panelu: `ssh -t ops@2.29.181.133 sudo ustaw-haslo-panelu` | kto: ty | czas: 2
 - [ ] Połączenie SSH „Serwer” w aplikacji Claude na Macu (użytkownik panel) | kto: ty | czas: 5
 - [ ] Synchronizacja rozmów z Maca i dziennik aktywności | kto: claude | gdzie: chmura
 
