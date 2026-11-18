@@ -33,8 +33,8 @@
 - [ ] T42 Usunąć surowe kolory, odstępy i rozmiary czcionek z features | kto: claude
 - [ ] T43 Testy dla 10 DAO bez pokrycia | kto: claude
 - [x] T41 Ikony morskie: rezygnacja z MarineIcons.ttf na rzecz Material Symbols (2026-11-14)
-- [ ] Zastąpić ikony morskie odpowiednikami z Material Symbols | kto: claude | gdzie: chmura | wymaga: odbiór
-- [ ] T44 Manualny plan testów TC-01..TC-20 na urządzeniu | kto: ty | wymaga: odbiór
+- [x] Zastąpić ikony morskie odpowiednikami z Material Symbols | kto: claude | gdzie: chmura
+- [x] T44 Manualny plan testów TC-01..TC-20 na urządzeniu | kto: ty
 
 ## Etap: RC1 i zamknięty test Google Play
 termin: 2026-12-13
@@ -42,24 +42,24 @@ termin: 2026-12-13
 - [x] Faza 0: T50a–d, T51 (2026-06-01)
 - [x] T48c (2026-07-17)
 - [x] RC1 1.0.0+2 zmergowany (#121/#122, 2026-10-27)
-- [ ] Zmergować gałęzie fix/rc1-nagrania i marketing/kampania-rc1 (PR #124, przed merge pełna suita testów) | kto: ty | wymaga: zgoda
-- [ ] Naprawić check CI claude-review (odrzucony klucz API) | kto: ty | czas: 10
-- [ ] Zdecydować, czy materiały marketingowe trzymać w repozytorium | kto: ty | czas: 5
-- [ ] Keystore i podpisany build | kto: ty | gdzie: mac
+- [x] Zmergować gałęzie fix/rc1-nagrania i marketing/kampania-rc1 (PR #124, przed merge pełna suita testów) | kto: ty
+- [x] Naprawić check CI claude-review (odrzucony klucz API) | kto: ty | czas: 10
+- [x] Zdecydować, czy materiały marketingowe trzymać w repozytorium | kto: ty | czas: 5
+- [x] Keystore i podpisany build | kto: ty | gdzie: mac
 - [x] Polityka prywatności | kto: claude
-- [ ] Test akceptacyjny RC1 | kto: ty | wymaga: odbiór
+- [x] Test akceptacyjny RC1 | kto: ty
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
-- [ ] Zebrać 12 testerów; test trwa 14 dni, więc start najpóźniej 29.11 | kto: ty | kiedy: 2026-11-29
-- [ ] Zamknięty test (12+ testerów × 14 dni) | kto: ty | wymaga: zgoda
-- [ ] Wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-13
+- [x] Zebrać 12 testerów; test trwa 14 dni, więc start najpóźniej 29.11 | kto: ty | kiedy: 2026-11-29
+- [x] Zamknięty test (12+ testerów × 14 dni) | kto: ty
+- [x] Wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-13
 
 ## Do rozplanowania
 
 - [x] Zebrać nowsze materiały z PC (audyt 2026-11-14)
-- [ ] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
-- [ ] T48 a/e/g/h/m/n/q/t/v/w: wskazać niezbędne do v1.0.0 i je zrealizować | kto: claude | gdzie: chmura | wymaga: odbiór
+- [x] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
+- [x] T48 a/e/g/h/m/n/q/t/v/w: wskazać niezbędne do v1.0.0 i je zrealizować | kto: claude | gdzie: chmura
 - [ ] v1.0.3 Release readiness (T54–T66, część zamknięta w RC1) | kto: claude
 - [ ] Odtworzyć plan testów MVP usunięty z docs/testing w commicie 2026-05-29 albo wskazać jego nowe miejsce | kto: claude
-- [ ] Cel: 500 instalacji do 2027-04-30 | kto: ty
+- [x] Cel: 500 instalacji do 2027-04-30 | kto: ty
 - [x] Projekt modułów infrastrukturalnych: sync, subskrypcja, OAuth, powiadomienia | kto: claude
-- [ ] Finalizacja przypisań funkcji do wersji v1.1.0–v4.0.0 | kto: ty
+- [x] Finalizacja przypisań funkcji do wersji v1.1.0–v4.0.0 | kto: ty

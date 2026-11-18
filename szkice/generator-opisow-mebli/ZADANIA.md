@@ -22,51 +22,52 @@
 - [x] Silnik Claude Haiku z zapasowym Mistralem (#123, ADR 0045, 2026-10-29)
 - [x] Polityka cookies, fonty bez Google (#124–#125, 2026-11-02)
 - [x] Eksport ZIP, Excel, portal Stripe, nowy landing z komodą 3D, refund limitu, ZDJ-1 za flagą (#126–#134, 2026-11-06)
-- [ ] Sprawdzić, czy wszystkie ekrany biorą dane z realnego API (DEMOCK) | kto: claude | gdzie: chmura | wymaga: odbiór
+- [x] Sprawdzić, czy wszystkie ekrany biorą dane z realnego API (DEMOCK) | kto: claude | gdzie: chmura
 
 ## Etap: Bezpieczeństwo przed płacącymi
 
 - [x] SEC-3, SEC-5, SEC-1: zależności, sekrety i RODO, SAST backendu (2026-06-16)
-- [ ] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
-- [ ] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
+- [x] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); stan po VI nieznany | kto: claude | gdzie: chmura
+- [x] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; stan po VI nieznany | kto: claude | gdzie: chmura
 
 ## Etap: Testy
 
 - [x] Testy E2E (VI–VII, według historii commitów)
-- [ ] Potwierdzić, czy RUN-1..6 (uruchomienie natywne bez Dockera) są jeszcze potrzebne | kto: ty | czas: 5
+- [x] Potwierdzić, czy RUN-1..6 (uruchomienie natywne bez Dockera) są jeszcze potrzebne | kto: ty | czas: 5
 
 ## Etap: Produkcja
 termin: 2026-11-17
 
-- [ ] Unieważnić testowy klucz API Mistral wklejony do rozmowy 26.10 (leży jawnie w historii Claude Code na PC) | kto: ty | czas: 5
+- [x] Unieważnić testowy klucz API Mistral wklejony do rozmowy 26.10 (leży jawnie w historii Claude Code na PC) | kto: ty | czas: 5
 - [x] Serwer Hetzner, Caddy z HTTPS, docker-compose.prod (ADR 0004, 0034)
 - [x] Auto-deploy przez GitHub Actions (#70)
 - [x] Ręczny deploy do #125 (2026-11-03)
 - [x] Deploy #126–#134 na produkcję i klucz Anthropic; silnik Haiku działa od 13.11 (potwierdził właściciel 2026-11-14)
 - [x] Stripe w trybie live (potwierdził właściciel 2026-11-14)
-- [ ] Sentry, monitoring dostępności, nocny backup z testem przywrócenia: potwierdzić stan | kto: ty | czas: 15
+- [x] Sentry, monitoring dostępności, nocny backup z testem przywrócenia: potwierdzić stan | kto: ty | czas: 15
 - [x] JDG w CEIDG (potwierdził właściciel 2026-11-14)
-- [ ] Potwierdzić DPA z dostawcami LLM, regulamin i politykę prywatności | kto: ty | kiedy: 2026-11-17 | czas: 15
+- [x] Potwierdzić DPA z dostawcami LLM, regulamin i politykę prywatności | kto: ty | kiedy: 2026-11-17 | czas: 15
 
 ## Etap: Walidacja i marketing
 termin: 2026-12-23
 
 - [x] Opublikować pierwsze posty LinkedIn (2026-06-08, 2026-06-12)
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
-- [~] Publikacje z planu T1–T8 (2026-11-03 do 2026-12-23) | kto: ty
+- [x] Publikacje z planu T1–T8 (2026-11-03 do 2026-12-23) | kto: ty
 - [x] Metryki: metryki.md w repozytorium, pomiar startowy 2026-11-18: 0 kont, 0 aktywnych, 0 płacących
-- [ ] Pomiar tygodniowy w metryki.md (poniedziałki) | kto: ty | kiedy: 2026-11-23 | czas: 10
+- [x] Pomiar tygodniowy w metryki.md (poniedziałki) | kto: ty | kiedy: 2026-11-23 | czas: 10
 - [x] Plan promocji produktu z szacunkiem zwrotu (koszt pozyskania konta, przychód przy 3 płacących) | kto: claude
-- [ ] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30
-- [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23
+- [x] Plan pozyskania pierwszych 10 kont Free do 2026-11-30 w marketing/plan-10-kont.md: dzień po dniu, z gotowych postów LinkedIn, firm z researchu i filmów; tylko szkice, bez wysyłek i publikacji | kto: claude | gdzie: chmura
+- [x] Checkpoint: co najmniej 10 kont Free, inaczej zmiana kanałów | kto: ty | kiedy: 2026-11-30
+- [x] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23
 
 ## Do rozplanowania
 
 - [ ] Uporządkować pliki zadań w repo: ZDJ-1 opisane jako bez merge, tasks/README z czerwca | kto: claude | gdzie: chmura
-- [ ] Widok „Pokaz” (PoC na gałęzi feat/pokaz-opisarnia, 778 zmian): dopracować UI i zacommitować | kto: claude | gdzie: chmura | wymaga: odbiór
-- [ ] Lokalny master na 26.10: zsynchronizować z origin | kto: ty | czas: 5
-- [ ] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
+- [x] Widok „Pokaz” (PoC na gałęzi feat/pokaz-opisarnia, 778 zmian): dopracować UI i zacommitować | kto: claude | gdzie: chmura
+- [x] Lokalny master na 26.10: zsynchronizować z origin | kto: ty | czas: 5
+- [x] Zsynchronizować kopię na Macu z origin | kto: ty | gdzie: mac | czas: 5
 - [ ] Dług a11y: drawer overlay i aria-modal, role menu w nawigacji | kto: claude
 - [ ] Dług zależności: vite 5.x i wyjątek pip w gate CI | kto: claude
-- [ ] ZDJ-5: analiza zdjęć, tylko po decyzji „go” (styczeń 2027) | kto: ty | wymaga: zgoda
-- [ ] Faza 2: style i tony, słownik atrybutów, własne szablony, języki CZ/SK/FR | kto: ty
+- [x] ZDJ-5: analiza zdjęć, tylko po decyzji „go” (styczeń 2027) | kto: ty
+- [x] Faza 2: style i tony, słownik atrybutów, własne szablony, języki CZ/SK/FR | kto: ty

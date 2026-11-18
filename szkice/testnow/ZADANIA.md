@@ -13,5 +13,5 @@
 
 - [ ] Szablon notatki wymagań i listy kontrolnej dla kolejnych testów | kto: claude
 - [x] Limit: najwyżej 3 h tygodniowo (2026-11-14)
-- [ ] Przygotować nagrywanie ekranu na Macu (Cmd+Shift+5 albo QuickTime) i sprawdzić przed kolejnym testem | kto: ty | gdzie: mac | czas: 15
+- [x] Przygotować nagrywanie ekranu na Macu (Cmd+Shift+5 albo QuickTime) i sprawdzić przed kolejnym testem | kto: ty | gdzie: mac | czas: 15
 - [ ] Lista kontrolna zgłoszenia: zrzut ekranu i nagranie przy każdym błędzie | kto: claude
