@@ -58,7 +58,7 @@ termin: 2026-12-23
 ## Etap: Pierwsze 10 kont (wariant B)
 termin: 2026-11-30
 
-- [ ] Sprawdzić rejestrację na telefonie: czy mail weryfikacyjny dochodzi (Brevo wyłączył klucz 14.10) | kto: ty | kiedy: 2026-11-19 | czas: 5
+- [x] Rejestracja naprawiona: maile weryfikacyjne nie wychodziły od 14.10 (wyłączony klucz SMTP Brevo); nowy klucz na produkcji, mail dochodzi (2026-11-18)
 - [ ] Post 1 (ogłoszenie, poprawki z planu, pkt 4) i zaproszenia do partii 1 (8 firm) | kto: ty | kiedy: 2026-11-19 | czas: 45
 - [ ] Film A i 5 wiadomości do znajomych z branży | kto: ty | kiedy: 2026-11-20 | czas: 45
 - [ ] Zaproszenia do partii 2 (8 firm), wiadomość 1 do przyjętych | kto: ty | kiedy: 2026-11-21 | czas: 40
