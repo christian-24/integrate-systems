@@ -3,6 +3,12 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-18: Pierwsze 10 kont: wariant B
+- Kontekst: pomiar startowy 18.11: 0 kont, 0 aktywnych, 0 płacących; checkpoint 30.11 wymaga co najmniej 10 kont Free.
+- Decyzja: plan z marketing/plan-10-kont.md w wariancie B: 4 posty LinkedIn, 3 filmy, 24 firmy w 3 partiach i 10–15 wiadomości do znajomych z branży; 0 zł, ok. 8 h w 12 dni. Najpierw sprawdzenie rejestracji (mail weryfikacyjny).
+- Skutki: publikuje i pisze do ludzi tylko właściciel; punkt kontrolny 25.11 (mniej niż 4 konta uruchamia rezerwę).
+- Kto: właściciel
+
 ## 2026-11-14: Faza marketing i terminy etapów
 - Kontekst: produkcja aktualna, Stripe live, JDG zarejestrowana.
 - Decyzja: projekt przechodzi w fazę marketingu (promocja i ocena zwrotu); terminy: produkcja 17.11, checkpoint 30.11, go/no-go 23.12, ZDJ-5 tylko po „go” w styczniu 2027.

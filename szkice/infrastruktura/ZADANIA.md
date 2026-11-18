@@ -16,7 +16,6 @@
 - [x] Adres panelu: https://2-29-181-133.sslip.io (bez domen Opisarni i Oprogramowani)
 - [x] Panel jako usługa systemd za Caddy z HTTPS (2026-11-17)
 - [x] Hasło panelu ustawione (2026-11-17)
-- [x] Połączenie SSH „Serwer” w aplikacji Claude na Macu (użytkownik panel) | kto: ty | czas: 5
 - [x] Zapis kart z serwera do GitHuba co 15 min: instalacja `uruchom/serwer/zainstaluj-zapis-kart.sh` | kto: ty | czas: 2
 - [x] Pole „gdzie:” w zadaniach po D13: chmura, mac; pc tylko dla Windows i migracji (2026-11-17)
 - [x] Automat, raport PM o 7:00, powiadomienia ntfy (2026-11-17)
@@ -27,5 +26,5 @@
 - [x] Zabezpieczenie danych z PC na dysk i GitHub (`ksiega/MIGRACJA-INSTRUKCJA-PC.md`) | kto: ty | gdzie: pc
 - [ ] Przenieść SPIS.md z PC do planu migracji | kto: claude | gdzie: mac
 - [x] Repozytoria projektów na serwerze w ~/projekty, karty podpięte dowiązaniami (2026-11-17)
-- [x] Dzień próbny bez PC | kto: ty
-- [x] Przed sprzedażą: autostart, SSH, zapora, wylogowanie kont, klucze PC na GitHubie, reset „Usuń wszystko” | kto: ty | gdzie: pc
+- [ ] Dzień próbny bez PC | kto: ty
+- [ ] Przed sprzedażą: autostart, SSH, zapora, wylogowanie kont, klucze PC na GitHubie, reset „Usuń wszystko” | kto: ty | gdzie: pc

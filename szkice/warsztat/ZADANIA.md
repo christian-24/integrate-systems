@@ -23,11 +23,7 @@
 ## Etap: K15 kształty
 
 - [x] Łuki, kontury, profile krawędzi, uchwyty w łańcuchu parametrów (US15.1–US15.6, 2026-11-06)
-- [x] Bramka K15: wypróbować paludarium i rozstrzygnąć K15-1…K15-4 (niepilne) | kto: ty | gdzie: pc | czas: 60
-- [x] Test piły P-14: druk 1:1 i wycięcie półki lub dwóch paneli | kto: ty | czas: 60
-- [x] Przebieg z prawdziwym API (US9.6, K9.11–K9.14): czy Haiku mieści się w 2048 tokenach | kto: ty | gdzie: pc | czas: 20
 
 ## Do rozplanowania
 
 - [ ] K16 według `docs/plan-paludarium.md`, po zgodzie na K15 | kto: claude | gdzie: chmura
-- [x] Przegląd `PARKING.md` przy retro kamienia | kto: claude
