@@ -26,8 +26,8 @@
 ## Etap: Bezpieczeństwo przed płacącymi
 
 - [x] SEC-3, SEC-5, SEC-1: zależności, sekrety i RODO, SAST backendu (2026-06-16)
-- [~] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
-- [~] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; stan po VI nieznany | kto: claude | gdzie: chmura | wymaga: odbiór
+- [~] SEC-2: SAST frontendu (XSS, open redirect, storage, CSP); re-audyt 2026-11-18: 0 CRITICAL/HIGH/MEDIUM, 3 LOW naprawione w kodzie (niezacommitowane), testy nieuruchomione (brak Node.js) — raport w docs/security/raport-audytu.md | kto: claude | gdzie: chmura | wymaga: odbiór
+- [~] SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit; re-audyt 2026-11-18: 0 CRITICAL/HIGH, 1 MEDIUM (brak limitu body na Caddy) i 2 LOW naprawione w repo (niezacommitowane, niewdrożone), 2 LOW jako dług; caddy validate i pytest nieuruchomione (brak uprawnień) — raport w docs/security/raport-audytu.md | kto: claude | gdzie: chmura | wymaga: odbiór
 
 ## Etap: Testy
 
