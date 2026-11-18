@@ -138,6 +138,12 @@ class Manager:
         self.timeout = _int(get("PANEL_AGENT_TIMEOUT"), 3600)
         self.model = (get("PANEL_AGENT_MODEL") or "").strip()
         self.pm_model = (get("PANEL_PM_MODEL") or "").strip()
+        # Stały rytm postów: "projekt=dni,projekt=dni". Automat zakłada zadanie „Przygotować post na …”.
+        self.rytm = {}
+        for part in (get("PANEL_RYTM") or "").split(","):
+            pid, _, days = part.partition("=")
+            if pid.strip() and days.strip().isdigit() and int(days) > 0:
+                self.rytm[pid.strip()] = int(days)
         self.pm_hour = _int(get("PANEL_PM_HOUR"), 7, low=0)
         self.git_pull = (get("PANEL_GIT_PULL") or "").strip() == "1"
         self.ntfy_url = (get("PANEL_NTFY_URL") or "").strip()
@@ -543,6 +549,39 @@ class Manager:
             args = self._claude_args(path, self.pm_model, ["--agent", "pm", "--allowedTools", PM_TOOLS])
             self._enqueue(rec, {"args": args, "cwd": self.root, "prompt": prompt})
         return 200, "", {"id": rec["id"]}
+
+    # ---------- stały rytm postów ----------
+    def _plan_posts(self, data, index, today):
+        """Zakłada zadanie przygotowania posta, gdy w kampanii „stały rytm” zbliża się kolejny termin. True, gdy coś dodano."""
+        added = False
+        for pid, days in self.rytm.items():
+            folder = index.get(pid)
+            if not folder or not os.path.isfile(os.path.join(folder, RYTM_FILE)):
+                continue
+            tasks = [t for t in data["tasks"] if t["project"] == pid]
+            if any(t["title"].startswith(POST_TASK) and t["state"] != "done" for t in tasks):
+                continue
+            dates = []
+            for t in tasks:
+                if t.get("kind") == "publikacja" and t.get("file") == RYTM_FILE and t.get("date"):
+                    try:
+                        dates.append(datetime.date.fromisoformat(t["date"][:10]))
+                    except ValueError:
+                        pass
+            slot = next_post_slot(dates, days, today)
+            if (slot - today).days > RYTM_AHEAD:
+                continue
+            title = "%s%s (stały rytm)" % (POST_TASK, slot.isoformat())
+            try:
+                with self.write_lock:
+                    self.projekt.add_task(folder, title)
+                    task = next(t for t in self.projekt.read_project(folder, pid)["tasks"] if t["title"] == title)
+                    self.projekt.update_task(folder, task["file"], task["line"], title,
+                                             {"executor": "claude", "machine": self.machine, "date": today.isoformat()})
+                added = True
+            except (ValueError, OSError, StopIteration) as e:
+                log("Rytm postów (%s): %s" % (pid, e))
+        return added
 
     # ---------- plan dnia ----------
     def plan_candidates(self):
@@ -1246,9 +1285,11 @@ class Manager:
                 free -= 1
         if free <= 0:
             return started
-        data, _ = self.load_projects()
+        data, index = self.load_projects()
         if data["projectsSource"] != "registry":
             return started
+        if self._plan_posts(data, index, now.date()):
+            data, index = self.load_projects()
         night = now.hour >= 22 or now.hour < 6
         live = self._live_keys()
         tools = {"claude": self.tool_found("claude"), "codex": self.tool_found("codex")}
@@ -1268,6 +1309,19 @@ class Manager:
                 started.append(extra["id"])
                 free -= 1
         return started
+
+
+POST_TASK = "Przygotować post na "
+RYTM_FILE = "kampanie/staly-rytm.md"
+RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny post
+
+
+def next_post_slot(dates, days, today):
+    """Data kolejnego posta w rytmie co `days` dni: po ostatniej publikacji, nie wcześniej niż jutro."""
+    tomorrow = today + datetime.timedelta(days=1)
+    if not dates:
+        return tomorrow
+    return max(tomorrow, max(dates) + datetime.timedelta(days=days))
 
 
 def run_block(task, source, live, tools, sample_ok=False):

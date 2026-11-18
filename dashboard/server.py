@@ -41,6 +41,7 @@ import io
 import json
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -657,6 +658,67 @@ def build_ics():
     return "\r\n".join(ics_fold(l) for l in lines) + "\r\n"
 
 
+# ---------- posty (stały rytm marketingu) ----------
+POST_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def post_folder(pid, day):
+    """Folder posta: <karta projektu>/posty/<dzień>-<nazwa>/. None, gdy go nie ma albo dane są niepoprawne."""
+    if not POST_DAY.match(day or ""):
+        return None
+    _, index = load_projects(resolve=False)
+    folder = index.get(pid)
+    if not folder:
+        return None
+    cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+    base = os.path.join(cards, "posty")
+    try:
+        names = sorted(n for n in os.listdir(base) if n.startswith(day + "-") or n == day)
+    except OSError:
+        return None
+    for n in names:
+        path = os.path.realpath(os.path.join(base, n))
+        if os.path.commonpath([os.path.realpath(base), path]) == os.path.realpath(base) and os.path.isdir(path):
+            return path
+    return None
+
+
+def post_info(folder):
+    """Tytuł i teksty z post.md: sekcje „## Facebook”, „## LinkedIn”, „## Alt” (pozostałe sekcje też, pod swoją nazwą)."""
+    out = {"title": "", "sections": {}, "image": False, "folder": os.path.basename(folder)}
+    try:
+        with open(os.path.join(folder, "post.md"), encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        text = ""
+    name = None
+    for line in text.split("\n"):
+        if line.startswith("# ") and not out["title"]:
+            out["title"] = line[2:].strip()
+        elif line.startswith("## "):
+            name = line[3:].strip()
+            out["sections"][name] = ""
+        elif name is not None:
+            out["sections"][name] += line + "\n"
+    out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
+    out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
+    return out
+
+
+def post_image(folder):
+    """grafika.png posta; gdy brak albo starsza od grafika.svg, tworzy ją rsvg-convert. None, gdy nie da się."""
+    png, svg = os.path.join(folder, "grafika.png"), os.path.join(folder, "grafika.svg")
+    fresh = os.path.exists(png) and (not os.path.exists(svg) or os.path.getmtime(png) >= os.path.getmtime(svg))
+    if not fresh and os.path.exists(svg) and shutil.which("rsvg-convert"):
+        try:
+            subprocess.run(["rsvg-convert", "-w", "1080", svg, "-o", png + ".tmp"], check=True, timeout=30,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            os.replace(png + ".tmp", png)
+        except (OSError, subprocess.SubprocessError):
+            pass
+    return png if os.path.exists(png) else None
+
+
 # ---------- strona ----------
 APP_HEAD = ('<link rel="manifest" href="/app/manifest.webmanifest"><meta name="theme-color" content="#0b1020">'
             '<link rel="icon" href="/app/ikona.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/app/ikona-180.png">'
@@ -827,6 +889,21 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(build_data(), ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if path in ("/api/post", "/api/post/grafika"):
+            q = parse_qs(url.query)
+            folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            if not folder:
+                return self._send(404, json.dumps({"ok": False, "error": "Nie ma posta na ten dzień."}, ensure_ascii=False),
+                                  "application/json; charset=utf-8")
+            if path == "/api/post":
+                return self._send(200, json.dumps(dict(post_info(folder), ok=True), ensure_ascii=False),
+                                  "application/json; charset=utf-8")
+            png = post_image(folder)
+            if not png:
+                return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")
+            with open(png, "rb") as f:
+                return self._send(200, f.read(), "image/png", [("Content-Disposition", 'inline; filename="%s.png"'
+                                                                 % os.path.basename(folder))])
         if self._app_file(path):
             with open(os.path.join(APP_DIR, path[5:]), "rb") as f:
                 return self._send(200, f.read(), APP_FILES[path[5:]], [("Cache-Control", "max-age=86400")])

@@ -269,6 +269,10 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .plan li input{margin-top:3px}
 .plan .pp{font-size:12.5px;color:var(--ink-3)}
 .plan .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.post{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
+.post img{width:100%;max-width:420px;border-radius:8px;border:1px solid var(--line)}
+.post .ptx p{margin:6px 0 0;font-size:13.5px;line-height:1.5;white-space:normal}
+.post .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .lc{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 .lc input{min-width:220px;max-width:100%;font:inherit;font-size:13px}
 .kv2{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:0 16px 14px;font-size:13px;color:var(--ink-2)}
@@ -1272,7 +1276,8 @@ function taskHtml(t){
   const pub=t.kind==='publikacja',p=P(t.project),s=stageOf(t.stage),c=t.campaign?D.campaigns.find(x=>x.id===t.campaign):null;
   let h='<div class="dhead"><span class="muted">'+(pub?'Publikacja':'Zadanie')+' · '+esc(projName(t.project))+'</span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
     '<textarea class="fi ttl" id="dtitle" rows="2" maxlength="160" data-f="title" aria-label="Tytuł">'+esc(t.title)+'</textarea>';
-  if(t.needsYou==='zgoda'&&t.state!=='done')h+='<div class="abox you"><b>Agent czeka na Twoją zgodę</b><div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">Wyraź zgodę</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>';
+  if(pub&&isDay(t.date))h+=postBox(t);
+  if(t.needsYou==='zgoda'&&t.state!=='done')h+='<div class="abox you"><b>'+(pub?'Publikacja czeka na Twoją akceptację':'Agent czeka na Twoją zgodę')+'</b><div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">'+(pub?'Zatwierdź publikację':'Wyraź zgodę')+'</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>';
   else if(t.needsYou==='odbiór'&&t.state!=='done')h+='<div class="abox you"><b>Praca czeka na Twój odbiór</b><div class="row"><button class="btn sm" data-act="accept" data-id="'+esc(t.id)+'">Odebrane</button><button class="btn sec sm" data-act="fix" data-id="'+esc(t.id)+'">Do poprawy</button></div></div>';
   h+='<div id="dag">'+agentBlock(t)+'</div><dl>';
   h+='<dt>Stan</dt><dd><div class="row">'+['todo','doing','blocked','done'].map(k=>'<button class="seg" data-state="'+k+'" aria-pressed="'+(t.state===k)+'">'+TS[k][1]+'</button>').join('')+'</div></dd>';
@@ -1302,6 +1307,31 @@ function closeDrawer(){
   const o=DR.opener,kind=DR.kind,id=DR.id;DR=null;$('#drawerHost').innerHTML='';
   if(o&&document.body.contains(o))o.focus();
   else{const n=document.querySelector(kind==='task'?'[data-task="'+CSS.escape(id)+'"]':'[data-run="'+CSS.escape(id)+'"]');if(n)n.focus()}
+}
+/* ---------- podgląd posta (stały rytm) ---------- */
+const PD={};
+function postBox(t){
+  const k=t.project+'|'+t.date,d=PD[k];
+  if(!LIVE)return '<div class="post muted">Podgląd posta działa w panelu na serwerze.</div>';
+  if(d===undefined){PD[k]=null;loadPost(t.project,t.date);return '<div class="post muted">Wczytuję post…</div>'}
+  if(d===null)return '<div class="post muted">Wczytuję post…</div>';
+  if(!d.ok)return '<div class="post muted">Brak przygotowanego posta na ten dzień.</div>';
+  const q='project='+encodeURIComponent(t.project)+'&date='+encodeURIComponent(t.date),S=d.sections||{};
+  let h='<div class="post">'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
+  ['Facebook','LinkedIn','Instagram'].forEach(n=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button></div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
+  if(d.image)h+='<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>';
+  return h+'</div>';
+}
+async function loadPost(pid,day){
+  const k=pid+'|'+day;let d={ok:false};
+  try{const r=await fetch('/api/post?project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day));if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){}
+  PD[k]=d;if(DR)renderDrawer(true);
+}
+async function copyPost(key){
+  const i=key.lastIndexOf('|'),d=PD[key.slice(0,i)],text=d&&d.sections?d.sections[key.slice(i+1)]||'':'';
+  if(!text)return;let ok=false;
+  try{await navigator.clipboard.writeText(text);ok=true}catch(e){}
+  say(ok?'Skopiowano tekst: '+key.slice(i+1)+'.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
 function renderDrawer(force){
   const host=$('#drawerHost');
@@ -1604,6 +1634,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('#refresh')){if(LIVE){say('Odświeżam…');load(true)}else say('Podgląd: dane przykładowe są stałe.');return}
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
+  if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-act]')){const a=ACT[el.dataset.act];if(a&&el.dataset.id)patchTask(el.dataset.id,a);return}
   if(el=qq('[data-run]')){openDrawer('run',el.dataset.run);return}
