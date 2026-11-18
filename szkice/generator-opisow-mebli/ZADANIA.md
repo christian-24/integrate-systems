@@ -78,3 +78,4 @@ termin: 2026-11-30
 - [ ] Widok „Pokaz” (PoC na gałęzi feat/pokaz-opisarnia, 778 zmian): dopracować UI i zacommitować | kto: claude | gdzie: chmura | wymaga: odbiór
 - [ ] Dług a11y: drawer overlay i aria-modal, role menu w nawigacji | kto: claude
 - [ ] Dług zależności: vite 5.x i wyjątek pip w gate CI | kto: claude
+- [x] Przygotować post na 2026-11-19 (stały rytm) | kto: claude | gdzie: chmura | kiedy: 2026-11-18

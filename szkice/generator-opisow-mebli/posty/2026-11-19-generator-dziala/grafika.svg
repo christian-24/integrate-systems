@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <!-- Szablon posta Opisarni 1080x1080 (Facebook, LinkedIn). Kolory i czcionki jak opisarnia.pl:
+       papier #fbf7f1, ciemne drewno #2b1d12, terakota #9e5f18 (akcent), złoto #c79a3e; Fraunces (nagłówki), Inter (tekst).
+       Agent podmienia tylko teksty w <tspan>; nagłówek do 3 wierszy po ok. 18 znaków, tekst do 5 wierszy po ok. 38 znaków. -->
+  <rect width="1080" height="1080" fill="#fbf7f1"/>
+  <rect x="0" y="0" width="1080" height="14" fill="#9e5f18"/>
+  <text x="90" y="170" font-family="Inter" font-weight="600" font-size="30" letter-spacing="3" fill="#9e5f18">OPISARNIA</text>
+  <text font-family="Fraunces" font-weight="600" font-size="84" fill="#2b1d12">
+    <tspan x="90" y="320">Generator</tspan>
+    <tspan x="90" y="420">opisów mebli</tspan>
+    <tspan x="90" y="520">już działa</tspan>
+  </text>
+  <rect x="90" y="575" width="120" height="6" fill="#c79a3e"/>
+  <text font-family="Inter" font-size="38" fill="#4a3a2c">
+    <tspan x="90" y="665">Wpisujesz typ, wymiary i materiał,</tspan>
+    <tspan x="90" y="717">dostajesz opis po polsku i niemiecku.</tspan>
+    <tspan x="90" y="769">Konto darmowe, bez karty.</tspan>
+  </text>
+  <rect x="0" y="900" width="1080" height="180" fill="#2b1d12"/>
+  <text x="90" y="1003" font-family="Fraunces" font-weight="600" font-size="46" fill="#fbf7f1">opisarnia.pl</text>
+  <text x="990" y="1003" text-anchor="end" font-family="Inter" font-size="30" fill="#efdcb3">10 opisów miesięcznie za darmo</text>
+</svg>

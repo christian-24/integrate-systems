@@ -15,3 +15,4 @@ Sprzedawcy mebli na Allegro i w Niemczech, małe firmy, decyzja u właściciela.
 Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, bez karty.
 
 ## Harmonogram
+- [ ] Darmowy generator opisów mebli już działa | kanał: facebook, linkedin | kiedy: 2026-11-19 | wymaga: zgoda
