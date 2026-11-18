@@ -269,6 +269,8 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .plan li input{margin-top:3px}
 .plan .pp{font-size:12.5px;color:var(--ink-3)}
 .plan .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.lc{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lc input{min-width:220px;max-width:100%;font:inherit;font-size:13px}
 .kv2{display:flex;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:0 16px 14px;font-size:13px;color:var(--ink-2)}
 .kv2 label{display:inline-flex;gap:6px;align-items:center}
 
@@ -640,7 +642,8 @@ function normAgents(a){
   const tl=x=>({found:!!(x&&x.found),version:(x&&x.version)||'',loggedIn:!!(x&&x.loggedIn),subscription:(x&&x.subscription)||'',loginCmd:(x&&typeof x.loginCmd==='string'&&x.loginCmd)||''});
   const t=a.tools||{},td=a.today||{};
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
-    maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
+    maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
+    login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
     runs:(a.runs||[]).map(r=>Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:'claude',state:RS[r.state]?r.state:'error',
       title:r.title||KIND[r.kind]||'',queuedAt:absT(r.queuedAt),startedAt:absT(r.startedAt),endedAt:absT(r.endedAt),
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[]}))};
@@ -687,7 +690,15 @@ function pmBtn(k){
   return '<button class="btn sec sm" data-ag="pm" data-k="'+k+'"'+(no?' disabled title="Brak polecenia claude"':on?' aria-disabled="true"':'')+'>'+(on?'Raport PM w toku':'Raport PM')+'</button>';
 }
 const loginCmd=()=>(D&&D.agents&&D.agents.tools.claude.loginCmd)||'claude auth login';
-const loginHint=k=>'<span>Claude nie jest zalogowany na tym komputerze.</span><button class="btn sm" data-ag="login" data-k="login"'+(A.busy.login?' aria-disabled="true"':'')+'>Zaloguj</button><button class="btn sec sm" data-ag="recheck" data-k="recheck"'+(A.busy.recheck?' aria-disabled="true"':'')+'>'+(A.busy.recheck?'Sprawdzam…':'Sprawdź ponownie')+'</button>'+
+const loginHint=k=>D.agents&&D.agents.loginWeb?loginWebHint():loginTermHint(k);
+function loginWebHint(){
+  const L=D.agents.login;
+  if(L.active&&L.url)return '<span>1. Otwórz stronę logowania i zatwierdź swoje konto Claude.</span><a class="btn sm" href="'+esc(L.url)+'" target="_blank" rel="noopener noreferrer">Otwórz stronę logowania</a>'+
+    '<form data-lc="1" class="lc"><input class="fi" name="code" autocomplete="off" autocapitalize="off" spellcheck="false" data-k="lc" aria-label="Kod logowania" placeholder="2. Wklej kod ze strony"'+(A.busy.lc?' disabled':'')+'><button class="btn sm"'+(A.busy.lc?' disabled':'')+'>'+(A.busy.lc?'Sprawdzam…':'Zatwierdź kod')+'</button></form>';
+  return '<span>Claude nie jest zalogowany na serwerze.</span><button class="btn sm" data-ag="login" data-k="login"'+(A.busy.login?' aria-disabled="true"':'')+'>'+(A.busy.login?'Uruchamiam…':'Zaloguj')+'</button><button class="btn sec sm" data-ag="recheck" data-k="recheck"'+(A.busy.recheck?' aria-disabled="true"':'')+'>'+(A.busy.recheck?'Sprawdzam…':'Sprawdź ponownie')+'</button>'+
+    '<span class="muted">Zaloguj pokaże link do strony logowania i pole na kod.</span>';
+}
+const loginTermHint=k=>'<span>Claude nie jest zalogowany na tym komputerze.</span><button class="btn sm" data-ag="login" data-k="login"'+(A.busy.login?' aria-disabled="true"':'')+'>Zaloguj</button><button class="btn sec sm" data-ag="recheck" data-k="recheck"'+(A.busy.recheck?' aria-disabled="true"':'')+'>'+(A.busy.recheck?'Sprawdzam…':'Sprawdź ponownie')+'</button>'+
   '<span class="muted">Zaloguj otwiera okno Terminala i stronę logowania w przeglądarce. Ręcznie: <code>'+esc(loginCmd())+'</code></span><button class="btn sec sm" data-ag="copy" data-k="'+k+'">Kopiuj</button>';
 const limitHint=()=>{const d=limitT();return 'Limit subskrypcji'+(d?'. Odnowienie: '+esc(whenT(isoL(d))):'')};
 
@@ -846,6 +857,7 @@ function vPrzeglad(){
     if(td.some(keyWarn))warn.push('Klucz API zamiast subskrypcji')}
   let h='<div class="pagehead"><div><h1>Przegląd</h1><p>'+esc(cap(dLong(D.todayKey)))+'</p><div class="sys">'+sys.join('')+'</div></div></div>';
   if(warn.length)h+='<div class="banner bad">'+esc(warn.join(' · '))+' · <a href="#agenci">Agenci</a></div>';
+  if(a&&a.loginWeb&&(a.needsLogin||(a.tools.claude.found&&!a.tools.claude.loggedIn)))h+='<section class="panel"><h2>Logowanie Claude</h2><p class="ahint" style="padding:0 16px 14px">'+loginHint('copy')+'</p></section>';
   if(LIVE||a)h+=planBox();
   h+='<div class="stats">'+
     '<a class="stat" href="#projekty"><span class="l">Projekty w toku</span><span class="v num">'+act.length+'</span><span class="d">'+[back+' w backlogu',paused?paused+' '+pl(paused,'wstrzymany','wstrzymane','wstrzymanych'):''].filter(Boolean).join(' · ')+'</span></a>'+
@@ -1497,7 +1509,16 @@ function openLogin(){
   if(!LIVE){say(PRV);return}
   A.busy.login=true;render();
   enqueue(async()=>{const r=await post('/api/agent/login',{tool:'claude'});A.busy.login=false;
-    if(r.ok)say('Otworzyłem Terminal. Zaloguj się w przeglądarce, potem kliknij „Sprawdź ponownie”.');else if(r.status!==401)say(r.error||'Nie otworzono logowania.')});
+    if(r.ok)say(r.data&&r.data.url?'Otwórz stronę logowania, zatwierdź konto i wklej kod w panelu.':'Otworzyłem Terminal. Zaloguj się w przeglądarce, potem kliknij „Sprawdź ponownie”.');else if(r.status!==401)say(r.error||'Nie otworzono logowania.')});
+}
+function submitLoginCode(code){
+  code=String(code||'').trim();
+  if(!code){say('Wklej kod ze strony logowania.');return}
+  if(!LIVE){say(PRV);return}
+  const fa=document.activeElement;if(fa&&fa.blur)fa.blur();
+  A.busy.lc=true;render(true);
+  enqueue(async()=>{const r=await post('/api/agent/login-code',{code:code});A.busy.lc=false;
+    if(r.ok)say('Claude zalogowany. Agenci mogą pracować.');else if(r.status!==401)say(r.error||'Kod nie został przyjęty.')});
 }
 function recheckLogin(){
   if(!LIVE){say(PRV);return}
@@ -1616,6 +1637,7 @@ document.addEventListener('change',ev=>{
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
   if(f.id==='padd'){addProject();return}
+  if(f.dataset.lc){const i=f.querySelector('input');submitLoginCode(i?i.value:'');return}
   if(f.id==='plan'){const t=f.querySelector('textarea');askPlan(t?t.value:'');return}
   if(f.dataset.qa){const t=f.querySelector('textarea');answerQ(f.dataset.qa,+f.dataset.n,t?t.value:'');return}
   const ti=f.querySelector('[name="title"]');if(!ti)return;const v=ti.value;

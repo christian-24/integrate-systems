@@ -19,6 +19,8 @@
  "needsLogin": false,
  "limitUntil": null,
  "automat": true,
+ "loginWeb": false,
+ "login": {"active": false},
  "maxParallel": 2,
  "canRunTasks": true,
  "today": {

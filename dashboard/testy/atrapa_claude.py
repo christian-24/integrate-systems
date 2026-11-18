@@ -78,8 +78,27 @@ def main(argv):
     if "--version" in argv:
         print("2.1.156 (Claude Code)")
         return 0
+    if argv[:2] == ["auth", "login"]:           # jak prawdziwe CLI bez okna: adres, potem kod z wejścia
+        print("Opening browser to sign in…")
+        print("If the browser didn't open, visit: https://claude.com/cai/oauth/authorize?code=true&state=atrapa")
+        sys.stdout.write("Paste code here if prompted > ")
+        sys.stdout.flush()
+        for line in sys.stdin:
+            if line.strip() == "kod#dobry":
+                if os.environ.get("ATRAPA_LOGIN_PLIK"):
+                    open(os.environ["ATRAPA_LOGIN_PLIK"], "w").close()
+                print("Login successful.")
+                return 0
+            if line.strip() == "kod#zly":
+                print("OAuth error: invalid code")
+                return 1
+            sys.stdout.write("That doesn't look like the full code. Copy all of it, including the # in the middle.\n")
+            sys.stdout.write("Paste code here if prompted > ")
+            sys.stdout.flush()
+        return 1
     if argv[:2] == ["auth", "status"]:
-        print(json.dumps({"loggedIn": True, "authMethod": "claude.ai", "apiProvider": "firstParty",
+        flag = os.environ.get("ATRAPA_LOGIN_PLIK")
+        print(json.dumps({"loggedIn": not flag or os.path.exists(flag), "authMethod": "claude.ai", "apiProvider": "firstParty",
                           "subscriptionType": "max"}))
         return 0
     prompt = sys.stdin.read()

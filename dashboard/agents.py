@@ -30,6 +30,7 @@ TOOLS_TTL = 300     # sekundy między odczytami stanu narzędzi
 CONFLICT = "Plik zmienił się od ostatniego odczytu. Odświeżam listę."
 PM_TOOLS = "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Write,Edit,Glob,Grep"
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
+LOGIN_TTL = 600           # s: tyle czeka logowanie przez panel na kod
 PLAN_MAX = 6
 STATE_LABEL = {"done": "zakończone", "error": "błąd", "login": "wymaga logowania", "limit": "limit subskrypcji",
                "stopped": "zatrzymane", "timeout": "przekroczony czas"}
@@ -151,6 +152,8 @@ class Manager:
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
         self._tools_busy = False
+        self._login = None          # logowanie przez panel (serwer bez okna): proces, adres, stan
+        self.login_web = (get("PANEL_LOGIN_WEB") or "").strip() == "1" or not (sys.platform == "darwin" or WINDOWS)
         self.launcher = lambda args, **kw: subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                                             stderr=subprocess.DEVNULL, **kw)
         self._stop_event = threading.Event()
@@ -339,6 +342,8 @@ class Manager:
 
     def shutdown(self, wait=8):
         """Zatrzymuje wątek i wszystkie procesy (koniec pracy serwera, testy). Czeka, aż rekordy zostaną zamknięte."""
+        if self._login:
+            self._login_stop(self._login)
         self._stop_event.set()
         with self._lock:
             ids = [rid for rid, rec in self._runs.items() if rec["state"] in LIVE]
@@ -407,6 +412,9 @@ class Manager:
                     "tools": {k: dict(v) for k, v in self._tools.items()},
                     "needsLogin": self._state["needsLogin"], "limitUntil": limit,
                     "automat": self._state["automat"], "maxParallel": self.max_parallel, "canRunTasks": True,
+                    "loginWeb": self.login_web,
+                    "login": ({"active": True, "url": self._login["url"]}
+                              if self._login and self._login["proc"].poll() is None and self._login["url"] else {"active": False}),
                     "today": {"runs": len(todays),
                               "tokens": sum((r.get("tokensIn") or 0) + (r.get("tokensOut") or 0) for r in todays),
                               "costUsd": round(sum(r.get("costUsd") or 0 for r in todays), 2)},
@@ -692,6 +700,10 @@ class Manager:
         if not path:
             return 409, "Brak polecenia %s. Instalacja: INSTALACJA.md." % tool, {}
         args = _command(path) + (["login"] if tool == "codex" else ["auth", "login"])
+        if self.login_web:
+            if tool != "claude":
+                return 409, "Logowanie Codex przez panel nie jest obsługiwane: %s" % self.login_cmd(tool, path), {}
+            return self._login_web_start(args)
         try:
             if sys.platform == "darwin":
                 line = " ".join(shlex.quote(a) for a in args)
@@ -709,6 +721,100 @@ class Manager:
         with self._lock:
             self._tools_at = 0.0
         return 200, "", {"opened": True}
+
+    # ---------- logowanie przez panel (serwer bez okna) ----------
+    def _login_web_start(self, args):
+        """Uruchamia `claude auth login` w tle i zwraca adres strony logowania. Kod wpisuje właściciel w panelu."""
+        with self._lock:
+            cur = self._login
+            if cur and cur["proc"].poll() is None and cur["url"]:
+                return 200, "", {"url": cur["url"]}
+            if cur:
+                self._login_stop(cur)
+            try:
+                proc = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        env=child_env(self.env), cwd=self.runs_dir if os.path.isdir(self.runs_dir) else None,
+                                        encoding="utf-8", errors="replace", bufsize=1, start_new_session=not WINDOWS)
+            except OSError as e:
+                return 500, "Nie udało się uruchomić logowania: %s" % e, {}
+            rec = {"proc": proc, "url": "", "lines": collections.deque(maxlen=20), "at": time.time()}
+            self._login = rec
+
+        def read():
+            for line in proc.stdout:
+                line = line.strip()
+                if not line:
+                    continue
+                rec["lines"].append(_short(line, 300))
+                m = re.search(r"https://\S+", line)
+                if m and not rec["url"]:
+                    rec["url"] = m.group(0)
+        threading.Thread(target=read, daemon=True).start()
+        timer = threading.Timer(LOGIN_TTL, lambda: self._login_expire(rec))
+        timer.daemon = True
+        timer.start()
+        end = time.time() + 15
+        while time.time() < end and not rec["url"] and proc.poll() is None:
+            time.sleep(0.05)
+        if not rec["url"]:
+            with self._lock:
+                self._login_stop(rec)
+            return 500, "Logowanie nie podało adresu: %s" % (" ".join(rec["lines"]) or "brak odpowiedzi"), {}
+        return 200, "", {"url": rec["url"]}
+
+    def _login_stop(self, rec):
+        if rec["proc"].poll() is None:
+            try:
+                rec["proc"].kill()
+            except OSError:
+                pass
+        if self._login is rec:
+            self._login = None
+
+    def _login_expire(self, rec):
+        with self._lock:
+            if self._login is rec:
+                self._login_stop(rec)
+
+    def submit_login_code(self, code):
+        """Przekazuje kod ze strony logowania do `claude auth login`. Kodu nie zapisuje ani nie loguje."""
+        code = str(code or "").strip()
+        if not code or len(code) > 1000 or any(c.isspace() for c in code):
+            return 400, "Wklej cały kod ze strony logowania (bez spacji).", {}
+        with self._lock:
+            rec = self._login
+        if not rec or rec["proc"].poll() is not None:
+            return 409, "Logowanie nie trwa. Kliknij „Zaloguj” jeszcze raz.", {}
+        seen = len(rec["lines"])
+        try:
+            rec["proc"].stdin.write(code + "\n")
+            rec["proc"].stdin.flush()
+        except (OSError, ValueError):
+            return 409, "Logowanie się zakończyło. Kliknij „Zaloguj” jeszcze raz.", {}
+        end = time.time() + 45
+        while time.time() < end and rec["proc"].poll() is None and len(rec["lines"]) == seen:
+            time.sleep(0.05)
+        time.sleep(0.3)
+        while time.time() < end and rec["proc"].poll() is None and \
+                not any("code" in l.lower() for l in list(rec["lines"])[seen:]):
+            time.sleep(0.1)
+        done = rec["proc"].poll()
+        news = [re.sub(r"^(Paste code here if prompted >\s*)+", "", l).strip() for l in list(rec["lines"])[seen:]]
+        news = [l for l in news if l]
+        if done == 0:
+            with self._lock:
+                if self._login is rec:
+                    self._login = None
+            code_, _, extra = self.recheck_login()
+            if extra["loggedIn"]["claude"]:
+                return 200, "", {"loggedIn": True}
+            return 409, "Logowanie zakończone, ale Claude nadal niezalogowany.", {}
+        if done is None:
+            return 400, "Kod nie został przyjęty: %s" % (_short(" ".join(news), 200) or "spróbuj jeszcze raz"), {}
+        with self._lock:
+            if self._login is rec:
+                self._login = None
+        return 400, "Logowanie nie powiodło się: %s" % (_short(" ".join(news), 200) or "kod %s" % done), {}
 
     def recheck_login(self):
         """Ponowny odczyt stanu narzędzi; po udanym logowaniu zdejmuje blokadę needsLogin."""

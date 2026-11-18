@@ -7,3 +7,4 @@ projekty.json
 .claude/launch.json
 .claude/settings.local.json
 system/system.env
+dashboard/build/

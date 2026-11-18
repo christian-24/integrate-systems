@@ -399,6 +399,7 @@ WRITES = {"/api/task/state": change_task, "/api/task/update": lambda b: update_t
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
           "/api/agent/recheck": lambda b: get_agents().recheck_login(),
+          "/api/agent/login-code": lambda b: get_agents().submit_login_code(b.get("code", "")),
           "/api/question/answer": lambda b: answer_question(b),
           "/api/plan/ask": lambda b: get_agents().run_plan(b.get("text", "")),
           "/api/plan/accept": lambda b: get_agents().accept_plan(b.get("id", ""), b.get("ids"))}
