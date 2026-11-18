@@ -76,8 +76,10 @@ class Logowanie(Serwer):
             if sys.platform == "darwin":
                 self.assertEqual(calls[0][:2], ["osascript", "-e"])
                 self.assertIn('tell application "Terminal"', calls[0][2])
-        else:
-            self.assertEqual(status, 409)
+        else:                                      # serwer bez okna: logowanie przez panel (adres strony logowania)
+            self.assertEqual(status, 200)
+            self.assertTrue(body.get("url", "").startswith("https://"))
+            self.assertEqual(calls, [])
         self.assertEqual(self.post("/api/agent/login", {"tool": "inne"})[0], 400)
 
     def test_ponowne_sprawdzenie(self):
