@@ -49,6 +49,7 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
 - Merge PR robi właściciel albo auto-merge przy zielonym CI; znalezisko CRITICAL z audytu bezpieczeństwa wymaga akceptacji właściciela przed mergem.
 - Agent nie publikuje postów i nie wysyła maili; przygotowuje drafty. Mailing tylko do adresów z udokumentowaną zgodą (rejestr zgód).
 - Twarde zasady techniczne z CLAUDE.md projektu: log generacji z kosztem per użytkownik, quota i limit długości wejścia przed wywołaniem LLM, brak sekretów w repo, provider LLM tylko za interfejsem, płatności tylko realnie przez Stripe.
+- Posty marketingowe przygotowuje według STYL.md w folderze karty (stały rytm: post co 2 dni, kampanie/staly-rytm.md); publikuje właściciel po akceptacji.
 - Stan pracy agent zapisuje w ZADANIA.md, decyzje w DECYZJE.md.
 
 ## Zasoby i ograniczenia
