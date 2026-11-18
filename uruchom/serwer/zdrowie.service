@@ -1,0 +1,13 @@
+[Unit]
+Description=Kontrola zdrowia serwera IntegrateSystems
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=panel
+Group=panel
+Environment=HOME=/home/panel
+EnvironmentFile=-/etc/integrate/panel.env
+EnvironmentFile=-/etc/integrate/serwer.env
+ExecStart=/usr/local/bin/zdrowie
+TimeoutStartSec=5min

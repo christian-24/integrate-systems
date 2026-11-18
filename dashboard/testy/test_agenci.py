@@ -432,10 +432,15 @@ class Dodatki(Baza):
             m = self.new_manager(PANEL_NTFY_URL="http://127.0.0.1:%d/temat" % httpd.server_address[1])
             self.wait(self.run_task("Zadanie A", m)[2]["id"], manager=m)
             self.wait_for(lambda: got)
-            self.assertEqual(got, ["Zadanie A (Projekt testowy): zakończone"])
+            # projekt bez pola „klient” jest kliencki: powiadomienie bez tytułu zadania
+            self.assertEqual(got, ["Zadanie w projekcie Projekt testowy: zakończone"])
             self.wait(m.run_check("claude")[2]["id"], manager=m)                    # test połączenia nie powiadamia
             time.sleep(0.3)
             self.assertEqual(len(got), 1)
+            projekt.set_card_fields(self.folder, {"client": False})
+            self.wait(self.run_task("Zadanie B", m)[2]["id"], manager=m)
+            self.wait_for(lambda: len(got) == 2)
+            self.assertEqual(got[1], "Zadanie B (Projekt testowy): zakończone")
         finally:
             httpd.shutdown()
             httpd.server_close()

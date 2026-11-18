@@ -106,7 +106,29 @@ Wiersze pod tytułem `KARTA.md`, obok `- stan:`:
 Faza wyliczona (pierwsza pasująca): backlog → pomysł; brak karty albo karta z brakami → księga;
 kampania w toku → marketing; wszystkie etapy zrobione → utrzymanie; inaczej budowa.
 Błędna wartość pola jest brakiem karty. W `/api/data` pola projektu: `phase`, `phaseSource` (`karta`, `wyliczona`),
-`client`, `threshold` (`lekka`, `pelna`), `description` (pierwszy akapit „Cel”, do 300 znaków), `alias`, `book`, `bookOk`, `bookTotal`, `questions`.
+`client`, `threshold` (`lekka`, `pelna`), `description` (pierwszy akapit „Cel”, do 300 znaków), `alias`, `book`, `bookOk`, `bookTotal`, `questions`,
+`nextStep`.
+
+### Szczegóły zadania i następny krok
+
+Format wciętych wierszy pod zadaniem opisuje `standard/STANDARD.md` (sekcja „Szczegóły zadania”). W `/api/data` każde zadanie ma:
+
+```
+"needsYou": "odbiór",                    pierwsza wartość pola wymaga (jak dotąd)
+"needs": ["odbiór", "zgoda"],            wszystkie wartości pola wymaga
+"detail": {"goal": "", "doneWhen": "", "refs": [{"path": "marketing/plan.md", "anchor": "5"}],
+           "steps": [{"done": false, "text": "Kedameble"}], "result": "", "decision": "", "left": "", "notes": []}
+```
+
+Projekt ma `nextStep`: `{"title", "taskId", "executor", "date"}` dla otwartego zadania z najwcześniejszą datą,
+a bez dat pierwszego otwartego z polem `kto`; `null`, gdy takiego nie ma.
+
+`GET /api/plik?project=<id>&path=<ścieżka>&anchor=<opcjonalnie>` zwraca `{"ok": true, "path", "title", "text"}`:
+tekst pliku `.md` albo `.txt` (najwyżej 200 KB) z folderu projektu albo folderu jego karty (gdy `KARTA.md` jest
+dowiązaniem do `szkice/`). Z `anchor` tylko sekcja: nagłówek `##` z numerem („5” → `## 5. …`) albo z tekstem
+(także w zapisie `partia-1`), a gdy takiego nie ma, nagłówek innego poziomu. Ścieżki sprawdzane po `realpath`:
+plik poza tymi folderami, dowiązanie wychodzące na zewnątrz, inny typ pliku, brak pliku albo sekcji → 404
+`{"ok": false, "error"}`. Wymaga zalogowania jak inne `/api/`.
 
 ### Pytania do właściciela
 
@@ -129,7 +151,8 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | Żądanie | Zmiana |
 |---|---|
 | `POST /api/task/update` | pola zadania: tytuł, stan, kto, gdzie, kiedy, pora, czas, wymaga, blokada, kanał |
-| `POST /api/task/add` | nowe zadanie w etapie, w kampanii albo w „Do rozplanowania” |
+| `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach |
+| `POST /api/task/add` | nowe zadanie w etapie, w kampanii albo w „Do rozplanowania” (pod szczegółami ostatniego zadania) |
 | `POST /api/stage/update` | termin etapu |
 | `POST /api/campaign/update` | wynik i stan kampanii |
 | `POST /api/agent/run` | uruchamia zadanie; wiersz dostaje `[~]`, `kto:` i `gdzie:` |

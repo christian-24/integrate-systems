@@ -1,0 +1,9 @@
+[Unit]
+Description=Kontrola zdrowia serwera IntegrateSystems co 10 minut
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

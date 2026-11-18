@@ -3,8 +3,8 @@
 - faza: budowa
 - klient: nie
 - próg: pełna
-- maszyna: pc
-- repozytorium: PC `C:\Users\Guest\Desktop\NaulikApp` (gałąź fix/rc1-nagrania, ostatni commit 2026-11-03); kopia na Macu nieaktualna (2026-05-29)
+- maszyna: chmura
+- repozytorium: serwer `~/projekty/naulikapp` (GitHub, gałąź master, po migracji D13); keystore i podpisany build na Macu; wcześniej PC `C:\Users\Guest\Desktop\NaulikApp`
 
 Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`). Własny produkt: własny biznesplan, repo i kampania.
 RC1 1.0.0+2 zmergowany 2026-10-27 (#121/#122). Niezmergowane gałęzie: `fix/rc1-nagrania`, `marketing/kampania-rc1` (03.11).

@@ -11,7 +11,24 @@
 
 ## Do rozplanowania
 
-- [ ] Szablon notatki wymagań i listy kontrolnej dla kolejnych testów | kto: claude
+- [ ] Przygotuj szablon notatki wymagań testu | kto: claude
+  cel: każdy kolejny test zaczyna się od tej samej notatki wymagań
+  gotowe gdy: w folderze karty plik szablonu z sekcjami: zakres testu, funkcje do przejścia, język zgłoszeń, zakazy, termin, wynik i wypłata
+  materiał: KARTA.md#Zakres
+  Nazwa notatki dla testu: test-<numer>-requirements.md.
 - [x] Limit: najwyżej 3 h tygodniowo (2026-11-14)
-- [ ] Przygotować nagrywanie ekranu na Macu (Cmd+Shift+5 albo QuickTime) i sprawdzić przed kolejnym testem | kto: ty | gdzie: mac | czas: 15
-- [ ] Lista kontrolna zgłoszenia: zrzut ekranu i nagranie przy każdym błędzie | kto: claude
+- [ ] Sprawdź nagrywanie ekranu na Macu przed kolejnym testem | kto: ty | gdzie: mac | kiedy: 2026-11-22 | czas: 15
+  cel: zgłoszenia mają zrzuty i nagrania ekranu z naturalnym ruchem kursora
+  gotowe gdy: próbne nagranie 1 minuty z widocznym kursorem i kliknięciami zapisane i odtworzone
+  materiał: KARTA.md#Zasoby i ograniczenia
+  - [ ] nagranie przez Cmd+Shift+5 albo QuickTime
+  - [ ] pokazywanie kliknięć i kursora w nagraniu
+  - [ ] stałe miejsce zapisu nagrań i zrzutów
+- [ ] Przygotuj listę kontrolną przebiegu testu i zgłoszenia błędu | kto: claude
+  cel: przy każdym błędzie zgłoszenie ma komplet dowodów i spełnia reguły testu
+  gotowe gdy: w folderze karty lista kontrolna z krokami poniżej, gotowa do skopiowania do notatki testu
+  materiał: KARTA.md#Poza zakresem
+  - [ ] zrzut ekranu przy każdym błędzie
+  - [ ] nagranie ekranu z naturalnym ruchem człowieka
+  - [ ] zgłoszenie w języku wymaganym przez test
+  - [ ] wynik testu i wypłata zapisane w ZADANIA.md

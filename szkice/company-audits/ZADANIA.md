@@ -5,6 +5,7 @@
 > Stany: `[ ]` do zrobienia, `[~]` w toku, `[!]` zablokowane (dodaj `blokada: powód`), `[x]` zrobione.
 > Pola są opcjonalne. kto: claude, codex, ty. gdzie: pc, mac, chmura. pora: dzień, noc. czas: minuty Twojej pracy. wymaga: zgoda, odbiór.
 > Etap to nagłówek `## Etap: nazwa` i wiersz `termin: RRRR-MM-DD` pod nim. Etap bez otwartych zadań jest zamknięty.
+> Szczegóły zadania: wcięte wiersze pod zadaniem (cel:, gotowe gdy:, materiał:, kroki `- [ ]`, wynik:, decyzja:, zostało:).
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). `[x]` tylko dla rzeczy widocznych w plikach lub dokumentach.
 
@@ -14,7 +15,11 @@
 - [x] Narzędzie audytu z backendem i raportem PDF
 - [x] Lokalny model AI w audycie (propozycje, gotowość, analiza)
 - [x] Dokumentacja systemu śledzenia zleceń (scanner/)
-- [ ] Wyjaśnić błąd 502 w ocenie gotowości AI | kto: claude | gdzie: mac
+- [ ] Znajdź przyczynę błędu 502 w ocenie gotowości AI | kto: claude | gdzie: mac
+  cel: ocena gotowości w narzędziu audytu zwraca wynik zamiast błędu 502
+  gotowe gdy: ocena gotowości na przykładowym kwestionariuszu kończy się wynikiem, albo w wynik: opisana przyczyna i poprawka
+  materiał: KARTA.md#Zasoby i ograniczenia
+  Model lokalnie przez Ollamę na Macu (qwen3:14b), backend na localhost:5050; dlatego zadanie zostaje na Macu.
 
 ## Etap: Założenie firmy
 
@@ -26,15 +31,53 @@
 ## Etap: Walidacja rynku
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
-- [ ] Wybrać pierwsze 10 firm z listy LeadyV2 i przygotować szkice wiadomości | kto: claude | wymaga: odbiór
-- [ ] Kontakt z wybranymi firmami z listy LeadyV2 | kto: ty | wymaga: zgoda
+- [ ] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+  cel: 10 firm z listy LeadyV2 do pierwszego kontaktu, każda z uzasadnieniem wyboru i szkicem wiadomości
+  gotowe gdy: w repozytorium projektu plik z 10 firmami (nazwa, powód wyboru, szkic pierwszej wiadomości); nic nie wysłane
+  materiał: Reaserch/LeadyV2
+  materiał: KARTA.md#Cel
+  materiał: KARTA.md#Zasady pracy agentów
+  Lista LeadyV2 jest dziś tylko w kopii PC: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch.
+  Dopóki nie ma jej na serwerze w folderze projektu (Reaserch/), agent oznacza zadanie [!] z blokadą „brak listy LeadyV2 na serwerze”.
+  Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
+- [ ] Wgraj folder Reaserch (LeadyV2) na serwer | kto: ty | gdzie: mac | kiedy: 2026-11-20 | czas: 15
+  cel: lista LeadyV2 dostępna dla agenta w folderze projektu na serwerze
+  gotowe gdy: folder Reaserch z LeadyV2 leży w repozytorium projektu na serwerze, bez plików .env i kluczy
+  materiał: KARTA.md#Zakres
+  Źródło: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch. Sekrety zostają poza repozytorium (ksiega/MIGRACJA.md).
+- [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | wymaga: zgoda
+  cel: pierwsza wiadomość do 10 firm wysłana nowym kanałem właściciela
+  gotowe gdy: 10 wiadomości wysłanych; data i kanał zapisane w notatce pod tym zadaniem
+  materiał: KARTA.md#Zasady pracy agentów
+  Szkice: wynik zadania „Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości”. Oferta z ceną wymaga osobnej zgody.
 - [x] Oferta na Useme: 2500 zł, 7 dni (bez odpowiedzi do 14.11)
 - [x] Asystent Useme na serwerze: usługa, 188 testów, bez automatycznej wysyłki i komentarzy (2026-11-17)
 - [x] Hasło do panelu zleceń: `ssh -t ops@2.29.181.133 sudo ustaw-haslo-zlecen` | kto: ty | czas: 2
-- [ ] Przykładowy e-mail od Useme o nowym zleceniu (do napisania odczytu) | kto: ty | czas: 5
-- [ ] Odczyt e-maili Useme na serwerze: zlecenia do asystenta, powiadomienie ntfy | kto: claude | gdzie: chmura
-- [ ] Przenieść historię zleceń (data/jobs.db) z kopii PC na serwer | kto: claude | gdzie: chmura
-- [ ] Przegląd skuteczności asystenta Useme (wysłane oferty, odpowiedzi, odrzucone zlecenia) | kto: claude | gdzie: chmura | wymaga: odbiór
+- [ ] Zapisz przykładowy e-mail Useme o nowym zleceniu w repozytorium asystenta | kto: ty | czas: 5
+  cel: agent ma wzór e-maila do napisania odczytu zleceń
+  gotowe gdy: plik .eml z jednym e-mailem Useme o nowym zleceniu leży w repozytorium asystent-useme (np. w danych testowych)
+  Przed zapisaniem usuń dane osobowe i linki z tokenami logowania.
+- [ ] Napisz odczyt e-maili Useme na serwerze, który przekazuje zlecenia asystentowi | kto: claude | gdzie: chmura
+  cel: nowe zlecenie z e-maila Useme trafia do asystenta bez ręcznego kopiowania
+  gotowe gdy: test na przykładowym e-mailu przechodzi, a zlecenie pojawia się w kolejce asystenta; usługa niewdrożona bez zgody
+  materiał: KARTA.md#Zakres
+  Czeka na przykładowy e-mail od właściciela. Asystent działa bez automatycznej wysyłki ofert i komentarzy.
+- [ ] Dodaj powiadomienie ntfy o nowym zleceniu z Useme | kto: claude | gdzie: chmura
+  cel: właściciel dostaje powiadomienie ntfy, gdy odczyt e-maili znajdzie nowe zlecenie
+  gotowe gdy: test wysyła jedno powiadomienie na każde nowe zlecenie i żadnego na powtórzone
+  materiał: KARTA.md#Zakres
+- [ ] Przenieś historię zleceń (data/jobs.db) z kopii PC na serwer | kto: claude | gdzie: chmura
+  cel: historia zleceń z PC dostępna asystentowi Useme na serwerze
+  gotowe gdy: data/jobs.db na serwerze ma tyle samo zleceń co kopia z PC; asystent czyta ją bez błędów
+  materiał: KARTA.md#Zasady pracy agentów
+  Migracja danych wymaga zgody właściciela. Jeśli pliku z kopii PC nie ma na serwerze, oznacz [!] z blokadą.
+- [ ] Podsumuj skuteczność asystenta Useme | kto: claude | gdzie: chmura
+  cel: wiadomo, ile ofert wysłano, ile dostało odpowiedź i dlaczego zlecenia odrzucano
+  gotowe gdy: w wynik: liczby dla każdego kroku i jedno zdanie wniosku
+  - [ ] wysłane oferty
+  - [ ] odpowiedzi na oferty
+  - [ ] odrzucone zlecenia i powody
+  Liczy z data/jobs.db; bez historii z PC wynik obejmie tylko zlecenia z serwera.
 
 ## Etap: Pilotaż u klienta 1
 

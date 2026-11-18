@@ -8,3 +8,17 @@ projekty.json
 .claude/settings.local.json
 system/system.env
 dashboard/build/
+
+# Sekrety i bazy danych (uruchom/serwer/zapis-kart.sh też ich nie dodaje); pliki *.przyklad zostają w repozytorium
+.env
+.env.*
+*.env
+*.key
+*.pem
+credentials*
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.db
+*.db-*
+!*.przyklad

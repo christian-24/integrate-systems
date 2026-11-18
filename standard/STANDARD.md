@@ -40,6 +40,38 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `kanał` | kanał publikacji, w kampaniach |
 
 Wszystkie pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
+`wymaga` może mieć kilka wartości po przecinku (`wymaga: odbiór, zgoda`); każda z nich obowiązuje.
+
+## Szczegóły zadania
+
+Pod wierszem zadania (w `ZADANIA.md` i w harmonogramie kampanii) mogą stać wiersze wcięte o 2 spacje.
+Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (także pustym).
+
+```
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20
+  cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 1
+  gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8”
+  materiał: marketing/plan-10-kont.md#5
+  - [ ] Kedameble
+  - [ ] Bambooko
+```
+
+| Klucz | Znaczenie | Kto pisze |
+|---|---|---|
+| `cel:` | co ma powstać lub się zmienić, jedno zdanie | właściciel, PM |
+| `gotowe gdy:` | sprawdzalny warunek ukończenia | właściciel, PM |
+| `materiał:` | ścieżka względem folderu projektu, opcjonalnie `#5` (sekcja `## 5.`) albo `#Nagłówek`; może wystąpić kilka razy | właściciel, PM |
+| `  - [ ] krok` | krok zadania; `[x]` zrobiony. Kroki nie są osobnymi zadaniami | wszyscy |
+| `wynik:` | krótki wynik pracy | agent |
+| `decyzja:` | co właściciel ma zatwierdzić przy odbiorze | agent |
+| `zostało:` | czego nie zrobiono | agent |
+
+Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
+Tytuł zaczyna się od czasownika („Wyślij”, „Przygotuj”) i ma najwyżej 120 znaków.
+
+Braki zgłaszane przy `ZADANIA.md` (`projekt.py sprawdz`, księga w panelu), najwyżej 5 przykładów w wierszu:
+otwarte zadanie w etapie z terminem bez `gotowe gdy:`; tytuł dłuższy niż 120 znaków;
+tytuł zaczynający się od rzeczownika odczasownikowego („Wdrożenie…”, „Przygotowanie…”).
 
 ## Kampania
 
@@ -57,6 +89,10 @@ Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
 | po terminie | otwarte zadanie z datą wcześniejszą niż dziś albo w etapie po terminie |
 | zablokowane | zadanie w stanie `[!]` |
 | stan etapu | pierwsza pasująca: zrobione → po terminie → czeka na Ciebie (wszystkie otwarte zadania wymagają Ciebie) → zagrożony (otwartych zadań więcej niż dni do terminu) → w normie |
+| bez następnego kroku | aktywny projekt bez otwartego zadania z datą najpóźniej za 7 dni |
+| etap bez terminu | otwarty etap aktywnego projektu bez wiersza `termin:` |
+| następny krok projektu | otwarte zadanie z najwcześniejszą datą, a bez dat pierwsze otwarte z polem `kto` |
+| najważniejsze decyzje | 3 pierwsze sprawy dla Ciebie: po terminie, potem najbliższa data, zgoda przed odbiorem, z czasem `czas:` w minutach |
 
 Rola agenta, który raportuje, jest opisana w `standard/PM.md`. Notatki PM trafiają do `raporty/RRRR-MM-DD.md`.
 
@@ -72,7 +108,11 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 | koniec, agent nie może iść dalej | `[!]` i `blokada: powód` |
 | błąd, limit, zatrzymanie, przekroczony czas | panel przywraca `[ ]` |
 
-Zadanie nie startuje, gdy jest zrobione, ma `kto: ty` albo `wymaga: zgoda`, jest publikacją w kampanii,
+Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wykonane kroki, a na koniec dopisuje pod
+swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`. Pytania do Ciebie dopisuje do sekcji
+„Pytania do właściciela” w `KARTA.md`.
+
+Zadanie nie startuje, gdy jest zrobione, ma `kto: ty` albo `zgoda` w polu `wymaga`, jest publikacją w kampanii,
 już pracuje albo należy do projektów przykładowych. Zadanie bez pola `kto` uruchamia Claude.
 
 ## Polecenia

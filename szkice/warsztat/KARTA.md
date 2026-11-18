@@ -4,8 +4,8 @@
 - klient: nie
 - próg: pełna
 - stan: wstrzymany
-- maszyna: pc
-- repozytorium: GitHub christian-24/Warsztat; na PC `C:\Users\Guest\Desktop\Warsztat` (gałąź main)
+- maszyna: chmura
+- repozytorium: GitHub christian-24/Warsztat, serwer `~/projekty/warsztat` (gałąź main, po migracji D13); build Windows (WPF) w GitHub Actions
 - założono: 2026-10-27
 
 Szkic z repozytorium na GitHubie (stan 2026-11-06, sesja-29) i audytu PC z 2026-11-14.

@@ -165,6 +165,7 @@ class Manager:
         self._stop_event = threading.Event()
         self._thread = None
         self._load()
+        self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
 
     # ---------- narzędzia (claude, codex) ----------
     @staticmethod
@@ -250,6 +251,7 @@ class Manager:
                 tools = self._read_tools()
                 with self._lock:
                     self._tools, self._tools_at = tools, time.time()
+                self._login_alert()
             finally:
                 self._tools_busy = False
 
@@ -455,20 +457,56 @@ class Manager:
             args += ["--model", model]
         return args + list(extra)
 
-    def task_prompt(self, tool, name, file, line, title, stage):
+    @staticmethod
+    def detail_lines(detail):
+        """Szczegóły zadania (projekt.parse_detail) jako wiersze promptu."""
+        d = detail if isinstance(detail, dict) else {}
+        out = []
+        if d.get("goal"):
+            out.append("Cel: %s" % d["goal"])
+        if d.get("doneWhen"):
+            out.append("Gotowe gdy: %s" % d["doneWhen"])
+        refs = [r for r in d.get("refs") or [] if isinstance(r, dict) and r.get("path")]
+        if refs:
+            out.append("Materiały (ścieżki względem folderu projektu; po # numer albo nazwa sekcji):")
+            out += ["- %s%s" % (r["path"], "#" + r["anchor"] if r.get("anchor") else "") for r in refs]
+        steps = [x for x in d.get("steps") or [] if isinstance(x, dict) and x.get("text")]
+        if steps:
+            out.append("Kroki (wcięte wiersze pod zadaniem; to nie są osobne zadania):")
+            out += ["- [%s] %s" % ("x" if x.get("done") else " ", x["text"]) for x in steps]
+        for key, label in (("notes", "Notatki"),):
+            if d.get(key):
+                out.append("%s: %s" % (label, " / ".join(d[key])))
+        for key, label in (("result", "Wynik poprzedniej pracy"), ("decision", "Decyzja do zatwierdzenia"),
+                           ("left", "Zostało z poprzedniej pracy")):
+            if d.get(key):
+                out.append("%s: %s" % (label, d[key]))
+        return out
+
+    def task_prompt(self, tool, name, file, line, title, stage, detail=None):
         rules = "AGENTS.md" if tool == "codex" else "CLAUDE.md"
         head = ["Pracujesz w projekcie „%s” według %s i KARTA.md." % (name, rules),
                 "Wykonaj jedno zadanie z pliku %s, wiersz %d: „%s”." % (file, line, title)]
         if stage:
             head.append("Etap: %s." % stage)
+        more = self.detail_lines(detail)
+        if more:
+            head += ["", "Szczegóły zadania:"] + more
         return "\n".join(head + [
             "",
             "Zasady:",
-            "- Rób tylko to zadanie. Nie zmieniaj innych zadań, terminów ani pliku KARTA.md.",
+            "- Rób tylko to zadanie. Nie zmieniaj innych zadań ani terminów. W KARTA.md możesz tylko dopisać pytanie.",
+            "- Nigdy nie zmieniaj tytułu zadania (tekstu wiersza przed pierwszym „|”) i nie dopisuj do niego raportu.",
             "- Nie wykonuj działań nieodwracalnych ani wychodzących na zewnątrz (wysyłka, publikacja, wdrożenie, płatność). "
             "Gdy zadanie tego wymaga, przygotuj wszystko i dopisz w wierszu zadania `wymaga: zgoda`.",
-            "- Polecenia, na które nie masz uprawnień, pomiń i opisz w punkcie „Zostało”.",
-            "- Na koniec zmień w %s wyłącznie wiersz tego zadania: gotowe to `[x]`; nie da się dokończyć to `[!]` "
+            "- Polecenia, na które nie masz uprawnień, pomiń i opisz w wierszu `zostało:`.",
+            "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
+            "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
+            "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
+            "`  zostało: …`, gdy coś nie zostało zrobione.",
+            "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
+            "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma).",
+            "- Stan zmień w %s wyłącznie w wierszu tego zadania: gotowe to `[x]`; nie da się dokończyć to `[!]` "
             "i pole `blokada: powód`; potrzebny przegląd właściciela to `[~]` i pole `wymaga: odbiór`." % file,
             "- Zakończ odpowiedź trzema krótkimi punktami: Zrobione, Sprawdzone, Zostało.",
         ]) + "\n"
@@ -526,13 +564,16 @@ class Manager:
             rec = self._new("task", tool, title, auto, task["project"], project.get("name", task["project"]),
                             task["id"], task["file"])
             rec["steps"] = first_steps
-            prompt = self.task_prompt(tool, rec["projectName"], task["file"], task["line"], title, stage)
+            prompt = self.task_prompt(tool, rec["projectName"], task["file"], task["line"], title, stage,
+                                      task.get("detail"))
             if tool == "codex":
                 args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                          "-C", folder, "-"]
             else:
                 args = self._claude_args(path, self.model, _card_dirs(folder))
-            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "folder": folder})
+            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "folder": folder,
+                                "client": project.get("client") is True,
+                                "label": project.get("alias") or project.get("name") or task["project"]})
             return 200, "", {"id": rec["id"]}
 
     def run_pm(self, auto=False):
@@ -593,31 +634,42 @@ class Manager:
         stages = {s["id"]: s for s in data["stages"]}
         out = []
         for t in data["tasks"]:
-            if t.get("kind") != "zadanie" or t.get("state") == "done":
+            if t.get("state") == "done":
+                continue
+            pub = t.get("kind") == "publikacja"
+            if pub and "zgoda" not in needs_of(t):
+                continue                    # publikacje tylko te, które czekają na zgodę właściciela
+            if not pub and t.get("kind") != "zadanie":
                 continue
             st = stages.get(t.get("stage")) or {}
             block = run_block(t, data["projectsSource"], live, tools)
             out.append({"id": t["id"], "project": names.get(t["project"], t["project"]), "title": t["title"],
-                        "stage": st.get("title", ""), "stageDue": st.get("date") or "", "date": t.get("date") or "",
+                        "kind": t.get("kind", ""), "goal": (t.get("detail") or {}).get("goal", ""),
+                        "minutes": t.get("minutes") or 0,
+                        "stage": st.get("title", "") or (t.get("group", "") if pub else ""),
+                        "stageDue": st.get("date") or "", "date": t.get("date") or "",
                         "executor": t.get("executor") or "", "state": t.get("state", ""),
                         "needsYou": t.get("needsYou") or "", "agent": not block, "why": block})
         return out
 
     def plan_prompt(self, text, cands, today):
-        rows = json.dumps([{k: c[k] for k in ("id", "project", "title", "stage", "stageDue", "date", "executor",
-                                              "state", "needsYou", "agent")} for c in cands], ensure_ascii=False)
+        rows = json.dumps([{k: c[k] for k in ("id", "project", "kind", "title", "goal", "minutes", "stage", "stageDue",
+                                              "date", "executor", "state", "needsYou", "agent")} for c in cands],
+                          ensure_ascii=False)
         return "\n".join([
             "Jesteś kierownikiem projektów właściciela. Dziś jest %s." % today,
             "Właściciel napisał, co chce dziś robić:",
             "<<<", text, ">>>",
             "",
             "Poniżej wszystkie otwarte zadania jego projektów (JSON). Pole agent=true oznacza, że zadanie może wykonać agent;",
-            "agent=false to zadania właściciela albo czekające na jego zgodę.",
+            "agent=false to zadania właściciela albo czekające na jego zgodę. kind=publikacja to publikacja z kampanii",
+            "czekająca na zgodę właściciela. goal to cel zadania, minutes to czas pracy właściciela w minutach (0: nie podano).",
             rows,
             "",
             "Ułóż plan na dziś:",
             "- „agenci”: najwyżej %d zadań z agent=true, najważniejsze najpierw (terminy etapów, prośba właściciela);" % PLAN_MAX,
-            "- „ty”: najwyżej 5 zadań z agent=false, które właściciel powinien dziś zrobić albo rozstrzygnąć;",
+            "- „ty”: najwyżej 5 zadań z agent=false, które właściciel powinien dziś zrobić albo rozstrzygnąć "
+            "(zgody na publikacje też); w podsumowaniu podaj łączny czas z pola minutes, gdy jest znany;",
             "- nie wymyślaj zadań spoza listy; jeśli prośba nie pasuje do żadnego zadania, napisz to w „uwagi”.",
             "Odpowiedz po polsku: 2–4 krótkie zdania podsumowania, a na końcu jeden blok:",
             "```json",
@@ -1208,7 +1260,8 @@ class Manager:
             self._save_state()
             self._save(rec)
         if state != "stopped" and rec["kind"] != "check":
-            self._notify(rec)
+            self._notify(rec, priv)
+        self._login_alert()
         self.refresh_tools(force=True)
         self._pump()
 
@@ -1244,20 +1297,45 @@ class Manager:
             except (ValueError, OSError):
                 pass
 
-    def _notify(self, rec):
+    def _notify(self, rec, priv=None):
+        """Powiadomienie ntfy po zakończeniu. W projektach klienckich bez tytułu zadania."""
         if not self.ntfy_url:
             return
-        where = " (%s)" % rec["projectName"] if rec["projectName"] else ""
-        body = ("%s%s: %s" % (rec["title"], where, STATE_LABEL.get(rec["state"], rec["state"]))).encode("utf-8")
+        priv = priv or {}
+        state = STATE_LABEL.get(rec["state"], rec["state"])
+        if rec["kind"] == "task" and priv.get("client"):
+            body = "Zadanie w projekcie %s: %s" % (priv.get("label") or rec["projectName"] or rec["project"], state)
+        else:
+            where = " (%s)" % rec["projectName"] if rec["projectName"] else ""
+            body = "%s%s: %s" % (rec["title"], where, state)
+        self._send_ntfy(body)
+
+    def _send_ntfy(self, body):
+        if not self.ntfy_url:
+            return
+        data = body.encode("utf-8")
 
         def send():
             try:
-                req = urllib.request.Request(self.ntfy_url, data=body, method="POST",
+                req = urllib.request.Request(self.ntfy_url, data=data, method="POST",
                                              headers={"Content-Type": "text/plain; charset=utf-8"})
                 urllib.request.urlopen(req, timeout=5).close()
             except Exception:
                 pass
         threading.Thread(target=send, daemon=True).start()
+
+    def _login_alert(self):
+        """Powiadomienie, gdy Claude zaczyna wymagać logowania: raz na zmianę stanu.
+
+        Wymaga logowania: needsLogin po uruchomieniu albo odczyt narzędzi (claude jest, ale niezalogowany)."""
+        with self._lock:
+            claude = self._tools.get("claude") or {}
+            needs = bool(self._state["needsLogin"]) or (self._tools_at > 0 and claude.get("found") is True
+                                                        and not claude.get("loggedIn"))
+            send = needs and not self._login_sent
+            self._login_sent = needs
+        if send:
+            self._send_ntfy("Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj.")
 
     # ---------- Automat ----------
     def tick(self, now=None):
@@ -1324,6 +1402,14 @@ def next_post_slot(dates, days, today):
     return max(tomorrow, max(dates) + datetime.timedelta(days=days))
 
 
+def needs_of(task):
+    """Wszystkie wartości pola „wymaga” zadania (needs), dla starszych danych samo needsYou."""
+    needs = task.get("needs")
+    if isinstance(needs, list):
+        return needs
+    return [task["needsYou"]] if task.get("needsYou") else []
+
+
 def run_block(task, source, live, tools, sample_ok=False):
     """Pierwszy pasujący powód z AGENCI.md; '' oznacza, że zadanie można uruchomić.
 
@@ -1338,7 +1424,7 @@ def run_block(task, source, live, tools, sample_ok=False):
         return "Zrobione"
     if task.get("executor") == "ty":
         return "Zadanie po Twojej stronie"
-    if task.get("needsYou") == "zgoda":
+    if "zgoda" in needs_of(task):
         return "Czeka na Twoją zgodę"
     tool = "codex" if task.get("executor") == "codex" else "claude"
     if not tools.get(tool):

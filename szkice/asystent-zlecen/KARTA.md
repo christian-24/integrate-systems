@@ -4,8 +4,8 @@
 - klient: nie
 - próg: lekka
 - stan: aktywny
-- maszyna: pc
-- repozytorium: brak git; PC `C:\Users\Guest\Zlecenia` i `C:\Users\Guest\Documents\ChatGPT\Zlecenia`
+- maszyna: chmura
+- repozytorium: serwer `~/projekty/szukanie-auta` (GitHub, od 2026-11-16); rozszerzenie w Chrome na Macu; wcześniej PC `C:\Users\Guest\Zlecenia`
 - założono: 2026-10-29
 
 Szkic tylko z audytu PC z 2026-11-14 (sesje Codex i pliki folderu). Kodu nie czytano.

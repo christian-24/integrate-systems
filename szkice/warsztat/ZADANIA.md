@@ -26,4 +26,9 @@
 
 ## Do rozplanowania
 
-- [ ] K16 według `docs/plan-paludarium.md`, po zgodzie na K15 | kto: claude | gdzie: chmura
+- [ ] Zrealizuj K16 według docs/plan-paludarium.md | kto: claude | gdzie: chmura | wymaga: zgoda
+  cel: kamień K16 gotowy do bramki właściciela
+  gotowe gdy: historyjki K16 zamknięte, `dotnet test Warsztat.sln` zielone na main, bramka w docs/gates/k16.md czeka na właściciela
+  materiał: docs/plan-paludarium.md
+  materiał: KARTA.md#Zasady pracy agentów
+  Start dopiero po zatwierdzeniu bramki K15 (docs/gates/k15.md); projekt wstrzymany (2026-11-14). Build Windows w GitHub Actions.

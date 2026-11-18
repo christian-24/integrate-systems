@@ -1,0 +1,16 @@
+[Unit]
+Description=Kopia danych serwera IntegrateSystems
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=panel
+Group=panel
+Environment=HOME=/home/panel
+EnvironmentFile=-/etc/integrate/panel.env
+EnvironmentFile=-/etc/integrate/serwer.env
+ExecStart=/usr/local/bin/kopia
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=2h

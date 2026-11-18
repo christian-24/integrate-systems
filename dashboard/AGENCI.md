@@ -30,7 +30,7 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_AGENT_MODEL`, `PANEL_PM_MODEL` | model domyślny CLI | model dla zadań i dla raportu PM |
 | `PANEL_PM_HOUR` | `7` | godzina dziennego raportu PM w Automacie |
 | `PANEL_GIT_PULL` | `0` | `1`: przed uruchomieniem `git pull --ff-only`, gdy repozytorium jest czyste |
-| `PANEL_NTFY_URL` | brak | adres tematu ntfy; powiadomienie po zakończeniu uruchomienia |
+| `PANEL_NTFY_URL` | brak | adres tematu ntfy; powiadomienie po zakończeniu uruchomienia i gdy Claude wymaga logowania |
 | `CLAUDE_CODE_OAUTH_TOKEN` | brak | token z `claude setup-token` dla komputera bez przeglądarki |
 
 ## Dostęp
@@ -39,6 +39,7 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 - Połączenie z innego urządzenia: wymagane `PANEL_TOKEN`. Bez ustawionego hasła serwer odmawia (403).
   Strona `GET /wejscie` ma jedno pole; `POST /wejscie` (formularz, pole `haslo`) ustawia ciasteczko
   `panel_sesja` (HttpOnly, SameSite=Strict; wartość to HMAC z hasła, nie samo hasło) i przekierowuje na `/`.
+  Gdy żądanie przyszło przez HTTPS (pośrednik, np. Caddy, ustawia `X-Forwarded-Proto: https`), ciasteczko ma też `Secure`.
   Żądanie bez ciasteczka: strony → 303 na `/wejscie`, `/api/*` → 401 `{"ok":false,"error":"Wymagane hasło."}`.
   Błędne hasło: odpowiedź po 1 s, najwyżej 10 prób na minutę (potem 429).
 - `GET /terminy.ics?k=<klucz>`: kalendarz do subskrypcji bez ciasteczka; klucz jest pochodną hasła
@@ -102,9 +103,13 @@ poza `CLAUDE_CODE_OAUTH_TOKEN` i `CLAUDE_CONFIG_DIR`. Dzięki temu praca idzie n
 ### Zadanie
 
 Przy starcie serwer zmienia wiersz zadania: stan `[~]`, `kto:` narzędzie, `gdzie:` ten węzeł.
-Agent dostaje prompt: jedno zadanie (plik, wiersz, tytuł, etap), zakaz zmiany innych zadań, terminów i `KARTA.md`,
-zakaz działań nieodwracalnych i wychodzących na zewnątrz, na koniec zmiana własnego wiersza
-(`[x]`; `[!]` + `blokada:`; albo `[~]` + `wymaga: odbiór`) i odpowiedź: Zrobione, Sprawdzone, Zostało.
+Agent dostaje prompt: jedno zadanie (plik, wiersz, tytuł, etap) i jego szczegóły (cel, gotowe gdy, materiały,
+kroki, notatki, wynik i „zostało” z poprzedniej pracy; format w `standard/STANDARD.md`), zakaz zmiany innych zadań
+i terminów, zakaz zmiany tytułu zadania i dopisywania do niego raportu, zakaz działań nieodwracalnych i wychodzących
+na zewnątrz. Na koniec agent odhacza wykonane kroki, dopisuje pod swoim wierszem wcięte wiersze `wynik:`, `decyzja:`
+(gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało), pytania do właściciela dopisuje do sekcji
+„Pytania do właściciela” w `KARTA.md` (poza tym karty nie zmienia), zmienia stan własnego wiersza
+(`[x]`; `[!]` + `blokada:`; albo `[~]` + `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
 
 Po zakończeniu:
 - stan inny niż `done`, a wiersz dalej `[~]`: serwer przywraca `[ ]`;
@@ -120,7 +125,7 @@ Pierwszy pasujący powód; pusty tekst oznacza, że można uruchomić.
 | publikacja w kampanii | `Publikację wykonujesz samodzielnie` |
 | stan zrobione | `Zrobione` |
 | `kto: ty` | `Zadanie po Twojej stronie` |
-| `wymaga: zgoda` | `Czeka na Twoją zgodę` |
+| `zgoda` w polu `wymaga` (także `wymaga: odbiór, zgoda`) | `Czeka na Twoją zgodę` |
 | brak polecenia (`claude`; dla `kto: codex` polecenie `codex`) | `Brak polecenia claude` / `Brak polecenia codex` |
 | uruchomienie w kolejce albo w toku | `W toku` |
 
@@ -133,6 +138,20 @@ Wyłączony domyślnie; stan w `stan.json`. Co 60 s bierze zadania, które speł
 `pora` zgodna (noc 22:00–6:00, dzień 6:00–22:00, brak pola: zawsze), brak dzisiejszego uruchomienia tego zadania,
 brak aktywnego limitu i znacznika logowania. Raz dziennie po `PANEL_PM_HOUR` uruchamia raport PM, gdy nie ma `raporty/<dziś>.md`.
 
+### Powiadomienia (ntfy)
+
+Przy `PANEL_NTFY_URL` serwer wysyła wiadomość po każdym uruchomieniu (poza testem połączenia i zatrzymaniem):
+`Tytuł zadania (Projekt): stan`. W projektach klienckich (`client: true`, także bez pola `- klient:` w karcie)
+bez tytułu zadania: `Zadanie w projekcie <alias albo nazwa>: stan`. Gdy Claude zaczyna wymagać logowania
+(`needsLogin` po uruchomieniu albo odczyt narzędzi: polecenie jest, ale niezalogowane), jedna wiadomość
+„Claude wymaga logowania…”; kolejna dopiero po zalogowaniu i ponownej utracie logowania.
+
+### Plan dnia
+
+`plan_candidates`: otwarte zadania z polami `id`, `project`, `kind`, `title`, `goal` (cel ze szczegółów), `minutes`
+(pole `czas`), `stage`, `stageDue`, `date`, `executor`, `state`, `needsYou`, `agent`, `why`, oraz publikacje z kampanii
+z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla właściciela.
+
 ### Logowanie i limit
 
 - Błąd logowania (401, wygasły token): stan `login`, `needsLogin: true` do pierwszego udanego uruchomienia.
@@ -144,7 +163,8 @@ brak aktywnego limitu i znacznika logowania. Raz dziennie po `PANEL_PM_HOUR` uru
 
 ## `/api/data`
 
-Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`) i `runBlock`.
+Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`) i `runBlock`,
+a z odczytu plików `detail` i `needs` (opis w `README.md`, „Szczegóły zadania i następny krok”).
 
 ```
 "agents": {
@@ -174,6 +194,7 @@ liczone od chwili otwarcia strony).
 | Żądanie | Treść | Działanie |
 |---|---|---|
 | `/api/agent/run` | `{"id": taskId, "title": tytuł}` | uruchamia zadanie; 409, gdy wiersz się zmienił albo `runBlock` niepusty |
+| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`; 409, gdy wiersz się zmienił |
 | `/api/agent/pm` | `{}` | raport PM; 409, gdy już trwa |
 | `/api/agent/check` | `{"tool": "claude"}` | test połączenia |
 | `/api/agent/stop` | `{"id": runId}` | zatrzymuje albo zdejmuje z kolejki |

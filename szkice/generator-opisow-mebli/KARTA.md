@@ -4,8 +4,8 @@
 - klient: nie
 - próg: pełna
 - stan: aktywny
-- maszyna: pc
-- repozytorium: PC `C:\Users\Guest\Desktop\generator-opisow-mebli` (gałąź feat/pokaz-opisarnia, 778 niezacommitowanych zmian); kopia na Macu nieaktualna (2026-06-21)
+- maszyna: chmura
+- repozytorium: serwer `~/projekty/generator-opisow-mebli` (GitHub, po migracji D13); wcześniej PC `C:\Users\Guest\Desktop\generator-opisow-mebli`
 
 Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`). Od 21.06: 101 commitów na master (PR #60–#134),
 ostatni commit 2026-11-05; w 14 dniach do 14.11: 38 commitów i 8 sesji Claude.
@@ -72,3 +72,10 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
    Odpowiedź: Tak, powinnismy zarządzać marketingiem i może pójść w rozpromowanie produktu i jego potencjalny zwrot
 5. Co jest w 778 niezacommitowanych zmianach na gałęzi `feat/pokaz-opisarnia` i czy ta gałąź ma trafić na origin?
    Odpowiedź: Pokaz to było nowy widok i poc, docelowo jeszcze będzie rozwijane ale nadal UI mnie się nie podobało wiec trzeba będzie to podrasować
+6. Ile jest filmów, o czym są i gdzie leżą? Od tego zależy, czy film A (slot 20.11) trzeba nagrać od nowa; odpowiedź do 2026-11-19.
+7. Czy posty z planu T1–T8 (od 03.11) były publikowane, i które? Od tego zależy, czy posty 2–4 (23.11, 25.11, 27.11) nie powtarzają tematu; odpowiedź do 2026-11-22.
+8. Ilu masz kontaktów na LinkedIn, w tym z branży meblowej? Od tego zależy, czy szacunek 2–4 kont z postów jest realny i czy rezerwę z planu (pkt 7) uruchomić wcześniej; odpowiedź do 2026-11-21.
+9. Czy „konto aktywne” to konto z co najmniej 1 udaną generacją w ostatnich 14 dniach, czy okno 30 dni albo co najmniej 3 generacje? Od tego zależy liczenie celu 20 aktywnych w pomiarze; odpowiedź do 2026-11-23.
+10. Czy 40 kont liczymy łącznie od początku, czy tylko konta założone od 2026-10-27? Od tego zależy pomiar w metryki.md i ocena checkpointu 30.11; odpowiedź do 2026-11-23.
+11. Które identyfikatory kont są własne lub testowe i mają być wyłączone z liczenia? Od tego zależy zapytanie z metryki.md (pkt 6) w pomiarze 23.11; odpowiedź do 2026-11-23.
+12. Liczby kanałów: ręcznie ze statystyk LinkedIn, Facebooka i Instagrama, czy parametr UTM i pole źródła przy rejestracji (osobne zadanie w kodzie)? Od tego zależy tabela kanałów 29.11 i decyzja 30.11; przy wariancie z kodem odpowiedź do 2026-11-21.

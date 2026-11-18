@@ -50,3 +50,24 @@ Sekretów (pliki `.env`, klucze) nie wysyłamy do repozytoriów: zostają w arch
 2. Szukanie auta: osobne repo czy tylko archiwum?
 3. Pozostałe własne repozytoria: tylko archiwum czy także push na GitHub?
 4. Dane Dockera na E: i pliki osobiste: co zabrać?
+
+## Serwer: kopie i kontrola zdrowia
+
+Pliki w `uruchom/serwer/`. Instalacja (jako ops, po pobraniu zmian na serwer przez zapis kart):
+
+```
+sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-kopie-i-zdrowie.sh
+```
+
+Skrypt instaluje `kopia`, `zdrowie` i nową wersję `zapis-kart` w `/usr/local/bin`, jednostki w `/etc/systemd/system`, włącza timery i robi pierwszy przebieg obu. Ustawienia opcjonalne: `/etc/integrate/serwer.env` (wzór `serwer.env.przyklad`), powiadomienia przez `PANEL_NTFY_URL` z `/etc/integrate/panel.env`.
+
+| Co | Kiedy | Co robi | Powiadomienie |
+|---|---|---|---|
+| Kopia (`kopia.timer`) | codziennie 03:30 czasu polskiego | `/home/panel/kopie/RRRR-MM-DD.tar.gz`: `dane/` (bazy SQLite jako spójna kopia w `sqlite/`), `uruchomienia/`, `historia/`, zmienione i nieśledzone pliki projektów z `git status`, niewypchnięte commity jako `git/<repo>.bundle`; zostaje 14 najnowszych | tylko przy błędzie |
+| Wysyłka poza serwer | po kopii, gdy ustawiony `KOPIA_CEL` | `rclone:<zdalny>:<folder>` albo `scp:<użytkownik@host>:<folder>`; bez `KOPIA_CEL` pomijana | przy błędzie |
+| Kontrola zdrowia (`zdrowie.timer`) | co 10 min | panel (`/api/data` lokalnie → 200), Useme (`/api/health`), wolne miejsce ≥ 15%, Claude zalogowany, kopia młodsza niż 36 h, ostatni zapis kart; stan w `/home/panel/.zdrowie-stan` | przy zmianie na zły i z powrotem na dobry, bez danych klientów |
+| Zapis kart (`zapis-kart.timer`) | co 15 min | jak dotąd; pliki wyglądające na sekrety i bazy (`.env*`, `*.env`, `*.key`, `*.pem`, `credentials*`, `*.sqlite`, `*.db`) pomija z ostrzeżeniem w dzienniku; `*.przyklad` wchodzą | przez kontrolę zdrowia |
+
+Sprawdzenie: `systemctl list-timers kopia.timer zdrowie.timer zapis-kart.timer`, `journalctl -u kopia -n 5`, `journalctl -u zdrowie -n 7`.
+Przywracanie: `tar -xzf /home/panel/kopie/RRRR-MM-DD.tar.gz -C /tmp/przywracanie`, opis w `kopia-info.txt` w archiwum. Bazy z `sqlite/<ścieżka>` zastępują pliki pod `<ścieżka>` przy zatrzymanej usłudze (`sudo systemctl stop useme`).
+Kopia na tym samym dysku nie chroni przed utratą serwera: do tego Backups w Hetznerze (cały serwer, 7 ostatnich dni) albo `KOPIA_CEL` (zdalny rclone typu crypt, bo archiwum zawiera dane klientów). Zewnętrzny monitoring adresu panelu (UptimeRobot) zgłasza awarię całego serwera, której kontrola zdrowia na tym serwerze nie wyśle.

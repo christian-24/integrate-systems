@@ -18,6 +18,12 @@ termin: +2
 - [x] Makieta formularza | kto: codex | gdzie: chmura
 - [~] Naprawa testów formularza | kto: claude | gdzie: pc | kiedy: +0 | pora: dzień
 - [ ] Formularz: walidacja i wysyłka | kto: codex | gdzie: chmura | kiedy: +1 | pora: noc
+  cel: formularz sprawdza pola i wysyła zgłoszenie na adres zespołu
+  gotowe gdy: testy formularza przechodzą, a zgłoszenie testowe trafia do skrzynki
+  materiał: docs/ARCHITEKTURA.md#Komponenty
+  - [x] Walidacja pól po stronie przeglądarki
+  - [ ] Walidacja po stronie serwera
+  - [ ] Wysyłka przez operatora poczty
 - [ ] Ochrona przed spamem | kto: claude | gdzie: pc
 
 ## Etap: Publikacja strony

@@ -4,8 +4,8 @@
 - klient: tak
 - próg: pełna
 - stan: aktywny
-- maszyna: pc
-- repozytorium: PC `C:\Users\Guest\Desktop\CompanyAudits` (ostatni commit 2026-06-01, 70 niezacommitowanych zmian) i `oprogramowani-onepager` (strona, commit 2026-11-04)
+- maszyna: chmura
+- repozytorium: serwer `~/projekty/company-audits` i `~/projekty/asystent-useme` (GitHub, po migracji D13); strona `oprogramowani-onepager` na GitHubie; wcześniej PC `C:\Users\Guest\Desktop\CompanyAudits`
 - założono: 2026-05-17
 
 Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`).

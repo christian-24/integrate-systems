@@ -8,6 +8,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/data              projekty, etapy, zadania, kampanie, kalendarz i blok agents
   POST /api/task/update       zmienia pola zadania w ZADANIA.md albo w pliku kampanii
   POST /api/task/state        zmienia sam stan zadania
+  POST /api/task/detail       dopisuje albo zmienia jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…)
   POST /api/task/add          dopisuje zadanie do etapu, do „Do rozplanowania” albo do harmonogramu kampanii
   POST /api/stage/update      zmienia termin etapu
   POST /api/campaign/update   zmienia wynik i stan kampanii
@@ -20,6 +21,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/project/add       dopisuje folder do rejestru projektów (opcjonalnie zakłada pliki standardu)
   POST /api/project/remove    usuwa projekt z rejestru; pliki zostają
   POST /api/project/meta      zmienia pola karty projektu: faza, klient, próg (KARTA.md)
+  GET  /api/plik              tekst pliku .md/.txt z folderu projektu albo jego karty (?project=&path=&anchor=)
   GET  /terminy.ics           terminy etapów i publikacje jako kalendarz do subskrypcji (?k=klucz spoza komputera)
 
 Projekty pochodzą z rejestru ../projekty.json (python3 ../standard/projekt.py dodaj <folder>)
@@ -172,6 +174,8 @@ def load_projects(resolve=True):
         for p in out["projects"]:
             if p["lastDecision"]:
                 p["lastDecision"]["date"] = resolve_date(p["lastDecision"]["date"])
+            if p.get("nextStep"):
+                p["nextStep"]["date"] = resolve_date(p["nextStep"]["date"])
     return out, index
 
 
@@ -223,6 +227,115 @@ def update_task(body):
     except OSError:
         return 400, "Nie udało się zapisać zmiany."
     return (200, "") if ok else CONFLICT
+
+
+DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało")
+
+
+def update_detail(body):
+    """{"id", "title", "key", "value"}: jeden klucz szczegółów pod wierszem zadania (projekt.set_detail)."""
+    where, error = _locate(body.get("id", ""))
+    if error:
+        return error
+    key = str(body.get("key", "")).strip().lower()
+    if key not in DETAIL_KEYS:
+        return 400, "Nie zapisano: klucz %s." % ", ".join(DETAIL_KEYS)
+    try:
+        with _write_lock:
+            ok = projekt.set_detail(where[0], where[1], where[2], str(body.get("title", "")), key, body.get("value", ""))
+    except ValueError as e:
+        return 400, "Nie zapisano: %s." % e
+    except OSError:
+        return 400, "Nie udało się zapisać zmiany."
+    return (200, "") if ok else CONFLICT
+
+
+# ---------- odczyt materiałów zadania (GET /api/plik) ----------
+FILE_MAX = 200 * 1024
+FILE_TYPES = (".md", ".txt")
+HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
+
+
+def _inside(base, path):
+    try:
+        return os.path.commonpath([base, path]) == base
+    except ValueError:
+        return False
+
+
+def project_file(pid, rel):
+    """Ścieżka pliku materiału albo (None, komunikat). Tylko .md i .txt wewnątrz folderu projektu albo folderu
+    jego karty (KARTA.md może być dowiązaniem do szkice/); porównanie po realpath."""
+    rel = str(rel or "").strip().replace("\\", "/")
+    if not rel or "\x00" in rel or os.path.isabs(rel) or rel.startswith("~"):
+        return None, "Nie ma takiego pliku."
+    _, index = load_projects(resolve=False)
+    folder = index.get(pid)
+    if not folder:
+        return None, "Nie ma takiego projektu."
+    root = os.path.realpath(folder)
+    bases = [root]
+    card = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+    if card not in bases:
+        bases.append(card)
+    for base in bases:
+        path = os.path.realpath(os.path.join(base, rel))
+        if not any(_inside(b, path) for b in bases):
+            continue
+        if os.path.isfile(path):
+            if not path.lower().endswith(FILE_TYPES):
+                return None, "Panel pokazuje tylko pliki .md i .txt."
+            if os.path.getsize(path) > FILE_MAX:
+                return None, "Plik jest większy niż 200 KB."
+            return path, ""
+    return None, "Nie ma takiego pliku."
+
+
+def file_section(text, anchor):
+    """(tytuł, tekst) sekcji: nagłówek ## z numerem („5.”) albo z tekstem; najpierw poziom ##, potem każdy inny.
+    None, gdy takiej sekcji nie ma."""
+    want = str(anchor).strip().lstrip("#").strip()
+    num = re.match(r"^(\d+(?:\.\d+)*)\.?$", want)
+    lines, fence, heads = text.split("\n"), False, []
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            fence = not fence
+            continue
+        m = None if fence else HEADING.match(line.rstrip("\r"))
+        if m:
+            heads.append((i, len(m.group(1)), m.group(2)))
+
+    def match(title):
+        if num:
+            return re.match(r"^%s(?:\.(?!\d)|\)|\s|$)" % re.escape(num.group(1)), title) is not None
+        return title.lower() == want.lower() or projekt.slug(title) == projekt.slug(want)
+
+    for level in (2, None):
+        for n, (i, depth, title) in enumerate(heads):
+            if (level is None or depth == level) and match(title):
+                end = next((j for j, d, _ in heads[n + 1:] if d <= depth), len(lines))
+                return title, "\n".join(lines[i:end]).strip()
+    return None
+
+
+def read_project_file(query):
+    """GET /api/plik: (kod, odpowiedź)."""
+    q = parse_qs(query)
+    pid, rel, anchor = ((q.get(k) or [""])[0] for k in ("project", "path", "anchor"))
+    path, error = project_file(pid, rel)
+    if not path:
+        return 404, {"ok": False, "error": error}
+    text = projekt.read(path)
+    if text is None:
+        return 404, {"ok": False, "error": "Nie udało się odczytać pliku."}
+    h1 = next((m.group(2) for m in map(HEADING.match, text.split("\n")) if m and len(m.group(1)) == 1), "")
+    title = h1 or os.path.basename(path)
+    if anchor.strip():
+        found = file_section(text, anchor)
+        if not found:
+            return 404, {"ok": False, "error": "Nie ma takiej sekcji w pliku."}
+        title, text = found
+    return 200, {"ok": True, "path": rel.strip().replace("\\", "/"), "title": title, "text": text}
 
 
 def add_task(body):
@@ -389,6 +502,7 @@ def get_agents():
 
 
 WRITES = {"/api/task/state": change_task, "/api/task/update": lambda b: update_task(b),
+          "/api/task/detail": lambda b: update_detail(b),
           "/api/task/add": lambda b: add_task(b), "/api/stage/update": lambda b: update_stage(b),
           "/api/campaign/update": lambda b: update_campaign(b),
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
@@ -850,6 +964,11 @@ class Handler(BaseHTTPRequestHandler):
     def _redirect(self, where, headers=()):
         self._send(303, "", "text/plain; charset=utf-8", [("Location", where)] + list(headers))
 
+    def _https(self):
+        """Żądanie przyszło przez HTTPS: pośrednik (Caddy) ustawia X-Forwarded-Proto: https."""
+        proto = (self.headers.get("X-Forwarded-Proto") or "").split(",")[0].strip().lower()
+        return proto == "https"
+
     def _login(self):
         """POST /wejscie: formularz z polem haslo. Błędna próba: odpowiedź po 1 s, najwyżej 10 na minutę."""
         if self._client_local():
@@ -865,6 +984,8 @@ class Handler(BaseHTTPRequestHandler):
             given = ""
         if given and hmac.compare_digest(given.encode("utf-8"), TOKEN.encode("utf-8")):
             cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000" % (SESSION_COOKIE, session_value())
+            if self._https():
+                cookie += "; Secure"
             return self._redirect("/", [("Set-Cookie", cookie)])
         login_blocked(add=True)
         time.sleep(LOGIN_DELAY)
@@ -889,6 +1010,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(build_data(), ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if path == "/api/plik":
+            code, answer = read_project_file(url.query)
+            return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
         if path in ("/api/post", "/api/post/grafika"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])

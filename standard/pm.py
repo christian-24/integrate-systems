@@ -35,9 +35,9 @@ def is_day(value):
 
 def load(today):
     """Wszystkie projekty z datami bezwzględnymi."""
-    folders, source = [f for f, _, _ in projekt.all_folders()], "registry"   # rejestr i projekty ze zbieracza
+    folders, source = [(f, dec) for f, _, dec in projekt.all_folders()], "registry"   # rejestr i zbieracz
     if not folders:
-        folders, source = sorted(p for p in glob.glob(os.path.join(SAMPLES, "*")) if os.path.isdir(p)), "sample"
+        folders, source = [(p, None) for p in sorted(glob.glob(os.path.join(SAMPLES, "*"))) if os.path.isdir(p)], "sample"
 
     def day(value):
         m = REL.match(value or "")
@@ -45,13 +45,13 @@ def load(today):
 
     out = {"projects": [], "stages": [], "tasks": [], "campaigns": [], "source": source}
     seen = set()
-    for folder in folders:
+    for folder, decision in folders:
         base = pid = projekt.slug(os.path.basename(folder))
         n = 2
         while pid in seen:
             pid, n = "%s-%d" % (base, n), n + 1
         seen.add(pid)
-        d = projekt.read_project(folder, pid)
+        d = projekt.read_project(folder, pid, decision)
         out["projects"].append(d["project"])
         for k in ("stages", "tasks", "campaigns"):
             out[k] += d[k]
@@ -59,6 +59,9 @@ def load(today):
         item["date"] = day(item["date"])
     for c in out["campaigns"]:
         c["start"], c["end"] = day(c["start"]), day(c["end"])
+    for p in out["projects"]:
+        if p.get("nextStep"):
+            p["nextStep"]["date"] = day(p["nextStep"]["date"])
     return out
 
 
@@ -111,6 +114,12 @@ def facts(today=None):
     you = [t for t in open_tasks if t["executor"] == "ty" or t["needsYou"]]
     decisions = [t for t in you if t["needsYou"] or (is_day(t["date"]) and t["date"] <= tomorrow)]
     decisions.sort(key=lambda t: (t["date"] or "9999", t["title"]))
+    top = sorted(decisions, key=lambda t: importance(t, late(t), key))[:TOP]
+    active = {p["id"] for p in d["projects"] if p.get("state") == "active"}
+    no_next = [p for p in d["projects"] if p["id"] in active and not any(
+        t["project"] == p["id"] and is_day(t["date"]) and t["date"] <= week for t in open_tasks)]
+    no_date = [s for s in d["stages"] if s["project"] in active and not is_day(s["date"])
+               and not projekt.stage_done(s, d["tasks"])]
     projects = []
     for p in d["projects"]:
         mine = [t for t in d["tasks"] if t["project"] == p["id"] and t["kind"] != "publikacja"]
@@ -126,8 +135,13 @@ def facts(today=None):
         "today": key, "source": d["source"],
         "counts": {"you": len(you), "late": sum(1 for t in open_tasks if late(t)),
                    "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),
-                   "blocked": sum(1 for t in open_tasks if t["state"] == "blocked")},
+                   "blocked": sum(1 for t in open_tasks if t["state"] == "blocked"),
+                   "noNextStep": len(no_next), "stagesNoDate": len(no_date)},
         "decisions": [brief(t) for t in decisions],
+        "top": [brief(t) for t in top],
+        "topMinutes": sum(t["minutes"] for t in top),
+        "noNextStep": [{"project": p["name"], "nextStep": p.get("nextStep")} for p in no_next],
+        "stagesNoDate": [stage_brief(s) for s in no_date],
         "stagesLate": [stage_brief(s) for s in d["stages"] if s["state"] == "late"],
         "stagesRisk": [stage_brief(s) for s in d["stages"] if s["state"] == "risk"],
         "blocked": [brief(t) for t in open_tasks if t["state"] == "blocked"],
@@ -142,6 +156,20 @@ def facts(today=None):
     }
 
 
+TOP = 3
+NEED_RANK = {"zgoda": 0, "odbiór": 1}
+
+
+def importance(t, is_late, today):
+    """Kolejność najważniejszych decyzji: po terminie, potem najbliższa data, zgoda przed odbiorem, krótsze najpierw."""
+    return (0 if is_late else 1, t["date"] if is_day(t["date"]) else "9999", NEED_RANK.get(t["needsYou"], 2),
+            t["minutes"] or 9999, t["title"])
+
+
+def minutes_text(m):
+    return "%d min" % m if m else "czas nieznany"
+
+
 def when(value, today):
     if not is_day(value):
         return "bez daty"
@@ -154,8 +182,9 @@ def text(f):
     c = f["counts"]
     out = ["Raport PM · %s, %d %s %d%s" % (DNI[today.weekday()], today.day, MD[today.month - 1], today.year,
                                           " · projekty przykładowe" if f["source"] == "sample" else ""),
-           "Wymaga Ciebie %d · Po terminie %d · Zagrożone etapy %d · Zablokowane %d"
-           % (c["you"], c["late"], c["risk"], c["blocked"])]
+           "Wymaga Ciebie %d · Po terminie %d · Zagrożone etapy %d · Zablokowane %d · Bez następnego kroku %d"
+           " · Etapy bez terminu %d"
+           % (c["you"], c["late"], c["risk"], c["blocked"], c["noNextStep"], c["stagesNoDate"])]
 
     def block(title, rows):
         if rows:
@@ -164,14 +193,27 @@ def text(f):
     def task(t, extra=""):
         return "%s · %s%s" % (t["project"], t["title"], extra)
 
-    block("DECYZJE DLA CIEBIE", [
-        "◆ %-7s %s" % (t["needsYou"] or "Twoje", task(t, " (%s)" % when(t["date"], today)))
-        for t in f["decisions"]])
+    def decision(t):
+        return "◆ %-7s %s" % (t["needsYou"] or "Twoje", task(t, " (%s, %s)" % (when(t["date"], today),
+                                                                             minutes_text(t["minutes"]))))
+
+    rest = [t for t in f["decisions"] if t not in f["top"]]
+    rows = []
+    if f["top"]:
+        unknown = sum(1 for t in f["top"] if not t["minutes"])
+        rows = ["Najważniejsze %d (%s%s):" % (len(f["top"]), minutes_text(f["topMinutes"]),
+                                             "; bez czasu: %d" % unknown if unknown and f["topMinutes"] else "")] \
+            + [decision(t) for t in f["top"]] + (["Pozostałe:"] if rest else []) + [decision(t) for t in rest]
+    block("DECYZJE DLA CIEBIE", rows)
     block("RYZYKA",
           ["%s %s: %s · etap %s (termin %s, %d/%d)" % (STAGE[s["state"]] + (s["project"], s["title"],
                                                         when(s["date"], today), s["done"], s["total"]))
            for s in f["stagesLate"] + f["stagesRisk"]]
-          + ["■ zablokowane: %s" % task(t, " (%s)" % t["blocked"] if t["blocked"] else "") for t in f["blocked"]])
+          + ["■ zablokowane: %s" % task(t, " (%s)" % t["blocked"] if t["blocked"] else "") for t in f["blocked"]]
+          + ["□ bez następnego kroku: %s (brak otwartego zadania z datą w ciągu 7 dni)" % p["project"]
+             for p in f["noNextStep"]]
+          + ["□ etap bez terminu: %s · etap %s (%d/%d)" % (s["project"], s["title"], s["done"], s["total"])
+             for s in f["stagesNoDate"]])
     block("DZIŚ", [task(t, " · " + (t["executor"] or "bez wykonawcy")) for t in f["today_tasks"]])
     block("JUTRO", [task(t, " · " + (t["executor"] or "bez wykonawcy")) for t in f["tomorrow_tasks"]])
     block("PROJEKTY", [
