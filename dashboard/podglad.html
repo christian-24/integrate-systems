@@ -1713,6 +1713,13 @@ document.addEventListener('keydown',ev=>{
   if(k==='g'){gWait=Date.now();return}
 });
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';render(true);window.scrollTo(0,0)});
+// powrót do aplikacji albo karty (telefon, Dock): dane od razu, bez czekania na licznik
+let wakeAt=0;
+const wake=()=>{if(!LIVE||document.visibilityState!=='visible'||Date.now()-wakeAt<3000)return;wakeAt=Date.now();clearTimeout(timer);load()};
+document.addEventListener('visibilitychange',wake);
+window.addEventListener('focus',wake);
+window.addEventListener('pageshow',ev=>{if(ev.persisted)wake()});
+window.addEventListener('online',wake);
 if(LIVE)load();else{D=normalize(PREVIEW);render(true)}
 })();
 </script>
