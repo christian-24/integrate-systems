@@ -53,7 +53,7 @@ termin: 2026-12-23
 - [x] Metryki: metryki.md w repozytorium, pomiar startowy 2026-11-18: 0 kont, 0 aktywnych, 0 płacących
 - [ ] Pomiar tygodniowy w metryki.md (poniedziałki) | kto: ty | kiedy: 2026-11-23 | czas: 10
 - [x] Plan pierwszych 10 kont do 30.11: marketing/plan-10-kont.md, przyjęty wariant B (2026-11-18)
-- [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23 | wymaga: zgoda
+- [ ] Decyzja go/no-go: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot | kto: ty | kiedy: 2026-12-23
 
 ## Etap: Pierwsze 10 kont (wariant B)
 termin: 2026-11-30
@@ -70,7 +70,7 @@ termin: 2026-11-30
 - [ ] Post 4, przypomnienia do partii 2, zgody do rejestr-zgod.md | kto: ty | kiedy: 2026-11-27 | czas: 40
 - [ ] Film C, ostatnie wiadomości do znajomych | kto: ty | kiedy: 2026-11-28 | czas: 40
 - [ ] Wiadomość do nowych kont bez generacji, tabela kanałów w metryki.md | kto: ty | kiedy: 2026-11-29 | czas: 30
-- [ ] Checkpoint: pomiar i decyzja według planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 20 | wymaga: zgoda
+- [ ] Checkpoint: pomiar i decyzja według planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 20
 
 ## Do rozplanowania
 
