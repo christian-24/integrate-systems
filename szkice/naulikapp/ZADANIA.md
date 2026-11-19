@@ -98,21 +98,25 @@ termin: 2026-12-13
   - [ ] grupy żeglarskie i kluby: osoby, które odpowiedzą na post ze szkicu zaproszenia
   - [ ] przy każdej osobie adres konta Google (potrzebny przy liście e-mail w Play Console)
   Listę osób znasz tylko Ty. Trzymaj ją w menedżerze haseł albo w notatce na Macu, nie w repozytorium.
-- [ ] Wskaż zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
+- [~] Wskaż zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
   cel: wiadomo, które z zadań T48 muszą wejść przed podpisanym buildem 24.11
   gotowe gdy: w wynik: każda pozycja z kroków oznaczona „przed v1.0.0” albo „po” z uzasadnieniem
   materiał: docs/backlog/STATUS.md
-  - [ ] T48a
-  - [ ] T48e
-  - [ ] T48g
-  - [ ] T48h
-  - [ ] T48m
-  - [ ] T48n
-  - [ ] T48q
-  - [ ] T48t
-  - [ ] T48v
-  - [ ] T48w
+  - [x] T48a
+  - [x] T48e
+  - [x] T48g
+  - [x] T48h
+  - [x] T48m
+  - [x] T48n
+  - [x] T48q
+  - [x] T48t
+  - [x] T48v
+  - [x] T48w
   Właściciel (2026-11-14): realizujemy wszystko, co niezbędne przed v1.0.0.
+  wynik: żadne nie jest niezbędne, wszystkie „po”. T48a po: makieta to logowanie Apple/Google, v1 nie ma kont. T48e po: Dziennik po redesignie to lista rejsów, filtry i FAB wpisów nie mają zastosowania. T48g po: przebudowa ekranu, obecny działa. T48h po: błędy naprawione w RC1, zostaje wygląd. T48m po: baner Premium i „Wyloguj” byłyby atrapami. T48n po: zarzut o ikonie nieaktualny. T48q po: powaga i zdjęcie to nowe funkcje z migracją bazy. T48t po: kosmetyka, przegląd 27.10 „OK”. T48v po: brak tylko przycisków zoomu i kompasu. T48w po: moduł poza MVP. Pełne uzasadnienie: docs/backlog/v1.0.2/T48-zakres-v1.0.0.md
+  decyzja: zatwierdź, że żadne zadanie T48 nie wchodzi przed buildem 24.11 (makiety T48 zastąpił redesign z 08–10.2026, a RC1 ma przegląd UI z 27.10)
+  zostało: ocena z kodu i przeglądu UI z 27.10, bez uruchamiania aplikacji; plik niezatwierdzony commitem (brak uprawnień do indeksu git w katalogu roboczym), zatwierdzi panel
+  następne: Przejrzyj zadania T48 pod nowy prototyp (zamknij nieaktualne, przepisz resztę) | kto: claude | kiedy: 2026-12-15
 - [ ] Uruchom pełną suitę testów na PR #124 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: wiadomo, czy PR #124 (fix/rc1-nagrania, marketing/kampania-rc1) można zmergować
   gotowe gdy: w wynik: liczba testów zaliczonych i niezaliczonych na gałęzi PR #124
@@ -145,6 +149,7 @@ termin: 2026-12-13
   gotowe gdy: każde wskazane zadanie T48 zrobione na gałęzi uruchomienia (panel zapisuje gałąź i listę zmian); testy zielone
   Zadanie T48, którego nie da się zrobić przed 24.11: [!] z blokadą i nazwą zadania; nie zamykaj zadania bez niego.
   materiał: docs/backlog/STATUS.md
+  materiał: docs/backlog/v1.0.2/T48-zakres-v1.0.0.md
 - [ ] Zapisz politykę prywatności na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
   cel: treść polityki z danymi wydawcy, HTML, odpowiedzi do Play Console i poprawiony ekran polityki na gałęzi uruchomienia
   gotowe gdy: zmiany w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); dane wydawcy z formularza wpisane; testy zielone

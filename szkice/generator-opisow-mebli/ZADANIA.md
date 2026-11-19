@@ -148,13 +148,15 @@ termin: 2026-11-30
   - [ ] panel, Agenci: uruchomienie „Załóż rejestr kontaktów…”, diff przejrzany, scalone do master
   Plik leży w indeksie gałęzi bez commita (zostało: zadania „Załóż rejestr kontaktów…”), dlatego scalenie w panelu wymaga najpierw commita.
   wynik: marketing/kontakty.md jest na master od commita d90f5fc (19.11); sprawdził Claude, zamknięte bez Twojej pracy
-- [ ] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
+- [~] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
   cel: przy każdej firmie z partii 1–3 gotowa wiadomość 1 ze zdaniem o tej firmie, do skopiowania bez poprawek
   gotowe gdy: plik wiadomosci/wiadomosc-1-partie-1-3.md w folderze karty ma 24 sekcje (firma, partia, wiadomość 1 ze szkicu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu firmy); bez nazwisk i adresów; nic nie wysłane
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/outreach/drafts/
   materiał: STYL.md
   Firma bez draftu w marketing/outreach/drafts/: zdanie z punktu 5 planu (kolumna „Dlaczego te”) i dopisek „bez draftu” w sekcji.
+  wynik: wiadomosci/wiadomosc-1-partie-1-3.md (folder karty): 24 sekcje (firma, partia, draft, wiadomość 1 według szablonu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu); wszystkie 24 firmy miały draft; bez nazwisk, adresów i linków; nic nie wysłane
+  decyzja: 14 sekcji ma wiersz „uwaga”. STIPA i Ramaro mają już strony po niemiecku (plan każe takie pomijać): wysłać czy pominąć? Przy Alan Meble, Meble North, Miloni i VERYSIMPL draft nie potwierdza sprzedaży za granicę, więc pytanie o opisy po niemiecku może nie trafić: zostawić szablon czy pominąć te firmy? Fakty pochodzą z researchu z czerwca i lipca, nie sprawdzałem ich ponownie.
 - [ ] Wyślij zaproszenia LinkedIn do 24 firm z partii 1–3 | kto: ty | kiedy: 2026-11-21 | czas: 45 | licznik: zaproszenia
   cel: 24 zaproszenia do osób decyzyjnych w firmach z partii 1–3, bez oferty
   gotowe gdy: przy każdej firmie krok zaznaczony: zaproszenie wysłane albo pominięta (nie działa, ma już opisy po niemiecku)
