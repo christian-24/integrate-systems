@@ -1,0 +1,52 @@
+{
+ "tytul": "Objaśnienie: problem, skutek, integracja",
+ "opis": "Plansze bez nagrania strony: problem z przepisywaniem zamówień, skutek, integracja, audyt na start. Hak od pierwszej sekundy (bez planszy z logo), na końcu plansza marki z adresem.",
+ "dla_wlasciciela": "Cztery plansze: problem z przepisywaniem zamówień, jego skutek, integracja i audyt na start. Do postów o jednym konkretnym problemie firmy.",
+ "typ": "objasnienie",
+ "parametry": {
+  "problem": "Zamówienie z Allegro przepisujesz *ręcznie* do ERP",
+  "skutek": "Pomyłki w stanach i *spóźnione* wysyłki",
+  "rozwiazanie": "Integracja przenosi zamówienia i stany *sama*",
+  "pierwszy_krok": "Zaczynamy od *audytu* Twojego procesu",
+  "podpis_skutek": "Każde przepisanie to ryzyko błędu",
+  "podpis_rozwiazanie": "ERP i sprzedaż bez przepisywania",
+  "podpis_krok": "Najpierw rozmowa i mapa procesu"
+ },
+ "etykiety": {
+  "problem": "Plansza 1: problem (hak)",
+  "skutek": "Plansza 2: skutek",
+  "rozwiazanie": "Plansza 3: rozwiązanie",
+  "pierwszy_krok": "Plansza 4: pierwszy krok",
+  "podpis_skutek": "Podpis 2",
+  "podpis_rozwiazanie": "Podpis 3",
+  "podpis_krok": "Podpis 4"
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{problem}}"
+  },
+  {
+   "tekst": "{{skutek}}",
+   "podpis": "{{podpis_skutek}}"
+  },
+  {
+   "tekst": "{{rozwiazanie}}",
+   "podpis": "{{podpis_rozwiazanie}}"
+  },
+  {
+   "tekst": "{{pierwszy_krok}}",
+   "podpis": "{{podpis_krok}}"
+  }
+ ],
+ "wymagane": [
+  "problem",
+  "skutek",
+  "rozwiazanie"
+ ],
+ "limity": {
+  "problem": {
+   "max": 60
+  }
+ }
+}

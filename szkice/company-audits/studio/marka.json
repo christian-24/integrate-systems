@@ -1,0 +1,33 @@
+{
+ "nazwa": "Oprogramowani",
+ "zrodlo": "kolory ze strony oprogramowani.com (repozytorium oprogramowani-onepager, site/src/OnePager.jsx: --paper, --ink, --red, --wood); strona używa Archivo Black i Space Grotesk, których nie ma na serwerze, więc w filmach Inter (tytuły Inter:Black, kroje zmienne: grubość przez obrys) do czasu instalacji statycznych krojów OFL; muzyki i logo brak (do dodania: plik w studio/ z licencją zapisaną tutaj)",
+ "strony": [
+  "oprogramowani.com"
+ ],
+ "kolory": {
+  "tlo": "#f6f3ec",
+  "tekst": "#161310",
+  "akcent": "#d93425",
+  "akcent2": "#7d5526"
+ },
+ "czcionki": {
+  "tytul": "Inter:Black",
+  "tekst": "Inter:Medium",
+  "napisy": "Inter:SemiBold"
+ },
+ "napisy": {
+  "rozmiar": 58,
+  "kolor": "#f6f3ec",
+  "tlo": "#161310",
+  "krycie": 0.9
+ },
+ "plansza_startowa": {
+  "tytul": "Oprogramowani",
+  "podtytul": "Integracje ERP i sprzedaży dla firm meblarskich"
+ },
+ "plansza_koncowa": {
+  "tytul": "Porozmawiajmy o Twoim procesie",
+  "podtytul": "Na początek audyt procesów",
+  "adres": "oprogramowani.com"
+ }
+}

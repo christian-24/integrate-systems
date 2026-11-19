@@ -1,0 +1,166 @@
+{
+ "tytul": "Pokaz generatora: formularz, opis PL i DE",
+ "opis": "Nagranie generatora na opisarnia.pl: wpisujesz mebel, wymiary, materiał i kolor, dostajesz opis po polsku, potem po niemiecku. Na początku hak posta (sam tytuł, bez podtytułu marki), na końcu plansza marki z ofertą. Treść posta: hak, mebel i kategoria są wymagane.",
+ "dla_wlasciciela": "Nagranie strony opisarnia.pl: widz widzi, jak ktoś wpisuje mebel, a po kilku sekundach dostaje opis po polsku i po niemiecku. Do postów o tym, jak działa generator.",
+ "typ": "pokaz",
+ "parametry": {
+  "hak": "Opis mebla na Allegro i do Niemiec w 10 sekund",
+  "typ_mebla": "Komoda Nordic, 4 szuflady",
+  "kategoria": "komoda",
+  "szerokosc": "80",
+  "wysokosc": "90",
+  "glebokosc": "40",
+  "material": "płyta laminowana, fronty MDF",
+  "kolor": "biały mat i dąb",
+  "napis_start": "Tak to działa",
+  "napis_typ": "Wpisujesz typ mebla",
+  "napis_wymiary": "Wymiary, materiał i kolor",
+  "napis_generuj": "Profil Allegro i „Generuj opis”",
+  "napis_czekaj": "Kilka sekund…",
+  "napis_pl": "Opis po polsku gotowy",
+  "napis_de": "Ten sam mebel po niemiecku"
+ },
+ "wymagane": [
+  "hak",
+  "typ_mebla",
+  "kategoria"
+ ],
+ "limity": {
+  "hak": {
+   "max": 60
+  },
+  "typ_mebla": {
+   "max": 60
+  },
+  "kategoria": {
+   "opcje": [
+    "sofa",
+    "szafa",
+    "stół",
+    "krzesło",
+    "komoda",
+    "fotel",
+    "łóżko",
+    "regał",
+    "biurko",
+    "inne"
+   ]
+  },
+  "szerokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "wysokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "glebokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "material": {
+   "max": 60
+  },
+  "kolor": {
+   "max": 40
+  }
+ },
+ "etykiety": {
+  "hak": "Hak na początku",
+  "typ_mebla": "Mebel",
+  "kategoria": "Kategoria",
+  "szerokosc": "Szerokość (cm)",
+  "wysokosc": "Wysokość (cm)",
+  "glebokosc": "Głębokość (cm)",
+  "material": "Materiał",
+  "kolor": "Kolor",
+  "napis_start": "Napis 1: start",
+  "napis_typ": "Napis 2: mebel",
+  "napis_wymiary": "Napis 3: wymiary",
+  "napis_generuj": "Napis 4: generowanie",
+  "napis_czekaj": "Napis 5: czekanie",
+  "napis_pl": "Napis 6: opis PL",
+  "napis_de": "Napis 7: opis DE"
+ },
+ "plansza_startowa": {
+  "tytul": "{{hak}}"
+ },
+ "url": "https://opisarnia.pl/generator",
+ "logowanie": "https://opisarnia.pl/logowanie",
+ "kroki": [
+  {
+   "napis": "{{napis_start}}",
+   "przewin": "#g-nazwa",
+   "pauza": 1.2
+  },
+  {
+   "napis": "{{napis_typ}}",
+   "wpisz": [
+    "#g-nazwa",
+    "{{typ_mebla}}"
+   ]
+  },
+  {
+   "wybierz": [
+    "#g-kategoria",
+    "{{kategoria}}"
+   ]
+  },
+  {
+   "napis": "{{napis_wymiary}}",
+   "wpisz": [
+    "#g-w",
+    "{{szerokosc}}"
+   ]
+  },
+  {
+   "wpisz": [
+    "#g-h",
+    "{{wysokosc}}"
+   ]
+  },
+  {
+   "wpisz": [
+    "#g-d",
+    "{{glebokosc}}"
+   ]
+  },
+  {
+   "wpisz": [
+    "#g-mat",
+    "{{material}}"
+   ]
+  },
+  {
+   "rozwin": "details.st-wiecej"
+  },
+  {
+   "wpisz": [
+    "#g-kolor",
+    "{{kolor}}"
+   ]
+  },
+  {
+   "napis": "{{napis_generuj}}",
+   "kliknij": "[aria-label='Wybierz marketplace'] button:has-text('Allegro')"
+  },
+  {
+   "kliknij": "button:has-text('Generuj opis')"
+  },
+  {
+   "napis": "{{napis_czekaj}}",
+   "czekaj_na": "button:has-text('Kopiuj')",
+   "limit": 90
+  },
+  {
+   "napis": "{{napis_pl}}",
+   "przewin": "[role=tablist][aria-label='Język opisu']",
+   "pauza": 3.5
+  },
+  {
+   "napis": "{{napis_de}}",
+   "kliknij": "[role=tab]:has-text('Niemiecki')",
+   "pauza": 4
+  }
+ ]
+}

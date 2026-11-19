@@ -1,0 +1,33 @@
+{
+ "nazwa": "NaulikApp",
+ "zrodlo": "kolory z motywu dziennego aplikacji (repozytorium naulikapp, lib/core/ui/app_colors.dart: bg, text, primary, accent; DECYZJE.md: jasny motyw navy, akcent bursztynowy). W filmach: akcent = bursztyn (wyróżnienia, kreski, pasek postępu), granat = tło plansz marki, napisy na ciemnym tle tekstu. Czcionka aplikacji niedostępna na serwerze, więc Inter (kroje zmienne: grubość przez obrys); strony www brak; wezwanie na końcu tymczasowe (zamknięty test Google Play), do potwierdzenia w KARTA.md, pytanie 6; muzyki i logo brak (do dodania: plik w studio/ z licencją zapisaną tutaj)",
+ "kolory": {
+  "tlo": "#f7fbfd",
+  "tekst": "#0c1218",
+  "akcent": "#b77610",
+  "akcent2": "#002b4f"
+ },
+ "czcionki": {
+  "tytul": "Inter:Bold",
+  "tekst": "Inter:Medium",
+  "napisy": "Inter:SemiBold"
+ },
+ "napisy": {
+  "rozmiar": 58,
+  "kolor": "#f7fbfd",
+  "tlo": "#0c1218",
+  "krycie": 0.88
+ },
+ "plansza_startowa": {
+  "tytul": "NaulikApp",
+  "podtytul": "Dziennik pokładowy w telefonie",
+  "tlo": "#002b4f",
+  "kolor": "#f6f9fb"
+ },
+ "plansza_koncowa": {
+  "tytul": "Szukamy testerów na Androida",
+  "podtytul": "Napisz w komentarzu, wyślemy zaproszenie do testu",
+  "tlo": "#002b4f",
+  "kolor": "#f6f9fb"
+ }
+}

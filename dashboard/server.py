@@ -223,6 +223,8 @@ def change_task(body):
             ok = projekt.set_state(folder, parts[1], int(parts[2]), str(body.get("title", "")), str(body.get("state", "")))
     except (ValueError, OSError):
         return 400, "Nie udało się zapisać zmiany."
+    if ok and body.get("state") == "done":
+        note_closed(parts[0], parts[1], str(body.get("title", "")))
     return (200, "") if ok else (409, "Plik zmienił się od ostatniego odczytu. Odświeżam listę.")
 
 
@@ -408,6 +410,7 @@ def close_checked(body):
                               "zamknięte na podstawie kontroli serwera z %s" % stamp)
     except (ValueError, OSError):
         return 400, "Nie udało się zapisać zmiany."
+    note_closed(t["project"], t["file"], title)
     return 200, "", {"check": check, "at": stamp}
 
 
@@ -734,9 +737,12 @@ def get_recorder():
 
 
 def record_film(body):
-    """POST /api/film/nagraj {project, date}: nagranie filmu posta w tle."""
-    return get_recorder().start(post_folder(str(body.get("project") or ""), str(body.get("date") or "")),
-                                str(body.get("title") or ""))
+    """POST /api/film/nagraj {project, date}: nagranie filmu posta w tle (widok Teraz widzi je od razu)."""
+    res = get_recorder().start(post_folder(str(body.get("project") or ""), str(body.get("date") or "")),
+                               str(body.get("title") or ""))
+    with _films_lock:
+        _films_cache["at"] = 0.0
+    return res
 
 
 def film_account(body):
@@ -762,8 +768,7 @@ def fix_post(body):
     title = projekt._clean("Popraw post na %s: %s" % (day, note), 120)
     detail = {"cel": "post %s poprawiony według uwagi właściciela" % rel,
               "gotowe gdy": "w %s/post.md (i scenariusz.json przy filmie) uwzględniona uwaga z wiersza poprawka:" % rel,
-              "poprawka": note, "materiał": [rel + "/post.md"] + ([rel + "/scenariusz.json"]
-                                                                if os.path.isfile(os.path.join(folder, film.SCENARIO)) else [])}
+              "poprawka": note, "materiał": [rel + "/post.md"] + film_refs(folder)}
     try:
         with _write_lock:
             get_agents()._add_task(proj, pid, title, {"executor": "claude", "machine": "cloud",
@@ -773,31 +778,181 @@ def fix_post(body):
     return 200, "", {"title": title}
 
 
-def auto_record():
-    """Co minutę: post ze scenariuszem bez filmu albo ze scenariuszem nowszym niż film → nagranie (raz na wersję)."""
-    rec = get_recorder()
-    if not rec.available():
-        return
-    _, index = load_projects(resolve=False)
-    for folder in index.values():
-        base = os.path.join(os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))), "posty")
-        try:
-            names = os.listdir(base)
-        except OSError:
+def film_change(body):
+    """POST /api/film/zmien {project, date, params: {nazwa: wartość}} albo {…, slides: [{n, tekst, podpis}]}: zmiana
+    treści filmu wprost w panelu (bez agenta). Zapis w scenariusz.json po tych samych kontrolach co nagranie
+    (film.apply_changes), potem nagranie od nowa (gdy nagrywarka jest wolna; inaczej czeka w kolejce)."""
+    pid, day = str(body.get("project") or ""), str(body.get("date") or "")
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    params, slides = body.get("params"), body.get("slides")
+    if not params and not slides:
+        return 400, "Podaj, co zmienić."
+    if params is not None and not (isinstance(params, dict) and len(params) <= 40
+                                   and all(isinstance(k, str) and len(str(v)) <= 300 for k, v in params.items())):
+        return 400, "Zmiany: najwyżej 40 pól po 300 znaków."
+    if slides is not None and not (isinstance(slides, list) and len(slides) <= film.MAX_CARDS):
+        return 400, "Zmiany plansz: lista najwyżej %d plansz." % film.MAX_CARDS
+    try:
+        with _write_lock:
+            info = film.apply_changes(folder, params=params or None, slides=slides or None)
+    except film.ScenarioChanged:
+        return 409, "Scenariusz filmu zmienił się w tym czasie (np. zapisał go agent). Odśwież i zmień jeszcze raz."
+    except ValueError as e:
+        return 400, "Nie zapisano: %s." % e
+    except OSError as e:
+        return 409, "Nie zapisano scenariusza (%s)." % e
+    code, msg, *rest = get_recorder().start(folder, str(body.get("title") or ""))
+    with _films_lock:
+        _films_cache["at"] = 0.0
+    recording = code == 202
+    return 200, "", {"recording": recording, "note": "" if recording else msg, "seconds": info.get("seconds", 0)}
+
+
+STUDIO_KINDS = {"marka": "plansze i wygląd marki", "szablon": "nowy szablon filmu"}
+
+
+def studio_request(body):
+    """POST /api/studio/popros {project, rodzaj: marka|szablon, uwaga}: zadanie dla agenta „Zmień studio filmów …”
+    (zmiana dla wszystkich filmów projektu: marka.json albo nowy szablon)."""
+    pid, kind, note = (str(body.get("project") or ""), str(body.get("rodzaj") or ""),
+                       str(body.get("uwaga") or "").strip())
+    data, index = load_projects(resolve=False)
+    folder = index.get(pid)
+    if not folder:
+        return 404, "Nie ma takiego projektu."
+    if kind not in STUDIO_KINDS:
+        return 400, "Rodzaj: marka albo szablon."
+    if not 3 <= len(note) <= 1000:
+        return 400, "Napisz, co zmienić (do 1000 znaków)."
+    title = projekt._clean("%s%s: %s" % (agents.STUDIO_TASK, STUDIO_KINDS[kind], note), 120)
+    _templates, refs = agents.Manager.studio_refs(folder)
+    detail = {"cel": "studio filmów projektu zmienione według uwagi właściciela (%s), dla wszystkich filmów"
+                     % STUDIO_KINDS[kind],
+              "gotowe gdy": ("studio/marka.json zmienione według uwagi; python3 film.py sprawdz przechodzi dla postów "
+                             "z dniem od dziś" if kind == "marka" else
+                             "nowy plik studio/szablony/<nazwa>.json z polami tytul, opis, dla_wlasciciela, wymagane; "
+                             "python3 film.py sprawdz przechodzi dla posta z tym szablonem i dla wszystkich postów od "
+                             "dziś, które używają zmienionego szablonu; nazw parametrów szablonu używanego w postach "
+                             "nie zmieniasz i takiego szablonu nie usuwasz"),
+              "poprawka": note, "materiał": refs or ["studio/"]}
+    try:
+        with _write_lock:
+            get_agents()._add_task(folder, pid, title, {"executor": "claude", "machine": "cloud",
+                                                        "date": datetime.date.today().isoformat()}, detail)
+    except (ValueError, OSError, StopIteration) as e:
+        return 409, "Nie dodano zadania: %s" % e
+    return 200, "", {"title": title}
+
+
+def film_refs(folder):
+    """Materiał filmu posta dla agenta: scenariusz, użyty szablon studia i marka (ścieżki względem karty)."""
+    if not os.path.isfile(os.path.join(folder, film.SCENARIO)):
+        return []
+    out = ["posty/%s/%s" % (os.path.basename(folder), film.SCENARIO)]
+    studio = film.studio_dir(folder)
+    name = film.describe(folder).get("template")
+    if name and film.NAME_RE.match(name) and os.path.isfile(os.path.join(studio, film.TEMPLATES, name + ".json")):
+        out.append("%s/%s/%s.json" % (film.STUDIO, film.TEMPLATES, name))
+    if os.path.isfile(os.path.join(studio, film.BRAND)):
+        out.append("%s/%s" % (film.STUDIO, film.BRAND))
+    return out
+
+
+def studio_summary(index):
+    """Studio filmów projektów (folder studio/ obok KARTA.md): {projekt: {"templates": [{"name", "kind", "kindLabel",
+    "desc", "params", "labels", "error", "uses"}], "brand": {"name", "errors", "colors", "intro", "outro", "sites"}
+    albo None}}. "uses": dni postów (posty/<dzień>-…/scenariusz.json) z tym szablonem. Projekty bez studia pominięte."""
+    out = {}
+    for pid, folder in sorted(index.items()):
+        card = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        studio = os.path.join(card, film.STUDIO)
+        if not os.path.isdir(studio):
             continue
-        for n in names:
-            pf = os.path.join(base, n)
-            sc = os.path.join(pf, film.SCENARIO)
-            if not os.path.isfile(sc):
+        brand, errors, exists = film.load_brand(studio)
+        uses = {}
+        try:
+            posts = sorted(os.listdir(os.path.join(card, "posty")))
+        except OSError:
+            posts = []
+        for n in posts:
+            try:
+                with open(os.path.join(card, "posty", n, film.SCENARIO), encoding="utf-8") as f:
+                    raw = json.load(f)
+            except (OSError, ValueError):
                 continue
-            mt = os.path.getmtime(sc)
-            fm = publikacja.Publisher.film(pf)
-            st = film.read_state(pf)
-            if (fm and os.path.getmtime(fm) >= mt) or st.get("state") == "running" or st.get("scenario") == mt:
-                continue
-            film.write_state(pf, state="queued", scenario=mt)
-            rec.start(pf, n)
-            return                              # jedno nagranie naraz
+            name = raw.get("szablon") if isinstance(raw, dict) else None
+            if isinstance(name, str) and POST_DAY.match(n[:10]):
+                uses.setdefault(name, []).append(n[:10])
+        templates = film.list_templates(studio)
+        today = datetime.date.today().isoformat()
+        names = {t["name"] for t in templates}
+        for name, days in uses.items():          # posty ze scenariuszem wskazującym szablon, którego już nie ma
+            if name not in names and any(d >= today for d in days):
+                templates.append({"name": name, "title": name, "kind": "pokaz", "kindLabel": film.KINDS["pokaz"],
+                                  "desc": "", "forOwner": "", "params": [], "labels": {}, "required": [],
+                                  "error": "brak pliku studio/szablony/%s.json" % name})
+        for t in templates:
+            t["uses"] = uses.get(t["name"], [])
+            # nadchodzące posty z tym szablonem, których scenariusz się nie nagra (np. po zmianie szablonu)
+            t["broken"] = [n[:10] for n in posts if n[:10] in t["uses"] and n[:10] >= today
+                           and film.describe(os.path.join(card, "posty", n))["error"]]
+            t["sample"] = ""                    # ostatni post z nagranym filmem z tego szablonu (przykład w studiu)
+            for n in reversed(posts):
+                if n[:10] in t["uses"] and publikacja.Publisher.film(os.path.join(card, "posty", n)):
+                    t["sample"] = n[:10]
+                    break
+
+        def card_of(key):
+            c = brand.get(key) or None
+            return {"title": c.get("tytul", ""), "subtitle": c.get("podtytul", ""), "address": c.get("adres", ""),
+                    "seconds": film.brand_time(c, key)[0], "bg": c.get("tlo") or brand["kolory"]["tekst"],
+                    "fg": c.get("kolor") or brand["kolory"]["tlo"]} if c else None
+        out[pid] = {"templates": templates,
+                    "brand": {"name": brand.get("nazwa") or "", "errors": errors[:3],
+                              "colors": dict(brand["kolory"]) if not errors else {},
+                              "intro": card_of("plansza_startowa") if not errors else None,
+                              "outro": card_of("plansza_koncowa") if not errors else None,
+                              "sites": list(brand.get("strony") or []),
+                              "music": bool(brand.get("muzyka")) and not errors,
+                              "logo": bool(brand.get("logo")) and not errors,
+                              "caption": {"color": (brand.get("napisy") or {}).get("kolor", ""),
+                                          "bg": (brand.get("napisy") or {}).get("tlo", "")} if not errors else None}
+                    if exists else None}
+    return out
+
+
+def auto_record():
+    """Co minutę: post ze scenariuszem bez filmu albo ze scenariuszem nowszym niż film → nagranie (raz na wersję).
+    Jedno nagranie naraz: gdy coś się nagrywa, reszta czeka w kolejce (od najstarszego scenariusza)."""
+    rec = get_recorder()
+    pokaz = rec.available()
+    if not (pokaz or rec.available("objasnienie")):      # objaśnienia nagrywa się z samym ffmpeg
+        return
+    with rec.lock:
+        if rec.busy:
+            return
+    data, index = load_projects(resolve=False)
+    published = published_days(data["tasks"])
+    with rec.lock:
+        busy = set(os.path.realpath(b) for b in rec.busy)
+    for _pid, _n, pf in _post_dirs(index):
+        st = film.read_state(pf)
+        if film_stale(st) and os.path.realpath(pf) not in busy:
+            keep = {"scenario": st["scenario"]} if "scenario" in st else {}
+            try:
+                film.write_state(pf, state="error", error=FILM_STALE, **keep)
+            except OSError:
+                pass
+    for _pid, n, pf, mt in film_queue(index, published=published):
+        if not pokaz and film.describe(pf)["kind"] == "pokaz":     # pokaz czeka na maszynę z Playwright
+            continue
+        film.write_state(pf, state="queued", scenario=mt)
+        rec.start(pf, n)
+        with _films_lock:
+            _films_cache["at"] = 0.0
+        return
 
 
 def auto_record_loop():
@@ -846,6 +1001,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/film/nagraj": record_film,
           "/api/film/konto": film_account,
           "/api/post/popraw": fix_post,
+          "/api/film/zmien": film_change,
+          "/api/studio/popros": studio_request,
           "/api/publikacja/facebook": lambda b: get_publisher().connect_facebook(b),
           "/api/publikacja/linkedin": lambda b: get_publisher().connect_linkedin(b),
           "/api/publikacja/strona": lambda b: get_publisher().map_page(b),
@@ -949,6 +1106,389 @@ def connect_calendar():
         threading.Thread(target=work, daemon=True).start()
 
 
+# ---------- „Teraz” w Przeglądzie: filmy, rozmowy o zadaniach, zamknięte zadania, zakończone uruchomienia ----------
+ACTIVITY_TTL = 5                      # s: foldery postów czytane najwyżej co tyle (panel pyta co 3 s, gdy coś trwa)
+RECENT_HOURS = 24                     # „Ostatnio zrobione”
+CLOSED_KEEP = 100
+# w podkatalogu katalogu uruchomień: Manager._load bierze *.json z katalogu głównego za rekordy uruchomień
+CLOSED_FILE = os.path.join("teraz", "zamkniete.json")
+CLOSED_OLD = "zamkniete.json"         # dawne miejsce pliku; przenoszony przy pierwszym odczycie
+FILM_INTERRUPTED = "nagrywanie przerwane przy restarcie panelu"
+FILM_STALE = "nagrywanie nie skończyło się w limicie czasu (proces przerwany)"
+_films_cache = {"at": 0.0, "key": None, "value": []}
+_films_lock = threading.Lock()
+_closed_lock = threading.Lock()
+_closed_mem = {}                      # ścieżka pliku -> stan track_closed (readAt: ostatni odczyt, bez zapisu na dysk)
+
+
+def _recent(at, now, hours=RECENT_HOURS):
+    return at is not None and datetime.timedelta(0) <= now - at <= datetime.timedelta(hours=hours)
+
+
+def _post_dirs(index, need=(film.STATE,)):
+    """(projekt, nazwa folderu, ścieżka) folderów posty/<nazwa>/ z co najmniej jednym z plików `need`."""
+    for pid, folder in sorted(index.items()):
+        base = os.path.join(os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))), "posty")
+        try:
+            names = sorted(os.listdir(base))
+        except OSError:
+            continue
+        for n in names:
+            pf = os.path.join(base, n)
+            if any(os.path.isfile(os.path.join(pf, x)) for x in need):
+                yield pid, n, pf
+
+
+def _pid_alive(pid):
+    try:
+        pid = int(pid)
+    except (TypeError, ValueError):
+        return False
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except (PermissionError, OSError):
+        return True
+    return True
+
+
+def film_elsewhere(st):
+    """Nagranie „running” prowadzone przez inny proces: inny host albo inny żywy proces na tym hoście.
+    Stan bez host/pid (sprzed tej wersji) traktujemy jak własny."""
+    host, pid = st.get("host"), st.get("pid")
+    if not host:
+        return False
+    if host != film.HOST:
+        return True
+    return pid != os.getpid() and _pid_alive(pid)
+
+
+def film_stale(st, now=None):
+    """„running” starszy niż film.TIMEOUT + 60 s: nagranie na pewno się skończyło (proces padł, PID przejął
+    inny proces albo host nie odpowiada). Traktujemy jak przerwane, żeby nie wstrzymywało kolejki na zawsze."""
+    if st.get("state") != "running":
+        return False
+    at = _iso(st.get("at"))
+    now = now or datetime.datetime.now()
+    return at is None or now - at > datetime.timedelta(seconds=film.TIMEOUT + 60)
+
+
+def film_pending(pf, st=None, today=None, published=False):
+    """Wersja filmu (film.version: najnowszy mtime scenariusza, szablonu, marki, muzyki, obrazów), gdy post czeka na
+    automatyczne nagranie; None, gdy nie czeka. Te same warunki co w auto_record: film starszy niż ta wersja albo
+    brak filmu, ta wersja jeszcze nie nagrywana. „running” starszy niż limit nagrania (film_stale) nie wstrzymuje
+    kolejki.
+    Zmiana samego studia (szablon, marka, muzyka, logo; scenariusz posta starszy niż film) nagrywa od nowa tylko
+    posty z dniem od dziś, nieopublikowane i bez filmu wgranego ręcznie: archiwum ma zostać takie, jakie poszło do
+    ludzi (studio_stale pokazuje w poście, że film jest starszy niż studio)."""
+    mt = film.version(pf)
+    if mt is None:
+        return None
+    fm = publikacja.Publisher.film(pf)
+    st = film.read_state(pf) if st is None else st
+    if (fm and os.path.getmtime(fm) >= mt) or (st.get("state") == "running" and not film_stale(st)) \
+            or st.get("scenario") == mt:
+        return None
+    if fm and studio_stale(pf, fm) and (published or post_day(pf) < (today or datetime.date.today().isoformat())
+                                        or os.path.exists(os.path.join(pf, film.MANUAL))):
+        return None
+    return mt
+
+
+def post_day(pf):
+    """Dzień posta z nazwy folderu posty/<RRRR-MM-DD>-…; "" gdy nazwa go nie ma."""
+    n = os.path.basename(os.path.normpath(pf))[:10]
+    return n if POST_DAY.match(n) else ""
+
+
+def studio_stale(pf, fm=None):
+    """Film starszy tylko przez studio: scenariusz i obrazy posta są starsze niż film, a szablon, marka, muzyka albo
+    logo nowsze."""
+    fm = fm or publikacja.Publisher.film(pf)
+    if not fm:
+        return False
+    sv, v = film.scenario_version(pf), film.version(pf)
+    t = os.path.getmtime(fm)
+    return sv is not None and v is not None and sv <= t < v
+
+
+def published_days(tasks):
+    """{(projekt, dzień)} postów opublikowanych: publikacja z kampanii w stanie zrobione."""
+    out = set()
+    for t in tasks or []:
+        if t.get("kind") == "publikacja" and t.get("state") == "done":
+            day = str(resolve_date(t.get("date") or "") or "")[:10]
+            if POST_DAY.match(day):
+                out.add((t.get("project"), day))
+    return out
+
+
+def film_queue(index, today=None, published=None):
+    """Posty czekające na automatyczne nagranie, najstarszy scenariusz najpierw: [(projekt, folder, ścieżka, mtime)].
+    published: {(projekt, dzień)} opublikowanych postów (zmiana studia ich nie nagrywa)."""
+    out = []
+    published = published or set()
+    for pid, n, pf in _post_dirs(index, (film.SCENARIO,)):
+        mt = film_pending(pf, today=today, published=(pid, n[:10]) in published)
+        if mt is not None:
+            out.append((pid, n, pf, mt))
+    out.sort(key=lambda x: (x[3], x[2]))
+    return out
+
+
+def _post_title(pf, n):
+    text = projekt.read(os.path.join(pf, "post.md")) or ""
+    for line in text.split("\n"):
+        if line.startswith("# "):
+            return projekt._clean(line[2:].strip() or n, 160)
+    return projekt._clean(n, 160)
+
+
+def film_activity(index, now=None, busy=(), queue=False, published=None):
+    """Filmy z .film-stan.json folderów posty/: nagrywane teraz, czekające w kolejce Automatu nagrań oraz nagrane
+    albo z błędem w ostatnich 24 h.
+
+    „running” jest pokazywane, gdy nagrywa ten proces (busy) albo inny proces według host/pid w stanie
+    (film_elsewhere, najwyżej film.TIMEOUT od startu); bez tego to pozostałość po restarcie (mark_interrupted_films).
+    queue=True (nagrywarka dostępna): posty ze scenariuszem do nagrania jako „queued”, z pozycją w kolejce
+    (auto_record nagrywa je po jednym, od najstarszego scenariusza).
+    [{"project", "post", "day", "title", "state", "at", "error", "pos"}], najnowsze najpierw."""
+    now = now or datetime.datetime.now()
+    busy = set(os.path.realpath(b) for b in busy or ())
+    out, seen = [], set()
+    for pid, n, pf in _post_dirs(index):
+        st = film.read_state(pf)
+        state, at = st.get("state"), _iso(st.get("at"))
+        if state == "running":
+            if os.path.realpath(pf) not in busy and not (
+                    film_elsewhere(st) and at is not None and now - at <= datetime.timedelta(seconds=film.TIMEOUT + 60)):
+                continue
+        elif state not in ("done", "error") or not _recent(at, now):
+            continue
+        seen.add(pf)
+        out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
+                    "title": _post_title(pf, n), "state": state,
+                    "at": at.isoformat(timespec="seconds") if at else "",
+                    "error": str(st.get("error") or "")[:200], "pos": 0})
+    if queue:
+        for i, (pid, n, pf, mt) in enumerate(film_queue(index, published=published)):
+            out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
+                        "title": _post_title(pf, n), "state": "queued",
+                        "at": datetime.datetime.fromtimestamp(mt).replace(microsecond=0).isoformat(),
+                        "error": "", "pos": i + 1})
+    out.sort(key=lambda f: f["at"], reverse=True)
+    return out
+
+
+def mark_interrupted_films(index):
+    """Przy starcie panelu: „running” i „queued” z poprzedniego procesu na tym hoście to przerwane nagrania
+    (stan błędu, raz). Nagrań innego hosta albo żywego procesu (drugi panel, ręczne film.py) nie rusza.
+    Pole scenario zostaje, więc auto_record nie nagrywa tej wersji scenariusza sam drugi raz."""
+    n = 0
+    for _pid, _n, pf in _post_dirs(index):
+        st = film.read_state(pf)
+        if st.get("state") in ("running", "queued") and not film_elsewhere(st):
+            keep = {"scenario": st["scenario"]} if "scenario" in st else {}
+            try:
+                film.write_state(pf, state="error", error=FILM_INTERRUPTED, **keep)
+                n += 1
+            except OSError:
+                pass
+    return n
+
+
+def films_cached(index, busy=(), queue=False, published=None):
+    """film_activity najwyżej co ACTIVITY_TTL s; zmiana rejestru albo nagrywanych folderów odświeża od razu."""
+    key = (tuple(sorted(index.items())), tuple(sorted(busy)), bool(queue), tuple(sorted(published or ())))
+    with _films_lock:
+        if _films_cache["key"] != key or time.time() - _films_cache["at"] >= ACTIVITY_TTL:
+            _films_cache.update(value=film_activity(index, busy=busy, queue=queue, published=published), key=key,
+                                at=time.time())
+        return _films_cache["value"]
+
+
+def track_closed(tasks, prev, now=None, when=None):
+    """Zadania zamknięte między odczytami: otwarte w poprzednim odczycie, teraz [x].
+
+    prev: {"open": [klucz projekt|plik|tytuł], "closed": [{"project", "file", "title", "at", "how"}], "readAt"}
+    z poprzedniego odczytu (pierwsze wywołanie bez "open" niczego nie uznaje za zamknięte).
+    Zadania o tym samym kluczu (ten sam tytuł w jednym pliku) liczą się osobno: zamknięcie jednego z dwóch
+    jest wykryte, gdy otwartych z tym kluczem jest mniej niż poprzednio.
+    Czas zamknięcia: when(zadanie) -> [(czas, źródło)] kandydatów (koniec uruchomienia agenta "run", zmiana
+    pliku zadań "file"); pierwszy, który mieści się między poprzednim odczytem (readAt) a teraz. Bez takiego
+    czasu: chwila wykrycia, "how": "seen" (panel pisze wtedy „zauważone”, nie „zamknięte o”).
+    Zadanie otwarte ponownie (jest otwarte i żadne o tym kluczu nie jest [x]) znika z "closed".
+    Zamknięcie razem ze zmianą tytułu w jednym zapisie nie jest wykrywane (inny klucz).
+    Zwraca nowy stan; "closed" z 48 h, najwyżej CLOSED_KEEP, jedno na zadanie (ostatnie zamknięcie)."""
+    now = now or datetime.datetime.now()
+    prev = prev if isinstance(prev, dict) else {}
+    closed = [c for c in prev.get("closed") or [] if isinstance(c, dict) and all(isinstance(c.get(k), str)
+              for k in ("project", "file", "title", "at")) and _recent(_iso(c["at"]), now, 48)]
+    open_now = collections.Counter(projekt.task_key(t) for t in tasks if t.get("state") != "done")
+    done_now = set(projekt.task_key(t) for t in tasks if t.get("state") == "done")
+    closed = [c for c in closed if not (open_now[projekt.task_key(c)] and projekt.task_key(c) not in done_now)]
+    if isinstance(prev.get("open"), list):
+        was = collections.Counter(k for k in prev["open"] if isinstance(k, str))
+        low = _iso(prev.get("readAt")) if isinstance(prev.get("readAt"), str) else None
+        seen = set()
+        for t in tasks:
+            k = projekt.task_key(t)
+            if t.get("state") != "done" or k in seen or open_now[k] >= was[k]:
+                continue
+            seen.add(k)
+            at, how = now, "seen"
+            for cand, src in (when(t) if when else []):
+                if cand is not None and cand <= now and (low is None or cand >= low):
+                    at, how = cand, src
+                    break
+            closed = [c for c in closed if projekt.task_key(c) != k]
+            closed.append({"project": t["project"], "file": t["file"], "title": t["title"],
+                           "at": at.isoformat(timespec="seconds"), "how": how})
+        closed.sort(key=lambda c: c["at"])
+    return {"open": sorted(open_now.elements()), "closed": closed[-CLOSED_KEEP:],
+            "readAt": now.isoformat(timespec="seconds")}
+
+
+def closed_recent(tasks, runs_dir, now=None, when=None):
+    """track_closed ze stanem w pamięci procesu i w <katalog uruchomień>/teraz/zamkniete.json; zwraca zamknięte
+    w ostatnich 24 h. readAt (dolna granica czasu zamknięcia) to ostatni odczyt w tym procesie; plik zapisuje się
+    tylko wtedy, gdy zmienił się zbiór otwartych albo zamkniętych (po restarcie readAt to ostatni zapis pliku)."""
+    now = now or datetime.datetime.now()
+    path = os.path.join(runs_dir, CLOSED_FILE)
+    with _closed_lock:
+        prev = _closed_mem.get(path)
+        if prev is None:
+            old = os.path.join(runs_dir, CLOSED_OLD)
+            if not os.path.exists(path) and os.path.isfile(old):
+                try:
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    os.replace(old, path)
+                except OSError:
+                    pass
+            prev = load_json(path, {})
+        new = track_closed(tasks, prev, now, when)
+        _closed_mem[path] = new
+        if {k: v for k, v in new.items() if k != "readAt"} != {k: v for k, v in prev.items() if k != "readAt"}:
+            try:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path + ".tmp", "w", encoding="utf-8") as f:
+                    json.dump(new, f, ensure_ascii=False)
+                os.replace(path + ".tmp", path)
+            except OSError:
+                pass
+    return [c for c in reversed(new["closed"]) if _recent(_iso(c["at"]), now)]
+
+
+def close_times(index, runs):
+    """Kandydaci na czas zamknięcia zadania dla track_closed: koniec ostatniego uruchomienia agenta dla tego
+    zadania, potem czas zmiany pliku zadań."""
+    ended = {}
+    for r in runs:
+        if r.get("kind") == "task" and r.get("endedAt") and r.get("state") == "done":
+            k = "%s|%s|%s" % (r.get("project", ""), r.get("file", ""), r.get("title", ""))
+            ended[k] = max(ended.get(k, ""), str(r["endedAt"]))
+
+    def when(t):
+        out = []
+        e = _iso(ended.get(projekt.task_key(t)))
+        if e is not None:
+            out.append((e, "run"))
+        folder = index.get(t.get("project"))
+        if folder:
+            try:
+                out.append((datetime.datetime.fromtimestamp(os.path.getmtime(os.path.join(folder, t["file"])))
+                            .replace(microsecond=0), "file"))
+            except (OSError, KeyError, ValueError):
+                pass
+        return out
+    return when
+
+
+def note_closed(project, file, title, runs_dir=None, now=None):
+    """Zamknięcie zapisane w chwili zmiany stanu przez panel (zmiana stanu, zamknięcie po kontroli): dokładny czas,
+    "how": "set". Klucz znika z "open", więc następny odczyt (track_closed) nie doda go drugi raz z gorszym czasem.
+    Edycje ręczne w pliku nadal wykrywa track_closed z różnicy odczytów."""
+    now = now or datetime.datetime.now()
+    try:
+        runs_dir = runs_dir or get_agents().runs_dir
+    except Exception:  # noqa: BLE001
+        return
+    path = os.path.join(runs_dir, CLOSED_FILE)
+    key = "%s|%s|%s" % (project, file, title)
+    with _closed_lock:
+        prev = _closed_mem.get(path)
+        if prev is None:
+            prev = load_json(path, {})
+        prev = dict(prev) if isinstance(prev, dict) else {}
+        closed = [c for c in prev.get("closed") or [] if isinstance(c, dict) and projekt.task_key(c) != key]
+        closed.append({"project": project, "file": file, "title": title,
+                       "at": now.isoformat(timespec="seconds"), "how": "set"})
+        prev["closed"] = sorted(closed, key=lambda c: str(c.get("at", "")))[-CLOSED_KEEP:]
+        if isinstance(prev.get("open"), list) and key in prev["open"]:
+            o = list(prev["open"])
+            o.remove(key)
+            prev["open"] = o
+        _closed_mem[path] = prev
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(prev, f, ensure_ascii=False)
+            os.replace(path + ".tmp", path)
+        except OSError:
+            pass
+
+
+def activity(out, index, manager):
+    """Blok "activity" w /api/data: to, czego panel nie ma w innych polach (uruchomienia w toku, publikacje
+    i Automat są). "runs": zakończone uruchomienia z 24 h, których nie ma w agents.runs (tam tylko ostatnie 40).
+    Kolejka nagrań jest liczona zawsze (szkice/ mogą być wspólne z serwerem); "recorder": czy ten host ma nagrywarkę
+    (bez niej panel pisze „nagra serwer”). Błąd w tym bloku nie wywraca /api/data: puste listy i "error"."""
+    empty = {"films": [], "chats": [], "closed": [], "runs": [], "recorder": False}
+    if out["projectsSource"] != "registry":
+        return empty
+    try:
+        recent = manager.recent_runs(RECENT_HOURS)
+        shown = set(r.get("id") for r in ((out.get("agents") or {}).get("runs") or []) if isinstance(r, dict))
+        rec = get_recorder()
+        with rec.lock:
+            busy = set(rec.busy)
+        return {"films": films_cached(index, busy, queue=True, published=published_days(out["tasks"])),
+                "chats": manager.chat_pending(),
+                "closed": closed_recent(out["tasks"], manager.runs_dir, when=close_times(index, recent)),
+                "runs": [r for r in recent if r["id"] not in shown],
+                "recorder": bool(rec.available())}
+    except Exception as e:  # noqa: BLE001
+        import traceback
+        traceback.print_exc()
+        return dict(empty, error="Nie odczytano aktywności (%s)." % type(e).__name__)
+
+
+DATA_TTL = 1.5                        # s: /api/data z pamięci (panel pyta co 3 s z kilku urządzeń, gdy coś trwa)
+_data_lock = threading.Lock()
+_data_cache = {"at": 0.0, "body": None}
+
+
+def data_cached(ttl=None):
+    """/api/data jako tekst JSON; ta sama odpowiedź najwyżej przez DATA_TTL s. Każdy zapis (POST) unieważnia ją
+    (data_invalidate), więc po zmianie panel dostaje świeże dane od razu."""
+    ttl = DATA_TTL if ttl is None else ttl
+    with _data_lock:
+        if _data_cache["body"] is not None and time.time() - _data_cache["at"] < ttl:
+            return _data_cache["body"]
+    body = json.dumps(build_data(), ensure_ascii=False)
+    with _data_lock:
+        _data_cache.update(at=time.time(), body=body)
+    return body
+
+
+def data_invalidate():
+    with _data_lock:
+        _data_cache.update(at=0.0, body=None)
+
+
 def build_data():
     out, index = load_projects()
     for p in out["projects"]:
@@ -986,7 +1526,10 @@ def build_data():
     out["costs"] = COSTS.state()
     out["panelVersion"] = panel_version()
     out["publish"] = get_publisher().status()
-    out["film"] = {"available": get_recorder().available(), "account": film.account_email()}
+    out["film"] = {"available": get_recorder().available(), "account": film.account_email(),
+                   "explainer": get_recorder().available("objasnienie")}
+    out["studio"] = studio_summary(index) if out["projectsSource"] == "registry" else {}
+    out["activity"] = activity(out, index, manager)
     add_checks(out["tasks"], index, out["server"])
     return out
 
@@ -1330,8 +1873,11 @@ def post_info(folder):
     out["film"] = {"name": os.path.basename(fpath), "size": os.path.getsize(fpath),
                    "at": int(os.path.getmtime(fpath))} if fpath else None
     out["scenario"] = os.path.isfile(os.path.join(folder, film.SCENARIO))
+    out["filmInfo"] = film.describe(folder) if out["scenario"] else None     # rodzaj filmu, szablon, błąd scenariusza
     st = film.read_state(folder)
     out["rec"] = {"state": st.get("state", ""), "error": st.get("error", ""), "at": st.get("at", "")}
+    out["filmManual"] = bool(fpath) and os.path.exists(os.path.join(folder, film.MANUAL))
+    out["filmStale"] = bool(out["scenario"] and fpath) and studio_stale(folder, fpath)   # starszy niż szablon/marka
     return out
 
 
@@ -1542,7 +2088,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/podglad":
             return self._send(200, SHELL % page_html(preview_data()), "text/html; charset=utf-8")
         if path == "/api/data":
-            return self._send(200, json.dumps(build_data(), ensure_ascii=False), "application/json; charset=utf-8")
+            return self._send(200, data_cached(), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
         if path == "/api/agent/diff":
@@ -1610,6 +2156,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         if not self._allowed(path):
             return
+        data_invalidate()
         if path == "/wejscie":
             return self._login()
         if path == "/api/calendar/connect":
@@ -1618,7 +2165,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/post/film":
             return self._film_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path == "/api/task/chat" else 4096)
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/film/zmien") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
@@ -1628,6 +2175,7 @@ class Handler(BaseHTTPRequestHandler):
                 import traceback
                 traceback.print_exc()
                 result = (500, "Błąd serwera panelu (%s). Szczegóły w dzienniku usługi." % type(e).__name__)
+            data_invalidate()
             code, answer = result[0], {"ok": 200 <= result[0] < 300, "error": result[1]}
             if len(result) > 2:
                 answer.update(result[2])            # np. id nowego uruchomienia
@@ -1666,6 +2214,9 @@ class Handler(BaseHTTPRequestHandler):
             with contextlib.suppress(OSError):
                 os.remove(os.path.join(folder, name))
         os.replace(tmp, os.path.join(folder, "film" + ext))
+        with contextlib.suppress(OSError):          # film wgrany ręcznie: zmiana studia nie nagra go sama od nowa
+            with open(os.path.join(folder, film.MANUAL), "w", encoding="utf-8") as f:
+                f.write(datetime.datetime.now().isoformat(timespec="seconds") + "\n")
         return self._send(200, json.dumps({"ok": True, "error": "", "size": size}), "application/json; charset=utf-8")
 
     def _json_body(self, limit=4096):
@@ -1708,6 +2259,10 @@ if __name__ == "__main__":
             signal.signal(getattr(signal, name), _stop)
     get_agents().start()                        # dopiero po zajęciu portu: drugi egzemplarz nie rusza rekordów
     get_publisher().start()
+    try:
+        mark_interrupted_films(load_projects(resolve=False)[1])
+    except Exception:  # noqa: BLE001  (stan filmów nie może zatrzymać startu panelu)
+        pass
     threading.Thread(target=auto_record_loop, daemon=True).start()
     try:
         httpd.serve_forever()

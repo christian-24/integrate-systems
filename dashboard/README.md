@@ -91,8 +91,45 @@ otwiera szufladę z podglądem, filmem, „Co poprawić” (`POST /api/post/popr
 i czatem. Nic nie publikuje się samo, dopóki nie klikniesz „Zaplanuj”.
 Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: prawdziwa przeglądarka (Playwright,
 `~/narzedzia/film`), kursor i podświetlenie kliknięć, napisy, MP4 1080×1920 (ffmpeg). Nagranie startuje samo, gdy
-scenariusz jest nowszy niż film, albo przyciskiem „Nagraj film”. Logowanie kontem demo z `~/dane/film/konto.json`
-(wpisujesz w Agenci → Publikacja). Przy błędzie zrzut `.film-blad.png` w folderze posta.
+film jest starszy niż scenariusz albo obrazy posta, albo przyciskiem „Nagraj film”. Zmiana samego studia (szablon,
+marka, muzyka, logo) nagrywa od nowa tylko posty z dniem od dziś, nieopublikowane i bez filmu wgranego ręcznie
+(znacznik `.film-wgrany` przy wgraniu); starsze dostają w poście „Film jest starszy niż szablon albo marka”.
+Logowanie kontem demo z `~/dane/film/konto.json` (wpisujesz w Agenci → Publikacja), tylko na hoście z `strony` w marce
+i tym samym co `url`; host sprawdzany także po przekierowaniu, nawigacja głównej ramki poza strony marki jest
+blokowana. Bez `strony` w marce pokaz otwiera tylko publiczne nazwy domen (bez adresów IP i sieci lokalnej).
+Przy błędzie zrzut `.film-blad.png` w folderze posta. Czekanie dłuższe niż 1,5 s (`czekaj_na`) jest wycięte z filmu.
+Film ma ścieżkę dźwięku (cisza albo `muzyka` z marki).
+
+Studio filmów: `studio/` obok `KARTA.md` projektu. `studio/marka.json` (kolory, czcionki z grubością np. `Inter:Bold`,
+styl napisów, `strony` do nagrań, `logo` i `muzyka` jako pliki w `studio/` sprawdzane po treści, plansza startowa
+i końcowa) i `studio/szablony/<nazwa>.json` (kroki z parametrami `{{nazwa}}`, `tytul` dla właściciela, wartości
+przykładowe w `parametry`, `wymagane` (treść posta), `limity` (`max`, `opcje`, `cyfry`), `etykiety`, `opis` dla agenta
+i `dla_wlasciciela`: jedno zdanie, co widz zobaczy). Pokaz nagrywa tylko hosty z `strony` w marce. Scenariusz posta:
+`{"szablon": "…", "parametry": {…}}`, pełne kroki (pokaz strony, także z `plansze_przed` i `plansze_po`: 1–4 plansze
+objaśnienia przed i po nagraniu) albo objaśnienie `{"typ": "objasnienie", "plansze": [{"tekst", "podpis", "czas",
+"obraz"}]}` (tylko ffmpeg; tekst do 90 znaków, `*słowo*` w kolorze akcentu). Czas każdej planszy, także startowej
+i końcowej, wydłuża się do czasu czytania (1,2 s + 15 znaków/s, plansze marki plus przejście); plansza bez podpisu
+ma domyślnie 2,5 s, hak (pierwsza plansza filmu) liczy 0,6 s + znaki, bo stoi od pierwszej klatki. Napis pokazu stoi
+co najmniej czas czytania (nagrywarka czeka przed następnym). Plansze marki są
+doklejane do obu rodzajów; scenariusz może je wyłączyć (`false`) albo zmienić obiektem: z własnym `tytul` (hak) bierze
+z marki tylko kolory, bez tytułu uzupełnia planszę marki; przy szablonie łączy się z planszą szablonu. Pierwsza klatka
+pokazuje tekst bez animacji (miniatura). Między planszami treść najpierw gaśnie do tła, potem tło przenika w następną
+planszę (bez podwójnej ekspozycji i bez czerni przed planszą końcową); przez czerń tylko przy nagraniu strony. Układ trzyma
+się poza strefami interfejsu Reels/TikTok (góra 250 px, dół 480 px), wiersze łamią się po polsku. W scenariuszu
+pisanym ręcznie `{{` to zwykły tekst, a klucz `opis` to komentarz.
+Sprawdzenie bez nagrania: `python3 dashboard/film.py sprawdz <folder posta>` (błędy, ostrzeżenia, długość; ostrzega
+też o powtórce szablonu i treści względem wcześniejszych postów, o planszach z przykładowym tekstem, o objaśnieniu
+powyżej 30 s, o długim haku i o filmie bez muzyki). Błąd wartości po podstawieniu wskazuje parametr posta, nie szablon. W poście
+„Co jest w filmie, po kolei” ma grupy: Plansze (przycisk „Zmień” przy planszy), Napisy na filmie i Dane wpisywane
+w formularz (po jednym formularzu na grupę); skąd pochodzi każde pole, mówi serwer (`filmInfo.fields`), limity
+szablonu trafiają do formularza (długość, lista, cyfry), „Wyróżnij zaznaczone słowo” wstawia `*słowo*` z podglądem.
+`POST /api/film/zmien {project, date, params | slides}` zapisuje scenariusz po kontroli i nagrywa film od nowa; gdy
+scenariusz zmienił się w międzyczasie (np. agent), odpowiada 409. Szuflada zadania posta (także zablokowanego) i zadania
+„Nagraj film …” ma na górze skrót filmu: rodzaj, szablon, długość, kto i kiedy nagra, „Nagraj film”, „Obejrzyj”.
+Marketing pokazuje „Studio filmów” (każdy projekt zwinięty osobno) z marką, miniaturami plansz w jej kolorach,
+szablonami, postami, których scenariusz po zmianie szablonu się nie nagra, przykładowym filmem i prośbą do agenta o zmianę marki albo nowy
+szablon (`POST /api/studio/popros`, zadanie „Zmień studio filmów: …”).
+Test renderowania na serwerze: `dashboard/testy/render_na_serwerze.sh panel@<adres>` (pracuje w `/tmp`).
 
 ## Koszty Hetzner
 

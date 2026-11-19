@@ -28,6 +28,7 @@ WINDOWS = os.name == "nt"
 NO_WINDOW = {"creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0)} if WINDOWS else {}
 LIVE = ("queued", "running")
 KEEP = 200          # tyle rekordów zostaje na dysku
+NOT_RUNS = ("stan.json", "zamkniete.json")   # pliki w katalogu uruchomień, które nie są rekordami (dawny zamkniete.json)
 SHOWN = 40          # tyle rekordów trafia do /api/data
 TOOLS_TTL = 300     # sekundy między odczytami stanu narzędzi
 CONFLICT = "Plik zmienił się od ostatniego odczytu. Odświeżam listę."
@@ -245,6 +246,7 @@ class Manager:
         self.chat_timeout = 180               # s: odpowiedź w rozmowie o zadaniu
         self._chat_lock = threading.Lock()    # pliki rozmów i _chat_live
         self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
+        self._chat_meta = {}                  # plik rozmowy -> zadanie i czas pytania (widok Teraz w panelu)
         self._load()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
 
@@ -376,7 +378,7 @@ class Manager:
     def _load(self):
         """Wczytuje ostatnie rekordy; starsze niż KEEP usuwa; przerwane restartem oznacza jako zatrzymane."""
         try:
-            names = sorted(n for n in os.listdir(self.runs_dir) if n.endswith(".json") and n != "stan.json")
+            names = sorted(n for n in os.listdir(self.runs_dir) if n.endswith(".json") and n not in NOT_RUNS)
         except OSError:
             names = []
         for name in names[:-KEEP] if len(names) > KEEP else []:
@@ -681,7 +683,7 @@ class Manager:
             "`  zostało: …`, gdy coś nie zostało zrobione.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + [
+        ] + git_rules + film_rules(title) + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
@@ -816,6 +818,26 @@ class Manager:
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij pytanie jeszcze raz."
         return 200, "", {"messages": chat["messages"], "pending": live, "error": chat["error"]}
 
+    RECENT_FIELDS = ("id", "kind", "tool", "state", "auto", "machine", "project", "projectName", "taskId", "file",
+                     "title", "queuedAt", "startedAt", "endedAt", "durationMs")
+
+    def recent_runs(self, hours=24, limit=100):
+        """Zakończone uruchomienia z ostatnich `hours` godzin, najnowsze najpierw, pola skrócone (widok Teraz).
+        snapshot() oddaje tylko SHOWN ostatnich, więc przy aktywnym Automacie część dnia by wypadła."""
+        low = (datetime.datetime.now() - datetime.timedelta(hours=hours)).isoformat(timespec="seconds")
+        with self._lock:
+            done = [r for r in self._runs.values()
+                    if r.get("endedAt") and str(r["endedAt"]) >= low and r.get("state") not in ("queued", "running")]
+            done.sort(key=lambda r: str(r["endedAt"]), reverse=True)
+            return [dict({k: r.get(k) for k in self.RECENT_FIELDS}, error=str(r.get("error") or "")[:200])
+                    for r in done[:limit]]
+
+    def chat_pending(self):
+        """Rozmowy, które czekają na odpowiedź Claude: [{"taskId", "project", "file", "title", "since"}]."""
+        with self._chat_lock:
+            return sorted((dict(m) for f, m in self._chat_meta.items() if f in self._chat_live),
+                          key=lambda m: m["since"])
+
     def chat_prompt(self, name, task, stage, detail, folder, text):
         """Pierwsza wiadomość rozmowy: kontekst zadania, zasady i pytanie właściciela (ostatnie wiersze)."""
         lines = ["Rozmawiasz z właścicielem projektu „%s” o jednym zadaniu z pliku %s, wiersz %d: „%s”."
@@ -880,6 +902,8 @@ class Manager:
             except OSError:
                 return 500, "Nie udało się zapisać rozmowy.", {}
             self._chat_live.add(file)
+            self._chat_meta[file] = {"taskId": task["id"], "project": task["project"], "file": task["file"],
+                                     "title": task["title"], "since": now_iso()}
         try:
             if session:
                 prompt = text + "\n"
@@ -947,6 +971,7 @@ class Manager:
                 pass
             finally:
                 self._chat_live.discard(file)
+                self._chat_meta.pop(file, None)
 
     def _chat_parse(self, out, err, code, resumed):
         """Wynik `claude -p --output-format json`: (odpowiedź, sesja, błąd). Błąd krótko, bez śladu stosu."""
@@ -1345,14 +1370,46 @@ class Manager:
                     break
         return out
 
+    @staticmethod
+    def studio_refs(folder):
+        """Studio filmów projektu (studio/ obok KARTA.md) według film.list_templates (te same zasady co nagrywarka):
+        (szablony [{"name", "kind", "params", "error", …}], ścieżki do materiału). Szablon z błędem zostaje na liście
+        z opisem błędu, żeby agent mógł go poprawić albo pominąć."""
+        import film  # noqa: E402  (ten sam katalog; bez Playwright)
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        studio = os.path.join(cards, STUDIO_DIR)
+        templates = film.list_templates(studio)
+        refs = ["%s/szablony/%s.json" % (STUDIO_DIR, t["name"]) for t in templates]
+        if os.path.isfile(os.path.join(studio, "marka.json")):
+            refs.append(STUDIO_DIR + "/marka.json")
+        return templates, refs
+
+    @staticmethod
+    def _template_line(t):
+        if t.get("error"):
+            return "%s (błąd: %s)" % (t["name"], t["error"][:120])
+        return "%s (%s; parametry: %s)%s" % (t["name"], t["kind"], ", ".join(t.get("params") or []) or "brak",
+                                             " wymagane: %s" % ", ".join(t["required"]) if t.get("required") else "")
+
     def post_detail(self, folder, day, channel, title):
-        """Szczegóły zadania „Przygotować post na …”: cel, gotowe gdy, materiał (rytm, STYL.md, plan)."""
+        """Szczegóły zadania „Przygotować post na …”: cel, gotowe gdy, materiał (rytm, STYL.md, plan, studio filmów)."""
+        templates, studio = self.studio_refs(folder)
+        if templates:
+            film = ("przy filmie także scenariusz.json z szablonu studia: {\"szablon\": \"<nazwa>\", \"parametry\": "
+                    "{…}} (szablony: %s; wartości przykładowe w szablonie, wymagane podaj zawsze; szablon dobierz "
+                    "według sekcji Filmy w STYL.md) albo objaśnienie "
+                    "{\"typ\": \"objasnienie\", \"plansze\": [{\"tekst\", \"podpis\", \"czas\"}]}; "
+                    "sprawdź: python3 %s sprawdz <folder posta>; film nagrywa panel sam"
+                    % ("; ".join(self._template_line(t) for t in templates), FILM_PY))
+        else:
+            film = ("przy filmie także scenariusz.json (wzór: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json "
+                    "albo objaśnienie {\"typ\": \"objasnienie\", \"plansze\": [{\"tekst\", \"podpis\", \"czas\"}]}), "
+                    "film nagrywa panel sam")
         return {"cel": "post na %s%s: %s, do zatwierdzenia przez właściciela"
                        % (day, " (%s)" % channel if channel else "", title),
                 "gotowe gdy": "obok KARTA.md jest folder posty/%s-<krótka-nazwa>/ z post.md (sekcje ## Facebook, "
-                              "## LinkedIn, ## Alt) i grafika.svg albo grafika.png; przy filmie także scenariusz.json "
-                              "(wzór: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json), film nagrywa panel sam" % day,
-                "materiał": [RYTM_FILE] + self.marketing_refs(folder)}
+                              "## LinkedIn, ## Alt) i grafika.svg albo grafika.png; %s" % (day, film),
+                "materiał": [RYTM_FILE] + self.marketing_refs(folder) + studio}
 
     def result_detail(self, folder, day, channel, title):
         """Szczegóły zadania „Wpisz wynik publikacji …”: cel, gotowe gdy, materiał (rytm, plan)."""
@@ -2234,6 +2291,67 @@ def with_answers(task, tasks):
 
 
 POST_TASK = "Przygotować post na "
+FIX_POST_TASK = "Popraw post na "   # zadanie z „Co poprawić” w poście (server.fix_post)
+FILM_PY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "film.py")   # sprawdzanie scenariusza
+STUDIO_DIR = "studio"               # studio filmów obok KARTA.md (film.py): marka.json i szablony/
+STUDIO_TASK = "Zmień studio filmów: "   # zadanie z „Studio filmów” w Marketingu (server.studio_request)
+# Reguły filmu dla zadań postów: scenariusz z szablonu studia, nie od zera.
+FILM_RULES = [
+    "- Film do posta: najpierw sprawdź studio/ obok KARTA.md (studio/szablony/*.json i studio/marka.json). Gdy jest "
+    "pasujący szablon, zapisz scenariusz.json jako {\"szablon\": \"<nazwa>\", \"parametry\": {…}}: podaj parametry "
+    "z \"wymagane\" w szablonie (treść tego posta) i te, które zmieniasz (tekst albo liczba, w \"limity\" szablonu); "
+    "kroków nie przepisuj i nie dodawaj innych kluczy obok \"szablon\" (wolno tylko plansza_startowa i "
+    "plansza_koncowa). Film bez strony (problem, rozwiązanie, korzyść) to objaśnienie: {\"typ\": \"objasnienie\", "
+    "\"plansze\": [{\"tekst\": …, \"podpis\": …}]} albo szablon objaśnienia: 1–12 plansz, tekst do 90 znaków "
+    "(jedno słowo kluczowe w *gwiazdkach* dostaje kolor akcentu), podpis do 70 znaków, czas 1–12 s (bez czasu "
+    "panel liczy go sam: 1,2 s + 1 s na 15 znaków), opcjonalnie \"obraz\": plik .png/.jpg z folderu posta albo "
+    "studio/obrazy/. Pokaz może mieć przed i po nagraniu strony plansze objaśnienia: \"plansze_przed\" i "
+    "\"plansze_po\" (po 1–4 plansze), np. 2 plansze z problemem, potem pokaz.",
+    "- Dobór filmu: według sekcji „Filmy” w STYL.md projektu; gdy jej nie ma: post z kanałem reels zawsze z filmem, "
+    "na zmianę pokaz i objaśnienie, nie ten sam szablon dwa razy z rzędu (sprawdź scenariusz.json poprzednich "
+    "postów w posty/). W każdym filmie własna treść: plansze objaśnienia piszesz pod ten post (nie zostawiasz "
+    "przykładowych tekstów szablonu), w pokazie inny mebel niż w poprzednich filmach. film.py sprawdz ostrzega "
+    "o powtórkach; ostrzeżenia poprawiasz przed oddaniem.",
+    "- Dodatkowa plansza w filmie z szablonu objaśnienia (uwaga „Dodaj planszę”): szablon nie przyjmuje nowych "
+    "plansz, więc zapisz scenariusz.json jako {\"typ\": \"objasnienie\", \"plansze\": [...]} z planszami "
+    "z szablonu (treść tego posta, po podstawieniu parametrów) i nową planszą w podanym miejscu; "
+    "plansza_startowa i plansza_koncowa jak w szablonie. Tak samo przy innych zmianach układu, których nie da się "
+    "zrobić parametrem.",
+    "- Pierwsza sekunda to hak posta: najlepiej do ok. 40 znaków (widz czyta go w 3 s), pierwsza plansza "
+    "objaśnienia bez podpisu, objaśnienie do 30 s. W szablonie z planszą startową podaj hak w parametrze szablonu; w scenariuszu "
+    "bez szablonu daj \"plansza_startowa\": {\"tytul\": \"<hak>\"} (hak nie dostaje podtytułu ani adresu marki, "
+    "czas liczy panel) albo false, gdy pierwsza plansza objaśnienia jest hakiem. Plansze marki (start i koniec, "
+    "z wezwaniem do działania) dokleja panel; nie powtarzaj ich treści w planszach ani w ostatnim napisie pokazu. "
+    "Pokaz nagrywa tylko strony https z marka.json (pole strony). Przed oddaniem sprawdź scenariusz: python3 %s "
+    "sprawdz <folder posta> (błędy i ostrzeżenia, długość filmu)." % FILM_PY,
+    "- Poprawka jednego posta zmienia tylko scenariusz.json tego posta: parametry albo plansza_startowa / "
+    "plansza_koncowa jako obiekt (np. inne wezwanie na końcu tylko w tym filmie: \"plansza_koncowa\": "
+    "{\"podtytul\": \"…\"}). Szablonu (studio/szablony/) i marki (studio/marka.json) nie zmieniasz: zmiana nagrywa "
+    "od nowa filmy wszystkich nadchodzących postów projektu. Zmieniasz je tylko w zadaniu „%s…” albo gdy uwaga "
+    "właściciela mówi wprost „zmień dla wszystkich filmów”." % STUDIO_TASK,
+]
+STUDIO_RULES = [
+    "- To zadanie zmienia studio filmów projektu (wszystkie filmy): studio/marka.json albo nowy szablon "
+    "studio/szablony/<nazwa>.json. Szablon ma pola \"tytul\" (czytelna nazwa po polsku), \"opis\" (jedno zdanie: "
+    "kiedy go użyć), \"parametry\" (wartości przykładowe), \"etykiety\", \"wymagane\" (treść posta, której nie wolno "
+    "wziąć z przykładu) i opcjonalnie \"limity\" ({parametr: {\"max\": znaki, \"opcje\": [...]}}). Nowy szablon ma "
+    "mieć inny układ niż istniejące, \"dla_wlasciciela\" (jedno zdanie dla właściciela: co widz zobaczy i do jakich "
+    "postów) i limit haka 60 znaków. Szablonu, którego używają nadchodzące posty (scenariusz.json z tym "
+    "\"szablon\"), nie usuwasz i nie zmieniasz w nim nazw parametrów; po zmianie python3 film.py sprawdz musi "
+    "przejść dla każdego z tych postów. Muzykę i logo dodajesz tylko jako plik w studio/ z licencją i źródłem "
+    "zapisanym w polu \"zrodlo\" marki. Filmy opublikowanych i minionych postów panel zostawia bez zmian.",
+]
+
+
+def film_rules(title):
+    """Reguły filmu w poleceniu dla agenta: zadania postów i poprawek oraz zmiany studia."""
+    if title.startswith(STUDIO_TASK):
+        return FILM_RULES + STUDIO_RULES
+    if title.startswith((POST_TASK, FIX_POST_TASK)):
+        return FILM_RULES
+    return []
+
+
 RYTM_SUFFIX = " (stały rytm)"
 RYTM_FILE = "kampanie/staly-rytm.md"
 RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny post

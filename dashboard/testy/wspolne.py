@@ -91,11 +91,17 @@ class Baza(unittest.TestCase):
         server.LOCAL_KEY_FILE = ""          # zapis z loopback bez klucza (Mac); testy klucza ustawiają go same
         self.manager = self.new_manager()
         server._agents = self.manager
+        # /api/data bez pamięci podręcznej: testy zmieniają pliki i od razu czytają dane (test pamięci: test_teraz)
+        self._data_ttl = server.DATA_TTL
+        server.DATA_TTL = 0
+        server.data_invalidate()
 
     def tearDown(self):
         for m in self.managers:
             m.shutdown()
         server._agents, server.TOKEN, server.LOCAL_KEY_FILE = self._server_state
+        server.DATA_TTL = self._data_ttl
+        server.data_invalidate()
         projekt.REGISTRY = self._registry
         for k, v in self._environ.items():
             if v is None:

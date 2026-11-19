@@ -1,0 +1,49 @@
+{
+ "tytul": "Porównanie: przed i po integracji",
+ "opis": "Plansze bez nagrania strony w innym układzie niż problem i skutek: pytanie do widza, jak jest dziś, jak jest po integracji, co zyskuje zespół. Pytanie od pierwszej sekundy (bez planszy z logo), na końcu plansza marki z adresem.",
+ "dla_wlasciciela": "Pytanie do widza, potem jak jest dziś i jak jest po integracji. Do postów, które pokazują zmianę w codziennej pracy zespołu.",
+ "typ": "objasnienie",
+ "parametry": {
+  "pytanie": "Ile razy dziennie *przepisujesz* zamówienie?",
+  "przed": "*Dziś*: Allegro, potem ERP, potem magazyn",
+  "podpis_przed": "Trzy razy te same dane",
+  "po": "*Po integracji*: zamówienie samo trafia do ERP",
+  "podpis_po": "Stany w sklepie zmieniają się same",
+  "zysk": "Zespół zajmuje się *klientem*, nie tabelką"
+ },
+ "wymagane": [
+  "pytanie",
+  "przed",
+  "po"
+ ],
+ "limity": {
+  "pytanie": {
+   "max": 60
+  }
+ },
+ "etykiety": {
+  "pytanie": "Plansza 1: pytanie (hak)",
+  "przed": "Plansza 2: dziś",
+  "podpis_przed": "Podpis 2",
+  "po": "Plansza 3: po integracji",
+  "podpis_po": "Podpis 3",
+  "zysk": "Plansza 4: zysk"
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{pytanie}}"
+  },
+  {
+   "tekst": "{{przed}}",
+   "podpis": "{{podpis_przed}}"
+  },
+  {
+   "tekst": "{{po}}",
+   "podpis": "{{podpis_po}}"
+  },
+  {
+   "tekst": "{{zysk}}"
+  }
+ ]
+}

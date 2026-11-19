@@ -61,3 +61,6 @@ NaulikApp to mobilny dziennik pokładowy dla polskich kapitanów małych i śred
    termin: 2026-11-21
    propozycja: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console
    Odpowiedź: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console
+6. Jakie wezwanie do działania ma być na końcu filmów NaulikApp (plansza końcowa w `studio/marka.json`): zapis do testu, link do Google Play czy profil w social media?
+   termin: 2026-11-24
+   propozycja: na czas testu przed wydaniem „Szukamy testerów na Androida. Napisz w komentarzu, wyślemy zaproszenie do testu”; po wydaniu link do Google Play

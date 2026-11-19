@@ -1,0 +1,61 @@
+{
+ "tytul": "Objaśnienie: 3 błędy w opisie mebla",
+ "opis": "Plansze bez nagrania strony: hak, trzy częste błędy w opisie mebla na Allegro, rozwiązanie. Hak od pierwszej sekundy, bez podpisu (bez planszy z logo), na końcu plansza marki z ofertą. Do postów poradnikowych między pokazami.",
+ "dla_wlasciciela": "Plansze w kolorach Opisarni: trzy błędy w opisie mebla i jak ich uniknąć. Bez nagrania strony. Do postów z poradą między pokazami generatora.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "3 błędy w opisie mebla na *Allegro*",
+  "blad_1": "Brak *wymiarów* w treści opisu",
+  "podpis_1": "Kupujący pyta albo odchodzi",
+  "blad_2": "Ten sam *ogólnik* przy każdym meblu",
+  "podpis_2": "Opis nie mówi, czym mebel się wyróżnia",
+  "blad_3": "Opis tylko po polsku, oferta też w *Niemczech*",
+  "podpis_3": "Niemiecki kupujący nie przeczyta szczegółów",
+  "rozwiazanie": "Opisarnia pisze opis z *Twoich* danych",
+  "podpis_rozwiazanie": "Wymiary, materiał i kolor w każdym opisie"
+ },
+ "wymagane": [
+  "hak",
+  "blad_1",
+  "blad_2",
+  "blad_3"
+ ],
+ "limity": {
+  "hak": {
+   "max": 60
+  }
+ },
+ "etykiety": {
+  "hak": "Plansza 1: hak",
+  "blad_1": "Plansza 2: błąd 1",
+  "podpis_1": "Podpis 2",
+  "blad_2": "Plansza 3: błąd 2",
+  "podpis_2": "Podpis 3",
+  "blad_3": "Plansza 4: błąd 3",
+  "podpis_3": "Podpis 4",
+  "rozwiazanie": "Plansza 5: rozwiązanie",
+  "podpis_rozwiazanie": "Podpis 5"
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}"
+  },
+  {
+   "tekst": "{{blad_1}}",
+   "podpis": "{{podpis_1}}"
+  },
+  {
+   "tekst": "{{blad_2}}",
+   "podpis": "{{podpis_2}}"
+  },
+  {
+   "tekst": "{{blad_3}}",
+   "podpis": "{{podpis_3}}"
+  },
+  {
+   "tekst": "{{rozwiazanie}}",
+   "podpis": "{{podpis_rozwiazanie}}"
+  }
+ ]
+}

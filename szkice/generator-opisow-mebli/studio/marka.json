@@ -1,0 +1,33 @@
+{
+ "nazwa": "Opisarnia",
+ "zrodlo": "kolory i czcionki z szablony/post-kwadrat.svg i strony opisarnia.pl; czcionki Fraunces i Inter są na serwerze w ~/.local/share/fonts jako kroje zmienne (grubość Inter inna niż domyślna to obrys); teksty plansz z kampanie/staly-rytm.md (Przekaz), bez powtarzania języków w haku, starcie i końcu; muzyki i logo brak (do dodania: plik w studio/ z licencją zapisaną tutaj)",
+ "strony": [
+  "opisarnia.pl"
+ ],
+ "kolory": {
+  "tlo": "#fbf7f1",
+  "tekst": "#2b1d12",
+  "akcent": "#9e5f18",
+  "akcent2": "#c79a3e"
+ },
+ "czcionki": {
+  "tytul": "Fraunces",
+  "tekst": "Inter:Medium",
+  "napisy": "Inter:SemiBold"
+ },
+ "napisy": {
+  "rozmiar": 58,
+  "kolor": "#fbf7f1",
+  "tlo": "#2b1d12",
+  "krycie": 0.88
+ },
+ "plansza_startowa": {
+  "tytul": "Opisarnia",
+  "podtytul": "Generator opisów mebli"
+ },
+ "plansza_koncowa": {
+  "tytul": "10 opisów miesięcznie za darmo",
+  "podtytul": "Konto Free, bez karty",
+  "adres": "opisarnia.pl"
+ }
+}

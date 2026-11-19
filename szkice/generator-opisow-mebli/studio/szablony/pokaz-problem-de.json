@@ -1,0 +1,147 @@
+{
+ "tytul": "Problem, potem szybki pokaz z opisem DE",
+ "opis": "Dwie plansze z problemem sprzedawcy, potem krótkie nagranie generatora: mebel, wymiary, Allegro, od razu zakładka z opisem po niemiecku. Bez planszy z logo na początku (hak to pierwsza plansza), na końcu plansza marki. Do postów o sprzedaży do Niemiec.",
+ "dla_wlasciciela": "Dwie plansze z problemem sprzedawcy, potem krótkie nagranie generatora z gotowym opisem po niemiecku. Do postów o sprzedaży mebli do Niemiec.",
+ "typ": "pokaz",
+ "parametry": {
+  "problem": "Sprzedajesz meble do *Niemiec*?",
+  "podpis_problem": "Opis po niemiecku zwykle trwa najdłużej",
+  "obietnica": "Wpisujesz mebel raz, opis *DE* jest od razu",
+  "typ_mebla": "Stół rozkładany, dąb",
+  "kategoria": "stół",
+  "szerokosc": "160",
+  "wysokosc": "76",
+  "glebokosc": "90",
+  "material": "lite drewno dębowe",
+  "napis_typ": "Mebel i wymiary",
+  "napis_generuj": "Allegro i „Generuj opis”",
+  "napis_de": "Opis po niemiecku"
+ },
+ "wymagane": [
+  "problem",
+  "typ_mebla",
+  "kategoria"
+ ],
+ "limity": {
+  "problem": {
+   "max": 60
+  },
+  "typ_mebla": {
+   "max": 60
+  },
+  "kategoria": {
+   "opcje": [
+    "sofa",
+    "szafa",
+    "stół",
+    "krzesło",
+    "komoda",
+    "fotel",
+    "łóżko",
+    "regał",
+    "biurko",
+    "inne"
+   ]
+  },
+  "szerokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "wysokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "glebokosc": {
+   "max": 4,
+   "cyfry": true
+  },
+  "material": {
+   "max": 60
+  }
+ },
+ "etykiety": {
+  "problem": "Plansza 1: problem (hak)",
+  "podpis_problem": "Podpis 1",
+  "obietnica": "Plansza 2: obietnica",
+  "typ_mebla": "Mebel",
+  "kategoria": "Kategoria",
+  "szerokosc": "Szerokość (cm)",
+  "wysokosc": "Wysokość (cm)",
+  "glebokosc": "Głębokość (cm)",
+  "material": "Materiał",
+  "napis_typ": "Napis 1: mebel",
+  "napis_generuj": "Napis 2: generowanie",
+  "napis_de": "Napis 3: opis DE"
+ },
+ "plansza_startowa": false,
+ "plansze_przed": [
+  {
+   "tekst": "{{problem}}",
+   "podpis": "{{podpis_problem}}"
+  },
+  {
+   "tekst": "{{obietnica}}"
+  }
+ ],
+ "url": "https://opisarnia.pl/generator",
+ "logowanie": "https://opisarnia.pl/logowanie",
+ "kroki": [
+  {
+   "napis": "{{napis_typ}}",
+   "wpisz": [
+    "#g-nazwa",
+    "{{typ_mebla}}"
+   ]
+  },
+  {
+   "wybierz": [
+    "#g-kategoria",
+    "{{kategoria}}"
+   ]
+  },
+  {
+   "wpisz": [
+    "#g-w",
+    "{{szerokosc}}"
+   ],
+   "pauza": 0.2
+  },
+  {
+   "wpisz": [
+    "#g-h",
+    "{{wysokosc}}"
+   ],
+   "pauza": 0.2
+  },
+  {
+   "wpisz": [
+    "#g-d",
+    "{{glebokosc}}"
+   ],
+   "pauza": 0.2
+  },
+  {
+   "wpisz": [
+    "#g-mat",
+    "{{material}}"
+   ]
+  },
+  {
+   "napis": "{{napis_generuj}}",
+   "kliknij": "[aria-label='Wybierz marketplace'] button:has-text('Allegro')"
+  },
+  {
+   "kliknij": "button:has-text('Generuj opis')"
+  },
+  {
+   "czekaj_na": "button:has-text('Kopiuj')",
+   "limit": 90
+  },
+  {
+   "napis": "{{napis_de}}",
+   "przewin": "[role=tablist][aria-label='Język opisu']",
+   "kliknij": "[role=tab]:has-text('Niemiecki')",
+   "pauza": 4
+  }
+ ]
+}

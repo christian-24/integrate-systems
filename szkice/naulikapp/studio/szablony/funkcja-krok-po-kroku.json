@@ -1,0 +1,52 @@
+{
+ "tytul": "Jedna funkcja krok po kroku",
+ "opis": "Plansze bez nagrania: pytanie z życia na pokładzie, potem jedna funkcja aplikacji w trzech krokach i efekt. Inny układ niż problem i rozwiązanie: do postów o konkretnej funkcji. Zrzut ekranu przy kroku: scenariusz bez szablonu z polem \"obraz\".",
+ "dla_wlasciciela": "Pytanie z życia na pokładzie, potem jedna funkcja aplikacji w trzech krokach i efekt. Do postów o jednej konkretnej funkcji.",
+ "typ": "objasnienie",
+ "parametry": {
+  "pytanie": "Usterka silnika w *rejsie*. Gdzie ją zapisać?",
+  "krok_1": "*1.* Otwierasz dziennik bieżącego rejsu",
+  "krok_2": "*2.* Wybierasz usterkę i opisujesz ją",
+  "krok_3": "*3.* Zapis ma godzinę i pozycję",
+  "efekt": "Po rejsie wpis jest w podpisanym *PDF*",
+  "podpis_efekt": "Wpisów po zamknięciu nie da się zmienić"
+ },
+ "wymagane": [
+  "pytanie",
+  "krok_1",
+  "krok_2",
+  "krok_3"
+ ],
+ "limity": {
+  "pytanie": {
+   "max": 60
+  }
+ },
+ "etykiety": {
+  "pytanie": "Plansza 1: pytanie (hak)",
+  "krok_1": "Plansza 2: krok 1",
+  "krok_2": "Plansza 3: krok 2",
+  "krok_3": "Plansza 4: krok 3",
+  "efekt": "Plansza 5: efekt",
+  "podpis_efekt": "Podpis 5"
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{pytanie}}"
+  },
+  {
+   "tekst": "{{krok_1}}"
+  },
+  {
+   "tekst": "{{krok_2}}"
+  },
+  {
+   "tekst": "{{krok_3}}"
+  },
+  {
+   "tekst": "{{efekt}}",
+   "podpis": "{{podpis_efekt}}"
+  }
+ ]
+}

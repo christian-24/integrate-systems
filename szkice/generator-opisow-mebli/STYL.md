@@ -32,5 +32,17 @@ Zadanie „Przygotować post na RRRR-MM-DD (stały rytm)” wykonujesz według t
 - Bez nazw firm, klientów i osób. Bez liczb, których nie ma w repozytorium.
 - Język: polski, rzeczowo, bez wykrzykników i emotek (najwyżej jedna).
 
+## Filmy
+Film powstaje ze studia (`studio/szablony/`, `studio/marka.json`) jako `posty/…/scenariusz.json`; nagrywa go panel.
+- Post z kanałem reels ma zawsze film. Post tylko na facebook albo linkedin ma film, gdy plan na ten dzień go przewiduje.
+- Szablony: `pokaz-generatora` (cały formularz, opis PL, potem DE), `pokaz-problem-de` (2 plansze z problemem, krótki pokaz
+  z opisem DE), `objasnienie-bledy` (plansze poradnikowe, bez strony).
+- Kolejność: na zmianę pokaz i objaśnienie; ten sam szablon nie dwa razy z rzędu; w każdym pokazie inny mebel
+  (sprawdź `scenariusz.json` poprzednich postów).
+- Hak: jedno zdanie do 60 znaków, najlepiej do ok. 40 (widz czyta go w 3 s). Nie powtarzaj „po polsku i po niemiecku”
+  z planszy końcowej.
+- W `objasnienie-bledy` trzy błędy piszesz pod ten post (szablon ich wymaga); objaśnienie do 30 s.
+- Poprawka jednego posta zmienia tylko jego `scenariusz.json`. Szablonu i marki nie zmieniasz.
+
 ## Czego nie robisz
 Nie publikujesz, nie wysyłasz, nie zmieniasz kodu Opisarni ani szablonu.

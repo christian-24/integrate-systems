@@ -1,0 +1,51 @@
+{
+ "tytul": "Objaśnienie: papierowy dziennik a aplikacja",
+ "opis": "Plansze bez nagrania (aplikacja nie ma strony): problem papierowego dziennika, zapis w telefonie, offline, PDF. Hak od pierwszej sekundy; do planszy można dodać zrzut ekranu aplikacji (\"obraz\").",
+ "dla_wlasciciela": "Cztery plansze: papierowy dziennik a zapis w telefonie, praca bez zasięgu i eksport do PDF. Do postów o tym, po co jest aplikacja.",
+ "typ": "objasnienie",
+ "parametry": {
+  "problem": "Papierowy dziennik *moknie* i ginie",
+  "zapis": "Rejs, ruch portowy i usterka zapisane w *telefonie*",
+  "offline": "Działa *bez zasięgu*, na pokładzie",
+  "pdf": "Podpisany dziennik eksportujesz do *PDF*",
+  "podpis_zapis": "Kilka dotknięć, także mokrą ręką",
+  "podpis_offline": "Dane zostają w telefonie",
+  "podpis_pdf": "Wpisów po zamknięciu nie da się zmienić"
+ },
+ "etykiety": {
+  "problem": "Plansza 1: problem (hak)",
+  "zapis": "Plansza 2: zapis",
+  "offline": "Plansza 3: offline",
+  "pdf": "Plansza 4: PDF",
+  "podpis_zapis": "Podpis 2",
+  "podpis_offline": "Podpis 3",
+  "podpis_pdf": "Podpis 4"
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{problem}}"
+  },
+  {
+   "tekst": "{{zapis}}",
+   "podpis": "{{podpis_zapis}}"
+  },
+  {
+   "tekst": "{{offline}}",
+   "podpis": "{{podpis_offline}}"
+  },
+  {
+   "tekst": "{{pdf}}",
+   "podpis": "{{podpis_pdf}}"
+  }
+ ],
+ "wymagane": [
+  "problem",
+  "zapis"
+ ],
+ "limity": {
+  "problem": {
+   "max": 60
+  }
+ }
+}

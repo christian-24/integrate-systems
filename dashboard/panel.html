@@ -311,6 +311,80 @@ img.tl-media{aspect-ratio:1/1;object-fit:cover}
 .pvid{width:100%;max-height:520px;border-radius:10px;background:#000}
 .filmb,.fixb{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
 .filmb h3{margin:0;font-size:14px}
+.stu-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0;font-size:13px;color:var(--ink-2)}
+.stu-box{margin-top:6px;padding:0;font-size:13px;color:var(--ink-2)}
+.stu-box[open]>summary{margin-bottom:0}
+.stu-box>summary{cursor:pointer;color:var(--ink-2);font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.stu-box>summary .muted{font-weight:400}
+.stu-box>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.stu-tpl{margin:0;font-size:13.5px;color:var(--ink-2)}
+.stu-err{display:grid;gap:6px}
+.stu-err .warn{margin:0}
+details.stu-det{padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+details.stu-det+details.stu-det{border-top:1px solid var(--line);padding-top:0}
+.stu-det>summary{cursor:pointer;padding:6px 10px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.stu-det>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+details.stu-det[open]>summary{margin-bottom:0;border-bottom:1px solid var(--line)}
+.stu-det>.note{margin:6px 10px 8px}
+.stu-seq{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr);gap:6px 12px;margin:0;padding:8px 10px;font-size:13.5px}
+.stu-seq dt{color:var(--ink-3);overflow-wrap:anywhere}
+.stu-seq dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.stu-warn{margin:0;padding:6px 10px 6px 26px;font-size:13px;color:var(--l-yellow);background:var(--l-yellow-bg);border-radius:6px}
+.stu-chips .chip{font-size:12.5px;color:var(--ink-2)}
+.stu-box>.note{margin:6px 0 0}
+.stu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;margin-top:8px}
+.stu-proj{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface);display:grid;gap:6px;align-content:start;min-width:0}
+.stu-ph{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.stu-sws{display:inline-flex;gap:4px}
+.stu-sw{width:16px;height:16px;border-radius:4px;border:1px solid var(--line-2);display:inline-block}
+.stu-card{margin:0;font-size:13px;color:var(--ink-2);overflow-wrap:anywhere}
+.stu-tl{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:8px}
+.stu-tl li{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:4px}
+.stu-th{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.stu-desc{margin:0;font-size:13px;color:var(--ink)}
+.stu-tl .note,.stu-tl .warn{margin:0}
+.stu-seq dd{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 10px}
+.stu-val{flex:1 1 12em;min-width:0}
+.stu-edbtn{flex:0 0 auto}
+.stu-ed{display:grid;gap:8px;width:100%;padding:8px;border:1px solid var(--line-2);border-radius:8px;background:var(--sunk)}
+.stu-ed .fl{display:grid;gap:4px;font-size:13px;color:var(--ink-2)}
+.stu-ed .fi{width:100%}
+.flm-top{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--surface);display:grid;gap:6px}
+.flm-top p{margin:0}
+.flm-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.stu-sec{padding:8px 10px 2px;border-top:1px solid var(--line)}
+.stu-sec:first-of-type{border-top:0}
+.stu-sec h4{margin:0 0 2px;font-size:12.5px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em}
+.stu-sec .stu-seq{padding:4px 0 6px}
+.stu-seq.stu-kv,.drawer .stu-seq.stu-kv{grid-template-columns:minmax(0,8.5em) minmax(0,1fr);gap:2px 10px}
+.stu-seq.stu-kv dt,.stu-seq.stu-kv dd{padding:1px 0}
+.stu-secact{padding:0 0 8px}
+.stu-hl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13px}
+.stu-prev{color:var(--ink);overflow-wrap:anywhere}
+.stu-acc{font-weight:700;color:var(--accent)}
+.stu-mocks{display:flex;gap:8px;padding:8px 10px;overflow-x:auto}
+.stu-mock{position:relative;flex:0 0 auto;width:96px;height:170px;border-radius:6px;border:1px solid var(--line-2);overflow:hidden;display:block;font-size:10px;line-height:1.2}
+.stu-mk-n{position:absolute;left:8px;top:28px;font-size:7px;font-weight:600}
+.stu-mk-bar{position:absolute;left:0;top:37px;height:2px;width:45%}
+.stu-mk-r{position:absolute;left:8px;top:56px;width:14px;height:2px}
+.stu-mk-t{position:absolute;left:8px;right:8px;top:62px;font-weight:700;font-size:10px;overflow-wrap:anywhere}
+.stu-mk-c{position:absolute;left:8px;right:8px;bottom:42px;padding:3px 4px;border-radius:2px;font-size:7.5px}
+.stu-mk-page{background:var(--sunk);color:var(--ink-3)}
+.stu-mk-card{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;padding:8px;text-align:center}
+.stu-mk-l{position:absolute;top:6px;left:0;right:0;font-size:7px;opacity:.75}
+.stu-mk-h{font-weight:700;font-size:10.5px;overflow-wrap:anywhere}
+.stu-mk-s{font-size:8px;overflow-wrap:anywhere}
+details.stu-proj{display:block}
+.stu-proj>summary{cursor:pointer;display:list-item}
+.stu-proj>summary>*{margin-right:8px}
+.stu-proj>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.stu-pbody{display:grid;gap:6px;margin-top:6px;min-width:0}
+.stu-swl{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--ink-2)}
+p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
+.stu-acts{margin-top:4px}
+.stu-ask{display:grid;gap:8px;margin-top:4px}
+.stu-ask .fl{display:grid;gap:4px;font-size:13px;color:var(--ink-2)}
+.stu-mc{display:block;font-size:12.5px;margin-top:2px;overflow-wrap:anywhere}
 @media (max-width:640px){.tl-day{grid-template-columns:1fr;gap:6px}.tl-day.nil{grid-template-columns:auto 1fr;padding:8px 0}.tl-day.nil .tl-date b{display:inline}.tl-day.nil .tl-empty{margin:0}}
 .dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
 .move-box{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;background:var(--sunk)}
@@ -561,8 +635,11 @@ details li{margin-top:4px}
 @media (max-width:620px){
   .kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .board{grid-template-columns:minmax(0,1fr)}
-  .runs li{grid-template-columns:auto minmax(0,1fr)}
-  .runs .wh{grid-column:2;text-align:left}
+  /* lista uruchomień (Agenci, Teraz): stan i czas w pierwszym wierszu, tytuł z opisem na całą szerokość pod nimi */
+  .runs li{grid-template-columns:auto minmax(0,1fr);row-gap:4px}
+  .runs li>span:first-child{grid-row:1;grid-column:1}
+  .runs li>div{grid-row:2;grid-column:1/-1}
+  .runs .wh{grid-row:1;grid-column:2;text-align:right}
   .drawer dl{grid-template-columns:minmax(0,1fr);gap:2px}
   .drawer dd{margin-bottom:8px}
   .hbar{grid-template-columns:80px minmax(0,1fr) 78px}
@@ -577,13 +654,14 @@ details li{margin-top:4px}
   .board .col:not(.on){display:none}
   .board .col.done .old{display:none}
   .board .col.done .more{display:block}
-  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
+  .bnav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
     padding:4px max(4px,env(safe-area-inset-right,0px)) max(4px,env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px))}
-  .bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;padding:4px 2px;border-radius:var(--r);color:var(--ink-2);text-decoration:none;font-size:11.5px;font-weight:600;position:relative;min-width:0;text-align:center;line-height:1.2}
+  .bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;padding:4px 1px;border-radius:var(--r);color:var(--ink-2);text-decoration:none;font-size:11px;font-weight:600;position:relative;min-width:0;text-align:center;line-height:1.2}
   .bnav a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
   .bnav svg{width:20px;height:20px}
   .bnav .count{position:absolute;top:2px;left:calc(50% + 6px);font-size:10.5px;font-weight:700;background:var(--l-purple-bg);color:var(--l-purple);border-radius:9px;padding:0 5px;line-height:16px}
   .bnav .count.blue{background:var(--l-blue-bg);color:var(--l-blue)}
+  .bnav .count.plain{background:var(--surface);color:var(--ink-3);border:1px solid var(--line);line-height:14px}
   .content{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   .drawer{padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}
   .nx{max-width:none}
@@ -605,6 +683,113 @@ details li{margin-top:4px}
   .rows:not(.runs):not(.plx) .r{text-align:left;justify-items:start;display:flex;gap:8px;align-items:center;flex-wrap:wrap;white-space:normal}
   .rows:not(.runs):not(.plx) .r br{display:none}
   .rows:not(.runs):not(.plx) .r>span>span.muted{margin-left:6px}}
+
+/* Teraz (Przegląd): jedna sekcja — trwa, zaplanowane publikacje, ostatnie 24 h; prefiks nw- */
+.nw-head{display:flex;align-items:center;gap:8px}
+.nw-head .dot{width:9px;height:9px}
+.nw-idle{margin:0;padding:0 16px 14px;color:var(--ink-2);font-size:13.5px}
+.nw-idle .linkbtn,.nw-idle a{margin-left:4px}
+.nw-sub{display:flex;justify-content:space-between;align-items:center;gap:4px 8px;flex-wrap:wrap;margin:0;padding:10px 16px 2px;border-top:1px solid var(--line);font-size:13.5px;font-weight:650;color:var(--ink)}
+.nw-sub small{font-size:12px;font-weight:500;color:var(--ink-3)}
+.nw-sub small a{color:var(--ink-3)}
+.nw-tog{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+.nw-tog:hover{color:var(--accent)}
+.nw-car{display:inline-block;width:1em;color:var(--ink-3)}
+.nw-fail{margin:0;padding:6px 16px 0;font-size:12.5px;font-weight:650;color:var(--l-red)}
+.nw-rows .s{row-gap:2px}
+.nw-act{flex-basis:100%;color:var(--ink-2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;min-width:0}
+.nw-why{flex-basis:100%;color:var(--l-red);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;min-width:0}
+.nw-err{color:var(--l-red);font-weight:650}
+.nw-more{padding:0 16px 12px;margin:0}
+.nw-rows .wh{font-variant-numeric:tabular-nums}
+.nw-m{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.nw-dot{color:var(--ink-3)}
+.nw-do{margin-top:6px;display:flex;gap:8px;flex-wrap:wrap}
+.nw-nb{white-space:nowrap}
+.nw-hs{display:inline-flex;align-items:baseline;gap:4px 8px;flex-wrap:wrap}
+.nw-au{white-space:nowrap}
+.nw-note{margin:0;padding:2px 16px 8px;font-size:12px;color:var(--ink-3)}
+.nw-note.nw-bad{color:var(--l-red)}
+.nw-foot{margin:0;padding:4px 16px 12px;border-top:1px solid var(--line);font-size:12.5px}
+.nw-foot a{color:var(--ink-3)}
+.nw-last{padding-top:0}
+@keyframes nw-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.nw-live{animation:nw-pulse 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.nw-live{animation:none}}
+/* desktop: znaczniki w jednej kolumnie o stałej szerokości, tytuły zaczynają się w tym samym miejscu */
+@media (min-width:621px){.nw-rows li{grid-template-columns:10rem minmax(0,1fr) auto}.nw-rows li>span:first-child .lz{white-space:normal}}
+.mk-hit{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* Blokady: drzewo zależności (po:/unlocks); prefiks bk- */
+.bk-line{display:flex;align-items:center;gap:8px;margin:0 16px 10px;padding:8px 12px;border-radius:8px;background:var(--l-purple-bg);color:var(--l-purple);text-decoration:none;font-size:13.5px;min-width:0}
+.bk-line svg{width:16px;height:16px;flex:none}
+.bk-line span{min-width:0;flex:1}
+.bk-line b{font-weight:650;white-space:nowrap}
+.bk-line:hover b{text-decoration:underline}
+.pagehead+.bk-line{margin:0 0 14px}
+.bk-intro{color:var(--ink-3);font-size:13px;padding:0 16px 10px;max-width:80ch;margin:0}
+.bk-tree,.bk-sub{list-style:none;margin:0;padding:0}
+.bk-tree{padding:0 16px 10px}
+.bk-tree>.bk-node{border-top:1px solid var(--line)}
+.bk-tree>.bk-node:first-child{border-top:0}
+.bk-sub{margin-left:11px;padding-left:14px;border-left:2px solid var(--line)}
+.bk-row{display:flex;align-items:flex-start;justify-content:space-between;gap:6px 8px;padding:9px 0;flex-wrap:wrap}
+.bk-sub .bk-row{padding:6px 0}
+.bk-main{min-width:0;flex:1 1 220px}
+.bk-t{font-weight:500;display:block;text-align:left}
+.bk-tree>.bk-node>.bk-row .bk-t{font-weight:600}
+.bk-meta{font-size:12px;color:var(--ink-3);display:flex;gap:4px 8px;align-items:center;flex-wrap:wrap;margin-top:2px}
+.bk-n{font-size:12.5px;color:var(--ink-2);white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:1px 9px;background:var(--sunk)}
+.bk-n b{font-weight:700;color:var(--ink)}
+.bk-nn{display:none}
+/* Twoje: tło i pasek po lewej; w poddrzewie bez przesunięcia tytułu względem rodzeństwa (ujemny margines = padding) */
+/* „Twoje”: pełne wyróżnienie tylko korzenia (do zrobienia teraz); niżej i na listach sam pasek po lewej */
+.bk-tree>.bk-you>.bk-row{background:var(--l-purple-bg);border-radius:6px;padding-left:8px;padding-right:8px;margin:4px -8px;box-shadow:inset 3px 0 0 var(--l-purple)}
+.bk-tree>.bk-you>.bk-row .bk-n{background:var(--surface);border-color:var(--l-purple)}
+.bk-tree>.bk-you>.bk-row .bk-n b{color:var(--l-purple)}
+.bk-youl>.bk-row{box-shadow:inset 2px 0 0 var(--l-purple);padding-left:8px}
+.bk-sub>.bk-youl>.bk-row{margin-left:-14px;padding-left:12px}
+.bk-later{color:var(--l-purple);font-weight:600}
+.bk-tog{flex:none;width:24px;height:24px;margin:-1px 0 0 -4px;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;border-radius:4px;padding:0;font:inherit;font-size:15px;color:var(--ink-3);cursor:pointer}
+.bk-tog:hover{color:var(--accent);background:var(--hover)}
+.bk-tg0{flex:none;width:20px}
+.bk-row>.bk-main{order:1}
+.bk-row>.bk-n{order:2}
+.bk-then{font-size:11.5px;color:var(--ink-3);margin:0 0 0 24px;letter-spacing:.01em}
+.bk-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bk-legend{display:flex;align-items:center;gap:6px}
+.bk-cdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.bk-gh{margin:0;padding:10px 16px 0;font-size:13px;font-weight:650;color:var(--l-red);overflow-wrap:anywhere}
+.bk-gh small{color:var(--ink-3);font-weight:500}
+.bk-rep .bk-t{font-weight:400;color:var(--ink-2)}
+.bk-cut{display:inline-block;font-size:12.5px;padding:4px 0;margin:0 0 6px;text-align:left}
+.bk-jump{font-size:12px}
+.bk-sum{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.bk-go{cursor:pointer;font:inherit;font-size:12.5px}
+.bk-go1{white-space:normal;text-align:left}
+.bk-go:hover{border-color:var(--line-2);background:var(--hover)}
+.bk-crit>.bk-row>.bk-main>.bk-t::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:middle}
+.bk-hit>.bk-row{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:no-preference){.bk-hit>.bk-row,.mk-hit{transition:outline-color .3s}}
+.bk-why{font-size:12.5px;color:var(--l-red);margin-top:2px;overflow-wrap:anywhere}
+.bk-why.none{color:var(--ink-3)}
+.nav .count.plain{background:transparent;color:var(--ink-3);border:1px solid var(--line)}
+@media (max-width:620px){
+  .nw-more .linkbtn,.nw-tog,.nw-idle .linkbtn,.bk-cut,.bk-jump{min-height:40px;display:inline-flex;align-items:center}
+  .bk-sum .bk-go:not(.bk-go1){display:none}
+  .bk-line{margin:0 12px 10px}
+  .bk-tree{padding:0 12px 8px}
+  .bk-sub{margin-left:4px;padding-left:10px}
+  .bk-sub>.bk-youl>.bk-row{margin-left:-10px;padding-left:8px}
+  .bk-tog{width:36px;height:36px;margin:-8px -6px -8px -10px}
+  .bk-then{margin-left:18px}
+  .bk-nw{display:none}
+  .bk-nn{display:inline-block}
+  .bk-head>div:first-child{flex-basis:100%}
+  .bk-head .toolbar{flex:1 1 100%;min-width:0;flex-wrap:wrap}
+  .bk-head .toolbar select{flex:1 1 0;min-width:0;width:0}
+  .bk-head .toolbar .btn{flex:1 1 100%}
+}
 </style>
 
 <div class="app">
@@ -683,18 +868,18 @@ const MACH={pc:'Windows',mac:'Mac',cloud:'serwer'};
 const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=['#fff','#fff','#0b2a1f','#2b1d00','#3a0f22','#fff','#fff','#fff'];
 const INBOX='Do rozplanowania';
-const VIEWS=['przeglad','wskazniki','ty','marketing','tablica','terminy','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',marketing:'Marketing',tablica:'Tablica zadań',terminy:'Terminy',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
+const VIEWS=['przeglad','wskazniki','ty','marketing','tablica','terminy','blokady','agenci','koszty','projekty'];
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',marketing:'Marketing',tablica:'Tablica zadań',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
 const PTABS=[['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
 
 /* ---------- stan strony ---------- */
 let D=null,offline=false,notice='',noticeT=null,timer=null,pending=0,queue=Promise.resolve(),tmpN=0,loadSeq=0,FX=null,HC={},CUR=null,DR=null,gWait=0,q='';
-const PF={bp:'all',mine:false,ms:'all',theme:'',hidden:[],col:'todo'};
+const PF={bp:'all',mine:false,ms:'all',theme:'',hidden:[],col:'todo',bk:''};
 try{const z=JSON.parse(localStorage.getItem('pulpit.v1')||'{}');if(z&&typeof z==='object'){
   if(typeof z.bp==='string')PF.bp=z.bp;PF.mine=!!z.mine;if(typeof z.ms==='string')PF.ms=z.ms;
-  if(z.theme==='light'||z.theme==='dark')PF.theme=z.theme;if(COLS.some(c=>c[0]===z.col))PF.col=z.col;if(Array.isArray(z.hidden))PF.hidden=z.hidden.map(String)}}catch(e){}
+  if(z.theme==='light'||z.theme==='dark')PF.theme=z.theme;if(COLS.some(c=>c[0]===z.col))PF.col=z.col;if(typeof z.bk==='string')PF.bk=z.bk;if(Array.isArray(z.hidden))PF.hidden=z.hidden.map(String)}}catch(e){}
 try{if(!PF.hidden.length){const h=JSON.parse(localStorage.getItem('panel.hiddenCals')||'[]');if(Array.isArray(h))PF.hidden=h.map(String)}}catch(e){}
 let hiddenCals=new Set(PF.hidden);
 const savePF=()=>{PF.hidden=Array.from(hiddenCals);try{localStorage.setItem('pulpit.v1',JSON.stringify(PF))}catch(e){}};
@@ -759,7 +944,8 @@ function normalize(raw){
     server:normServer(raw.server),
     costs:normCosts(raw.costs),
     publish:normPublish(raw.publish),
-    film:raw.film&&typeof raw.film==='object'?{available:!!raw.film.available,account:String(raw.film.account||'')}:null,
+    film:raw.film&&typeof raw.film==='object'?{available:!!raw.film.available,explainer:!!raw.film.explainer,account:String(raw.film.account||'')}:null,
+    studio:raw.studio&&typeof raw.studio==='object'&&!Array.isArray(raw.studio)?raw.studio:{},
     campaigns:(raw.campaigns||[]).map(c=>{
       const cn={},co=c.counters&&typeof c.counters==='object'?c.counters:{};
       Object.keys(co).forEach(k=>{const n=+co[k];if(k&&isFinite(n))cn[k]=n});
@@ -768,7 +954,7 @@ function normalize(raw){
       const rm=mk&&cn.hasOwnProperty(mk)?cn[mk]:0;
       return Object.assign({},c,{start:rr(c.start),end:rr(c.end),channels:c.channels||[],gaps:c.gaps||[],counters:cn,
       target:isFinite(+c.target)&&+c.target>0?+c.target:0,result:Math.max(r0,rm)})}),
-    standard:raw.standard||[],agents:normAgents(raw.agents),
+    standard:raw.standard||[],agents:normAgents(raw.agents),activity:normActivity(raw.activity),
     pmNote:raw.pmNote?{date:rr(raw.pmNote.date),text:String(raw.pmNote.text||'')}:null,
     history:(Array.isArray(raw.history)?raw.history:[]).map(e=>({date:String(rr(e&&e.date)||''),projects:e&&e.projects&&typeof e.projects==='object'?e.projects:{}}))
       .filter(e=>isDay(e.date)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0),
@@ -864,7 +1050,8 @@ function derive(o){
   o.byP={};o.projects.forEach((p,i)=>{p.ci=i%8;p.ini=initials(p.name);o.byP[p.id]=p});
   o.tasks.forEach(t=>{t.col=colOf(t);if(!t.detail)t.detail=normDetail(null);if(!Array.isArray(t.after))t.after=[];if(!Array.isArray(t.waitingFor))t.waitingFor=[]});
   /* po: — zadania z tego samego pliku, które muszą być zrobione wcześniej; dopasowanie jak na serwerze
-     (pierwszy wiersz z fragmentem w tytule, bez wielkości liter), liczone od nowa po każdej zmianie stanu */
+     (pierwszy wiersz z fragmentem w tytule, bez wielkości liter), liczone od nowa po każdej zmianie stanu;
+     fragment bez pasującego wiersza to niezrobiony poprzednik (jak projekt.link_after; publikacja.py takiego zadania nie wypuści) */
   const byFile={};o.tasks.forEach(t=>{const k=t.project+'\n'+t.file;(byFile[k]||(byFile[k]=[])).push(t)});
   Object.keys(byFile).forEach(k=>byFile[k].sort((a,b)=>(a.line||0)-(b.line||0)));
   o.tasks.forEach(t=>{t.deps=[]});
@@ -872,8 +1059,11 @@ function derive(o){
     let w=t.waitingFor;
     if(t.after.length){const L=byFile[t.project+'\n'+t.file]||[];w=[];
       t.after.forEach(fr=>{const f=fr.trim().toLowerCase(),m=f?L.find(x=>x!==t&&x.title.toLowerCase().indexOf(f)>=0):null;
-        if(m){w.push({title:m.title,done:m.state==='done'});if(m.deps.indexOf(t)<0)m.deps.push(t)}})}
+        if(m){w.push({title:m.title,done:m.state==='done'});if(m.deps.indexOf(t)<0)m.deps.push(t)}
+        else if(f)w.push({title:fr.trim(),done:false,missing:true})})}
     t.waits=t.state==='done'?[]:w.filter(x=>!x.done).map(x=>x.title);
+    /* brakujące poprzedniki (fragment po: bez wiersza; z serwera: id puste) — jedno źródło dla Blokad */
+    t.missing=t.state==='done'?[]:w.filter(x=>!x.done&&(x.missing||(x.id===''&&!t.after.length))).map(x=>x.title);
   });
   /* odblokowania: zadania z po: na tym zadaniu; z serwera (unlocks), a bez pola liczone tak samo z po: */
   o.tasks.forEach(t=>{
@@ -995,18 +1185,23 @@ function normAgents(a){
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
     maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
-    runs:(a.runs||[]).map(r=>Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:'claude',state:RS[r.state]?r.state:'error',
+    runs:(a.runs||[]).map(normRun)};
+}
+/* uruchomienie z /api/data (agents.runs i activity.runs) */
+function normRun(r){
+  r=r&&typeof r==='object'?r:{};
+  return Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:'claude',state:RS[r.state]?r.state:'error',
       title:r.title||KIND[r.kind]||'',queuedAt:absT(r.queuedAt),startedAt:absT(r.startedAt),endedAt:absT(r.endedAt),
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[],
       /* praca w git worktree: gałąź, baza i pliki zmienione względem bazy (git diff --numstat) */
       branch:typeof r.branch==='string'?r.branch:'',base:typeof r.base==='string'?r.base:'',merged:!!r.merged,
       changes:(Array.isArray(r.changes)?r.changes:[]).filter(c=>c&&typeof c.path==='string'&&c.path).map(c=>({path:c.path,
-        added:Number.isFinite(+c.added)&&c.added!==''&&c.added!=null?+c.added:null,removed:Number.isFinite(+c.removed)&&c.removed!==''&&c.removed!=null?+c.removed:null}))}))};
+        added:Number.isFinite(+c.added)&&c.added!==''&&c.added!=null?+c.added:null,removed:Number.isFinite(+c.removed)&&c.removed!==''&&c.removed!=null?+c.removed:null}))});
 }
 const runs=()=>D&&D.agents?D.agents.runs:[];
 const isAct=r=>r.state==='queued'||r.state==='running';
 const anyActive=()=>runs().some(isAct);
-const runById=id=>runs().find(r=>r.id===id);
+const runById=id=>runs().find(r=>r.id===id)||(D&&D.activity?D.activity.runs.find(r=>r.id===id):null);
 const runOf=t=>t.runId?runById(t.runId):null;
 const sameTask=(r,t)=>(r.taskId===t.id&&r.title===t.title)||(r.project===t.project&&r.file===t.file&&r.title===t.title);
 const taskOfRun=r=>r.kind!=='task'?null:(D.tasks.find(t=>t.runId===r.id)||D.tasks.find(t=>sameTask(r,t))||null);
@@ -1082,6 +1277,7 @@ const ICON={
  film:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M6.5 6v4l3.5-2z"/></svg>',
  money:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><circle cx="8" cy="8.25" r="2"/><path d="M4 6.5v3.5M12 6.5v3.5"/></svg>',
  agent:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="4" width="11" height="8.5" rx="2"/><path d="M8 1.5V4M5.5 8h.01M10.5 8h.01M6 10.5h4"/></svg>',
+ tree:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="2" width="5" height="3.5" rx="1"/><rect x="9.5" y="6.25" width="5" height="3.5" rx="1"/><rect x="9.5" y="11.5" width="5" height="3.5" rx="1"/><path d="M4 5.5v7.75h5.5M4 8h5.5"/></svg>',
  folder:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4.5a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1v6.5a1 1 0 01-1 1H3a1 1 0 01-1-1z"/></svg>'};
 const CI={ok:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="var(--bar-done)"/><path d="M5.5 9.3l2.2 2.2 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  gaps:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="var(--l-yellow)" stroke-width="1.6"/><path d="M9 1.8a7.2 7.2 0 010 14.4z" fill="var(--l-yellow)"/></svg>',
@@ -1171,8 +1367,9 @@ function todayRow(x){
       (x.d?dateR(x.d):'<div class="r"><span class="muted">bez terminu</span>')+
       (pr?'<button class="btn sm" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'">Przyjmij propozycję</button>':'')+
       '<button class="btn sec sm" data-qans="'+esc(k)+'">Odpowiedz</button></div></li>'}
-  const t=x.t,p=P(t.project),a=ACTB(t),ns=firstStep(t);
+  const t=x.t,p=P(t.project),a=ACTB(t),ns=firstStep(t),ar=runOf(t);
   return '<li><div><button class="lk t" data-task="'+esc(t.id)+'">'+esc(t.title)+'</button><div class="s">'+(p?av(p,'sm')+'<span>'+esc(p.name)+'</span>':'')+prioLz(p)+
+    (ar&&isAct(ar)?'<span class="lz blue" title="Szczegóły w sekcji Teraz">'+(ar.state==='running'?'trwa':'w kolejce')+'</span>':'')+
     (t.kind==='publikacja'?'<span class="lz out">publikacja</span>':'')+(x.need?'<span class="lz purple">'+esc(x.need)+'</span>':'<span class="lz grey">Twoje</span>')+
     (x.late?'<span class="lz red">po terminie</span>':'')+unlLz(t)+waitLz(t)+(x.min?'<span class="num">'+x.min+' min</span>':'')+'</div>'+
     (ns?'<div class="gw" title="'+esc(ns)+'">następny krok: '+esc(ns)+'</div>':'')+doneLine(x)+'</div>'+
@@ -1197,7 +1394,7 @@ function todayPanel(ys){
         '<div class="row"><button class="btn sm" data-ag="defer" data-k="defer"'+(A.busy.defer?' aria-disabled="true"':'')+'>Przesuń na jutro</button>'+(op.got<op.over?'<span>Zostaje ponad plan '+(op.over-op.got)+' min (zgody, odbiory, zadania w toku).</span>':'')+'</div>'
       :'<span>Na dziś zostały zgody, odbiory i zadania w toku. Przesuń termin w szczegółach albo zmniejsz czas.</span>')+'</div>';
   }
-  return '<section class="panel today"><h2><span>Dziś</span><small>ok. <span class="num">'+op.m+'</span> z <span class="num">'+op.cap+'</span> min Twojej pracy · <a href="#ty">Wymaga Ciebie</a></small></h2>'+cnt+ov+chkBlock(ys.checked)+
+  return '<section class="panel today"><h2><span>Dziś</span><small>ok. <span class="num">'+op.m+'</span> z <span class="num">'+op.cap+'</span> min Twojej pracy · <a href="#ty">Wymaga Ciebie</a></small></h2>'+cnt+bkLine()+ov+chkBlock(ys.checked)+
     (n?'<ul class="rows">'+top.map(todayRow).join('')+'</ul>'+(n>TODAY_MAX?'<p class="empty">Jeszcze '+(n-TODAY_MAX)+' w widoku <a href="#ty">Wymaga Ciebie</a>.</p>':''):'<p class="empty">'+(ys.checked.length?'Poza zadaniami do zamknięcia na dziś nic nie czeka.':'Na dziś nic nie czeka.')+'</p>')+'</section>'}
 function deferToday(){
   if(A.busy.defer)return;
@@ -1265,6 +1462,9 @@ function nextCell(p){
   const n=p.next;if(!n)return '<div class="nx"><span>—</span></div>';
   const t=(n.taskId&&D.tasks.find(x=>x.id===n.taskId))||D.tasks.find(x=>x.project===p.id&&x.title===n.title)||null;
   const w=WHO[n.executor]||WHO[''],s=n.title.length>60?n.title.slice(0,59).trim()+'…':n.title,late=isDay(n.date)&&n.date<D.todayKey;
+  /* zadanie, nad którym agent pracuje teraz: pełny opis jest w Teraz, tu krótki znacznik */
+  const ar=t?runOf(t):null;
+  if(ar&&isAct(ar))return '<div class="nx">'+'<button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button><span><span class="lz blue" title="Szczegóły w sekcji Teraz">'+(ar.state==='running'?'trwa':'w kolejce')+'</span></span></div>';
   return '<div class="nx">'+(t?'<button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button>':'<b title="'+esc(n.title)+'">'+esc(s)+'</b>')+
     '<span'+(late?' class="late"':'')+'>'+esc(w.n)+(isDay(n.date)?' · '+ddl(n.date)+' · '+rel(n.date):'')+'</span></div>'}
 function projCard(p){
@@ -1352,7 +1552,7 @@ function planBox(){
     '<button class="btn"'+(dis?' disabled':'')+(no?' title="Brak polecenia claude"':'')+'>'+(live||A.busy.plan?'Układam…':'Ułóż plan')+'</button></form>';
   if(r&&(today||live)){
     if(r.ask)h+='<p class="ask">Ty: „'+esc(r.ask)+'”</p>';
-    if(live)h+='<p class="pmt muted">PM układa plan'+(r.activity?': '+esc(r.activity):'…')+'</p>';
+    if(live)h+='<p class="pmt muted">PM układa plan'+(r.activity?': '+nwStep(r.activity):'…')+'</p>';
     else if(r.state!=='done'||!r.plan)h+='<p class="pmt">Nie udało się ułożyć planu: '+esc(r.error||(RS[r.state]||[])[1]||r.state)+'</p>';
     else{
       const p=r.plan,acc=r.accepted||[],sel=A.psel[r.id]||(A.psel[r.id]={});
@@ -1394,7 +1594,7 @@ function acceptPlan(rid){
 }
 
 /* ---------- widoki ---------- */
-/* Przegląd jako jedna ścieżka: Dziś (z akcjami) → pytania z terminem do jutra → plan dnia → kampanie → projekty → notatka PM, ryzyka, terminy.
+/* Przegląd jako jedna ścieżka: Teraz (trwa, zaplanowane publikacje, ostatnie 24 h) → Dziś (z akcjami) → pytania z terminem do jutra → plan dnia → kampanie → projekty → notatka PM, ryzyka, terminy.
    Pozycja pokazana w Dziś nie powtarza się niżej. */
 function vPrzeglad(){
   const f=facts(),c=calStatus(),a=D.agents,ys=youState();
@@ -1407,8 +1607,9 @@ function vPrzeglad(){
   const risks=riskRows(shownT);
   const sys=[];
   sys.push(pill(LIVE?{dot:offline?'bad':'ok',label:offline?'brak połączenia z serwerem':'dane z serwera'+(tOf(D.generatedAt)?' '+hhmm(tOf(D.generatedAt)):'')}:{dot:'warn',label:'dane przykładowe'}));
-  if(a){const n=runs().filter(r=>r.state==='running').length,lim=limitT();
-    sys.push(pill(a.needsLogin?{dot:'warn',label:'agenci: Claude wymaga logowania'}:lim?{dot:'bad',label:'agenci: limit do '+hhmm(lim)}:n?{dot:'run',label:'agenci: '+n+' '+pl(n,'pracuje','pracują','pracuje')}:{dot:'ok',label:'agenci gotowi'+(a.automat?' · Automat':'')}))}
+  /* stan pracy agentów (w toku, Automat) jest tylko w Teraz; tu wyłącznie problemy */
+  if(a){const lim=limitT();
+    if(a.needsLogin)sys.push(pill({dot:'warn',label:'agenci: Claude wymaga logowania'}));else if(lim)sys.push(pill({dot:'bad',label:'agenci: limit do '+hhmm(lim)}))}
   else sys.push(pill({dot:'off',label:'agenci niedostępni'}));
   sys.push(pill({dot:c.dot,label:'kalendarz: '+c.short,title:c.s}));
   const warn=[];
@@ -1419,6 +1620,7 @@ function vPrzeglad(){
     if(td.some(keyWarn))warn.push('Klucz API zamiast subskrypcji')}
   let h='<div class="pagehead"><div style="min-width:0;flex:1"><h1>Przegląd</h1><p>'+esc(cap(dLong(D.todayKey)))+'</p><div class="sys">'+sys.join('')+'</div>'+srvBar()+costLine()+statusLine(warn)+'</div></div>';
   if(warn.length)h+='<div class="banner bad pvwarn">'+esc(warn.join(' · '))+' · <a href="#agenci">Agenci</a></div>';
+  h+=nwPanel();
   h+=todayPanel(ys);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
   if(a&&a.loginWeb&&(a.needsLogin||(a.tools.claude.found&&!a.tools.claude.loggedIn)))h+='<section class="panel"><h2>Logowanie Claude</h2><p class="ahint" style="padding:0 16px 14px">'+loginHint('copy')+'</p></section>';
@@ -1430,9 +1632,232 @@ function vPrzeglad(){
   const note=D.pmNote,age=note&&isDay(note.date)?diff(D.todayKey,note.date):0,late=f.lateStages.length+f.lateOwn.length;
   h+='<div class="two"><section class="panel"><h2>Notatka PM <small>'+(note&&note.text.trim()?(age<=0?'dziś':age===1?'wczoraj':'sprzed '+age+' dni')+' ':'')+pmBtn('pmr')+'</small></h2>'+
     (note&&note.text.trim()?'<div class="pmn">'+md(note.text)+'</div>':'<p class="empty">Brak notatki.'+(a?'':' W Claude Code: <code>/raport</code>')+'</p>')+'</section>';
-  h+='<section class="panel"><h2>Ryzyka <small>'+risks.length+(late?' · po terminie: etapy '+f.lateStages.length+', zadania '+f.lateOwn.length:'')+'</small></h2>'+(risks.length?'<ul class="rows">'+risks.join('')+'</ul>':'<p class="empty">'+(late?'Zadania po terminie są w Dziś.':'Brak ryzyk.')+'</p>')+'</section></div>';
+  h+='<section class="panel"><h2>Ryzyka <small>'+risks.length+(late?' · po terminie: etapy '+f.lateStages.length+', zadania '+f.lateOwn.length:'')+' · <a href="#blokady">Blokady</a></small></h2>'+(risks.length?'<ul class="rows">'+risks.join('')+'</ul>':'<p class="empty">'+(late?'Zadania po terminie są w Dziś.':'Brak ryzyk.')+'</p>')+'</section></div>';
   h+='<section class="panel"><h2>Terminy w 7 dni <small>bez spraw z Dziś · <a href="#terminy">wszystkie terminy</a></small></h2><ul class="rows">'+(week.map(dlRow).join('')||'<li class="empty">Brak terminów.</li>')+'</ul></section>';
   return h;
+}
+/* ---------- Teraz: jedna sekcja nad Dziś. Trwa (uruchomienia, filmy, rozmowy, publikacje w tej chwili),
+   Zaplanowane publikacje (24 h wstecz i naprzód), Ostatnie 24 h (zrobione, osobno to, co się nie udało) ---------- */
+/* activity z /api/data: filmy (.film-stan.json; queued z pozycją w kolejce nagrań), rozmowy czekające na Claude,
+   zamknięte zadania (how: run = koniec uruchomienia, file = zmiana pliku zadań, seen = chwila wykrycia),
+   zakończone uruchomienia z 24 h, których nie ma w agents.runs; reszta z agents, publish i tasks */
+function normActivity(a){
+  a=a&&typeof a==='object'?a:{};
+  const s=v=>typeof v==='string'?v:'',L=v=>(Array.isArray(v)?v:[]).filter(x=>x&&typeof x==='object');
+  return {films:L(a.films).map(f=>({project:s(f.project),post:s(f.post),day:isDay(f.day)?f.day:'',title:s(f.title)||s(f.post),state:s(f.state),at:s(f.at),error:s(f.error),pos:Math.max(0,+f.pos||0)})),
+    chats:L(a.chats).map(c=>({taskId:s(c.taskId),project:s(c.project),file:s(c.file),title:s(c.title),since:s(c.since)})).filter(c=>c.title),
+    closed:L(a.closed).map(c=>({project:s(c.project),file:s(c.file),title:s(c.title),at:s(c.at),how:['run','file','set'].indexOf(c.how)>=0?c.how:'seen'})).filter(c=>c.title),
+    runs:L(a.runs).map(normRun).filter(r=>r.id),recorder:a.recorder!==false,error:s(a.error)};
+}
+const NW_DAY=864e5,NW_SHOW=3,NW_NOW=3,NW_NOW_M=2,NW_PLAN=3,NW_LATE=10*6e4,NW_ERR=2;
+const PST_N={paused:'wstrzymany',backlog:'w backlogu',done:'zakończony'};
+const nwAct=()=>D&&D.activity?D.activity:{films:[],chats:[],closed:[],runs:[],recorder:true,error:''};
+const nwBusy=()=>anyActive()||nwAct().films.some(f=>f.state==='running')||nwAct().chats.length>0||nwPubs().now.length>0;
+const nwTask=(pid,file,title)=>D.tasks.find(t=>t.project===pid&&t.file===file&&t.title===title)||null;
+const nwFresh=iso=>{const d=tOf(iso);return !!d&&Date.now()-d<=NW_DAY};
+/* czas trwania w minutach: Przegląd nie zmienia się przy każdym odpytaniu serwera (co 3 s, gdy coś trwa) */
+const nwMin=ms=>{const m=Math.max(0,Math.floor(ms/6e4));return m<1?'poniżej 1 min':m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+m%60+' min':'')};
+/* zadanie posta: publikacja z tego projektu na dzień posta; przy kilku postach jednego dnia po nazwie folderu albo tytule */
+function nwPostTask(f){
+  if(!f.day)return null;
+  const L=D.tasks.filter(t=>t.project===f.project&&t.kind==='publikacja'&&t.date===f.day);
+  const dir=('posty/'+f.post).toLowerCase(),name=f.post.slice(11).replace(/-/g,' ').toLowerCase(),tl=f.title.toLowerCase();
+  const hit=L.find(t=>(t.detail.refs||[]).some(r=>r.path.toLowerCase().indexOf(dir)>=0))||
+    L.find(t=>{const x=t.title.toLowerCase();return (!!tl&&x.indexOf(tl)>=0)||(name.length>2&&x.indexOf(name)>=0)});
+  return hit||(L.length===1?L[0]:null);
+}
+const nwProj=pid=>{const p=P(pid);return p?av(p,'sm')+'<span>'+esc(p.name)+'</span>':pid?'<span>'+esc(pid)+'</span>':''};
+/* projekt i narzędzie uruchomienia jako dwa kawałki metadanych (łączy je nwM) */
+const nwRunProj=r=>[r.project&&P(r.project)?nwProj(r.project):(r.projectName||r.project)?'<span>'+esc(r.projectName||r.project)+'</span>':'','<span>'+TOOL[r.tool]+'</span>'];
+/* tytuł pozycji: zadanie (szuflada), uruchomienie (szuflada), dzień posta w Marketingu albo link do widoku.
+   data-k (sekcja + id): fokus z klawiatury zostaje na tej samej pozycji przy odświeżaniu co 3 s */
+const nwTitle=(text,o)=>{const k=' data-k="nw:'+esc(o.k||'')+':';
+  return o.task?'<button class="lk t" data-task="'+esc(o.task.id)+'"'+k+esc(o.task.id)+'">'+esc(text)+'</button>':
+    o.run?'<button class="lk t" data-run="'+esc(o.run)+'"'+k+'r'+esc(o.run)+'">'+esc(text)+'</button>':
+    o.day?'<button class="lk t" data-nwmk="'+esc(o.day)+'"'+k+'d'+esc(o.day+'|'+text)+'" title="Otwórz dzień '+esc(dd(o.day))+' w Marketingu">'+esc(text)+'</button>':
+    '<a class="t" href="'+esc(o.href||'#przeglad')+'"'+k+'h'+esc(text)+'">'+esc(text)+'</a>'};
+/* metadane wiersza: projekt · narzędzie · czas, jeden separator „·” między kawałkami (puste pomijane) */
+const nwM=L=>{L=L.flat().filter(Boolean);return L.length?'<span class="nw-m">'+L.join('<span class="nw-dot" aria-hidden="true">·</span>')+'</span>':''};
+/* wiersz w układzie listy uruchomień (Agenci): znacznik stanu, tytuł z opisem, czas; do: przycisk naprawy przy wierszu */
+const nwRow=(lab,title,meta,right,act)=>'<li><span>'+lab+'</span><div>'+title+'<div class="s">'+meta.filter(Boolean).join('')+'</div>'+(act?'<div class="nw-do">'+act+'</div>':'')+'</div><span class="wh">'+right+'</span></li>';
+const nwLz=(c,t)=>'<span class="lz '+c+'">'+t+'</span>';
+const nwWhy=w=>'<span class="nw-why">'+esc(shortT(w,160))+'</span>';
+/* czynność agenta zwykłymi słowami: „Edit: tests/x.py” → „edytuje plik x.py”; tekst agenta bez zmian */
+const NW_TOOLS=[[/^(Edit|MultiEdit|NotebookEdit|apply_patch)$/,'edytuje plik',1],[/^Write$/,'zapisuje plik',1],[/^(Read|NotebookRead)$/,'czyta plik',1],
+  [/^(Grep|Glob|LS)$/,'przegląda pliki projektu'],[/^(WebFetch|WebSearch)$/,'sprawdza w internecie'],[/^(Task|Agent)$/,'zleca część pracy pomocnikowi'],
+  [/^TodoWrite$/,'planuje kolejne kroki'],[/^mcp__/,'korzysta z narzędzia zewnętrznego']];
+function nwPlain(s){
+  s=String(s||'');const m=/^([A-Za-z][\w-]*):\s*(.*)$/.exec(s);if(!m)return s;
+  const name=m[1],arg=m[2].trim(),c=arg.toLowerCase();
+  if(name==='Bash'){
+    if(/\b(pytest|unittest|jest|vitest|mocha|phpunit|rspec)\b|\b(npm|pnpm|yarn) (run )?test\b|\b(go|cargo) test\b/.test(c))return 'uruchamia testy';
+    if(/\b(npm|pnpm|yarn|pip3?|poetry|brew|apt(-get)?) (install|add|ci)\b/.test(c))return 'instaluje biblioteki';
+    if(/\b(npm|pnpm|yarn) run build\b|\b(tsc|webpack)\b|\bvite build\b|^make\b/.test(c))return 'buduje aplikację';
+    if(/^git\b/.test(c))return /^git (commit|push|merge|rebase|checkout|switch)\b/.test(c)?'zapisuje zmiany w repozytorium':'sprawdza zmiany w repozytorium';
+    if(/^(ls|cat|head|tail|find|grep|rg|wc|tree|sed -n)\b/.test(c))return 'przegląda pliki projektu';
+    return 'uruchamia polecenie';
+  }
+  const hit=NW_TOOLS.find(x=>x[0].test(name));if(!hit)return s;
+  const f=arg.split(/[\\/]/).pop();
+  return hit[2]&&f?hit[1]+' '+f:hit[1];
+}
+/* krok agenta po ludzku, surowy zapis w podpowiedzi (Teraz, Agenci, szuflada uruchomienia i zadania) */
+const nwStep=s=>{const p=nwPlain(s);return p===String(s||'')?esc(p):'<span title="'+esc(s)+'">'+esc(p)+'</span>'};
+/* stan Automatu: zdanie (txt) i krótki znacznik (short, lz); włączony nie znaczy, że ruszy: limit subskrypcji
+   i brak logowania wstrzymują go */
+function nwAuto(){
+  const a=D.agents;if(!a)return {txt:'agenci niedostępni',short:'agenci niedostępni',lz:'grey',dot:'off'};
+  if(!a.automat)return {txt:'Automat: wyłączony',short:'Automat wyłączony',lz:'grey',dot:'warn',off:1};
+  const lim=limitT();
+  if(lim)return {txt:'Automat: włączony, wstrzymany do '+hhmm(lim)+' (limit subskrypcji)',short:'Automat wstrzymany do '+hhmm(lim),lz:'yellow',dot:'warn'};
+  if(a.needsLogin)return {txt:'Automat: włączony, ale Claude wymaga logowania',short:'Automat: wymaga logowania',lz:'yellow',dot:'warn'};
+  return {txt:'Automat: włączony',short:'Automat włączony',lz:'green',dot:'ok'};
+}
+/* zaplanowane publikacje wszystkich projektów (publikator wysyła je bez względu na stan projektu; wiersz zaplanowane:
+   w kampaniach). now: termin minął najwyżej NW_LATE temu, jeszcze bez wyniku, kanał połączony i nic nie wstrzymuje
+   (to dzieje się teraz); soon: 24 h wstecz i naprzód, najbliższe najpierw, bez opublikowanych i nieudanych (te są
+   w Ostatnie 24 h); later: dalej niż 24 h (liczba i najbliższa); old: liczba starszych zaległych. */
+const nwSchedAt=sc=>{const d=fromKey(sc.day),m=/^(\d\d):(\d\d)$/.exec(sc.time);if(m)d.setHours(+m[1],+m[2],0,0);return d};
+const nwChOff=x=>x.sc.ch.filter(c=>!chanOk(x.t,c));
+function nwPubs(){
+  const out={now:[],soon:[],old:0,later:[]};if(!D)return out;
+  const ps=D.publish&&D.publish.state||{},now=Date.now();
+  D.tasks.forEach(t=>{
+    if(t.kind!=='publikacja'||t.state==='done')return;
+    const sc=parseSched(t.detail.scheduled);if(!sc)return;
+    const at=+nwSchedAt(sc),st=ps[t.project+'|'+t.file+'|'+t.title]||{};
+    const bad=sc.ch.filter(c=>st[c]&&st[c].ok===false),good=sc.ch.filter(c=>st[c]&&st[c].ok);
+    if(bad.length||(good.length&&good.length===sc.ch.length))return;
+    const x={t:t,sc:sc,at:at};
+    if(at<now-NW_DAY){out.old++;return}
+    if(at>now+NW_DAY){out.later.push(x);return}
+    if(at<=now&&now-at<=NW_LATE&&!t.waits.length&&!nwChOff(x).length)out.now.push(x);else out.soon.push(x);
+  });
+  out.now.sort((a,b)=>a.at-b.at);out.soon.sort((a,b)=>Math.abs(a.at-now)-Math.abs(b.at-now));out.later.sort((a,b)=>a.at-b.at);
+  return out;
+}
+/* na telefonie w Trwa najwyżej 2 pozycje (Dziś ma zostać na pierwszym ekranie) */
+const nwNarrow=()=>!!(window.matchMedia&&matchMedia('(max-width:620px)').matches);
+function nwNow(){
+  const out=[],A2=nwAct(),now=Date.now();
+  const qd=runs().filter(r=>r.state==='queued').sort((a,b)=>(tOf(a.queuedAt)||0)-(tOf(b.queuedAt)||0)).map(r=>r.id);
+  runs().filter(isAct).forEach(r=>{const run=r.state==='running',st=tOf(run?r.startedAt:r.queuedAt),act=run&&r.activity?nwPlain(r.activity):'';
+    out.push({at:st?+st:0,q:!run,h:nwRow(lzR(r.state),nwTitle(r.title,{run:r.id,k:'now'}),[nwM([nwRunProj(r),r.kind!=='task'&&KIND[r.kind]!==r.title?'<span>'+KIND[r.kind]+'</span>':'']),act?'<span class="nw-act" title="'+esc(r.activity)+'">'+esc(act)+'</span>':''],
+      run?(st?'od '+esc(whenT(isoL(st)))+' · '+nwMin(now-st):''):(qd.indexOf(r.id)+1)+'.'+(st?' · od '+esc(whenT(isoL(st))):''))})});
+  A2.films.filter(f=>f.state==='running'||f.state==='queued').forEach(f=>{const t=nwPostTask(f),d=tOf(f.at),run=f.state==='running';
+    out.push({at:d?+d:0,q:!run,h:nwRow(nwLz(run?'blue':'grey',run?'nagrywa film':'film w kolejce'),nwTitle(f.title,{task:t,day:f.day,href:'#marketing',k:'now'}),
+      [nwM([nwProj(f.project),f.day?'<span>post na '+dd(f.day)+'</span>':'',!run&&!A2.recorder?'<span>nagra serwer</span>':''])],
+      run?(d?'od '+esc(whenT(f.at))+' · '+nwMin(now-d):''):[f.pos?f.pos+'.':'',d?'od '+esc(whenT(f.at)):''].filter(Boolean).join(' · '))})});
+  A2.chats.forEach(c=>{const t=nwTask(c.project,c.file,c.title)||D.tasks.find(x=>x.id===c.taskId)||null,d=tOf(c.since);
+    out.push({at:d?+d:0,q:false,h:nwRow(nwLz('blue','Claude odpowiada'),nwTitle(c.title,{task:t,href:'#tablica',k:'now'}),[nwM([nwProj(c.project)])],d?'od '+esc(whenT(c.since)):'')})});
+  nwPubs().now.forEach(x=>{const t=x.t;
+    out.push({at:x.at,q:false,h:nwRow(nwLz('yellow','publikuje się'),nwTitle(t.title,{task:t,k:'now'}),[nwM([nwProj(t.project),x.sc.ch.length?'<span>'+esc(x.sc.ch.map(c=>PUBN[c]).join(', '))+'</span>':''])],'od '+esc(whenT(isoL(new Date(x.at)))))})});
+  return out.sort((a,b)=>a.q-b.q||a.at-b.at);
+}
+/* Zaplanowane publikacje: najwyżej NW_PLAN najbliższych z 24 h, dalsze jednym wierszem (liczba i najbliższa),
+   starsze zaległe jednym wierszem; link do Marketingu */
+function nwPlanPanel(){
+  const pb=nwPubs(),now=Date.now();
+  if(!pb.soon.length&&!pb.old&&!pb.later.length)return '';
+  const rows=pb.soon.slice(0,NW_PLAN).map(x=>{const t=x.t,due=x.at<=now,off=nwChOff(x),p=P(t.project);
+    let lab,why='';
+    if(t.waits.length){lab=nwLz('red','nie wyjdzie');why='czeka na: '+t.waits.join('; ')}
+    else if(off.length){lab=nwLz('red','nie wyjdzie');why='kanał niepołączony: '+off.map(c=>PUBN[c]||c).join(', ')+' (Agenci → Publikacja)'}
+    else if(due)lab=nwLz('red','po czasie');
+    else lab=nwLz('out','zaplanowane');
+    return nwRow(lab,nwTitle(t.title,{task:t,k:'plan'}),[nwM([nwProj(t.project),p&&p.state!=='active'?'<span>projekt '+esc(PST_N[p.state]||p.state)+'</span>':'',x.sc.ch.length?'<span>'+esc(x.sc.ch.map(c=>PUBN[c]).join(', '))+'</span>':'']),why?nwWhy(why):''],esc(whenT(isoL(new Date(x.at)))))});
+  const more=pb.soon.length-rows.length;
+  if(pb.later.length){const f=pb.later[0],n=pb.later.length;
+    rows.push('<li class="nw-old"><span>'+nwLz('out','dalej')+'</span><div><a class="t" href="#marketing" data-k="nw:plan:later">Kolejne: '+n+' '+pl(n,'publikacja','publikacje','publikacji')+'</a><div class="s">'+nwM(['<span>najbliższa '+esc(dd(f.sc.day))+(f.sc.time?' '+esc(f.sc.time):'')+'</span>','<span>'+esc(shortT(f.t.title,50))+'</span>'])+'</div></div><span class="wh"></span></li>')}
+  if(pb.old)rows.push('<li class="nw-old"><span>'+nwLz('red','zaległe')+'</span><div><a class="t" href="#marketing" data-k="nw:plan:old">Starsze niż 24 h: '+pb.old+' '+pl(pb.old,'publikacja','publikacje','publikacji')+' bez wyniku</a></div><span class="wh"></span></li>');
+  return '<h3 class="nw-sub">Zaplanowane publikacje <small>'+(pb.soon.length?'24 h'+(more>0?' · jeszcze '+more:'')+' · ':'')+'<a href="#marketing">Marketing</a></small></h3><ul class="rows runs nw-rows">'+rows.join('')+'</ul>';
+}
+/* przycisk naprawy przy nieudanej pozycji: ponowne uruchomienie (zadanie, raport PM, test), logowanie, nagranie, publikacja */
+function nwRetryRun(r){
+  if(r.state==='login')return '<a class="btn sec sm" href="#agenci">Zaloguj Claude</a>';
+  if(r.state==='limit')return '';
+  if(r.kind==='pm')return pmOn()?'':'<button class="btn sec sm" data-ag="pm" data-k="nw:re:pm">Uruchom ponownie</button>';
+  if(r.kind==='check')return '<button class="btn sec sm" data-ag="check" data-k="nw:re:check">Sprawdź ponownie</button>';
+  if(r.kind!=='task')return '';
+  const t=taskOfRun(r);if(!t||t.state==='done'||blockOf(t))return '';
+  return '<button class="btn sec sm" data-ag="run" data-id="'+esc(t.id)+'" data-k="nw:re:'+esc(t.id)+'">Uruchom ponownie</button>';
+}
+/* ostatnie 24 h: zakończone uruchomienia (z serwera, nie tylko ostatnie 40), filmy, publikacje (także nieudane) i zamknięte
+   zadania (tylko te, które nadal są [x]); zamknięcie po uruchomieniu albo po publikacji łączy się z nim. Najnowsze najpierw.
+   approx: czas zamknięcia z pliku albo z chwili odczytu (zadanie zmienione ręcznie w pliku) */
+const NW_FAIL=/^publikacja nieudana (\d\d)\.(\d\d) (\d\d):(\d\d):?\s*(.*)$/;
+function nwDone(){
+  const out=[],A2=nwAct(),ps=D.publish&&D.publish.state||{},joined={},pubBad={},now=new Date();
+  const K=(p,f,t)=>p+'|'+f+'|'+t,lastAt=L=>L.slice().sort().slice(-1)[0];
+  Object.keys(ps).forEach(k=>{const st=ps[k];if(!st||typeof st!=='object')return;
+    const i=k.indexOf('|'),j=k.indexOf('|',i+1);if(i<0||j<0)return;
+    const ch=Object.keys(st).filter(c=>st[c]&&typeof st[c]==='object'&&nwFresh(st[c].at));if(!ch.length)return;
+    const pid=k.slice(0,i),title=k.slice(j+1),t=nwTask(pid,k.slice(i+1,j),title),ok=ch.filter(c=>st[c].ok),bad=ch.filter(c=>!st[c].ok);
+    if(ok.length){joined[k]=1;const at=lastAt(ok.map(c=>st[c].at));
+      out.push({at:+tOf(at),err:0,h:nwRow(nwLz('green','opublikowano'),nwTitle(title,{task:t,href:'#marketing',k:'done'}),[nwM([nwProj(pid),'<span>'+esc(ok.map(c=>PUBN[c]||c).join(', '))+'</span>'])],esc(whenT(at)))})}
+    if(bad.length){pubBad[k]=1;const at=lastAt(bad.map(c=>st[c].at)),why=bad.map(c=>(PUBN[c]||c)+': '+(st[c].error||'błąd')).join('; ');
+      const re=bad.filter(c=>c!=='linkedin'),act=t&&t.state!=='done'&&re.length?'<button class="btn sec sm" data-nwpub="'+esc(t.id)+'" data-ch="'+esc(re.join(','))+'" data-k="nw:re:p'+esc(t.id)+'">Opublikuj ponownie</button>':'';
+      out.push({at:+tOf(at),err:1,h:nwRow(nwLz('red','nie opublikowano'),nwTitle(title,{task:t,href:'#marketing',k:'done'}),[nwM([nwProj(pid)]),nwWhy(why)],esc(whenT(at)),act)})}
+  });
+  /* nieudane przed wysłaniem (czeka na poprzednika, brak tekstu): tylko wiersz „zostało: publikacja nieudana DD.MM GG:MM: …” */
+  D.tasks.forEach(t=>{if(t.kind!=='publikacja'||t.state==='done'||pubBad[K(t.project,t.file,t.title)])return;
+    const m=NW_FAIL.exec(t.detail.left||'');if(!m)return;
+    const d=new Date(now.getFullYear(),+m[2]-1,+m[1],+m[3],+m[4]);if(d>now)d.setFullYear(d.getFullYear()-1);
+    if(now-d>NW_DAY)return;const why=m[5]||'publikacja nieudana';
+    out.push({at:+d,err:1,h:nwRow(nwLz('red','nie opublikowano'),nwTitle(t.title,{task:t,k:'done'}),[nwM([nwProj(t.project)]),nwWhy(why)],esc(whenT(isoL(d))),
+      '<button class="btn sec sm" data-task="'+esc(t.id)+'" data-k="nw:re:o'+esc(t.id)+'">Otwórz i popraw</button>')})});
+  /* zamknięte zadania: tylko te, które nadal są [x] (ponownie otwarte znikają) */
+  const closed=A2.closed.filter(c=>{const t=nwTask(c.project,c.file,c.title);return nwFresh(c.at)&&(!t||t.state==='done')});
+  const rl={},rlist=[];
+  runs().concat(A2.runs).forEach(r=>{if(!rl[r.id]&&!isAct(r)&&r.endedAt&&nwFresh(r.endedAt)){rl[r.id]=1;rlist.push(r)}});
+  rlist.forEach(r=>{const d=tOf(r.endedAt),k=K(r.project,r.file,r.title),err=['error','timeout','limit','login'].indexOf(r.state)>=0;
+    const cl=r.kind==='task'&&r.state==='done'?closed.find(c=>K(c.project,c.file,c.title)===k):null;
+    if(cl)joined[k]=1;
+    out.push({at:+d,err:err?1:0,h:nwRow(lzR(r.state),nwTitle(r.title,{run:r.id,k:'done'}),[nwM([nwRunProj(r),r.kind!=='task'&&KIND[r.kind]!==r.title?'<span>'+KIND[r.kind]+'</span>':'',r.durationMs!=null?'<span>'+nwMin(r.durationMs)+'</span>':'']),
+      cl?nwLz('green','zadanie zamknięte'):'',err&&r.error?nwWhy(r.error):''],esc(whenT(r.endedAt)),err?nwRetryRun(r):'')})});
+  A2.films.filter(f=>(f.state==='done'||f.state==='error')&&nwFresh(f.at)).forEach(f=>{const d=tOf(f.at),ok=f.state==='done';
+    const act=!ok&&f.day&&A2.recorder?'<button class="btn sec sm" data-film-rec="'+esc(f.project+'|'+f.day)+'" data-title="'+esc(f.title)+'" data-k="nw:re:f'+esc(f.project+'|'+f.post)+'">Nagraj ponownie</button>':'';
+    out.push({at:+d,err:ok?0:1,h:nwRow(nwLz(ok?'green':'red',ok?'film nagrany':'film: błąd'),nwTitle(f.title,{task:nwPostTask(f),day:f.day,href:'#marketing',k:'done'}),[nwM([nwProj(f.project)]),
+      !ok&&f.error?nwWhy(f.error):''],esc(whenT(f.at)),act)})});
+  closed.filter(c=>!joined[K(c.project,c.file,c.title)]).forEach(c=>{const t=nwTask(c.project,c.file,c.title),ap=c.how==='seen'||c.how==='file';
+    out.push({at:+tOf(c.at),err:0,approx:ap,h:nwRow(nwLz('green','zamknięte'),nwTitle(c.title,{task:t,href:'#tablica',k:'done'}),[nwM([nwProj(c.project)])],
+      ap?'<span title="Zadanie zmienione w pliku: dokładny czas zamknięcia nieznany">ok. '+esc(whenT(c.at))+'</span>':esc(whenT(c.at)))})});
+  return out.sort((a,b)=>b.at-a.at);
+}
+/* Ostatnie 24 h: domyślnie zwinięte na każdym ekranie (stan zapamiętany na tym urządzeniu); w nagłówku liczby,
+   a najnowsza nieudana pozycja widoczna zawsze, z przyciskiem naprawy. Po rozwinięciu: zrobione (NW_SHOW)
+   i osobno „Nie udało się” (NW_ERR) */
+const NW_OPEN_KEY='panel.nwDone';
+const nwDoneOpen=()=>{if(A.nwDoneOpen==null){let v=false;try{v=localStorage.getItem(NW_OPEN_KEY)==='1'}catch(e){}A.nwDoneOpen=v}return A.nwDoneOpen};
+function nwDonePanel(){
+  const L=nwDone();if(!L.length)return '';
+  const ok=L.filter(x=>!x.err),bad=L.filter(x=>x.err),all=!!A.nwAll,open=nwDoneOpen();
+  const sum=['<span class="nw-nb">zrobione '+ok.length+'</span>',bad.length?'<span class="nw-err nw-nb">nie udało się '+bad.length+'</span>':''].filter(Boolean).join(' · ');
+  let h='<h3 class="nw-sub"><button class="nw-tog" data-nwdone="1" data-k="nwdone" aria-expanded="'+open+'" aria-controls="nw-done">'+
+    '<span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>Ostatnie 24 h</button><small>'+sum+'</small></h3>';
+  if(!open)return h+(bad.length?'<ul class="rows runs nw-rows nw-last" aria-label="Ostatnia nieudana pozycja">'+bad[0].h+'</ul>':'');
+  const so=all?ok:ok.slice(0,NW_SHOW),sb=all?bad:bad.slice(0,NW_ERR);
+  h+='<div id="nw-done">'+(so.length?'<ul class="rows runs nw-rows">'+so.map(x=>x.h).join('')+'</ul>':'');
+  if(sb.length)h+='<p class="nw-fail">Nie udało się <span class="num">'+bad.length+'</span></p><ul class="rows runs nw-rows">'+sb.map(x=>x.h).join('')+'</ul>';
+  if(so.some(x=>x.approx))h+='<p class="nw-note">„ok.”: zadanie zamknięte w pliku poza panelem; czas jest przybliżony.</p>';
+  if(ok.length>NW_SHOW||bad.length>NW_ERR)h+='<p class="nw-more"><button class="linkbtn" data-nwall="1" data-k="nwall" aria-expanded="'+all+'" aria-controls="nw-done">'+(all?'Pokaż mniej':'Pokaż wszystkie ('+L.length+')')+'</button></p>';
+  return h+'</div>';
+}
+/* jedna sekcja Teraz w każdym stanie (stały nagłówek): liczby w toku i w kolejce, Automat jako osobny znacznik;
+   link do Agentów na dole sekcji. Komunikaty dla czytnika ekranu daje #tstat */
+function nwPanel(){
+  const now=nwNow(),au=nwAuto(),nq=now.filter(x=>x.q).length,nr=now.length-nq,max=nwNarrow()?NW_NOW_M:NW_NOW;
+  const dot=nr?'run nw-live':nq?'run':au.dot;
+  const sum=[nr?nr+' '+pl(nr,'trwa','trwają','trwa'):'',nq?nq+' w kolejce':''].filter(Boolean).map(x=>'<span class="nw-nb">'+x+'</span>').join(' · ');
+  let h='<section class="panel nw-panel" aria-labelledby="nw-h"><h2 id="nw-h"><span class="nw-head"><i class="dot '+dot+'"></i>Teraz</span><small class="nw-hs">'+sum+
+    (now.length?'<span class="lz '+au.lz+' nw-au" title="'+esc(au.txt)+'">'+esc(au.short)+'</span>':'')+'</small></h2>';
+  if(nwAct().error)h+='<p class="nw-note nw-bad">'+esc(nwAct().error)+' Pozostałe dane są aktualne.</p>';
+  if(now.length){
+    h+='<ul class="rows runs nw-rows">'+(A.nwNowAll?now:now.slice(0,max)).map(x=>x.h).join('')+'</ul>';
+    if(now.length>max)h+='<p class="nw-more"><button class="linkbtn" data-nwnow="1" data-k="nwnow" aria-expanded="'+!!A.nwNowAll+'">'+(A.nwNowAll?'Pokaż mniej':'Pokaż wszystkie ('+now.length+')')+'</button></p>';
+  }else h+='<p class="nw-idle">Nikt teraz nie pracuje. '+esc(au.txt)+'.'+
+    (au.off?' <button class="linkbtn" data-ag="automat" data-k="nw:automat">Włącz Automat</button>':au.dot==='warn'?' <a href="#agenci">Sprawdź w Agentach</a>':'')+'</p>';
+  return h+nwPlanPanel()+nwDonePanel()+(now.length||nwDone().length?'<p class="nw-foot"><a href="#agenci">Wszystkie uruchomienia: Agenci</a></p>':'')+'</section>';
 }
 /* telefon: jedna linia stanu (dane, agenci, serwer, kalendarz) zamiast pigułek; problemy po kolei, link do Agentów */
 function statusLine(warn){
@@ -1443,11 +1868,9 @@ function statusLine(warn){
   const v=srvItems();if(v)v.items.forEach(x=>{if(x.dot==='bad')bad.push(x.label);else if(x.dot==='warn')chk.push(x.label)});
   if(!a)chk.push('agenci niedostępni');
   const c=calStatus();if(LIVE&&c.dot!=='ok'&&D.cal.status!=='unsupported')chk.push('kalendarz: '+c.short);
-  const lvl=bad.length?'bad':chk.length?'warn':'ok',n=runs().filter(r=>r.state==='running').length;
+  const lvl=bad.length?'bad':chk.length?'warn':'ok';
   const ok=['W normie'];
   if(LIVE&&tOf(D.generatedAt))ok.push('dane z '+hhmm(tOf(D.generatedAt)));
-  if(a)ok.push(n?'agenci: '+n+' '+pl(n,'pracuje','pracują','pracuje'):'agenci gotowi');
-  if(a&&a.automat)ok.push('Automat');
   const txt=lvl==='ok'?ok.join(' · '):(lvl==='bad'?'Problem: ':'Do sprawdzenia: ')+bad.concat(chk).join(', ');
   return '<a class="sline s-'+lvl+'" href="#agenci" role="status" title="'+esc(txt)+'"><i class="dot '+lvl+'"></i><span>'+esc(txt)+'</span></a>';
 }
@@ -1507,7 +1930,7 @@ function md(text){
 function vTy(){
   const ys=youState(),n=youTotal(ys);
   const G=[['Dziś i po terminie',ys.youToday,'Na dziś nic nie czeka.'],['W tym tygodniu',ys.youWeek,'Nic do końca tygodnia.'],['Później',ys.youLater,'Nic później.']];
-  return '<div class="pagehead"><div><h1>Wymaga Ciebie<span class="hcnt num" title="Wszystkie sprawy z aktywnych projektów">'+n+'</span></h1><p>Pytania z kart, zgody i odbiory, o które proszą agenci, oraz Twoje zadania z aktywnych projektów.</p></div></div>'+
+  return '<div class="pagehead"><div><h1>Wymaga Ciebie<span class="hcnt num" title="Wszystkie sprawy z aktywnych projektów">'+n+'</span></h1><p>Pytania z kart, zgody i odbiory, o które proszą agenci, oraz Twoje zadania z aktywnych projektów.</p></div></div>'+bkLine()+
     (ys.checked.length?'<section class="panel"><h2>Do zamknięcia <small>kontrola serwera potwierdza wykonanie</small></h2>'+chkBlock(ys.checked)+'</section>':'')+
     G.map(([t,L,e])=>'<section class="panel"><h2>'+t+'</h2>'+(L.length?'<ul class="rows">'+L.map(todayRow).join('')+'</ul>':'<p class="empty">'+e+'</p>')+'</section>').join('')+
     '<p class="note">Odpowiedź na pytanie trafia do KARTA.md projektu, pod pytanie.</p>';
@@ -1536,6 +1959,286 @@ function vTerminy(){
   h+='<p>'+(LIVE?'<b>Subskrypcja ICS:</b> <a href="'+esc(D.icsPath)+'"><code>'+esc(location.origin+D.icsPath)+'</code></a> · '+cnt:'<b>Subskrypcja ICS:</b> po uruchomieniu serwera <code>http://localhost:4801/terminy.ics</code> · '+cnt)+'</p>'+
     '<details style="padding:0"><summary>Jak dodać subskrypcję</summary><ol><li><b>Mac:</b> Kalendarz → Plik → Nowa subskrypcja kalendarza.</li><li><b>iPhone:</b> Ustawienia → Aplikacje → Kalendarz → Konta kalendarzy → Dodaj konto → Inne → Dodaj subskrybowany kalendarz.</li><li><b>iPhone</b> musi widzieć serwer panelu: adres Tailscale zamiast <code>localhost</code>.</li></ol></details></div></section></div>';
   return h;
+}
+
+/* ---------- Blokady: drzewo zależności z po: (unlocks) ---------- */
+/*bkGraph:start*/
+/* model blokad bez zależności od reszty panelu (test: testy/test_blokady.py).
+   tasks: otwarte zadania [{id,title,state,executor,you,date,prio,cost,kids:[id zadań, które czekają na to],waits:[tytuły],miss:[fragmenty po: bez zadania]}],
+   today: 'RRRR-MM-DD'. Twoje: you (kto: ty albo czeka na Twoją zgodę lub odbiór) albo executor 'ty'.
+   cost: dni pracy na zadanie (z czas: przy Twoich zadaniach, inaczej 1).
+   Korzenie: nie czekają na nic, nie są zablokowane [!] i odblokowują co najmniej jedno zadanie.
+   count: wszystkie zależne (także pośrednio, każde raz), direct: bezpośrednie (jak „wstrzymuje” w raporcie PM),
+   next/late: najbliższy termin i liczba zależnych po terminie, chain: najdłuższy łańcuch zależnych (cykle zwinięte
+   w jeden węzeł, czas liniowy, bez rekurencji).
+   slack(korzeń): zapas każdej ścieżki osobno — dla zależnego z terminem: dni do terminu minus dni pracy na najdłuższej
+   drodze od korzenia do niego (z nim włącznie); worst: najmniejszy zapas wśród terminów od dziś. tight: worst < 0
+   („ciasno”; inna miara niż „bez zapasu” etapu w raporcie PM). crit(korzeń): ścieżka krytyczna — na każdym poziomie
+   dziecko, za którym jest zależny o najmniejszym zapasie (także po terminie); remis: dłuższy łańcuch, wcześniejszy termin.
+   early: poprzednicy z terminem późniejszym niż to zadanie (zła kolejność, jak `order` w raporcie PM).
+   fix: zależności do poprawy (cykl, po: bez zadania, czeka na zadanie z takim problemem: via missing/cycle);
+   zablokowane [!] są tylko w blocked. Kolejność: Twoje, z zależnymi po terminie, najwięcej zależnych, najbliższy
+   termin (własny albo zależnego), priorytet projektu, tytuł. */
+function bkGraph(tasks,today){
+  const ix={};tasks.forEach(t=>{ix[t.id]=t});
+  const km={};
+  const kids=t=>{if(km[t.id])return km[t.id];const L=[],s={};(t.kids||[]).forEach(id=>{const x=ix[id];if(x&&x!==t&&!s[x.id]){s[x.id]=1;L.push(x)}});return km[t.id]=L};
+  const pred={};tasks.forEach(t=>{kids(t).forEach(x=>{(pred[x.id]||(pred[x.id]=[])).push(t)})});
+  const reachL=(L,next)=>{next=next||kids;const seen={},st=L.slice(),out=[];L.forEach(t=>{seen[t.id]=1});
+    while(st.length){next(st.pop()).forEach(x=>{if(!seen[x.id]){seen[x.id]=1;out.push(x);st.push(x)}})}
+    return out};
+  /* silnie spójne składowe (Tarjan, iteracyjnie: długi łańcuch nie przepełni stosu): cykl = zadania w jednej składowej;
+     składowe powstają od końca łańcucha (składowa osiągalna z innej ma mniejszy numer) */
+  const scc={},comps=[],ind={},low={},onS={},S=[];let n=0;
+  tasks.forEach(t0=>{if(ind[t0.id]!=null)return;
+    const st=[[t0,0]];ind[t0.id]=low[t0.id]=n++;S.push(t0);onS[t0.id]=1;
+    while(st.length){const fr=st[st.length-1],v=fr[0],K=kids(v);
+      if(fr[1]<K.length){const w=K[fr[1]++];
+        if(ind[w.id]==null){ind[w.id]=low[w.id]=n++;S.push(w);onS[w.id]=1;st.push([w,0])}
+        else if(onS[w.id])low[v.id]=Math.min(low[v.id],ind[w.id]);
+      }else{st.pop();
+        if(st.length){const u=st[st.length-1][0];low[u.id]=Math.min(low[u.id],low[v.id])}
+        if(low[v.id]===ind[v.id]){const c=[];let w;do{w=S.pop();onS[w.id]=0;scc[w.id]=comps.length;c.push(w)}while(w!==v);comps.push(c)}}}
+  });
+  const cch=comps.map(()=>0);
+  comps.forEach((c,i)=>{let m=0;c.forEach(t=>kids(t).forEach(x=>{const j=scc[x.id];if(j!==i)m=Math.max(m,1+cch[j])}));cch[i]=c.length-1+m});
+  const chain=t=>cch[scc[t.id]];
+  const cyc=t=>kids(t).filter(x=>scc[x.id]===scc[t.id]);
+  const memo={};
+  const info=t=>{if(memo[t.id])return memo[t.id];
+    const R=reachL([t]),k=kids(t);let next='',late=0;
+    R.forEach(x=>{if(x.date){if(!next||x.date<next)next=x.date;if(x.date<today)late++}});
+    return memo[t.id]={count:R.length,direct:k.length,next:next,late:late,cycle:cyc(t)}};
+  const days=d=>Math.round((new Date(d+'T00:00:00')-new Date(today+'T00:00:00'))/864e5);
+  const cost=t=>Math.max(1,Math.round(+t.cost||1));
+  const ccost=comps.map(c=>Math.max.apply(null,c.map(cost)));
+  const slm={};
+  const slack=r=>{if(slm[r.id])return slm[r.id];
+    const rc=scc[r.id],dist={},sl={},bc={};let worst=null;dist[rc]=0;
+    for(let i=rc;i>=0;i--){if(dist[i]==null)continue;
+      comps[i].forEach(t=>kids(t).forEach(x=>{const j=scc[x.id];if(j!==i){const v=dist[i]+ccost[j];if(dist[j]==null||v>dist[j])dist[j]=v}}))}
+    for(let i=rc-1;i>=0;i--){if(dist[i]==null)continue;
+      comps[i].forEach(x=>{if(!x.date)return;const d=days(x.date),v=d-dist[i];sl[x.id]=v;
+        if(x.date>=today&&(!worst||v<worst.slack||(v===worst.slack&&x.date<worst.date)))worst={slack:v,steps:dist[i],days:d,id:x.id,title:x.title,date:x.date}})}
+    for(let i=0;i<=rc;i++){if(dist[i]==null)continue;let b=Infinity;
+      comps[i].forEach(x=>{if(sl[x.id]!=null)b=Math.min(b,sl[x.id]);kids(x).forEach(y=>{const j=scc[y.id];if(j!==i&&bc[j]!=null)b=Math.min(b,bc[j])})});bc[i]=b}
+    return slm[r.id]={worst:worst,slackOf:id=>sl[id],best:id=>bc[scc[id]]}};
+  const tight=t=>{const w=slack(t).worst;return w&&w.slack<0?{steps:w.steps,days:w.days,id:w.id,title:w.title,date:w.date}:null};
+  const crit=(r,max)=>{const out={},s=slack(r);let x=r,g=0;max=max||5;
+    while(x&&g++<max){out[x.id]=1;const k=kids(x).filter(y=>!out[y.id]);if(!k.length)break;
+      x=k.slice().sort((a,b)=>(s.best(a.id)-s.best(b.id))||(chain(b)-chain(a))||((a.date||'9999').localeCompare(b.date||'9999')))[0]}
+    return out};
+  const early=t=>t.date?(pred[t.id]||[]).filter(p=>p.date&&p.date>t.date):[];
+  const mine=t=>!!t.you||t.executor==='ty';
+  const dl=t=>{const n=info(t).next,o=t.date||'';return !o?n:!n?o:o<n?o:n};
+  const by=(a,b)=>(mine(b)-mine(a))||((info(b).late>0)-(info(a).late>0))||(info(b).count-info(a).count)||(dl(a)||'9999').localeCompare(dl(b)||'9999')||
+    ((a.prio||3)-(b.prio||3))||String(a.title).localeCompare(String(b.title));
+  const roots=tasks.filter(t=>!t.waits.length&&t.state!=='blocked'&&kids(t).length).sort(by);
+  const blocked=tasks.filter(t=>t.state==='blocked').sort(by);
+  /* zadania z waits, do których nie prowadzi żaden korzeń ani zablokowane: cykl albo po: bez zadania wyżej w łańcuchu */
+  const cov={};roots.concat(blocked).concat(reachL(roots.concat(blocked))).forEach(t=>{cov[t.id]=1});
+  const bad=t=>(t.miss||[]).length?'missing':cyc(t).length?'cycle':'';
+  const fix=[];
+  tasks.forEach(t=>{if(t.state==='blocked')return;const why=[];
+    (t.miss||[]).forEach(f=>why.push({kind:'missing',text:f}));
+    const c=cyc(t);if(c.length)why.push({kind:'cycle',text:c.map(x=>x.title).join('; '),comp:scc[t.id]});
+    if(!why.length&&t.waits.length&&!cov[t.id]){
+      const up=reachL([t],x=>pred[x.id]||[]),src=up.find(bad);
+      why.push({kind:'orphan',text:t.waits.join('; '),via:src?bad(src):'',src:src?src.title:''})}
+    if(why.length)fix.push({t:t,why:why})});
+  fix.sort((a,b)=>by(a.t,b.t));
+  return {roots:roots,blocked:blocked,fix:fix,info:info,chain:chain,tight:tight,slack:slack,crit:crit,early:early,mine:mine,
+    kids:t=>kids(t).slice().sort(by),reach:L=>reachL(L).length,reachL:L=>reachL(L),byId:id=>ix[id]||null,comp:i=>comps[i]||[]};
+}
+/*bkGraph:end*/
+const BK_DEPTH=5,BK_OPEN=2;
+/*bkModel:start*/
+/* model z zadań panelu (liczony raz na stan danych, w facts()). kids z unlocksL (id z serwera; bez id: po tytule
+   w tym samym pliku, tylko gdy tytuł jest jeden), miss: brakujące poprzedniki z derive (t.missing, to samo
+   dopasowanie po: co na serwerze); Twoje: needsMe (kto: ty, zgoda, odbiór); cost: czas: Twojego zadania
+   w dniach pojemności (dayMinutes), inaczej 1 dzień */
+function bkModel(){
+  const f=facts();if(f.bk)return f.bk;
+  const nodes=[],dm=D.dayMinutes||120;
+  const byTitle=(t,title)=>{const L=D.tasks.filter(y=>y.project===t.project&&y.file===t.file&&y.title===title);return L.length===1?L[0].id:''};
+  f.open.forEach(t=>{const p=P(t.project);
+    nodes.push({id:t.id,title:t.title,state:t.state,executor:t.executor,you:needsMe(t),date:isDay(t.date)?t.date:'',prio:p?p.priority:3,
+      cost:t.executor==='ty'&&+t.minutes>dm?Math.ceil(+t.minutes/dm):1,
+      kids:(t.unlocksL||[]).filter(u=>!u.done).map(u=>u.id||byTitle(t,u.title)).filter(Boolean),
+      waits:t.waits,miss:t.missing||[],t:t})});
+  return f.bk=bkGraph(nodes,D.todayKey);
+}
+/* Twoje zadania z aktywnych projektów, na które czeka co najmniej jedno otwarte zadanie */
+const bkYouL=()=>{const m=bkModel();return D.tasks.filter(t=>needsMe(t)&&(P(t.project)||{}).state==='active').map(t=>m.byId(t.id)).filter(n=>n&&m.info(n).direct>0)};
+/* jedna liczba i jedno zdanie wszędzie (Przegląd, Wymaga Ciebie, Blokady, menu): N = zadania, które czekają
+   bezpośrednio (jak „wstrzymuje” w raporcie PM), razem = także pośrednio */
+function bkYouN(L){
+  const m=bkModel(),y=L||bkYouL(),d={};
+  y.forEach(n=>m.kids(n).forEach(x=>{d[x.id]=1}));
+  return {tasks:y.length,n:Object.keys(d).length,all:m.reach(y)};
+}
+const bkYouTxt=(c,short)=>(c.tasks===1?'Twoje zadanie wstrzymuje ':'Twoje zadania wstrzymują ')+c.n+' '+pl(c.n,'inne zadanie','inne zadania','innych zadań')+(!short&&c.all>c.n?' (razem '+c.all+')':'');
+/*bkModel:end*/
+const bkYou=()=>bkYouN().n;
+/* jeden wiersz w Dziś i w Wymaga Ciebie: link do Blokad */
+function bkLine(){
+  const c=bkYouN();if(!c.tasks)return '';
+  return '<a class="bk-line" href="#blokady">'+ICON.tree+'<span>'+esc(bkYouTxt(c))+'</span><b aria-hidden="true">Blokady →</b></a>';
+}
+/* „odblokowuje N”: wszystkie zależne (także pośrednio); bezpośrednie w podpowiedzi */
+const bkCntT=i=>i.direct+' '+pl(i.direct,'bezpośrednio','bezpośrednio','bezpośrednio')+(i.count>i.direct?', razem z dalszymi '+i.count:'');
+const bkPill=(i,cls)=>i.count?'<span class="bk-n '+cls+'" title="'+esc(bkCntT(i))+'">odblokowuje <b class="num">'+i.count+'</b></span>':'';
+/* zgoda i odbiór w Blokadach mówią, czyje są: u korzenia „czeka na Twoją zgodę”, niżej „potem Twoja zgoda” */
+const BK_NEED={zgoda:['czeka na Twoją zgodę','potem Twoja zgoda'],'odbiór':['czeka na Twój odbiór','potem Twój odbiór']};
+function bkMeta(n,withProj,extra,sub){
+  const t=n.t,w=WHO[t.executor]||WHO[''],p=P(t.project),b=[];
+  if(withProj&&p)b.push(av(p,'sm')+'<span>'+esc(p.name)+'</span>');
+  b.push('<span class="who"><i style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>');
+  b.push(isDay(t.date)?'<span class="dl'+(isLate(t)?' late':'')+'">'+dd(t.date)+' · '+esc(rel(t.date))+'</span>':'<span>bez terminu</span>');
+  if(t.state==='doing')b.push('<span class="lz blue">w toku</span>');
+  if(t.state==='blocked')b.push('<span class="lz red" title="'+esc(t.blocked?'powód: '+t.blocked:'bez podanego powodu')+'">zablokowane</span>');
+  /* zgoda zadania, które samo jeszcze czeka (poddrzewo, po:, [!]), to sprawa na potem, nie na teraz */
+  const later=sub||t.waits.length>0||t.state==='blocked';
+  (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>{const q=BK_NEED[x];
+    b.push(q?(later?'<span class="bk-later">'+q[1]+'</span>':'<span class="lz purple">'+q[0]+'</span>'):'<span class="lz purple">'+esc(x)+'</span>')});
+  return '<div class="bk-meta">'+b.concat(extra||[]).join('')+'</div>';
+}
+/* miejsce każdego zadania na stronie: najpłytszy poziom, pierwszy rodzic w kolejności (BFS), pierwszy korzeń w kolejności.
+   Tam rysowane w całości; w innym miejscu tego drzewa albo pod innym korzeniem jednym wierszem „pokazane też pod: …”.
+   drawn: wspólne dla całej strony {id: {root, parent}} */
+function bkHomes(m,root,drawn){
+  const home={},q=[[root,0]];home[root.id]={parent:null,depth:0};
+  while(q.length){const [n,d]=q.shift();if(d+1>=BK_DEPTH)continue;
+    m.kids(n).forEach(x=>{if(home[x.id])return;
+      const g=drawn&&drawn[x.id];
+      if(g&&g.root!==root.id){home[x.id]={parent:n,depth:d+1,other:g};return}
+      home[x.id]={parent:n,depth:d+1};q.push([x,d+1])})}
+  if(drawn)Object.keys(home).forEach(id=>{if(!home[id].other&&!drawn[id])drawn[id]={root:root.id,parent:home[id].parent,homes:home}});
+  return home;
+}
+const bkDom=s=>String(s).replace(/[^\w-]/g,'_');
+/* klucze rozwinięcia gałęzi od korzenia do rodzica zadania (Przejdź rozwija je przed przewinięciem) */
+const bkPath=(rootId,homes,parent)=>{const L=[];let x=parent,g=0;while(x&&g++<BK_DEPTH+1){L.unshift(rootId+'>'+x.id);const h=homes[x.id];x=h?h.parent:null}return L};
+/* węzeł drzewa: strzałka ▸/▾ na początku wiersza (także przy korzeniu), nad listą podrzędną „Potem ruszy:”.
+   Domyślnie rozwinięte BK_OPEN poziomy i cała ścieżka krytyczna; „Rozwiń wszystko” otwiera resztę.
+   Pełne wyróżnienie „Twoje” tylko dla korzenia (bk-you); niżej sam pasek (bk-youl) */
+function bkNode(m,n,depth,ctx,parent){
+  const t=n.t,i=m.info(n),you=m.mine(n),kids=m.kids(n),h0=ctx.home[n.id];
+  const btn='<button class="lk bk-t" data-task="'+esc(t.id)+'">'+esc(t.title)+'</button>';
+  const domId='bk-'+bkDom(ctx.root)+'-'+bkDom(n.id);
+  const rep=(where,root,homes,par)=>{const tid='bk-'+bkDom(root)+'-'+bkDom(n.id);
+    return '<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main">'+btn+'<div class="bk-meta"><span>pokazane też pod: „'+esc(shortT(where,60))+'”</span>'+
+      '<button class="linkbtn bk-jump" data-bkjump="'+esc(tid)+'" data-bkpath="'+esc(bkPath(root,homes,par).join('\n'))+'" data-k="bkj:'+esc(ctx.root+'>'+parent.id+'>'+n.id)+'">Przejdź</button></div></div></div></li>'};
+  if(h0&&parent&&h0.other)return rep(h0.other.parent?h0.other.parent.t.title:m.byId(h0.other.root).t.title,h0.other.root,h0.other.homes,h0.other.parent);
+  if(h0&&parent&&h0.parent&&h0.parent.id!==parent.id)return rep(h0.parent.t.title,ctx.root,ctx.home,h0.parent);
+  const crit=!!ctx.crit[n.id]&&depth>0,ex=[];
+  if(depth===0){
+    if(i.late)ex.push('<span class="dl late">zależne po terminie: '+i.late+'</span>');
+    else if(i.next)ex.push('<span>najbliższe zależne: '+dd(i.next)+' · '+esc(rel(i.next))+'</span>');
+    const c=m.chain(n);if(c>1)ex.push('<span class="bk-nw">najdłuższy łańcuch: '+c+' '+pl(c,'krok','kroki','kroków')+'</span>');
+    const tg=m.tight(n);if(tg)ex.push('<span class="lz red" title="Zapas liczony osobno dla każdej ścieżki: dni do terminu „'+esc(tg.title)+'” mniej dni pracy przed nim (1 dzień na zadanie, przy Twoich zadaniach według czas:)">ciasno: '+tg.steps+' '+pl(tg.steps,'dzień','dni','dni')+' pracy do '+dd(tg.date)+' (zostało '+tg.days+')</span>');
+  }
+  if(crit)ex.push('<span class="bk-sr">na ścieżce krytycznej</span>');
+  const er=m.early(n);if(er.length)ex.push('<span class="lz yellow" title="Termin tego zadania jest wcześniejszy niż termin zadania, na które czeka">termin przed: „'+esc(shortT(er[0].title,40))+'” ('+dd(er[0].date)+')</span>');
+  const also=parent?t.waits.filter(w=>w!==parent.title):[];
+  if(also.length)ex.push('<span>czeka też na: '+esc(shortT(also.join('; '),60))+'</span>');
+  if(i.count)ex.push(bkPill(i,'bk-nn'));
+  const k=ctx.root+'>'+n.id,sub='bks-'+bkDom(k),deep=depth+1>=BK_DEPTH;
+  const o=A.bkOpen&&A.bkOpen[k],open=kids.length&&!deep&&(o!=null?o:(A.bkAll||depth+1<BK_OPEN||!!ctx.crit[n.id]));
+  const tog=kids.length&&!deep?'<button class="bk-tog" data-bkx="'+esc(k)+'" data-k="bkx:'+esc(k)+'" aria-expanded="'+!!open+'" aria-controls="'+esc(sub)+'" aria-label="'+(open?'Zwiń':'Pokaż')+' zadania, które ruszą po: '+esc(t.title)+'"><span aria-hidden="true">'+(open?'▾':'▸')+'</span></button>':'<span class="bk-tg0" aria-hidden="true"></span>';
+  const cls=depth===0&&you&&!ctx.flat?' bk-you':you?' bk-youl':'';
+  let h='<li class="bk-node'+cls+(crit?' bk-crit':'')+'" id="'+esc(domId)+'"><div class="bk-row">'+tog+'<div class="bk-main">'+btn+bkMeta(n,ctx.proj&&depth===0,ex,depth>0)+(depth===0&&ctx.why?ctx.why:'')+'</div>'+
+    bkPill(i,'bk-nw')+'</div>';
+  if(kids.length&&deep){
+    const rest=m.reachL([n]).filter(x=>!ctx.home[x.id]).length;
+    h+='<button class="linkbtn bk-cut" data-bkfocus="'+esc(t.id)+'" data-k="bkf:'+esc(k)+'">… i '+(rest||i.count)+' '+pl(rest||i.count,'zależne','zależne','zależnych')+' niżej: pokaż od tego zadania</button>';
+  }else if(open)h+='<div class="bk-then" aria-hidden="true">Potem ruszy:</div><ul class="bk-sub" id="'+esc(sub)+'" aria-label="Ruszą po: '+esc(t.title)+'">'+kids.map(x=>bkNode(m,x,depth+1,ctx,n)).join('')+'</ul>';
+  return h+'</li>';
+}
+/* drzewo od korzenia (Do zrobienia najpierw, Zablokowane, widok od jednego zadania) */
+function bkTree(m,n,drawn,o){
+  o=o||{};const home=bkHomes(m,n,drawn),lc=m.chain(n)>1;
+  return bkNode(m,n,0,{home:home,crit:lc?m.crit(n,BK_DEPTH):{},root:n.id,proj:!PF.bk,why:o.why||'',flat:o.flat},null);
+}
+function bkFlat(m,n,withProj,why){
+  const t=n.t,i=m.info(n),you=m.mine(n);
+  return '<li class="bk-node'+(you?' bk-youl':'')+'"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(t.id)+'">'+esc(t.title)+'</button>'+
+    bkMeta(n,withProj,i.count?[bkPill(i,'bk-nn')]:[])+why+'</div>'+bkPill(i,'bk-nw')+'</div></li>';
+}
+const BKWHY={missing:w=>'czeka na „'+w.text+'”, a takiego zadania nie ma w pliku',cycle:w=>'zależność w kółko z: '+w.text,
+  orphan:w=>'czeka na: '+w.text+(w.via==='missing'?'; wyżej w łańcuchu „'+w.src+'” czeka na zadanie, którego nie ma w pliku':
+    w.via==='cycle'?'; wyżej w łańcuchu „'+w.src+'” ma zależność w kółko':'; to zadanie nie może ruszyć')};
+/* Zależności do poprawy pogrupowane po przyczynie: brakujące zadanie, cykl, łańcuch z problemem wyżej */
+function bkFixGroups(m,fix){
+  const G={},order=[];
+  const add=(key,head,x)=>{if(!G[key]){G[key]={head:head,L:[]};order.push(key)}if(G[key].L.indexOf(x)<0)G[key].L.push(x)};
+  fix.forEach(x=>x.why.forEach(w=>{
+    if(w.kind==='missing')add('m\n'+w.text.toLowerCase(),'Brakuje zadania „'+w.text+'” (po: nie pasuje do żadnego wiersza w pliku)',x);
+    else if(w.kind==='cycle')add('c\n'+w.comp,'Zależność w kółko: '+m.comp(w.comp).map(y=>'„'+y.title+'”').join(', '),x);
+    else if(w.src)add('o\n'+w.src,w.via==='missing'?'Czekają na „'+w.src+'”, które czeka na brakujące zadanie':'Czekają na „'+w.src+'”, które ma zależność w kółko',x);
+    else add('w\n'+w.text,'Nie ruszą: czekają na „'+w.text+'”',x)}));
+  return order.map(k=>G[k]);
+}
+function vBlokady(){
+  const m=bkModel(),act=p=>!!p&&p.state==='active';
+  if(PF.bk&&!P(PF.bk))PF.bk='';
+  const inP=n=>PF.bk?n.t.project===PF.bk:act(P(n.t.project));
+  const roots=m.roots.filter(inP),blocked=m.blocked.filter(inP),fix=m.fix.filter(x=>inP(x.t));
+  const you=bkYouL().filter(inP),yc=bkYouN(you),pids={};
+  /* Twoje zadania, które wstrzymują inne, ale same czekają (nie są korzeniami): osobno, żeby liczba z menu była widoczna */
+  const youWait=you.filter(n=>roots.indexOf(n)<0);
+  m.roots.concat(m.blocked).concat(m.fix.map(x=>x.t)).forEach(n=>{pids[n.t.project]=1});
+  const opts=D.projects.filter(p=>pids[p.id]||p.id===PF.bk);
+  /* skróty do sekcji (przyciski, nie pigułki do oglądania); na telefonie tylko pierwszy, liczby są w nagłówkach sekcji */
+  const go=(id,dot,label,cl)=>'<button class="pill bk-go'+(cl?' '+cl:'')+'" data-bkjump="'+id+'" data-k="bkgo:'+id+'"><i class="dot '+dot+'"></i>'+esc(label)+'</button>';
+  const sum=[you.length?go(you.some(n=>roots.indexOf(n)>=0)?'bk-roots':'bk-youw','you',bkYouTxt(yc),'bk-go1'):'<span class="pill bk-go1"><i class="dot ok"></i>Nic nie czeka na Ciebie</span>',
+    go('bk-roots',roots.length?'run':'ok',roots.length+' do zrobienia najpierw'),
+    go('bk-blocked',blocked.length?'bad':'ok',blocked.length+' '+pl(blocked.length,'zablokowane','zablokowane','zablokowanych'))];
+  if(fix.length)sum.push(go('bk-fix','bad',fix.length+' do poprawy'));
+  const anyKids=roots.concat(blocked).some(n=>m.kids(n).length);
+  const fo=A.bkFocus?m.byId(A.bkFocus):null;if(A.bkFocus&&!fo)A.bkFocus='';
+  let h='<div class="pagehead bk-head"><div style="min-width:0;flex:1"><h1>Blokady</h1><p>Zacznij od góry; pod zadaniem to, co ruszy po nim.<span class="bk-nw"> Kolejność: Twoje, z zależnymi po terminie, najwięcej zależnych, termin.</span></p><div class="bk-sum">'+sum.join('')+'</div></div>'+
+    '<div class="toolbar"><label class="muted" for="bkp">Projekt</label><select id="bkp"><option value="">Aktywne projekty</option>'+opts.map(p=>'<option value="'+esc(p.id)+'"'+(PF.bk===p.id?' selected':'')+'>'+esc(p.name)+(act(p)?'':' ('+(PST_N[p.state]||p.state)+')')+'</option>').join('')+'</select>'+
+    (anyKids?'<button class="btn sec sm" data-bkall="1" data-k="bkall" aria-pressed="'+!!A.bkAll+'">'+(A.bkAll?'Zwiń do 2 poziomów':'Rozwiń wszystko')+'</button>':'')+'</div></div>';
+  if(fo)return h+'<section class="panel" id="bk-focus" tabindex="-1"><h2>Od zadania: '+esc(shortT(fo.t.title,70))+' <small><button class="linkbtn" data-bkfocus="" data-k="bkf:back">Wróć do wszystkich blokad</button></small></h2>'+
+    '<ul class="bk-tree">'+bkTree(m,fo,null)+'</ul></section>';
+  const drawn={},rootsH=roots.map(n=>bkTree(m,n,drawn)).join('');
+  const crit=roots.some(n=>m.chain(n)>1);
+  h+='<section class="panel" id="bk-roots" tabindex="-1"><h2>Do zrobienia najpierw <small class="num">'+roots.length+'</small></h2>'+
+    (crit?'<p class="bk-intro bk-legend"><i class="bk-cdot" aria-hidden="true"></i>Kropka: ścieżka krytyczna (do zadania z najmniejszym zapasem do terminu).</p>':'')+
+    (roots.length?'<ul class="bk-tree">'+rootsH+'</ul>':'<p class="empty">Żadne zadanie nie wstrzymuje innych.</p>')+'</section>';
+  if(youWait.length)h+='<section class="panel" id="bk-youw" tabindex="-1"><h2>Twoje, które same czekają <small class="num">'+youWait.length+'</small></h2>'+
+    '<ul class="bk-tree">'+youWait.map(n=>bkFlat(m,n,!PF.bk,n.t.state==='blocked'?'<div class="bk-why">zablokowane'+(n.t.blocked?': '+esc(n.t.blocked):'')+'</div>':
+      '<div class="bk-meta"><span class="lz yellow">czeka na</span><span>'+esc(shortT(n.t.waits.join('; '),90))+'</span></div>')).join('')+'</ul></section>';
+  h+='<section class="panel" id="bk-blocked" tabindex="-1"><h2>Zablokowane <small class="num">'+blocked.length+'</small></h2>'+
+    (blocked.length?'<ul class="bk-tree">'+blocked.map(n=>bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+'</div>'+
+      (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>':'')+
+      (n.t.waits.length?'<div class="bk-meta"><span class="lz yellow">czeka na</span><span>'+esc(shortT(n.t.waits.join('; '),90))+'</span></div>':'')})).join('')+'</ul>'
+      :'<p class="empty">Brak zablokowanych zadań.</p>')+'</section>';
+  if(fix.length)h+='<section class="panel" id="bk-fix" tabindex="-1"><h2>Zależności do poprawy <small class="num">'+fix.length+'</small></h2><p class="bk-intro">Te zadania nie ruszą, dopóki nie poprawisz pola po: w pliku zadań.</p>'+
+    bkFixGroups(m,fix).map(g=>'<h3 class="bk-gh">'+esc(g.head)+' <small class="num">'+g.L.length+'</small></h3><ul class="bk-tree">'+g.L.map(x=>bkFlat(m,x.t,!PF.bk,'')).join('')+'</ul>').join('')+'</section>';
+  return h;
+}
+/* przejście do sekcji albo do zadania w drzewie: najpierw rozwija gałęzie na drodze do niego (data-bkpath), potem
+   przewija i podświetla na chwilę */
+function bkJump(id,path){
+  if(path&&path.length){const o=A.bkOpen||(A.bkOpen={});let ch=false;path.forEach(k=>{if(o[k]!==true){o[k]=true;ch=true}});if(ch)render(true)}
+  const n=document.getElementById(id);
+  if(!n){say('Nie znaleziono tego zadania na stronie. Użyj „Rozwiń wszystko”.');return}
+  n.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});
+  const b=n.querySelector('.bk-t')||n;if(b.focus)b.focus({preventScroll:true});
+  n.classList.add('bk-hit');setTimeout(()=>n.classList.remove('bk-hit'),1600);
+}
+/* Teraz → Marketing: tydzień z dniem posta i przewinięcie do tego dnia */
+function mkDay(day){
+  if(!isDay(day)){location.hash='marketing';return}
+  const d=fromKey(day);d.setDate(d.getDate()-(d.getDay()+6)%7);
+  A.mweek=Math.round((d-weekStart(0))/6048e5);
+  if(location.hash==='#marketing')render(true);else location.hash='marketing';
+  let n=0;const find=()=>{const el=document.querySelector('.tl-day[data-day="'+day+'"]');
+    if(el){el.setAttribute('tabindex','-1');el.scrollIntoView({block:'start'});el.focus({preventScroll:true});el.classList.add('mk-hit');setTimeout(()=>el.classList.remove('mk-hit'),1600)}
+    else if(n++<15)setTimeout(find,60)};
+  setTimeout(find,30);
 }
 
 /* ---------- strona projektu ---------- */
@@ -1772,7 +2475,7 @@ function agBarHtml(){
 function runRow(r){
   const m=[],d=fmtDur(runDur(r)),pn=r.projectName||(r.project?projName(r.project):'');
   if(pn)m.push(esc(pn));m.push(TOOL[r.tool]);if(r.auto)m.push('Automat');
-  if(r.state==='running'&&r.activity)m.push(esc(r.activity));
+  if(r.state==='running'&&r.activity)m.push(nwStep(r.activity));
   if(keyWarn(r))m.push('<span class="lz yellow">klucz API</span>');
   return '<li><span>'+lzR(r.state)+'</span><div><button class="lk t" data-run="'+esc(r.id)+'" data-k="r:'+esc(r.id)+'">'+esc(r.title)+'</button><div class="s">'+m.join(' · ')+'</div></div>'+
     '<span class="wh">'+esc(whenT(r.startedAt||r.queuedAt))+(d?' · '+d:'')+'</span></li>';
@@ -1844,7 +2547,7 @@ function runHtml(r){
   let h='<div class="dhead"><span class="muted">'+KIND[r.kind]+'</span><button class="x" data-close="1">Zamknij</button></div><h2 id="dtitle">'+esc(r.title)+'</h2>'+
     '<p class="muted">'+[pn?esc(pn):'',TOOL[r.tool],esc(MACH[r.machine]||r.machine||''),r.auto?'Automat':''].filter(Boolean).join(' · ')+'</p>';
   h+='<div class="abox'+(bad?' bad':'')+'"><div>'+lzR(r.state)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>';
-  if(r.state==='running'&&r.activity)h+='<p class="act">'+esc(r.activity)+'</p>';
+  if(r.state==='running'&&r.activity)h+='<p class="act">'+nwStep(r.activity)+'</p>';
   if(r.error)h+='<p class="act">'+esc(r.error)+'</p>';
   if(r.state==='login')h+='<div class="row">'+loginHint('copy2')+'</div>';
   if(r.state==='limit'&&limitT())h+='<p class="act">'+limitHint()+'</p>';
@@ -1865,7 +2568,7 @@ function runHtml(r){
   if(r.file)rows.push(['Plik','<code>'+esc(r.file)+'</code>']);
   h+='<dl>'+rows.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl>';
   if(r.kind==='task'&&!isAct(r))h+=chgBlock(r);
-  if(r.steps.length)h+='<h3>Kroki</h3><ul class="stp">'+r.steps.slice().reverse().map(x=>'<li><span class="t">'+esc(x.t)+'</span><span class="s">'+esc(x.text)+'</span></li>').join('')+'</ul>';
+  if(r.steps.length)h+='<h3>Kroki</h3><ul class="stp">'+r.steps.slice().reverse().map(x=>'<li><span class="t">'+esc(x.t)+'</span><span class="s">'+nwStep(x.text)+'</span></li>').join('')+'</ul>';
   if(r.result)h+='<h3>Wynik</h3><pre class="res">'+esc(r.result)+'</pre>';
   if(r.denials.length)h+='<h3>Odmowy uprawnień</h3><ul class="stp">'+r.denials.map(x=>'<li><span class="t">odmowa</span><span class="s">'+esc(x)+'</span></li>').join('')+'</ul>';
   return h;
@@ -1906,7 +2609,7 @@ function vProjekty(){
     '<details><summary>Wiersz zadania i polecenia</summary><p><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></p>'+
     '<p class="note" style="margin-top:6px"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>'+
     '<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul></details>'+
-    '<details><summary>Klawisze</summary><ul><li><code>/</code> szukaj projektu</li><li><code>g</code> potem <code>p</code> przegląd, <code>w</code> wskaźniki, <code>t</code> tablica, <code>d</code> terminy, <code>a</code> agenci</li><li><code>Esc</code> zamyka szczegóły; w szczegółach zadania <code>r</code> uruchamia agenta</li></ul></details></section>';
+    '<details><summary>Klawisze</summary><ul><li><code>/</code> szukaj projektu</li><li><code>g</code> potem <code>p</code> przegląd, <code>w</code> wskaźniki, <code>t</code> tablica, <code>d</code> terminy, <code>b</code> blokady, <code>a</code> agenci</li><li><code>Esc</code> zamyka szczegóły; w szczegółach zadania <code>r</code> uruchamia agenta</li></ul></details></section>';
   return h;
 }
 
@@ -1923,7 +2626,7 @@ function agentBlock(t){
   if(!D.agents)return '';
   const r=runOf(t);
   if(r){const d=fmtDur(runDur(r)),ls=r.steps.length?r.steps[r.steps.length-1]:null;
-    return '<div class="abox"><div>'+TOOL[r.tool]+': '+lzR(r.state)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>'+((r.activity||ls)?'<p class="act">'+(ls?esc(ls.t)+' · ':'')+esc(r.activity||ls.text)+'</p>':'')+
+    return '<div class="abox"><div>'+TOOL[r.tool]+': '+lzR(r.state)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>'+((r.activity||ls)?'<p class="act">'+(ls?esc(ls.t)+' · ':'')+nwStep(r.activity||ls.text)+'</p>':'')+
       '<div class="row"><button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop">Zatrzymaj</button><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="open">Podgląd uruchomienia</button></div></div>'}
   const why=blockOf(t),last=lastRunOf(t);
   return '<div class="abox"><div class="row"><button class="btn sm" data-ag="run" data-id="'+esc(t.id)+'" data-k="run"'+(!why?'':A.starting[t.id]?' aria-disabled="true"':' disabled')+' title="Skrót: r">Uruchom agenta: '+TOOL[toolOf(t)]+'</button>'+(why?'<span class="rsn">'+esc(why)+'</span>':'')+'</div>'+
@@ -1936,6 +2639,8 @@ function taskHtml(t){
   const d=t.detail||normDetail(null),zg=t.needsYou==='zgoda'&&t.state!=='done',od=t.needsYou==='odbiór'&&t.state!=='done';
   const dec=d.decision?'<p class="dcap" id="ddec">Zatwierdzasz: '+esc(d.decision)+'</p>':'',db=d.decision?' aria-describedby="ddec"':'';
   const pday=prepDay(t),gr=lastGitRun(t),br=!gr&&t.state!=='done'?branchRun(t):null,mine=t.executor==='ty'||!t.executor;
+  /* zadanie „Nagraj film …” przy poście ze scenariuszem: film nagrywa panel, właściciel tylko ogląda i zamyka */
+  const fday=filmDay(t),ftask=!!fday&&!pday&&/^nagra[jć]\s+film/i.test(t.title||'')&&!(pub&&t.channel);
   /* 1. Twój ruch: jedno zdanie i jedna akcja */
   let mv='',shown={};
   if(t.state==='done')mv='<div class="move-box ok"><b>Zrobione.</b>'+(d.result?'<p>'+esc(d.result)+'</p>':'')+'</div>'+(pub?pubBox(t):'');
@@ -1947,8 +2652,11 @@ function taskHtml(t){
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
   else if(needsResult(t)||needsCount(t)||dForm(t,'done'))mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p></div>'+finBox(t);
   else if(!mine)mv='<div class="move-box"><b>To robi agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.</b><p>'+esc(doWhat(t))+'</p></div>';
+  else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
+  /* skrót filmu posta na górze (także gdy zadanie czeka na poprzednie): rodzaj, szablon, długość, kto nagra */
+  if(fday&&!shown.post)mv+=filmTop(t,fday,ftask);
   h+=mv+chatBox(t);
   /* 2. Szczegóły zwinięte */
   h+='<details class="dmore" id="dmore"'+(DR&&DR.more?' open':'')+'><summary>Szczegóły zadania</summary>';
@@ -1958,6 +2666,7 @@ function taskHtml(t){
   if(pub&&t.channel&&isDay(t.date)&&!shown.post)h+=postBox(t,t.date.slice(0,10),false);
   h+=wynBlock(t,d,zg||od,od,t.executor==='ty');
   if(pday&&!shown.post)h+=postBox(t,pday,false);
+  if(ftask)h+=postBox(t,fday,false);
   if(gr&&!od)h+='<div class="dbox"><h3>Zmiany agenta</h3>'+chgBlock(gr,true)+'</div>';
   if(d.answers.length)h+='<div class="dbox"><h3>Twoje dane</h3><dl class="ans">'+d.answers.map(a=>'<dt>'+esc(a.label)+'</dt><dd>'+esc(a.value)+'</dd>').join('')+'</dl></div>';
   h+=afterBlock(t);
@@ -2018,7 +2727,7 @@ async function sendChat(f){
   ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.pending=true;c.error='';if(DR)DR.chat=1;renderDrawer(true);
   const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text});
   if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano pytania.';renderDrawer(true);return}
-  setTimeout(()=>loadChat(id),2500);
+  load();setTimeout(()=>loadChat(id),2500);
 }
 /* blok „Co zrobić”: cel, kroki (odhaczane z panelu), warunek ukończenia, materiały, notatki */
 const MV={};
@@ -2406,31 +3115,330 @@ function postBox(t,day,publish){
     (publish&&n==='LinkedIn'?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Otwórz LinkedIn z tekstem</button>':''))+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
     (publish?'<button class="btn sec sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowałem ręcznie</button>':'')+'</div>';
-  h+=filmBox(t,day,d)+fixBox(t,day);
+  h+=filmBox(t,day,d)+fixBox(t,day,d);
   return h+'</div>';
 }
 /* ---------- film posta (film.py: nagranie ze scenariusza) i „Co poprawić” (zadanie dla agenta) ---------- */
 const postQ=(pid,day)=>'project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day);
 function filmBox(t,day,d){
-  const r=d.rec||{},st=r.state||'',run=st==='running'||st==='queued',q=postQ(t.project,day);
+  const r=d.rec||{},st=r.state||'',run=st==='running'||st==='queued',q=postQ(t.project,day),key=t.project+'|'+day;
   if(!d.scenario&&!d.film)return '';
-  let h='<div class="filmb"><h3>Film</h3>';
+  const fi=d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null,show=!fi||fi.kind!=='objasnienie';
+  let h='<div class="filmb" data-filmb="'+esc(key)+'"><h3>Film</h3>'+filmMeta(fi,key,LIVE&&d.scenario&&!run);
   if(d.film)h+='<video class="pvid" controls playsinline preload="metadata" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video>';
-  if(run)h+='<p class="note">Nagrywam film… (2–4 min). Dostaniesz powiadomienie.</p>';
+  if(run)h+='<p class="note">Nagrywam film… ('+(fi&&fi.kind==='objasnienie'?'zwykle około minuty':'2–4 min')+'). Dostaniesz powiadomienie.</p>';
   else if(st==='error')h+='<p class="warn">Nie nagrano: '+esc(r.error||'błąd')+'</p>';
-  else if(!d.film)h+='<p class="note">Filmu jeszcze nie ma. Nagra go panel według scenariusza.</p>';
-  if(d.scenario&&!run)h+='<div class="row"><button class="btn '+(d.film?'sec ':'')+'sm" data-film-rec="'+esc(t.project+'|'+day)+'" data-title="'+esc(t.title)+'">'+(d.film?'Nagraj ponownie':'Nagraj film')+'</button>'+
-    (D.film&&!D.film.account?'<span class="note">Najpierw konto demo: Agenci → Publikacja.</span>':'')+'</div>';
+  const who=filmWho(fi,d,day,t);
+  if(who&&!run)h+='<p class="note">'+esc(who)+'</p>';
+  if(d.film&&d.filmManual&&!run)h+='<p class="note">Film wgrany ręcznie. Zmiana studia go nie nadpisze; „Nagraj ponownie” zastąpi go nagraniem ze scenariusza.</p>';
+  if(d.scenario&&!run)h+='<div class="row"><button class="btn '+(d.film?'sec ':'')+'sm" data-film-rec="'+esc(key)+'" data-title="'+esc(t.title)+'">'+(d.film?'Nagraj ponownie':'Nagraj film')+'</button>'+
+    (show&&D.film&&!D.film.account?'<span class="note">Najpierw konto demo: Agenci → Publikacja.</span>':'')+'</div>';
+  if(d.scenario)h+='<p class="note">'+(fi&&fi.editable&&fi.editable.length?'Teksty i dane zmienisz przyciskami „Zmień…” w „Co jest w filmie”; film nagra się od nowa. Inne zmiany (rodzaj filmu, nowe plansze, wezwanie na końcu) opisz niżej w „Co poprawić”.'
+    :'Żeby zmienić napisy, treść plansz, rodzaj filmu albo planszę końcową, napisz to niżej w polu „Co poprawić”. Film nagra się od nowa po poprawce.')+'</p>';
   return h+'</div>';
 }
-function fixBox(t,day){
-  return '<form class="dform fixb" data-fixpost="'+esc(t.project+'|'+day)+'"><label class="fl"><span>Co poprawić w tym poście?</span><textarea class="fi" rows="2" maxlength="1000" data-fixq placeholder="Np. krótszy tekst na LinkedIn, w filmie wpisz sofę zamiast komody, większy napis na grafice"></textarea></label>'+
-    '<div class="row"><button class="btn sm">Wyślij do poprawy</button><span class="note">Poprawi agent; film nagra się od nowa sam.</span></div></form>';
+/* Kto i kiedy nagra film: jedno zdanie. Serwer (auto_record) co minutę nagrywa nową wersję scenariusza raz; pokaz
+   potrzebuje Playwright i konta demo, objaśnienie samego ffmpeg. Minione, opublikowane i wgrane ręcznie filmy
+   nie nagrywają się same od nowa po zmianie studia. */
+function filmWho(fi,d,day,t){
+  const F=D.film||{},kind=(fi&&fi.kind)||'pokaz',r=d.rec||{},st=r.state||'';
+  if(st==='running'||st==='queued')return '';
+  if(fi&&fi.error)return 'Panel nie nagra filmu, dopóki scenariusz ma błąd.';
+  const old=(isDay(day)&&day<D.todayKey)||d.filmManual||(t&&t.kind==='publikacja'&&t.state==='done');
+  if(d.film&&!d.filmStale)return '';
+  if(d.film&&old)return 'Film jest starszy niż szablon albo marka w studiu. Panel nie nagra go sam od nowa (post miniony, opublikowany albo film wgrany ręcznie); kliknij „Nagraj ponownie”, jeśli chcesz nową wersję.';
+  if(!d.film&&st==='error')return 'Tej wersji scenariusza panel już nie ponowi sam. Po poprawce scenariusza nagra film sam; możesz też kliknąć „Nagraj ponownie”.';
+  const tools=kind==='objasnienie'?F.explainer:F.available;
+  if(!tools)return 'Ten panel nie ma narzędzi do nagrywania. Film nagra sam panel na serwerze, kilka minut po zapisaniu scenariusza.';
+  if(kind==='pokaz'&&!F.account)return 'Panel nagra film sam, gdy dodasz konto demo (Agenci → Publikacja).';
+  return (d.film?'Film jest starszy niż szablon albo marka w studiu. Panel nagra go sam od nowa':'Panel nagra film sam')+' w ciągu kilku minut; nie musisz nic klikać. „'+(d.film?'Nagraj ponownie':'Nagraj film')+'” zaczyna od razu.';
+}
+/* stan filmu posta jednym słowem (kafelek tygodnia i skrót w szufladzie) */
+function filmState(d,t,day){
+  const r=d.rec||{},fi=d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null,F=D.film||{},kind=(fi&&fi.kind)||'pokaz';
+  const old=(isDay(day)&&day<D.todayKey)||d.filmManual||(t&&t.kind==='publikacja'&&t.state==='done');
+  if(r.state==='running'||r.state==='queued')return ['blue','nagrywa się film'];
+  if(fi&&fi.error)return ['red','błąd w filmie'];
+  if(r.state==='error'&&!d.film)return ['red','błąd nagrania'];
+  if(d.scenario&&!d.film)return ['yellow',(kind==='objasnienie'?F.explainer:F.available&&F.account)?'film nagra się sam':'film do nagrania'];
+  if(d.film&&d.filmStale)return ['yellow',old?'film starszy niż studio':'film nagra się od nowa'];
+  return d.film?['green','film gotowy']:['grey','bez filmu'];
+}
+/* dzień posta, z którym wiąże się zadanie: publikacja, „Przygotować post na …” albo zadanie „Nagraj film …”,
+   na które czeka publikacja (po:) */
+function filmDay(t){
+  if(t.kind==='publikacja'&&t.channel&&isDay(t.date))return t.date.slice(0,10);
+  const p=prepDay(t);if(p)return p;
+  if(!/^nagra[jć]\s+film/i.test(t.title||''))return '';
+  const tt=(t.title||'').toLowerCase(),x=(t.deps||[]).find(y=>y.kind==='publikacja'&&isDay(y.date))||
+    D.tasks.find(y=>y.kind==='publikacja'&&y.project===t.project&&isDay(y.date)&&(y.after||[]).some(a=>String(a).trim()&&tt.indexOf(String(a).trim().toLowerCase())>=0));
+  return x?x.date.slice(0,10):'';
+}
+/* skrót filmu na górze szuflady: rodzaj, szablon, długość, kto nagra, „Nagraj film” albo „Obejrzyj”,
+   niezależnie od blokad zadania. own: zadanie „Nagraj film …” (film nagrywa panel, nie właściciel). */
+function filmTop(t,day,own){
+  if(!day)return '';
+  const done=own&&t.state!=='done'?'<div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div>':'';
+  if(!LIVE)return own?'<div class="flm-top"><b>Film</b><p class="note">Film do tego posta nagrywa panel na serwerze ze scenariusza posta; nie nagrywasz ekranu ręcznie.</p>'+done+'</div>':'';
+  const k=t.project+'|'+day,d=PD[k];
+  if(d===undefined){PD[k]=null;loadPost(t.project,day);return own?'<div class="flm-top"><b>Film</b><p class="note">Wczytuję film…</p>'+done+'</div>':''}
+  if(!d||!d.ok||!(d.scenario||d.film))return own?'<div class="flm-top"><b>Film</b><p class="note">Scenariusza filmu do posta z '+esc(dd(day))+' jeszcze nie ma. Przygotuje go agent razem z postem, a film nagra panel; nie nagrywasz ekranu ręcznie.</p>'+done+'</div>':'';
+  const fi=d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null,r=d.rec||{},run=r.state==='running'||r.state==='queued',q=postQ(t.project,day),st=filmState(d,t,day);
+  let h='<div class="flm-top" aria-label="Film do posta"><div class="flm-head"><b>Film</b><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+(fi?'<span class="lz out">'+esc(stuKind(fi))+'</span>':'')+
+    (fi&&fi.template?'<span class="muted">'+esc(stuTpl(fi))+'</span>':'')+(fi&&fi.seconds&&!fi.error?'<span class="muted">ok. '+Math.round(+fi.seconds)+' s</span>':'')+'</div>';
+  if(own)h+='<p class="move">'+(d.film?'Film do posta z '+esc(dd(day))+' nagrał już panel ze scenariusza. Obejrzyj go; jeśli jest dobry, zamknij to zadanie. Nie nagrywasz ekranu ręcznie.'
+    :'Film do posta z '+esc(dd(day))+' nagra panel ze scenariusza; nie nagrywasz ekranu ręcznie. Gdy film będzie gotowy, zamknij to zadanie.')+'</p>';
+  const who=filmWho(fi,d,day,t);if(who)h+='<p class="note">'+esc(who)+'</p>';
+  if(fi&&fi.error)h+='<p class="warn">'+esc(fi.errorHint||'Błąd w scenariuszu filmu.')+'</p>';
+  h+='<div class="row">'+(own&&t.state!=='done'?'<button class="btn '+(d.film?'':'sec ')+'sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button>':'')+
+    (d.scenario&&!run?'<button class="btn '+(d.film||own?'sec ':'')+'sm" data-film-rec="'+esc(k)+'" data-title="'+esc(t.title)+'">'+(d.film?'Nagraj ponownie':'Nagraj film')+'</button>':'')+
+    '<button type="button" class="btn sec sm" data-filmgo="'+esc(k)+'">Co jest w filmie</button></div>';
+  if(d.film)h+='<details class="stu-det flm-watch"><summary>Obejrzyj film</summary><video class="pvid" controls playsinline preload="none" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video></details>';
+  return h+'</div>';
+}
+/* Studio filmów (film.py, studio/ obok KARTA.md): rodzaj, szablon i treść filmu w poście, lista szablonów w Marketingu.
+   Nazwy rodzajów (kindLabel, kindHelp) przychodzą z serwera: jedno źródło. */
+const stuKind=x=>String((x&&x.kindLabel)||(x&&x.kind)||'pokaz strony');
+const stuSec=v=>{const n=+v;return isFinite(n)&&n>0?(Math.round(n*10)/10).toString().replace('.',',')+' s':''};
+const stuTpl=x=>String((x&&(x.templateTitle||x.title))||(x&&(x.template||x.name))||'');
+function stuCard(c){
+  if(!c||typeof c!=='object')return '';
+  return [c.title,c.subtitle,c.address].filter(Boolean).map(x=>esc(x)).join(' · ');
+}
+/* „Co jest w filmie” w grupach: plansze (w kolejności filmu), napisy na filmie, dane wpisywane w formularz, inne.
+   Skąd pochodzi każde pole, mówi serwer (fi.fields: parametry szablonu dla planszy, napisu i formularza), więc panel
+   niczego nie zgaduje po wartościach. Wiersz: [etykieta, html, pole do zmiany albo null]; pole: {id, params, labels}
+   (parametry szablonu) albo {id:'s:N', text, caption} (plansza objaśnienia pisanego w scenariuszu). */
+function stuSections(fi){
+  const P=Array.isArray(fi.params)?fi.params:[],ed=Array.isArray(fi.editable)?fi.editable:[],F=fi.fields&&typeof fi.fields==='object'?fi.fields:null;
+  const byName=n=>P.find(p=>p.name===n),canP=ed.includes('params'),used=new Set();
+  const pf=(id,names,labels)=>{const ps=(Array.isArray(names)?names:[]).map(byName).filter(Boolean);ps.forEach(p=>used.add(p.name));return canP&&ps.length?{id:id,params:ps,labels:labels||{}}:null};
+  const bold=(html,names)=>(Array.isArray(names)?names:[]).some(n=>{const p=byName(n);return p&&p.changed})?'<b>'+html+'</b>':html;
+  const slideHtml=(c,names)=>bold(esc(c.text),names)+(c.caption?'<span class="muted"> · '+esc(c.caption)+'</span>':'')+(c.image?'<span class="muted"> · obraz: '+esc(c.image)+'</span>':'');
+  const cards=[],caps=[],form=[],other=[];
+  const brandRow=(c,m,id,first)=>{const lab={};if(m&&m.fields)Object.keys(m.fields).forEach(s=>{lab[m.fields[s]]={tytul:'Tytuł',podtytul:'Podtytuł',adres:'Adres'}[s]||s});
+    cards.push([(first?(c.hook?'Hak na początku':'Na początku'):'Na końcu')+' ('+stuSec(c.seconds)+')',bold(stuCard(c),m&&m.params),m?pf(id,m.params,lab):null])};
+  if(fi.introCard)brandRow(fi.introCard,F&&F.intro,'c:in',true);
+  else if(fi.kind)cards.push(['Na początku','<span class="muted">bez planszy marki, film zaczyna się od treści</span>',null]);
+  const slides=(arr,maps,label,id,own)=>(Array.isArray(arr)?arr:[]).forEach((c,i)=>{
+    const m=maps&&maps[i];let f=null;
+    if(own)f={id:'s:'+(i+1),label:label+' '+(i+1),text:String(c.markup||c.text||''),caption:String(c.caption||'')};
+    else if(m){const lab={};if(m.text)lab[m.text]='Tekst planszy';if(m.caption)lab[m.caption]='Podpis';f=pf(id+(i+1),m.params,lab)}
+    cards.push([label+' '+(i+1)+(c.hook?' · hak':'')+' ('+stuSec(c.seconds)+')',slideHtml(c,m&&m.params),f]);
+  });
+  slides(fi.before,F&&F.before,'Przed pokazem','c:b',false);
+  if(fi.kind==='objasnienie')slides(fi.slides,F&&F.slides,'Plansza','c:s',!P.length&&ed.includes('slides'));
+  else cards.push(['Nagranie strony','<span class="muted">'+(Array.isArray(fi.captions)?fi.captions.length:0)+' '+pl(Array.isArray(fi.captions)?fi.captions.length:0,'napis','napisy','napisów')+(fi.captionPauses?', panel wydłuży '+fi.captionPauses+' '+pl(+fi.captionPauses,'napis','napisy','napisów')+' do czasu czytania':'')+'</span>',null]);
+  slides(fi.after,F&&F.after,'Po pokazie','c:a',false);
+  if(fi.outroCard)brandRow(fi.outroCard,F&&F.outro,'c:out',false);
+  if(fi.kind!=='objasnienie'){
+    const C=Array.isArray(fi.captions)?fi.captions:[];
+    if(F&&Array.isArray(F.captions))C.forEach((c,j)=>{const names=F.captions[j]||[];names.forEach(n=>used.add(n));caps.push(['Napis '+(j+1),bold(esc(c),names),null])});
+    else if(Array.isArray(fi.sequence)&&fi.sequence.length){const W={napis:'Napis',wpisz:'Wpisuje',wybierz:'Wybiera'};let n=0;
+      fi.sequence.forEach(x=>(x.kind==='napis'?caps:form).push([x.kind==='napis'?'Napis '+(++n):(W[x.kind]||x.kind),esc(x.text),null]))}
+    else C.forEach((c,i)=>caps.push(['Napis '+(i+1),esc(c),null]));
+    if(F&&Array.isArray(F.form))F.form.map(byName).filter(Boolean).forEach(p=>{used.add(p.name);form.push([String(p.label||p.name),p.changed?'<b>'+esc(p.value)+'</b>':esc(p.value),null])});
+  }
+  P.filter(p=>!used.has(p.name)).forEach(p=>other.push([String(p.label||p.name),p.changed?'<b>'+esc(p.value)+'</b>':esc(p.value),pf('p:'+p.name,[p.name])]));
+  /* napisy i dane formularza zmienia się jednym formularzem na grupę (bez przycisku przy każdym wierszu) */
+  const capNames=F&&Array.isArray(F.captions)?[].concat(...F.captions).filter((n,i,a)=>a.indexOf(n)===i):[];
+  const capEdit=capNames.length?pf('g:napisy',capNames):null,formEdit=F&&Array.isArray(F.form)?pf('g:form',F.form):null;
+  return [{title:'Plansze',rows:cards},{title:'Napisy na filmie',rows:caps,edit:capEdit,what:'napisy'},{title:'Dane wpisywane w formularz',rows:form,edit:formEdit,what:'dane',kv:true},{title:'Inne',rows:other}].filter(s=>s.rows.length);
+}
+/* podgląd tekstu planszy: *słowo* w kolorze akcentu marki */
+function stuPrev(v,acc){
+  const parts=String(v||'').split('*');
+  return '<span class="muted">Na planszy: </span>'+parts.map((x,i)=>i%2?'<span class="stu-acc"'+(acc?' style="color:'+acc+'"':'')+'>'+esc(x)+'</span>':esc(x)).join('')+(parts.length<3?' <span class="muted">(bez wyróżnienia)</span>':'');
+}
+function stuAcc(key){const S=D.studio&&D.studio[String(key).split('|')[0]],b=S&&S.brand,c=b&&b.colors;return c?stuHex(c.akcent):''}
+function stuInput(key,k,value,max,label,markup,digits){
+  return '<label class="fl"><span>'+esc(label)+'</span><input class="fi" data-fval="'+esc(k)+'" maxlength="'+(max||120)+'" value="'+esc(value)+'"'+(digits?' inputmode="numeric" pattern="[0-9]*"':'')+'></label>'+
+    (markup?'<div class="stu-hl"><button type="button" class="btn sec sm" data-stuhl="'+esc(k)+'" title="Zaznacz słowo w polu wyżej">Wyróżnij zaznaczone słowo</button><span class="stu-prev" data-stuprev="'+esc(k)+'">'+stuPrev(value,stuAcc(key))+'</span></div>':'');
+}
+function stuEditForm(key,f){
+  const v=A.fVal||{},val=(k,d)=>v[k]!==undefined?v[k]:d;
+  let h='<form class="stu-ed" data-fset="'+esc(key)+'" data-field="'+esc(f.id)+'">';
+  if(f.id.slice(0,2)==='s:')h+=stuInput(key,f.id+':t',val(f.id+':t',f.text),90,'Tekst planszy (do 90 znaków)',true)+stuInput(key,f.id+':c',val(f.id+':c',f.caption),70,'Podpis (do 70 znaków, puste: bez podpisu)',false);
+  else (f.params||[]).forEach(p=>{
+    const k='p:'+p.name,lab=String((f.labels&&f.labels[p.name])||p.label||p.name),cur=val(k,String(p.value||''));
+    if(Array.isArray(p.options)&&p.options.length)h+='<label class="fl"><span>'+esc(lab)+'</span><select class="fi" data-fval="'+esc(k)+'">'+
+      (p.options.indexOf(cur)<0?'<option value="'+esc(cur)+'" selected>'+esc(cur)+' (spoza listy)</option>':'')+p.options.map(o=>'<option value="'+esc(o)+'"'+(o===cur?' selected':'')+'>'+esc(o)+'</option>').join('')+'</select></label>';
+    else h+=stuInput(key,k,cur,p.max,lab+(p.digits?' (same cyfry)':p.max?' (do '+p.max+' znaków)':''),!!p.markup,!!p.digits);
+  });
+  return h+'<div class="row"><button class="btn sm">Zapisz i nagraj od nowa</button><button type="button" class="btn sec sm" data-fcancel>Anuluj</button></div></form>';
+}
+/* miniatura planszy w kolorach marki (makieta CSS; kolory z marka.json projektu) */
+function stuMock(b,text,cap){
+  const c=b&&b.colors||{},acc=stuHex(c.akcent)||stuHex(c.tekst);if(!stuHex(c.tlo)||!stuHex(c.tekst))return '';
+  const cb=b.caption&&typeof b.caption==='object'?b.caption:{};
+  const mark=String(text||'').split('*').map((x,i)=>i%2?'<span style="color:'+acc+'">'+esc(x)+'</span>':esc(x)).join('');
+  return '<span class="stu-mock" style="background:'+stuHex(c.tlo)+';color:'+stuHex(c.tekst)+'"><span class="stu-mk-n" style="color:'+acc+'">'+esc(b.name||'')+'</span><span class="stu-mk-bar" style="background:'+acc+'"></span>'+
+    '<span class="stu-mk-r" style="background:'+acc+'"></span><span class="stu-mk-t">'+mark+'</span>'+(cap?'<span class="stu-mk-c" style="background:'+(stuHex(cb.bg)||stuHex(c.tekst))+';color:'+(stuHex(cb.color)||stuHex(c.tlo))+'">'+esc(cap)+'</span>':'')+'</span>';
+}
+function stuMockCard(card,label){
+  if(!card||!stuHex(card.bg)||!stuHex(card.fg))return '';
+  return '<span class="stu-mock stu-mk-card" style="background:'+stuHex(card.bg)+';color:'+stuHex(card.fg)+'"><span class="stu-mk-l">'+esc(label)+'</span><span class="stu-mk-h">'+esc(card.title||'')+'</span>'+
+    (card.subtitle?'<span class="stu-mk-s">'+esc(card.subtitle)+'</span>':'')+(card.address?'<span class="stu-mk-s">'+esc(card.address)+'</span>':'')+'</span>';
+}
+/* miniatury: plansza startowa, plansza treści (albo kadr nagrania strony z napisem), plansza końcowa; fi: ten film
+   (jego hak i wezwanie zamiast plansz marki) */
+function stuMocks(b,text,cap,fi){
+  if(!b||!b.colors)return '';
+  const own=(c,base)=>c?Object.assign({},base||{bg:b.colors.tekst,fg:b.colors.tlo},{title:c.title,subtitle:c.subtitle,address:c.address}):null;
+  const intro=fi?own(fi.introCard,b.intro):b.intro,outro=fi?own(fi.outroCard,b.outro):b.outro;
+  const page=fi&&fi.kind!=='objasnienie'&&!text,cb=b.caption&&typeof b.caption==='object'?b.caption:{};
+  const mid=page?'<span class="stu-mock stu-mk-page"><span class="stu-mk-l">nagranie strony</span>'+(cap?'<span class="stu-mk-c" style="background:'+(stuHex(cb.bg)||stuHex(b.colors.tekst))+';color:'+(stuHex(cb.color)||stuHex(b.colors.tlo))+'">'+esc(cap)+'</span>':'')+'</span>'
+    :stuMock(b,text||'Tekst planszy z *wyróżnieniem*',cap===undefined?'Podpis planszy':cap);
+  const m=[intro?stuMockCard(intro,intro.hook||(fi&&fi.introCard&&fi.introCard.hook)?'Hak':'Na początku'):'',mid,outro?stuMockCard(outro,'Na końcu'):''].filter(Boolean);
+  return m.length?'<div class="stu-mocks" role="img" aria-label="Podgląd plansz w kolorach marki">'+m.join('')+'</div>':'';
+}
+function filmMeta(fi,key,canEdit){
+  if(!fi)return '';
+  const pid=String(key).split('|')[0],S=D.studio&&D.studio[pid],b=S&&S.brand&&!(S.brand.errors&&S.brand.errors.length)?S.brand:null;
+  let h='<p class="stu-meta"><span class="lz out">'+esc(stuKind(fi))+'</span>'+(fi.kindHelp?'<span>'+esc(fi.kindHelp)+'</span>':'')+
+    (fi.seconds&&!fi.error?'<span class="muted">długość ok. '+Math.round(+fi.seconds)+' s</span>':'')+'</p>';
+  const about=fi.templateOwner||fi.templateDesc;
+  h+=fi.template?'<p class="stu-tpl">Szablon <b>'+esc(stuTpl(fi))+'</b>'+(about?'<br><span class="soft">'+esc(about)+'</span>':'')+'</p>'
+    :'<p class="stu-tpl soft">Scenariusz pisany ręcznie (bez szablonu studia). Agent może przenieść go na szablon, jeśli o to poprosisz.</p>';
+  const E=A.fEdit&&A.fEdit.key===key?A.fEdit.id:'';
+  if(fi.error){
+    const ask='Popraw scenariusz filmu. Panel zgłasza: '+fi.error,P=Array.isArray(fi.params)?fi.params:[],bad=fi.errorParam?P.find(p=>p.name===fi.errorParam):null;
+    const f=bad&&canEdit?{id:'p:'+bad.name,params:[bad],labels:{}}:null;
+    h+='<div class="stu-err"><p class="warn">Film się nie nagra. '+esc(fi.errorHint||'Błąd w scenariuszu filmu.')+'</p>'+
+      (f&&E===f.id?stuEditForm(key,f):'<div class="row">'+(f?'<button type="button" class="btn sm" data-fedit="'+esc(key)+'" data-field="'+esc(f.id)+'">Popraw: '+esc(bad.label||bad.name)+'</button>':'')+
+        '<button type="button" class="btn sec sm" data-fixfill="'+esc(key)+'" data-text="'+esc(ask)+'">Przekaż agentowi do poprawy</button></div>')+
+      '<details class="stu-det"><summary>Szczegóły techniczne</summary><p class="note">'+esc(fi.error)+'</p></details></div>';
+    return h;
+  }
+  const W=Array.isArray(fi.warnings)?fi.warnings:[];
+  if(W.length)h+='<ul class="stu-warn">'+W.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul>';
+  const secs=stuSections(fi);
+  if(!secs.length)return h;
+  const first=Array.isArray(fi.slides)&&fi.slides[0]?fi.slides[0]:Array.isArray(fi.before)&&fi.before[0]?fi.before[0]:null;
+  const row=r=>{const f=canEdit?r[2]:null,open=f&&E===f.id;
+    return '<dt>'+esc(r[0])+'</dt><dd>'+(open?stuEditForm(key,f):'<span class="stu-val">'+(r[1]||'<span class="muted">—</span>')+'</span>'+
+      (f?'<button type="button" class="btn sec sm stu-edbtn" data-fedit="'+esc(key)+'" data-field="'+esc(f.id)+'" aria-label="Zmień: '+esc(r[0])+'">Zmień</button>':''))+'</dd>'};
+  h+='<details class="stu-det" data-stud'+(A.stuDet===false&&!E?'':' open')+'><summary>Co jest w filmie, po kolei</summary>'+
+    (b?stuMocks(b,first?first.markup||first.text:'',first?first.caption||'':Array.isArray(fi.captions)&&fi.captions[0]?fi.captions[0]:undefined,fi):'')+
+    secs.map(s=>{const ef=canEdit?s.edit:null,open=ef&&E===ef.id;
+      return '<section class="stu-sec"><h4>'+esc(s.title)+'</h4>'+(open?stuEditForm(key,ef):'<dl class="stu-seq'+(s.kv?' stu-kv':'')+'">'+s.rows.map(row).join('')+'</dl>'+
+        (ef?'<div class="row stu-secact"><button type="button" class="btn sec sm" data-fedit="'+esc(key)+'" data-field="'+esc(ef.id)+'">Zmień '+esc(s.what||'dane')+'</button></div>':''))+'</section>'}).join('')+
+    (fi.template&&Array.isArray(fi.params)&&fi.params.some(p=>p.changed)?'<p class="note">Pogrubione: inne niż w przykładzie szablonu.</p>':'')+'</details>';
+  return h;
+}
+const stuHex=c=>/^#[0-9a-f]{3}([0-9a-f]{3})?$/i.test(String(c||''))?String(c):'';
+function stuAskBox(id){
+  const a=A.stuAsk&&A.stuAsk.pid===id?A.stuAsk:null;
+  let h='<div class="row stu-acts"><button type="button" class="btn sec sm" data-stuask="'+esc(id)+'" data-kind="marka" aria-expanded="'+(a&&a.kind==='marka')+'">Zmień plansze i wygląd</button>'+
+    '<button type="button" class="btn sec sm" data-stuask="'+esc(id)+'" data-kind="szablon" aria-expanded="'+(a&&a.kind==='szablon')+'">Poproś o nowy szablon</button></div>';
+  if(a)h+='<form class="stu-ask" data-stusend="'+esc(id)+'" data-kind="'+esc(a.kind)+'"><label class="fl"><span>'+(a.kind==='marka'?'Co zmienić w planszach albo wyglądzie (wszystkie filmy projektu)?':'Jaki film ma umieć nowy szablon?')+'</span>'+
+    '<textarea class="fi" rows="2" maxlength="1000" data-stuq placeholder="'+(a.kind==='marka'?'Np. na końcu „Załóż konto za darmo”, większy adres strony':'Np. porównanie dwóch opisów: przed i po')+'">'+esc(a.text||'')+'</textarea></label>'+
+    (a.kind==='marka'?'<p class="stu-warn">Zmiana dotyczy wszystkich nadchodzących filmów projektu: nagrają się od nowa. Filmy opublikowanych i minionych postów zostają bez zmian.</p>':'')+
+    '<div class="row"><button class="btn sm">Wyślij do agenta</button><button type="button" class="btn sec sm" data-stucancel>Anuluj</button></div></form>';
+  return h;
+}
+/* Studio filmów w nagłówku Marketingu: lista zwinięta, każdy projekt rozwija się osobno (na telefonie oś tygodnia
+   zostaje blisko góry). */
+function studioHead(days){
+  const S=D.studio&&typeof D.studio==='object'?D.studio:{},ids=Object.keys(S).filter(id=>S[id]&&Array.isArray(S[id].templates));
+  if(!ids.length)return '';
+  const n=ids.reduce((a,id)=>a+S[id].templates.length,0),wk=Array.isArray(days)?days:[],PO=A.stuProj||{};
+  const sum=ids.map(id=>esc(projName(id))+' '+S[id].templates.length).join(', ');
+  let h='<details class="stu-box" id="stubox"'+(A.stuOpen||A.stuAsk?' open':'')+'><summary>Studio filmów: '+n+' '+pl(n,'szablon','szablony','szablonów')+' <span class="muted">('+sum+')</span></summary>'+
+    '<p class="note">Szablony filmów i wygląd marki każdego projektu. Agent robi film z szablonu. Treść jednego filmu zmieniasz w poście (przycisk „Zmień”); plansze i wygląd marki zmienia agent na Twoją prośbę.</p><div class="stu-grid">';
+  ids.forEach(id=>{
+    const s=S[id],b=s.brand&&typeof s.brand==='object'?s.brand:null,col=b&&b.colors&&typeof b.colors==='object'?b.colors:{};
+    const sw=[['tlo','tło'],['tekst','tekst'],['akcent','akcent'],['akcent2','drugi akcent']].filter(x=>stuHex(col[x[0]]))
+      .map(x=>'<span class="stu-swl"><span class="stu-sw" style="background:'+stuHex(col[x[0]])+'" aria-hidden="true"></span>'+esc(x[1])+'</span>').join('');
+    const kinds=[...new Set(s.templates.map(t=>stuKind(t)))].join(', '),broken=s.templates.reduce((a,t)=>a+(Array.isArray(t.broken)?t.broken.length:0),0);
+    h+='<details class="stu-proj" data-stuproj="'+esc(id)+'"'+(PO[id]||(A.stuAsk&&A.stuAsk.pid===id)?' open':'')+'><summary class="stu-ph"><b>'+esc(projName(id))+'</b><span class="muted">'+s.templates.length+' '+pl(s.templates.length,'szablon','szablony','szablonów')+(kinds?' · '+esc(kinds):'')+'</span>'+
+      (broken?'<span class="lz red">'+broken+' '+pl(broken,'post z błędem','posty z błędem','postów z błędem')+'</span>':'')+'</summary><div class="stu-pbody">'+(sw?'<p class="stu-sws">'+sw+'</p>':'');
+    if(!b)h+='<p class="note">Bez studio/marka.json: plansze w kolorach neutralnych, bez planszy startowej i końcowej.</p>';
+    else if(b.errors&&b.errors.length)h+='<p class="warn">Błąd w ustawieniach marki: '+esc(b.errors[0])+'</p>';
+    else{
+      h+=stuMocks(b);
+      if(b.intro)h+='<p class="stu-card"><span class="muted">Na początku:</span> '+stuCard(b.intro)+'</p>';
+      if(b.outro)h+='<p class="stu-card"><span class="muted">Na końcu:</span> '+stuCard(b.outro)+'</p>';
+      if(Array.isArray(b.sites)&&b.sites.length)h+='<p class="stu-card"><span class="muted">Strony do nagrań:</span> '+esc(b.sites.join(', '))+'</p>';
+      const miss=[b.music?'':'muzyki (filmy są ciche, a Reels i TikTok słabiej pokazują ciche filmy)',b.logo?'':'logo'].filter(Boolean);
+      if(miss.length)h+='<p class="stu-warn">Brak '+esc(miss.join(' i '))+'. Dodasz '+(miss.length>1?'je':b.music?'je':'ją')+' przyciskiem „Zmień plansze i wygląd” (plik z licencją).</p>';
+    }
+    h+=s.templates.length?'<ul class="stu-tl">'+s.templates.map(t=>{
+      const U=Array.isArray(t.uses)?t.uses:[],used=U.filter(x=>wk.includes(x)).length,P=Array.isArray(t.params)?t.params:[],L=t.labels&&typeof t.labels==='object'?t.labels:{};
+      const R=Array.isArray(t.required)?t.required:[],B=Array.isArray(t.broken)?t.broken:[],about=t.forOwner||t.desc;
+      return '<li><div class="stu-th"><b title="'+esc(t.name)+'">'+esc(stuTpl(t))+'</b><span class="lz out">'+esc(stuKind(t))+'</span>'+(used?'<span class="muted">'+used+' '+pl(used,'post','posty','postów')+' w tym tygodniu</span>':'')+'</div>'+
+        (t.error?'<p class="warn">Szablon z błędem: '+esc(t.error)+'</p>':'')+
+        (B.length?'<p class="warn">Nie nagra się: '+esc(B.map(dd).join(', '))+' (błąd w scenariuszu posta). Otwórz post: poprawisz go tam albo przekażesz agentowi.</p>':'')+
+        (about?'<p class="stu-desc">'+esc(about)+'</p>':'')+
+        (R.length?'<p class="note">W każdym poście własne: '+esc(R.map(x=>L[x]||x).join(', '))+'</p>':P.length?'<p class="note">Zmienia się: '+esc(P.slice(0,4).map(x=>L[x]||x).join(', '))+(P.length>4?' i '+(P.length-4)+' '+pl(P.length-4,'inne','inne','innych'):'')+'</p>':'')+
+        (t.sample&&LIVE?'<details class="stu-det"><summary>Przykład: film z '+esc(dd(t.sample))+'</summary><video class="pvid" controls playsinline preload="none" src="/api/post/film?'+postQ(id,t.sample)+'"></video></details>':'')+'</li>';
+    }).join('')+'</ul>':'<p class="note">Brak szablonów.</p>';
+    h+=(LIVE?stuAskBox(id):'')+'</div></details>';
+  });
+  return h+'</div></details>';
+}
+function fixBox(t,day,d){
+  const fi=d&&d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null,key=t.project+'|'+day;
+  const S=D.studio&&D.studio[t.project]&&Array.isArray(D.studio[t.project].templates)?D.studio[t.project].templates:[],has=k=>S.some(x=>x.kind===k&&!x.error);
+  const end='Tylko w tym filmie inne wezwanie na końcu: „…”';
+  const ex=fi?(fi.kind==='objasnienie'?['W planszy 2 zmień tekst na „…”','Dodaj planszę: „…”',end].concat(has('pokaz')?['Zrób z filmu nagranie strony zamiast plansz']:[])
+    :['Dodaj przed pokazem planszę z problemem: „…”',end].concat(has('objasnienie')?['Zrób z filmu objaśnienie na planszach']:[])):[];
+  return '<form class="dform fixb" data-fixpost="'+esc(key)+'"><label class="fl"><span>Co poprawić w tym poście?</span><textarea class="fi" rows="2" maxlength="1000" data-fixq placeholder="Np. krótszy tekst na LinkedIn, inny hak w filmie, większy napis na grafice"></textarea></label>'+
+    (ex.length?'<div class="chips stu-chips" role="group" aria-label="Przykłady poprawek filmu">'+ex.map(x=>'<button type="button" class="chip" data-fixfill="'+esc(key)+'" data-text="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>':'')+
+    '<div class="row"><button class="btn sm">Wyślij do poprawy</button><span class="note">Poprawi agent, tylko w tym poście; film nagra się od nowa sam.</span></div></form>';
+}
+function stuField(f,key){
+  const id=f.dataset.field||'',v=k=>{const i=f.querySelector('[data-fval="'+CSS.escape(k)+'"]');return i?i.value:''};
+  if(id.slice(0,2)==='s:')return {slides:[{n:+id.slice(2),tekst:v(id+':t').trim(),podpis:v(id+':c').trim()}]};
+  /* pola parametrów szablonu (plansza, napis, dane formularza): każde pole to jeden parametr p:<nazwa> */
+  const o={};f.querySelectorAll('[data-fval^="p:"]').forEach(i=>{o[i.dataset.fval.slice(2)]=String(i.value||'').trim()});
+  return Object.keys(o).length?{params:o}:null;
+}
+/* „Wyróżnij zaznaczone słowo”: zaznaczenie (albo słowo pod kursorem) w gwiazdkach, poprzednie wyróżnienie znika */
+function stuHighlight(el){
+  const k=el.dataset.stuhl||'',form=el.closest('form'),i=form&&form.querySelector('[data-fval="'+CSS.escape(k)+'"]');
+  if(!i)return;
+  let v=i.value,a=i.selectionStart==null?0:i.selectionStart,b=i.selectionEnd==null?a:i.selectionEnd;
+  const before=v.slice(0,a).split('*').length-1,inside=v.slice(a,b).split('*').length-1;
+  v=v.replace(/\*/g,'');a-=before;b-=before+inside;
+  const W=/[^\s.,:;!?„”"()]/;   /* zawsze całe słowa: zaznaczenie w środku słowa obejmuje całe słowo */
+  while(a>0&&W.test(v[a-1]))a--;while(b<v.length&&W.test(v[b]))b++;
+  while(a<b&&v[a]===' ')a++;while(b>a&&v[b-1]===' ')b--;
+  if(a===b){say('Zaznacz słowo w polu, które ma być w kolorze marki.');i.focus();return}
+  v=v.slice(0,a)+'*'+v.slice(a,b)+'*'+v.slice(b);
+  if(v.length>(+i.maxLength||90)){say('Tekst byłby za długi.');return}
+  i.value=v;(A.fVal||(A.fVal={}))[k]=v;
+  const pv=form.querySelector('[data-stuprev="'+CSS.escape(k)+'"]');if(pv)pv.innerHTML=stuPrev(v,stuAcc(form.dataset.fset||''));
+  i.focus();i.setSelectionRange(a,b+2);
+}
+async function saveFilmEdit(f){
+  const key=f.dataset.fset||'',[pid,day]=key.split('|'),body=stuField(f,key);
+  if(!body){return}
+  if(!LIVE){say(PRV);return}
+  const x=await post('/api/film/zmien',Object.assign({project:pid,date:day},body));
+  if(x.ok){A.fEdit=null;A.fVal={};delete PD[key];
+    say(x.data&&x.data.recording?'Zapisane. Nagrywam film od nowa.':'Zapisane. '+((x.data&&x.data.note)||'Film nagra się w kolejce.'));
+    if(DR)renderDrawer(true);render(true);load()}
+  else say(failMsg(x,'Nie zapisano.'));
+}
+async function sendStuAsk(f){
+  const pid=f.dataset.stusend||'',kind=f.dataset.kind||'',ta=f.querySelector('[data-stuq]'),text=(ta&&ta.value||'').trim();
+  if(text.length<3){say('Napisz, co zmienić.');if(ta)ta.focus();return}
+  if(!LIVE){say(PRV);return}
+  const x=await post('/api/studio/popros',{project:pid,rodzaj:kind,uwaga:text});
+  if(x.ok){A.stuAsk=null;say('Wysłane. Agent zajmie się tym w zadaniu „'+((x.data&&x.data.title)||'Zmień studio filmów')+'”.');load(true)}
+  else say(failMsg(x,'Nie wysłano.'));
+}
+function fixFill(el){
+  const f=document.querySelector('[data-fixpost="'+CSS.escape(el.dataset.fixfill||'')+'"]'),ta=f&&f.querySelector('[data-fixq]');
+  if(!ta)return;
+  ta.value=el.dataset.text||'';ta.focus();
+  const i=ta.value.indexOf('…');if(i>=0)ta.setSelectionRange(i,i+1);
 }
 async function recFilm(el){
   const [pid,day]=el.dataset.filmRec.split('|');if(!LIVE){say(PRV);return}
   const x=await post('/api/film/nagraj',{project:pid,date:day,title:el.dataset.title||''});
-  if(x.ok||x.status===202){const d=PD[pid+'|'+day];if(d){d.rec={state:'running'};}say('Nagrywam film. Dostaniesz powiadomienie.');renderDrawer(true);render(true);setTimeout(()=>{delete PD[pid+'|'+day];render(true)},20000)}
+  if(x.ok||x.status===202){const d=PD[pid+'|'+day];if(d){d.rec={state:'running'};}say('Nagrywam film. Dostaniesz powiadomienie.');renderDrawer(true);render(true);load();setTimeout(()=>{delete PD[pid+'|'+day];render(true)},20000)}
   else say(failMsg(x,'Nie rozpoczęto nagrania.'));
 }
 async function sendFixPost(f){
@@ -2447,12 +3455,12 @@ const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 function vMarketing(){
   const off=A.mweek||0,m=weekStart(off),days=[...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return keyOf(x)});
   const items=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)&&t.date>=days[0]&&t.date<=days[6]);
-  let h='<div class="pagehead"><div><h1>Marketing</h1><p>Posty i filmy na tydzień. Otwórz post, obejrzyj i napisz, co poprawić. Nic nie publikuje się samo.</p></div>'+
+  let h='<div class="pagehead"><div><h1>Marketing</h1><p>Posty i filmy na tydzień. Otwórz post, obejrzyj i napisz, co poprawić. Nic nie publikuje się samo.</p>'+studioHead(days)+'</div>'+
     '<div class="row"><button class="btn sec sm" data-mw="-1" aria-label="Poprzedni tydzień">←</button><b class="wk">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b><button class="btn sec sm" data-mw="1" aria-label="Następny tydzień">→</button>'+(off?'<button class="btn sec sm" data-mw="0">Ten tydzień</button>':'')+'</div></div>';
   h+='<section class="panel"><ol class="mtl">';
   days.forEach(k=>{
     const L=items.filter(t=>t.date.slice(0,10)===k);
-    h+='<li class="tl-day'+(k===D.todayKey?' tl-now':'')+(L.length?'':' nil')+'"><div class="tl-date"><b>'+esc(DN[fromKey(k).getDay()])+'</b> '+esc(dd(k))+'</div><div class="tl-items">'+
+    h+='<li class="tl-day'+(k===D.todayKey?' tl-now':'')+(L.length?'':' nil')+'" data-day="'+k+'"><div class="tl-date"><b>'+esc(DN[fromKey(k).getDay()])+'</b> '+esc(dd(k))+'</div><div class="tl-items">'+
       (L.length?L.map(t=>mCard(t,k)).join(''):'<p class="muted tl-empty">—</p>')+'</div></li>';
   });
   h+='</ol></section>';
@@ -2460,17 +3468,21 @@ function vMarketing(){
   return h;
 }
 function mCard(t,day){
-  const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day);
+  const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day),fi=d&&d.ok&&d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null;
   if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
   let media='<div class="tl-ph">Wczytuję…</div>',st=['grey','czeka na przygotowanie'];
   if(!LIVE)media='<div class="tl-ph">Podgląd na serwerze</div>';
   else if(d&&d.ok){
     const r=d.rec||{};
     media=d.film?'<video class="tl-media" controls playsinline preload="metadata" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video>':d.image?'<img class="tl-media" loading="lazy" src="/api/post/grafika?'+q+'" alt="">':'<div class="tl-ph">Tekst bez grafiki</div>';
-    st=t.state==='done'?['green','opublikowany']:(r.state==='running'||r.state==='queued')?['blue','nagrywa się film']:r.state==='error'?['red','błąd nagrania']:d.scenario&&!d.film?['yellow','film do nagrania']:['purple','gotowy do przeglądu'];
+    const fe=d.filmInfo&&typeof d.filmInfo==='object'&&d.filmInfo.error;
+    const fs=filmState(d,t,day);
+    st=t.state==='done'?['green','opublikowany']:(r.state==='running'||r.state==='queued')?['blue','nagrywa się film']:fe?['red','błąd w filmie']:r.state==='error'?['red','błąd nagrania']
+      :(d.scenario&&!d.film)||d.filmStale?fs:['purple','gotowy do przeglądu'];
   }else if(d&&!d.ok){media='<div class="tl-ph">Agent jeszcze nie przygotował posta</div>';const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');if(pr)st=['blue','agent przygotowuje']}
   return '<article class="tl-card">'+media+'<button class="tl-body" data-task="'+esc(t.id)+'"><span class="muted">'+esc(projName(t.project))+'</span><b>'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b>'+
-    '<span class="row"><span class="lz '+st[0]+'">'+st[1]+'</span>'+String(t.channel).split(/,\s*/).map(c=>'<span class="pill">'+esc(c)+'</span>').join('')+'</span></button></article>';
+    '<span class="row"><span class="lz '+st[0]+'">'+st[1]+'</span>'+(fi?'<span class="lz out">'+esc(stuKind(fi))+'</span>':'')+String(t.channel).split(/,\s*/).map(c=>'<span class="pill">'+esc(c)+'</span>').join('')+'</span>'+
+    (fi&&(fi.template||fi.seconds)?'<span class="muted stu-mc">'+esc([fi.template?stuTpl(fi):'',fi.seconds&&!fi.error?'ok. '+Math.round(+fi.seconds)+' s':''].filter(Boolean).join(' · '))+'</span>':'')+'</button></article>';
 }
 /* ---------- publikacja automatyczna (publikacja.py): połączenia w Agenci, plan w poście ---------- */
 function normPublish(p){
@@ -2505,6 +3517,14 @@ function pubPlanBox(t,day,d){
   if(good.length)h+='<p class="note">Opublikowane: '+good.map(c=>'<a href="'+esc(st[c].link)+'" target="_blank" rel="noopener noreferrer">'+PUBN[c]+'</a>').join(', ')+'</p>';
   if(bad.length)h+='<p class="warn">Błąd: '+esc(bad.map(c=>PUBN[c]+': '+st[c].error).join('; '))+'</p>';
   return h+'</div>';
+}
+/* Teraz → nieudana publikacja: te same kanały jeszcze raz, teraz (opublikowane kanały publikator pomija) */
+function nwRepub(el){
+  const t=D.tasks.find(x=>x.id===el.dataset.nwpub),ch=(el.dataset.ch||'').split(',').filter(Boolean);
+  if(!t||!ch.length)return;if(!LIVE){say(PRV);return}
+  if(el.getAttribute('aria-disabled')==='true')return;el.setAttribute('aria-disabled','true');
+  enqueue(async()=>{const x=await post('/api/publikacja/plan',{id:t.id,title:t.title,channels:ch,now:true});
+    say(x.ok?'Publikuję ponownie: '+ch.map(c=>PUBN[c]||c).join(', ')+'. Wynik przyjdzie w powiadomieniu.':failMsg(x,'Nie opublikowano.'));load()});
 }
 function pubAct(el){
   const id=el.dataset.id||'',t=D.tasks.find(x=>x.id===id),a=el.dataset.pub;
@@ -2636,15 +3656,15 @@ function route(){
 }
 function renderSide(r){
   const you=youTotal(youState()),ag=runs().filter(isAct).length;
-  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['marketing',ICON.film],['tablica',ICON.board],['terminy',ICON.cal],['agenci',ICON.agent,ag,'blue'],['koszty',ICON.money],['projekty',ICON.folder]]
+  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['marketing',ICON.film],['tablica',ICON.board],['terminy',ICON.cal],['blokady',ICON.tree,bkYou(),'plain'],['agenci',ICON.agent,ag,'blue'],['koszty',ICON.money],['projekty',ICON.folder]]
     .map(([h,ic,c,cl])=>'<a href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ic+VNAME[h]+(c?'<span class="count '+(cl||'')+'">'+c+'</span>':'')+'</a>').join(''));
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
   /* dolny pasek (telefon): ten sam licznik co w nawigacji i w widoku Wymaga Ciebie */
-  setHtml($('#bnav'),[['przeglad',ICON.home,'Przegląd'],['ty',ICON.you,'Dla Ciebie',you],['marketing',ICON.film,'Marketing'],['tablica',ICON.board,'Tablica'],['agenci',ICON.agent,'Agenci',ag,'blue']]
+  setHtml($('#bnav'),[['przeglad',ICON.home,'Przegląd'],['ty',ICON.you,'Dla Ciebie',you],['blokady',ICON.tree,'Blokady',bkYou(),'plain'],['marketing',ICON.film,'Marketing'],['tablica',ICON.board,'Tablica'],['agenci',ICON.agent,'Agenci',ag,'blue']]
     .map(([h,ic,n,c,cl])=>'<a href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ic+'<span>'+n+'</span>'+(c?'<span class="count '+(cl||'')+'">'+c+'</span>':'')+'</a>').join(''));
   $('#pcount').textContent=D.projects.length;
   setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'"'+(r.p===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted" style="padding:4px 8px;font-size:13px">Brak wyników</p>');
-  const opts=VIEWS.map(v=>['#'+v,VNAME[v]]).concat(D.projects.map(p=>[phref(p),'Projekt: '+p.name]));
+  const byc=bkYouN(),opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='blokady'&&byc.n?' ('+byc.n+')':'')]).concat(D.projects.map(p=>[phref(p),'Projekt: '+p.name]));
   const curH=r.v==='projekt'?phref(r.p):'#'+r.v,ms=$('#mnav');
   if(document.activeElement!==ms)setHtml(ms,opts.map(([h,n])=>'<option value="'+esc(h)+'"'+(h===curH?' selected':'')+'>'+esc(n)+'</option>').join(''));
 }
@@ -2671,11 +3691,11 @@ function setToast(t){const el=$('#toast');if(el&&el.textContent!==t)el.textConte
 function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);noticeT=setTimeout(()=>{notice='';setToast('')},ms||7000)}
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
-  return ({wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,tablica:vTablica,terminy:vTerminy,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
+  return ({wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,tablica:vTablica,terminy:vTerminy,blokady:vBlokady,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
-  if(a.id==='bp'||a.id==='ms'||a.id==='q'||a.id==='mnav')return false;
+  if(a.id==='bp'||a.id==='bkp'||a.id==='ms'||a.id==='q'||a.id==='mnav')return false;
   if(a.closest('#drawerHost'))return true;
   if(a.closest('#view'))return a.tagName==='SELECT'||a.type==='date'||!!a.value.trim();
   return false};
@@ -3005,11 +4025,11 @@ function agentAct(el){
 const focusK=k=>{const n=Array.prototype.find.call(document.querySelectorAll('[data-k]'),x=>x.dataset.k===k);if(n)n.focus()};
 
 /* ---------- wczytywanie ---------- */
-const restSig=raw=>{const o=Object.assign({},raw);delete o.agents;delete o.generatedAt;return JSON.stringify(o)};
+const restSig=raw=>{const o=Object.assign({},raw);delete o.agents;delete o.generatedAt;delete o.activity;return JSON.stringify(o)};
 const idle=()=>{if(!pending){A.starting={};A.busy.pm=A.busy.check=A.busy.add=false}};
 /* w trakcie edycji albo gdy reszta danych się nie zmieniła: tylko blok agentów */
 function applyAgents(raw){
-  D.agents=normAgents(raw.agents);D.generatedAt=raw.generatedAt||D.generatedAt;
+  D.agents=normAgents(raw.agents);D.activity=normActivity(raw.activity);D.generatedAt=raw.generatedAt||D.generatedAt;
   const m={};(raw.tasks||[]).forEach(z=>{m[z.id+'\n'+z.title]=z});
   D.tasks.forEach(t=>{const z=m[t.id+'\n'+t.title];if(z){t.runId=z.runId||'';t.runBlock=z.runBlock||''}});
   if(raw.pmNote)D.pmNote={date:raw.pmNote.date,text:String(raw.pmNote.text||'')};
@@ -3044,7 +4064,7 @@ async function load(force){
     offline=true;idle();
     if(D)render();else $('#view').innerHTML='<div class="banner bad">Brak połączenia z serwerem panelu. Uruchom: <code>python3 dashboard/server.py</code></div>';
   }
-  timer=setTimeout(load,D&&D.cal.connecting?2000:anyActive()?3000:D&&(editing()||pending)?15000:60000);
+  timer=setTimeout(load,D&&D.cal.connecting?2000:nwBusy()?3000:D&&(editing()||pending)?15000:60000);
 }
 
 /* ---------- zdarzenia ---------- */
@@ -3052,11 +4072,35 @@ document.addEventListener('click',async ev=>{
   if(ev.target&&ev.target.id==='toast'){clearTimeout(noticeT);notice='';setToast('');return}
   if(!D)return;
   const qq=s=>ev.target.closest(s);let el;
+  /* rozwinięcie Studia: stan od razu przy kliknięciu (wczytany post może przerysować widok przed zdarzeniem toggle) */
+  if(el=qq('#stubox>summary,[data-stuproj]>summary')){const dt=el.parentElement;if(dt.id==='stubox')A.stuOpen=!dt.open;else (A.stuProj||(A.stuProj={}))[dt.dataset.stuproj]=!dt.open}
   if(el=qq('#refresh')){if(LIVE){say('Odświeżam…');load(true)}else say('Podgląd: dane przykładowe są stałe.');return}
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
   if(el=qq('[data-pub]')){pubAct(el);return}
   if(el=qq('[data-film-rec]')){recFilm(el);return}
+  if(el=qq('[data-fixfill]')){fixFill(el);return}
+  if(el=qq('[data-stuhl]')){stuHighlight(el);return}
+  if(el=qq('[data-filmgo]')){const k=el.dataset.filmgo;if(DR)DR.more=true;A.stuDet=true;renderDrawer(true);
+    const box=document.querySelector('#drawer [data-filmb="'+CSS.escape(k)+'"]'),sm=box&&box.querySelector('[data-stud]>summary');
+    if(box){box.scrollIntoView({block:'start',behavior:'smooth'});(sm||box).focus&&(sm||box).focus({preventScroll:true})}else say('Film pokaże się po wczytaniu posta.');return}
+  if(el=qq('[data-fedit]')){A.fEdit={key:el.dataset.fedit,id:el.dataset.field||''};A.fVal={};A.stuDet=true;renderDrawer(true);
+    const i=document.querySelector('[data-fset="'+CSS.escape(A.fEdit.key)+'"] .fi');if(i){i.focus();if(i.select)i.select()}return}
+  if(el=qq('[data-fcancel]')){const k=A.fEdit;A.fEdit=null;A.fVal={};renderDrawer(true);
+    if(k){const b=document.querySelector('[data-fedit="'+CSS.escape(k.key)+'"][data-field="'+CSS.escape(k.id)+'"]');if(b)b.focus()}return}
+  if(el=qq('[data-stuask]')){const pid=el.dataset.stuask,kind=el.dataset.kind;A.stuAsk=A.stuAsk&&A.stuAsk.pid===pid&&A.stuAsk.kind===kind?null:{pid,kind,text:''};render(true);
+    const ta=document.querySelector('[data-stusend="'+CSS.escape(pid)+'"] textarea');if(ta)ta.focus();return}
+  if(el=qq('[data-stucancel]')){const pid=A.stuAsk&&A.stuAsk.pid;A.stuAsk=null;render(true);
+    const b=pid&&document.querySelector('[data-stuask="'+CSS.escape(pid)+'"]');if(b)b.focus();return}
+  if(el=qq('[data-nwall]')){A.nwAll=!A.nwAll;render(true);focusK('nwall');return}
+  if(el=qq('[data-nwdone]')){A.nwDoneOpen=el.getAttribute('aria-expanded')!=='true';try{localStorage.setItem(NW_OPEN_KEY,A.nwDoneOpen?'1':'0')}catch(e){}render(true);focusK('nwdone');return}
+  if(el=qq('[data-nwpub]')){nwRepub(el);return}
+  if(el=qq('[data-nwmk]')){mkDay(el.dataset.nwmk);return}
+  if(el=qq('[data-nwnow]')){A.nwNowAll=!A.nwNowAll;render(true);focusK('nwnow');return}
+  if(el=qq('[data-bkx]')){const k=el.dataset.bkx,o=A.bkOpen||(A.bkOpen={});o[k]=el.getAttribute('aria-expanded')!=='true';render(true);focusK('bkx:'+k);return}
+  if(el=qq('[data-bkall]')){A.bkAll=!A.bkAll;A.bkOpen={};render(true);focusK('bkall');return}
+  if(el=qq('[data-bkjump]')){bkJump(el.dataset.bkjump,(el.dataset.bkpath||'').split('\n').filter(Boolean));return}
+  if(el=qq('[data-bkfocus]')){A.bkFocus=el.dataset.bkfocus||'';render(true);window.scrollTo(0,0);focusK(A.bkFocus?'bkf:back':'bkall');return}
   if(el=qq('[data-mw]')){const v=+el.dataset.mw;A.mweek=v?(A.mweek||0)+v:0;render(true);return}
   if(el=qq('[data-share]')){sharePost(el.dataset.share);return}
   if(el=qq('[data-copyopen]')){copyOpen(el.dataset.copyopen,el.dataset.url||'');return}
@@ -3099,6 +4143,7 @@ document.addEventListener('change',ev=>{
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
   if(el.dataset.psel){const m=A.psel[el.dataset.psel]||(A.psel[el.dataset.psel]={});m[el.dataset.pid]=el.checked;render(true);return}
   if(el.id==='bp'){PF.bp=el.value;savePF();render(true);return}
+  if(el.id==='bkp'){PF.bk=el.value;savePF();render(true);return}
   if(el.id==='ms'){PF.ms=el.value;savePF();render(true);return}
   if(el.dataset.f&&DR&&DR.kind==='task'){const t=findTask(DR.ref,true);if(t)applyField(t,el.dataset.f,el.value);return}
   if(el.dataset.stage){patchStage(el.dataset.stage,el.value);return}
@@ -3112,6 +4157,8 @@ document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
   if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.fixpost!=null){ev.preventDefault();sendFixPost(f);return}
+  if(f.dataset.fset!=null){saveFilmEdit(f);return}
+  if(f.dataset.stusend!=null){sendStuAsk(f);return}
   if(f.dataset.dform){submitForm(f);return}
   if(f.id==='padd'){addProject();return}
   if(f.dataset.lc){const i=f.querySelector('input');submitLoginCode(i?i.value:'');return}
@@ -3124,6 +4171,9 @@ document.addEventListener('submit',ev=>{
 });
 document.addEventListener('input',ev=>{
   if(ev.target.dataset&&ev.target.dataset.qd!=null){QD[ev.target.dataset.qd]=ev.target.value;return}
+  if(ev.target.dataset&&ev.target.dataset.fval!=null){(A.fVal||(A.fVal={}))[ev.target.dataset.fval]=ev.target.value;
+    const f=ev.target.closest('form'),pv=f&&f.querySelector('[data-stuprev="'+CSS.escape(ev.target.dataset.fval)+'"]');if(pv)pv.innerHTML=stuPrev(ev.target.value,stuAcc(f.dataset.fset||''));return}
+  if(ev.target.dataset&&ev.target.dataset.stuq!=null&&A.stuAsk){A.stuAsk.text=ev.target.value;return}
   if(ev.target.dataset&&ev.target.dataset.fv&&DR){(DR.fv||(DR.fv={}))[ev.target.dataset.fv]=ev.target.value;return}
   if(ev.target.dataset&&ev.target.dataset.ev&&DR){(DR.ev||(DR.ev={}))[ev.target.dataset.ev]=ev.target.value;return}
   if(ev.target.id==='q'&&D){q=ev.target.value.trim().toLowerCase();renderSide(route())}
@@ -3158,10 +4208,10 @@ document.addEventListener('keydown',ev=>{
   if(k==='Escape'){if(DR){ev.preventDefault();closeDrawer()}return}
   if(DR){if(k==='r'&&DR.kind==='task'){ev.preventDefault();runTask(DR.id)}return}
   if(k==='/'){ev.preventDefault();const s=$('#q');if(s.offsetParent!==null)s.focus();else $('#mnav').focus();return}
-  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={p:'przeglad',w:'wskazniki',t:'tablica',d:'terminy',a:'agenci'}[k];if(m){ev.preventDefault();location.hash=m}return}
+  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={p:'przeglad',w:'wskazniki',t:'tablica',d:'terminy',a:'agenci',b:'blokady'}[k];if(m){ev.preventDefault();location.hash=m}return}
   if(k==='g'){gWait=Date.now();return}
 });
-document.addEventListener('toggle',ev=>{const el=ev.target;if(!DR)return;if(el.id==='dmore')DR.more=el.open;else if(el.id==='dchat')DR.chat=el.open},true);
+document.addEventListener('toggle',ev=>{const el=ev.target;if(el.id==='stubox'){A.stuOpen=el.open;return}if(el.dataset&&el.dataset.stuproj!=null){(A.stuProj||(A.stuProj={}))[el.dataset.stuproj]=el.open;return}if(el.dataset&&el.dataset.stud!=null){A.stuDet=el.open;return}if(!DR)return;if(el.id==='dmore')DR.more=el.open;else if(el.id==='dchat')DR.chat=el.open},true);
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';render(true);window.scrollTo(0,0)});
 // powrót do aplikacji albo karty (telefon, Dock): dane od razu, bez czekania na licznik
 let wakeAt=0;
