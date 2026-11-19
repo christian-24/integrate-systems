@@ -2313,7 +2313,7 @@ function postBox(t,day,publish){
   let h='<div class="post"><h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
   PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+
     (publish?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Kopiuj i otwórz '+n+'</button>':'')+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
-  if(publish)h+=planBox(t,day,d);
+  if(publish)h+=pubPlanBox(t,day,d);
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
     (publish?'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button><span class="rsn">'+(t.waits.length?'Najpierw: '+esc(t.waits.join('; '))+'. ':'')+'Potem wpiszesz link i wyniki.</span>':'')+'</div>';
   return h+'</div>';
@@ -2329,7 +2329,7 @@ const PUBCH=[['facebook','Facebook'],['linkedin','LinkedIn'],['reels','Reels'],[
 const PL={};          // wybór w formularzu planu: {id: {ch:{}, day, time}}
 const parseSched=v=>{const m=/^(\d{4}-\d\d-\d\d) (\d\d:\d\d)(?:;\s*(.*))?$/.exec(v||'');return m?{day:m[1],time:m[2],ch:(m[3]||'').split(/,\s*/).filter(c=>PUBN[c])}:null};
 const chanOk=(t,c)=>{const P=D.publish;return !!P&&(c==='linkedin'?P.li.connected:P.fb.pages.some(p=>p.project===t.project&&(c!=='instagram'||p.instagram)))};
-function planBox(t,day,d){
+function pubPlanBox(t,day,d){
   const P=D.publish;if(!P||!LIVE)return '';
   const want=String(t.channel||'').toLowerCase().split(/[,\s]+/).filter(c=>PUBN[c]),list=PUBCH.filter(([c])=>!want.length||want.indexOf(c)>=0);
   const avail=list.filter(([c])=>chanOk(t,c)),sc=parseSched(t.detail.scheduled),st=P.state[t.project+'|'+t.file+'|'+t.title]||{};

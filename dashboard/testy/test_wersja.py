@@ -24,5 +24,15 @@ class Wersja(unittest.TestCase):
                 server.PAGE = old
 
 
+class Panel(unittest.TestCase):
+    def test_bez_zdublowanych_funkcji(self):
+        """Dwie funkcje o tej samej nazwie w panel.html: późniejsza po cichu zastępuje wcześniejszą."""
+        import collections
+        import re
+        with open(server.PAGE, encoding="utf-8") as f:
+            names = re.findall(r"^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(", f.read(), re.M)
+        self.assertEqual([n for n, c in collections.Counter(names).items() if c > 1], [])
+
+
 if __name__ == "__main__":
     unittest.main()
