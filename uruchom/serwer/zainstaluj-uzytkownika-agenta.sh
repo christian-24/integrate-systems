@@ -266,8 +266,11 @@ zle() { printf '  BRAK  %s\n' "$*"; PROBLEMY=$((PROBLEMY + 1)); }
 spr() { local o="$1"; shift; if "$@" >/dev/null 2>&1; then ok "$o"; else zle "$o"; fi; }
 nie() { local o="$1"; shift; if "$@" >/dev/null 2>&1; then zle "$o"; else ok "$o"; fi; }
 jako() { local u="$1"; shift; runuser -u "$u" -- "$@"; }
-dostep() { jako "$AGENT" sh -c 'test -r "$1" || test -w "$1" || test -x "$1"' _ "$1"; }
+# Dostęp sprawdzany próbą odczytu (ls katalogu, bajt pliku), nie test -r/-w: te dają fałszywe „nie” przy ACL.
+dostep() { jako "$AGENT" sh -c 'if [ -d "$1" ]; then ls -- "$1"; else head -c1 -- "$1"; fi' _ "$1"; }
 w_grupie() { id -nG "$1" 2>/dev/null | tr ' ' '\n' | grep -qx "$2"; }
+# Zapis sprawdzany prawdziwym plikiem: test -w daje fałszywe „nie” przy prawach nadanych przez ACL.
+zapisuje() { jako "$AGENT" sh -c 'f="$1/.proba-agenta-$$"; touch "$f" && rm -f "$f"' _ "$1"; }
 
 raport() {
   local r g p x pid wynik
@@ -291,20 +294,20 @@ raport() {
     for p in "$PROJEKTY"/*/; do
       p="${p%/}"
       [ -L "$p" ] && continue
-      spr "zapis: ${p#$PANEL_DOM/}" jako "$AGENT" test -w "$p"
+      spr "zapis: ${p#$PANEL_DOM/}" zapisuje "$p"
       g="$p/.git"
       [ -d "$g" ] || continue
       spr "  core.sharedRepository=group" sh -c "[ \"\$(runuser -u $PANEL -- git -C '$p' config --get core.sharedRepository)\" = group ]"
       spr "  zapis .git/objects, refs/heads, worktrees" jako "$AGENT" sh -c \
         'test -w "$1/objects" && test -w "$1/refs/heads" && test -w "$1/worktrees"' _ "$g"
       nie "  bez zapisu .git, config, hooks, info" jako "$AGENT" sh -c \
-        'test -w "$1" || test -w "$1/config" || test -w "$1/hooks" || test -w "$1/info"' _ "$g"
+        'for f in "$1" "$1/config" "$1/hooks" "$1/info"; do touch -c -- "$f" 2>/dev/null && exit 0; done; exit 1' _ "$g"
       spr "  .agent/ w .git/info/exclude" grep -qxF '.agent/' "$g/info/exclude"
     done
   else
     zle "brak $PROJEKTY"
   fi
-  for x in $WSPOLNE_IS; do spr "zapis: IntegrateSystems/$x" jako "$AGENT" test -w "$IS/$x"; done
+  for x in $WSPOLNE_IS; do spr "zapis: IntegrateSystems/$x" zapisuje "$IS/$x"; done
   spr "odczyt: IntegrateSystems/standard (raport PM)" jako "$AGENT" test -r "$IS/standard/pm.py"
   spr "przejście: IntegrateSystems/uruchomienia (katalog testu i planu dnia)" jako "$AGENT" test -x "$IS/uruchomienia"
   spr "git safe.directory dla $AGENT" sh -c "runuser -u $AGENT -- git config --global --get-all safe.directory | grep -qxF '*'"
