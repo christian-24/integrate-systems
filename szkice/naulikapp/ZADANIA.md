@@ -90,7 +90,7 @@ termin: 2026-12-13
   gotowe gdy: szkic w repozytorium (wiadomość prywatna i post do grupy), z instrukcją dołączenia do testu w Google Play; nic nie wysłane
   materiał: KARTA.md#Cel
   Możesz skorzystać z materiałów z gałęzi marketing/kampania-rc1. Wysyłka i publikacja tylko przez właściciela.
-  wynik: szkic w docs/marketing/zaproszenie-testerzy-zamkniety-test.md (plik niezacommitowany): wiadomość prywatna i wersja krótka, post do grupy/forum, instrukcja dołączenia w Google Play z rozwiązywaniem problemów, przypomnienie po tygodniu; nic nie wysłane
+  wynik: szkic w docs/marketing/zaproszenie-testerzy-zamkniety-test.md (commit 0c07892 na gałęzi agent/2026-11-19-przygotuj-szkic-zaproszenia-dla-testerow; fakty zgodne z kodem: pakiet pl.naulik.app, Android 7+, 1.0.0+2): wiadomość prywatna i wersja krótka, post do grupy/forum, instrukcja dołączenia w Google Play z rozwiązywaniem problemów, przypomnienie po tygodniu; nic nie wysłane
   decyzja: zatwierdź treść i wybierz sposób dodawania testerów (Grupa Google, rekomendowane, albo lista adresów e-mail); uzupełnij [LINK-GRUPA], [LINK-TEST], [KONTAKT]; żeby zdążyć do 13.12, dwunasty tester musi dołączyć do 29.11
   zostało: wysyłka i publikacja (tylko właściciel); linki do testu powstaną dopiero po wgraniu buildu do ścieżki zamkniętego testu w Play Console
 - [~] Przygotuj politykę prywatności NaulikApp | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór

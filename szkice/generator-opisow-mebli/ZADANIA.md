@@ -96,19 +96,20 @@ termin: 2026-11-17
 - [x] Deploy #126–#134 na produkcję i klucz Anthropic; silnik Haiku działa od 13.11 (potwierdził właściciel 2026-11-14)
 - [x] Stripe w trybie live (potwierdził właściciel 2026-11-14)
 - [x] JDG w CEIDG (potwierdził właściciel 2026-11-14)
-- [ ] Potwierdź DPA z dostawcami LLM, regulamin i politykę prywatności | kto: ty | kiedy: 2026-11-17 | czas: 15
+- [x] Potwierdź DPA z dostawcami LLM, regulamin i politykę prywatności | kto: ty | kiedy: 2026-11-17 | czas: 15
   cel: przed płacącymi Opisarnia ma podpisane DPA z dostawcami LLM oraz aktualny regulamin i politykę prywatności
   gotowe gdy: wszystkie kroki zaznaczone, a data akceptacji DPA wpisana przy kroku
   materiał: KARTA.md#Zasoby i ograniczenia
-  - [ ] DPA Anthropic (silnik Haiku)
-  - [ ] DPA Mistral (silnik zapasowy)
-  - [ ] regulamin na opisarnia.pl wymienia obu dostawców
-  - [ ] polityka prywatności na opisarnia.pl wymienia obu dostawców
+  - [x] DPA Anthropic (silnik Haiku)
+  - [x] DPA Mistral (silnik zapasowy)
+  - [x] regulamin na opisarnia.pl wymienia obu dostawców (wersja 1.1 od 13.11.2026, § 6 ust. 4; sprawdzone 2026-11-19 na stronie)
+  - [x] polityka prywatności na opisarnia.pl wymienia obu dostawców (wersja 1.1 od 13.11.2026, pkt 5 i 6; sprawdzone 2026-11-19 na stronie)
   Jak: Anthropic: anthropic.com/legal, DPA jest częścią warunków komercyjnych API; zapisz wersję i datę przy kroku.
   Mistral: mistral.ai/terms, sekcja Data Processing Agreement; zapisz wersję i datę przy kroku.
   Regulamin i polityka: stopka opisarnia.pl, w każdym dokumencie wyszukaj „Anthropic” i „Mistral” (Cmd+F).
   Gdy dostawcy brakuje w dokumencie: zadanie dla Claude „Dopisz Anthropic i Mistral do regulaminu i polityki prywatności”; wdrożenie po Twojej zgodzie.
   Wszystkie wiadomości do ludzi (zaproszenia, wiadomości, przypomnienia) i publikacje w kampanie/staly-rytm.md czekają na to zadanie (po:); komentarze: pytanie 13 w KARTA.md.
+  wynik: Regulamin, wersja 1.1 od 13.11.2026: § 6 ust. 4 wymienia Anthropic, PBC jako główny silnik (USA) i Mistral AI jako zapasowy (UE). Polityka prywatności, wersja 1.1 od 13.11.2026: pkt 5 wymienia obu jako podmioty przetwarzające, a pkt 6 opisuje przekazywanie danych do USA.
 
 ## Etap: Walidacja i marketing
 termin: 2026-12-23
@@ -148,13 +149,14 @@ termin: 2026-11-30
   materiał: marketing/plan-10-kont.md#7
   materiał: marketing/plan-10-kont.md#9
   Bez nazwisk, stanowisk i adresów: dane osobowe tylko w marketing/outreach/rejestr-zgod.md. W kolumnach daty RRRR-MM-DD albo „tak”/„nie”.
-- [ ] Scal rejestr kontaktów z gałęzi agent/2026-11-19-rejestr-kontaktow | kto: ty | kiedy: 2026-11-19 | czas: 5
+- [x] Scal rejestr kontaktów z gałęzi agent/2026-11-19-rejestr-kontaktow | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: marketing/kontakty.md jest w master repozytorium Opisarni, więc zadania kontaktowe i agenci go widzą
   gotowe gdy: `git log -1 -- marketing/kontakty.md` na master repozytorium na serwerze pokazuje commit z rejestrem
-  - [ ] `ssh ops@2.29.181.133`; w repozytorium /home/panel/projekty/generator-opisow-mebli ustaw `git config user.name` i `user.email` (jako panel)
-  - [ ] w katalogu uruchomienia gałęzi agent/2026-11-19-rejestr-kontaktow: `sudo -u panel git commit -m "docs(marketing): rejestr kontaktów partii 1–4"`
+  - [x] `ssh ops@2.29.181.133`; w repozytorium /home/panel/projekty/generator-opisow-mebli ustaw `git config user.name` i `user.email` (jako panel)
+  - [x] w katalogu uruchomienia gałęzi agent/2026-11-19-rejestr-kontaktow: `sudo -u panel git commit -m "docs(marketing): rejestr kontaktów partii 1–4"`
   - [ ] panel, Agenci: uruchomienie „Załóż rejestr kontaktów…”, diff przejrzany, scalone do master
   Plik leży w indeksie gałęzi bez commita (zostało: zadania „Załóż rejestr kontaktów…”), dlatego scalenie w panelu wymaga najpierw commita.
+  wynik: marketing/kontakty.md jest na master od commita d90f5fc (19.11); sprawdził Claude, zamknięte bez Twojej pracy
 - [ ] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
   cel: przy każdej firmie z partii 1–3 gotowa wiadomość 1 ze zdaniem o tej firmie, do skopiowania bez poprawek
   gotowe gdy: plik wiadomosci/wiadomosc-1-partie-1-3.md w folderze karty ma 24 sekcje (firma, partia, wiadomość 1 ze szkicu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu firmy); bez nazwisk i adresów; nic nie wysłane

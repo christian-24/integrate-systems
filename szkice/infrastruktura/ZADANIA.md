@@ -36,12 +36,13 @@
   - [x] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-kopie-i-zdrowie.sh`
   - [x] w wyniku: „zapisano /home/panel/kopie/…” i stany kontroli zdrowia bez „zle”
   zamknięte 2026-11-19 na podstawie kontroli serwera (kopia: ok, ostatnia kopia 2026-11-19 06:02; kopia poza serwerem: brak, osobne zadanie)
-- [ ] Włącz Backups serwera w Hetznerze | kto: ty | kiedy: 2026-11-20 | czas: 2
+- [x] Włącz Backups serwera w Hetznerze | kto: ty | kiedy: 2026-11-20 | czas: 2
   cel: Hetzner robi codzienną kopię całego serwera (7 ostatnich dni) poza jego dyskiem
   gotowe gdy: w Hetzner Cloud Console przy serwerze zakładka Backups ma stan włączony i pierwszą kopię
   - [ ] console.hetzner.cloud → projekt → Servers → serwer CAX11 (Helsinki) → zakładka Backups → „Enable backups”
   - [ ] następnego dnia ta sama zakładka pokazuje pierwszą kopię
   Koszt: 20% ceny serwera, ok. 1,87 $/mies. z VAT przy 9,34 $/mies. za serwer.
+  wynik: API Hetzner 19.11: kopie zapasowe włączone na obu serwerach (okna 10-14 i 18-22)
 - [ ] Dodaj zewnętrzny monitoring adresu panelu (UptimeRobot, darmowy) | kto: ty | kiedy: 2026-11-21 | czas: 10
   cel: powiadomienie, gdy adres panelu nie odpowiada z zewnątrz (awaria całego serwera albo Caddy)
   gotowe gdy: monitor HTTPS na https://2-29-181-133.sslip.io/wejscie ma stan Up i alert na e-mail albo w aplikacji
@@ -86,7 +87,7 @@
   - [ ] Snapshots: plan automatyczny codziennie o 05:00, 14 migawek
   - [ ] Sub-accounts: nowe konto, katalog bazowy integrate-serwer, SSH tak, Samba i WebDAV nie; zapisz login uXXXXXX-subN
   Opis i powód (migawki zamiast borg append-only i restic): ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Klucz i rclone na koncie pomocniczym: zadanie „Skonfiguruj kopię poza serwerem” (ma po: na tym zadaniu).
-- [ ] Zaktualizuj ochronę agenta (sekrety, zapora) | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | sprawdza: plik /etc/nftables.d/integrate-agent.nft
+- [x] Zaktualizuj ochronę agenta (sekrety, zapora) | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | sprawdza: plik /etc/nftables.d/integrate-agent.nft
   cel: agent nie czyta plików sekretów w repozytoriach projektów i nie łączy się z panelem, asystentem Useme ani API Caddy na serwerze
   gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK w częściach „Sekrety w projektach” i „Zapora agenta”
   - [ ] zmiany rundy 5 są na GitHubie i na serwerze (zapis kart pobiera je co 15 min; inaczej `sudo -u panel git -C /home/panel/IntegrateSystems pull --ff-only`)
@@ -94,6 +95,7 @@
   - [ ] w raporcie „Sekrety w projektach” i „Zapora agenta” bez BRAK; „w gicie” przy pliku: unieważnij ten sekret u dostawcy i usuń plik z repozytorium
   - [ ] część „Przed sprzedażą PC” w raporcie: warunki z „nie” zostają w zadaniach kopii poza serwerem i próby odtworzenia
   Opis: ksiega/MIGRACJA.md, sekcja „Użytkownik agenta”, „Sekrety i zapora”. Gdy „Zainstaluj użytkownika agenta” jest jeszcze otwarte, jedno uruchomienie instalatora zamyka oba zadania.
+  wynik: instalator uruchomiony 19.11, kontrola --sprawdz: 80 ok, bez BRAK; zapora agenta aktywna
 
 ## Etap: Migracja z PC
 
