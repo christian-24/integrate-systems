@@ -45,27 +45,27 @@ termin: 2026-11-25
   wynik: re-audyt 2026-11-18: 0 CRITICAL, 0 HIGH; 1 MEDIUM (brak limitu body na Caddy) i 2 LOW naprawione w repo; 2 LOW zapisane jako dług
   decyzja: odebrać raport SEC-4 i zgodzić się na commit oraz wdrożenie limitu body na Caddy
   zostało: poprawki niezacommitowane i niewdrożone; `caddy validate` i pytest nieuruchomione (brak uprawnień)
-- [ ] Zapisz poprawki SEC-2 (3 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
+- [x] Zapisz poprawki SEC-2 (3 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
   cel: poprawki 3 LOW z SAST frontendu zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
   gotowe gdy: poprawki 3 LOW są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); testy frontendu zielone
   materiał: docs/security/raport-audytu.md
   Poprawki z re-audytu leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/generator-opisow-mebli), poza katalogiem uruchomienia.
   Przenieś je stamtąd (`git -C /home/panel/projekty/generator-opisow-mebli diff -- <pliki frontendu>`); gdy nie masz dostępu, nanieś 3 LOW ponownie według raportu.
   Bez Node.js na serwerze testów frontendu nie uruchomisz: wtedy [!] z blokadą „brak Node.js do testów frontendu”, poprawki zostają w katalogu uruchomienia.
-- [ ] Zapisz poprawki SEC-4 (limit body Caddy, 2 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
+  wynik: zmiany są na gałęzi agent/2026-11-19-sec2-sec4-poprawki (commit 98ca001, razem z SEC-4); testów przy zapisie nie uruchomiono, sprawdzenie przy wdrożeniu
+- [x] Zapisz poprawki SEC-4 (limit body Caddy, 2 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
   cel: limit body na Caddy i poprawki 2 LOW zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
   gotowe gdy: zmiany są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); `caddy validate` i pytest zielone
   materiał: docs/security/raport-audytu.md
   Poprawki leżą niezacommitowane w głównym katalogu repozytorium; przenieś je jak przy SEC-2 albo nanieś ponownie według raportu.
   Gdy `caddy validate` albo pytest nie da się uruchomić (brak uprawnień): [!] z blokadą i poleceniem, które trzeba dopuścić.
+  wynik: zmiany są na gałęzi agent/2026-11-19-sec2-sec4-poprawki (commit 98ca001, razem z SEC-4); testów przy zapisie nie uruchomiono, sprawdzenie przy wdrożeniu
 - [ ] Przejrzyj zmiany agenta SEC-2 i SEC-4 i scal w panelu | kto: ty | kiedy: 2026-11-22 | czas: 15 | po: Zapisz poprawki SEC-2, Zapisz poprawki SEC-4
   cel: poprawki SEC-2 i SEC-4 w gałęzi master repozytorium Opisarni na serwerze
-  gotowe gdy: oba uruchomienia scalone w panelu do master (bez push); w notatce pod zadaniem liczba zmienionych plików
+  gotowe gdy: gałąź scalona w panelu do master (bez push)
   materiał: docs/security/raport-audytu.md
-  - [ ] panel, Agenci: uruchomienie „Zapisz poprawki SEC-2…”, lista zmian i diff przejrzane, scalone
-  - [ ] to samo dla „Zapisz poprawki SEC-4…”
-  Gdy scalenie zwraca 409 przez niezacommitowane zmiany w głównym katalogu: `ssh ops@2.29.181.133`, potem
-  `sudo -u panel git -C /home/panel/projekty/generator-opisow-mebli stash push -m sec-przed-scaleniem` i scal ponownie.
+  gałąź: agent/2026-11-19-sec2-sec4-poprawki
+  W szczegółach zadania: „Pokaż zmiany” (12 plików, +427 −4), potem „Scal”. Scalenie zamyka zadanie.
 - [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: ty | kiedy: 2026-11-22 | czas: 20 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
   cel: poprawki SEC-2 i limit body na Caddy działają na opisarnia.pl
   gotowe gdy: master z poprawkami na GitHubie, CI i auto-deploy zielone, `caddy validate` na serwerze Opisarni zielone, opisarnia.pl odpowiada
