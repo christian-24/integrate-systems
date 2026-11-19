@@ -84,6 +84,16 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
 - Instagram pobiera pliki z publicznego adresu `/media/<token>/…` (token na godzinę); wymaga `PANEL_PUBLIC_URL`
   i biblioteki Pillow (`python3-pil`) do JPEG. TikTok: jeszcze nie (wymaga audytu aplikacji przez TikTok).
 
+## Marketing i filmy
+
+Widok Marketing (`#marketing`): oś czasu tygodnia z postami kampanii (grafika albo film, stan, kanały). Post
+otwiera szufladę z podglądem, filmem, „Co poprawić” (`POST /api/post/popraw`: zadanie agenta „Popraw post na …”)
+i czatem. Nic nie publikuje się samo, dopóki nie klikniesz „Zaplanuj”.
+Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: prawdziwa przeglądarka (Playwright,
+`~/narzedzia/film`), kursor i podświetlenie kliknięć, napisy, MP4 1080×1920 (ffmpeg). Nagranie startuje samo, gdy
+scenariusz jest nowszy niż film, albo przyciskiem „Nagraj film”. Logowanie kontem demo z `~/dane/film/konto.json`
+(wpisujesz w Agenci → Publikacja). Przy błędzie zrzut `.film-blad.png` w folderze posta.
+
 ## Koszty Hetzner
 
 Widok Koszty (`#koszty`, w menu) i wiersz w Przeglądzie: ten miesiąc, łącznie od założenia, pełny

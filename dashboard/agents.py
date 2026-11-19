@@ -1350,7 +1350,8 @@ class Manager:
         return {"cel": "post na %s%s: %s, do zatwierdzenia przez właściciela"
                        % (day, " (%s)" % channel if channel else "", title),
                 "gotowe gdy": "obok KARTA.md jest folder posty/%s-<krótka-nazwa>/ z post.md (sekcje ## Facebook, "
-                              "## LinkedIn, ## Alt) i grafika.svg albo grafika.png" % day,
+                              "## LinkedIn, ## Alt) i grafika.svg albo grafika.png; przy filmie także scenariusz.json "
+                              "(wzór: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json), film nagrywa panel sam" % day,
                 "materiał": [RYTM_FILE] + self.marketing_refs(folder)}
 
     def result_detail(self, folder, day, channel, title):

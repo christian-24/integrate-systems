@@ -98,6 +98,7 @@ import historia  # noqa: E402  (dzienny stan zadań projektów, PULPIT.md sekcja
 import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENCI.md)
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
+import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
@@ -720,6 +721,92 @@ _agents_lock = threading.Lock()
 
 
 _publisher = None
+_recorder = None
+
+
+def get_recorder():
+    """Nagrywanie filmów (film.py); jedno na proces."""
+    global _recorder
+    with _agents_lock:
+        if _recorder is None:
+            _recorder = film.Recorder(notify=lambda text: get_agents()._send_ntfy(text))
+        return _recorder
+
+
+def record_film(body):
+    """POST /api/film/nagraj {project, date}: nagranie filmu posta w tle."""
+    return get_recorder().start(post_folder(str(body.get("project") or ""), str(body.get("date") or "")),
+                                str(body.get("title") or ""))
+
+
+def film_account(body):
+    """POST /api/film/konto {email, haslo}: konto demo do nagrań (plik 0600, hasło nie wraca do panelu)."""
+    email, password = str(body.get("email") or "").strip(), str(body.get("haslo") or "")
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or not 6 <= len(password) <= 200:
+        return 400, "Podaj e-mail i hasło konta demo (co najmniej 6 znaków)."
+    film.save_account(email, password)
+    return 200, ""
+
+
+def fix_post(body):
+    """POST /api/post/popraw {project, date, uwaga}: zadanie dla agenta „Popraw post na …” z uwagą właściciela."""
+    pid, day, note = str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("uwaga") or "").strip()
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    if not 3 <= len(note) <= 1000:
+        return 400, "Napisz, co poprawić (do 1000 znaków)."
+    _, index = load_projects(resolve=False)
+    proj = index.get(pid)
+    rel = "posty/" + os.path.basename(folder)
+    title = projekt._clean("Popraw post na %s: %s" % (day, note), 120)
+    detail = {"cel": "post %s poprawiony według uwagi właściciela" % rel,
+              "gotowe gdy": "w %s/post.md (i scenariusz.json przy filmie) uwzględniona uwaga z wiersza poprawka:" % rel,
+              "poprawka": note, "materiał": [rel + "/post.md"] + ([rel + "/scenariusz.json"]
+                                                                if os.path.isfile(os.path.join(folder, film.SCENARIO)) else [])}
+    try:
+        with _write_lock:
+            get_agents()._add_task(proj, pid, title, {"executor": "claude", "machine": "cloud",
+                                                      "date": datetime.date.today().isoformat()}, detail)
+    except (ValueError, OSError, StopIteration) as e:
+        return 409, "Nie dodano zadania: %s" % e
+    return 200, "", {"title": title}
+
+
+def auto_record():
+    """Co minutę: post ze scenariuszem bez filmu albo ze scenariuszem nowszym niż film → nagranie (raz na wersję)."""
+    rec = get_recorder()
+    if not rec.available():
+        return
+    _, index = load_projects(resolve=False)
+    for folder in index.values():
+        base = os.path.join(os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))), "posty")
+        try:
+            names = os.listdir(base)
+        except OSError:
+            continue
+        for n in names:
+            pf = os.path.join(base, n)
+            sc = os.path.join(pf, film.SCENARIO)
+            if not os.path.isfile(sc):
+                continue
+            mt = os.path.getmtime(sc)
+            fm = publikacja.Publisher.film(pf)
+            st = film.read_state(pf)
+            if (fm and os.path.getmtime(fm) >= mt) or st.get("state") == "running" or st.get("scenario") == mt:
+                continue
+            film.write_state(pf, state="queued", scenario=mt)
+            rec.start(pf, n)
+            return                              # jedno nagranie naraz
+
+
+def auto_record_loop():
+    while True:
+        time.sleep(60)
+        try:
+            auto_record()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def get_publisher():
@@ -756,6 +843,9 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
+          "/api/film/nagraj": record_film,
+          "/api/film/konto": film_account,
+          "/api/post/popraw": fix_post,
           "/api/publikacja/facebook": lambda b: get_publisher().connect_facebook(b),
           "/api/publikacja/linkedin": lambda b: get_publisher().connect_linkedin(b),
           "/api/publikacja/strona": lambda b: get_publisher().map_page(b),
@@ -896,6 +986,7 @@ def build_data():
     out["costs"] = COSTS.state()
     out["panelVersion"] = panel_version()
     out["publish"] = get_publisher().status()
+    out["film"] = {"available": get_recorder().available(), "account": film.account_email()}
     add_checks(out["tasks"], index, out["server"])
     return out
 
@@ -1235,8 +1326,12 @@ def post_info(folder):
             out["sections"][name] += line + "\n"
     out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
     out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
-    film = publikacja.Publisher.film(folder)
-    out["film"] = {"name": os.path.basename(film), "size": os.path.getsize(film)} if film else None
+    fpath = publikacja.Publisher.film(folder)
+    out["film"] = {"name": os.path.basename(fpath), "size": os.path.getsize(fpath),
+                   "at": int(os.path.getmtime(fpath))} if fpath else None
+    out["scenario"] = os.path.isfile(os.path.join(folder, film.SCENARIO))
+    st = film.read_state(folder)
+    out["rec"] = {"state": st.get("state", ""), "error": st.get("error", ""), "at": st.get("at", "")}
     return out
 
 
@@ -1475,12 +1570,24 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, json.dumps(dict(post_info(folder), ok=True), ensure_ascii=False),
                                   "application/json; charset=utf-8")
             if path == "/api/post/film":                 # plik filmu do udostępnienia z telefonu
-                film = publikacja.Publisher.film(folder)
-                if not film:
+                fpath = publikacja.Publisher.film(folder)
+                if not fpath:
                     return self._send(404, "Brak filmu", "text/plain; charset=utf-8")
-                with open(film, "rb") as f:
-                    return self._send(200, f.read(), "video/quicktime" if film.endswith(".mov") else "video/mp4",
-                                      [("Content-Disposition", 'inline; filename="%s"' % os.path.basename(film))])
+                ctype, size = "video/quicktime" if fpath.endswith(".mov") else "video/mp4", os.path.getsize(fpath)
+                hdr = [("Content-Disposition", 'inline; filename="%s"' % os.path.basename(fpath)),
+                       ("Accept-Ranges", "bytes")]
+                m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
+                with open(fpath, "rb") as f:
+                    if m and (m.group(1) or m.group(2)):    # Safari (iPhone) odtwarza wideo tylko z odpowiedzi 206
+                        a, b = m.group(1), m.group(2)
+                        start = int(a) if a else max(0, size - int(b))
+                        end = min(size - 1, int(b)) if a and b else size - 1
+                        if start > end or start >= size:
+                            return self._send(416, b"", ctype, [("Content-Range", "bytes */%d" % size)])
+                        f.seek(start)
+                        return self._send(206, f.read(end - start + 1), ctype,
+                                          hdr + [("Content-Range", "bytes %d-%d/%d" % (start, end, size))])
+                    return self._send(200, f.read(), ctype, hdr)
             png = post_image(folder)
             if not png:
                 return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")
@@ -1601,6 +1708,7 @@ if __name__ == "__main__":
             signal.signal(getattr(signal, name), _stop)
     get_agents().start()                        # dopiero po zajęciu portu: drugi egzemplarz nie rusza rekordów
     get_publisher().start()
+    threading.Thread(target=auto_record_loop, daemon=True).start()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

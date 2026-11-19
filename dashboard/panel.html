@@ -286,6 +286,26 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .pubc{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .pubc .steps{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5;color:var(--ink-2)}
 .pubc summary{cursor:pointer;font-size:13.5px;margin:6px 0}
+.mtl{list-style:none;margin:0;padding:8px 16px 16px;display:grid;gap:0}
+.tl-day{display:grid;grid-template-columns:96px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.tl-day:last-child{border-bottom:0}
+.tl-day.tl-now .tl-date b{color:var(--accent)}
+.tl-date{font-size:13.5px;padding-top:4px}
+.tl-date b{display:block;font-size:15px}
+.tl-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.tl-empty{margin:4px 0}
+.tl-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);display:grid}
+.tl-media{width:100%;aspect-ratio:9/16;max-height:360px;object-fit:cover;background:#000;display:block}
+img.tl-media{aspect-ratio:1/1;object-fit:cover}
+.tl-ph{aspect-ratio:1/1;display:grid;place-items:center;color:var(--ink-3);font-size:13px;background:var(--sunk);padding:12px;text-align:center}
+.tl-body{all:unset;cursor:pointer;display:grid;gap:6px;padding:10px 12px;font-size:13.5px}
+.tl-body:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tl-body b{font-size:14px;line-height:1.35}
+.wk{font-size:14px;padding:0 6px}
+.pvid{width:100%;max-height:520px;border-radius:10px;background:#000}
+.filmb,.fixb{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.filmb h3{margin:0;font-size:14px}
+@media (max-width:640px){.tl-day{grid-template-columns:1fr;gap:6px}.tl-day.nil{grid-template-columns:auto 1fr;padding:8px 0}.tl-day.nil .tl-date b{display:inline}.tl-day.nil .tl-empty{margin:0}}
 .dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
 .move-box{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;background:var(--sunk)}
 .move-box b{display:block;margin-bottom:4px}
@@ -551,7 +571,7 @@ details li{margin-top:4px}
   .board .col:not(.on){display:none}
   .board .col.done .old{display:none}
   .board .col.done .more{display:block}
-  .bnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
+  .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
     padding:4px max(4px,env(safe-area-inset-right,0px)) max(4px,env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px))}
   .bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px;padding:4px 2px;border-radius:var(--r);color:var(--ink-2);text-decoration:none;font-size:11.5px;font-weight:600;position:relative;min-width:0;text-align:center;line-height:1.2}
   .bnav a[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
@@ -657,8 +677,8 @@ const MACH={pc:'Windows',mac:'Mac',cloud:'serwer'};
 const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=['#fff','#fff','#0b2a1f','#2b1d00','#3a0f22','#fff','#fff','#fff'];
 const INBOX='Do rozplanowania';
-const VIEWS=['przeglad','wskazniki','ty','tablica','terminy','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',tablica:'Tablica zadań',terminy:'Terminy',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
+const VIEWS=['przeglad','wskazniki','ty','marketing','tablica','terminy','agenci','koszty','projekty'];
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',marketing:'Marketing',tablica:'Tablica zadań',terminy:'Terminy',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
 const PTABS=[['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
@@ -733,6 +753,7 @@ function normalize(raw){
     server:normServer(raw.server),
     costs:normCosts(raw.costs),
     publish:normPublish(raw.publish),
+    film:raw.film&&typeof raw.film==='object'?{available:!!raw.film.available,account:String(raw.film.account||'')}:null,
     campaigns:(raw.campaigns||[]).map(c=>{
       const cn={},co=c.counters&&typeof c.counters==='object'?c.counters:{};
       Object.keys(co).forEach(k=>{const n=+co[k];if(k&&isFinite(n))cn[k]=n});
@@ -1052,6 +1073,7 @@ const ICON={
  cal:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>',
  chart:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 13.5h12M4 11V8M7.3 11V4.5M10.6 11V6.5M13.5 11V3"/></svg>',
  you:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="5.5" r="2.8"/><path d="M2.8 14c.8-2.8 2.8-4.2 5.2-4.2s4.4 1.4 5.2 4.2"/></svg>',
+ film:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M6.5 6v4l3.5-2z"/></svg>',
  money:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><circle cx="8" cy="8.25" r="2"/><path d="M4 6.5v3.5M12 6.5v3.5"/></svg>',
  agent:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="4" width="11" height="8.5" rx="2"/><path d="M8 1.5V4M5.5 8h.01M10.5 8h.01M6 10.5h4"/></svg>',
  folder:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4.5a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1v6.5a1 1 0 01-1 1H3a1 1 0 01-1-1z"/></svg>'};
@@ -2378,7 +2400,71 @@ function postBox(t,day,publish){
     (publish&&n==='LinkedIn'?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Otwórz LinkedIn z tekstem</button>':''))+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
     (publish?'<button class="btn sec sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowałem ręcznie</button>':'')+'</div>';
+  h+=filmBox(t,day,d)+fixBox(t,day);
   return h+'</div>';
+}
+/* ---------- film posta (film.py: nagranie ze scenariusza) i „Co poprawić” (zadanie dla agenta) ---------- */
+const postQ=(pid,day)=>'project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day);
+function filmBox(t,day,d){
+  const r=d.rec||{},st=r.state||'',run=st==='running'||st==='queued',q=postQ(t.project,day);
+  if(!d.scenario&&!d.film)return '';
+  let h='<div class="filmb"><h3>Film</h3>';
+  if(d.film)h+='<video class="pvid" controls playsinline preload="metadata" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video>';
+  if(run)h+='<p class="note">Nagrywam film… (2–4 min). Dostaniesz powiadomienie.</p>';
+  else if(st==='error')h+='<p class="warn">Nie nagrano: '+esc(r.error||'błąd')+'</p>';
+  else if(!d.film)h+='<p class="note">Filmu jeszcze nie ma. Nagra go panel według scenariusza.</p>';
+  if(d.scenario&&!run)h+='<div class="row"><button class="btn '+(d.film?'sec ':'')+'sm" data-film-rec="'+esc(t.project+'|'+day)+'" data-title="'+esc(t.title)+'">'+(d.film?'Nagraj ponownie':'Nagraj film')+'</button>'+
+    (D.film&&!D.film.account?'<span class="note">Najpierw konto demo: Agenci → Publikacja.</span>':'')+'</div>';
+  return h+'</div>';
+}
+function fixBox(t,day){
+  return '<form class="dform fixb" data-fixpost="'+esc(t.project+'|'+day)+'"><label class="fl"><span>Co poprawić w tym poście?</span><textarea class="fi" rows="2" maxlength="1000" data-fixq placeholder="Np. krótszy tekst na LinkedIn, w filmie wpisz sofę zamiast komody, większy napis na grafice"></textarea></label>'+
+    '<div class="row"><button class="btn sm">Wyślij do poprawy</button><span class="note">Poprawi agent; film nagra się od nowa sam.</span></div></form>';
+}
+async function recFilm(el){
+  const [pid,day]=el.dataset.filmRec.split('|');if(!LIVE){say(PRV);return}
+  const x=await post('/api/film/nagraj',{project:pid,date:day,title:el.dataset.title||''});
+  if(x.ok||x.status===202){const d=PD[pid+'|'+day];if(d){d.rec={state:'running'};}say('Nagrywam film. Dostaniesz powiadomienie.');renderDrawer(true);render(true);setTimeout(()=>{delete PD[pid+'|'+day];render(true)},20000)}
+  else say(failMsg(x,'Nie rozpoczęto nagrania.'));
+}
+async function sendFixPost(f){
+  const [pid,day]=f.dataset.fixpost.split('|'),ta=f.querySelector('[data-fixq]'),text=(ta.value||'').trim();
+  if(text.length<3){say('Napisz, co poprawić.');ta.focus();return}
+  if(!LIVE){say(PRV);return}
+  const x=await post('/api/post/popraw',{project:pid,date:day,uwaga:text});
+  if(x.ok){ta.value='';say('Wysłane do poprawy. Agent zajmie się tym w ciągu kilku minut (zadanie „'+((x.data&&x.data.title)||'Popraw post')+'”).');load(true)}
+  else say(failMsg(x,'Nie wysłano.'));
+}
+/* ---------- widok Marketing: oś czasu tygodnia z postami i filmami ---------- */
+function weekStart(off){const d=fromKey(D.todayKey);const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd+7*off);return d}
+const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+function vMarketing(){
+  const off=A.mweek||0,m=weekStart(off),days=[...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return keyOf(x)});
+  const items=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)&&t.date>=days[0]&&t.date<=days[6]);
+  let h='<div class="pagehead"><div><h1>Marketing</h1><p>Posty i filmy na tydzień. Otwórz post, obejrzyj i napisz, co poprawić. Nic nie publikuje się samo.</p></div>'+
+    '<div class="row"><button class="btn sec sm" data-mw="-1" aria-label="Poprzedni tydzień">←</button><b class="wk">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b><button class="btn sec sm" data-mw="1" aria-label="Następny tydzień">→</button>'+(off?'<button class="btn sec sm" data-mw="0">Ten tydzień</button>':'')+'</div></div>';
+  h+='<section class="panel"><ol class="mtl">';
+  days.forEach(k=>{
+    const L=items.filter(t=>t.date.slice(0,10)===k);
+    h+='<li class="tl-day'+(k===D.todayKey?' tl-now':'')+(L.length?'':' nil')+'"><div class="tl-date"><b>'+esc(DN[fromKey(k).getDay()])+'</b> '+esc(dd(k))+'</div><div class="tl-items">'+
+      (L.length?L.map(t=>mCard(t,k)).join(''):'<p class="muted tl-empty">—</p>')+'</div></li>';
+  });
+  h+='</ol></section>';
+  if(!items.length)h+='<p class="empty">W tym tygodniu nie ma postów w kampaniach.</p>';
+  return h;
+}
+function mCard(t,day){
+  const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day);
+  if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
+  let media='<div class="tl-ph">Wczytuję…</div>',st=['grey','czeka na przygotowanie'];
+  if(!LIVE)media='<div class="tl-ph">Podgląd na serwerze</div>';
+  else if(d&&d.ok){
+    const r=d.rec||{};
+    media=d.film?'<video class="tl-media" controls playsinline preload="metadata" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video>':d.image?'<img class="tl-media" loading="lazy" src="/api/post/grafika?'+q+'" alt="">':'<div class="tl-ph">Tekst bez grafiki</div>';
+    st=t.state==='done'?['green','opublikowany']:(r.state==='running'||r.state==='queued')?['blue','nagrywa się film']:r.state==='error'?['red','błąd nagrania']:d.scenario&&!d.film?['yellow','film do nagrania']:['purple','gotowy do przeglądu'];
+  }else if(d&&!d.ok){media='<div class="tl-ph">Agent jeszcze nie przygotował posta</div>';const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');if(pr)st=['blue','agent przygotowuje']}
+  return '<article class="tl-card">'+media+'<button class="tl-body" data-task="'+esc(t.id)+'"><span class="muted">'+esc(projName(t.project))+'</span><b>'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b>'+
+    '<span class="row"><span class="lz '+st[0]+'">'+st[1]+'</span>'+String(t.channel).split(/,\s*/).map(c=>'<span class="pill">'+esc(c)+'</span>').join('')+'</span></button></article>';
 }
 /* ---------- publikacja automatyczna (publikacja.py): połączenia w Agenci, plan w poście ---------- */
 function normPublish(p){
@@ -2434,6 +2520,9 @@ function pubAct(el){
     enqueue(async()=>{const x=await post('/api/publikacja/'+(a==='fb'?'facebook':'linkedin'),body);
       say(x.ok?(a==='fb'?'Facebook połączony: '+((x.data.pages||[]).map(p=>p.name).join(', ')||'strony')+'.':'LinkedIn połączony: '+(x.data.name||'profil')+'.'):failMsg(x,'Nie połączono.'))});
     return}
+  if(a==='film'){const box=el.closest('form'),v=k=>((box.querySelector('[data-fk="'+k+'"]')||{}).value||'');const body={email:v('email').trim(),haslo:v('haslo')};
+    box.querySelectorAll('[data-fk]').forEach(x=>{x.value=''});
+    enqueue(async()=>{const x=await post('/api/film/konto',body);say(x.ok?'Konto do nagrań zapisane.':failMsg(x,'Nie zapisano.'))});return}
   if(a==='off'){enqueue(async()=>{const x=await post('/api/publikacja/odlacz',{service:el.dataset.svc});say(x.ok?'Odłączono.':failMsg(x,'Nie odłączono.'))});return}
 }
 async function uploadFilm(el){
@@ -2457,6 +2546,10 @@ function pubPanel(){
   h+='<details'+(P.fb.connected?'':' open')+'><summary>'+(P.fb.connected?'Połącz ponownie':'Połącz Facebook')+'</summary><form class="dform" onsubmit="return false"><ol class="steps"><li>developers.facebook.com → Utwórz aplikację, przypadek użycia „Zarządzaj stroną”.</li><li>Ustawienia → Podstawowe: skopiuj App ID i App Secret.</li><li>Narzędzia → Graph API Explorer: ta aplikacja, „Token użytkownika”, uprawnienia pages_show_list, pages_read_engagement, pages_manage_posts, publish_video, a dla Instagrama też instagram_basic i instagram_content_publish → Generate Access Token, zaznacz obie strony.</li><li>Instagram: konto firmowe połączone ze stroną (Meta Business Suite → Ustawienia → Konta). Panel znajdzie je sam.</li></ol>'+
     '<label class="fl"><span>App ID</span><input class="fi" data-pf="appId" inputmode="numeric" autocomplete="off"></label><label class="fl"><span>App Secret</span><input class="fi" type="password" data-pf="appSecret" autocomplete="off"></label><label class="fl"><span>Token użytkownika</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label>'+
     '<div class="row"><button type="button" class="btn sm" data-pub="fb">Połącz</button>'+(P.fb.connected?'<button type="button" class="btn sec sm" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form></details></div>';
+  const F=D.film||{};
+  h+='<div><h3>Konto do nagrań filmów'+(F.account?' <span class="lz green">ustawione</span>':'')+'</h3><p class="note">Panel nagrywa filmy z Opisarni, logując się tym kontem. Załóż zwykłe konto na opisarnia.pl (np. adres z dopiskiem +demo) i wpisz je tutaj; hasło zostaje na serwerze.</p>'+
+    (F.account?'<p>'+esc(F.account)+'</p>':'')+'<form class="dform" onsubmit="return false"><label class="fl"><span>E-mail konta demo</span><input class="fi" type="email" data-fk="email" autocomplete="off"></label><label class="fl"><span>Hasło</span><input class="fi" type="password" data-fk="haslo" autocomplete="new-password"></label>'+
+    '<div class="row"><button type="button" class="btn sm" data-pub="film">Zapisz</button></div></form></div>';
   h+='<div><h3>LinkedIn</h3><p class="note">Regulamin API LinkedIn zabrania automatycznego publikowania. W poście: „Udostępnij” (telefon: aplikacja LinkedIn z grafiką i tekstem) albo „Kopiuj i otwórz LinkedIn” (Mac: edytor z wpisanym tekstem); godzinę ustawiasz w LinkedIn (ikona zegara).</p></div>';
   return h+'</div></section>';
 }
@@ -2498,7 +2591,8 @@ async function copyOpen(key,url){
 async function loadPost(pid,day){
   const k=pid+'|'+day;let d={ok:false};
   try{const r=await fetch('/api/post?project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day));if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){}
-  PD[k]=d;if(DR)renderDrawer(true);
+  PD[k]=d;if(DR)renderDrawer(true);else if(CUR&&CUR.v==='marketing')render(true);
+  const st=d&&d.rec&&d.rec.state;if(st==='running'||st==='queued')setTimeout(()=>{delete PD[k];if(DR||(CUR&&CUR.v==='marketing'))render(true)},15000);
 }
 async function copyText(text){
   let ok=false;
@@ -2536,11 +2630,11 @@ function route(){
 }
 function renderSide(r){
   const you=youTotal(youState()),ag=runs().filter(isAct).length;
-  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['tablica',ICON.board],['terminy',ICON.cal],['agenci',ICON.agent,ag,'blue'],['koszty',ICON.money],['projekty',ICON.folder]]
+  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['marketing',ICON.film],['tablica',ICON.board],['terminy',ICON.cal],['agenci',ICON.agent,ag,'blue'],['koszty',ICON.money],['projekty',ICON.folder]]
     .map(([h,ic,c,cl])=>'<a href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ic+VNAME[h]+(c?'<span class="count '+(cl||'')+'">'+c+'</span>':'')+'</a>').join(''));
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
   /* dolny pasek (telefon): ten sam licznik co w nawigacji i w widoku Wymaga Ciebie */
-  setHtml($('#bnav'),[['przeglad',ICON.home,'Przegląd'],['ty',ICON.you,'Wymaga Ciebie',you],['tablica',ICON.board,'Tablica'],['agenci',ICON.agent,'Agenci',ag,'blue']]
+  setHtml($('#bnav'),[['przeglad',ICON.home,'Przegląd'],['ty',ICON.you,'Dla Ciebie',you],['marketing',ICON.film,'Marketing'],['tablica',ICON.board,'Tablica'],['agenci',ICON.agent,'Agenci',ag,'blue']]
     .map(([h,ic,n,c,cl])=>'<a href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ic+'<span>'+n+'</span>'+(c?'<span class="count '+(cl||'')+'">'+c+'</span>':'')+'</a>').join(''));
   $('#pcount').textContent=D.projects.length;
   setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'"'+(r.p===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted" style="padding:4px 8px;font-size:13px">Brak wyników</p>');
@@ -2571,7 +2665,7 @@ function setToast(t){const el=$('#toast');if(el&&el.textContent!==t)el.textConte
 function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);noticeT=setTimeout(()=>{notice='';setToast('')},ms||7000)}
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
-  return ({wskazniki:vWskazniki,ty:vTy,tablica:vTablica,terminy:vTerminy,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
+  return ({wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,tablica:vTablica,terminy:vTerminy,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
@@ -2956,6 +3050,8 @@ document.addEventListener('click',async ev=>{
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
   if(el=qq('[data-pub]')){pubAct(el);return}
+  if(el=qq('[data-film-rec]')){recFilm(el);return}
+  if(el=qq('[data-mw]')){const v=+el.dataset.mw;A.mweek=v?(A.mweek||0)+v:0;render(true);return}
   if(el=qq('[data-share]')){sharePost(el.dataset.share);return}
   if(el=qq('[data-copyopen]')){copyOpen(el.dataset.copyopen,el.dataset.url||'');return}
   if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
@@ -3009,6 +3105,7 @@ document.addEventListener('change',ev=>{
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
   if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
+  if(f.dataset.fixpost!=null){ev.preventDefault();sendFixPost(f);return}
   if(f.dataset.dform){submitForm(f);return}
   if(f.id==='padd'){addProject();return}
   if(f.dataset.lc){const i=f.querySelector('input');submitLoginCode(i?i.value:'');return}
