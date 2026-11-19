@@ -33,6 +33,7 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
 - [ ] Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: ty | kanał: linkedin, facebook, reels | kiedy: 2026-11-20 | czas: 15 | po: Nagraj film A
   cel: pokazać w 60 sekund drogę od atrybutów mebla do opisu PL i DE
   gotowe gdy: film opublikowany w kanałach z wiersza, opis pod filmem z linkiem opisarnia.pl
+  materiał: posty/2026-11-20-film-a-opis-pl-de/post.md
   materiał: marketing/plan-10-kont.md#6
   - [ ] opis pod filmem ze slotu A (punkt 6)
 - [ ] Opublikuj post „Cztery elementy opisu mebla na Allegro” | kto: ty | kanał: linkedin | kiedy: 2026-11-23 | czas: 15

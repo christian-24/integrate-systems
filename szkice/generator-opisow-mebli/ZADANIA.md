@@ -111,7 +111,9 @@ termin: 2026-12-23
 termin: 2026-11-30
 
 - [x] Sprawdź rejestrację na telefonie: mail weryfikacyjny dochodzi (działa od 2026-11-18, potwierdził właściciel)
-- [ ] Załóż rejestr kontaktów marketing/kontakty.md bez nazwisk | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+- [x] Załóż rejestr kontaktów marketing/kontakty.md bez nazwisk | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+  wynik: powstał marketing/kontakty.md: 10 wymaganych kolumn, 32 wiersze (po 8 firm w partiach 1–3 i 8 firm rezerwy w partii 4), wszystkie komórki stanu startowo „nie”, bez nazwisk, stanowisk i adresów; plik jest dodany do indeksu na gałęzi agent/2026-11-19-rejestr-kontaktow, bez commita
+  zostało: commit nie powstał, bo w repozytorium nie ma ustawionej tożsamości git (user.name, user.email), a polecenie z tożsamością podaną jednorazowo wymagało zgody; na gałęzi agent/2026-11-19-rejestr-kontaktow wystarczy `git commit -m "docs(marketing): rejestr kontaktów partii 1–4"` (plik jest już w indeksie)
   cel: jedna tabela stanu kontaktu z każdą firmą z partii 1–4, bez nazwisk i adresów
   gotowe gdy: marketing/kontakty.md ma kolumny firma, partia, zaproszenie, przyjęte, wiadomość 1, odpowiedź, link, konto, przypomnienie, koniec oraz po jednym wierszu dla 24 firm z partii 1–3 i 8 firm rezerwy (partia 4)
   materiał: marketing/plan-10-kont.md#5
@@ -285,3 +287,8 @@ termin: 2026-11-30
   - [ ] zaktualizuj vite z wersji 5.x
   - [ ] usuń wyjątek pip w gate CI
 - [x] Przygotować post na 2026-11-19 (stały rytm) | kto: claude | gdzie: chmura | kiedy: 2026-11-18
+- [~] Przygotować post na 2026-11-20: Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: claude | gdzie: chmura | kiedy: 2026-11-19 | wymaga: odbiór
+  materiał: kampanie/staly-rytm.md
+  wynik: w folderze karty powstał posty/2026-11-20-film-a-opis-pl-de/: post.md (opisy pod film na Facebook, LinkedIn i Reels oraz alt) i grafika.svg (plansza z szablonu, zmienione tylko teksty); w kampanie/staly-rytm.md wiersz filmu A dostał materiał: posty/2026-11-20-film-a-opis-pl-de/post.md; folder karty bez repozytorium, więc bez gałęzi i commita
+  decyzja: zatwierdzić teksty pod film przed publikacją 20.11; tekst LinkedIn i Facebook opisuje film według scenariusza zastępczego z planu (komoda, profil Allegro, „Generuj”, „Kopiuj”), więc przy innym nagraniu popraw 2–3 zdania
+  zostało: film A nie istnieje w repozytorium (nagranie to Twój wiersz „Nagraj film A”, pytanie 6 w KARTA.md bez odpowiedzi); grafika.png zrobi panel; publikacja po Twojej stronie
