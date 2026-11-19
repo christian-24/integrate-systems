@@ -19,6 +19,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/pm          uruchamia raport PM
   POST /api/agent/check       test połączenia z Claude Code albo Codex
   POST /api/agent/stop        zatrzymuje uruchomienie albo zdejmuje je z kolejki
+  POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików)
+  GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
@@ -739,6 +741,8 @@ def get_agents():
         return _agents
 
 
+# Wiadomość w rozmowie o zadaniu: 2000 znaków w JSON z \uXXXX (np. polskie litery, emoji) przekracza 4 KB.
+CHAT_BODY = 32 * 1024
 WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
           "/api/task/count": lambda b: count_task(b),
           "/api/task/close-checked": lambda b: close_checked(b),
@@ -748,6 +752,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
           "/api/project/meta": lambda b: update_meta(b),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
+          "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
@@ -1453,6 +1458,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, text, "text/plain; charset=utf-8")
             return self._send(code, json.dumps({"ok": False, "error": text}, ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/task/chat":
+            code, err, extra = get_agents().chat_get((parse_qs(url.query).get("id") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
@@ -1502,7 +1511,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/post/film":
             return self._film_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body()
+            body = self._json_body(CHAT_BODY if path == "/api/task/chat" else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
@@ -1512,7 +1521,7 @@ class Handler(BaseHTTPRequestHandler):
                 import traceback
                 traceback.print_exc()
                 result = (500, "Błąd serwera panelu (%s). Szczegóły w dzienniku usługi." % type(e).__name__)
-            code, answer = result[0], {"ok": result[0] == 200, "error": result[1]}
+            code, answer = result[0], {"ok": 200 <= result[0] < 300, "error": result[1]}
             if len(result) > 2:
                 answer.update(result[2])            # np. id nowego uruchomienia
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
@@ -1552,13 +1561,14 @@ class Handler(BaseHTTPRequestHandler):
         os.replace(tmp, os.path.join(folder, "film" + ext))
         return self._send(200, json.dumps({"ok": True, "error": "", "size": size}), "application/json; charset=utf-8")
 
-    def _json_body(self):
-        """Mały obiekt JSON. Wymagany typ application/json, więc obca strona nie wyśle go bez zgody CORS."""
+    def _json_body(self, limit=4096):
+        """Mały obiekt JSON (najwyżej limit bajtów). Wymagany typ application/json, więc obca strona nie wyśle go
+        bez zgody CORS."""
         if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
             return None
         try:
             size = int(self.headers.get("Content-Length") or 0)
-            if not 0 < size <= 4096:
+            if not 0 < size <= limit:
                 return None
             body = json.loads(self.rfile.read(size).decode("utf-8"))
         except (ValueError, UnicodeDecodeError):

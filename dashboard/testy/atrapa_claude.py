@@ -15,6 +15,9 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   plik     jak ok, a w katalogu roboczym tworzy notatki/analiza.md i dopisuje pod zadaniem wynik: z tą ścieżką
   commit   jak plik, a zmiany zatwierdza sam (git commit w katalogu roboczym)
   sekret   jak plik, a w katalogu roboczym tworzy też .env.local i certyfikat/serwer.pem (atrapy sekretów)
+Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
+  (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”. Tryby: czat-wolno (odpowiedź
+  po 1,5 s), login (błąd 401), smieci (tekst zamiast JSON), wolno (bez odpowiedzi do limitu czasu).
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
 """
 import json
@@ -89,6 +92,23 @@ def result(text, error=False, status=None, denials=()):
          "permission_denials": list(denials)})
 
 
+def chat(prompt, how):
+    """Rozmowa o zadaniu: odpowiedź jak `claude -p --output-format json`."""
+    if how == "login":
+        print(json.dumps({"type": "result", "is_error": True, "session_id": "sesja-1",
+                          "result": "Failed to authenticate. API Error: 401 OAuth access token has expired."}))
+        return 1
+    if how == "wolno":
+        time.sleep(120)
+        return 0
+    if how == "czat-wolno":
+        time.sleep(1.5)
+    last = ([x.strip() for x in prompt.split("\n") if x.strip()] or [""])[-1]
+    print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": "sesja-1",
+                      "result": "Odpowiedź atrapy: " + last[:40]}, ensure_ascii=False))
+    return 0
+
+
 def main(argv):
     if "--version" in argv:
         print("2.1.156 (Claude Code)")
@@ -125,6 +145,8 @@ def main(argv):
     if how == "smieci":
         print("Segmentation fault (atrapa)")
         return 2
+    if "json" in argv and argv[argv.index("json") - 1] == "--output-format":
+        return chat(prompt, how)
     out({"type": "system", "subtype": "init", "model": "claude-atrapa-1", "permissionMode": "acceptEdits",
          "apiKeySource": "none", "tools": ["Read", "Edit", "Bash"], "session_id": SESSION,
          "claude_code_version": "2.1.156"})

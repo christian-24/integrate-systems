@@ -6,6 +6,7 @@ dostaje od niego funkcję load_projects, wspólny zamek zapisu i moduł projekt.
 import collections
 import datetime
 import glob
+import hashlib
 import json
 import os
 import re
@@ -37,6 +38,14 @@ TASK_TOOLS = ",".join([
     "Bash(git add:*)", "Bash(git commit:*)", "Bash(python3 -m pytest:*)", "Bash(pytest:*)",
     "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
+# Rozmowa o zadaniu (AGENCI.md, „Rozmowa o zadaniu”): tylko odczyt plików, bez powłoki, zapisu i sieci.
+CHAT_TOOLS = "Read,Grep,Glob,LS"
+CHAT_DENY = "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+CHAT_MAX = 2000             # znaków w jednej wiadomości właściciela
+CHAT_KEEP = 100             # tyle wiadomości zostaje w historii zadania
+CHAT_ANSWER = 8000          # najwyżej tyle znaków odpowiedzi
+CHAT_PARALLEL = 3           # tyle rozmów naraz czeka na odpowiedź
+CHAT_EXPIRED = "Rozmowa wygasła. Wyślij pytanie jeszcze raz."
 LOGIN_TTL = 600           # s: tyle czeka logowanie przez panel na kod
 PLAN_MAX = 6
 STATE_LABEL = {"done": "zakończone", "error": "błąd", "login": "wymaga logowania", "limit": "limit subskrypcji",
@@ -233,6 +242,9 @@ class Manager:
         self._stop_event = threading.Event()
         self._thread = None
         self._git_lock = threading.Lock()     # operacje panelu na repozytoriach projektów (worktree, commit, merge)
+        self.chat_timeout = 180               # s: odpowiedź w rozmowie o zadaniu
+        self._chat_lock = threading.Lock()    # pliki rozmów i _chat_live
+        self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
         self._load()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
 
@@ -768,6 +780,194 @@ class Manager:
         else:
             args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", TASK_TOOLS])
         priv.update(args=args, cwd=cwd, prompt=prompt)
+
+    # ---------- rozmowa o zadaniu ----------
+    def _chat_file(self, task):
+        key = "%s|%s|%s" % (task["project"], task["file"], task["title"])
+        return os.path.join(self.runs_dir, "czat", hashlib.sha1(key.encode("utf-8")).hexdigest() + ".json")
+
+    @staticmethod
+    def _chat_read(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        msgs = [m for m in data.get("messages") or [] if isinstance(m, dict) and m.get("role") in ("ty", "claude")]
+        return {"session": str(data.get("session") or ""), "messages": msgs[-CHAT_KEEP:],
+                "pending": data.get("pending") is True, "error": str(data.get("error") or "")}
+
+    def _chat_write(self, path, chat):
+        chat["messages"] = chat["messages"][-CHAT_KEEP:]
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        self._write_json(path, chat)
+
+    def chat_get(self, task_id):
+        """Historia rozmowy o zadaniu. Zwraca (kod, błąd, {"messages", "pending", "error"})."""
+        task, _, _ = self._find_task(task_id=str(task_id))
+        if not task:
+            return 404, "Nie ma tego zadania.", {}
+        path = self._chat_file(task)
+        with self._chat_lock:
+            chat = self._chat_read(path)
+            live = path in self._chat_live
+        if chat["pending"] and not live:            # odpowiedź przerwana restartem panelu
+            chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij pytanie jeszcze raz."
+        return 200, "", {"messages": chat["messages"], "pending": live, "error": chat["error"]}
+
+    def chat_prompt(self, name, task, stage, detail, folder, text):
+        """Pierwsza wiadomość rozmowy: kontekst zadania, zasady i pytanie właściciela (ostatnie wiersze)."""
+        lines = ["Rozmawiasz z właścicielem projektu „%s” o jednym zadaniu z pliku %s, wiersz %d: „%s”."
+                 % (name, task["file"], task["line"], task["title"])]
+        if stage:
+            lines.append("Etap: %s." % stage)
+        more = self.detail_lines(detail)
+        if more:
+            lines += ["", "Szczegóły zadania:"] + more
+        files = [os.path.join(folder, n) for n in ("KARTA.md", "ZADANIA.md", task["file"])]
+        lines += ["", "Pliki projektu: karta %s, zadania %s%s." % (files[0], files[1], "" if files[2] == files[1]
+                                                                  else ", plik zadania %s" % files[2]),
+                  "", "Zasady:",
+                  "- Odpowiadasz na pytanie właściciela o to jedno zadanie.",
+                  "- Krótko i konkretnie, prostym językiem po polsku. Bez żargonu technicznego, chyba że właściciel o niego prosi.",
+                  "- Możesz czytać pliki projektu, ale niczego nie zmieniasz i nie uruchamiasz poleceń.",
+                  "- Gdy zadanie wygląda na zbędne, błędne albo niejasne, powiedz to wprost i zaproponuj jedną konkretną "
+                  "zmianę (np. zamknąć je, zmienić termin, zastąpić je innym zadaniem) w jednym zdaniu zaczynającym się "
+                  "od „Propozycja:”.",
+                  "- Nigdy nie proś właściciela o hasła, klucze ani tokeny.",
+                  "", "Pytanie właściciela:", text]
+        return "\n".join(lines) + "\n"
+
+    def chat_send(self, task_id, title, message):
+        """Wiadomość właściciela w rozmowie o zadaniu; odpowiedź Claude przychodzi w tle (chat_get).
+        Zwraca (kod, błąd, dodatki): 202 z {"pending": True} albo błąd 400, 404, 409, 500."""
+        text = str(message or "").strip()
+        if not text:
+            return 400, "Napisz pytanie.", {}
+        if len(text) > CHAT_MAX:
+            return 400, "Najwyżej %d znaków." % CHAT_MAX, {}
+        task, data, index = self._find_task(task_id=str(task_id))
+        if not task or task["project"] not in index:
+            return 404, "Nie ma tego zadania.", {}
+        if task["title"] != str(title):
+            return 409, CONFLICT, {}
+        if data["projectsSource"] != "registry":
+            return 409, "Projekty przykładowe", {}
+        path = self.tool_path("claude")
+        if not path:
+            return 409, "Brak polecenia claude", {}
+        with self._lock:
+            login = self._state["needsLogin"]
+        if login:
+            return 409, "Wymaga logowania: %s" % self.login_cmd("claude", path), {}
+        limit = self.limit_until()
+        if limit:
+            return 409, "Limit subskrypcji. Odnowienie o %s." % limit[11:16], {}
+        folder = index[task["project"]]
+        file = self._chat_file(task)
+        with self._chat_lock:
+            if file in self._chat_live:
+                return 409, "Czekam jeszcze na odpowiedź.", {}
+            if len(self._chat_live) >= CHAT_PARALLEL:
+                return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
+            chat = self._chat_read(file)
+            session = chat["session"] if re.fullmatch(r"[\w-]{1,100}", chat["session"]) else ""
+            chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
+            chat.update(pending=True, error="")
+            try:
+                self._chat_write(file, chat)
+            except OSError:
+                return 500, "Nie udało się zapisać rozmowy.", {}
+            self._chat_live.add(file)
+        try:
+            if session:
+                prompt = text + "\n"
+            else:
+                project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
+                stage = next((s["title"] for s in data["stages"] if s["id"] == task.get("stage")), "")
+                prompt = self.chat_prompt(project.get("name", task["project"]), task, stage,
+                                          with_answers(task, data["tasks"]), folder, text)
+            # Tylko odczyt: tryb uprawnień default (bez acceptEdits i bypass), lista narzędzi do odczytu, reszta
+            # zabroniona wprost (zabronione wygrywa z regułami allow z .claude/settings.json projektu), bez MCP.
+            args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
+            if self.model:
+                args += ["--model", self.model]
+            if session:
+                args += ["--resume", session]
+            args += _card_dirs(folder) + ["--allowedTools", CHAT_TOOLS, "--disallowedTools", CHAT_DENY,
+                                          "--strict-mcp-config"]
+            threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session)),
+                             daemon=True).start()
+        except Exception:
+            self._chat_end(file, "", "", "Nie udało się uruchomić rozmowy.")
+            return 500, "Nie udało się uruchomić rozmowy.", {}
+        return 202, "", {"pending": True}
+
+    def _chat_run(self, file, args, cwd, prompt, resumed):
+        answer, session, error = "", "", ""
+        if WINDOWS:
+            kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | NO_WINDOW["creationflags"]}
+        else:
+            kw = {"start_new_session": True}
+        try:
+            proc = subprocess.Popen(self.as_agent(args), cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE, env=child_env(self.env), encoding="utf-8",
+                                    errors="replace", **kw)
+            try:
+                out, err = proc.communicate(prompt, timeout=self.chat_timeout)
+                answer, session, error = self._chat_parse(out or "", err or "", proc.returncode, resumed)
+            except subprocess.TimeoutExpired:
+                self._kill(proc)
+                try:
+                    proc.communicate(timeout=10)
+                except (OSError, ValueError, subprocess.SubprocessError):
+                    pass
+                error = "Brak odpowiedzi w ciągu %d s. Spróbuj ponownie." % self.chat_timeout
+        except OSError:
+            error = "Nie udało się uruchomić polecenia claude."
+        except Exception:  # rozmowa nie może zostać w stanie oczekiwania
+            error = "Nie udało się uzyskać odpowiedzi."
+        finally:
+            self._chat_end(file, answer, session, error)
+
+    def _chat_end(self, file, answer, session, error):
+        with self._chat_lock:
+            try:
+                chat = self._chat_read(file)
+                if session:
+                    chat["session"] = session
+                elif error == CHAT_EXPIRED:
+                    chat["session"] = ""            # następna wiadomość zaczyna rozmowę od nowa, z kontekstem
+                if answer:
+                    chat["messages"].append({"role": "claude", "text": answer, "at": now_iso()})
+                chat.update(pending=False, error=error)
+                self._chat_write(file, chat)
+            except OSError:
+                pass
+            finally:
+                self._chat_live.discard(file)
+
+    def _chat_parse(self, out, err, code, resumed):
+        """Wynik `claude -p --output-format json`: (odpowiedź, sesja, błąd). Błąd krótko, bez śladu stosu."""
+        try:
+            res = json.loads(out)
+        except ValueError:
+            res = None
+        if isinstance(res, list):
+            res = next((x for x in reversed(res) if isinstance(x, dict) and x.get("type") == "result"), None)
+        res = res if isinstance(res, dict) else None
+        text = str(res.get("result") or "").strip() if res else ""
+        if res and not res.get("is_error") and code == 0 and text:
+            return text[:CHAT_ANSWER], str(res.get("session_id") or ""), ""
+        blob = " ".join([text, out[-2000:] if res is None else "", err[-2000:]])
+        if LOGIN_RE.search(blob):
+            return "", "", "Wymaga logowania: %s" % self.login_cmd("claude", self.tool_path("claude"))
+        if LIMIT_RE.search(blob):
+            return "", "", "Limit subskrypcji. Spróbuj później."
+        if resumed and re.search(r"no conversation found|session.{0,40}not found", blob, re.I):
+            return "", "", CHAT_EXPIRED
+        return "", "", "Nie udało się uzyskać odpowiedzi (kod %s)." % code
 
     @staticmethod
     def _standard_dirs(folder, file_rel):

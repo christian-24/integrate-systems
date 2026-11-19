@@ -315,6 +315,21 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 | `/api/project/add` | `{"path": folder, "name"?: nazwa, "files": bool}` | dopisuje istniejący folder do rejestru; `files: true` zakłada brakujące pliki standardu (niczego nie nadpisuje) |
 | `/api/project/remove` | `{"id": projekt}` | usuwa z rejestru; pliki zostają |
 
+Rozmowa o zadaniu (tylko odczyt):
+`POST /api/task/chat` z `{"id": taskId, "title": tytuł, "message": tekst}` (najwyżej 2000 znaków, treść żądania
+do 32 KB) zapisuje pytanie i uruchamia w tle Claude; odpowiedź 202 `{"ok": true, "error": "", "pending": true}`;
+400 pusta albo za długa wiadomość, 404 brak zadania, 409 zmieniony wiersz, poprzednia odpowiedź jeszcze trwa
+(„Czekam jeszcze na odpowiedź.”), brak `claude`, wymagane logowanie, limit albo 3 rozmowy naraz.
+`GET /api/task/chat?id=<taskId>`: `{"ok": true, "messages": [{"role": "ty"|"claude", "text", "at"}], "pending": bool,
+"error": str}`; 404 bez zadania. Historia (najwyżej 100 wiadomości, id sesji Claude) w
+`uruchomienia/czat/<sha1 „projekt|plik|tytuł”>.json`.
+Polecenie: `claude -p --output-format json --permission-mode default [--model M] [--resume <sesja>] [--add-dir …]
+--allowedTools "Read,Grep,Glob,LS" --disallowedTools "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+--strict-mcp-config` w folderze projektu (prompt przez stdin, `sudo -n -u` jak przy zadaniach), limit 180 s. Pierwsza
+wiadomość niesie kontekst zadania i zasady (krótko, po polsku, bez zmian w plikach, „Propozycja:” przy zbędnym albo
+niejasnym zadaniu, bez próśb o hasła i klucze); kolejne idą przez `--resume` z samym pytaniem. Agent w rozmowie
+niczego nie zmienia: bez powłoki, zapisu, sieci i serwerów MCP, także gdy `.claude/settings.json` projektu na nie pozwala.
+
 ## Testy
 
 `python3 -m unittest discover -s dashboard/testy` — uruchamianie na atrapie polecenia `claude` (bez sieci i bez limitu).

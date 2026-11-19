@@ -286,6 +286,18 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .pubc{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .pubc .steps{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5;color:var(--ink-2)}
 .pubc summary{cursor:pointer;font-size:13.5px;margin:6px 0}
+.dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
+.move-box{border:1px solid var(--line);border-radius:10px;padding:12px;margin:0 0 12px;background:var(--sunk)}
+.move-box b{display:block;margin-bottom:4px}
+.move-box p{margin:4px 0 8px;font-size:14px;line-height:1.5}
+.move-box.ok{border-color:var(--l-green-bg)}
+.dmore{margin-top:14px;border-top:1px solid var(--line);padding-top:8px}
+.dmore>summary,.chat>summary{cursor:pointer;font-weight:600;font-size:14px;padding:6px 0}
+.chat .cms{display:grid;gap:8px;margin:8px 0}
+.chat .cm{padding:8px 10px;border-radius:8px;font-size:14px;line-height:1.5}
+.chat .cm.me{background:var(--accent-soft)} .chat .cm.ai{background:var(--sunk)}
+.chat .cm b{display:block;font-size:12px;color:var(--ink-3)}
+.chat .prop{margin:6px 0 0;font-weight:600}
 .abox .move{margin:6px 0;font-size:13.5px;line-height:1.5}
 .post h3{margin:0;font-size:14px}
 .post .ptx p{margin:6px 0 0;font-size:13.5px;line-height:1.5;white-space:normal}
@@ -1892,26 +1904,34 @@ function agentBlock(t){
 function taskHtml(t){
   const pub=t.kind==='publikacja',p=P(t.project),s=stageOf(t.stage),c=t.campaign?D.campaigns.find(x=>x.id===t.campaign):null;
   let h='<div class="dhead"><span class="muted">'+(pub?'Publikacja':'Zadanie')+' · '+esc(projName(t.project))+'</span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
-    '<textarea class="fi ttl" id="dtitle" rows="2" maxlength="160" data-f="title" aria-label="Tytuł">'+esc(t.title)+'</textarea>';
+    '<h2 class="dttl" id="dtitle">'+esc(t.title)+'</h2>';
   const d=t.detail||normDetail(null),zg=t.needsYou==='zgoda'&&t.state!=='done',od=t.needsYou==='odbiór'&&t.state!=='done';
   const dec=d.decision?'<p class="dcap" id="ddec">Zatwierdzasz: '+esc(d.decision)+'</p>':'',db=d.decision?' aria-describedby="ddec"':'';
-  if(t.waits.length)h+='<div class="warn">Czeka na: '+esc(t.waits.join('; '))+'</div>';
-  if(d.fix&&t.state!=='done')h+='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>';
+  const pday=prepDay(t),gr=lastGitRun(t),br=!gr&&t.state!=='done'?branchRun(t):null,mine=t.executor==='ty'||!t.executor;
+  /* 1. Twój ruch: jedno zdanie i jedna akcja */
+  let mv='',shown={};
+  if(t.state==='done')mv='<div class="move-box ok"><b>Zrobione.</b>'+(d.result?'<p>'+esc(d.result)+'</p>':'')+'</div>'+(pub?pubBox(t):'');
+  else if(t.waits.length)mv='<div class="move-box"><b>Jeszcze nie teraz.</b><p>Najpierw: '+t.waits.map(w=>{const x=D.tasks.find(y=>y.title===w&&y.project===t.project);return x?'<button class="lk" data-task="'+esc(x.id)+'">'+esc(w)+'</button>':esc(w)}).join('; ')+'.</p></div>';
+  else if(zg)mv='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>'+(pub?'Zatwierdź publikację':'Wyraź zgodę')+'</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>';
+  else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+accBox(t,d,db,dec);shown.post=1}
+  else if(d.asks.length&&!d.answers.length){mv=askBox(t);shown.ask=1}
+  else if(br){mv='<div class="abox you"><b>Twój ruch: przejrzyj zmiany i kliknij „Scal”</b><p class="move">Scalenie zamyka to zadanie.</p>'+chgBlock(br,true)+'</div>'}
+  else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
+  else if(needsResult(t)||needsCount(t)||dForm(t,'done'))mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p></div>'+finBox(t);
+  else if(!mine)mv='<div class="move-box"><b>To robi agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.</b><p>'+esc(doWhat(t))+'</p></div>';
+  else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
+  if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
+  h+=mv+chatBox(t);
+  /* 2. Szczegóły zwinięte */
+  h+='<details class="dmore" id="dmore"'+(DR&&DR.more?' open':'')+'><summary>Szczegóły zadania</summary>';
+  h+='<label class="fl"><span>Tytuł</span><textarea class="fi ttl" rows="2" maxlength="160" data-f="title" aria-label="Tytuł">'+esc(t.title)+'</textarea></label>';
   h+=checkBox(t);
   h+=planBlock(t);
-  const pday=prepDay(t);
-  if(pub&&isDay(t.date))h+=postBox(t,t.date.slice(0,10),t.state!=='done');
-  if(pub&&t.state==='done')h+=pubBox(t);
+  if(pub&&t.channel&&isDay(t.date)&&!shown.post)h+=postBox(t,t.date.slice(0,10),false);
   h+=wynBlock(t,d,zg||od,od,t.executor==='ty');
-  if(pday)h+=postBox(t,pday,false);
-  const gr=lastGitRun(t),br=!gr&&t.state!=='done'?branchRun(t):null;
+  if(pday&&!shown.post)h+=postBox(t,pday,false);
   if(gr&&!od)h+='<div class="dbox"><h3>Zmiany agenta</h3>'+chgBlock(gr,true)+'</div>';
-  if(br)h+='<div class="dbox"><h3>Zmiany agenta</h3><p class="move">Twój ruch: przejrzyj zmiany i kliknij „Scal”. Scalenie zamyka to zadanie.</p>'+chgBlock(br,true)+'</div>';
   if(d.answers.length)h+='<div class="dbox"><h3>Twoje dane</h3><dl class="ans">'+d.answers.map(a=>'<dt>'+esc(a.label)+'</dt><dd>'+esc(a.value)+'</dd>').join('')+'</dl></div>';
-  if(d.asks.length&&t.state!=='done'&&!d.answers.length)h+=askBox(t);
-  if(zg)h+='<div class="abox you"><b>'+(pub?'Publikacja czeka na Twoją akceptację':'Agent czeka na Twoją zgodę')+'</b><div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>'+(pub?'Zatwierdź publikację':'Wyraź zgodę')+'</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div>'+dec+'</div>';
-  else if(od&&!dForm(t,'done'))h+=accBox(t,d,db,dec);
-  else if(needsResult(t)||needsCount(t)||dForm(t,'done'))h+=finBox(t);
   h+=afterBlock(t);
   h+='<div id="dag">'+agentBlock(t)+'</div><dl>';
   h+='<dt>Stan</dt><dd><div class="row">'+['todo','doing','blocked','done'].map(k=>'<button class="seg" data-state="'+k+'" aria-pressed="'+(t.state===k)+'">'+TS[k][1]+'</button>').join('')+'</div></dd>';
@@ -1929,8 +1949,48 @@ function taskHtml(t){
   if(t.counter)h+='<dt>Licznik</dt><dd>'+esc(t.counter)+' <span class="muted">· liczba wpisywana przy zamknięciu</span></dd>';
   if(t.check)h+='<dt>Sprawdza</dt><dd>'+esc(t.check.key)+' <span class="muted">· '+(t.check.ok===true?'ok':t.check.ok===false?'nie spełnione':'brak danych')+(atShort(t.check.at)?', '+esc(atShort(t.check.at)):'')+'</span></dd>';
   h+='<dt>Plik</dt><dd>'+(t.line?'<code>'+esc(t.file+':'+t.line)+'</code>':'<span class="muted">niezapisane</span>')+'</dd></dl>';
-  h+='<p class="note">Zmiany zapisują się w pliku po wyjściu z pola. Esc zamyka, r uruchamia agenta.</p>';
+  h+='<p class="note">Zmiany zapisują się w pliku po wyjściu z pola. Esc zamyka, r uruchamia agenta.</p></details>';
   return h;
+}
+/* jedno zdanie „co zrobić”: pierwszy niezrobiony krok, cel albo tytuł */
+function doWhat(t){
+  const d=t.detail||normDetail(null),st=d.steps.find(x=>!x.done),n=d.steps.filter(x=>!x.done).length;
+  const g=d.goal?cap(d.goal.replace(/\.$/,''))+'.':'';
+  return (g||t.title)+(st?' Następny krok: '+st.text+(n>1?' (zostało '+n+')':'')+'.':'');
+}
+/* ---------- czat o zadaniu (POST/GET /api/task/chat): Claude czyta zadanie, kartę i kod, nic nie zmienia ---------- */
+const CH={};
+function chatBox(t){
+  if(!LIVE)return '';
+  let c=CH[t.id];
+  if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
+  let h='<details class="dbox chat"'+(c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>Zapytaj Claude o to zadanie</summary>';
+  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>').join('')+'</div>';
+  if(c.pending)h+='<p class="note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>';
+  if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
+  h+='<form class="dform" data-chat="'+esc(t.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Pytanie o zadanie" placeholder="Np. po co to zadanie? Co dokładnie mam wpisać? Czy można je pominąć?"></textarea>'+
+    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Enter wysyła. Claude czyta zadanie, kartę i pliki projektu; niczego nie zmienia.</span></div></form></details>';
+  return h;
+}
+const chatText=x=>'<div>'+String(x||'').split('\n').map(l=>/^\s*Propozycja:/i.test(l)?'<p class="prop">'+esc(l)+'</p>':esc(l)).join('<br>')+'</div>';
+async function loadChat(id){
+  let c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
+  try{const r=await fetch('/api/task/chat?id='+encodeURIComponent(id),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[];c.pending=!!j.pending;c.error=String(j.error||'')}
+    else if(r.status!==404)c.error=String(j.error||'Czat jest niedostępny.')}catch(e){c.error='Brak połączenia z serwerem.'}
+  c.loading=false;
+  if(DR&&DR.kind==='task'&&DR.id===id){renderDrawer();if(c.pending)setTimeout(()=>{if(DR&&DR.id===id)loadChat(id)},2500)}
+}
+async function sendChat(f){
+  const id=f.dataset.chat,t=D.tasks.find(x=>x.id===id),ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim();
+  if(!t||!text)return;const c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
+  if(c.pending){say('Czekam jeszcze na odpowiedź.');return}
+  if(!LIVE){say(PRV);return}
+  ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.pending=true;c.error='';if(DR)DR.chat=1;renderDrawer(true);
+  const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text});
+  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano pytania.';renderDrawer(true);return}
+  setTimeout(()=>loadChat(id),2500);
 }
 /* blok „Co zrobić”: cel, kroki (odhaczane z panelu), warunek ukończenia, materiały, notatki */
 const MV={};
@@ -2310,14 +2370,14 @@ function postBox(t,day,publish){
   if(d===null)return '<div class="post muted">Wczytuję post…</div>';
   if(!d.ok)return '<div class="post muted">Brak przygotowanego posta na '+esc(dd(day))+'.'+(prepDay(t)?'':' Przygotuje go agent w zadaniu „Przygotować post na …”.')+'</div>';
   const q='project='+encodeURIComponent(t.project)+'&date='+encodeURIComponent(day),S=d.sections||{};
-  let h='<div class="post"><h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
+  let h='<div class="post">'+(publish?pubPlanBox(t,day,d):'')+'<h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
   if(canShare())shareFile(t.project,day,d);
-  PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+
-    (canShare()?'<button class="btn sm" data-share="'+esc(k+'|'+n)+'">Udostępnij</button>':'')+
-    (publish?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Kopiuj i otwórz '+n+'</button>':'')+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
-  if(publish)h+=pubPlanBox(t,day,d);
+  const auto=n=>{const c={Facebook:'facebook',Reels:'reels',Instagram:'instagram'}[n];return !!c&&chanOk(t,c)};
+  PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b>'+(publish&&auto(n)?'<span class="muted">publikuje panel</span>':
+    '<button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+(canShare()?'<button class="btn sm" data-share="'+esc(k+'|'+n)+'">Udostępnij</button>':'')+
+    (publish&&n==='LinkedIn'?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Otwórz LinkedIn z tekstem</button>':''))+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
-    (publish?'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button><span class="rsn">'+(t.waits.length?'Najpierw: '+esc(t.waits.join('; '))+'. ':'')+'Potem wpiszesz link i wyniki.</span>':'')+'</div>';
+    (publish?'<button class="btn sec sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowałem ręcznie</button>':'')+'</div>';
   return h+'</div>';
 }
 /* ---------- publikacja automatyczna (publikacja.py): połączenia w Agenci, plan w poście ---------- */
@@ -2335,7 +2395,7 @@ function pubPlanBox(t,day,d){
   const P=D.publish;if(!P||!LIVE)return '';
   const want=String(t.channel||'').toLowerCase().split(/[,\s]+/).filter(c=>PUBN[c]),list=PUBCH.filter(([c])=>!want.length||want.indexOf(c)>=0);
   const avail=list.filter(([c])=>chanOk(t,c)),sc=parseSched(t.detail.scheduled),st=P.state[t.project+'|'+t.file+'|'+t.title]||{};
-  let h='<div class="plan"><h3>Publikacja automatyczna</h3>';
+  let h='<div class="plan"><h3>Panel opublikuje sam</h3>';
   if(!avail.length)return h+'<p class="note">Połącz '+esc(list.map(x=>x[1]).join(' i ')||'kanały')+' w widoku <a href="#agenci">Agenci → Publikacja</a>. Potem panel opublikuje post sam o wybranej godzinie.</p></div>';
   const vid=list.some(([c])=>c==='reels'),film=d.film;
   if(vid||film)h+='<p class="note">'+(film?'Film: '+esc(film.name)+' · '+(film.size/1048576).toFixed(1).replace('.',',')+' MB ':'Brak filmu. ')+
@@ -2948,6 +3008,7 @@ document.addEventListener('change',ev=>{
 });
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
+  if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.dform){submitForm(f);return}
   if(f.id==='padd'){addProject();return}
   if(f.dataset.lc){const i=f.querySelector('input');submitLoginCode(i?i.value:'');return}
@@ -2977,7 +3038,7 @@ document.addEventListener('mouseout',ev=>{
   tipHide();const cx=hit.closest('svg').querySelector('.cx');if(cx)cx.setAttribute('opacity','0');
 });
 document.addEventListener('keydown',ev=>{
-  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"]');
+  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-chat] textarea');
   if(qt&&ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=qt.form;if(f.requestSubmit)f.requestSubmit();else f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return}
   if(!D||ev.metaKey||ev.ctrlKey||ev.altKey)return;
   const a=document.activeElement,tg=a&&a.tagName,k=ev.key,inField=tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT';
@@ -2997,6 +3058,7 @@ document.addEventListener('keydown',ev=>{
   if(gWait&&Date.now()-gWait<1500){gWait=0;const m={p:'przeglad',w:'wskazniki',t:'tablica',d:'terminy',a:'agenci'}[k];if(m){ev.preventDefault();location.hash=m}return}
   if(k==='g'){gWait=Date.now();return}
 });
+document.addEventListener('toggle',ev=>{const el=ev.target;if(!DR)return;if(el.id==='dmore')DR.more=el.open;else if(el.id==='dchat')DR.chat=el.open},true);
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';render(true);window.scrollTo(0,0)});
 // powrót do aplikacji albo karty (telefon, Dock): dane od razu, bez czekania na licznik
 let wakeAt=0;
