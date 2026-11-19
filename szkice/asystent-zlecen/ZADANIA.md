@@ -12,7 +12,7 @@
 - [x] Rozszerzenie „Asystent aut OLX + OTOMOTO” do wersji 2.12.0 (indeks, analiza AI, harmonogram)
 - [x] Przejście analiz z OpenAI API na Codex CLI
 - [x] Panel „Garaż”
-- [~] Prowadź codzienny przegląd ogłoszeń aut z OLX i OTOMOTO | kto: codex | gdzie: mac
+- [ ] Prowadź codzienny przegląd ogłoszeń aut z OLX i OTOMOTO | kto: codex | gdzie: mac
   cel: nowe ogłoszenia oceniane codziennie według kryteriów właściciela, wyniki w panelu „Garaż”
   gotowe gdy: przegląd działa sam 7 kolejnych dni bez PC, a „Garaż” pokazuje oceny z każdego dnia
   materiał: KARTA.md#Zakres

@@ -1,15 +1,22 @@
 #!/bin/bash
 # Kontrola zdrowia serwera co 10 min (timer zdrowie, użytkownik panel).
 # Sprawdza: panel (/api/data lokalnie), asystent Useme (/api/health), wolne miejsce na dysku (>= 15%),
-# logowanie Claude (claude auth status), wiek ostatniej kopii (< 36 h) i ostatni przebieg zapisu kart.
-# Powiadomienie ntfy tylko przy zmianie stanu: dobry -> zły i zły -> dobry. Treść bez danych klientów.
-# Stan poprzedni: /home/panel/.zdrowie-stan (wiersze nazwa=ok|zle|brak).
-# Ustawienia (opcjonalne, /etc/integrate/serwer.env): USEME_URL (pełny adres /api/health), ZDROWIE_PROG_DYSKU (domyślnie 15).
+# logowanie Claude (claude auth status), wiek ostatniej kopii (< 36 h), kopię poza serwerem (< 26 h, gdy ustawiony
+# KOPIA_CEL) i ostatni przebieg zapisu kart.
+# Powiadomienie ntfy przy zmianie stanu: dobry -> zły i zły -> dobry. Raz dziennie, w pierwszym przebiegu od 8:00
+# (czas polski), krótkie podsumowanie: „Serwer: wszystko w normie” albo lista problemów. Treść bez danych klientów.
+# Stan: /home/panel/.zdrowie-stan, wiersze nazwa=ok|zle|brak, a po nich kopia_wiek_h=<godziny albo puste>
+# i kopia_poza=tak|nie (z /home/panel/kopie/ostatnia.json). Panel czyta ten plik (PANEL_ZDROWIE_STAN).
+# Ustawienia (opcjonalne, /etc/integrate/serwer.env): USEME_URL (pełny adres /api/health), ZDROWIE_PROG_DYSKU (domyślnie 15),
+# ZDROWIE_GODZINA_PODSUMOWANIA (domyślnie 8).
 set -u
 BAZA="${ZDROWIE_BAZA:-/home/panel}"
 STAN="${ZDROWIE_STAN:-$BAZA/.zdrowie-stan}"
 PANEL_URL="${ZDROWIE_PANEL_URL:-http://127.0.0.1:4801/api/data}"
 PROG="${ZDROWIE_PROG_DYSKU:-15}"
+KOPIA_STAN="${ZDROWIE_KOPIA_STAN:-$BAZA/kopie/ostatnia.json}"
+PODSUMOWANIE="${ZDROWIE_PODSUMOWANIE:-$BAZA/.zdrowie-podsumowanie}"
+GODZINA="${ZDROWIE_GODZINA_PODSUMOWANIA:-8}"
 log() { echo "zdrowie: $*"; }
 
 ntfy() {
@@ -77,15 +84,51 @@ else
   wynik claude zle "Claude niezalogowany: zaloguj w panelu albo przez ssh (claude auth login)"
 fi
 
-# 5. Ostatnia kopia nie starsza niż 36 h (pomijane, dopóki nie ma żadnej kopii).
+# 5. Ostatnia kopia nie starsza niż 36 h (pomijane, dopóki nie ma żadnej kopii). Czas z ostatnia.json, bez niego z pliku archiwum.
+teraz=$(date +%s)
+read -r kopia_at kopia_off_at < <(python3 - "$KOPIA_STAN" <<'PY' 2>/dev/null || echo "- -"
+import datetime, json, sys
+def sek(v):
+    try:
+        return str(int(datetime.datetime.fromisoformat(v).timestamp()))
+    except (TypeError, ValueError):
+        return "-"
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        d = json.load(f)
+except (OSError, ValueError):
+    d = {}
+if not isinstance(d, dict):
+    d = {}
+off_at = d.get("offAt") or (d.get("at") if d.get("off") is True else None)
+print(sek(d.get("at")), sek(off_at))
+PY
+)
 ostatnia=""
 for a in "$BAZA"/kopie/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].tar.gz; do [ -f "$a" ] && ostatnia="$a"; done
-if [ -z "$ostatnia" ]; then
+kopia_wiek_h=""
+if [ "${kopia_at:--}" != "-" ]; then
+  kopia_wiek_h=$(( (teraz - kopia_at) / 3600 ))
+elif [ -n "$ostatnia" ]; then
+  kopia_wiek_h=$(( (teraz - $(stat -c %Y "$ostatnia" 2>/dev/null || stat -f %m "$ostatnia")) / 3600 ))
+fi
+if [ -z "$kopia_wiek_h" ]; then
   wynik kopia brak "brak kopii"
+elif [ "$kopia_wiek_h" -lt 36 ] && ! systemctl is-failed --quiet kopia.service 2>/dev/null; then
+  wynik kopia ok "kopia aktualna"
 else
-  wiek=$(( ( $(date +%s) - $(stat -c %Y "$ostatnia" 2>/dev/null || stat -f %m "$ostatnia") ) / 3600 ))
-  if [ "$wiek" -lt 36 ] && ! systemctl is-failed --quiet kopia.service 2>/dev/null; then wynik kopia ok "kopia aktualna"
-  else wynik kopia zle "ostatnia kopia sprzed $wiek h albo ostatni przebieg nieudany (journalctl -u kopia)"; fi
+  wynik kopia zle "ostatnia kopia sprzed $kopia_wiek_h h albo ostatni przebieg nieudany (journalctl -u kopia)"
+fi
+
+# 5a. Kopia poza serwerem w ostatnich 26 h; sprawdzane tylko, gdy ustawiony KOPIA_CEL.
+kopia_poza=nie
+if [ "${kopia_off_at:--}" != "-" ] && [ $(( teraz - kopia_off_at )) -lt $(( 26 * 3600 )) ]; then kopia_poza=tak; fi
+if [ -z "${KOPIA_CEL:-}" ]; then
+  wynik kopia-poza brak "kopia tylko na serwerze (KOPIA_CEL nieustawiony)"
+elif [ "$kopia_poza" = tak ]; then
+  wynik kopia-poza ok "kopia poza serwerem aktualna"
+else
+  wynik kopia-poza zle "brak kopii poza serwerem z ostatnich 26 h (journalctl -u kopia)"
 fi
 
 # 6. Zapis kart do GitHuba: ostatni przebieg usługi.
@@ -114,6 +157,8 @@ while [ "$i" -lt "${#NAZWY[@]}" ]; do
   log "$n: $w ($o)"
   i=$((i + 1))
 done
+echo "kopia_wiek_h=$kopia_wiek_h" >> "$nowy_stan"
+echo "kopia_poza=$kopia_poza" >> "$nowy_stan"
 mv -f "$nowy_stan" "$STAN"
 
 if [ -n "$zmiany_zle" ]; then
@@ -122,4 +167,25 @@ fi
 if [ -n "$zmiany_ok" ]; then
   ntfy "Serwer: znów w porządku"$'\n'"${zmiany_ok%$'\n'}" default white_check_mark
 fi
+# Podsumowanie dzienne: pierwszy przebieg od godziny $GODZINA czasu polskiego, raz na dzień.
+dzis="$(TZ=Europe/Warsaw date +%F)"
+godz="$(TZ=Europe/Warsaw date +%H)"
+if [ "$((10#$godz))" -ge "$GODZINA" ] && [ "$(cat "$PODSUMOWANIE" 2>/dev/null)" != "$dzis" ]; then
+  problemy=""; uwagi_info=""
+  i=0
+  while [ "$i" -lt "${#NAZWY[@]}" ]; do
+    case "${WYNIK[$i]}" in
+      zle) problemy="$problemy- ${OPIS[$i]}"$'\n' ;;
+      brak) [ "${NAZWY[$i]}" = kopia-poza ] && uwagi_info="$uwagi_info- ${OPIS[$i]}"$'\n' ;;
+    esac
+    i=$((i + 1))
+  done
+  if [ -n "$problemy" ]; then
+    ntfy "Serwer: problemy"$'\n'"${problemy}${uwagi_info%$'\n'}" default warning
+  else
+    ntfy "Serwer: wszystko w normie${uwagi_info:+$'\n'}${uwagi_info%$'\n'}" low white_check_mark
+  fi
+  echo "$dzis" > "$PODSUMOWANIE"
+fi
+
 [ "$zle_teraz" -eq 0 ]

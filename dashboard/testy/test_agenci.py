@@ -61,7 +61,11 @@ class Zadanie(Baza):
         self.assertEqual(rec["state"], "done")
         call = self.calls()[-1]
         self.assertEqual(call["argv"], ["-p", "--output-format", "stream-json", "--verbose",
-                                        "--permission-mode", "acceptEdits"])
+                                        "--permission-mode", "acceptEdits", "--allowedTools", agents.TASK_TOOLS])
+        tools = agents.TASK_TOOLS.split(",")                             # bez push i bez sieci
+        self.assertIn("Bash(git commit:*)", tools)
+        self.assertIn("Bash(git switch -c:*)", tools)
+        self.assertFalse([x for x in tools if "push" in x or "curl" in x or "Web" in x or x == "Bash"])
         self.assertEqual(os.path.realpath(call["cwd"]), self.folder)
         self.assertIn("z pliku ZADANIA.md, wiersz", call["prompt"])
         self.assertIn("„Zadanie A”", call["prompt"])
@@ -72,7 +76,8 @@ class Zadanie(Baza):
     def test_model_z_ustawien(self):
         m = self.new_manager(PANEL_AGENT_MODEL="sonnet")
         self.wait(self.run_task("Zadanie A", m)[2]["id"], manager=m)
-        self.assertEqual(self.calls()[-1]["argv"][-2:], ["--model", "sonnet"])
+        argv = self.calls()[-1]["argv"]
+        self.assertEqual(argv[argv.index("--model"):argv.index("--model") + 2], ["--model", "sonnet"])
 
     def test_wiersz_zostaje_w_toku_dostaje_odbior(self):
         self.set_mode("zostaw")

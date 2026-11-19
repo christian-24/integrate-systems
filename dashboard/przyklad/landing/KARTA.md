@@ -29,3 +29,7 @@ Strona produktu z formularzem kontaktowym.
 
 ## Zasoby i ograniczenia
 - Budżet miesięczny na agentów: 150 zł.
+
+## Pytania do właściciela
+1. Czy formularz ma wysyłać kopię zgłoszenia do zgłaszającego?
+   termin: +2

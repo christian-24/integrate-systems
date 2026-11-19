@@ -8,7 +8,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/data              projekty, etapy, zadania, kampanie, kalendarz i blok agents
   POST /api/task/update       zmienia pola zadania w ZADANIA.md albo w pliku kampanii
   POST /api/task/state        zmienia sam stan zadania
-  POST /api/task/detail       dopisuje albo zmienia jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…)
+  POST /api/task/detail       jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…, poprawka, następne, krok)
   POST /api/task/add          dopisuje zadanie do etapu, do „Do rozplanowania” albo do harmonogramu kampanii
   POST /api/stage/update      zmienia termin etapu
   POST /api/campaign/update   zmienia wynik i stan kampanii
@@ -21,6 +21,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/project/add       dopisuje folder do rejestru projektów (opcjonalnie zakłada pliki standardu)
   POST /api/project/remove    usuwa projekt z rejestru; pliki zostają
   POST /api/project/meta      zmienia pola karty projektu: faza, klient, próg (KARTA.md)
+  POST /api/session/logout-all  unieważnia wszystkie sesje (nowy klucz sesji w ../uruchomienia/stan.json)
   GET  /api/plik              tekst pliku .md/.txt z folderu projektu albo jego karty (?project=&path=&anchor=)
   GET  /terminy.ics           terminy etapów i publikacje jako kalendarz do subskrypcji (?k=klucz spoza komputera)
 
@@ -176,6 +177,8 @@ def load_projects(resolve=True):
                 p["lastDecision"]["date"] = resolve_date(p["lastDecision"]["date"])
             if p.get("nextStep"):
                 p["nextStep"]["date"] = resolve_date(p["nextStep"]["date"])
+            for q in p.get("questions") or []:
+                q["date"] = resolve_date(q.get("date", ""))
     return out, index
 
 
@@ -229,15 +232,17 @@ def update_task(body):
     return (200, "") if ok else CONFLICT
 
 
-DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało")
+DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok")
 
 
 def update_detail(body):
-    """{"id", "title", "key", "value"}: jeden klucz szczegółów pod wierszem zadania (projekt.set_detail)."""
+    """{"id", "title", "key", "value"}: jeden klucz szczegółów pod wierszem zadania (projekt.set_detail).
+    "krok": value {"index": n, "done": bool}; "następne": „Tytuł | kto: … | kiedy: …”."""
     where, error = _locate(body.get("id", ""))
     if error:
         return error
     key = str(body.get("key", "")).strip().lower()
+    key = {"nastepne": "następne"}.get(key, key)
     if key not in DETAIL_KEYS:
         return 400, "Nie zapisano: klucz %s." % ", ".join(DETAIL_KEYS)
     try:
@@ -516,6 +521,7 @@ WRITES = {"/api/task/state": change_task, "/api/task/update": lambda b: update_t
           "/api/agent/recheck": lambda b: get_agents().recheck_login(),
           "/api/agent/login-code": lambda b: get_agents().submit_login_code(b.get("code", "")),
           "/api/question/answer": lambda b: answer_question(b),
+          "/api/session/logout-all": lambda b: logout_all(b),
           "/api/plan/ask": lambda b: get_agents().run_plan(b.get("text", "")),
           "/api/plan/accept": lambda b: get_agents().accept_plan(b.get("id", ""), b.get("ids"))}
 
@@ -619,20 +625,78 @@ def build_data():
     if status == "ok":
         calendar = {"status": "ok", "source": "macos", "readAt": cal.get("readAt"),
                     "calendars": cal.get("calendars", []), "events": cal.get("events", [])}
-    else:
+    elif out["projectsSource"] == "sample":
         calendar = {"status": status, "source": "sample", "error": cal.get("error", ""), **sample_calendar()}
+    else:       # prawdziwe projekty: bez wydarzeń przykładowych
+        calendar = {"status": status, "source": "none", "error": cal.get("error", ""), "calendars": [], "events": []}
     calendar["connecting"] = _cal["connecting"]
     out["calendar"] = calendar
     out["today"] = datetime.date.today().isoformat()
     out["generatedAt"] = datetime.datetime.now().isoformat(timespec="seconds")
     out["mode"] = "live"
     out["icsPath"] = "/terminy.ics" + ("?k=" + ics_key() if TOKEN else "")
+    today = datetime.date.fromisoformat(out["today"])
     manager = get_agents()
-    manager.annotate(out["tasks"], out["projectsSource"])
+    manager.annotate(out["tasks"], out["projectsSource"], today)
+    for t in out["tasks"]:
+        t["ownerNeeds"] = projekt.owner_needs(t)
+    out.update(projekt.owner_counts(out["projects"], out["stages"], out["tasks"], today))
     out["agents"] = manager.snapshot()
     out["agents"]["canRunTasks"] = out["projectsSource"] == "registry"
     out["history"] = project_history(out)
+    out["server"] = server_state()
     return out
+
+
+# ---------- stan serwera: kontrola zdrowia i kopie (uruchom/serwer/zdrowie.sh, kopia.sh) ----------
+HEALTH_FILE = "/home/panel/.zdrowie-stan"
+BACKUP_FILE = "/home/panel/kopie/ostatnia.json"
+BACKUP_OFF_HOURS = 26
+HEALTH_VALUES = ("ok", "zle", "brak")
+
+
+def _iso(value):
+    """Tekst ISO (data albo data z czasem) -> datetime bez strefy, w czasie lokalnym; None, gdy to nie data."""
+    if not isinstance(value, str) or not re.match(r"^\d{4}-\d\d-\d\d", value):
+        return None
+    try:
+        dt = datetime.datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt
+
+
+def server_state(now=None):
+    """Blok "server" w /api/data albo None, gdy nie ma ani pliku zdrowia, ani pliku kopii.
+
+    Zdrowie: wiersze nazwa=ok|zle|brak (PANEL_ZDROWIE_STAN, domyślnie /home/panel/.zdrowie-stan).
+    Kopia: JSON (PANEL_KOPIA_STAN, domyślnie /home/panel/kopie/ostatnia.json) z polami "at" (czas kopii)
+    i "offsiteAt" (czas wysyłki poza serwer, null bez wysyłki); "at" to czas odczytu zdrowia."""
+    now = now or datetime.datetime.now()
+    health = os.environ.get("PANEL_ZDROWIE_STAN", "").strip() or HEALTH_FILE
+    backup = os.environ.get("PANEL_KOPIA_STAN", "").strip() or BACKUP_FILE
+    text = projekt.read(health)
+    info = load_json(backup, None) if os.path.isfile(backup) else None
+    if text is None and info is None:
+        return None
+    checks = {}
+    for line in (text or "").splitlines():
+        name, sep, value = line.strip().partition("=")
+        if sep and re.match(r"^[\w.-]{1,40}$", name) and value.strip() in HEALTH_VALUES:
+            checks[name] = value.strip()
+    info = info if isinstance(info, dict) else {}
+    at = _iso(info.get("at"))
+    off = _iso(info.get("offsiteAt"))
+    if off is None and info.get("offsite") is True:
+        off = at
+    stamp = health if text is not None else backup
+    try:
+        read_at = datetime.datetime.fromtimestamp(os.path.getmtime(stamp))
+    except OSError:
+        read_at = now
+    return {"checks": checks, "backupAt": at.isoformat(timespec="seconds") if at else None,
+            "backupOff": bool(off and datetime.timedelta(0) <= now - off <= datetime.timedelta(hours=BACKUP_OFF_HOURS)),
+            "at": read_at.isoformat(timespec="seconds")}
 
 
 def project_history(out):
@@ -658,9 +722,33 @@ def _derive(label):
     return hmac.new(TOKEN.encode("utf-8"), label.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def session_value():
-    """Wartość ciasteczka: pochodna hasła, nie samo hasło."""
-    return _derive("panel-sesja")
+SESSION_DAYS = 30
+
+
+def _session_sig(stamp):
+    """Podpis sesji: HMAC z hasła, losowego klucza sesji (stan panelu) i chwili logowania."""
+    return _derive("panel-sesja|%s|%d" % (get_agents().session_key(), stamp))
+
+
+def session_value(now=None):
+    """Wartość ciasteczka „chwila.podpis”: bez hasła; ważna SESSION_DAYS dni albo do „Wyloguj wszędzie”."""
+    stamp = int(now if now is not None else time.time())
+    return "%d.%s" % (stamp, _session_sig(stamp))
+
+
+def session_ok(value, now=None):
+    stamp, _, sig = str(value or "").partition(".")
+    if not stamp.isdigit() or len(stamp) > 12 or not sig:
+        return False
+    age = (now if now is not None else time.time()) - int(stamp)
+    if age > SESSION_DAYS * 86400 or age < -300:
+        return False
+    return hmac.compare_digest(sig.encode("utf-8"), _session_sig(int(stamp)).encode("ascii"))
+
+
+def logout_all(body):
+    """POST /api/session/logout-all: nowy klucz sesji, wszystkie ciasteczka tracą ważność."""
+    return get_agents().reset_sessions()
 
 
 def ics_key():
@@ -920,7 +1008,7 @@ class Handler(BaseHTTPRequestHandler):
             morsel = SimpleCookie(self.headers.get("Cookie") or "").get(SESSION_COOKIE)
         except CookieError:
             return False
-        return morsel is not None and hmac.compare_digest(morsel.value.encode("utf-8"), session_value().encode("ascii"))
+        return morsel is not None and session_ok(morsel.value)
 
     def _allowed(self, path, query=""):
         """Dostęp według AGENCI.md. Gdy żądanie nie przechodzi, wysyła odmowę i zwraca False."""
@@ -983,7 +1071,8 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, UnicodeDecodeError):
             given = ""
         if given and hmac.compare_digest(given.encode("utf-8"), TOKEN.encode("utf-8")):
-            cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=2592000" % (SESSION_COOKIE, session_value())
+            cookie = "%s=%s; HttpOnly; SameSite=Strict; Path=/; Max-Age=%d" % (SESSION_COOKIE, session_value(),
+                                                                               SESSION_DAYS * 86400)
             if self._https():
                 cookie += "; Secure"
             return self._redirect("/", [("Set-Cookie", cookie)])

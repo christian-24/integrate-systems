@@ -21,7 +21,7 @@ import projekt  # noqa: E402
 
 ATRAPA_CLAUDE = os.path.join(TESTY, "atrapa_claude.py")
 ATRAPA_CODEX = os.path.join(TESTY, "atrapa_codex.py")
-ENV_KEYS = ("STAN_DIR", "LOKALNE_DIR", "PANEL_HISTORY_DIR")
+ENV_KEYS = ("STAN_DIR", "LOKALNE_DIR", "PANEL_HISTORY_DIR", "PANEL_ZDROWIE_STAN", "PANEL_KOPIA_STAN", "PANEL_RUNS_DIR")
 TODAY = datetime.date.today().isoformat()
 TOMORROW = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
 
@@ -69,7 +69,12 @@ class Baza(unittest.TestCase):
         self.lokalne = os.path.join(self.tmp, "lokalne")
         self.history_dir = os.path.join(self.tmp, "historia")
         self._environ = {k: os.environ.get(k) for k in ENV_KEYS}
-        os.environ.update({"STAN_DIR": self.stan, "LOKALNE_DIR": self.lokalne, "PANEL_HISTORY_DIR": self.history_dir})
+        # Stan serwera (zdrowie, kopia) i uruchomienia czytane przez pm.py też tylko z katalogu tymczasowego.
+        self.health_file = os.path.join(self.tmp, "zdrowie-stan")
+        self.backup_file = os.path.join(self.tmp, "kopie", "ostatnia.json")
+        os.environ.update({"STAN_DIR": self.stan, "LOKALNE_DIR": self.lokalne, "PANEL_HISTORY_DIR": self.history_dir,
+                           "PANEL_ZDROWIE_STAN": self.health_file, "PANEL_KOPIA_STAN": self.backup_file,
+                           "PANEL_RUNS_DIR": self.runs})
         quiet(projekt.cmd_nowy, self.folder, "Projekt testowy", register=self.registered)
         with open(os.path.join(self.folder, "ZADANIA.md"), "w", encoding="utf-8") as f:
             f.write(ZADANIA)

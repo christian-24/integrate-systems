@@ -7,7 +7,8 @@
 > Etap to nagłówek `## Etap: nazwa` i wiersz `termin: RRRR-MM-DD` pod nim. Etap bez otwartych zadań jest zamknięty.
 > Szczegóły zadania: wcięte wiersze pod zadaniem (cel:, gotowe gdy:, materiał:, kroki `- [ ]`, wynik:, decyzja:, zostało:).
 > Ścieżki w „materiał:” są względem repozytorium Opisarni albo folderu karty (KARTA.md, STYL.md, kampanie/).
-> Publikacje (posty i filmy) są w `kampanie/staly-rytm.md`; tu zostają kontakty i pomiary.
+> Publikacje (posty i filmy) i nagrania filmów są w `kampanie/staly-rytm.md`; tu zostają kontakty i pomiary.
+> Pole `po:` wskazuje zadania z tego pliku, które muszą być zrobione wcześniej. Stan kontaktu z firmą: marketing/kontakty.md.
 
 > Uzupełnione danymi z PC (audyt 2026-11-14) i odpowiedziami właściciela z 2026-11-14 (terminy etapów zatwierdzone).
 
@@ -27,22 +28,37 @@
 - [x] Eksport ZIP, Excel, portal Stripe, nowy landing z komodą 3D, refund limitu, ZDJ-1 za flagą (#126–#134, 2026-11-06)
 
 ## Etap: Bezpieczeństwo przed płacącymi
+termin: 2026-11-25
 
 - [x] SEC-3, SEC-5, SEC-1: zależności, sekrety i RODO, SAST backendu (2026-06-16)
-- [~] Zamknij SEC-2: SAST frontendu (XSS, open redirect, storage, CSP) | kto: claude | gdzie: chmura | wymaga: odbiór
+- [~] Zamknij SEC-2: SAST frontendu (XSS, open redirect, storage, CSP) | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
   cel: frontend bez znalezisk CRITICAL, HIGH i MEDIUM z SAST (XSS, open redirect, storage, CSP)
-  gotowe gdy: poprawki 3 LOW zacommitowane, testy frontendu zielone, raport odebrany przez właściciela
+  gotowe gdy: raport SEC-2 odebrany przez właściciela; commit i wdrożenie poprawek w zadaniach następczych poniżej
   materiał: docs/security/raport-audytu.md
   wynik: re-audyt 2026-11-18: 0 CRITICAL, 0 HIGH, 0 MEDIUM; 3 LOW naprawione w kodzie
   decyzja: odebrać raport SEC-2 i zgodzić się na commit poprawek 3 LOW
   zostało: poprawki niezacommitowane; testy frontendu nieuruchomione (brak Node.js na serwerze)
-- [~] Zamknij SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit | kto: claude | gdzie: chmura | wymaga: odbiór
+- [~] Zamknij SEC-4: infra, nagłówki bezpieczeństwa, CORS, rate-limit | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
   cel: infrastruktura bez znalezisk CRITICAL i HIGH; nagłówki, CORS i limity zgodne z raportem
-  gotowe gdy: poprawki zacommitowane i wdrożone, `caddy validate` i pytest zielone, raport odebrany przez właściciela
+  gotowe gdy: raport SEC-4 odebrany przez właściciela; commit i wdrożenie poprawek w zadaniach następczych poniżej
   materiał: docs/security/raport-audytu.md
   wynik: re-audyt 2026-11-18: 0 CRITICAL, 0 HIGH; 1 MEDIUM (brak limitu body na Caddy) i 2 LOW naprawione w repo; 2 LOW zapisane jako dług
   decyzja: odebrać raport SEC-4 i zgodzić się na commit oraz wdrożenie limitu body na Caddy
   zostało: poprawki niezacommitowane i niewdrożone; `caddy validate` i pytest nieuruchomione (brak uprawnień)
+- [ ] Zacommituj poprawki SEC-2 na gałęzi agenta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
+  cel: poprawki 3 LOW z SAST frontendu zapisane w jednym commicie
+  gotowe gdy: lokalny commit na gałęzi agent/2026-11-21-sec-2, bez push; w wynik: gałąź, commit i wynik testów frontendu albo powód ich pominięcia
+  materiał: docs/security/raport-audytu.md
+- [ ] Zacommituj poprawki SEC-4 na gałęzi agenta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
+  cel: limit body na Caddy i poprawki 2 LOW zapisane w jednym commicie
+  gotowe gdy: lokalny commit na gałęzi agent/2026-11-21-sec-4, bez push; `caddy validate` i pytest zielone albo w zostało: powód; w wynik: gałąź i commit
+  materiał: docs/security/raport-audytu.md
+- [ ] Wdróż poprawki SEC-2 na produkcję | kto: ty | kiedy: 2026-11-24 | czas: 15 | po: Zacommituj poprawki SEC-2
+  cel: poprawki SEC-2 działają na opisarnia.pl
+  gotowe gdy: gałąź z commitem SEC-2 wypchnięta i zmergowana do master, CI i auto-deploy zielone, opisarnia.pl otwiera się bez błędów
+- [ ] Wdróż poprawki SEC-4 na produkcję | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Zacommituj poprawki SEC-4
+  cel: limit body na Caddy i poprawki SEC-4 działają na serwerze Opisarni
+  gotowe gdy: gałąź z commitem SEC-4 zmergowana do master i wdrożona; na serwerze `caddy validate` zielone, opisarnia.pl odpowiada po przeładowaniu Caddy
 
 ## Etap: Testy
 
@@ -51,7 +67,7 @@
 ## Etap: Produkcja
 termin: 2026-11-17
 
-- [ ] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | czas: 5
+- [ ] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: klucz Mistral z historii rozmowy przestaje działać
   gotowe gdy: klucz ma w konsoli Mistral stan unieważniony, a zapasowy silnik Opisarni działa na innym kluczu
   Klucz leży jawnie w historii Claude Code z PC (archiwum rozmów na Macu, ksiega/MIGRACJA.md).
@@ -95,15 +111,23 @@ termin: 2026-12-23
 termin: 2026-11-30
 
 - [x] Sprawdź rejestrację na telefonie: mail weryfikacyjny dochodzi (działa od 2026-11-18, potwierdził właściciel)
+- [ ] Załóż rejestr kontaktów marketing/kontakty.md bez nazwisk | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+  cel: jedna tabela stanu kontaktu z każdą firmą z partii 1–4, bez nazwisk i adresów
+  gotowe gdy: marketing/kontakty.md ma kolumny firma, partia, zaproszenie, przyjęte, wiadomość 1, odpowiedź, link, konto, przypomnienie, koniec oraz po jednym wierszu dla 24 firm z partii 1–3 i 8 firm rezerwy (partia 4)
+  materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/plan-10-kont.md#7
+  materiał: marketing/plan-10-kont.md#9
+  Bez nazwisk, stanowisk i adresów: dane osobowe tylko w marketing/outreach/rejestr-zgod.md. W kolumnach daty RRRR-MM-DD albo „tak”/„nie”.
 - [ ] Załóż tabelę dziennego pomiaru z planu (pkt 8) | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: jedno miejsce na dzienne liczby kontaktów i kont od 19.11 do 30.11
   gotowe gdy: tabela z punktu 8 planu ma wiersze 19.11–30.11 i wpisane liczby z 19.11
   materiał: marketing/plan-10-kont.md#8
   Tabela zawiera tylko liczby; nazwiska i adresy wyłącznie w marketing/outreach/rejestr-zgod.md (plan, pkt 9).
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | po: Załóż rejestr kontaktów
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 1
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 19.11
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
   - [ ] Kedameble
   - [ ] Bambooko
   - [ ] Meble z Polski 24
@@ -123,10 +147,11 @@ termin: 2026-11-30
   gotowe gdy: pod postem 1 na LinkedIn i Facebooku nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
   Szkic odpowiedzi „jak to wypróbować” jest w punkcie 4.
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Załóż rejestr kontaktów
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 2
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 21.11
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
   - [ ] ERMA Meble
   - [ ] ATB Meble
   - [ ] Alan Meble
@@ -135,23 +160,25 @@ termin: 2026-11-30
   - [ ] Miloni
   - [ ] VERYSIMPL
   - [ ] Lano Meble
-- [ ] Wyślij wiadomość 1 do osób z partii 1, które przyjęły zaproszenie | kto: ty | kiedy: 2026-11-21 | czas: 20
+- [ ] Wyślij wiadomość 1 do osób z partii 1, które przyjęły zaproszenie | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 1
   cel: każda osoba, która przyjęła zaproszenie, dostaje pytanie bez linku
   gotowe gdy: w tabeli z punktu 8 przy 21.11 wpisane liczby „Przyjęte” i „Rozmowy”
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
   Zdanie o firmie weź z pierwszego akapitu jej draftu w marketing/outreach/drafts/. Link dopiero po odpowiedzi „tak” (wiadomość 2).
 - [ ] Napisz 5 komentarzy pod cudzymi postami o Allegro i eksporcie mebli | kto: ty | kiedy: 2026-11-22 | czas: 30
   cel: wyjście poza własną sieć kontaktów bez kosztów
   gotowe gdy: 5 merytorycznych komentarzy pod postami 5 różnych autorów, bez linku do Opisarni
   materiał: marketing/plan-10-kont.md#10
-- [ ] Wyślij wiadomość do 5 kolejnych znajomych z branży (wariant B, tura 2) | kto: ty | kiedy: 2026-11-23 | czas: 15
+- [ ] Wyślij wiadomość do 5 kolejnych znajomych z branży (wariant B, tura 2) | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wyślij wiadomość do 5 znajomych z branży
   cel: kolejne 5 osób z branży dostaje link do darmowego konta
   gotowe gdy: 5 wiadomości wysłanych; w tabeli z punktu 8 przy 23.11 wpisane „Linki podane”
   materiał: marketing/plan-10-kont.md#5
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Załóż rejestr kontaktów
   cel: 8 zaproszeń do osób od e-commerce lub marketingu w firmach z partii 3
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 24.11
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
   - [ ] Meble Emilia
   - [ ] Brattex
   - [ ] Vilmax
@@ -161,39 +188,43 @@ termin: 2026-11-30
   - [ ] Comforteo
   - [ ] MGK Meble
   Większe firmy: szukaj osoby od e-commerce lub marketingu, nie właściciela.
-- [ ] Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2 | kto: ty | kiedy: 2026-11-24 | czas: 15
+- [ ] Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2 | kto: ty | kiedy: 2026-11-24 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 2
   cel: każda osoba, która przyjęła zaproszenie po 21.11, dostaje pytanie bez linku
   gotowe gdy: w tabeli z punktu 8 przy 24.11 wpisane liczby „Przyjęte” i „Rozmowy”
   materiał: marketing/plan-10-kont.md#5
-- [ ] Wyślij przypomnienia do partii 1 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-25 | czas: 10
+  materiał: marketing/kontakty.md
+- [ ] Wyślij przypomnienia do partii 1 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-25 | czas: 10 | po: Wyślij wiadomość 1 do osób z partii 1
   cel: jedno przypomnienie do osób z partii 1, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa z partii 1 bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
   materiał: marketing/plan-10-kont.md#5
-- [ ] Policz konta na punkt kontrolny 25.11 | kto: ty | kiedy: 2026-11-25 | czas: 10
+  materiał: marketing/kontakty.md
+- [ ] Policz konta na punkt kontrolny 25.11 | kto: ty | kiedy: 2026-11-25 | czas: 10 | po: Załóż tabelę dziennego pomiaru
   cel: decyzja, czy uruchomić rezerwę z punktu 7 planu
   gotowe gdy: liczba kont z 25.11 wpisana w tabeli z punktu 8; przy wyniku poniżej 4 uruchomiona rezerwa
   materiał: marketing/plan-10-kont.md#7
   materiał: metryki.md#6
   Rezerwa (partia 4): Kerbe Design, Lofthron, Albero Meble, Kverko, Mille Tavoli, Stol Poprosze, Sleep Home, Valor Meble.
   Rezerwa obejmuje też dodatkowy post 28.11 (marketing/linkedin/drafts/2026-06-24-chatgpt-nie-wystarcza-workflow.md).
-- [ ] Wyślij wiadomość 1 do kontaktów z partii 3 | kto: ty | kiedy: 2026-11-26 | czas: 15
+- [ ] Wyślij wiadomość 1 do kontaktów z partii 3 | kto: ty | kiedy: 2026-11-26 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 3
   cel: każda osoba z partii 3, która przyjęła zaproszenie, dostaje pytanie bez linku
   gotowe gdy: w tabeli z punktu 8 przy 26.11 wpisane liczby „Przyjęte” i „Rozmowy”
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
 - [ ] Odpowiedz na komentarze pod postami 2 i 3 | kto: ty | kiedy: 2026-11-26 | czas: 15
   cel: każdy komentarz pod postami z 23.11 i 25.11 ma odpowiedź
   gotowe gdy: pod postami 2 i 3 nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
-- [ ] Wyślij przypomnienia do partii 2 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 10
+- [ ] Wyślij przypomnienia do partii 2 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 10 | po: Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2
   cel: jedno przypomnienie do osób z partii 2, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa z partii 2 bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
   materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/kontakty.md
 - [ ] Wpisz zgody na kontakt mailowy do rejestru zgód | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: każda zgoda z rozmów na LinkedIn zapisana, zanim użyjesz draftu maila
   gotowe gdy: w marketing/outreach/rejestr-zgod.md każda zgoda ma datę, osobę i podstawę „LinkedIn”; prośby o brak kontaktu jako „opt-out”
   materiał: marketing/outreach/rejestr-zgod.md
   materiał: marketing/plan-10-kont.md#9
-- [ ] Wyślij wiadomość do ostatnich znajomych z branży (wariant B, tura 3) | kto: ty | kiedy: 2026-11-28 | czas: 15
+- [ ] Wyślij wiadomość do ostatnich znajomych z branży (wariant B, tura 3) | kto: ty | kiedy: 2026-11-28 | czas: 15 | po: Wyślij wiadomość do 5 kolejnych znajomych
   cel: łącznie 10–15 osób z branży dostało link do darmowego konta
   gotowe gdy: wiadomości wysłane; w tabeli z punktu 8 przy 28.11 wpisane „Linki podane”
   materiał: marketing/plan-10-kont.md#5
@@ -202,7 +233,7 @@ termin: 2026-11-30
   gotowe gdy: liczba kont bez udanej generacji wpisana w tabeli z punktu 8 przy 28.11
   materiał: metryki.md#6
   Konto bez wygenerowanego opisu nie liczy się do celu 20 aktywnych (plan, pkt 10).
-- [ ] Wyślij krótką wiadomość do nowych kont bez generacji | kto: ty | kiedy: 2026-11-29 | czas: 15
+- [ ] Wyślij krótką wiadomość do nowych kont bez generacji | kto: ty | kiedy: 2026-11-29 | czas: 15 | po: które nowe konta nie wygenerowały opisu
   cel: osoby z kontem, ale bez opisu, generują pierwszy opis
   gotowe gdy: każda osoba z listy z 28.11, z którą już rozmawiasz, dostała jedną wiadomość
   materiał: marketing/plan-10-kont.md#3
@@ -216,7 +247,7 @@ termin: 2026-11-30
   gotowe gdy: w metryki.md, punkt 3, wiersz 2026-11-30 ma liczby we wszystkich kolumnach
   materiał: metryki.md#3
   materiał: metryki.md#6
-- [ ] Zdecyduj o kanałach na grudzień według progu z planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 10
+- [ ] Zdecyduj o kanałach na grudzień według progu z planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 10 | po: Wpisz pomiar checkpointu 30.11, Uzupełnij tabelę kanałów
   cel: decyzja, które kanały zostają, a które wymieniasz
   gotowe gdy: w DECYZJE.md wpis z 2026-11-30 z liczbą kont i wybranym wariantem z tabeli „Decyzja 30.11”
   materiał: marketing/plan-10-kont.md#8

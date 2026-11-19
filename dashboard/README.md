@@ -51,7 +51,10 @@ Pełny opis: `AGENCI.md`.
 - Logowanie: gdy Claude nie jest zalogowany, widok Agenci ma przycisk „Zaloguj”. Otwiera okno Terminala z `claude auth login`
   (`/api/agent/login`); logujesz się w przeglądarce, panel nie widzi danych logowania. Potem „Sprawdź ponownie” (`/api/agent/recheck`).
   Na Macu za pierwszym razem system pyta, czy Python może sterować Terminalem.
-- Automat: sam bierze zadania z `kto: claude|codex`, `gdzie:` tego komputera i datą `kiedy:` nie późniejszą niż dziś; domyślnie wyłączony.
+- Automat: sam bierze zadania z `kto: claude|codex`, `gdzie:` tego komputera (bez `gdzie:` na serwerze, węźle domyślnym)
+  i datą `kiedy:` nie późniejszą niż dziś (także z przeszłości), gdy poprzednicy z `po:` są zrobieni; domyślnie wyłączony.
+  Rytm marketingu (`kampanie/staly-rytm.md`) zakłada zadania postów i wpisania wyników; opis w `AGENCI.md`.
+- Zadania Claude dostają `--allowedTools` z listą bezpiecznych narzędzi (lokalny git, testy, pliki; bez push i sieci).
 - Tryb uprawnień `acceptEdits`; polecenia powłoki dopuszcza `.claude/settings.json` projektu. Trybu z pominięciem uprawnień panel nie używa.
 - Rekordy: `../uruchomienia/<id>.json`, surowy zapis `<id>.log`.
 
@@ -120,6 +123,24 @@ Format wciętych wierszy pod zadaniem opisuje `standard/STANDARD.md` (sekcja „
            "steps": [{"done": false, "text": "Kedameble"}], "result": "", "decision": "", "left": "", "notes": []}
 ```
 
+Zadanie ma też:
+
+```
+"after": ["makietę"],                                       fragmenty z pola po:
+"waitingFor": [{"title": "Przygotuj makietę", "done": false, "id": "…"}],   poprzednicy; id "" gdy fragment nie pasuje
+"ownerNeeds": ["odbiór"],                                   wartości wymaga, które są sprawą właściciela (bez zgody przy kto: ty)
+"stateSince": "2026-11-15",                                 od kiedy w toku albo do odbioru ("" poza tymi stanami i w przykładach)
+"stalled": false,                                           [~] bez agenta dłużej niż 3 dni
+"reviewOverdue": false                                      odbiór czeka dłużej niż 2 dni
+```
+
+`detail` ma dodatkowo `fix` (wiersz `poprawka:`) i `next` (wiersz `następne:`). `runBlock` „Czeka na: …” podaje
+niezrobionych poprzedników. Dzień wejścia w stan panel zapisuje w `../uruchomienia/stan.json` (pole `since`), skąd
+czyta go też `pm.py`.
+
+Liczniki spraw właściciela na najwyższym poziomie `/api/data` (projekty poza stanem wstrzymany i backlog, zadania
+i pytania bez odpowiedzi): `youToday` (dziś i po terminie), `youWeek` (w ciągu 7 dni), `youLater` (później albo bez daty).
+
 Projekt ma `nextStep`: `{"title", "taskId", "executor", "date"}` dla otwartego zadania z najwcześniejszą datą,
 a bez dat pierwszego otwartego z polem `kto`; `null`, gdy takiego nie ma.
 
@@ -135,6 +156,23 @@ plik poza tymi folderami, dowiązanie wychodzące na zewnątrz, inny typ pliku, 
 Sekcja `## Pytania do właściciela` w `KARTA.md`: wiersze `1. pytanie` albo `- pytanie`, pod pytaniem wcięty wiersz `   Odpowiedź: …`.
 Panel pokazuje pytania bez odpowiedzi w Przeglądzie, w widoku Wymaga Ciebie i w księdze projektu. Odpowiedź z panelu
 (`/api/question/answer` `{id, n, answer}`) zapisuje albo zmienia ten wiersz; pusta odpowiedź go usuwa.
+Pod pytaniem może stać wcięty wiersz `   termin: RRRR-MM-DD` (albo „do RRRR-MM-DD” w treści); pytanie w `questions`
+ma pole `date` (`"RRRR-MM-DD"` albo `""`). Pytanie po terminie to ryzyko w raporcie PM.
+
+### Stan serwera
+
+`/api/data` → `server`:
+
+```
+"server": {"checks": {"panel": "ok", "kopia": "zle", "useme": "brak"},
+           "backupAt": "2026-11-19T03:00:00", "backupOff": true, "at": "2026-11-19T09:10:00"}
+```
+
+- `checks`: wiersze `nazwa=ok|zle|brak` z pliku kontroli zdrowia (`PANEL_ZDROWIE_STAN`, domyślnie `/home/panel/.zdrowie-stan`);
+  `at`: czas zmiany tego pliku.
+- `backupAt`: pole `at` z pliku ostatniej kopii (`PANEL_KOPIA_STAN`, domyślnie `/home/panel/kopie/ostatnia.json`);
+  `backupOff`: kopia poza serwerem (`offsiteAt`, albo `offsite: true` przy `at`) w ostatnich 26 h.
+- Brak obu plików (Mac, PC) → `"server": null`.
 
 ### Historia
 
@@ -151,7 +189,7 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | Żądanie | Zmiana |
 |---|---|
 | `POST /api/task/update` | pola zadania: tytuł, stan, kto, gdzie, kiedy, pora, czas, wymaga, blokada, kanał |
-| `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach |
+| `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach; `następne` to „Tytuł \| kto: … \| kiedy: …” (sprawdzany jak wiersz zadania); `krok` z value `{"index": n, "done": bool}` zmienia n-ty krok (od 0) |
 | `POST /api/task/add` | nowe zadanie w etapie, w kampanii albo w „Do rozplanowania” (pod szczegółami ostatniego zadania) |
 | `POST /api/stage/update` | termin etapu |
 | `POST /api/campaign/update` | wynik i stan kampanii |
@@ -165,6 +203,7 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | `POST /api/project/add` | dopisuje folder do rejestru; opcjonalnie zakłada brakujące pliki standardu |
 | `POST /api/project/remove` | usuwa projekt z rejestru; pliki zostają |
 | `POST /api/project/meta` | `faza`, `klient`, `próg` w `KARTA.md` projektu z rejestru albo ze zbieracza |
+| `POST /api/session/logout-all` | `{}`: unieważnia wszystkie sesje (nowy losowy klucz sesji w `../uruchomienia/stan.json`) |
 
 Gdy plik zmienił się w międzyczasie (agent albo edytor), serwer odmawia (409), a panel wczytuje stan od nowa.
 Żądania z obcej strony są odrzucane (403).
@@ -178,11 +217,14 @@ Gdy plik zmienił się w międzyczasie (agent albo edytor), serwer odmawia (409)
 | inne urządzenie, bez `PANEL_TOKEN` | odmowa (403) |
 
 Błędne hasło: odpowiedź po 1 s, najwyżej 10 prób na minutę. Kroki dla iPhone'a: `../INSTALACJA.md`.
+Sesja wygasa po 30 dniach. „Wyloguj wszystkie urządzenia” (`/api/session/logout-all`) unieważnia od razu wszystkie sesje.
 
 ## Kalendarz
 
 - Odczyt (tylko Mac): `build/PanelKalendarz.app` (źródło `kalendarz.swift`), EventKit, tylko do odczytu.
   Pierwszy odczyt wymaga zgody: przycisk „Połącz kalendarz”.
+- Bez połączonego kalendarza wydarzenia przykładowe (`kalendarz-przyklad.json`) pojawiają się tylko przy projektach
+  przykładowych; przy projektach z rejestru albo zbieracza `calendar` ma `source: "none"` i pustą listę `events`.
 - Po zmianie `kalendarz.swift` uruchom `./zbuduj-kalendarz.sh`; macOS zapyta wtedy o zgodę ponownie.
 - Eksport: `/terminy.ics` (terminy etapów i daty publikacji). Z tego komputera bez klucza; z innego urządzenia
   adres z kluczem `/terminy.ics?k=…`, który panel pokazuje w zakładce Kalendarz.
@@ -202,7 +244,7 @@ Błędne hasło: odpowiedź po 1 s, najwyżej 10 prób na minutę. Kroki dla iPh
 | `testy/` | testy uruchamiania na atrapie polecenia `claude` |
 | `przyklad/` | trzy projekty przykładowe i przykładowa notatka PM (daty względne, np. `+3`) |
 | `przyklad-odtworz.py` | przywraca `przyklad/` do stanu początkowego |
-| `kalendarz-przyklad.json` | przykładowe wydarzenia |
+| `kalendarz-przyklad.json` | przykładowe wydarzenia (tylko przy projektach przykładowych) |
 | `kalendarz.swift`, `kalendarz-Info.plist`, `zbuduj-kalendarz.sh` | pomocnik kalendarza |
 | `podglad.html` | wynik `python3 server.py --export podglad.html`, strona bez serwera |
 | `../uruchom/` | skrypty stałego uruchamiania (Mac, Windows) i ręcznego startu |
@@ -214,6 +256,8 @@ Błędne hasło: odpowiedź po 1 s, najwyżej 10 prób na minutę. Kroki dla iPh
 W folderze IntegrateSystems, bez sieci i bez zużycia limitu:
 
     python3 -m unittest discover -s dashboard/testy
+
+Runda 2 (kolejność `po:`, kroki, poprawka, następne, terminy pytań, liczniki, Automat, stan serwera, sesje): `testy/test_runda2.py`.
 
 ## Poza zakresem
 

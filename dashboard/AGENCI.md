@@ -9,8 +9,12 @@ Ten sam serwer działa na każdym komputerze. Każdy węzeł uruchamia tylko wł
 
 | Węzeł | `PANEL_MACHINE` | Rola |
 |---|---|---|
-| PC z Windows, włączony stale | `pc` | główny: Automat, raport PM, dostęp z telefonu |
+| serwer (po D13) | `cloud` (`gdzie: chmura`) | główny: Automat, raport PM, dostęp z telefonu; węzeł domyślny |
+| PC z Windows | `pc` | zadania `gdzie: pc` |
 | Mac | `mac` | praca przy komputerze, zadania `gdzie: mac` |
+
+Węzeł domyślny bierze w Automacie także zadania bez pola `gdzie:`. Domyślnie jest nim każdy węzeł poza Makiem;
+`PANEL_DEFAULT_NODE=1` albo `0` ustawia to wprost.
 
 Pliki projektów przenosi między komputerami git danego projektu.
 
@@ -24,6 +28,10 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_ALLOWED_HOSTS` | brak | dodatkowe nazwy hosta (np. nazwa w Tailscale) |
 | `PANEL_TOKEN` | brak | hasło panelu dla połączeń spoza tego komputera |
 | `PANEL_MACHINE` | `mac` na macOS, inaczej `pc` | nazwa węzła |
+| `PANEL_DEFAULT_NODE` | `1` poza Makiem | `1`: Automat bierze też zadania bez `gdzie:` |
+| `PANEL_RUNS_DIR` | `../uruchomienia` | rekordy uruchomień i `stan.json` (czyta je też `standard/pm.py`) |
+| `PANEL_ZDROWIE_STAN` | `/home/panel/.zdrowie-stan` | wynik kontroli zdrowia serwera (`server.checks` w `/api/data`) |
+| `PANEL_KOPIA_STAN` | `/home/panel/kopie/ostatnia.json` | stan ostatniej kopii (`server.backupAt`, `server.backupOff`) |
 | `PANEL_CLAUDE`, `PANEL_CODEX` | z `PATH` (Claude także `~/.local/bin/claude`) | ścieżki poleceń |
 | `PANEL_AGENTS_MAX` | `2` | ile uruchomień naraz |
 | `PANEL_AGENT_TIMEOUT` | `3600` | limit czasu jednego uruchomienia, sekundy |
@@ -38,7 +46,10 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 - Połączenie z tego komputera (loopback): bez hasła.
 - Połączenie z innego urządzenia: wymagane `PANEL_TOKEN`. Bez ustawionego hasła serwer odmawia (403).
   Strona `GET /wejscie` ma jedno pole; `POST /wejscie` (formularz, pole `haslo`) ustawia ciasteczko
-  `panel_sesja` (HttpOnly, SameSite=Strict; wartość to HMAC z hasła, nie samo hasło) i przekierowuje na `/`.
+  `panel_sesja` (HttpOnly, SameSite=Strict, Max-Age 30 dni) i przekierowuje na `/`. Wartość to `chwila.podpis`:
+  chwila logowania i HMAC z hasła, losowego klucza sesji (`sessionKey` w `stan.json`) i tej chwili, nie samo hasło.
+  Sesja starsza niż 30 dni nie działa. `POST /api/session/logout-all` losuje nowy klucz sesji: wszystkie
+  dotychczasowe ciasteczka, także bieżące, przestają działać.
   Gdy żądanie przyszło przez HTTPS (pośrednik, np. Caddy, ustawia `X-Forwarded-Proto: https`), ciasteczko ma też `Secure`.
   Żądanie bez ciasteczka: strony → 303 na `/wejscie`, `/api/*` → 401 `{"ok":false,"error":"Wymagane hasło."}`.
   Błędne hasło: odpowiedź po 1 s, najwyżej 10 prób na minutę (potem 429).
@@ -80,7 +91,9 @@ denials       odmowy uprawnień, najwyżej 10 krótkich wierszy
 ```
 
 Pliki: `../uruchomienia/<id>.json` (rekord), `../uruchomienia/<id>.log` (surowy strumień),
-`../uruchomienia/stan.json` (Automat, znacznik logowania, limit). Serwer trzyma 200 ostatnich rekordów.
+`../uruchomienia/stan.json` (Automat, znacznik logowania, limit; `since`: od kiedy zadanie jest w toku albo czeka
+na odbiór, `{"projekt|plik|tytuł": {"s": "doing|review", "d": "RRRR-MM-DD"}}`; `sessionKey`: klucz sesji panelu;
+`rytmDone`: publikacje, dla których powstało już zadanie wpisania wyniku). Serwer trzyma 200 ostatnich rekordów.
 Po restarcie serwera uruchomienia `queued` i `running` dostają stan `stopped`.
 
 ### Polecenia
@@ -89,10 +102,15 @@ Prompt idzie przez stdin (bez problemów z cudzysłowami na Windows). Katalog ro
 
 | Rodzaj | Polecenie |
 |---|---|
-| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M]` |
+| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M] [--add-dir <folder karty>] --allowedTools "<lista>"` |
 | pm | w folderze IntegrateSystems: jak wyżej oraz `--agent pm --allowedTools "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Write,Edit,Glob,Grep"` |
 | check | `claude -p --output-format stream-json --verbose --model haiku`, prompt „Odpowiedz jednym słowem: ok” |
 | task, Codex | `codex exec --json --sandbox workspace-write --skip-git-repo-check -C <folder> -` |
+
+Lista dla zadań Claude (`TASK_TOOLS` w `agents.py`), bez push i bez sieci:
+`Bash(git status:*)`, `Bash(git diff:*)`, `Bash(git log:*)`, `Bash(git switch -c:*)`, `Bash(git checkout -b:*)`,
+`Bash(git add:*)`, `Bash(git commit:*)`, `Bash(python3 -m pytest:*)`, `Bash(pytest:*)`, `Bash(python3 -m unittest:*)`,
+`Read`, `Edit`, `Write`, `Glob`, `Grep`.
 
 Panel nigdy nie używa `--dangerously-skip-permissions`, `bypassPermissions` ani odpowiedników w Codex.
 Polecenia powłoki, na które agent ma zgodę, ustala `.claude/settings.json` projektu; odmowy widać w rekordzie (`denials`).
@@ -107,9 +125,14 @@ Agent dostaje prompt: jedno zadanie (plik, wiersz, tytuł, etap) i jego szczegó
 kroki, notatki, wynik i „zostało” z poprzedniej pracy; format w `standard/STANDARD.md`), zakaz zmiany innych zadań
 i terminów, zakaz zmiany tytułu zadania i dopisywania do niego raportu, zakaz działań nieodwracalnych i wychodzących
 na zewnątrz. Na koniec agent odhacza wykonane kroki, dopisuje pod swoim wierszem wcięte wiersze `wynik:`, `decyzja:`
-(gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało), pytania do właściciela dopisuje do sekcji
-„Pytania do właściciela” w `KARTA.md` (poza tym karty nie zmienia), zmienia stan własnego wiersza
-(`[x]`; `[!]` + `blokada:`; albo `[~]` + `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
+(gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało), może dopisać jeden wiersz
+`następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` (propozycja; nowych zadań nie zakłada), pytania do właściciela dopisuje
+do sekcji „Pytania do właściciela” w `KARTA.md`, z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
+nie zmienia), zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
+albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
+Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”), prompt ją podaje, a agent poprawia pracę według niej.
+Pracę w repozytorium git agent zapisuje na nowej gałęzi `agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem
+(bez push, bez plików KARTA.md, ZADANIA.md, DECYZJE.md) i podaje gałąź i skrót commita w `wynik:`.
 
 Po zakończeniu:
 - stan inny niż `done`, a wiersz dalej `[~]`: serwer przywraca `[ ]`;
@@ -126,6 +149,7 @@ Pierwszy pasujący powód; pusty tekst oznacza, że można uruchomić.
 | stan zrobione | `Zrobione` |
 | `kto: ty` | `Zadanie po Twojej stronie` |
 | `zgoda` w polu `wymaga` (także `wymaga: odbiór, zgoda`) | `Czeka na Twoją zgodę` |
+| niezrobiony poprzednik z `po:` (także fragment bez pasującego wiersza) | `Czeka na: Tytuł poprzednika, …` |
 | brak polecenia (`claude`; dla `kto: codex` polecenie `codex`) | `Brak polecenia claude` / `Brak polecenia codex` |
 | uruchomienie w kolejce albo w toku | `W toku` |
 
@@ -134,9 +158,20 @@ Zadanie bez pola `kto` uruchamia Claude.
 ### Automat
 
 Wyłączony domyślnie; stan w `stan.json`. Co 60 s bierze zadania, które spełniają wszystko:
-`runBlock` pusty, stan `[ ]`, `kto: claude` albo `kto: codex`, `gdzie:` równe temu węzłowi, `kiedy:` ustawione i nie później niż dziś,
+`runBlock` pusty (w tym poprzednicy z `po:` zrobieni), stan `[ ]`, `kto: claude` albo `kto: codex`, `gdzie:` równe
+temu węzłowi albo brak `gdzie:` na węźle domyślnym, `kiedy:` ustawione i nie później niż dziś (przeszła data też),
 `pora` zgodna (noc 22:00–6:00, dzień 6:00–22:00, brak pola: zawsze), brak dzisiejszego uruchomienia tego zadania,
 brak aktywnego limitu i znacznika logowania. Raz dziennie po `PANEL_PM_HOUR` uruchamia raport PM, gdy nie ma `raporty/<dziś>.md`.
+
+Rytm marketingu, przy każdym przebiegu, dla projektów z rejestru z plikiem `kampanie/staly-rytm.md` (poza stanem
+wstrzymany i backlog), zadania trafiają do „Do rozplanowania”:
+- dotychczasowy rytm: „Przygotować post na RRRR-MM-DD (stały rytm)” przed kolejnym terminem z ustawień rytmu;
+- publikacja niezrobiona z `kiedy` od dziś do 2 dni naprzód, bez folderu `posty/<kiedy>-*` (obok `KARTA.md`):
+  „Przygotować post na <kiedy>: <tytuł publikacji>” (`kto: claude`, `gdzie:` ten węzeł, `kiedy:` dziś,
+  `materiał: kampanie/staly-rytm.md`), gdy takiego zadania jeszcze nie ma;
+- publikacja `[x]` z `kiedy` dawniej niż 2 dni (48 h) i bez wiersza `wynik:`: „Wpisz wynik publikacji <tytuł>”
+  (`kto: ty`, `kiedy:` dziś, `czas: 3`). Tylko raz: klucz publikacji trafia do `rytmDone` w `stan.json`, więc usunięte
+  zadanie nie wraca.
 
 ### Powiadomienia (ntfy)
 
@@ -163,8 +198,10 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
 
 ## `/api/data`
 
-Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`) i `runBlock`,
-a z odczytu plików `detail` i `needs` (opis w `README.md`, „Szczegóły zadania i następny krok”).
+Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`), `runBlock`,
+`stateSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, a z odczytu plików `detail`, `needs`, `after` i `waitingFor`
+(opis w `README.md`, „Szczegóły zadania i następny krok”). Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
+i `server` (README, „Stan serwera”).
 
 ```
 "agents": {
@@ -194,7 +231,8 @@ liczone od chwili otwarcia strony).
 | Żądanie | Treść | Działanie |
 |---|---|---|
 | `/api/agent/run` | `{"id": taskId, "title": tytuł}` | uruchamia zadanie; 409, gdy wiersz się zmienił albo `runBlock` niepusty |
-| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`; 409, gdy wiersz się zmienił |
+| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`; `krok` z value `{"index": n, "done": bool}`; 400 przy złej wartości, 409, gdy wiersz się zmienił |
+| `/api/session/logout-all` | `{}` | unieważnia wszystkie sesje panelu (nowy klucz sesji) |
 | `/api/agent/pm` | `{}` | raport PM; 409, gdy już trwa |
 | `/api/agent/check` | `{"tool": "claude"}` | test połączenia |
 | `/api/agent/stop` | `{"id": runId}` | zatrzymuje albo zdejmuje z kolejki |

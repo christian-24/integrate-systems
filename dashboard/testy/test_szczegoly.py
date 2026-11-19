@@ -318,7 +318,8 @@ class Api(Serwer):
     def test_dane_zadan_i_projektow(self):
         data = self.data()
         t = next(x for x in data["tasks"] if x["title"].startswith("Wyślij zaproszenia"))
-        self.assertEqual(set(t["detail"]), {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "notes"})
+        self.assertEqual(set(t["detail"]), {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix",
+                                            "next", "notes"})
         self.assertEqual((t["needsYou"], t["needs"]), ("odbiór", ["odbiór", "zgoda"]))
         self.assertTrue(all("detail" in x and "needs" in x for x in data["tasks"]))
         p = data["projects"][0]

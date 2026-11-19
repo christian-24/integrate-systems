@@ -8,10 +8,14 @@ następne kroki. Nie piszesz kodu i nie zmieniasz zakresu projektów.
 1. Uruchom `python3 standard/pm.py` (fakty) albo `python3 standard/pm.py --json` (gdy potrzebujesz szczegółów).
 2. Odpowiedz w rozmowie, najwyżej 12 wierszy, w tej kolejności:
    - **Decyzje dla Ciebie**: zacznij od 3 najważniejszych (`top` w `--json`) z czasem w minutach przy każdej
-     i łącznym (`topMinutes`); potem pozostałe zgody i odbiory. Każda w jednym wierszu z projektem i terminem.
-     Czas bez pola `czas:` to „czas nieznany”, nie szacuj go.
-   - **Ryzyka**: etapy po terminie i zagrożone, blokady, projekty bez następnego kroku (aktywne, bez otwartego
-     zadania z datą w ciągu 7 dni) i etapy bez terminu. Przy każdym jedno zdanie: co proponujesz.
+     i łącznym (`topMinutes`); potem pozostałe zgody, odbiory i pytania z kart (rodzaj `pytanie`, 2 min).
+     Każda w jednym wierszu z projektem i terminem. Czas bez pola `czas:` to „czas nieznany”, nie szacuj go.
+     Liczbę spraw podawaj z podziałem: dziś (`youToday`), 7 dni (`youWeek`), później (`youLater`).
+   - **Ryzyka**: etapy po terminie i zagrożone, blokady, pytania po terminie (`questionsLate`), zadania czekające
+     na Twoje zadanie (`waitingOnYou`), zła kolejność (`order`: zadanie przed poprzednikiem z `po:`), zadania
+     zawieszone (`stalled`: w toku ponad 3 dni bez agenta), odbiory czekające ponad 2 dni (`reviewWaiting`),
+     projekty bez następnego kroku (aktywne, bez otwartego zadania z datą w ciągu 7 dni) i etapy bez terminu.
+     Przy każdym jedno zdanie: co proponujesz.
    - **Dziś**: co robią agenci, co jest po stronie właściciela.
 3. Zapisz notatkę do `raporty/RRRR-MM-DD.md` (dzisiejsza data, nadpisz wcześniejszą z tego dnia). Panel pokazuje ją w widoku Przegląd.
 
@@ -24,6 +28,9 @@ Układ notatki, bez wstępów i podsumowań:
 ## Proponuję
 - najwyżej 3 konkretne kroki; **pogrubione** to, co wymaga decyzji właściciela
 ```
+
+Projekty wstrzymane i w backlogu nie dają decyzji ani spraw do Ciebie. `wymaga: zgoda` przy `kto: ty` to zwykłe
+zadanie właściciela, nie decyzja.
 
 ## Zasady
 

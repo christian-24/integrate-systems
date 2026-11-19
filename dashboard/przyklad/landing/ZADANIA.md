@@ -17,7 +17,7 @@ termin: +2
 
 - [x] Makieta formularza | kto: codex | gdzie: chmura
 - [~] Naprawa testów formularza | kto: claude | gdzie: pc | kiedy: +0 | pora: dzień
-- [ ] Formularz: walidacja i wysyłka | kto: codex | gdzie: chmura | kiedy: +1 | pora: noc
+- [ ] Formularz: walidacja i wysyłka | kto: codex | gdzie: chmura | kiedy: +1 | pora: noc | po: naprawa testów
   cel: formularz sprawdza pola i wysyła zgłoszenie na adres zespołu
   gotowe gdy: testy formularza przechodzą, a zgłoszenie testowe trafia do skrzynki
   materiał: docs/ARCHITEKTURA.md#Komponenty
@@ -32,6 +32,6 @@ termin: +18
 - [ ] Domena i certyfikat | kto: ty | czas: 30
 - [ ] Polityka prywatności | kto: claude | gdzie: pc
 - [ ] Pomiar ruchu bez plików cookie | kto: codex | gdzie: chmura
-- [ ] Publikacja | kto: claude | gdzie: pc | wymaga: zgoda
+- [ ] Publikacja | kto: claude | gdzie: pc | wymaga: zgoda | po: domena
 
 ## Do rozplanowania

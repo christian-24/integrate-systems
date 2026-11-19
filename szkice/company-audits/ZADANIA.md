@@ -31,21 +31,21 @@
 ## Etap: Walidacja rynku
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
-- [ ] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+- [ ] Wgraj folder Reaserch (LeadyV2) na serwer | kto: ty | gdzie: mac | kiedy: 2026-11-20 | czas: 15
+  cel: lista LeadyV2 dostępna dla agenta w folderze projektu na serwerze
+  gotowe gdy: folder Reaserch z LeadyV2 leży w repozytorium projektu na serwerze, bez plików .env i kluczy
+  materiał: KARTA.md#Zakres
+  Źródło: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch. Sekrety zostają poza repozytorium (ksiega/MIGRACJA.md).
+- [ ] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Wgraj folder Reaserch
   cel: 10 firm z listy LeadyV2 do pierwszego kontaktu, każda z uzasadnieniem wyboru i szkicem wiadomości
   gotowe gdy: w repozytorium projektu plik z 10 firmami (nazwa, powód wyboru, szkic pierwszej wiadomości); nic nie wysłane
   materiał: Reaserch/LeadyV2
   materiał: KARTA.md#Cel
   materiał: KARTA.md#Zasady pracy agentów
   Lista LeadyV2 jest dziś tylko w kopii PC: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch.
-  Dopóki nie ma jej na serwerze w folderze projektu (Reaserch/), agent oznacza zadanie [!] z blokadą „brak listy LeadyV2 na serwerze”.
+  Zaczyna się po wgraniu folderu Reaserch na serwer (20.11). Gdy listy nadal nie ma w Reaserch/, agent oznacza [!] z blokadą „brak listy LeadyV2 na serwerze”.
   Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
-- [ ] Wgraj folder Reaserch (LeadyV2) na serwer | kto: ty | gdzie: mac | kiedy: 2026-11-20 | czas: 15
-  cel: lista LeadyV2 dostępna dla agenta w folderze projektu na serwerze
-  gotowe gdy: folder Reaserch z LeadyV2 leży w repozytorium projektu na serwerze, bez plików .env i kluczy
-  materiał: KARTA.md#Zakres
-  Źródło: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch. Sekrety zostają poza repozytorium (ksiega/MIGRACJA.md).
-- [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | wymaga: zgoda
+- [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | po: Wybierz 10 firm z listy LeadyV2
   cel: pierwsza wiadomość do 10 firm wysłana nowym kanałem właściciela
   gotowe gdy: 10 wiadomości wysłanych; data i kanał zapisane w notatce pod tym zadaniem
   materiał: KARTA.md#Zasady pracy agentów
@@ -57,12 +57,12 @@
   cel: agent ma wzór e-maila do napisania odczytu zleceń
   gotowe gdy: plik .eml z jednym e-mailem Useme o nowym zleceniu leży w repozytorium asystent-useme (np. w danych testowych)
   Przed zapisaniem usuń dane osobowe i linki z tokenami logowania.
-- [ ] Napisz odczyt e-maili Useme na serwerze, który przekazuje zlecenia asystentowi | kto: claude | gdzie: chmura
+- [ ] Napisz odczyt e-maili Useme na serwerze, który przekazuje zlecenia asystentowi | kto: claude | gdzie: chmura | po: Zapisz przykładowy e-mail Useme
   cel: nowe zlecenie z e-maila Useme trafia do asystenta bez ręcznego kopiowania
   gotowe gdy: test na przykładowym e-mailu przechodzi, a zlecenie pojawia się w kolejce asystenta; usługa niewdrożona bez zgody
   materiał: KARTA.md#Zakres
   Czeka na przykładowy e-mail od właściciela. Asystent działa bez automatycznej wysyłki ofert i komentarzy.
-- [ ] Dodaj powiadomienie ntfy o nowym zleceniu z Useme | kto: claude | gdzie: chmura
+- [ ] Dodaj powiadomienie ntfy o nowym zleceniu z Useme | kto: claude | gdzie: chmura | po: Napisz odczyt e-maili Useme
   cel: właściciel dostaje powiadomienie ntfy, gdy odczyt e-maili znajdzie nowe zlecenie
   gotowe gdy: test wysyła jedno powiadomienie na każde nowe zlecenie i żadnego na powtórzone
   materiał: KARTA.md#Zakres

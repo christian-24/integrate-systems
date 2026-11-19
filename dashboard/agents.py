@@ -29,6 +29,11 @@ SHOWN = 40          # tyle rekordów trafia do /api/data
 TOOLS_TTL = 300     # sekundy między odczytami stanu narzędzi
 CONFLICT = "Plik zmienił się od ostatniego odczytu. Odświeżam listę."
 PM_TOOLS = "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Write,Edit,Glob,Grep"
+# Zadania Claude: bezpieczna lista narzędzi (git lokalnie, testy, pliki); bez push i bez sieci.
+TASK_TOOLS = ",".join([
+    "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git switch -c:*)", "Bash(git checkout -b:*)",
+    "Bash(git add:*)", "Bash(git commit:*)", "Bash(python3 -m pytest:*)", "Bash(pytest:*)",
+    "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
 LOGIN_TTL = 600           # s: tyle czeka logowanie przez panel na kod
 PLAN_MAX = 6
@@ -134,6 +139,9 @@ class Manager:
         self.notes_dir = notes_dir or os.path.join(self.root, "raporty")
         machine = (get("PANEL_MACHINE") or ("mac" if sys.platform == "darwin" else "pc")).strip().lower()
         self.machine = projekt.WHERE.get(machine, machine)
+        # Zadania bez „gdzie:” bierze Automat węzła domyślnego (po D13 serwer). Mac domyślnie nie.
+        default = (get("PANEL_DEFAULT_NODE") or "").strip()
+        self.default_node = default == "1" if default in ("0", "1") else self.machine != "mac"
         self.max_parallel = _int(get("PANEL_AGENTS_MAX"), 2)
         self.timeout = _int(get("PANEL_AGENT_TIMEOUT"), 3600)
         self.model = (get("PANEL_AGENT_MODEL") or "").strip()
@@ -154,7 +162,8 @@ class Manager:
         self._runs = collections.OrderedDict()
         self._queue = []
         self._priv = {}                       # id -> dane robocze, których nie pokazujemy (folder, prompt, proces)
-        self._state = {"automat": False, "needsLogin": False, "limitUntil": None}
+        self._state = {"automat": False, "needsLogin": False, "limitUntil": None, "since": {}, "sessionKey": "",
+                       "rytmDone": []}
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
         self._tools_busy = False
@@ -312,6 +321,14 @@ class Manager:
             self._state["automat"] = saved.get("automat") is True
             self._state["needsLogin"] = saved.get("needsLogin") is True
             self._state["limitUntil"] = saved.get("limitUntil") if isinstance(saved.get("limitUntil"), str) else None
+            since = saved.get("since")
+            self._state["since"] = {k: v for k, v in since.items() if isinstance(k, str) and isinstance(v, dict)
+                                    and isinstance(v.get("s"), str) and isinstance(v.get("d"), str)} \
+                if isinstance(since, dict) else {}
+            key = saved.get("sessionKey")
+            self._state["sessionKey"] = key if isinstance(key, str) and re.match(r"^[0-9a-f]{32,128}$", key) else ""
+            done = saved.get("rytmDone")
+            self._state["rytmDone"] = [x for x in done if isinstance(x, str)][-RYTM_KEEP:] if isinstance(done, list) else []
         except (OSError, ValueError, AttributeError):
             pass
 
@@ -399,13 +416,61 @@ class Manager:
         return run_block(task, source, self._live_keys() if live is None else live,
                          tools or {"claude": self.tool_found("claude"), "codex": self.tool_found("codex")})
 
-    def annotate(self, tasks, source):
-        """Dopisuje do zadań runId i runBlock."""
+    def annotate(self, tasks, source, today=None):
+        """Dopisuje do zadań runId, runBlock, stateSince, stalled i reviewOverdue (projekt.state_flags)."""
         live = self._live_keys()
         tools = {"claude": self.tool_found("claude"), "codex": self.tool_found("codex")}
+        today = today or datetime.date.today()
+        since = self.track_states(tasks, today) if source == "registry" else {}
         for t in tasks:
             t["runId"] = live.get((t["project"], t["file"], t["title"]), "")
             t["runBlock"] = run_block(t, source, live, tools)
+            t["stateSince"] = since.get(self.projekt.task_key(t), "")
+            t["stalled"], t["reviewOverdue"] = self.projekt.state_flags(t, t["stateSince"], bool(t["runId"]), today)
+
+    def track_states(self, tasks, today):
+        """Od kiedy zadanie jest w toku ([~] bez odbioru) albo czeka na odbiór: {klucz: "RRRR-MM-DD"}.
+
+        Zapis w stan.json (pole since). Nowe zadanie w takim stanie dostaje dzień zakończenia ostatniego
+        uruchomienia agenta dla tego zadania, a bez uruchomienia dzisiejszy dzień. Zadania w innym stanie znikają."""
+        with self._lock:
+            old = self._state.get("since") or {}
+            ended = {}
+            for r in self._runs.values():
+                if r.get("kind") == "task" and r.get("endedAt"):
+                    k = "%s|%s|%s" % (r["project"], r["file"], r["title"])
+                    ended[k] = max(ended.get(k, ""), str(r["endedAt"])[:10])
+            new = {}
+            for t in tasks:
+                status = self.projekt.task_status(t)
+                if not status:
+                    continue
+                k = self.projekt.task_key(t)
+                prev = old.get(k)
+                if isinstance(prev, dict) and prev.get("s") == status:
+                    new[k] = prev
+                else:
+                    new[k] = {"s": status, "d": min(ended.get(k) or today.isoformat(), today.isoformat())}
+            if new != old:
+                self._state["since"] = new
+                self._save_state()
+            return {k: v["d"] for k, v in new.items()}
+
+    # ---------- sesje panelu (server.py) ----------
+    def session_key(self):
+        """Losowy klucz sesji z stan.json; powstaje przy pierwszym użyciu."""
+        with self._lock:
+            if not self._state.get("sessionKey"):
+                self._state["sessionKey"] = uuid.uuid4().hex + uuid.uuid4().hex
+                self._save_state()
+            return self._state["sessionKey"]
+
+    def reset_sessions(self):
+        """Nowy klucz sesji: wszystkie dotychczasowe ciasteczka przestają działać."""
+        with self._lock:
+            self._state["sessionKey"] = uuid.uuid4().hex + uuid.uuid4().hex
+            self._save_state()
+        return 200, "", {}
 
     # ---------- dane dla /api/data ----------
     def snapshot(self):
@@ -478,7 +543,8 @@ class Manager:
             if d.get(key):
                 out.append("%s: %s" % (label, " / ".join(d[key])))
         for key, label in (("result", "Wynik poprzedniej pracy"), ("decision", "Decyzja do zatwierdzenia"),
-                           ("left", "Zostało z poprzedniej pracy")):
+                           ("left", "Zostało z poprzedniej pracy"), ("fix", "Poprawka od właściciela (wiersz poprawka:)"),
+                           ("next", "Zaproponowane następne zadanie")):
             if d.get(key):
                 out.append("%s: %s" % (label, d[key]))
         return out
@@ -501,13 +567,21 @@ class Manager:
             "Gdy zadanie tego wymaga, przygotuj wszystko i dopisz w wierszu zadania `wymaga: zgoda`.",
             "- Polecenia, na które nie masz uprawnień, pomiń i opisz w wierszu `zostało:`.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
+            "- Gdy pod zadaniem jest wiersz `poprawka:`, to uwagi właściciela po odbiorze: popraw pracę według nich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
             "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
             "`  zostało: …`, gdy coś nie zostało zrobione.",
+            "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
+            "kolejnego zadania. Nowych zadań nie zakładaj.",
+            "- Pracę w repozytorium git zapisz na nowej gałęzi `agent/%s-krotka-nazwa` (`git switch -c`) jednym lokalnym "
+            "commitem, bez push i bez plików KARTA.md, ZADANIA.md, DECYZJE.md. W wierszu `wynik:` podaj gałąź i skrót "
+            "commita. Folder bez repozytorium: bez gałęzi i commita." % datetime.date.today().isoformat(),
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
-            "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma).",
-            "- Stan zmień w %s wyłącznie w wierszu tego zadania: gotowe to `[x]`; nie da się dokończyć to `[!]` "
-            "i pole `blokada: powód`; potrzebny przegląd właściciela to `[~]` i pole `wymaga: odbiór`." % file,
+            "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
+            "`   termin: RRRR-MM-DD` pod pytaniem.",
+            "- Stan zmień w %s wyłącznie w wierszu tego zadania: gotowe to `[x]`; potrzebny przegląd właściciela to `[~]` "
+            "i pole `wymaga: odbiór`. Gdy warunek „gotowe gdy” nie jest spełniony, zakończ stanem `[!]` z polem "
+            "`blokada: powód` (bez `wymaga: odbiór`)." % file,
             "- Zakończ odpowiedź trzema krótkimi punktami: Zrobione, Sprawdzone, Zostało.",
         ]) + "\n"
 
@@ -570,7 +644,7 @@ class Manager:
                 args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                          "-C", folder, "-"]
             else:
-                args = self._claude_args(path, self.model, _card_dirs(folder))
+                args = self._claude_args(path, self.model, _card_dirs(folder) + ["--allowedTools", TASK_TOOLS])
             self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "folder": folder,
                                 "client": project.get("client") is True,
                                 "label": project.get("alias") or project.get("name") or task["project"]})
@@ -600,7 +674,8 @@ class Manager:
             if not folder or not os.path.isfile(os.path.join(folder, RYTM_FILE)):
                 continue
             tasks = [t for t in data["tasks"] if t["project"] == pid]
-            if any(t["title"].startswith(POST_TASK) and t["state"] != "done" for t in tasks):
+            if any(t["title"].startswith(POST_TASK) and t["title"].endswith(RYTM_SUFFIX) and t["state"] != "done"
+                   for t in tasks):
                 continue
             dates = []
             for t in tasks:
@@ -612,7 +687,7 @@ class Manager:
             slot = next_post_slot(dates, days, today)
             if (slot - today).days > RYTM_AHEAD:
                 continue
-            title = "%s%s (stały rytm)" % (POST_TASK, slot.isoformat())
+            title = "%s%s%s" % (POST_TASK, slot.isoformat(), RYTM_SUFFIX)
             try:
                 with self.write_lock:
                     self.projekt.add_task(folder, title)
@@ -622,6 +697,73 @@ class Manager:
                 added = True
             except (ValueError, OSError, StopIteration) as e:
                 log("Rytm postów (%s): %s" % (pid, e))
+        return added
+
+    def _add_task(self, folder, pid, title, changes, detail=None):
+        """Nowe zadanie w „Do rozplanowania” z polami; wywołujący trzyma write_lock."""
+        self.projekt.add_task(folder, title)
+        task = next(t for t in self.projekt.read_project(folder, pid)["tasks"] if t["title"] == title)
+        self.projekt.update_task(folder, task["file"], task["line"], title, changes)
+        for key, value in (detail or {}).items():
+            self.projekt.set_detail(folder, task["file"], task["line"], title, key, value)
+
+    def _plan_rhythm(self, data, index, today):
+        """Rytm marketingu z kampanie/staly-rytm.md (każdy projekt z tym plikiem):
+        - publikacja z kiedy w ciągu RYTM_AHEAD dni bez folderu posty/<kiedy>-*: zadanie „Przygotować post na <kiedy>: <tytuł>”;
+        - publikacja zrobiona ponad 48 h temu bez wynik:: zadanie właściciela „Wpisz wynik publikacji <tytuł>” (raz).
+        True, gdy coś dodano."""
+        added = False
+        changed = False
+        horizon = (today + datetime.timedelta(days=RYTM_AHEAD)).isoformat()
+        old = (today - datetime.timedelta(days=RYTM_RESULT_DAYS)).isoformat()
+        with self._lock:
+            done_keys = set(self._state.get("rytmDone") or [])
+        quiet = {p["id"] for p in data["projects"] if p.get("state") in self.projekt.QUIET_STATES}
+        for pid, folder in index.items():
+            if pid in quiet or not os.path.isfile(os.path.join(folder, RYTM_FILE)):
+                continue
+            tasks = [t for t in data["tasks"] if t["project"] == pid]
+            titles = {t["title"] for t in tasks}
+            posts = os.path.join(os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))), "posty")
+            try:
+                folders = os.listdir(posts)
+            except OSError:
+                folders = []
+            for t in tasks:
+                if t.get("kind") != "publikacja" or t.get("file") != RYTM_FILE:
+                    continue
+                day = str(t.get("date") or "")[:10]
+                if not re.match(r"^\d{4}-\d\d-\d\d$", day):
+                    continue
+                new = None
+                if t["state"] != "done" and today.isoformat() <= day <= horizon \
+                        and not any(n == day or n.startswith(day + "-") for n in folders):
+                    title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
+                    if title not in titles:
+                        new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat()},
+                               {"materiał": RYTM_FILE})
+                elif t["state"] == "done" and day < old and not (t.get("detail") or {}).get("result"):
+                    key = "%s|%s|%s" % (pid, day, t["title"])
+                    title = self.projekt._clean("%s%s" % (RESULT_TASK, t["title"]), 160)
+                    if key not in done_keys:
+                        done_keys.add(key)
+                        changed = True
+                        if title not in titles:
+                            new = (title, {"executor": "ty", "date": today.isoformat(), "minutes": RESULT_MINUTES},
+                                   {"cel": "wynik publikacji z %s w %s (wiersz wynik: pod publikacją)" % (day, RYTM_FILE)})
+                if not new:
+                    continue
+                try:
+                    with self.write_lock:
+                        self._add_task(folder, pid, *new)
+                    titles.add(new[0])
+                    added = True
+                except (ValueError, OSError, StopIteration) as e:
+                    log("Rytm marketingu (%s): %s" % (pid, e))
+        if changed:
+            with self._lock:
+                self._state["rytmDone"] = sorted(done_keys)[-RYTM_KEEP:]
+                self._save_state()
         return added
 
     # ---------- plan dnia ----------
@@ -1366,7 +1508,9 @@ class Manager:
         data, index = self.load_projects()
         if data["projectsSource"] != "registry":
             return started
-        if self._plan_posts(data, index, now.date()):
+        added = self._plan_posts(data, index, now.date())
+        added = self._plan_rhythm(data, index, now.date()) or added
+        if added:
             data, index = self.load_projects()
         night = now.hour >= 22 or now.hour < 6
         live = self._live_keys()
@@ -1374,7 +1518,9 @@ class Manager:
         for t in data["tasks"]:
             if free <= 0:
                 break
-            if t["state"] != "todo" or t["executor"] not in ("claude", "codex") or t["machine"] != self.machine:
+            if t["state"] != "todo" or t["executor"] not in ("claude", "codex"):
+                continue
+            if t["machine"] != self.machine and not (not t["machine"] and self.default_node):
                 continue
             if not t["date"] or t["date"][:10] > today:
                 continue
@@ -1390,8 +1536,13 @@ class Manager:
 
 
 POST_TASK = "Przygotować post na "
+RYTM_SUFFIX = " (stały rytm)"
 RYTM_FILE = "kampanie/staly-rytm.md"
 RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny post
+RYTM_RESULT_DAYS = 2        # publikacja zrobiona dawniej niż tyle dni (48 h) bez wynik: → zadanie właściciela
+RYTM_KEEP = 500             # tyle kluczy publikacji z założonym zadaniem wyniku zostaje w stan.json
+RESULT_TASK = "Wpisz wynik publikacji "
+RESULT_MINUTES = 3
 
 
 def next_post_slot(dates, days, today):
@@ -1426,6 +1577,9 @@ def run_block(task, source, live, tools, sample_ok=False):
         return "Zadanie po Twojej stronie"
     if "zgoda" in needs_of(task):
         return "Czeka na Twoją zgodę"
+    waiting = [w.get("title", "") for w in task.get("waitingFor") or [] if isinstance(w, dict) and not w.get("done")]
+    if waiting:
+        return _short("Czeka na: " + ", ".join(waiting), 200)
     tool = "codex" if task.get("executor") == "codex" else "claude"
     if not tools.get(tool):
         return "Brak polecenia %s" % tool
@@ -1443,3 +1597,4 @@ def annotate_sample(tasks, block):
         t["runId"] = by_title.get((t["project"], t["title"]), "")
         live = {(t["project"], t["file"], t["title"])} if t["runId"] else ()
         t["runBlock"] = run_block(t, "sample", live, tools, sample_ok=True)
+        t["stateSince"], t["stalled"], t["reviewOverdue"] = "", False, False

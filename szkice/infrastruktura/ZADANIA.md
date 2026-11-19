@@ -24,7 +24,7 @@
   gotowe gdy: rozmowa z Maca z ostatniej godziny jest widoczna na serwerze; zmiany konfiguracji serwera po zgodzie właściciela
   materiał: KARTA.md#Zakres
   materiał: KARTA.md#Zasady pracy agentów
-- [ ] Zbuduj dziennik aktywności z rozmów w panelu | kto: claude | gdzie: chmura
+- [ ] Zbuduj dziennik aktywności z rozmów w panelu | kto: claude | gdzie: chmura | po: Uruchom synchronizację rozmów z Maca
   cel: panel pokazuje dziennik aktywności złożony z rozmów z Maca i serwera
   gotowe gdy: dziennik w panelu pokazuje wpisy z obu maszyn z ostatnich 24 h
   materiał: KARTA.md#Zakres
@@ -41,6 +41,17 @@
 - [ ] Dodaj zewnętrzny monitoring adresu panelu (UptimeRobot, darmowy) | kto: ty | kiedy: 2026-11-21 | czas: 10
   cel: powiadomienie, gdy adres panelu nie odpowiada z zewnątrz (awaria całego serwera albo Caddy)
   gotowe gdy: monitor HTTPS na https://2-29-181-133.sslip.io/wejscie ma stan Up i alert na e-mail albo w aplikacji
+- [ ] Skonfiguruj kopię poza serwerem (Storage Box) | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 20 | po: Zainstaluj kopie i kontrolę zdrowia
+  cel: nocna kopia trafia zaszyfrowana poza serwer, więc utrata serwera nie zabiera danych
+  gotowe gdy: `journalctl -u kopia` pokazuje „zaszyfrowano” i „wysłano poza serwer”, w /home/panel/kopie/ostatnia.json jest "off": true, a hasło kopii jest w menedżerze haseł
+  Kroki: ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”.
+  - [ ] zamów Storage Box BX11 w Hetzner Robot, włącz SSH, zapisz użytkownika uXXXXXX
+  - [ ] klucz kopii panelu, zdalny rclone `storagebox`, plik hasła /home/panel/.kopia-haslo (600)
+  - [ ] KOPIA_CEL i KOPIA_HASLO_PLIK w /etc/integrate/serwer.env, `sudo systemctl start kopia`
+- [ ] Wykonaj próbę odtworzenia (odtworz.sh --sprawdz) | kto: ty | gdzie: chmura | kiedy: 2026-11-22 | czas: 30 | po: Skonfiguruj kopię poza serwerem
+  cel: wiadomo, że kopię z Storage Box da się odczytać i ile trwa odtworzenie
+  gotowe gdy: `odtworz --sprawdz` na archiwum pobranym ze Storage Box kończy się „archiwum poprawne”, rozpakowanie do /tmp działa, a czas próby jest wpisany w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
+  Kroki: ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka; po próbie usuń /tmp/proba (dane klientów).
 
 ## Etap: Migracja z PC
 
@@ -54,7 +65,7 @@
   cel: potwierdzenie, że do pracy nie jest potrzebny PC
   gotowe gdy: 24 h bez włączania PC i bez brakujących danych; braki zapisane w notatce pod tym zadaniem
   Warunek etapu 4 z ksiega/MIGRACJA.md; po nim PC idzie do resetu i sprzedaży.
-- [ ] Przygotuj PC do sprzedaży | kto: ty | gdzie: pc
+- [ ] Przygotuj PC do sprzedaży | kto: ty | gdzie: pc | po: Przeprowadź dzień próbny bez PC
   cel: PC bez danych, kont i dostępu do serwerów i GitHuba
   gotowe gdy: wszystkie kroki zaznaczone; reset Windows zakończony
   - [ ] usuń autostart asystenta z Harmonogramu zadań

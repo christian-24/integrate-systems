@@ -1,0 +1,20 @@
+# Wzór /etc/caddy/Caddyfile (bez haseł). Logowanie robi sam panel (/wejscie, PANEL_TOKEN), Caddy daje HTTPS.
+# Adres panelu: zmienna PANEL_ADRES (np. w `sudo systemctl edit caddy`: Environment=PANEL_ADRES=...)
+# albo wpisany w miejsce {$PANEL_ADRES}. Ten sam adres musi być w PANEL_ALLOWED_HOSTS w /etc/integrate/panel.env.
+# Po zmianie: sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+# Porównaj z działającym plikiem przed odtworzeniem: sudo cat /etc/caddy/Caddyfile
+
+{$PANEL_ADRES} {
+	encode gzip
+	request_body {
+		max_size 20MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	# reverse_proxy ustawia X-Forwarded-Proto: https, więc ciasteczko sesji panelu dostaje Secure.
+	reverse_proxy 127.0.0.1:4801
+}

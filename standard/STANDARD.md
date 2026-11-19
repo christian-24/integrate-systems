@@ -18,6 +18,14 @@ Dzięki temu panel, Claude Code i Codex czytają każdy projekt tak samo, a Ty w
 
 Sekcja z tekstem `_Do uzupełnienia…_` liczy się jako brak. Nazw sekcji nie zmieniamy.
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
+Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
+
+```
+## Pytania do właściciela
+1. Który kolor logo?
+   termin: 2026-11-21
+   Odpowiedź: niebieski
+```
 
 ## Jeden format wiersza
 
@@ -38,9 +46,13 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `wymaga` | zgoda (agent czeka na decyzję), odbiór (praca czeka na przegląd) |
 | `blokada` | powód, przy stanie `[!]` |
 | `kanał` | kanał publikacji, w kampaniach |
+| `po` | fragmenty tytułów zadań z tego samego pliku (po przecinku), które muszą być `[x]` wcześniej |
 
 Wszystkie pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
 `wymaga` może mieć kilka wartości po przecinku (`wymaga: odbiór, zgoda`); każda z nich obowiązuje.
+`po: makietę, zatwierdź teksty`: poprzednikiem jest pierwszy wiersz tego samego pliku, którego tytuł zawiera fragment
+(bez wielkości liter). Dopóki któryś poprzednik nie jest `[x]` (albo fragment nie pasuje do żadnego wiersza),
+zadania nie da się uruchomić („Czeka na: …”).
 
 ## Szczegóły zadania
 
@@ -65,8 +77,11 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `wynik:` | krótki wynik pracy | agent |
 | `decyzja:` | co właściciel ma zatwierdzić przy odbiorze | agent |
 | `zostało:` | czego nie zrobiono | agent |
+| `poprawka:` | uwagi właściciela przy „Do poprawy”; agent poprawia pracę według nich | właściciel |
+| `następne:` | jedna propozycja kolejnego zadania w formacie wiersza bez stanu: `Tytuł \| kto: … \| kiedy: …` | agent |
 
-Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
+Kroki zmienia się po kolejności (od 0, liczone tylko wiersze `- [ ]`/`- [x]` pod zadaniem).
+`następne:` nie jest zadaniem: właściciel decyduje, czy je założyć. Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
 Tytuł zaczyna się od czasownika („Wyślij”, „Przygotuj”) i ma najwyżej 120 znaków.
 
 Braki zgłaszane przy `ZADANIA.md` (`projekt.py sprawdz`, księga w panelu), najwyżej 5 przykładów w wierszu:
@@ -85,14 +100,21 @@ Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
 
 | Pojęcie | Reguła |
 |---|---|
-| wymaga Ciebie | otwarte zadanie z `kto: ty` albo z polem `wymaga` |
+| wymaga Ciebie | otwarte zadanie z `kto: ty` albo z polem `wymaga`, oraz pytanie bez odpowiedzi; bez projektów o stanie wstrzymany i backlog |
+| zgoda na zadaniu właściciela | `wymaga: zgoda` przy `kto: ty` nie jest decyzją, tylko zwykłym zadaniem właściciela |
+| dziś / 7 dni / później | `youToday`: data najpóźniej dziś albo etap po terminie; `youWeek`: data w ciągu 7 dni; `youLater`: później albo bez daty |
 | po terminie | otwarte zadanie z datą wcześniejszą niż dziś albo w etapie po terminie |
 | zablokowane | zadanie w stanie `[!]` |
 | stan etapu | pierwsza pasująca: zrobione → po terminie → czeka na Ciebie (wszystkie otwarte zadania wymagają Ciebie) → zagrożony (otwartych zadań więcej niż dni do terminu) → w normie |
 | bez następnego kroku | aktywny projekt bez otwartego zadania z datą najpóźniej za 7 dni |
 | etap bez terminu | otwarty etap aktywnego projektu bez wiersza `termin:` |
 | następny krok projektu | otwarte zadanie z najwcześniejszą datą, a bez dat pierwsze otwarte z polem `kto` |
-| najważniejsze decyzje | 3 pierwsze sprawy dla Ciebie: po terminie, potem najbliższa data, zgoda przed odbiorem, z czasem `czas:` w minutach |
+| najważniejsze decyzje | 3 pierwsze sprawy dla Ciebie: po terminie, potem najbliższa data, zgoda, pytanie, odbiór, z czasem `czas:` w minutach |
+| pytanie | otwarte pytanie z karty to decyzja rodzaju „pytanie”, 2 min; pytanie po terminie to ryzyko |
+| kolejność | otwarte zadanie z `po:`, którego data jest wcześniejsza niż data niezrobionego poprzednika albo poprzednik nie ma daty |
+| czeka na Ciebie | otwarte zadanie z `po:`, którego niezrobiony poprzednik ma `kto: ty` |
+| zawieszone | `[~]` bez odbioru i bez pracującego agenta dłużej niż 3 dni (od zmiany stanu, zapis panelu w `uruchomienia/stan.json`) |
+| odbiór czeka | otwarte zadanie z `wymaga: odbiór` dłużej niż 2 dni |
 
 Rola agenta, który raportuje, jest opisana w `standard/PM.md`. Notatki PM trafiają do `raporty/RRRR-MM-DD.md`.
 
@@ -105,15 +127,18 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 | start | stan `[~]`, `kto:` narzędzie, `gdzie:` komputer, na którym działa panel |
 | koniec, agent skończył | `[x]` |
 | koniec, praca do przeglądu | `[~]` i `wymaga: odbiór` (panel dopisuje pole, gdy agent zostawił samo `[~]`) |
-| koniec, agent nie może iść dalej | `[!]` i `blokada: powód` |
+| koniec, agent nie może iść dalej albo „gotowe gdy” nie jest spełnione | `[!]` i `blokada: powód` (bez `wymaga: odbiór`) |
 | błąd, limit, zatrzymanie, przekroczony czas | panel przywraca `[ ]` |
 
 Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wykonane kroki, a na koniec dopisuje pod
-swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`. Pytania do Ciebie dopisuje do sekcji
-„Pytania do właściciela” w `KARTA.md`.
+swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jeden wiersz `następne:`. Przy wierszu
+`poprawka:` poprawia pracę według niego. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
+(z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia). Pracę w repozytorium git zapisuje na nowej gałęzi
+`agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem (bez push) i podaje gałąź i commit w `wynik:`.
 
 Zadanie nie startuje, gdy jest zrobione, ma `kto: ty` albo `zgoda` w polu `wymaga`, jest publikacją w kampanii,
-już pracuje albo należy do projektów przykładowych. Zadanie bez pola `kto` uruchamia Claude.
+ma niezrobionego poprzednika z `po:`, już pracuje albo należy do projektów przykładowych.
+Zadanie bez pola `kto` uruchamia Claude. Automat bierze zadanie bez `gdzie:` na serwerze (węzeł domyślny).
 
 ## Polecenia
 

@@ -6,9 +6,15 @@
 #   projekty/<repo>/...                   pliki z `git status --porcelain` (zmienione i nieśledzone, bez ignorowanych)
 #   git/<repo>.bundle                     commity, których nie ma na zdalnym repozytorium (gdy są)
 #   kopia-info.txt                        data, liczby plików, HEAD każdego repozytorium
-# Zostaje 14 najnowszych archiwów. KOPIA_CEL (opcjonalnie, /etc/integrate/serwer.env) wysyła archiwum poza serwer:
-#   KOPIA_CEL=rclone:<zdalny>:<folder>    rclone copy (zdalny skonfigurowany przez `rclone config` jako panel)
-#   KOPIA_CEL=scp:<użytkownik@host>:<folder>  scp kluczem użytkownika panel, bez pytań (BatchMode)
+# Zostaje 14 najnowszych archiwów. Po kopii: <BAZA>/kopie/ostatnia.json
+#   {"at": ISO, "size": bajty, "files": n, "off": bool, "offAt": ISO|null}   (off: wysłano poza serwer w tym przebiegu)
+# Ustawienia (opcjonalne, /etc/integrate/serwer.env; opis w serwer.env.przyklad i ksiega/MIGRACJA.md):
+#   KOPIA_CEL=rclone:<zdalny>:<folder>        rclone copy (zdalny z `sudo -u panel rclone config`, np. sftp do Storage Box)
+#   KOPIA_CEL=scp:<host-z-ssh-config>:<folder> scp kluczem użytkownika panel, bez pytań (BatchMode)
+#   KOPIA_HASLO_PLIK=<plik>      szyfrowanie przed wysyłką: gpg symetryczny AES256 (plik z hasłem: panel, 600)
+#   KOPIA_AGE_ODBIORCY=<plik>    zamiast gpg: age z kluczem publicznym (klucz prywatny tylko u właściciela)
+#   KOPIA_CEL_DNI=30             rclone: archiwa starsze niż tyle dni są usuwane z celu (0 = bez usuwania)
+# scp bez szyfrowania jest odrzucany (archiwum zawiera dane klientów); rclone bez szyfrowania tylko do zdalnego typu crypt.
 # Przy błędzie: powiadomienie ntfy (PANEL_NTFY_URL z /etc/integrate/panel.env), bez nazw plików i danych klientów.
 set -u
 umask 077
@@ -25,7 +31,12 @@ ntfy() {
 }
 
 ROB=""
-sprzataj() { [ -n "$ROB" ] && rm -rf "$ROB"; rm -f "$KOPIE/.$DZIS.tar.gz.tmp" "$KOPIE/.$DZIS.tar.tmp"; }
+SZYFR=""
+sprzataj() {
+  [ -n "$ROB" ] && rm -rf "$ROB"
+  rm -f "$KOPIE/.$DZIS.tar.gz.tmp" "$KOPIE/.$DZIS.tar.tmp" "$KOPIE/.ostatnia.json.tmp"
+  [ -n "$SZYFR" ] && rm -rf "$SZYFR"
+}
 trap sprzataj EXIT
 
 blad() {
@@ -155,17 +166,79 @@ while [ "$i" -lt "$usun" ]; do
   i=$((i + 1))
 done
 
-# 5. Wysyłka poza serwer, tylko gdy ustawiono KOPIA_CEL.
+# Stan ostatniej kopii dla panelu i kontroli zdrowia. offAt: ostatnia udana wysyłka poza serwer (także z wcześniejszych dni).
+ROZMIAR="$(stat -c %s "$ARCH" 2>/dev/null || stat -f %z "$ARCH")"
+PLIKI=$((n_dane + n_proj + n_baz + n_bundle + 1))
+zapisz_stan() {  # off (true|false)
+  python3 - "$KOPIE/ostatnia.json" "$KOPIE/.ostatnia.json.tmp" "$ROZMIAR" "$PLIKI" "$1" <<'PY' || log "OSTRZEŻENIE: nie zapisano ostatnia.json"
+import datetime, json, os, sys
+cel, tmp, rozmiar, pliki, off = sys.argv[1:6]
+teraz = datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(timespec="seconds")
+off_at = None
+try:
+    with open(cel, encoding="utf-8") as f:
+        off_at = json.load(f).get("offAt")
+except (OSError, ValueError, AttributeError):
+    pass
+if off == "true":
+    off_at = teraz
+stan = {"at": teraz, "size": int(rozmiar), "files": int(pliki), "off": off == "true", "offAt": off_at}
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(stan, f)
+    f.write("\n")
+os.replace(tmp, cel)
+PY
+}
+zapisz_stan false
+
+# 5. Wysyłka poza serwer, tylko gdy ustawiono KOPIA_CEL. Najpierw szyfrowanie, gdy ustawione.
+plik_prywatny() {  # plik opis: istnieje, czytelny, bez praw dla grupy i innych
+  [ -r "$1" ] || blad "$2 nie istnieje albo brak dostępu"
+  prawa="$(stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1")"
+  case "$prawa" in 600|400) ;; *) blad "$2 ma prawa $prawa (wymagane 600: chmod 600, właściciel panel)" ;; esac
+}
 cel="${KOPIA_CEL:-}"
+WYSLIJ="$ARCH"
+if [ -n "$cel" ]; then
+  if [ -n "${KOPIA_AGE_ODBIORCY:-}" ]; then
+    command -v age >/dev/null || blad "KOPIA_AGE_ODBIORCY ustawione, a age nie jest zainstalowany"
+    [ -r "$KOPIA_AGE_ODBIORCY" ] || blad "plik KOPIA_AGE_ODBIORCY nie istnieje"
+    SZYFR="$(mktemp -d "$KOPIE/.szyfr.XXXXXX")" || blad "brak folderu roboczego"
+    WYSLIJ="$SZYFR/$DZIS.tar.gz.age"
+    age -e -R "$KOPIA_AGE_ODBIORCY" -o "$WYSLIJ" "$ARCH" || blad "szyfrowanie age"
+    log "zaszyfrowano (age)"
+  elif [ -n "${KOPIA_HASLO_PLIK:-}" ]; then
+    command -v gpg >/dev/null || blad "KOPIA_HASLO_PLIK ustawione, a gpg nie jest zainstalowany"
+    plik_prywatny "$KOPIA_HASLO_PLIK" "plik KOPIA_HASLO_PLIK"
+    SZYFR="$(mktemp -d "$KOPIE/.szyfr.XXXXXX")" || blad "brak folderu roboczego"
+    WYSLIJ="$SZYFR/$DZIS.tar.gz.gpg"
+    GNUPGHOME="$SZYFR/gnupg" && mkdir -m 700 "$GNUPGHOME" && export GNUPGHOME
+    gpg --batch --quiet --yes --pinentry-mode loopback --passphrase-file "$KOPIA_HASLO_PLIK" \
+        --symmetric --cipher-algo AES256 --compress-algo none -o "$WYSLIJ" "$ARCH" || blad "szyfrowanie gpg"
+    log "zaszyfrowano (gpg AES256)"
+  else
+    case "$cel" in
+      scp:*) blad "KOPIA_CEL=scp bez szyfrowania (ustaw KOPIA_HASLO_PLIK albo KOPIA_AGE_ODBIORCY)" ;;
+      rclone:*) log "bez szyfrowania skryptem: zdalny rclone powinien być typu crypt" ;;
+    esac
+  fi
+fi
 case "$cel" in
   "") log "KOPIA_CEL nieustawiony, kopia tylko na serwerze" ;;
   rclone:*)
     command -v rclone >/dev/null || blad "KOPIA_CEL wskazuje rclone, a rclone nie jest zainstalowany"
-    rclone copy -q "$ARCH" "${cel#rclone:}" || blad "wysyłka rclone"
-    log "wysłano poza serwer (rclone)" ;;
+    rclone copy -q "$WYSLIJ" "${cel#rclone:}" || blad "wysyłka rclone"
+    log "wysłano poza serwer (rclone)"
+    dni="${KOPIA_CEL_DNI:-30}"
+    if [ "$dni" -gt 0 ] 2>/dev/null; then
+      rclone delete -q --min-age "${dni}d" --include '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].tar.gz*' "${cel#rclone:}" \
+        || { log "OSTRZEŻENIE: usuwanie starych kopii w celu nieudane"; uwagi=$((uwagi + 1)); }
+    fi
+    zapisz_stan true ;;
   scp:*)
-    scp -q -o BatchMode=yes -o ConnectTimeout=20 "$ARCH" "${cel#scp:}" || blad "wysyłka scp"
-    log "wysłano poza serwer (scp)" ;;
+    scp -q -o BatchMode=yes -o ConnectTimeout=20 "$WYSLIJ" "${cel#scp:}" || blad "wysyłka scp"
+    log "wysłano poza serwer (scp)"
+    zapisz_stan true ;;
   *) blad "KOPIA_CEL ma nieznany format (oczekiwane rclone:... albo scp:...)" ;;
 esac
 

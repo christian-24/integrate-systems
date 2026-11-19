@@ -6,6 +6,8 @@
 
 Projekty pochodzą z rejestru ../projekty.json i z decyzji zbieracza (system/); gdy obu brak, z projektów przykładowych panelu.
 Reguły są te same, co w panelu (zakładka Raport) i opisane w STANDARD.md, sekcja „Raport PM”.
+Stan uruchomień agentów (zadania w toku, od kiedy zadanie jest w toku albo czeka na odbiór) pochodzi z folderu
+../uruchomienia (albo PANEL_RUNS_DIR), który prowadzi panel; bez niego tych ryzyk nie ma.
 Tylko odczyt. Tylko biblioteka standardowa Pythona.
 """
 import datetime
@@ -20,6 +22,8 @@ sys.path.insert(0, HERE)
 import projekt  # noqa: E402
 
 SAMPLES = os.path.join(os.path.dirname(HERE), "dashboard", "przyklad")
+RUNS = os.path.join(os.path.dirname(HERE), "uruchomienia")
+QUESTION_MINUTES = 2
 REL = re.compile(r"^([+-]\d+)$")
 DNI = ["poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela"]
 MD = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września",
@@ -62,7 +66,43 @@ def load(today):
     for p in out["projects"]:
         if p.get("nextStep"):
             p["nextStep"]["date"] = day(p["nextStep"]["date"])
+        for q in p.get("questions") or []:
+            q["date"] = day(q.get("date", ""))
     return out
+
+
+def runs_info(runs_dir=None):
+    """Stan z folderu uruchomień panelu: ({klucz zadania: {"s", "d"}}, {klucze z agentem w toku}, {klucz: dzień
+    ostatniego zakończenia}). Klucz zadania to projekt|plik|tytuł. Brak folderu albo plików to puste wyniki."""
+    runs_dir = runs_dir or os.environ.get("PANEL_RUNS_DIR", "").strip() or RUNS
+    since, live, ended = {}, set(), {}
+    try:
+        names = os.listdir(runs_dir)
+    except OSError:
+        return since, live, ended
+    for name in names:
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(runs_dir, name), encoding="utf-8") as f:
+                rec = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if not isinstance(rec, dict):
+            continue
+        if name == "stan.json":
+            raw = rec.get("since")
+            since = {k: v for k, v in raw.items() if isinstance(v, dict)} if isinstance(raw, dict) else {}
+            continue
+        if rec.get("kind") != "task":
+            continue
+        key = "%s|%s|%s" % (rec.get("project", ""), rec.get("file", ""), rec.get("title", ""))
+        if rec.get("state") in ("queued", "running"):
+            live.add(key)
+        end = str(rec.get("endedAt") or "")[:10]
+        if is_day(end) and end > ended.get(key, ""):
+            ended[key] = end
+    return since, live, ended
 
 
 def stage_state(stage, tasks, today):
@@ -83,7 +123,7 @@ def stage_state(stage, tasks, today):
     return "ok"
 
 
-def facts(today=None):
+def facts(today=None, runs_dir=None):
     today = today or datetime.date.today()
     key = today.isoformat()
     tomorrow = (today + datetime.timedelta(days=1)).isoformat()
@@ -91,19 +131,26 @@ def facts(today=None):
     d = load(today)
     names = {p["id"]: p["name"] for p in d["projects"]}
     stages = {s["id"]: s for s in d["stages"]}
+    by_id = {t["id"]: t for t in d["tasks"]}
     for s in d["stages"]:
         s["state"] = stage_state(s, d["tasks"], today)
     open_tasks = [t for t in d["tasks"] if t["state"] != "done"]
+    quiet = {p["id"] for p in d["projects"] if p.get("state") in projekt.QUIET_STATES}
+    since, live, ended = runs_info(runs_dir) if d["source"] == "registry" else ({}, set(), {})
 
     def late(t):
         s = stages.get(t["stage"])
         return (is_day(t["date"]) and t["date"] < key) or bool(s and s["state"] == "late")
 
+    def need(t):
+        n = projekt.owner_needs(t)
+        return n[0] if n else ""
+
     def brief(t):
         s = stages.get(t["stage"])
         return {"project": names.get(t["project"], t["project"]), "title": t["title"], "state": t["state"],
                 "kind": t["kind"], "executor": t["executor"], "date": t["date"], "minutes": t["minutes"],
-                "needsYou": t["needsYou"], "blocked": t["blocked"], "channel": t["channel"],
+                "needsYou": need(t), "blocked": t["blocked"], "channel": t["channel"],
                 "stage": s["title"] if s else t["group"], "where": "%s:%d" % (t["file"], t["line"])}
 
     def stage_brief(s):
@@ -111,15 +158,53 @@ def facts(today=None):
         return {"project": names.get(s["project"], s["project"]), "title": s["title"], "date": s["date"],
                 "state": s["state"], "done": sum(1 for t in mine if t["state"] == "done"), "total": len(mine)}
 
-    you = [t for t in open_tasks if t["executor"] == "ty" or t["needsYou"]]
-    decisions = [t for t in you if t["needsYou"] or (is_day(t["date"]) and t["date"] <= tomorrow)]
-    decisions.sort(key=lambda t: (t["date"] or "9999", t["title"]))
-    top = sorted(decisions, key=lambda t: importance(t, late(t), key))[:TOP]
+    def question(p, q):
+        return {"project": p["name"], "title": q["text"], "state": "todo", "kind": "pytanie", "executor": "ty",
+                "date": q["date"], "minutes": QUESTION_MINUTES, "needsYou": "", "blocked": "", "channel": "",
+                "stage": projekt.QUESTIONS_TITLE, "where": "KARTA.md:%d" % q["line"]}
+
+    you = [t for t in open_tasks if t["project"] not in quiet and projekt.for_owner(t)]
+    questions = [(p, q) for p in d["projects"] if p["id"] not in quiet
+                 for q in p.get("questions") or [] if not q.get("answer")]
+    decided = [t for t in you if need(t) or (is_day(t["date"]) and t["date"] <= tomorrow)]
+    items = [(brief(t), late(t)) for t in decided]
+    items += [(question(p, q), is_day(q["date"]) and q["date"] < key) for p, q in questions]
+    decisions = sorted(items, key=lambda x: (x[0]["date"] or "9999", x[0]["title"]))
+    top = [b for b, _ in sorted(decisions, key=lambda x: importance(x[0], x[1], key))[:TOP]]
     active = {p["id"] for p in d["projects"] if p.get("state") == "active"}
     no_next = [p for p in d["projects"] if p["id"] in active and not any(
         t["project"] == p["id"] and is_day(t["date"]) and t["date"] <= week for t in open_tasks)]
     no_date = [s for s in d["stages"] if s["project"] in active and not is_day(s["date"])
                and not projekt.stage_done(s, d["tasks"])]
+
+    order, waiting_you = [], []
+    for t in open_tasks:
+        if t["project"] in quiet:
+            continue
+        for w in t.get("waitingFor") or []:
+            pred = by_id.get(w.get("id"))
+            if not pred or pred["state"] == "done":
+                continue
+            if not is_day(pred["date"]) or (is_day(t["date"]) and t["date"] < pred["date"]):
+                order.append(dict(brief(t), after=pred["title"], afterDate=pred["date"]))
+            if pred["executor"] == "ty":
+                waiting_you.append(dict(brief(t), after=pred["title"], afterDate=pred["date"]))
+
+    stalled, review = [], []
+    for t in open_tasks:
+        k = projekt.task_key(t)
+        status = projekt.task_status(t)
+        seen = since.get(k) if isinstance(since.get(k), dict) and since[k].get("s") == status else None
+        day_ = (seen or {}).get("d") or ended.get(k, "")
+        if t["project"] in quiet or not status or not day_:
+            continue
+        is_stalled, is_review = projekt.state_flags(t, day_, k in live, today)
+        if is_stalled:
+            stalled.append(dict(brief(t), since=day_))
+        elif is_review:
+            review.append(dict(brief(t), since=day_))
+    questions_late = [question(p, q) for p, q in questions if is_day(q["date"]) and q["date"] < key]
+
     projects = []
     for p in d["projects"]:
         mine = [t for t in d["tasks"] if t["project"] == p["id"] and t["kind"] != "publikacja"]
@@ -131,20 +216,27 @@ def facts(today=None):
                          "docsOk": p["docsOk"], "docsTotal": p["docsTotal"],
                          "gaps": [{"file": x["file"], "gaps": x["gaps"]} for x in p["docs"] if x["status"] != "ok"]})
     pubs = [t for t in open_tasks if t["kind"] == "publikacja" and is_day(t["date"]) and t["date"] <= week]
+    counts = {"you": len(you) + len(questions), "late": sum(1 for t in open_tasks if late(t)),
+              "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),
+              "blocked": sum(1 for t in open_tasks if t["state"] == "blocked"),
+              "noNextStep": len(no_next), "stagesNoDate": len(no_date)}
+    counts.update(projekt.owner_counts(d["projects"], d["stages"], d["tasks"], today))
     return {
         "today": key, "source": d["source"],
-        "counts": {"you": len(you), "late": sum(1 for t in open_tasks if late(t)),
-                   "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),
-                   "blocked": sum(1 for t in open_tasks if t["state"] == "blocked"),
-                   "noNextStep": len(no_next), "stagesNoDate": len(no_date)},
-        "decisions": [brief(t) for t in decisions],
-        "top": [brief(t) for t in top],
+        "counts": counts,
+        "decisions": [b for b, _ in decisions],
+        "top": top,
         "topMinutes": sum(t["minutes"] for t in top),
         "noNextStep": [{"project": p["name"], "nextStep": p.get("nextStep")} for p in no_next],
         "stagesNoDate": [stage_brief(s) for s in no_date],
         "stagesLate": [stage_brief(s) for s in d["stages"] if s["state"] == "late"],
         "stagesRisk": [stage_brief(s) for s in d["stages"] if s["state"] == "risk"],
         "blocked": [brief(t) for t in open_tasks if t["state"] == "blocked"],
+        "order": order,
+        "waitingOnYou": waiting_you,
+        "stalled": stalled,
+        "reviewWaiting": review,
+        "questionsLate": questions_late,
         "late": [brief(t) for t in open_tasks if late(t)],
         "today_tasks": [brief(t) for t in open_tasks if t["date"] == key],
         "tomorrow_tasks": [brief(t) for t in open_tasks if t["date"] == tomorrow],
@@ -157,13 +249,18 @@ def facts(today=None):
 
 
 TOP = 3
-NEED_RANK = {"zgoda": 0, "odbiór": 1}
+NEED_RANK = {"zgoda": 0, "pytanie": 1, "odbiór": 2}
 
 
 def importance(t, is_late, today):
-    """Kolejność najważniejszych decyzji: po terminie, potem najbliższa data, zgoda przed odbiorem, krótsze najpierw."""
-    return (0 if is_late else 1, t["date"] if is_day(t["date"]) else "9999", NEED_RANK.get(t["needsYou"], 2),
+    """Kolejność najważniejszych decyzji: po terminie, potem najbliższa data, zgoda, pytanie, odbiór, krótsze najpierw."""
+    need = "pytanie" if t.get("kind") == "pytanie" else t["needsYou"]
+    return (0 if is_late else 1, t["date"] if is_day(t["date"]) else "9999", NEED_RANK.get(need, 3),
             t["minutes"] or 9999, t["title"])
+
+
+def days_since(value, today):
+    return (today - datetime.date.fromisoformat(value)).days
 
 
 def minutes_text(m):
@@ -182,9 +279,10 @@ def text(f):
     c = f["counts"]
     out = ["Raport PM · %s, %d %s %d%s" % (DNI[today.weekday()], today.day, MD[today.month - 1], today.year,
                                           " · projekty przykładowe" if f["source"] == "sample" else ""),
-           "Wymaga Ciebie %d · Po terminie %d · Zagrożone etapy %d · Zablokowane %d · Bez następnego kroku %d"
-           " · Etapy bez terminu %d"
-           % (c["you"], c["late"], c["risk"], c["blocked"], c["noNextStep"], c["stagesNoDate"])]
+           "Wymaga Ciebie %d (dziś %d, 7 dni %d, później %d) · Po terminie %d · Zagrożone etapy %d · Zablokowane %d"
+           " · Bez następnego kroku %d · Etapy bez terminu %d"
+           % (c["you"], c["youToday"], c["youWeek"], c["youLater"], c["late"], c["risk"], c["blocked"],
+              c["noNextStep"], c["stagesNoDate"])]
 
     def block(title, rows):
         if rows:
@@ -194,8 +292,8 @@ def text(f):
         return "%s · %s%s" % (t["project"], t["title"], extra)
 
     def decision(t):
-        return "◆ %-7s %s" % (t["needsYou"] or "Twoje", task(t, " (%s, %s)" % (when(t["date"], today),
-                                                                             minutes_text(t["minutes"]))))
+        label = "pytanie" if t["kind"] == "pytanie" else t["needsYou"] or "Twoje"
+        return "◆ %-7s %s" % (label, task(t, " (%s, %s)" % (when(t["date"], today), minutes_text(t["minutes"]))))
 
     rest = [t for t in f["decisions"] if t not in f["top"]]
     rows = []
@@ -210,6 +308,13 @@ def text(f):
                                                         when(s["date"], today), s["done"], s["total"]))
            for s in f["stagesLate"] + f["stagesRisk"]]
           + ["■ zablokowane: %s" % task(t, " (%s)" % t["blocked"] if t["blocked"] else "") for t in f["blocked"]]
+          + ["■ pytanie po terminie: %s" % task(t, " (termin %s)" % when(t["date"], today)) for t in f["questionsLate"]]
+          + ["◆ czeka na Ciebie: %s · po Twoim zadaniu „%s”" % (task(t), t["after"]) for t in f["waitingOnYou"]]
+          + ["▲ kolejność: %s (%s) przed poprzednikiem „%s” (%s)"
+             % (task(t), when(t["date"], today), t["after"], when(t["afterDate"], today)) for t in f["order"]]
+          + ["▲ zawieszone: %s (w toku %d dni, bez agenta)" % (task(t), days_since(t["since"], today))
+             for t in f["stalled"]]
+          + ["◆ odbiór czeka %d dni: %s" % (days_since(t["since"], today), task(t)) for t in f["reviewWaiting"]]
           + ["□ bez następnego kroku: %s (brak otwartego zadania z datą w ciągu 7 dni)" % p["project"]
              for p in f["noNextStep"]]
           + ["□ etap bez terminu: %s · etap %s (%d/%d)" % (s["project"], s["title"], s["done"], s["total"])

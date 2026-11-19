@@ -1,0 +1,22 @@
+# Wzór /etc/systemd/system/panel.service (bez sekretów: hasło i ntfy w /etc/integrate/panel.env, root 600).
+# Porównaj z działającym przed odtworzeniem: systemctl cat panel
+# Instalacja: sudo install -m 644 panel.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now panel
+[Unit]
+Description=Panel projektów IntegrateSystems
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=panel
+Group=panel
+WorkingDirectory=/home/panel/IntegrateSystems
+Environment=HOME=/home/panel
+Environment=PATH=/home/panel/.local/bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/etc/integrate/panel.env
+ExecStart=/usr/bin/python3 dashboard/server.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -163,7 +163,7 @@ def parse_task(line):
         return None
     parts = re.split(r"\s*\|\s*", m.group(2))
     t = {"title": parts[0], "state": STATE[m.group(1)], "executor": "", "machine": "", "date": "", "slot": "",
-         "minutes": 0, "needsYou": "", "needs": [], "blocked": "", "channel": "", "errors": []}
+         "minutes": 0, "needsYou": "", "needs": [], "blocked": "", "channel": "", "after": [], "errors": []}
     for p in parts[1:]:
         k, sep, v = p.partition(":")
         k, v = k.strip().lower(), v.strip()
@@ -200,6 +200,9 @@ def parse_task(line):
             t["blocked"] = v
         elif k in ("kanał", "kanal"):
             t["channel"] = v
+        elif k == "po":
+            t["after"] = [x.strip() for x in v.split(",") if x.strip()]
+            bad = None if t["after"] else "po: podaj fragment tytułu zadania"
         else:
             bad = "nieznane pole „%s”" % k
         if bad:
@@ -209,10 +212,12 @@ def parse_task(line):
 
 # ---------- szczegóły zadania: wcięte wiersze bezpośrednio pod wierszem zadania ----------
 DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "material": "refs", "materiały": "refs",
-               "materialy": "refs", "wynik": "result", "decyzja": "decision", "zostało": "left", "zostalo": "left"}
+               "materialy": "refs", "wynik": "result", "decyzja": "decision", "zostało": "left", "zostalo": "left",
+               "poprawka": "fix", "następne": "next", "nastepne": "next"}
 DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
-              "left": "zostało"}
-DETAIL_ORDER = ["goal", "doneWhen", "refs", "steps", "result", "decision", "left"]   # kroki i notatki: "steps"
+              "left": "zostało", "fix": "poprawka", "next": "następne"}
+DETAIL_ORDER = ["goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix", "next"]   # kroki i notatki: "steps"
+STEP_KEY = "krok"           # set_detail: {"index": n, "done": bool} zmienia n-ty krok (od 0)
 DETAIL_INDENT = "  "
 DETAIL_LINE = re.compile(r"^(?:[-*]\s+)?([^:|\[\]`]{2,20}?)\s*:\s*(.*?)\s*$")
 STEP = re.compile(r"^[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
@@ -221,7 +226,8 @@ NOUN_START = re.compile(r"^\w{3,}(anie|enie|ęcie|ycie)$")   # „Wdrożenie”,
 
 
 def blank_detail():
-    return {"goal": "", "doneWhen": "", "refs": [], "steps": [], "result": "", "decision": "", "left": "", "notes": []}
+    return {"goal": "", "doneWhen": "", "refs": [], "steps": [], "result": "", "decision": "", "left": "", "fix": "",
+            "next": "", "notes": []}
 
 
 def ref_of(value):
@@ -244,7 +250,8 @@ def is_detail(line):
 
 
 def parse_detail(lines):
-    """Wcięte wiersze pod zadaniem -> {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "notes"}."""
+    """Wcięte wiersze pod zadaniem -> {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix", "next",
+    "notes"}. „następne” to jeden wiersz (pierwszy wygrywa); pozostałe klucze łączą kolejne wiersze spacją."""
     d = blank_detail()
     for line in lines:
         s = line.strip()
@@ -255,6 +262,8 @@ def parse_detail(lines):
         key, value = detail_key(line)
         if key == "refs":
             d["refs"] += [ref_of(v) for v in re.split(r",\s+", value) if v.strip()]
+        elif key == "next":
+            d["next"] = d["next"] or value
         elif key:
             d[key] = (d[key] + " " + value).strip() if d[key] else value
         else:
@@ -307,8 +316,36 @@ def _task(t, pid, file_rel, no, kind, **extra):
     t.update({"id": "%s|%s|%d" % (pid, file_rel, no), "project": pid, "file": file_rel, "line": no, "kind": kind,
               "stage": "", "group": "", "campaign": ""})
     t.setdefault("detail", blank_detail())
+    t.setdefault("waitingFor", [])
     t.update(extra)
     return ["wiersz %d: %s" % (no, e) for e in errors]
+
+
+def link_after(tasks):
+    """Pole „po:”: dla każdego zadania lista poprzedników "waitingFor" [{"title", "done", "id"}].
+
+    Poprzednik to pierwszy wiersz tego samego pliku (poza samym zadaniem), którego tytuł zawiera fragment,
+    bez wielkości liter. Fragment bez pasującego wiersza: {"title": fragment, "done": False, "id": ""}.
+    """
+    by_file = {}
+    for t in tasks:
+        by_file.setdefault((t["project"], t["file"]), []).append(t)
+    for rows in by_file.values():
+        rows.sort(key=lambda t: t["line"])
+        for t in rows:
+            out = []
+            for frag in t.get("after") or []:
+                low = frag.lower()
+                hit = next((x for x in rows if x is not t and low in x["title"].lower()), None)
+                out.append({"title": hit["title"], "done": hit["state"] == "done", "id": hit["id"]} if hit
+                           else {"title": frag, "done": False, "id": ""})
+            t["waitingFor"] = out
+    return tasks
+
+
+def waiting_titles(task):
+    """Tytuły poprzedników z „po:”, które nie są zrobione."""
+    return [w["title"] for w in task.get("waitingFor") or [] if not w.get("done")]
 
 
 def parse_tasks(text, pid, file_rel="ZADANIA.md"):
@@ -483,6 +520,7 @@ def read_project(path, pid=None, decision=None):
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
                "questions": parse_questions(sections) if karta is not None else []}
+    link_after(tasks)
     project["nextStep"] = next_step(tasks)
     if fields["phase"]:
         project["phase"], project["phaseSource"] = fields["phase"], "karta"
@@ -590,6 +628,66 @@ def compute_phase(state, karta_doc, stages, tasks, campaigns):
     return "budowa"
 
 
+# ---------- sprawy właściciela: wspólne reguły dla pm.py i panelu (STANDARD.md, „Raport PM”) ----------
+QUIET_STATES = ("paused", "backlog")      # projekty wstrzymane i w backlogu nie liczą się do spraw właściciela
+STALLED_DAYS = 3                          # [~] bez agenta dłużej niż tyle dni: ryzyko „zawieszone”
+REVIEW_DAYS = 2                           # odbiór czekający dłużej niż tyle dni: ryzyko
+
+
+def owner_needs(task):
+    """Wartości „wymaga”, które są sprawą właściciela. Na zadaniu kto: ty „zgoda” nie jest decyzją."""
+    needs = task.get("needs")
+    needs = list(needs) if isinstance(needs, list) else ([task["needsYou"]] if task.get("needsYou") else [])
+    return [n for n in needs if n != "zgoda"] if task.get("executor") == "ty" else needs
+
+
+def for_owner(task):
+    """Otwarte zadanie, które czeka na właściciela: kto: ty albo pole wymaga (po regule owner_needs)."""
+    return task.get("state") != "done" and (task.get("executor") == "ty" or bool(owner_needs(task)))
+
+
+def task_key(task):
+    return "%s|%s|%s" % (task.get("project", ""), task.get("file", ""), task.get("title", ""))
+
+
+def task_status(task):
+    """"doing" ([~] bez odbioru), "review" (otwarte z wymaga: odbiór) albo ""."""
+    if task.get("state") == "done":
+        return ""
+    if "odbiór" in (task.get("needs") or ([task["needsYou"]] if task.get("needsYou") else [])):
+        return "review"
+    return "doing" if task.get("state") == "doing" else ""
+
+
+def state_flags(task, since, live, today):
+    """(stalled, reviewOverdue) zadania. since: dzień wejścia w obecny stan ("RRRR-MM-DD" albo ""),
+    live: czy agent pracuje nad zadaniem, today: date."""
+    try:
+        age = (today - datetime.date.fromisoformat(str(since)[:10])).days
+    except ValueError:
+        return False, False
+    status = task_status(task)
+    return (status == "doing" and not live and age > STALLED_DAYS), (status == "review" and age > REVIEW_DAYS)
+
+
+def owner_counts(projects, stages, tasks, today):
+    """Liczniki spraw właściciela w projektach poza QUIET_STATES: zadania for_owner i pytania bez odpowiedzi.
+    youToday: z datą najpóźniej dziś albo w etapie po terminie; youWeek: w ciągu 7 dni; youLater: później albo bez daty."""
+    key = today.isoformat()
+    week = (today + datetime.timedelta(days=7)).isoformat()
+    quiet = {p["id"] for p in projects if p.get("state") in QUIET_STATES}
+    late_stages = {s["id"] for s in stages if re.match(r"^\d{4}-\d\d-\d\d$", s.get("date") or "")
+                   and s["date"] < key and not stage_done(s, tasks)}
+    items = [(date_key(t.get("date"), today), t.get("stage") in late_stages) for t in tasks
+             if t.get("project") not in quiet and for_owner(t)]
+    items += [(date_key(q.get("date"), today), False) for p in projects if p["id"] not in quiet
+              for q in p.get("questions") or [] if not q.get("answer")]
+    out = {"youToday": 0, "youWeek": 0, "youLater": 0}
+    for day, late in items:
+        out["youToday" if late or (day and day <= key) else "youWeek" if day and day <= week else "youLater"] += 1
+    return out
+
+
 def describe():
     """Opis standardu do pokazania w panelu."""
     return [{"key": d[0], "label": d[1], "file": d[2], "purpose": d[3], "sections": d[4]} for d in DOCS + [CAMPAIGN_DOC]]
@@ -635,7 +733,7 @@ def set_state(root, file_rel, line_no, title, state):
 
 WHERE_OUT = {"pc": "pc", "mac": "mac", "cloud": "chmura"}
 CAMPAIGN_STATE_OUT = {"plan": "plan", "active": "w toku", "done": "zakończona", "paused": "wstrzymana"}
-KNOWN = {"kto", "gdzie", "kiedy", "pora", "czas", "wymaga", "blokada", "kanał", "kanal"}
+KNOWN = {"kto", "gdzie", "kiedy", "pora", "czas", "wymaga", "blokada", "kanał", "kanal", "po"}
 ALLOWED = {"state": set(CHAR), "executor": {"", "claude", "codex", "ty"}, "machine": {"", "pc", "mac", "cloud"},
            "slot": {"", "dzień", "noc"}, "needsYou": {"", "zgoda", "odbiór"}}
 
@@ -659,7 +757,7 @@ def format_task(t, extra=()):
     for label, value in (("kto", t["executor"]), ("gdzie", WHERE_OUT.get(t["machine"], "")), ("kiedy", t["date"]),
                          ("pora", t["slot"]), ("czas", str(t["minutes"]) if t["minutes"] else ""),
                          ("wymaga", ", ".join(t.get("needs") or ([t["needsYou"]] if t["needsYou"] else []))),
-                         ("blokada", t["blocked"]), ("kanał", t["channel"])):
+                         ("blokada", t["blocked"]), ("kanał", t["channel"]), ("po", ", ".join(t.get("after") or []))):
         if value:
             parts.append("%s: %s" % (label, value))
     return "- [%s] %s" % (CHAR[t["state"]], " | ".join(parts + list(extra)))
@@ -706,6 +804,10 @@ def update_task(root, file_rel, line_no, title, changes):
                 raise ValueError("czas w minutach, od 0 do 1440")
         elif k in ("blocked", "channel"):
             v = _clean(v, 120)
+        elif k == "after":
+            if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
+                raise ValueError("po: lista fragmentów tytułów")
+            v = [x for x in (_clean(x, 120).replace(",", " ").strip() for x in v) if x][:10]
         else:
             raise ValueError("nieznane pole")
         t[k] = v
@@ -748,16 +850,34 @@ def add_task(root, title, file_rel="ZADANIA.md", section_line=None):
     return True
 
 
+def next_value(value):
+    """Propozycja następnego zadania „Tytuł | kto: … | kiedy: …” -> znormalizowany tekst; ValueError przy błędzie."""
+    text = re.sub(r"\s+", " ", str(value)).strip()
+    if len(text) > 300:
+        raise ValueError("następne: najwyżej 300 znaków")
+    t = parse_task("- [ ] " + text)
+    if not t or not t["title"].strip():
+        raise ValueError("następne: podaj tytuł zadania")
+    if t["errors"]:
+        raise ValueError("następne: %s" % t["errors"][0])
+    return text
+
+
 def set_detail(root, file_rel, line_no, title, key, value):
     """Dopisuje, zmienia albo (pusta wartość) usuwa jeden klucz szczegółów pod wierszem zadania.
 
-    key: cel, gotowe gdy, materiał, wynik, decyzja, zostało. Materiał może mieć kilka wartości (lista albo
-    wartości w osobnych wierszach tekstu); zapis zastępuje wszystkie dotychczasowe wiersze materiału.
+    key: cel, gotowe gdy, materiał, wynik, decyzja, zostało, poprawka, następne albo krok. Materiał może mieć kilka
+    wartości (lista albo wartości w osobnych wierszach tekstu); zapis zastępuje wszystkie dotychczasowe wiersze
+    materiału. „następne” to wiersz zadania bez stanu („Tytuł | kto: … | kiedy: …”), sprawdzany jak wiersz zadania.
+    „krok” przyjmuje {"index": n, "done": bool} i zmienia znacznik n-tego wciętego kroku (liczone od 0).
     False, gdy wiersz zadania zmienił się od odczytu; ValueError przy złym kluczu albo wartości.
     """
-    field = DETAIL_KEYS.get(str(key or "").strip().lower())
+    name = str(key or "").strip().lower()
+    if name == STEP_KEY:
+        return _set_step(root, file_rel, line_no, title, value)
+    field = DETAIL_KEYS.get(name)
     if not field:
-        raise ValueError("nieznany klucz szczegółów (dozwolone: %s)" % ", ".join(DETAIL_OUT.values()))
+        raise ValueError("nieznany klucz szczegółów (dozwolone: %s, %s)" % (", ".join(DETAIL_OUT.values()), STEP_KEY))
     if isinstance(value, list):
         raw = [str(v) for v in value]
     elif isinstance(value, str):
@@ -766,7 +886,10 @@ def set_detail(root, file_rel, line_no, title, key, value):
         raise ValueError("wartość to tekst")
     if sum(len(v) for v in raw) > 2000:
         raise ValueError("wartość: najwyżej 2000 znaków")
-    values = [v for v in (_clean(v, 300 if field == "refs" else 1000) for v in raw) if v]
+    if field == "next":
+        values = [next_value(v) for v in raw[:1] if v.strip()]
+    else:
+        values = [v for v in (_clean(v, 300 if field == "refs" else 1000) for v in raw) if v]
     if field != "refs":
         values = values[:1]
     path = _task_file(root, file_rel)
@@ -794,6 +917,35 @@ def set_detail(root, file_rel, line_no, title, key, value):
             if DETAIL_ORDER.index(f) <= rank:
                 at = k + 1
     lines[at:at] = ["%s%s: %s%s" % (DETAIL_INDENT, DETAIL_OUT[field], v, cr) for v in values]
+    write_atomic(path, "\n".join(lines))
+    return True
+
+
+def _set_step(root, file_rel, line_no, title, value):
+    """Znacznik n-tego kroku („  - [ ] krok”) pod zadaniem. value: {"index": n, "done": bool}."""
+    if not isinstance(value, dict):
+        raise ValueError("krok: {index, done}")
+    index, done = value.get("index"), value.get("done")
+    if isinstance(index, bool) or not isinstance(index, int) or index < 0 or not isinstance(done, bool):
+        raise ValueError("krok: index to liczba od 0, done to true albo false")
+    path = _task_file(root, file_rel)
+    lines = _lines(path)
+    i = int(line_no) - 1
+    if i < 0 or i >= len(lines):
+        return False
+    t = parse_task(lines[i].rstrip("\r"))
+    if not t or t["title"] != title:
+        return False
+    steps = []
+    k = i + 1
+    while k < len(lines) and is_detail(lines[k].rstrip("\r")):
+        if STEP.match(lines[k].strip()):
+            steps.append(k)
+        k += 1
+    if index >= len(steps):
+        raise ValueError("nie ma takiego kroku")
+    k = steps[index]
+    lines[k] = re.sub(r"\[[ xX~!]\]", "[x]" if done else "[ ]", lines[k], count=1)
     write_atomic(path, "\n".join(lines))
     return True
 
@@ -870,22 +1022,32 @@ def set_campaign(root, file_rel, name, changes):
 QUESTIONS_TITLE = "Pytania do właściciela"
 QUESTION = re.compile(r"^(?:(\d+)\.|[-*])\s+(.+)$")
 ANSWER = re.compile(r"^\s+Odpowiedź\s*:\s*(.*)$", re.I)
+QUESTION_DUE = re.compile(r"^\s+termin\s*:\s*(\d{4}-\d\d-\d\d|[+-]\d+)\s*$", re.I)
+QUESTION_DUE_TEXT = re.compile(r"\bdo\s+(\d{4}-\d\d-\d\d)\b")
 
 
 def parse_questions(sections):
     """Pytania z sekcji „Pytania do właściciela” w KARTA.md: wiersz „1. pytanie” albo „- pytanie”,
-    pod nim opcjonalnie wcięty wiersz „Odpowiedź: …”. Zwraca [{n, text, answer, line}]."""
+    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD” i „Odpowiedź: …”. Termin może też stać w treści
+    („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, line}]; date to "RRRR-MM-DD" albo ""."""
     sec = section(sections, QUESTIONS_TITLE)
     out = []
     for no, line in (sec["body"] if sec else []):
         m = QUESTION.match(line)
         a = ANSWER.match(line)
+        due = QUESTION_DUE.match(line)
         if a and out:
             out[-1]["answer"] = a.group(1).strip()
+        elif due and out:
+            out[-1]["date"] = due.group(1)
         elif m and PLACEHOLDER not in line:
-            out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "line": no})
+            out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "date": "", "line": no})
         elif line.startswith((" ", "\t")) and line.strip() and out and not out[-1]["answer"]:
             out[-1]["text"] += " " + line.strip()
+    for q in out:
+        if not q["date"]:
+            hit = QUESTION_DUE_TEXT.search(q["text"])
+            q["date"] = hit.group(1) if hit else ""
     return out
 
 
