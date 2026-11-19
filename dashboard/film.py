@@ -13,6 +13,7 @@ Krok (klucze opcjonalne, wykonywane w tej kolejności):
   "rozwin": selektor               rozwinięcie <details>, gdy jest zwinięte
   "czekaj_na": selektor            czekanie, aż element się pojawi ("limit": sekundy, domyślnie 60)
   "pauza": sekundy
+  "opcjonalnie": true              błąd kroku nie przerywa nagrania
 Wynik: <folder posta>/film.mp4, pion 1080×1920, 30 kl./s, napisy wtopione; stan w .film-stan.json.
 
 Uruchamiane osobnym interpreterem z Playwright (PANEL_FILM_PYTHON, domyślnie ~/narzedzia/film/bin/python):
@@ -26,6 +27,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import time
 
@@ -111,7 +113,7 @@ def record(folder):
             browser = p.chromium.launch()
             ctx = browser.new_context(viewport={"width": VIEW[0], "height": VIEW[1]}, device_scale_factor=2,
                                       locale="pl-PL", record_video_dir=work,
-                                      record_video_size={"width": VIEW[0] * 2, "height": VIEW[1] * 2})
+                                      record_video_size={"width": VIEW[0], "height": VIEW[1]})  # kadr = ekran
             ctx.add_init_script(CURSOR_JS)
             page = ctx.new_page()
             if sc.get("logowanie"):
@@ -163,6 +165,8 @@ def record(folder):
                         page.locator(k["czekaj_na"]).first.wait_for(timeout=int(float(k.get("limit", 60)) * 1000))
                     page.wait_for_timeout(int(float(k.get("pauza", 0.6)) * 1000))
                 except Exception as e:  # noqa: BLE001
+                    if k.get("opcjonalnie"):        # krok, który może nie zadziałać (np. zamknięcie baneru)
+                        continue
                     try:                    # zrzut ekranu z chwili błędu: łatwiej poprawić scenariusz
                         page.screenshot(path=os.path.join(folder, ".film-blad.png"), full_page=True)
                     except Exception:  # noqa: BLE001
@@ -189,12 +193,14 @@ def render(src, out, captions, end, work):
     filters = ["scale=1080:1920:flags=lanczos", "fps=30"]
     for n, (at, text) in enumerate(captions):
         stop = captions[n + 1][0] if n + 1 < len(captions) else end + 1
-        path = os.path.join(work, "napis-%d.txt" % n)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(text)
-        filters.append("drawtext=fontfile=%s:textfile=%s:fontsize=46:fontcolor=white:box=1:boxcolor=0x2b1d12@0.82:"
-                       "boxborderw=22:x=(w-text_w)/2:y=h-300:line_spacing=10:enable='between(t,%.2f,%.2f)'"
-                       % (FONT, path, at, stop))
+        lines = textwrap.wrap(text, 24)        # napis w kilku liniach, każda osobnym drawtext (bez znaku końca linii)
+        for j, line in enumerate(lines):
+            path = os.path.join(work, "napis-%d-%d.txt" % (n, j))
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(line)
+            y = 1920 - 300 - (len(lines) - j) * 78
+            filters.append("drawtext=fontfile=%s:textfile=%s:fontsize=50:fontcolor=white:box=1:boxcolor=0x2b1d12@0.85:"
+                           "boxborderw=16:x=(w-text_w)/2:y=%d:enable='between(t,%.2f,%.2f)'" % (FONT, path, y, at, stop))
     cmd = ["ffmpeg", "-y", "-v", "error", "-ss", "%.2f" % lead, "-i", src, "-vf", ",".join(filters), "-an",
            "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out]
     r = subprocess.run(cmd, capture_output=True, text=True)
