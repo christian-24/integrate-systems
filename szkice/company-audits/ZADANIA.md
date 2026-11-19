@@ -108,3 +108,10 @@ termin: 2026-12-18
 - [x] Zacommitować nieśledzone pliki w CompanyAudits (commit „wip: migracja z PC”, 2026-11-16)
 - [x] Część Useme w osobnym repozytorium asystent-useme (2026-11-16)
 - [x] Strona oprogramowani.com, nowa wersja (2026-11-04)
+- [~] Zaproponuj formy marketingu Oprogramowani na grudzień (poza Reels) | kto: claude | gdzie: chmura | kiedy: 2026-11-19 | wymaga: odbiór
+  cel: 3–5 form marketingu dopasowanych do grupy docelowej, każda z przykładem i rytmem, gotowe do wpisania na oś czasu
+  gotowe gdy: plik marketing/formy-grudzien.md w folderze karty: dla każdej formy kanał, dla kogo, przykład tematu, częstotliwość, nakład pracy i czy film robi studio (pokaz albo objaśnienie); rekomendacja 3 form na start
+  materiał: KARTA.md
+  wynik: powstał marketing/formy-grudzien.md (folder karty): 5 form (bezpłatny przegląd drogi zamówienia, pokaz integracji z jednostronicowym opisem, seria na LinkedIn „Gdzie ginie zamówienie”, list papierowy, grupy na Facebooku), każda z kanałem, odbiorcą, przykładem tematu, częstotliwością, nakładem pracy i filmem ze studia (pokaz albo objaśnienie); rekomendacja na start: przegląd, pokaz integracji, seria na LinkedIn; 4 warianty z kosztem i oś czasu 24.11–18.12; pytania 6 i 7 w KARTA.md
+  decyzja: które formy wchodzą na grudzień (propozycja: A, B, C; pytanie 6 w KARTA.md) i czy jest demo integracji do nagrania (pytanie 7)
+  następne: Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | kiedy: 2026-11-24

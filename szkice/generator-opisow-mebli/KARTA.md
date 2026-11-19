@@ -111,3 +111,9 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
    skutek: po: Potwierdź DPA → Odpowiedz na komentarze pod postami 2 i 3
    skutek: po: Potwierdź DPA → Napisz 5 komentarzy pod cudzymi postami
    Odpowiedź: wstrzymać posty i komentarze do potwierdzenia DPA; publikacje w kampanii i wiadomości mają już po: Potwierdź DPA, potwierdzenie zajmuje ok. 15 min, więc post 1 może wyjść jeszcze 19.11
+14. Które formy marketingu (poza stałym rytmem i Reels) wchodzą na grudzień? Opis pięciu form i czterech wariantów: marketing/formy-grudzien.md. Od tego zależy, które wiersze trafią na oś czasu od 30.11.
+   termin: 2026-11-30
+   propozycja: wariant 2: darmowy przegląd opisu (A), grupy sprzedawców na Facebooku (C) i maile aktywacyjne do założonych kont (D); 0 zł wydatków, ok. 2 h tygodniowo ponad stały rytm; pozostałe wiersze z punktu 5 pliku dopisze agent po przyjęciu
+   skutek: nowe: Przygotuj ogłoszenie, przypomnienie i szablony darmowego przeglądu opisu | kto: claude | gdzie: chmura | kiedy: 2026-11-30
+   skutek: nowe: Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy | kto: ty | kiedy: 2026-12-01 | czas: 30
+   skutek: nowe: Przygotuj teksty 3 maili aktywacyjnych z oceną RODO | kto: claude | gdzie: chmura | kiedy: 2026-12-02

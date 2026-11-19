@@ -70,3 +70,14 @@ Projekt to działalność konsultingowo-wdrożeniowa dla firm meblarskich zatrud
    Odpowiedź: nie, ale docelowo znalazłem kolejna możliwość komunikacji z klientem, rozmowy będą przeprowadzone w innym miejscu
 5. Czy kontaktujemy się z firmami z listy LeadyV2 (145 ocenionych) i od których zacząć?
    Odpowiedź: Tak, będziemy
+6. Które formy marketingu (poza Reels) wchodzą na grudzień? Opis pięciu form i czterech wariantów: marketing/formy-grudzien.md. Od tego zależy, które wiersze trafią na oś czasu od 24.11.
+   termin: 2026-11-23
+   propozycja: wariant 2, czyli formy A, B i C: bezpłatny 30-minutowy przegląd drogi zamówienia, pokaz integracji z jednostronicowym opisem, seria 6 wpisów na LinkedIn „Gdzie ginie zamówienie”; 0 zł, ok. 1,5 h tygodniowo
+   skutek: nowe: Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | gdzie: chmura | kiedy: 2026-11-24
+   skutek: nowe: Przygotuj scenariusz filmu i jednostronicowy opis pokazu integracji | kto: claude | gdzie: chmura | kiedy: 2026-11-27
+   skutek: nowe: Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (1–8.12) i scenariusz filmu objaśniającego | kto: claude | gdzie: chmura | kiedy: 2026-11-30
+   skutek: nowe: Przyjmij film i opis pokazu integracji | kto: ty | kiedy: 2026-12-02 | czas: 45
+   skutek: nowe: Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (10–17.12) z surowca po rozmowach | kto: claude | gdzie: chmura | kiedy: 2026-12-07
+7. Czy istnieje działające demo integracji ERP ↔ sprzedaż (np. zamówienie z Allegro albo BaseLinkera trafia do programu magazynowego), które studio może nagrać jako pokaz, i gdzie leży? Bez demo film z formy B powstanie jako objaśnienie na planszach.
+   termin: 2026-11-26
+   propozycja: jeśli demo nie ma, zacząć od objaśnienia na planszach, a przykład na zmyślonych danych zbudować w osobnym zadaniu po pierwszych rozmowach
