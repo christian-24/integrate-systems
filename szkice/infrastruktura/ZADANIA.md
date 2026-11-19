@@ -43,25 +43,6 @@
   - [ ] następnego dnia ta sama zakładka pokazuje pierwszą kopię
   Koszt: 20% ceny serwera, ok. 1,87 $/mies. z VAT przy 9,34 $/mies. za serwer.
   wynik: API Hetzner 19.11: kopie zapasowe włączone na obu serwerach (okna 10-14 i 18-22)
-- [ ] Dodaj zewnętrzny monitoring adresu panelu (UptimeRobot, darmowy) | kto: ty | kiedy: 2026-11-21 | czas: 10
-  cel: powiadomienie, gdy adres panelu nie odpowiada z zewnątrz (awaria całego serwera albo Caddy)
-  gotowe gdy: monitor HTTPS na https://2-29-181-133.sslip.io/wejscie ma stan Up i alert na e-mail albo w aplikacji
-  - [ ] uptimerobot.com: konto darmowe, „Add New Monitor”, typ HTTP(s), URL https://2-29-181-133.sslip.io/wejscie, interwał 5 min
-  - [ ] Alert Contacts: Twój e-mail albo aplikacja UptimeRobot na iPhonie; monitor ma stan Up
-- [ ] Skonfiguruj kopię poza serwerem (Storage Box) | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 20 | po: Zainstaluj kopie i kontrolę zdrowia, Załóż Storage Box | sprawdza: kopia-poza
-  cel: nocna kopia trafia zaszyfrowana poza serwer, więc utrata serwera nie zabiera danych
-  gotowe gdy: `journalctl -u kopia` pokazuje „zaszyfrowano” i „wysłano poza serwer”, w /home/panel/kopie/ostatnia.json jest "off": true, a hasło kopii jest w menedżerze haseł
-  Kroki: ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Storage Box i konto pomocnicze zakłada zadanie „Załóż Storage Box i konto tylko do zapisu”.
-  - [ ] klucz kopii panelu na koncie pomocniczym, zdalny rclone `storagebox`, plik hasła /home/panel/.kopia-haslo (600)
-  - [ ] KOPIA_CEL i KOPIA_HASLO_PLIK w /etc/integrate/serwer.env, `sudo systemctl start kopia`
-- [ ] Wykonaj próbę odtworzenia (odtworz.sh --sprawdz) | kto: ty | gdzie: chmura | kiedy: 2026-11-22 | czas: 30 | po: Skonfiguruj kopię poza serwerem
-  cel: wiadomo, że kopię z Storage Box da się odczytać i ile trwa odtworzenie
-  gotowe gdy: `odtworz --sprawdz` na archiwum pobranym ze Storage Box kończy się „archiwum poprawne”, rozpakowanie do /tmp działa, a czas próby jest wpisany w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
-  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel rclone copy storagebox:integrate/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/` (najnowsze archiwum)
-  - [ ] `sudo -u panel odtworz --sprawdz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg`: „archiwum poprawne”
-  - [ ] `sudo -u panel odtworz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/dane`; czas zanotowany
-  - [ ] `rm -rf /tmp/proba` (dane klientów); data i czas próby w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
-  Polecenia z ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka: niczego poza /tmp/proba nie nadpisuje.
 - [x] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10 | sprawdza: claude-agent
   cel: agenci z panelu działają jako osobny użytkownik agent, bez dostępu do kluczy SSH, logowania Claude panelu, /etc/integrate i kopii
   gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK poza „Claude agenta niezalogowany”
@@ -87,6 +68,7 @@
   - [ ] Snapshots: plan automatyczny codziennie o 05:00, 14 migawek
   - [ ] Sub-accounts: nowe konto, katalog bazowy integrate-serwer, SSH tak, Samba i WebDAV nie; zapisz login uXXXXXX-subN
   Opis i powód (migawki zamiast borg append-only i restic): ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Klucz i rclone na koncie pomocniczym: zadanie „Skonfiguruj kopię poza serwerem” (ma po: na tym zadaniu).
+  Po założeniu napisz w rozmowie z Claude: „Storage Box gotowy”. Claude ustawi kopię poza serwerem i zrobi próbę odtworzenia.
 - [x] Zaktualizuj ochronę agenta (sekrety, zapora) | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | sprawdza: plik /etc/nftables.d/integrate-agent.nft
   cel: agent nie czyta plików sekretów w repozytoriach projektów i nie łączy się z panelem, asystentem Useme ani API Caddy na serwerze
   gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK w częściach „Sekrety w projektach” i „Zapora agenta”

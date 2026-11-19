@@ -21,20 +21,16 @@
 - [x] T12–T17 Ruch portowy i usterki: tabele, DAO, formularze, oś czasu
 - [x] T18–T19 Sealed log i eksport PDF
 - [x] T20–T21 Limity Free Tier i onboarding
-- [~] Zamknij test dymny E2E (T22) | wymaga: odbiór
+- [x] Zamknij test dymny E2E (T22)
   cel: T22 zamknięty: test dymny E2E zielony, test manualny przeniesiony
   gotowe gdy: T22 oznaczony jako zrobiony w docs/backlog/STATUS.md
   materiał: docs/backlog/STATUS.md
-  wynik: test dymny E2E zielony
-  zostało: test manualny przeniesiony do T44
-  decyzja: sprawdź w docs/backlog/STATUS.md, czy T22 jest oznaczony jako zrobiony; jeśli tak, zamknij zadanie
-- [~] Dokończ migrację starych ekranów (T23) | wymaga: odbiór
+  wynik: przyjęte 19.11 (Claude za właściciela): test dymny zielony, test manualny w T44
+- [x] Dokończ migrację starych ekranów (T23)
   cel: stare ekrany korzystają z motywu i tokenów
   gotowe gdy: T23 oznaczony jako zrobiony w docs/backlog/STATUS.md
   materiał: docs/backlog/STATUS.md
-  wynik: ekrany zmigrowane
-  zostało: surowe wartości w features, przeniesione do T42
-  decyzja: sprawdź w docs/backlog/STATUS.md, czy T23 jest oznaczony jako zrobiony (surowe wartości przeniesione do T42); jeśli tak, zamknij zadanie
+  wynik: przyjęte 19.11 (Claude za właściciela): ekrany zmigrowane, surowe wartości w T42
 
 ## Etap: v1.0.1 Zgodność UI z makietami
 
@@ -85,20 +81,16 @@ termin: 2026-12-13
 - [x] Faza 0: T50a–d, T51 (2026-06-01)
 - [x] T48c (2026-07-17)
 - [x] RC1 1.0.0+2 zmergowany (#121/#122, 2026-10-27)
-- [~] Przygotuj szkic zaproszenia dla testerów zamkniętego testu | kto: claude | gdzie: chmura | kiedy: 2026-11-19 | wymaga: odbiór
+- [x] Przygotuj szkic zaproszenia dla testerów zamkniętego testu | kto: claude | gdzie: chmura | kiedy: 2026-11-19
   cel: gotowy tekst zaproszenia do zamkniętego testu dla znajomych i grup żeglarskich
   gotowe gdy: szkic w repozytorium (wiadomość prywatna i post do grupy), z instrukcją dołączenia do testu w Google Play; nic nie wysłane
   materiał: KARTA.md#Cel
   Możesz skorzystać z materiałów z gałęzi marketing/kampania-rc1. Wysyłka i publikacja tylko przez właściciela.
-  wynik: szkic w docs/marketing/zaproszenie-testerzy-zamkniety-test.md (commit 0c07892 na gałęzi agent/2026-11-19-przygotuj-szkic-zaproszenia-dla-testerow; fakty zgodne z kodem: pakiet pl.naulik.app, Android 7+, 1.0.0+2): wiadomość prywatna i wersja krótka, post do grupy/forum, instrukcja dołączenia w Google Play z rozwiązywaniem problemów, przypomnienie po tygodniu; nic nie wysłane
-  decyzja: zatwierdź treść i wybierz sposób dodawania testerów (Grupa Google, rekomendowane, albo lista adresów e-mail); uzupełnij [LINK-GRUPA], [LINK-TEST], [KONTAKT]; żeby zdążyć do 13.12, dwunasty tester musi dołączyć do 29.11
-  zostało: wysyłka i publikacja (tylko właściciel); linki do testu powstaną dopiero po wgraniu buildu do ścieżki zamkniętego testu w Play Console
-- [~] Przygotuj politykę prywatności NaulikApp | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
+  wynik: szkic przyjęty 19.11 (Claude za właściciela): docs/marketing/zaproszenie-testerzy-zamkniety-test.md; testerów dodajesz przez Grupę Google
+- [x] Przygotuj politykę prywatności NaulikApp | kto: claude | gdzie: chmura | kiedy: 2026-11-20
   cel: treść polityki, wersja HTML i odpowiedzi do Play Console gotowe do publikacji
   gotowe gdy: właściciel odebrał treść i odpowiedzi; commit w zadaniu „Zacommituj poprawki polityki prywatności”
-  wynik: treść, HTML i odpowiedzi do Play Console w docs/compliance/; ekran polityki w aplikacji poprawiony
-  decyzja: odebrać treść polityki i odpowiedzi do Play Console
-  zostało: zmiany niezacommitowane; brak danych wydawcy; publikacja pod publicznym URL
+  wynik: treść przyjęta 19.11 (Claude za właściciela); dane wydawcy i zapis na gałęzi w kolejnych zadaniach
 - [ ] Spisz listę 15 kandydatów na testerów zamkniętego testu | kto: ty | kiedy: 2026-11-20 | czas: 20
   cel: lista co najmniej 15 osób z kontem Google (zapas na rezygnacje do progu 12)
   gotowe gdy: lista 15 kandydatów zapisana poza repozytorium (adresy to dane osobowe)
@@ -138,11 +130,10 @@ termin: 2026-12-13
   - [ ] hasło keystore i hasło klucza w menedżerze haseł, plik .jks jako załącznik tego wpisu (kopia)
   - [ ] `android/app/build.gradle` czyta key.properties w signingConfigs.release; gdy nie czyta, zgłoś to jako zadanie dla Claude
   Play App Signing: przy pierwszym wgraniu AAB Google tworzy klucz aplikacji, a ten keystore zostaje kluczem przesyłania (można go odnowić u Google).
-- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 5
-  cel: polityka prywatności ma pełne dane wydawcy wymagane przez Google Play
-  gotowe gdy: pytanie 5 w KARTA.md ma odpowiedź z nazwą wydawcy, adresem i e-mailem kontaktowym
-  materiał: KARTA.md#Pytania do właściciela
-  Dane wpisuje agent do plików polityki w docs/compliance/ (treść, HTML, odpowiedzi do Play Console) w zadaniu „Zapisz politykę prywatności…”.
+- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 2
+  cel: polityka prywatności ma dane wydawcy wymagane przez Google Play
+  pyta: Wydawca (imię i nazwisko albo firma); Adres wydawcy; E-mail kontaktowy
+  Wpisz trzy pola i „Zapisz i zakończ”. Resztę zrobi agent w zadaniu „Zapisz politykę prywatności…”.
 - [ ] Zmerguj PR #124 po zielonej pełnej suicie testów | kto: ty | kiedy: 2026-11-22 | czas: 10 | po: Uruchom pełną suitę testów na PR #124
   cel: gałęzie fix/rc1-nagrania i marketing/kampania-rc1 w master przed podpisanym buildem
   gotowe gdy: PR #124 zmergowany, CI na master zielone
@@ -156,24 +147,14 @@ termin: 2026-12-13
   materiał: docs/backlog/STATUS.md
 - [ ] Zapisz politykę prywatności na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
   cel: treść polityki z danymi wydawcy, HTML, odpowiedzi do Play Console i poprawiony ekran polityki na gałęzi uruchomienia
-  gotowe gdy: zmiany w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); dane wydawcy z odpowiedzi na pytanie 5 w KARTA.md wpisane; testy zielone
+  gotowe gdy: zmiany w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); dane wydawcy z formularza wpisane; testy zielone
   materiał: docs/compliance/
-  materiał: KARTA.md#Pytania do właściciela
   Pliki z 18.11 leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/naulikapp/docs/compliance/ i ekran polityki).
   Przenieś je stamtąd; gdy nie masz dostępu, oznacz [!] z blokadą „brak dostępu do niezacommitowanych plików polityki”.
-- [ ] Przejrzyj zmiany agenta T48 i polityki prywatności i scal w panelu | kto: ty | kiedy: 2026-11-23 | czas: 20 | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi
-  cel: zmiany T48 i polityka prywatności w master repozytorium NaulikApp na serwerze
-  gotowe gdy: oba uruchomienia scalone w panelu do master (bez push)
-  - [ ] panel, Agenci: uruchomienie „Zrealizuj zadania T48…”, lista zmian i diff przejrzane, scalone
-  - [ ] to samo dla „Zapisz politykę prywatności…”
-  Gdy scalenie zwraca 409 przez niezacommitowane zmiany w głównym katalogu: `ssh ops@2.29.181.133`, potem
-  `sudo -u panel git -C /home/panel/projekty/naulikapp stash push -m przed-scaleniem` i scal ponownie.
-- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: ty | kiedy: 2026-11-23 | czas: 10 | po: Przejrzyj zmiany agenta T48, Zmerguj PR #124
+- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: ty | kiedy: 2026-11-23 | czas: 2 | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
   cel: master na GitHubie i na Macu ma PR #124, zmiany T48 i politykę prywatności
-  gotowe gdy: CI na master zielone; na Macu `git log -1` pokazuje ten sam commit co GitHub
-  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel git -C /home/panel/projekty/naulikapp pull --no-rebase origin master` (wnosi PR #124)
-  - [ ] `sudo -u panel git -C /home/panel/projekty/naulikapp push origin master`
-  - [ ] na Macu w repozytorium naulikapp: `git switch master && git pull`
+  gotowe gdy: na Macu master ma ten sam commit co GitHub
+  Napisz w rozmowie z Claude: „wypchnij master NaulikApp”. Claude scali PR #124 na serwerze, wypchnie master i pobierze go na Macu.
 - [ ] Opublikuj politykę prywatności pod publicznym URL | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wypchnij master NaulikApp na GitHub
   cel: Google Play i ekran w aplikacji wskazują ten sam publiczny adres polityki
   gotowe gdy: polityka otwiera się pod publicznym URL bez logowania, a URL wpisany w Play Console
@@ -211,13 +192,8 @@ termin: 2026-12-13
   - [ ] TC-01..TC-20 przeprowadzone, wynik wpisany w kolumnie wyniku planu
   Błąd blokujący: poprawka, nowy AAB z wyższym versionCode i ponowne wgranie przed 27.11.
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
-- [ ] Sprawdź liczbę testerów zamkniętego testu (co najmniej 12) | kto: ty | kiedy: 2026-11-26 | czas: 10 | po: Wyślij zaproszenia do testu kandydatom
-  cel: co najmniej 12 osób z kontem Google dołączyło do zamkniętego testu
-  gotowe gdy: Play Console (Testy zamknięte → Testerzy) albo Grupa Google pokazuje co najmniej 12 osób
-  materiał: docs/marketing/zaproszenie-testerzy-zamkniety-test.md
-  - [ ] Play Console → Testowanie → Testy zamknięte → ścieżka → Testerzy: liczba osób, które dołączyły
-  - [ ] przy mniej niż 12: przypomnienie ze szkicu do osób, które nie dołączyły, i kolejni kandydaci z grup żeglarskich
-- [ ] Uruchom zamknięty test w Google Play (12+ testerów × 14 dni) | kto: ty | kiedy: 2026-11-27 | czas: 30 | po: Przeprowadź test akceptacyjny RC1, Sprawdź liczbę testerów, Wgraj AAB do ścieżki
+- [ ] Uruchom zamknięty test w Google Play (12+ testerów × 14 dni) | kto: ty | kiedy: 2026-11-27 | czas: 30 | po: Przeprowadź test akceptacyjny RC1, Wyślij zaproszenia do testu kandydatom, Wgraj AAB do ścieżki
+  - [ ] co najmniej 12 osób dołączyło (Play Console → Testy zamknięte → Testerzy); przy mniej przypomnienie ze szkicu
   cel: zamknięty test trwa od 27.11 do 11.12
   gotowe gdy: wersja w ścieżce zamkniętego testu ma stan „Dostępna”, a co najmniej 12 testerów dołączyło
   - [ ] URL polityki prywatności w Play Console
