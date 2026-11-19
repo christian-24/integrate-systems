@@ -283,7 +283,13 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .plan h3,.pubc h3{margin:0;font-size:14px}
 .plan .chk{display:inline-flex;gap:6px;align-items:center;font-size:13.5px}
 .fup{cursor:pointer}
-.pubc{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.pubc{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.pubc>div{min-width:0;border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;align-content:start}
+.pubc table{width:100%;table-layout:fixed;border-collapse:collapse}
+.pubc td{padding:4px 0;vertical-align:middle}
+.pubc td:first-child{width:38%;padding-right:8px;overflow-wrap:anywhere}
+.pubc select,.pubc input{width:100%;max-width:100%;box-sizing:border-box}
+.pubc .note{margin:0}
 .pubc .steps{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5;color:var(--ink-2)}
 .pubc summary{cursor:pointer;font-size:13.5px;margin:6px 0}
 .mtl{list-style:none;margin:0;padding:8px 16px 16px;display:grid;gap:0}
