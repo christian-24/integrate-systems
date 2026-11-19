@@ -3,6 +3,7 @@
 - faza: budowa
 - klient: nie
 - próg: pełna
+- priorytet: 1
 - maszyna: chmura
 - repozytorium: serwer `~/projekty/naulikapp` (GitHub, gałąź master, po migracji D13); keystore i podpisany build na Macu; wcześniej PC `C:\Users\Guest\Desktop\NaulikApp`
 
@@ -56,3 +57,6 @@ NaulikApp to mobilny dziennik pokładowy dla polskich kapitanów małych i śred
    Odpowiedź: Nie mam 12 testerów ale konto założone
 4. Które zadania T48 (a/e/g/h/m/n/q/t/v/w) wchodzą przed wydaniem v1.0.0, a które po?
    Odpowiedź: Moze zrealizujmy wszystko niezbędne
+5. Dane wydawcy do polityki prywatności NaulikApp i Play Console: nazwa wydawcy, adres, e-mail kontaktowy w sprawie danych?
+   termin: 2026-11-21
+   propozycja: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console

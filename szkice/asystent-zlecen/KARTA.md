@@ -3,6 +3,7 @@
 - faza: budowa
 - klient: nie
 - próg: lekka
+- priorytet: 5
 - stan: aktywny
 - maszyna: chmura
 - repozytorium: serwer `~/projekty/szukanie-auta` (GitHub, od 2026-11-16); rozszerzenie w Chrome na Macu; wcześniej PC `C:\Users\Guest\Zlecenia`

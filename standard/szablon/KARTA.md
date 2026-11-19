@@ -1,6 +1,7 @@
 # Karta projektu: {{NAZWA}}
 
 - stan: aktywny
+- priorytet: 3
 - maszyna: pc
 - repozytorium:
 - założono: {{DATA}}

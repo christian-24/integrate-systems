@@ -55,6 +55,11 @@ Pełny opis: `AGENCI.md`.
   i datą `kiedy:` nie późniejszą niż dziś (także z przeszłości), gdy poprzednicy z `po:` są zrobieni; domyślnie wyłączony.
   Rytm marketingu (`kampanie/staly-rytm.md`) zakłada zadania postów i wpisania wyników; opis w `AGENCI.md`.
 - Zadania Claude dostają `--allowedTools` z listą bezpiecznych narzędzi (lokalny git, testy, pliki; bez push i sieci).
+- Projekt w repozytorium git: panel zakłada gałąź `agent/RRRR-MM-DD-nazwa` i katalog roboczy `.agent/<id>`, agent
+  pracuje w nim, po zakończeniu panel zatwierdza zmiany, zapisuje listę zmienionych plików (`changes`) i usuwa katalog.
+  Scalenie do bazy: `POST /api/agent/merge`; podgląd zmian: `GET /api/agent/diff?id=`. Opis: `AGENCI.md`.
+- Ścieżki plików z `wynik:` trafiają jako `materiał:` do zadań, które mają `po:` na tym zadaniu.
+- `PANEL_AGENT_USER`: agenci jako osobny użytkownik systemu (`sudo -n -u`).
 - Tryb uprawnień `acceptEdits`; polecenia powłoki dopuszcza `.claude/settings.json` projektu. Trybu z pominięciem uprawnień panel nie używa.
 - Rekordy: `../uruchomienia/<id>.json`, surowy zapis `<id>.log`.
 
@@ -134,6 +139,10 @@ Zadanie ma też:
 "reviewOverdue": false                                      odbiór czeka dłużej niż 2 dni
 ```
 
+Pola, które dodaje odczyt plików (`standard/STANDARD.md`: `priority` projektu, `proposal` pytania, `target`
+i `result` kampanii, szczegóły publikacji), serwer przekazuje bez filtrowania. `dayMinutes` na najwyższym poziomie
+`/api/data` to dzienna pojemność właściciela w minutach (`PANEL_DZIEN_MIN`, domyślnie 120).
+
 `detail` ma dodatkowo `fix` (wiersz `poprawka:`) i `next` (wiersz `następne:`). `runBlock` „Czeka na: …” podaje
 niezrobionych poprzedników. Dzień wejścia w stan panel zapisuje w `../uruchomienia/stan.json` (pole `since`), skąd
 czyta go też `pm.py`.
@@ -189,7 +198,7 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | Żądanie | Zmiana |
 |---|---|
 | `POST /api/task/update` | pola zadania: tytuł, stan, kto, gdzie, kiedy, pora, czas, wymaga, blokada, kanał |
-| `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach; `następne` to „Tytuł \| kto: … \| kiedy: …” (sprawdzany jak wiersz zadania); `krok` z value `{"index": n, "done": bool}` zmienia n-ty krok (od 0) |
+| `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`; dla publikacji `wyświetlenia`, `kliknięcia`, `konta`, `link`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach; `następne` to „Tytuł \| kto: … \| kiedy: …” (sprawdzany jak wiersz zadania); `krok` z value `{"index": n, "done": bool}` zmienia n-ty krok (od 0) |
 | `POST /api/task/add` | nowe zadanie w etapie, w kampanii albo w „Do rozplanowania” (pod szczegółami ostatniego zadania) |
 | `POST /api/stage/update` | termin etapu |
 | `POST /api/campaign/update` | wynik i stan kampanii |
@@ -199,6 +208,7 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | `POST /api/plan/accept` | `{"id", "ids"}`: uruchamia wybrane zadania z planu; odpowiedź `started`, `failed` |
 | `POST /api/agent/check` | test połączenia |
 | `POST /api/agent/stop` | zatrzymuje uruchomienie albo zdejmuje je z kolejki |
+| `POST /api/agent/merge` | `{id}`: scala gałąź uruchomienia do bazy (`git merge --no-ff`, bez push); 409 z opisem przy konflikcie albo niezatwierdzonych zmianach |
 | `POST /api/agent/automat` | włącza i wyłącza Automat |
 | `POST /api/project/add` | dopisuje folder do rejestru; opcjonalnie zakłada brakujące pliki standardu |
 | `POST /api/project/remove` | usuwa projekt z rejestru; pliki zostają |
@@ -212,7 +222,8 @@ Gdy plik zmienił się w międzyczasie (agent albo edytor), serwer odmawia (409)
 
 | Skąd | Warunek |
 |---|---|
-| ten komputer | bez hasła |
+| ten komputer, odczyt | bez hasła |
+| ten komputer, zapis (`POST`) | bez hasła na Macu i PC; przy `PANEL_LOKALNY_KLUCZ_PLIK`, `PANEL_AGENT_USER` albo `PANEL_MACHINE=cloud` sesja albo nagłówek `X-Panel-Klucz` z pliku klucza (`AGENCI.md`, „Dostęp”) |
 | inne urządzenie | `PANEL_HOST=0.0.0.0`, nazwa hosta w `PANEL_ALLOWED_HOSTS`, hasło w `PANEL_TOKEN`; logowanie na `/wejscie` |
 | inne urządzenie, bez `PANEL_TOKEN` | odmowa (403) |
 
@@ -258,6 +269,8 @@ W folderze IntegrateSystems, bez sieci i bez zużycia limitu:
     python3 -m unittest discover -s dashboard/testy
 
 Runda 2 (kolejność `po:`, kroki, poprawka, następne, terminy pytań, liczniki, Automat, stan serwera, sesje): `testy/test_runda2.py`.
+Runda 3, agenci (gałąź uruchomienia na tymczasowym repozytorium git, scalenie, diff, materiał z wyniku, szczegóły
+zadań Automatu, `PANEL_AGENT_USER`, klucz zapisu z loopback, nowe pola w `/api/data`): `testy/test_runda3_agenci.py`.
 
 ## Poza zakresem
 

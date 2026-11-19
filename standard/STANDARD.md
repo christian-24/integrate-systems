@@ -17,13 +17,21 @@ Dzięki temu panel, Claude Code i Codex czytają każdy projekt tak samo, a Ty w
 | `kampanie/<nazwa>.md` | Jedna kampania w jednym pliku (opcjonalnie) | Grupa docelowa, Przekaz, Harmonogram, Wyniki i wnioski |
 
 Sekcja z tekstem `_Do uzupełnienia…_` liczy się jako brak. Nazw sekcji nie zmieniamy.
+
+Pod tytułem karty stoją pola (`- stan:`, `- faza:`, `- klient:`, `- próg:`, opis w `dashboard/README.md`) oraz
+`- priorytet: 1–5`: 1 to projekt najważniejszy, brak wiersza = 3. Inna wartość jest brakiem karty. Priorytet ustala
+kolejność spraw w raporcie PM i to, które zadania przesunąć, gdy dzień jest pełny (`priority` w danych projektu).
+
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
+Agent może dopisać pod pytaniem swoją rekomendację: wcięty wiersz `   propozycja: …` (w danych `proposal`).
+Propozycja nie jest odpowiedzią: pytanie czeka na Twoją `Odpowiedź:`.
 
 ```
 ## Pytania do właściciela
 1. Który kolor logo?
    termin: 2026-11-21
+   propozycja: niebieski, zgodny z kolorem strony
    Odpowiedź: niebieski
 ```
 
@@ -79,19 +87,47 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `zostało:` | czego nie zrobiono | agent |
 | `poprawka:` | uwagi właściciela przy „Do poprawy”; agent poprawia pracę według nich | właściciel |
 | `następne:` | jedna propozycja kolejnego zadania w formacie wiersza bez stanu: `Tytuł \| kto: … \| kiedy: …` | agent |
+| `trwa: N dni` | notatka: zadanie trwa N dni od `kiedy` (raport PM liczy z tego zapas etapu) | właściciel, PM |
+| `wyświetlenia:`, `kliknięcia:`, `konta:` | wynik publikacji, liczba całkowita (`1200` albo `1 200`) | właściciel, agent |
+| `link:` | adres opublikowanego wpisu, `http://` albo `https://` | właściciel, agent |
 
 Kroki zmienia się po kolejności (od 0, liczone tylko wiersze `- [ ]`/`- [x]` pod zadaniem).
 `następne:` nie jest zadaniem: właściciel decyduje, czy je założyć. Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
 Tytuł zaczyna się od czasownika („Wyślij”, „Przygotuj”) i ma najwyżej 120 znaków.
 
-Braki zgłaszane przy `ZADANIA.md` (`projekt.py sprawdz`, księga w panelu), najwyżej 5 przykładów w wierszu:
-otwarte zadanie w etapie z terminem bez `gotowe gdy:`; tytuł dłuższy niż 120 znaków;
-tytuł zaczynający się od rzeczownika odczasownikowego („Wdrożenie…”, „Przygotowanie…”).
+Wyniki publikacji (`wyświetlenia`, `kliknięcia`, `konta`, `link`) zapisuje się pod wierszem publikacji w harmonogramie
+kampanii; w danych publikacji są w `detail` jako `views`, `clicks`, `accounts` (liczba albo `null`) i `link` (tekst).
+Zła wartość zostaje notatką.
+
+```
+- [x] Post o ofercie | kanał: LinkedIn | kiedy: 2026-11-20 | kto: ty | czas: 15
+  materiał: posty/2026-11-20-oferta/post.md
+  wyświetlenia: 1 200
+  kliknięcia: 34
+  konta: 2
+  link: https://www.linkedin.com/feed/update/…
+```
+
+Braki zgłaszane przy `ZADANIA.md` (`projekt.py sprawdz`, księga w panelu), najwyżej 5 przykładów w wierszu;
+liczą się otwarte zadania z `ZADANIA.md` (bez publikacji):
+
+| Brak | Reguła |
+|---|---|
+| bez `gotowe gdy` | zadanie w etapie z terminem bez `gotowe gdy:` |
+| długi tytuł | tytuł dłuższy niż 120 znaków |
+| tytuł nie zaczyna się od czasownika | pierwsze słowo to rzeczownik odczasownikowy („Wdrożenie…”, „Przygotowanie…”) |
+| Twoje zadanie bez kroków i materiału | `kto: ty`, `kiedy` najpóźniej za 7 dni (także po terminie), bez kroków i bez `materiał:` |
+| Twoje zadanie bez `czas` | `kto: ty` bez pola `czas` |
+| zadanie agenta bez `kiedy` | `kto: claude` albo `codex` w aktywnym projekcie, bez `kiedy`, poza sekcją „Do rozplanowania” |
+| `wynik:` bez odbioru | stan `[ ]`, jest `wynik:`, nie ma `wymaga` (praca zrobiona, a zadanie wisi: zamknij albo daj do odbioru) |
+| kampania bez celu liczbowego | kampania w stanie „w toku” bez pola `cel liczbowy` z liczbą |
 
 ## Kampania
 
 Pod tytułem pliku kampanii są pola: `stan` (plan, w toku, zakończona, wstrzymana), `cel`, `miernik`,
 `cel liczbowy`, `wynik`, `kanały`, `start`, `koniec`, `budżet`. Publikacje to wiersze w sekcji Harmonogram.
+`cel liczbowy` i `wynik` to liczby (pierwsza liczba w wierszu: „40 kont” → 40, „1 200” → 1200); w danych kampanii
+`target` i `result` (liczba albo `null`). Kampania w toku powinna mieć `cel liczbowy`.
 Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
 
 ## Raport PM
@@ -115,6 +151,10 @@ Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
 | czeka na Ciebie | otwarte zadanie z `po:`, którego niezrobiony poprzednik ma `kto: ty` |
 | zawieszone | `[~]` bez odbioru i bez pracującego agenta dłużej niż 3 dni (od zmiany stanu, zapis panelu w `uruchomienia/stan.json`) |
 | odbiór czeka | otwarte zadanie z `wymaga: odbiór` dłużej niż 2 dni |
+| priorytet | `- priorytet:` z karty (1–5, brak = 3); decyzje, „Dziś” i „Jutro” sortowane po priorytecie projektu, potem po dacie; najważniejsze decyzje: po terminie, priorytet, data, zgoda, pytanie, odbiór |
+| bez zapasu | etap z terminem (nie po terminie, nie zrobiony), w którym najpóźniejszy koniec otwartego zadania z datą (`kiedy` plus dni z notatki `trwa: N dni`, a bez niej z „N dni” w tytule) wypada w dniu terminu albo później |
+| ponad pojemność | suma `czas:` Twoich spraw na dziś (data najpóźniej dziś albo etap po terminie) większa niż `PANEL_DZIEN_MIN` (domyślnie 120 min); do przesunięcia zadania od najniższego priorytetu, aż suma się zmieści |
+| propozycja | pytanie z wierszem `propozycja:` pokazane z „propozycja: …” |
 
 Rola agenta, który raportuje, jest opisana w `standard/PM.md`. Notatki PM trafiają do `raporty/RRRR-MM-DD.md`.
 
@@ -133,8 +173,12 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wykonane kroki, a na koniec dopisuje pod
 swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jeden wiersz `następne:`. Przy wierszu
 `poprawka:` poprawia pracę według niego. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
-(z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia). Pracę w repozytorium git zapisuje na nowej gałęzi
-`agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem (bez push) i podaje gałąź i commit w `wynik:`.
+(z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia, i z `   propozycja:`, gdy ma rekomendację).
+W projekcie z repozytorium git panel zakłada osobny katalog roboczy (`<repo>/.agent/<id uruchomienia>`) na nowej gałęzi
+`agent/RRRR-MM-DD-krotka-nazwa` od bieżącego stanu; agent pracuje tylko tam. Po zakończeniu panel zapisuje
+niezacommitowane zmiany jednym lokalnym commitem na tej gałęzi (bez push), a scalenie do gałęzi bazowej następuje
+dopiero na Twoje polecenie z panelu. Pliki wskazane w `wynik:` panel dopisuje jako `materiał:` do otwartych zadań,
+które mają `po:` na tym zadaniu.
 
 Zadanie nie startuje, gdy jest zrobione, ma `kto: ty` albo `zgoda` w polu `wymaga`, jest publikacją w kampanii,
 ma niezrobionego poprzednika z `po:`, już pracuje albo należy do projektów przykładowych.

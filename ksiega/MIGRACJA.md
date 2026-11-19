@@ -10,7 +10,7 @@ Cel: wszystko, co dziś istnieje tylko na PC, ma bezpieczne miejsce, zanim PC p�
 | 1 | Zabezpieczenie danych z PC (PC włączony, w sieci) | każdy wiersz tabeli poniżej ma stan „gotowe”; archiwum na Macu sprawdzone (liczba plików, rozmiar) |
 | 2 | Serwer w chmurze: panel z logowaniem przez HTTPS, agenci, repozytoria, nocna kopia | panel otwiera się z Maca i z iPhone'a spoza domu; jedno zadanie agenta wykonane na serwerze |
 | 3 | Useme i Windows: pilnowanie zleceń przez e-maile na serwerze, rozszerzenia w Chrome na Macu, build Warsztatu w GitHub Actions, próba Windows w Azure | nowe zlecenie z Useme widoczne w panelu; zielony build Warsztatu |
-| 4 | Dzień próbny bez PC | 24 h bez włączania PC i bez brakujących danych → PC do resetu i sprzedaży |
+| 4 | Dzień próbny bez PC | 24 h bez włączania PC i bez brakujących danych, kopia poza serwerem działa, próba odtworzenia z niej przeszła (warunki w „Przed sprzedażą PC”) → PC do resetu i sprzedaży |
 
 ## Dane do zabrania z PC
 
@@ -40,6 +40,16 @@ Sekretów (pliki `.env`, klucze) nie wysyłamy do repozytoriów: zostają w arch
 
 ## Przed sprzedażą PC
 
+Kolejność jest wiążąca: PC (jedyna dziś druga kopia części danych) idzie do resetu dopiero, gdy kopia poza serwerem działa
+i wiadomo, że da się z niej odtworzyć dane.
+
+1. Kopia poza serwerem działa: Storage Box z kontem pomocniczym i migawkami (sekcja „Kopia poza serwerem”), w kontroli
+   zdrowia `kopia-poza: ok`, w `ostatnia.json` `"off": true`.
+2. Próba odtworzenia: archiwum pobrane ze Storage Box, `odtworz --sprawdz` kończy się „archiwum poprawne”, rozpakowanie
+   do `/tmp/proba` działa, data i czas próby wpisane w sekcji „Odtworzenie serwera”.
+3. Dzień próbny bez PC (etap 4) zakończony bez braków.
+4. Dopiero wtedy kroki poniżej.
+
 - Usunąć z Harmonogramu zadań autostart asystenta, wyłączyć sshd, portproxy i reguły zapory (albo pełny reset).
 - Wylogować konta (Microsoft, Google, GitHub, Claude, Codex), unieważnić klucze SSH tego komputera na GitHubie.
 - Reset Windows „Usuń wszystko” z czyszczeniem dysków (C: i E:).
@@ -68,8 +78,55 @@ Instalator najpierw sprawdza, że `uruchom/serwer` w kopii roboczej na serwerze 
 | Kontrola zdrowia (`zdrowie.timer`) | co 10 min | panel (`/api/data` lokalnie → 200), Useme (`/api/health`), wolne miejsce ≥ 15%, Claude zalogowany, kopia młodsza niż 36 h, kopia poza serwerem młodsza niż 26 h (gdy ustawiony `KOPIA_CEL`), ostatni zapis kart; stan w `/home/panel/.zdrowie-stan` (`nazwa=ok\|zle\|brak`, dalej `kopia_wiek_h=` i `kopia_poza=tak\|nie`) | przy zmianie na zły i z powrotem na dobry; codziennie od 8:00 jedno podsumowanie „Serwer: wszystko w normie” albo lista problemów; bez danych klientów |
 | Zapis kart (`zapis-kart.timer`) | co 15 min | commit i push tylko zmian w `szkice/` i `raporty/` (osobny indeks, więc nic innego nie trafia do commita); inne zmiany zostają na dysku z ostrzeżeniem w dzienniku; pliki wyglądające na sekrety i bazy (`.env*`, `*.env`, `*.key`, `*.pem`, `credentials*`, `*.sqlite`, `*.db`) pomija; działa tylko na gałęzi `main`; niewypchnięte commity spoza `szkice/` i `raporty/` wstrzymują push | przez kontrolę zdrowia |
 
+Przy `PANEL_AGENT_USER` kontrola zdrowia sprawdza też logowanie Claude użytkownika agenta (`claude-agent`, przez tę samą regułę sudo co panel).
+
 Sprawdzenie: `systemctl list-timers kopia.timer zdrowie.timer zapis-kart.timer`, `journalctl -u kopia -n 5`, `journalctl -u zdrowie -n 8`, `cat /home/panel/kopie/ostatnia.json`.
 Kopia na tym samym dysku nie chroni przed utratą serwera: do tego Backups w Hetznerze (cały serwer, 7 ostatnich dni) i kopia poza serwerem (niżej). Zewnętrzny monitoring adresu panelu (UptimeRobot) zgłasza awarię całego serwera, której kontrola zdrowia na tym serwerze nie wyśle.
+
+## Użytkownik agenta
+
+Agenci uruchamiani z panelu (zadania, raport PM, plan dnia, test połączenia) działają jako osobny użytkownik systemu
+`agent`, a nie jako `panel`. Wcześniej agent miał wszystkie uprawnienia panelu: hasło panelu i ntfy (`/etc/integrate`),
+klucze SSH do GitHuba i Storage Box, logowanie Claude panelu, archiwa kopii i kod samego panelu.
+
+Instalacja (jako ops, po pobraniu zmian na serwer; instalator sprawdza zgodność `uruchom/serwer` z GitHubem):
+
+```
+sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh
+sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz   # sam raport, bez zmian
+```
+
+| Agent może | Agent nie może |
+|---|---|
+| zapisywać w `/home/panel/projekty/*` (grupa `projekty`, setgid, ACL) | czytać `/home/panel/.ssh`, `.claude`, `.config`, `kopie`, `.kopia-haslo` ani innych wpisów domu panelu |
+| zapisywać w `IntegrateSystems/szkice` (karty) i `IntegrateSystems/raporty` (raport PM) | wejść do `/etc/integrate` (root:panel 750), w tym `lokalny.klucz` |
+| czytać resztę `IntegrateSystems` (standard, `pm.py`, rejestr, uruchomienia) | zmieniać kodu panelu i skryptów serwera |
+| zapisywać w repozytorium projektu obiekty, gałęzie i pliki swojego worktree | zmieniać `.git/config`, `.git/hooks`, `.git/info` i plików w samym `.git` |
+| — | używać sudo i logować się przez SSH (`DenyUsers agent`, hasło zablokowane) |
+
+Co robi instalator: użytkownik `agent` (dom `/home/agent`, 711) i grupa `projekty` (panel i agent); prawa do katalogów
+jak w tabeli, `core.sharedRepository=group` i `.agent/` w `.git/info/exclude` w każdym repozytorium; reguła
+`/etc/sudoers.d/90-panel-agent` (`panel ALL=(agent) NOPASSWD: /home/agent/.local/bin/claude`, sprawdzona `visudo -c`;
+sudo czyści środowisko i ustawia `HOME=/home/agent`, więc `SETENV` nie jest potrzebne); Claude Code dla agenta
+(oficjalny instalator) i `safe.directory=*` w gicie agenta (worktree zakłada panel); w `/etc/integrate/panel.env`
+`PANEL_AGENT_USER=agent`, `PANEL_CLAUDE=/home/agent/.local/bin/claude` (reguła sudo dopuszcza tylko tę ścieżkę),
+`PANEL_LOKALNY_KLUCZ_PLIK=/etc/integrate/lokalny.klucz` (klucz losowy, root:panel 640; poprzednia wersja pliku:
+`panel.env.przed-agentem`); nowa wersja `zdrowie`; restart panelu. Na końcu raport (`ok` / `BRAK`), także gdy nic
+nie zmieniał.
+
+Logowanie Claude agenta (raz; ponownie, gdy kontrola zdrowia zgłosi `claude-agent`):
+1. Panel → agenci: przy Claude „Wymaga logowania” → Zaloguj. Panel uruchamia `claude auth login` jako agent
+   i pokazuje adres strony logowania.
+2. Adres otwierasz na Macu albo iPhonie, logujesz kontem Max, kod wklejasz w panelu.
+3. Test połączenia w panelu: „ok”; `zainstaluj-uzytkownika-agenta.sh --sprawdz`: „Wszystko w porządku.”
+
+Bez panelu: `sudo -u agent -H /home/agent/.local/bin/claude auth login` (ssh jako ops).
+Wycofanie: w `/etc/integrate/panel.env` usuń `PANEL_AGENT_USER`, przywróć `PANEL_CLAUDE=/home/panel/.local/bin/claude`,
+`sudo systemctl restart panel`. Użytkownik, grupa i prawa mogą zostać.
+
+Panel uruchamia git w repozytoriach, do których agent pisze, więc wywołuje go bez haków i fsmonitora; pliki, które agent
+mógł podmienić w swoim worktree (`.git` w worktree, `commondir`, `gitdir`), nie mogą decydować o tym, którą konfigurację
+gita panel czyta.
 
 ## Kopia poza serwerem (Storage Box)
 
@@ -85,21 +142,59 @@ Archiwum zawiera dane klientów, więc poza serwer idzie zaszyfrowane. Ustawieni
 Bez szyfrowania `scp` jest odrzucany; `rclone` bez szyfrowania skryptem tylko do zdalnego typu `crypt`.
 W celu leżą pliki `RRRR-MM-DD.tar.gz.gpg` (albo `.age`). Hasło gpg (albo klucz prywatny age) musi być też w menedżerze haseł: bez niego kopii nie da się odczytać.
 
-Konfiguracja (jako ops; `uXXXXXX` to użytkownik Storage Box z Hetzner Robot, port SSH 23):
+### Odporność na kod z serwera
+
+Serwer musi mieć klucz, którym zapisuje do Storage Box. Przez SFTP ten sam klucz pozwala też usuwać i nadpisywać pliki,
+więc każdy, kto przejmie uprawnienia użytkownika panel (błąd w panelu, agent, który wydostał się poza swoje uprawnienia),
+mógłby razem z serwerem zniszczyć kopię. Dlatego:
+
+| Zabezpieczenie | Przed czym chroni |
+|---|---|
+| Konto pomocnicze Storage Box (sub-account) z własnym katalogiem bazowym, tylko SSH | klucz z serwera widzi tylko katalog kopii serwera; hasło konta głównego nie trafia na serwer |
+| Automatyczne migawki Storage Box (codziennie, 14 sztuk), ustawiane tylko w Hetzner Console | usunięte albo nadpisane z serwera archiwa zostają w migawkach przez 14 dni; serwer nie ma dostępu do ustawień migawek |
+| Konto Hetzner z 2FA, hasła tylko w menedżerze haseł | migawki może usunąć tylko ktoś z dostępem do konsoli Hetznera |
+| Storage Box w innej lokalizacji niż serwer (serwer w Helsinkach → Storage Box w Falkenstein) | awaria jednego centrum danych nie zabiera obu kopii |
+
+Rozważane i odrzucone:
+- borg z `--append-only` wymuszonym w `authorized_keys` (`command=…`): wymaga, żeby Storage Box respektował wymuszone
+  polecenie dla klucza; tego nie sprawdziliśmy, a kopia przeszłaby z jednego archiwum `tar.gz` na repozytorium borg
+  (zmiana `kopia.sh` i `odtworz.sh`);
+- restic: nie ma klucza „tylko do zapisu”; tryb tylko dopisywania daje dopiero własny `rest-server --append-only`,
+  czyli kolejny serwer do utrzymania.
+
+Migawki dają ten sam skutek bez zmian w kodzie: `KOPIA_CEL` i `kopia.sh` zostają jak są. Rotacja `KOPIA_CEL_DNI=30`
+zostaje (usunięte pliki i tak są w migawkach przez 14 dni). Migawki zajmują miejsce w limicie Storage Box tylko
+w wysokości usuniętych i zmienionych plików.
+
+Odtworzenie po zniszczeniu kopii z serwera: Hetzner Console → Storage Box → Snapshots → przywrócenie migawki sprzed
+zdarzenia (albo pobranie pojedynczych plików z migawki, gdy jest włączony widoczny katalog migawek).
+
+### Konfiguracja
+
+W Hetzner Console (konto z 2FA):
+1. Storage Box BX11 w innej lokalizacji niż serwer (serwer w Helsinkach → Falkenstein); zapisz identyfikator `uXXXXXX`; hasło konta głównego do menedżera haseł.
+2. Snapshots → plan automatyczny: codziennie (np. 05:00, po kopii o 03:30), liczba migawek 14.
+3. Sub-accounts → nowe konto: katalog bazowy `integrate-serwer`, SSH włączone, Samba i WebDAV wyłączone, bez „tylko
+   odczyt”. Zapisz login `uXXXXXX-subN` i hasło w menedżerze haseł (hasło potrzebne tylko do wgrania klucza).
+   Gdy połączenie z serwera się nie uda, włącz dla konta dostęp z zewnątrz (External reachability).
+
+Na serwerze (jako ops; `uXXXXXX-subN` to login konta pomocniczego, port SSH 23):
 
 ```
 sudo apt install -y rclone gnupg
 sudo -u panel ssh-keygen -t ed25519 -N '' -f /home/panel/.ssh/kopia -C kopia-serwera
-sudo -u panel sh -c 'cat /home/panel/.ssh/kopia.pub | ssh -p 23 uXXXXXX@uXXXXXX.your-storagebox.de install-ssh-key'
-sudo -u panel rclone config create storagebox sftp host=uXXXXXX.your-storagebox.de user=uXXXXXX port=23 key_file=/home/panel/.ssh/kopia
+sudo -u panel sh -c 'cat /home/panel/.ssh/kopia.pub | ssh -p 23 uXXXXXX-subN@uXXXXXX-subN.your-storagebox.de install-ssh-key'
+sudo -u panel rclone config create storagebox sftp host=uXXXXXX-subN.your-storagebox.de user=uXXXXXX-subN port=23 key_file=/home/panel/.ssh/kopia
 sudo -u panel rclone mkdir storagebox:integrate
 sudo -u panel sh -c 'umask 077; openssl rand -base64 32 > /home/panel/.kopia-haslo'   # skopiuj hasło do menedżera haseł
 sudo nano /etc/integrate/serwer.env    # KOPIA_CEL=rclone:storagebox:integrate, KOPIA_HASLO_PLIK=/home/panel/.kopia-haslo
 sudo systemctl start kopia && journalctl -u kopia -n 6 -o cat
 sudo -u panel rclone ls storagebox:integrate
+sudo -u panel rclone lsd storagebox:     # widać tylko katalog integrate: konto pomocnicze nie sięga dalej
 ```
 
-Wynik: w dzienniku „zaszyfrowano (gpg AES256)” i „wysłano poza serwer (rclone)”, w `ostatnia.json` `"off": true`, w kontroli zdrowia `kopia-poza: ok`.
+Wynik: w dzienniku „zaszyfrowano (gpg AES256)” i „wysłano poza serwer (rclone)”, w `ostatnia.json` `"off": true`, w kontroli zdrowia `kopia-poza: ok`, następnego dnia w Console pierwsza migawka.
+Klucz `/home/panel/.ssh/kopia` i `/home/panel/.kopia-haslo` są niedostępne dla użytkownika agent (sekcja „Użytkownik agenta”).
 
 ## Odtworzenie serwera
 
@@ -127,7 +222,7 @@ Na czystym serwerze (Ubuntu 24.04 Arm, Hetzner CAX11), jako root, potem ops:
 6. Dostęp do Storage Box (klucz panelu jak w sekcji wyżej), pobranie ostatniego archiwum, `odtworz` do pustego katalogu, kroki ręczne wypisane przez skrypt (dane, `uruchomienia/`, `historia/`, repozytoria projektów sklonowane w `~/projekty` i pliki z kopii, pakiety commitów, `chown`).
 7. Useme: jednostka `useme.service` z wyniku `zbierz-konfiguracje.sh`, `systemctl enable --now useme`.
 8. `sudo -u panel claude auth login` (albo logowanie z panelu).
-9. Instalatory: `zainstaluj-zapis-kart.sh`, `zainstaluj-kopie-i-zdrowie.sh`.
+9. Instalatory: `zainstaluj-zapis-kart.sh`, `zainstaluj-kopie-i-zdrowie.sh`, `zainstaluj-uzytkownika-agenta.sh`; potem logowanie Claude agenta w panelu (sekcja „Użytkownik agenta”).
 10. Adres: nowy IP → nowy adres sslip.io w `Caddyfile` i `PANEL_ALLOWED_HOSTS`, UptimeRobot i zakładki na iPhonie.
 11. Sprawdzenie: `sudo -u panel zdrowie` bez „zle”, panel z iPhone'a, jedno zadanie agenta.
 
@@ -142,6 +237,9 @@ Wzory bez haseł: `uruchom/serwer/konfiguracja/`. Bieżące pliki z serwera (war
 | `/etc/systemd/system/useme.service` | brak wzoru: z `zbierz-konfiguracje.sh` | sprawdzić |
 | `/etc/systemd/system/{kopia,zdrowie,zapis-kart}.{service,timer}` | `uruchom/serwer/*.service`, `*.timer` | brak |
 | `/etc/integrate/panel.env` | `konfiguracja/panel.env.przyklad` | `PANEL_TOKEN`, `PANEL_NTFY_URL` w menedżerze haseł |
+| `/etc/integrate/lokalny.klucz` | — (tworzy `zainstaluj-uzytkownika-agenta.sh`) | klucz lokalnych żądań POST; na nowym serwerze nowy |
+| `/etc/sudoers.d/90-panel-agent`, `/etc/ssh/sshd_config.d/90-agent.conf` | tworzy `zainstaluj-uzytkownika-agenta.sh` | brak |
+| `/home/agent` (Claude Code agenta, logowanie) | — | logowanie od nowa przez panel |
 | `/etc/integrate/serwer.env` | `uruchom/serwer/serwer.env.przyklad` | adres celu kopii; hasło kopii w osobnym pliku |
 | `/home/panel/.kopia-haslo` | — | hasło kopii, w menedżerze haseł |
 | `/home/panel/.ssh/` (GitHub, Storage Box), `/home/panel/.config/rclone/rclone.conf` | — | klucze tworzone od nowa na nowym serwerze |

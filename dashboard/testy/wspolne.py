@@ -21,7 +21,10 @@ import projekt  # noqa: E402
 
 ATRAPA_CLAUDE = os.path.join(TESTY, "atrapa_claude.py")
 ATRAPA_CODEX = os.path.join(TESTY, "atrapa_codex.py")
-ENV_KEYS = ("STAN_DIR", "LOKALNE_DIR", "PANEL_HISTORY_DIR", "PANEL_ZDROWIE_STAN", "PANEL_KOPIA_STAN", "PANEL_RUNS_DIR")
+ENV_KEYS = ("STAN_DIR", "LOKALNE_DIR", "PANEL_HISTORY_DIR", "PANEL_ZDROWIE_STAN", "PANEL_KOPIA_STAN", "PANEL_RUNS_DIR",
+            "PANEL_AGENT_USER", "PANEL_DZIEN_MIN")
+# Ustawienia z panel.env tego komputera, które zmieniają dostęp i polecenia: w testach wyłączone.
+CLEARED = ("PANEL_AGENT_USER", "PANEL_DZIEN_MIN")
 TODAY = datetime.date.today().isoformat()
 TOMORROW = (datetime.date.today() + datetime.timedelta(days=1)).isoformat()
 
@@ -75,6 +78,8 @@ class Baza(unittest.TestCase):
         os.environ.update({"STAN_DIR": self.stan, "LOKALNE_DIR": self.lokalne, "PANEL_HISTORY_DIR": self.history_dir,
                            "PANEL_ZDROWIE_STAN": self.health_file, "PANEL_KOPIA_STAN": self.backup_file,
                            "PANEL_RUNS_DIR": self.runs})
+        for k in CLEARED:
+            os.environ.pop(k, None)
         quiet(projekt.cmd_nowy, self.folder, "Projekt testowy", register=self.registered)
         with open(os.path.join(self.folder, "ZADANIA.md"), "w", encoding="utf-8") as f:
             f.write(ZADANIA)
@@ -82,14 +87,15 @@ class Baza(unittest.TestCase):
         self.journal = os.path.join(self.tmp, "dziennik.jsonl")
         self.pid_file = os.path.join(self.tmp, "pid")
         self.managers = []
-        self._server_state = (server._agents, server.TOKEN)
+        self._server_state = (server._agents, server.TOKEN, server.LOCAL_KEY_FILE)
+        server.LOCAL_KEY_FILE = ""          # zapis z loopback bez klucza (Mac); testy klucza ustawiają go same
         self.manager = self.new_manager()
         server._agents = self.manager
 
     def tearDown(self):
         for m in self.managers:
             m.shutdown()
-        server._agents, server.TOKEN = self._server_state
+        server._agents, server.TOKEN, server.LOCAL_KEY_FILE = self._server_state
         projekt.REGISTRY = self._registry
         for k, v in self._environ.items():
             if v is None:
@@ -105,7 +111,8 @@ class Baza(unittest.TestCase):
                     "PANEL_NTFY_URL": "", "PANEL_AGENT_MODEL": "", "PANEL_PM_MODEL": "", "PANEL_RUNS_DIR": "",
                     "ATRAPA_TRYB_PLIK": self.mode_file, "ATRAPA_DZIENNIK": self.journal, "ATRAPA_PID_PLIK": self.pid_file,
                     "ANTHROPIC_API_KEY": "klucz-testowy", "OPENAI_API_KEY": "klucz-testowy",
-                    "PANEL_TOKEN": "haslo-testowe", "CLAUDECODE": "1", "CLAUDE_CODE_OAUTH_TOKEN": "token-testowy"})
+                    "PANEL_TOKEN": "haslo-testowe", "CLAUDECODE": "1", "CLAUDE_CODE_OAUTH_TOKEN": "token-testowy",
+                    "PANEL_AGENT_USER": "", "PANEL_AGENT_WORKTREE": "1"})
         env.update(extra)
         return env
 

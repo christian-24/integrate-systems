@@ -1,8 +1,8 @@
 #!/bin/bash
 # Kontrola zdrowia serwera co 10 min (timer zdrowie, użytkownik panel).
 # Sprawdza: panel (/api/data lokalnie), asystent Useme (/api/health), wolne miejsce na dysku (>= 15%),
-# logowanie Claude (claude auth status), wiek ostatniej kopii (< 36 h), kopię poza serwerem (< 26 h, gdy ustawiony
-# KOPIA_CEL) i ostatni przebieg zapisu kart.
+# logowanie Claude (claude auth status; przy PANEL_AGENT_USER także Claude agenta przez sudo: claude-agent),
+# wiek ostatniej kopii (< 36 h), kopię poza serwerem (< 26 h, gdy ustawiony KOPIA_CEL) i ostatni przebieg zapisu kart.
 # Powiadomienie ntfy przy zmianie stanu: dobry -> zły i zły -> dobry. Raz dziennie, w pierwszym przebiegu od 8:00
 # (czas polski), krótkie podsumowanie: „Serwer: wszystko w normie” albo lista problemów. Treść bez danych klientów.
 # Stan: /home/panel/.zdrowie-stan, wiersze nazwa=ok|zle|brak, a po nich kopia_wiek_h=<godziny albo puste>
@@ -82,6 +82,21 @@ elif ${limit_czasu[@]+"${limit_czasu[@]}"} "$claude_bin" auth status 2>/dev/null
   wynik claude ok "Claude zalogowany"
 else
   wynik claude zle "Claude niezalogowany: zaloguj w panelu albo przez ssh (claude auth login)"
+fi
+
+# 4a. Claude użytkownika agenta (PANEL_AGENT_USER): ta sama reguła sudoers co w panelu, więc sprawdza też, czy panel
+# może uruchomić agenta (zainstaluj-uzytkownika-agenta.sh). Bez zmiennej kontrola pominięta.
+if [ -n "${PANEL_AGENT_USER:-}" ]; then
+  agent_dom="$(getent passwd "$PANEL_AGENT_USER" 2>/dev/null | cut -d: -f6)"
+  agent_bin="${agent_dom:+$agent_dom/.local/bin/claude}"
+  if [ -z "$agent_dom" ]; then
+    wynik claude-agent zle "brak użytkownika $PANEL_AGENT_USER (zainstaluj-uzytkownika-agenta.sh)"
+  elif (cd / && ${limit_czasu[@]+"${limit_czasu[@]}"} sudo -n -u "$PANEL_AGENT_USER" -- "$agent_bin" auth status 2>/dev/null) \
+         | grep -Eq '"loggedIn"[[:space:]]*:[[:space:]]*true'; then
+    wynik claude-agent ok "Claude agenta zalogowany"
+  else
+    wynik claude-agent zle "Claude agenta niezalogowany albo sudo odmawia: panel → Zaloguj (zainstaluj-uzytkownika-agenta.sh --sprawdz)"
+  fi
 fi
 
 # 5. Ostatnia kopia nie starsza niż 36 h (pomijane, dopóki nie ma żadnej kopii). Czas z ostatnia.json, bez niego z pliku archiwum.

@@ -3,6 +3,7 @@
 - faza: budowa
 - klient: tak
 - próg: pełna
+- priorytet: 2
 - stan: aktywny
 - maszyna: chmura
 - repozytorium: serwer `~/projekty/company-audits` i `~/projekty/asystent-useme` (GitHub, po migracji D13); strona `oprogramowani-onepager` na GitHubie; wcześniej PC `C:\Users\Guest\Desktop\CompanyAudits`

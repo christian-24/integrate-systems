@@ -3,6 +3,7 @@
 - faza: wdrozenie
 - klient: nie
 - próg: lekka
+- priorytet: 2
 - stan: aktywny
 - założono: 2026-11-17
 

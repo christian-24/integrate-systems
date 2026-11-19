@@ -38,12 +38,25 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_AGENT_MODEL`, `PANEL_PM_MODEL` | model domyślny CLI | model dla zadań i dla raportu PM |
 | `PANEL_PM_HOUR` | `7` | godzina dziennego raportu PM w Automacie |
 | `PANEL_GIT_PULL` | `0` | `1`: przed uruchomieniem `git pull --ff-only`, gdy repozytorium jest czyste |
+| `PANEL_AGENT_WORKTREE` | `1` | `0`: zadanie w repozytorium git bez gałęzi uruchomienia (praca w folderze projektu) |
+| `PANEL_AGENT_USER` | brak | użytkownik systemu dla agentów; polecenie idzie przez `sudo -n -u <użytkownik> --` |
+| `PANEL_LOKALNY_KLUCZ_PLIK` | brak | plik klucza zapisu dla żądań z tego komputera (nagłówek `X-Panel-Klucz`) |
+| `PANEL_DZIEN_MIN` | `120` | dzienna pojemność właściciela w minutach (`dayMinutes` w `/api/data`) |
 | `PANEL_NTFY_URL` | brak | adres tematu ntfy; powiadomienie po zakończeniu uruchomienia i gdy Claude wymaga logowania |
 | `CLAUDE_CODE_OAUTH_TOKEN` | brak | token z `claude setup-token` dla komputera bez przeglądarki |
 
 ## Dostęp
 
-- Połączenie z tego komputera (loopback): bez hasła.
+- Połączenie z tego komputera (loopback): odczyty (`GET`: strona, `/api/data`, `/api/post*`, `/api/plik`,
+  `/api/agent/diff`, `/terminy.ics`) bez hasła. Zapis (`POST`) bez hasła tylko wtedy, gdy ochrona zapisu jest wyłączona.
+- Ochrona zapisu z tego komputera działa, gdy ustawione jest `PANEL_LOKALNY_KLUCZ_PLIK` albo `PANEL_AGENT_USER`,
+  albo węzeł to serwer (`PANEL_MACHINE=cloud`). Wtedy `POST` z loopback wymaga sesji (logowanie na `/wejscie`
+  działa też z loopback) albo nagłówka `X-Panel-Klucz` równego zawartości pliku z `PANEL_LOKALNY_KLUCZ_PLIK`;
+  inaczej 401 `{"ok":false,"error":"Zapis z tego komputera wymaga zalogowania albo klucza lokalnego."}`.
+  Plik klucza: co najmniej 16 znaków, prawa `600` (właściciel `panel`) albo `640` z grupą, do której agent nie należy
+  (`root:panel 640`). Plik z prawami dla innych albo dla grupy użytkownika `PANEL_AGENT_USER` jest odrzucany, bo mógłby
+  go przeczytać agent. Klucz działa tylko z loopback, nie przez pośrednika.
+  Na Macu i PC bez tych ustawień zapis z tego komputera działa jak dotąd (agent i tak działa jako właściciel).
 - Połączenie z innego urządzenia: wymagane `PANEL_TOKEN`. Bez ustawionego hasła serwer odmawia (403).
   Strona `GET /wejscie` ma jedno pole; `POST /wejscie` (formularz, pole `haslo`) ustawia ciasteczko
   `panel_sesja` (HttpOnly, SameSite=Strict, Max-Age 30 dni) i przekierowuje na `/`. Wartość to `chwila.podpis`:
@@ -90,6 +103,18 @@ keySource     "none" oznacza subskrypcję; inna wartość to ostrzeżenie w pane
 denials       odmowy uprawnień, najwyżej 10 krótkich wierszy
 ```
 
+Zadanie w repozytorium git (gałąź uruchomienia) ma dodatkowo; inne rekordy tych pól nie mają:
+
+```
+branch        "agent/2026-11-19-krotka-nazwa"
+base          gałąź bazowa z chwili startu ("main"); przy odłączonym HEAD skrót commita
+baseCommit    commit, od którego powstała gałąź
+changes       [{"path": "notatki/analiza.md", "added": 3, "removed": 0}]   git diff --numstat baseCommit...branch,
+              ścieżki względem katalogu głównego repozytorium, najwyżej 200; plik binarny: 0, 0 i "binary": true
+commits       liczba commitów gałęzi ponad baseCommit
+merged, mergeCommit   po /api/agent/merge: czas scalenia i commit scalenia
+```
+
 Pliki: `../uruchomienia/<id>.json` (rekord), `../uruchomienia/<id>.log` (surowy strumień),
 `../uruchomienia/stan.json` (Automat, znacznik logowania, limit; `since`: od kiedy zadanie jest w toku albo czeka
 na odbiór, `{"projekt|plik|tytuł": {"s": "doing|review", "d": "RRRR-MM-DD"}}`; `sessionKey`: klucz sesji panelu;
@@ -98,14 +123,18 @@ Po restarcie serwera uruchomienia `queued` i `running` dostają stan `stopped`.
 
 ### Polecenia
 
-Prompt idzie przez stdin (bez problemów z cudzysłowami na Windows). Katalog roboczy: folder projektu.
+Prompt idzie przez stdin (bez problemów z cudzysłowami na Windows). Katalog roboczy: folder projektu, a dla zadania
+w repozytorium git katalog roboczy gałęzi uruchomienia (niżej). Przy `PANEL_AGENT_USER` każde polecenie agenta
+(zadanie, raport PM, plan, test połączenia, odczyt stanu logowania, logowanie przez panel) ma przedrostek
+`["sudo", "-n", "-u", PANEL_AGENT_USER, "--"]`; bez zmiennej jak dotąd. Test połączenia i plan dnia działają wtedy
+w katalogu tymczasowym systemu (agent nie musi mieć dostępu do `uruchomienia/`).
 
 | Rodzaj | Polecenie |
 |---|---|
-| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M] [--add-dir <folder karty>] --allowedTools "<lista>"` |
+| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M] [--add-dir <folder karty>] --allowedTools "<lista>"`; w gałęzi uruchomienia `--add-dir` dla folderów `KARTA.md`, `ZADANIA.md`, `DECYZJE.md` i pliku zadania |
 | pm | w folderze IntegrateSystems: jak wyżej oraz `--agent pm --allowedTools "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Write,Edit,Glob,Grep"` |
 | check | `claude -p --output-format stream-json --verbose --model haiku`, prompt „Odpowiedz jednym słowem: ok” |
-| task, Codex | `codex exec --json --sandbox workspace-write --skip-git-repo-check -C <folder> -` |
+| task, Codex | `codex exec --json --sandbox workspace-write --skip-git-repo-check -C <folder> -`; w gałęzi uruchomienia `-C <katalog roboczy> --add-dir <folder> … -` |
 
 Lista dla zadań Claude (`TASK_TOOLS` w `agents.py`), bez push i bez sieci:
 `Bash(git status:*)`, `Bash(git diff:*)`, `Bash(git log:*)`, `Bash(git switch -c:*)`, `Bash(git checkout -b:*)`,
@@ -131,12 +160,38 @@ do sekcji „Pytania do właściciela” w `KARTA.md`, z wierszem `   termin: RR
 nie zmienia), zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
 albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
 Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”), prompt ją podaje, a agent poprawia pracę według niej.
-Pracę w repozytorium git agent zapisuje na nowej gałęzi `agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem
-(bez push, bez plików KARTA.md, ZADANIA.md, DECYZJE.md) i podaje gałąź i skrót commita w `wynik:`.
+Folder bez repozytorium git (albo `PANEL_AGENT_WORKTREE=0`): pracę w repozytorium agent zapisuje na nowej gałęzi
+`agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem (bez push, bez plików KARTA.md, ZADANIA.md, DECYZJE.md)
+i podaje gałąź i skrót commita w `wynik:`. W repozytorium git gałąź zakłada panel (niżej).
 
 Po zakończeniu:
 - stan inny niż `done`, a wiersz dalej `[~]`: serwer przywraca `[ ]`;
-- stan `done`, a wiersz dalej `[~]` bez pola `wymaga`: serwer dopisuje `wymaga: odbiór`.
+- stan `done`, a wiersz dalej `[~]` bez pola `wymaga`: serwer dopisuje `wymaga: odbiór`;
+- gałąź uruchomienia: commit, `changes`, usunięcie katalogu roboczego (niżej), przy każdym stanie końcowym;
+- stan `done`: ścieżki plików z `wynik:` zadania (rozszerzenia md, txt, csv, json, html, svg, png, jpg, pdf, yaml),
+  które istnieją w folderze projektu, w folderze karty albo na gałęzi uruchomienia, panel dopisuje jako
+  `materiał: <ścieżka>` (względem folderu projektu) do otwartych zadań tego samego pliku, które mają `po:` na tym
+  zadaniu; ścieżki, które zadanie już ma w `materiał:`, pomija; najwyżej 10 ścieżek.
+
+### Gałąź uruchomienia (git worktree)
+
+Gdy folder projektu leży w repozytorium git z co najmniej jednym commitem (i folder jest w nim śledzony), a
+repozytorium to nie jest sam folder IntegrateSystems:
+
+1. Przy starcie panel (nie agent) zakłada gałąź `agent/<RRRR-MM-DD>-<krótka-nazwa>` od bieżącego `HEAD`
+   (zajęta nazwa dostaje `-2`, `-3`…) i katalog roboczy `<repozytorium>/.agent/<id uruchomienia>`
+   (`git worktree add`). `/.agent/` trafia do `.git/info/exclude` (lokalnie, bez commita).
+2. Agent pracuje w tym katalogu (podfolder, gdy projekt to podfolder repozytorium). Plik zadania i kartę zmienia
+   pod ścieżkami bezwzględnymi z promptu (prawdziwe pliki w folderze projektu, dostępne przez `--add-dir`);
+   prompt podaje gałąź i każe zatwierdzić pracę na niej, bez zmiany gałęzi i bez push.
+3. Po zakończeniu panel zatwierdza niezatwierdzone zmiany agenta na tej gałęzi (bez `KARTA.md`, `ZADANIA.md`,
+   `DECYZJE.md` i pliku zadania; autor z konfiguracji repozytorium, a bez niej „Panel projektów”), zapisuje w rekordzie
+   `branch`, `base`, `baseCommit`, `changes`, `commits` i usuwa katalog roboczy. Gałąź zostaje. Gdy agent przełączył
+   katalog na własną gałąź, rekord wskazuje tę gałąź.
+4. Uruchomienie przerwane restartem serwera: to samo przy starcie serwera.
+
+Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty) i bez podpisywania commitów.
+Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w folderze projektu, krok w rekordzie to opisuje.
 
 ### Kiedy zadania nie da się uruchomić (`runBlock`)
 
@@ -166,12 +221,18 @@ brak aktywnego limitu i znacznika logowania. Raz dziennie po `PANEL_PM_HOUR` uru
 Rytm marketingu, przy każdym przebiegu, dla projektów z rejestru z plikiem `kampanie/staly-rytm.md` (poza stanem
 wstrzymany i backlog), zadania trafiają do „Do rozplanowania”:
 - dotychczasowy rytm: „Przygotować post na RRRR-MM-DD (stały rytm)” przed kolejnym terminem z ustawień rytmu;
-- publikacja niezrobiona z `kiedy` od dziś do 2 dni naprzód, bez folderu `posty/<kiedy>-*` (obok `KARTA.md`):
-  „Przygotować post na <kiedy>: <tytuł publikacji>” (`kto: claude`, `gdzie:` ten węzeł, `kiedy:` dziś,
-  `materiał: kampanie/staly-rytm.md`), gdy takiego zadania jeszcze nie ma;
-- publikacja `[x]` z `kiedy` dawniej niż 2 dni (48 h) i bez wiersza `wynik:`: „Wpisz wynik publikacji <tytuł>”
-  (`kto: ty`, `kiedy:` dziś, `czas: 3`). Tylko raz: klucz publikacji trafia do `rytmDone` w `stan.json`, więc usunięte
+- publikacja niezrobiona z `kiedy` od dziś do 2 dni naprzód, bez `materiał:` w szczegółach i bez folderu
+  `posty/<kiedy>-*` (obok `KARTA.md`): „Przygotować post na <kiedy>: <tytuł publikacji>” (`kto: claude`, `gdzie:`
+  ten węzeł, `kiedy:` dziś, `czas: 5` na przejrzenie przez właściciela), gdy takiego zadania jeszcze nie ma;
+  szczegóły: `cel:` (data, kanał, tytuł), `gotowe gdy:` (folder `posty/<kiedy>-<nazwa>/` z `post.md` w sekcjach
+  Facebook, LinkedIn, Alt i grafiką), `materiał:` `kampanie/staly-rytm.md`, `STYL.md` i plan marketingu, gdy istnieją
+  (`STYL.md`, `marketing/STYL.md`, `kampanie/STYL.md`; `marketing/plan*.md`, `kampanie/plan*.md`, `PLAN.md`, `plan*.md`;
+  w folderze projektu albo karty);
+- publikacja `[x]` z `kiedy` dawniej niż 2 dni (48 h) bez wyniku (wiersz `wynik:` albo `wyświetlenia:`, `kliknięcia:`,
+  `konta:`): „Wpisz wynik publikacji <tytuł>” (`kto: ty`, `kiedy:` dziś, `czas: 3`; `cel:`, `gotowe gdy:` z wierszami
+  wyniku, `materiał:` rytm i plan). Tylko raz: klucz publikacji trafia do `rytmDone` w `stan.json`, więc usunięte
   zadanie nie wraca.
+- `PANEL_RYTM` (dotychczasowy rytm) zakłada zadanie z tymi samymi szczegółami.
 
 ### Powiadomienia (ntfy)
 
@@ -198,7 +259,8 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
 
 ## `/api/data`
 
-Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`), `runBlock`,
+Pola z odczytu plików (np. `priority` projektu, `proposal` pytania, `target` i `result` kampanii) serwer przekazuje
+bez filtrowania; `dayMinutes` to `PANEL_DZIEN_MIN`. Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`), `runBlock`,
 `stateSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, a z odczytu plików `detail`, `needs`, `after` i `waitingFor`
 (opis w `README.md`, „Szczegóły zadania i następny krok”). Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
 i `server` (README, „Stan serwera”).
@@ -231,11 +293,15 @@ liczone od chwili otwarcia strony).
 | Żądanie | Treść | Działanie |
 |---|---|---|
 | `/api/agent/run` | `{"id": taskId, "title": tytuł}` | uruchamia zadanie; 409, gdy wiersz się zmienił albo `runBlock` niepusty |
-| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`; `krok` z value `{"index": n, "done": bool}`; 400 przy złej wartości, 409, gdy wiersz się zmienił |
+| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`, a dla publikacji `wyświetlenia`, `kliknięcia`, `konta`, `link`; `krok` z value `{"index": n, "done": bool}`; 400 przy złej wartości, 409, gdy wiersz się zmienił |
 | `/api/session/logout-all` | `{}` | unieważnia wszystkie sesje panelu (nowy klucz sesji) |
 | `/api/agent/pm` | `{}` | raport PM; 409, gdy już trwa |
 | `/api/agent/check` | `{"tool": "claude"}` | test połączenia |
 | `/api/agent/stop` | `{"id": runId}` | zatrzymuje albo zdejmuje z kolejki |
+| `/api/agent/merge` | `{"id": runId}` | `git merge --no-ff` gałęzi uruchomienia do `base` w repozytorium projektu, bez push; odpowiedź `commit`; 404 bez gałęzi albo repozytorium; 409 z opisem: uruchomienie trwa, już scalona, w repozytorium wybrana inna gałąź niż `base`, trwa inne scalanie, niezatwierdzone zmiany (poza `KARTA.md`, `ZADANIA.md`, `DECYZJE.md`, które zmienia panel), brak zmian, konflikt (scalenie przerwane, repozytorium bez zmian) |
+
+`GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
+błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.
 | `/api/agent/automat` | `{"enabled": bool}` | włącza i wyłącza Automat |
 | `/api/project/add` | `{"path": folder, "name"?: nazwa, "files": bool}` | dopisuje istniejący folder do rejestru; `files: true` zakłada brakujące pliki standardu (niczego nie nadpisuje) |
 | `/api/project/remove` | `{"id": projekt}` | usuwa z rejestru; pliki zostają |
@@ -243,3 +309,5 @@ liczone od chwili otwarcia strony).
 ## Testy
 
 `python3 -m unittest discover -s dashboard/testy` — uruchamianie na atrapie polecenia `claude` (bez sieci i bez limitu).
+Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i klucz lokalny: `testy/test_runda3_agenci.py`
+(tymczasowe repozytorium git).

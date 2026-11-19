@@ -12,6 +12,8 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   smieci   wypisuje tekst zamiast JSON i kończy kodem 2
   plan     plan dnia: 2 zadania dla agentów, 1 dla właściciela i 1 id spoza listy w bloku JSON
   plan-zly plan dnia bez bloku JSON
+  plik     jak ok, a w katalogu roboczym tworzy notatki/analiza.md i dopisuje pod zadaniem wynik: z tą ścieżką
+  commit   jak plik, a zmiany zatwierdza sam (git commit w katalogu roboczym)
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
 """
 import json
@@ -46,7 +48,7 @@ def journal(entry):
 
 def edit_row(prompt, mark):
     """Zmienia stan wiersza zadania wskazanego w prompcie. Zwraca nazwę pliku albo ''."""
-    m = re.search(r"z pliku (\S+), wiersz (\d+): „(.+)”\.", prompt)
+    m = re.search(r"z pliku (.+?), wiersz (\d+): „(.+)”\.", prompt)
     if not m or not os.path.exists(m.group(1)):
         return ""
     with open(m.group(1), encoding="utf-8") as f:
@@ -58,6 +60,18 @@ def edit_row(prompt, mark):
                 f.write("\n".join(lines))
             return m.group(1)
     return ""
+
+
+def add_result(path, title, text):
+    """Dopisuje wcięty wiersz wynik: pod wierszem zadania (jak agent na koniec pracy)."""
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().split("\n")
+    for i, line in enumerate(lines):
+        if line.startswith("- [") and line[6:].startswith(title):
+            lines.insert(i + 1, "  wynik: " + text)
+            break
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
 
 
 def tool(name, data):
@@ -150,6 +164,18 @@ def main(argv):
     edited = "" if how == "zostaw" else edit_row(prompt, "x")
     if edited:
         tool("Edit", {"file_path": os.path.join(os.getcwd(), edited)})
+    if how in ("plik", "commit") and edited:
+        os.makedirs("notatki", exist_ok=True)
+        with open(os.path.join("notatki", "analiza.md"), "w", encoding="utf-8") as f:
+            f.write("# Analiza\n\nTreść.\n")
+        tool("Write", {"file_path": os.path.join(os.getcwd(), "notatki", "analiza.md")})
+        m = re.search(r"z pliku (.+?), wiersz (\d+): „(.+)”\.", prompt)
+        add_result(edited, m.group(3), "analiza w notatki/analiza.md, szkic w `brak/plik.md`")
+        if how == "commit":
+            ident = ["-c", "user.name=atrapa", "-c", "user.email=atrapa@example.invalid"]
+            subprocess.run(["git", "add", "-A", "."], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["git"] + ident + ["commit", "-q", "-m", "Analiza"], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     out({"type": "assistant", "session_id": SESSION,
          "message": {"role": "assistant", "content": [{"type": "text", "text": "Zrobione: zmiana gotowa.\nSprawdzone: testy."}],
                      "usage": {"input_tokens": 3, "output_tokens": 60}}})

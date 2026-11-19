@@ -29,12 +29,17 @@
 - [x] Nazwa marki: Oprogramowani (strategia 2026-08-24)
 
 ## Etap: Walidacja rynku
+termin: 2026-12-18
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
 - [ ] Wgraj folder Reaserch (LeadyV2) na serwer | kto: ty | gdzie: mac | kiedy: 2026-11-20 | czas: 15
   cel: lista LeadyV2 dostępna dla agenta w folderze projektu na serwerze
   gotowe gdy: folder Reaserch z LeadyV2 leży w repozytorium projektu na serwerze, bez plików .env i kluczy
   materiał: KARTA.md#Zakres
+  - [ ] na Macu, dysk zewnętrzny podłączony: `rsync -av --exclude '.env*' --exclude '*.key' --exclude '*.pem' "/Volumes/<dysk>/Migracja-PC-2026-11/projekty/Reaserch/" ops@2.29.181.133:/tmp/Reaserch/`
+  - [ ] `ssh ops@2.29.181.133`, potem `sudo rsync -a /tmp/Reaserch/ /home/panel/projekty/company-audits/Reaserch/ && sudo chown -R panel:panel /home/panel/projekty/company-audits/Reaserch && rm -rf /tmp/Reaserch`
+  - [ ] `sudo -u panel git -C /home/panel/projekty/company-audits add Reaserch && sudo -u panel git -C /home/panel/projekty/company-audits commit -m "Reaserch: lista LeadyV2"`
+  Commit jest potrzebny, bo agent pracuje w osobnym katalogu uruchomienia od bieżącego commita i nie widzi plików niezacommitowanych.
   Źródło: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch. Sekrety zostają poza repozytorium (ksiega/MIGRACJA.md).
 - [ ] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Wgraj folder Reaserch
   cel: 10 firm z listy LeadyV2 do pierwszego kontaktu, każda z uzasadnieniem wyboru i szkicem wiadomości
@@ -45,7 +50,7 @@
   Lista LeadyV2 jest dziś tylko w kopii PC: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch.
   Zaczyna się po wgraniu folderu Reaserch na serwer (20.11). Gdy listy nadal nie ma w Reaserch/, agent oznacza [!] z blokadą „brak listy LeadyV2 na serwerze”.
   Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
-- [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | po: Wybierz 10 firm z listy LeadyV2
+- [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | kiedy: 2026-11-25 | czas: 30 | po: Wybierz 10 firm z listy LeadyV2
   cel: pierwsza wiadomość do 10 firm wysłana nowym kanałem właściciela
   gotowe gdy: 10 wiadomości wysłanych; data i kanał zapisane w notatce pod tym zadaniem
   materiał: KARTA.md#Zasady pracy agentów

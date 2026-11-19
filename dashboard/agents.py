@@ -5,6 +5,7 @@ dostaje od niego funkcję load_projects, wspólny zamek zapisu i moduł projekt.
 """
 import collections
 import datetime
+import glob
 import json
 import os
 import re
@@ -13,6 +14,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.request
@@ -42,6 +44,59 @@ STATE_LABEL = {"done": "zakończone", "error": "błąd", "login": "wymaga logowa
 LOGIN_RE = re.compile(r"authenticat|oauth|/login|not logged in|invalid api key|\b401\b", re.I)
 LIMIT_RE = re.compile(r"usage limit|limit reached|rate.?limit|hit your limit|\b429\b", re.I)
 DENIED = {"rejected", "denied", "blocked", "exceeded"}
+AGENT_DIR = ".agent"        # katalogi robocze uruchomień: <repozytorium>/.agent/<id uruchomienia>
+DIFF_MAX = 200 * 1024       # GET /api/agent/diff: najwyżej tyle bajtów tekstu
+CHANGES_MAX = 200           # tyle plików trafia do pola changes rekordu
+GIT_NAME, GIT_EMAIL = "Panel projektów", "panel@localhost"     # gdy repozytorium nie ma user.email
+# Ścieżki plików w wierszu wynik: (materiał dla następników z po:).
+RESULT_PATH = re.compile(r"(?<![\w./-])(/?(?:[\w.-]+/)*[\w-][\w.-]*\.(?:md|txt|csv|json|html|svg|png|jpe?g|pdf|ya?ml))"
+                         r"(?![\w/])", re.I)
+RESULT_PATHS_MAX = 10
+
+
+def _inside(base, path):
+    try:
+        return os.path.commonpath([base, path]) == base
+    except ValueError:
+        return False
+
+
+def git_run(cwd, args, timeout=60):
+    """git bez haków i fsmonitora (repozytorium mógł zmienić agent), z komunikatami po angielsku do rozpoznania
+    konfliktów. Zwraca (kod, stdout, stderr); -1 przy braku polecenia albo przekroczonym czasie."""
+    env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0")
+    base = ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.fsmonitor=false", "-c", "core.quotePath=false"]
+    try:
+        p = subprocess.run(base + list(args), cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, encoding="utf-8", errors="replace", timeout=timeout, env=env,
+                           **NO_WINDOW)
+        return p.returncode, p.stdout or "", p.stderr or ""
+    except (OSError, subprocess.SubprocessError) as e:
+        return -1, "", str(e)
+
+
+def git_ident(cwd):
+    """-c user.name/user.email, gdy repozytorium (ani konfiguracja globalna) nie ma autora."""
+    code, out, _ = git_run(cwd, ["config", "user.email"], timeout=15)
+    return [] if code == 0 and out.strip() else ["-c", "user.name=" + GIT_NAME, "-c", "user.email=" + GIT_EMAIL]
+
+
+def git_numstat(top, base, branch):
+    """[{"path", "added", "removed"}] dla base...branch; plik binarny: 0, 0 i "binary": true."""
+    code, out, _ = git_run(top, ["diff", "--numstat", "--no-renames", "--no-ext-diff", "%s...%s" % (base, branch)])
+    if code != 0:
+        return []
+    changes = []
+    for line in out.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
+            continue
+        item = {"path": parts[2], "added": int(parts[0]) if parts[0].isdigit() else 0,
+                "removed": int(parts[1]) if parts[1].isdigit() else 0}
+        if not parts[0].isdigit():
+            item["binary"] = True
+        changes.append(item)
+    return changes[:CHANGES_MAX]
 
 
 def log(text):
@@ -154,6 +209,10 @@ class Manager:
                 self.rytm[pid.strip()] = int(days)
         self.pm_hour = _int(get("PANEL_PM_HOUR"), 7, low=0)
         self.git_pull = (get("PANEL_GIT_PULL") or "").strip() == "1"
+        # Zadanie w repozytorium git: katalog roboczy i gałąź zakłada panel (AGENCI.md, „Gałąź uruchomienia”).
+        self.worktrees = (get("PANEL_AGENT_WORKTREE") or "1").strip() != "0"
+        # Agenci jako osobny użytkownik systemu: sudo -n -u <użytkownik> -- polecenie.
+        self.agent_user = (get("PANEL_AGENT_USER") or "").strip()
         self.ntfy_url = (get("PANEL_NTFY_URL") or "").strip()
         self.tick_seconds = 60
 
@@ -173,6 +232,7 @@ class Manager:
                                                             stderr=subprocess.DEVNULL, **kw)
         self._stop_event = threading.Event()
         self._thread = None
+        self._git_lock = threading.Lock()     # operacje panelu na repozytoriach projektów (worktree, commit, merge)
         self._load()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
 
@@ -212,7 +272,15 @@ class Manager:
                     return guess
         return ""
 
+    def as_agent(self, args):
+        """Polecenie agenta: przy PANEL_AGENT_USER przez sudo -n -u <użytkownik> -- (bez hasła; brak zgody w sudoers
+        kończy się błędem, nie pytaniem)."""
+        if self.agent_user and not WINDOWS:
+            return ["sudo", "-n", "-u", self.agent_user, "--"] + list(args)
+        return list(args)
+
     def _probe(self, args, timeout=20):
+        args = self.as_agent(args)          # stan logowania tego użytkownika, który uruchamia agentów
         try:
             p = subprocess.run(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                env=child_env(self.env), timeout=timeout, encoding="utf-8", errors="replace",
@@ -352,6 +420,12 @@ class Manager:
         for rec in self._interrupted:
             if rec.get("kind") == "task":
                 self._settle_task(rec, rec["state"])
+                try:
+                    git = self._worktree_info(rec)
+                    if git:
+                        self._worktree_close(rec, git)
+                except Exception as e:
+                    log("Gałąź uruchomienia %s: %s" % (rec["id"], e))
         self._interrupted = []
         if self._thread is None:
             self._thread = threading.Thread(target=self._loop, daemon=True)
@@ -549,15 +623,30 @@ class Manager:
                 out.append("%s: %s" % (label, d[key]))
         return out
 
-    def task_prompt(self, tool, name, file, line, title, stage, detail=None):
+    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None):
+        """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia."""
         rules = "AGENTS.md" if tool == "codex" else "CLAUDE.md"
         head = ["Pracujesz w projekcie „%s” według %s i KARTA.md." % (name, rules),
-                "Wykonaj jedno zadanie z pliku %s, wiersz %d: „%s”." % (file, line, title)]
+                "Wykonaj jedno zadanie z pliku %s, wiersz %d: „%s”." % (git["file"] if git else file, line, title)]
         if stage:
             head.append("Etap: %s." % stage)
         more = self.detail_lines(detail)
         if more:
             head += ["", "Szczegóły zadania:"] + more
+        if git:
+            git_rules = [
+                "- Pracujesz w osobnym katalogu roboczym git (%s) na gałęzi `%s`, którą założył panel. Pracę zapisz "
+                "w tym katalogu i zatwierdź lokalnym commitem na tej gałęzi: bez zmiany gałęzi, bez push, bez plików "
+                "KARTA.md, ZADANIA.md, DECYZJE.md. Niezatwierdzone zmiany panel zatwierdzi sam po zakończeniu."
+                % (git["cwd"], git["branch"]),
+                "- Plik zadania i kartę zmieniaj wyłącznie pod tymi ścieżkami (kopii w katalogu roboczym nie zmieniaj): "
+                "zadanie %s, karta %s. Folder posty/ leży obok karty: %s." % (git["file"], git["card"], git["cards"]),
+                "- W wierszu `wynik:` podaj ścieżki powstałych plików względem folderu projektu."]
+        else:
+            git_rules = [
+                "- Pracę w repozytorium git zapisz na nowej gałęzi `agent/%s-krotka-nazwa` (`git switch -c`) jednym "
+                "lokalnym commitem, bez push i bez plików KARTA.md, ZADANIA.md, DECYZJE.md. W wierszu `wynik:` podaj "
+                "gałąź i skrót commita. Folder bez repozytorium: bez gałęzi i commita." % datetime.date.today().isoformat()]
         return "\n".join(head + [
             "",
             "Zasady:",
@@ -573,15 +662,13 @@ class Manager:
             "`  zostało: …`, gdy coś nie zostało zrobione.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-            "- Pracę w repozytorium git zapisz na nowej gałęzi `agent/%s-krotka-nazwa` (`git switch -c`) jednym lokalnym "
-            "commitem, bez push i bez plików KARTA.md, ZADANIA.md, DECYZJE.md. W wierszu `wynik:` podaj gałąź i skrót "
-            "commita. Folder bez repozytorium: bez gałęzi i commita." % datetime.date.today().isoformat(),
+        ] + git_rules + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
             "- Stan zmień w %s wyłącznie w wierszu tego zadania: gotowe to `[x]`; potrzebny przegląd właściciela to `[~]` "
             "i pole `wymaga: odbiór`. Gdy warunek „gotowe gdy” nie jest spełniony, zakończ stanem `[!]` z polem "
-            "`blokada: powód` (bez `wymaga: odbiór`)." % file,
+            "`blokada: powód` (bez `wymaga: odbiór`)." % (git["file"] if git else file),
             "- Zakończ odpowiedź trzema krótkimi punktami: Zrobione, Sprawdzone, Zostało.",
         ]) + "\n"
 
@@ -638,17 +725,315 @@ class Manager:
             rec = self._new("task", tool, title, auto, task["project"], project.get("name", task["project"]),
                             task["id"], task["file"])
             rec["steps"] = first_steps
-            prompt = self.task_prompt(tool, rec["projectName"], task["file"], task["line"], title, stage,
-                                      task.get("detail"))
-            if tool == "codex":
-                args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
-                                         "-C", folder, "-"]
-            else:
-                args = self._claude_args(path, self.model, _card_dirs(folder) + ["--allowedTools", TASK_TOOLS])
-            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "folder": folder,
-                                "client": project.get("client") is True,
-                                "label": project.get("alias") or project.get("name") or task["project"]})
+            priv = {"folder": folder, "client": project.get("client") is True,
+                    "label": project.get("alias") or project.get("name") or task["project"],
+                    "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
+                             "line": task["line"], "title": title, "stage": stage, "detail": task.get("detail")}}
+            self._task_command(priv)
+            self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
+
+    def _task_command(self, priv, git=None):
+        """Polecenie, katalog i prompt zadania. git (z _worktree_open): praca w katalogu roboczym gałęzi
+        uruchomienia, pliki standardu w folderze projektu przez --add-dir i ścieżki bezwzględne."""
+        t, folder = priv["task"], priv["folder"]
+        if git:
+            cwd = git["worktree"] if git["rel"] == "." else os.path.join(git["worktree"], git["rel"])
+            extra = [x for d in self._standard_dirs(folder, t["file"]) for x in ("--add-dir", d)]
+            info = {"branch": git["branch"], "cwd": cwd, "file": os.path.join(folder, t["file"]),
+                    "card": os.path.join(folder, "KARTA.md"),
+                    "cards": os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))}
+        else:
+            cwd, extra, info = folder, _card_dirs(folder), None
+        prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
+                                  git=info)
+        if t["tool"] == "codex":
+            args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
+                                          "-C", cwd] + (extra if git else []) + ["-"]
+        else:
+            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", TASK_TOOLS])
+        priv.update(args=args, cwd=cwd, prompt=prompt)
+
+    @staticmethod
+    def _standard_dirs(folder, file_rel):
+        """Foldery plików, które agent zmienia poza katalogiem roboczym: KARTA.md, ZADANIA.md, DECYZJE.md, plik zadania."""
+        dirs = []
+        for name in STANDARD_LINKS + (file_rel,):
+            target = os.path.realpath(os.path.join(folder, name))
+            where = os.path.dirname(target)
+            if os.path.exists(target) and where not in dirs:
+                dirs.append(where)
+        return dirs
+
+    # ---------- gałąź uruchomienia (git worktree) ----------
+    def _git_top(self, folder):
+        """Katalog główny repozytorium git projektu albo ''. Folder IntegrateSystems (karty w szkice/) to nie
+        repozytorium projektu: tam praca idzie jak dotąd."""
+        code, out, _ = git_run(folder, ["rev-parse", "--show-toplevel"], timeout=15)
+        if code != 0 or not out.strip():
+            return ""
+        top = os.path.realpath(out.strip())
+        return "" if top == os.path.realpath(self.root) else top
+
+    def _branch_name(self, top, title, day=None):
+        short = re.sub(r"-+", "-", self.projekt.slug(title)[:40]).strip("-") or "zadanie"
+        base = "agent/%s-%s" % ((day or datetime.date.today()).isoformat(), short)
+        name, n = base, 2
+        while git_run(top, ["rev-parse", "--verify", "-q", "refs/heads/" + name], timeout=15)[0] == 0:
+            name, n = "%s-%d" % (base, n), n + 1
+        return name
+
+    @staticmethod
+    def _exclude_agent_dir(top):
+        """/.agent/ w .git/info/exclude: katalogi robocze nie brudzą stanu repozytorium (lokalnie, bez commita)."""
+        code, out, _ = git_run(top, ["rev-parse", "--git-common-dir"], timeout=15)
+        if code != 0:
+            return
+        common = out.strip()
+        path = os.path.join(common if os.path.isabs(common) else os.path.join(top, common), "info", "exclude")
+        try:
+            text = ""
+            if os.path.exists(path):
+                with open(path, encoding="utf-8", errors="replace") as f:
+                    text = f.read()
+            if "/%s/" % AGENT_DIR not in text.split("\n"):
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, "a", encoding="utf-8") as f:
+                    f.write(("" if not text or text.endswith("\n") else "\n") + "/%s/\n" % AGENT_DIR)
+        except OSError:
+            pass
+
+    def _worktree_open(self, rec, priv):
+        """Przed startem zadania w repozytorium git: nowa gałąź agent/RRRR-MM-DD-nazwa od bieżącego HEAD w katalogu
+        <repozytorium>/.agent/<id>. Bez repozytorium (albo przy błędzie git) praca w folderze projektu jak dotąd."""
+        folder = priv["folder"]
+        top = self._git_top(folder)
+        if not top:
+            return
+        rel = os.path.relpath(os.path.realpath(folder), top)
+        with self._git_lock:
+            code, head, _ = git_run(top, ["rev-parse", "--verify", "-q", "HEAD^{commit}"], timeout=15)
+            if code != 0:
+                return self._step(rec, "git: repozytorium bez commita, praca w folderze projektu")
+            head = head.strip()
+            if rel != "." and not git_run(top, ["ls-tree", "-d", "HEAD", rel.replace(os.sep, "/")], timeout=15)[1].strip():
+                return self._step(rec, "git: folder projektu poza repozytorium, praca w folderze projektu")
+            code, cur, _ = git_run(top, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+            base = cur.strip() if code == 0 and cur.strip() else head
+            branch = self._branch_name(top, rec["title"])
+            wt = os.path.join(top, AGENT_DIR, rec["id"])
+            try:
+                os.makedirs(os.path.join(top, AGENT_DIR), exist_ok=True)
+            except OSError:
+                return self._step(rec, "git: nie utworzono katalogu %s, praca w folderze projektu" % AGENT_DIR)
+            self._exclude_agent_dir(top)
+            code, _, err = git_run(top, ["worktree", "add", "-q", "-b", branch, wt, head], timeout=300)
+            if code != 0:
+                return self._step(rec, "git: nie utworzono katalogu roboczego (%s), praca w folderze projektu"
+                                  % _short(err, 80))
+        git = {"top": top, "rel": rel, "worktree": wt, "branch": branch, "base": base, "baseCommit": head}
+        priv["git"] = git
+        with self._lock:
+            rec.update(branch=branch, base=base, baseCommit=head, changes=[], commits=0)
+            self._save(rec)
+        self._step(rec, "Gałąź %s od %s" % (branch, base if base != head else head[:8]))
+        self._task_command(priv, git)
+
+    def _worktree_info(self, rec):
+        """Dane katalogu roboczego z rekordu (uruchomienie przerwane restartem serwera) albo None."""
+        if not rec.get("branch") or not rec.get("baseCommit"):
+            return None
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(rec["project"])
+        top = self._git_top(folder) if folder else ""
+        if not top:
+            return None
+        return {"top": top, "rel": os.path.relpath(os.path.realpath(folder), top), "branch": rec["branch"],
+                "worktree": os.path.join(top, AGENT_DIR, rec["id"]), "base": rec.get("base") or "",
+                "baseCommit": rec["baseCommit"]}
+
+    def _worktree_close(self, rec, git):
+        """Po zakończeniu: commit niezatwierdzonych zmian agenta na gałęzi (bez plików standardu), changes i commits
+        w rekordzie, usunięcie katalogu roboczego. Gałąź zostaje."""
+        wt, top = git["worktree"], git["top"]
+        branch, note = rec.get("branch") or git["branch"], ""
+        with self._git_lock:
+            if os.path.isdir(wt):
+                code, cur, _ = git_run(wt, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+                if code == 0 and cur.strip():
+                    branch = cur.strip()                # agent założył własną gałąź: liczy się ta
+                code, status, _ = git_run(wt, ["status", "--porcelain", "--untracked-files=all"])
+                if code == 0 and status.strip():
+                    prefix = "" if git["rel"] == "." else git["rel"].replace(os.sep, "/") + "/"
+                    skip = [":(top,exclude)%s%s" % (prefix, n) for n in STANDARD_LINKS + (rec.get("file") or "",) if n]
+                    git_run(wt, ["add", "-A", "--", ":/"] + skip, timeout=300)
+                    if git_run(wt, ["diff", "--cached", "--quiet"])[0] == 1:
+                        msg = "%s\n\nUruchomienie panelu %s (%s)." % (rec["title"], rec["id"], rec["tool"])
+                        code, _, err = git_run(wt, git_ident(wt) + ["-c", "commit.gpgsign=false", "commit", "-q",
+                                                                    "--no-verify", "-m", msg], timeout=300)
+                        note = "git: zatwierdzono zmiany agenta na gałęzi %s" % branch if code == 0 \
+                            else "git: nie zatwierdzono zmian (%s)" % _short(err, 80)
+            changes = git_numstat(top, git["baseCommit"], branch)
+            code, out, _ = git_run(top, ["rev-list", "--count", "%s..%s" % (git["baseCommit"], branch)], timeout=15)
+            commits = int(out.strip()) if code == 0 and out.strip().isdigit() else 0
+            if os.path.isdir(wt):
+                if git_run(top, ["worktree", "remove", "--force", wt], timeout=300)[0] != 0:
+                    shutil.rmtree(wt, ignore_errors=True)
+            git_run(top, ["worktree", "prune"], timeout=30)
+        if note:
+            self._step(rec, note)
+        with self._lock:
+            rec.update(branch=branch, changes=changes, commits=commits)
+            self._save(rec)
+
+    def _run_repo(self, rid):
+        """(rekord, repozytorium) dla merge i diff albo (None, (kod, błąd))."""
+        rec = self.get(str(rid))
+        if not rec or rec.get("kind") != "task" or not rec.get("branch"):
+            return None, (404, "Nie ma gałęzi tego uruchomienia.")
+        if rec["state"] in LIVE:
+            return None, (409, "Uruchomienie jeszcze trwa.")
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(rec["project"])
+        top = self._git_top(folder) if folder else ""
+        if not top:
+            return None, (404, "Nie ma repozytorium projektu.")
+        if git_run(top, ["rev-parse", "--verify", "-q", "refs/heads/" + rec["branch"]], timeout=15)[0] != 0:
+            return None, (409, "Nie ma gałęzi %s." % rec["branch"])
+        return (rec, top), None
+
+    def diff(self, rid):
+        """GET /api/agent/diff: (kod, tekst diffu gałęzi względem bazy, najwyżej DIFF_MAX bajtów | błąd)."""
+        found, error = self._run_repo(rid)
+        if error:
+            return error[0], error[1]
+        rec, top = found
+        code, out, err = git_run(top, ["diff", "--no-color", "--no-ext-diff", "--no-textconv",
+                                       "%s...%s" % (rec.get("baseCommit") or rec.get("base"), rec["branch"])])
+        if code != 0:
+            return 409, "Nie udało się odczytać zmian: %s" % _short(err, 200)
+        raw = out.encode("utf-8")
+        if len(raw) > DIFF_MAX:
+            out = raw[:DIFF_MAX].decode("utf-8", "ignore") + "\n… (diff obcięty do 200 KB)\n"
+        return 200, out
+
+    def merge(self, rid):
+        """POST /api/agent/merge: git merge --no-ff gałęzi uruchomienia do bazy, bez push. Tylko na gałęzi bazowej,
+        bez niezatwierdzonych zmian (poza plikami standardu, które zmienia panel) i bez konfliktów; inaczej 409."""
+        found, error = self._run_repo(rid)
+        if error:
+            return error[0], error[1], {}
+        rec, top = found
+        if rec.get("merged"):
+            return 409, "Gałąź %s jest już scalona." % rec["branch"], {}
+        base = rec.get("base") or ""
+        with self._git_lock:
+            code, cur, _ = git_run(top, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+            cur = cur.strip() if code == 0 else ""
+            if not base or base == rec.get("baseCommit"):
+                return 409, "Baza gałęzi to commit bez nazwy gałęzi. Scal ręcznie.", {}
+            if cur != base:
+                return 409, "W repozytorium wybrana jest gałąź %s, a baza to %s." % (cur or "(brak)", base), {}
+            if git_run(top, ["rev-parse", "-q", "--verify", "MERGE_HEAD"], timeout=15)[0] == 0:
+                return 409, "W repozytorium trwa inne scalanie.", {}
+            code, status, _ = git_run(top, ["status", "--porcelain", "--untracked-files=no"])
+            if code != 0:
+                return 409, "Nie udało się odczytać stanu repozytorium.", {}
+            dirty = [line[3:].strip() for line in status.splitlines() if len(line) > 3]
+            dirty = [p for p in dirty if os.path.basename(p.split(" -> ")[-1].strip('"')) not in STANDARD_LINKS]
+            if dirty:
+                return 409, _short("Niezatwierdzone zmiany w repozytorium: %s." % ", ".join(dirty[:5]), 300), {}
+            code, out, _ = git_run(top, ["rev-list", "--count", "%s..%s" % (base, rec["branch"])], timeout=15)
+            if code == 0 and out.strip() == "0":
+                return 409, "Gałąź %s nie ma zmian do scalenia." % rec["branch"], {}
+            msg = "Scalenie %s: %s" % (rec["branch"], rec["title"])
+            code, out, err = git_run(top, git_ident(top) + ["-c", "commit.gpgsign=false", "merge", "--no-ff",
+                                                            "--no-edit", "-m", msg, rec["branch"]], timeout=300)
+            if code != 0:
+                text = out + "\n" + err
+                files = re.findall(r"CONFLICT \([^)]*\): .*? in (.+)$", text, re.M)
+                if git_run(top, ["rev-parse", "-q", "--verify", "MERGE_HEAD"], timeout=15)[0] == 0:
+                    git_run(top, ["merge", "--abort"])
+                if files:
+                    return 409, _short("Konflikt w: %s. Repozytorium bez zmian." % ", ".join(files[:5]), 300), {}
+                local = re.findall(r"^\s+(\S.*)$", err, re.M) if "would be overwritten" in err else []
+                if local:
+                    return 409, _short("Scalenie zmieniłoby niezatwierdzone pliki: %s." % ", ".join(local[:5]), 300), {}
+                return 409, _short("Scalenie nie powiodło się: %s" % (err.strip() or out.strip()), 300), {}
+            sha = git_run(top, ["rev-parse", "HEAD"], timeout=15)[1].strip()
+        with self._lock:
+            live = self._runs.get(rec["id"])
+            if live is not None:
+                live.update(merged=now_iso(), mergeCommit=sha)
+                self._save(live)
+        return 200, "", {"commit": sha}
+
+    # ---------- materiał z wyniku dla następników (po:) ----------
+    def result_paths(self, text, folder, git=None):
+        """Ścieżki plików z wiersza wynik:, które istnieją w folderze projektu, w folderze kart albo na gałęzi
+        uruchomienia; względem folderu projektu, ukośniki /."""
+        root = os.path.realpath(folder)
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        bases = [root] + ([cards] if cards != root else [])
+        work = ""
+        if git:
+            work = git["worktree"] if git["rel"] == "." else os.path.join(git["worktree"], git["rel"])
+        out = []
+        for raw in RESULT_PATH.findall(str(text or "")):
+            path = raw.replace("\\", "/")
+            if os.path.isabs(path):
+                for base in [work] + bases if work else bases:
+                    if base and _inside(base, os.path.normpath(path)):
+                        path = os.path.relpath(os.path.normpath(path), base).replace(os.sep, "/")
+                        break
+                else:
+                    continue
+            path = os.path.normpath(path).replace(os.sep, "/")
+            if path.startswith("../") or path == ".." or os.path.isabs(path) or path in out:
+                continue
+            exists = any(_inside(b, os.path.realpath(os.path.join(b, path))) and
+                         os.path.isfile(os.path.join(b, path)) for b in bases)
+            if not exists and git:
+                prefix = "" if git["rel"] == "." else git["rel"].replace(os.sep, "/") + "/"
+                exists = git_run(git["top"], ["cat-file", "-e", "%s:%s%s" % (git["branch"], prefix, path)],
+                                 timeout=15)[0] == 0
+            if exists:
+                out.append(path)
+            if len(out) >= RESULT_PATHS_MAX:
+                break
+        return out
+
+    def _pass_materials(self, rec, git=None):
+        """Ścieżki z wynik: zadania trafiają jako materiał: do otwartych zadań z po: na tym zadaniu (bez duplikatów)."""
+        data, index = self.load_projects(resolve=False)
+        folder = index.get(rec["project"])
+        if not folder:
+            return
+        tasks = [t for t in data["tasks"] if t["project"] == rec["project"] and t["file"] == rec["file"]]
+        me = next((t for t in tasks if t["title"] == rec["title"]), None)
+        result = ((me or {}).get("detail") or {}).get("result") or ""
+        paths = self.result_paths(result, folder, git) if result else []
+        if not paths:
+            return
+        added = 0
+        for t in tasks:
+            if t.get("state") == "done" or t is me or \
+                    not any(isinstance(w, dict) and w.get("title") == rec["title"] for w in t.get("waitingFor") or []):
+                continue
+            refs = [r for r in (t.get("detail") or {}).get("refs") or [] if isinstance(r, dict) and r.get("path")]
+            have = {r["path"] for r in refs}
+            new = [p for p in paths if p not in have]
+            if not new:
+                continue
+            values = ["%s%s" % (r["path"], "#" + r["anchor"] if r.get("anchor") else "") for r in refs] + new
+            try:
+                with self.write_lock:
+                    if self.projekt.set_detail(folder, t["file"], t["line"], t["title"], "materiał", values):
+                        added += 1
+            except (ValueError, OSError) as e:
+                log("Materiał dla %s: %s" % (t["title"], e))
+        if added:
+            self._step(rec, "Materiał z wyniku dopisany do %d zadań z po:" % added)
 
     def run_pm(self, auto=False):
         path = self.tool_path("claude")
@@ -690,14 +1075,45 @@ class Manager:
             title = "%s%s%s" % (POST_TASK, slot.isoformat(), RYTM_SUFFIX)
             try:
                 with self.write_lock:
-                    self.projekt.add_task(folder, title)
-                    task = next(t for t in self.projekt.read_project(folder, pid)["tasks"] if t["title"] == title)
-                    self.projekt.update_task(folder, task["file"], task["line"], title,
-                                             {"executor": "claude", "machine": self.machine, "date": today.isoformat()})
+                    self._add_task(folder, pid, title, {"executor": "claude", "machine": self.machine,
+                                                        "date": today.isoformat(), "minutes": POST_REVIEW_MINUTES},
+                                   self.post_detail(folder, slot.isoformat(), "", "post w stałym rytmie"))
                 added = True
             except (ValueError, OSError, StopIteration) as e:
                 log("Rytm postów (%s): %s" % (pid, e))
         return added
+
+    def marketing_refs(self, folder):
+        """Istniejące materiały marketingu projektu: STYL.md i plan (folder projektu albo folder karty)."""
+        bases = [folder]
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        if cards != os.path.realpath(folder):
+            bases.append(cards)
+        out = []
+        for patterns in (STYLE_FILES, PLAN_FILES):
+            for pattern in patterns:
+                hit = next((os.path.relpath(p, b).replace(os.sep, "/") for b in bases
+                            for p in sorted(glob.glob(os.path.join(b, pattern))) if os.path.isfile(p)), None)
+                if hit:
+                    out.append(hit)
+                    break
+        return out
+
+    def post_detail(self, folder, day, channel, title):
+        """Szczegóły zadania „Przygotować post na …”: cel, gotowe gdy, materiał (rytm, STYL.md, plan)."""
+        return {"cel": "post na %s%s: %s, do zatwierdzenia przez właściciela"
+                       % (day, " (%s)" % channel if channel else "", title),
+                "gotowe gdy": "obok KARTA.md jest folder posty/%s-<krótka-nazwa>/ z post.md (sekcje ## Facebook, "
+                              "## LinkedIn, ## Alt) i grafika.svg albo grafika.png" % day,
+                "materiał": [RYTM_FILE] + self.marketing_refs(folder)}
+
+    def result_detail(self, folder, day, channel, title):
+        """Szczegóły zadania „Wpisz wynik publikacji …”: cel, gotowe gdy, materiał (rytm, plan)."""
+        refs = [r for r in self.marketing_refs(folder) if not r.endswith("STYL.md")]
+        return {"cel": "wynik publikacji „%s” z %s%s w %s (szczegóły pod publikacją)"
+                       % (title, day, " (%s)" % channel if channel else "", RYTM_FILE),
+                "gotowe gdy": "pod publikacją są wiersze wyświetlenia:, kliknięcia: i konta: (albo wynik:)",
+                "materiał": [RYTM_FILE] + refs}
 
     def _add_task(self, folder, pid, title, changes, detail=None):
         """Nowe zadanie w „Do rozplanowania” z polami; wywołujący trzyma write_lock."""
@@ -736,13 +1152,15 @@ class Manager:
                 if not re.match(r"^\d{4}-\d\d-\d\d$", day):
                     continue
                 new = None
-                if t["state"] != "done" and today.isoformat() <= day <= horizon \
+                detail = t.get("detail") or {}
+                if t["state"] != "done" and today.isoformat() <= day <= horizon and not detail.get("refs") \
                         and not any(n == day or n.startswith(day + "-") for n in folders):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
                     if title not in titles:
-                        new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat()},
-                               {"materiał": RYTM_FILE})
-                elif t["state"] == "done" and day < old and not (t.get("detail") or {}).get("result"):
+                        new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
+                                       "minutes": POST_REVIEW_MINUTES},
+                               self.post_detail(folder, day, t.get("channel") or "", t["title"]))
+                elif t["state"] == "done" and day < old and not has_result(detail):
                     key = "%s|%s|%s" % (pid, day, t["title"])
                     title = self.projekt._clean("%s%s" % (RESULT_TASK, t["title"]), 160)
                     if key not in done_keys:
@@ -750,7 +1168,7 @@ class Manager:
                         changed = True
                         if title not in titles:
                             new = (title, {"executor": "ty", "date": today.isoformat(), "minutes": RESULT_MINUTES},
-                                   {"cel": "wynik publikacji z %s w %s (wiersz wynik: pod publikacją)" % (day, RYTM_FILE)})
+                                   self.result_detail(folder, day, t.get("channel") or "", t["title"]))
                 if not new:
                     continue
                 try:
@@ -936,7 +1354,7 @@ class Manager:
         if self.login_web:
             if tool != "claude":
                 return 409, "Logowanie Codex przez panel nie jest obsługiwane: %s" % self.login_cmd(tool, path), {}
-            return self._login_web_start(args)
+            return self._login_web_start(self.as_agent(args))
         try:
             if sys.platform == "darwin":
                 line = " ".join(shlex.quote(a) for a in args)
@@ -1176,8 +1594,14 @@ class Manager:
                 kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | NO_WINDOW["creationflags"]}
             else:
                 kw = {"start_new_session": True}
+            if priv.get("task") and self.worktrees:
+                self._worktree_open(rec, priv)
+            cwd = priv["cwd"]
+            if self.agent_user and rec["kind"] in ("check", "plan"):
+                cwd = tempfile.gettempdir()     # agent nie musi mieć dostępu do katalogu uruchomień
             try:
-                proc = subprocess.Popen(priv["args"], cwd=priv["cwd"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                proc = subprocess.Popen(self.as_agent(priv["args"]), cwd=cwd, stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
                                         stderr=subprocess.STDOUT, env=child_env(self.env), encoding="utf-8",
                                         errors="replace", bufsize=1, **kw)
             except OSError as e:
@@ -1374,10 +1798,7 @@ class Manager:
                 return
             priv["finishing"] = True
         if rec["kind"] == "task":                      # wiersz zadania przed ogłoszeniem stanu końcowego
-            try:
-                self._settle_task(rec, state)
-            except Exception as e:
-                log("Zadanie po uruchomieniu: %s" % e)
+            self._close_task(rec, state, priv.get("git"))
         if rec["kind"] == "plan" and state == "done":
             body, plan = self.parse_plan(result, (self._priv.get(rec["id"]) or {}).get("cands") or {})
             result = body[:4000]
@@ -1406,6 +1827,24 @@ class Manager:
         self._login_alert()
         self.refresh_tools(force=True)
         self._pump()
+
+    def _close_task(self, rec, state, git=None):
+        """Koniec zadania: wiersz zadania, gałąź uruchomienia (commit, changes, katalog roboczy), materiał dla
+        następników. Błąd jednego kroku nie zatrzymuje pozostałych."""
+        try:
+            self._settle_task(rec, state)
+        except Exception as e:
+            log("Zadanie po uruchomieniu: %s" % e)
+        try:
+            if git:
+                self._worktree_close(rec, git)
+        except Exception as e:
+            log("Gałąź uruchomienia %s: %s" % (rec["id"], e))
+        if state == "done":
+            try:
+                self._pass_materials(rec, dict(git, branch=rec.get("branch") or git["branch"]) if git else None)
+            except Exception as e:
+                log("Materiał z wyniku: %s" % e)
 
     def _settle_task(self, rec, state):
         """Po zakończeniu: wiersz dalej [~] → przy niepowodzeniu wraca [ ], przy sukcesie dostaje wymaga: odbiór."""
@@ -1543,6 +1982,22 @@ RYTM_RESULT_DAYS = 2        # publikacja zrobiona dawniej niż tyle dni (48 h) b
 RYTM_KEEP = 500             # tyle kluczy publikacji z założonym zadaniem wyniku zostaje w stan.json
 RESULT_TASK = "Wpisz wynik publikacji "
 RESULT_MINUTES = 3
+POST_REVIEW_MINUTES = 5     # czas właściciela na przejrzenie i zatwierdzenie posta
+STYLE_FILES = ("STYL.md", "marketing/STYL.md", "kampanie/STYL.md")
+PLAN_FILES = ("marketing/plan*.md", "kampanie/plan*.md", "PLAN.md", "plan*.md")
+RESULT_KEYS = ("result", "views", "clicks", "accounts", "wyswietlenia", "klikniecia", "konta")
+RESULT_NOTES = re.compile(r"^(wynik|wyświetlenia|wyswietlenia|kliknięcia|klikniecia|konta)\s*:\s*\S", re.I)
+
+
+def has_result(detail):
+    """Publikacja ma wynik: wiersz wynik: albo liczby wyświetlenia:, kliknięcia:, konta: (pola parsera albo notatki)."""
+    d = detail if isinstance(detail, dict) else {}
+    if any(d.get(k) not in (None, "", 0, [], {}) for k in RESULT_KEYS):
+        return True
+    for key in ("stats", "metrics"):
+        if isinstance(d.get(key), dict) and any(v not in (None, "") for v in d[key].values()):
+            return True
+    return any(RESULT_NOTES.match(str(n)) for n in d.get("notes") or [])
 
 
 def next_post_slot(dates, days, today):

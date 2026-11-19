@@ -68,6 +68,10 @@ YES_NO = {"tak": True, "nie": False}
 COLLECTOR_STATE = {"w realizacji": "active", "w przygotowaniu": "active", "wstrzymany": "paused", "backlog": "backlog"}
 DESCRIPTION_MAX = 300
 CAMPAIGN_STATE = {"plan": "plan", "w toku": "active", "zakończona": "done", "zakonczona": "done", "wstrzymana": "paused"}
+PRIORITY_DEFAULT = 3                      # „- priorytet: 1–5” w KARTA.md; 1 najważniejszy, brak wiersza = 3
+PRIORITIES = range(1, 6)
+DAY_MINUTES = 120                         # dzienna pojemność właściciela w minutach (PANEL_DZIEN_MIN)
+OWNER_SOON_DAYS = 7                       # zadanie właściciela z kiedy w tylu dniach potrzebuje kroków albo materiału
 
 TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
@@ -152,8 +156,18 @@ def minutes_of(value):
 
 
 def number_of(value):
-    m = re.search(r"\d+(?:[.,]\d+)?", str(value or "").replace(" ", ""))
-    return float(m.group(0).replace(",", ".")) if m else None
+    """Pierwsza liczba w tekście („40 rozmów” -> 40, „1 200” -> 1200, „2,5” -> 2.5); None bez liczby."""
+    m = re.search(r"\d+(?:[.,]\d+)?", str(value or "").replace(" ", "").replace("\u00a0", ""))
+    if not m:
+        return None
+    n = float(m.group(0).replace(",", "."))
+    return int(n) if n.is_integer() else n
+
+
+def day_minutes(env=None):
+    """Dzienna pojemność właściciela w minutach: PANEL_DZIEN_MIN (liczba całkowita > 0), inaczej DAY_MINUTES."""
+    raw = str((os.environ if env is None else env).get("PANEL_DZIEN_MIN", "") or "").strip()
+    return int(raw) if raw.isdigit() and int(raw) > 0 else DAY_MINUTES
 
 
 def parse_task(line):
@@ -213,10 +227,19 @@ def parse_task(line):
 # ---------- szczegóły zadania: wcięte wiersze bezpośrednio pod wierszem zadania ----------
 DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "material": "refs", "materiały": "refs",
                "materialy": "refs", "wynik": "result", "decyzja": "decision", "zostało": "left", "zostalo": "left",
-               "poprawka": "fix", "następne": "next", "nastepne": "next"}
+               "poprawka": "fix", "następne": "next", "nastepne": "next",
+               "wyświetlenia": "views", "wyswietlenia": "views", "kliknięcia": "clicks", "klikniecia": "clicks",
+               "konta": "accounts", "link": "link"}
 DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
-              "left": "zostało", "fix": "poprawka", "next": "następne"}
-DETAIL_ORDER = ["goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix", "next"]   # kroki i notatki: "steps"
+              "left": "zostało", "fix": "poprawka", "next": "następne", "views": "wyświetlenia",
+              "clicks": "kliknięcia", "accounts": "konta", "link": "link"}
+DETAIL_ORDER = ["goal", "doneWhen", "refs", "steps", "views", "clicks", "accounts", "link", "result", "decision",
+                "left", "fix", "next"]   # kroki i notatki: "steps"
+# Wyniki publikacji (wiersze kampanii): liczby całkowite i adres. W szczegółach publikacji zawsze obecne
+# (None / ""), w zadaniach ZADANIA.md tylko wtedy, gdy wiersz jest zapisany.
+PUB_COUNTS = ("views", "clicks", "accounts")
+PUB_KEYS = PUB_COUNTS + ("link",)
+LINK = re.compile(r"^https?://\S+$")
 STEP_KEY = "krok"           # set_detail: {"index": n, "done": bool} zmienia n-ty krok (od 0)
 DETAIL_INDENT = "  "
 DETAIL_LINE = re.compile(r"^(?:[-*]\s+)?([^:|\[\]`]{2,20}?)\s*:\s*(.*?)\s*$")
@@ -249,9 +272,17 @@ def is_detail(line):
     return bool(line.strip()) and line[:1] in (" ", "\t")
 
 
+def count_of(value):
+    """Liczba całkowita nieujemna z tekstu wyniku publikacji („1 200”, „1200”) albo None."""
+    text = re.sub(r"[\s\u00a0.]", "", str(value or ""))
+    return int(text) if text.isdigit() else None
+
+
 def parse_detail(lines):
     """Wcięte wiersze pod zadaniem -> {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix", "next",
-    "notes"}. „następne” to jeden wiersz (pierwszy wygrywa); pozostałe klucze łączą kolejne wiersze spacją."""
+    "notes"}. „następne” to jeden wiersz (pierwszy wygrywa); pozostałe klucze łączą kolejne wiersze spacją.
+    Wyniki publikacji („wyświetlenia”, „kliknięcia”, „konta”: liczby, „link”: adres http) trafiają do "views",
+    "clicks", "accounts", "link" tylko wtedy, gdy są zapisane; zła wartość zostaje notatką."""
     d = blank_detail()
     for line in lines:
         s = line.strip()
@@ -260,7 +291,18 @@ def parse_detail(lines):
             d["steps"].append({"done": step.group(1) in "xX", "text": step.group(2)})
             continue
         key, value = detail_key(line)
-        if key == "refs":
+        if key in PUB_COUNTS:
+            n = count_of(value)
+            if n is None:
+                d["notes"].append(s)
+            else:
+                d[key] = n
+        elif key == "link":
+            if LINK.match(value.strip()):
+                d["link"] = value.strip()
+            else:
+                d["notes"].append(s)
+        elif key == "refs":
             d["refs"] += [ref_of(v) for v in re.split(r",\s+", value) if v.strip()]
         elif key == "next":
             d["next"] = d["next"] or value
@@ -294,13 +336,27 @@ def _examples(items, limit=5):
     return ", ".join(shown) + (" i %d inne" % (len(items) - limit) if len(items) > limit else "")
 
 
-def task_gaps(stages, tasks):
-    """Braki w opisie otwartych zadań ZADANIA.md (do braków dokumentu, najwyżej 5 przykładów w wierszu)."""
+def task_gaps(stages, tasks, today=None, active=True, campaigns=()):
+    """Braki w opisie otwartych zadań ZADANIA.md (do braków dokumentu, najwyżej 5 przykładów w wierszu).
+
+    today: date do reguły 7 dni (domyślnie dziś), active: czy projekt jest aktywny (reguła „agent bez kiedy”),
+    campaigns: kampanie projektu (reguła „kampania w toku bez celu liczbowego”)."""
+    today = today or datetime.date.today()
+    soon = (today + datetime.timedelta(days=OWNER_SOON_DAYS)).isoformat()
     dated = {s["id"] for s in stages if s["date"] and not s["closed"]}
-    open_ = [t for t in tasks if t["state"] != "done"]
+    open_ = [t for t in tasks if t["state"] != "done" and t.get("kind", "zadanie") == "zadanie"]
     no_done = [t["title"] for t in open_ if t["stage"] in dated and not t["detail"]["doneWhen"]]
     long_ = [t["title"] for t in open_ if len(t["title"]) > TITLE_MAX]
     nouns = [t["title"] for t in open_ if NOUN_START.match((t["title"].split() or [""])[0].lower())]
+    owner = [t for t in open_ if t["executor"] == "ty"]
+    bare = [t["title"] for t in owner if date_key(t["date"], today) and date_key(t["date"], today) <= soon
+            and not t["detail"]["steps"] and not t["detail"]["refs"]]
+    no_time = [t["title"] for t in owner if not t["minutes"]]
+    agent_no_date = [t["title"] for t in open_ if active and t["executor"] in ("claude", "codex")
+                     and not t["date"] and t.get("group") != INBOX]
+    left_result = [t["title"] for t in open_ if t["state"] == "todo" and t["detail"]["result"]
+                   and not t.get("needs") and not t.get("needsYou")]
+    no_target = [c["name"] for c in campaigns if c.get("state") == "active" and c.get("target") is None]
     gaps = []
     if no_done:
         gaps.append("zadania bez „gotowe gdy” w etapie z terminem: %d (%s)" % (len(no_done), _examples(no_done)))
@@ -308,6 +364,17 @@ def task_gaps(stages, tasks):
         gaps.append("tytuł dłuższy niż %d znaków: %d (%s)" % (TITLE_MAX, len(long_), _examples(long_)))
     if nouns:
         gaps.append("tytuł nie zaczyna się od czasownika: %d (%s)" % (len(nouns), _examples(nouns)))
+    if bare:
+        gaps.append("Twoje zadania na %d dni bez kroków i materiału: %d (%s)" % (OWNER_SOON_DAYS, len(bare), _examples(bare)))
+    if no_time:
+        gaps.append("Twoje zadania bez „czas”: %d (%s)" % (len(no_time), _examples(no_time)))
+    if agent_no_date:
+        gaps.append("zadania agenta bez „kiedy”: %d (%s)" % (len(agent_no_date), _examples(agent_no_date)))
+    if left_result:
+        gaps.append("otwarte zadania z „wynik:” bez odbioru i nie w toku: %d (%s)"
+                    % (len(left_result), _examples(left_result)))
+    if no_target:
+        gaps.append("kampania w toku bez „cel liczbowy”: %d (%s)" % (len(no_target), _examples(no_target)))
     return gaps
 
 
@@ -407,6 +474,8 @@ def parse_campaign(text, pid, file_rel):
         elif title == "Harmonogram":
             for no, t in task_rows(sec["body"]):
                 gaps += _task(t, pid, file_rel, no, "publikacja", campaign=cid, group=name)
+                for k in PUB_KEYS:
+                    t["detail"].setdefault(k, "" if k == "link" else None)
                 tasks.append(t)
             if not tasks:
                 gaps.append("harmonogram bez publikacji")
@@ -465,14 +534,20 @@ def read_project(path, pid=None, decision=None):
         karta_doc["status"] = "gaps"
     docs.append(karta_doc)
 
-    stages, tasks, campaigns = [], [], []
+    stages, tasks, campaigns, pubs = [], [], [], []
+    for f in sorted(glob.glob(os.path.join(glob.escape(path), "kampanie", "*.md"))):
+        text = read(f)
+        if text is not None:
+            camp, rows = parse_campaign(text, pid, "kampanie/" + os.path.basename(f))
+            campaigns.append(camp)
+            pubs += rows
     if texts["ZADANIA.md"] is None:
         docs.append(_doc("zadania", "Zadania", "ZADANIA.md", "missing", ["brak pliku ZADANIA.md"]))
     else:
         stages, tasks, problems = parse_tasks(texts["ZADANIA.md"], pid)
         if not stages:
             problems.insert(0, "brak etapów (nagłówek „## Etap: nazwa”)")
-        problems += task_gaps(stages, tasks)
+        problems += task_gaps(stages, tasks, active=fields["state"] == "active", campaigns=campaigns)
         docs.append(_doc("zadania", "Zadania", "ZADANIA.md", "gaps" if problems else "ok", problems))
 
     decisions = []
@@ -505,12 +580,7 @@ def read_project(path, pid=None, decision=None):
     docs.append(_doc("agenci", "Instrukcje agentów", "CLAUDE.md, AGENTS.md",
                      "missing" if claude is None and agents is None else "gaps" if gaps else "ok", gaps))
 
-    for f in sorted(glob.glob(os.path.join(glob.escape(path), "kampanie", "*.md"))):
-        text = read(f)
-        if text is not None:
-            camp, pubs = parse_campaign(text, pid, "kampanie/" + os.path.basename(f))
-            campaigns.append(camp)
-            tasks += pubs
+    tasks += pubs
 
     docs_ok = sum(1 for d in docs if d["status"] == "ok")
     project = {"id": pid, "name": name, "goal": goal, "description": description, "state": fields["state"],
@@ -519,6 +589,7 @@ def read_project(path, pid=None, decision=None):
                "docs": docs, "docsOk": docs_ok, "docsTotal": len(docs),
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
+               "priority": fields["priority"],
                "questions": parse_questions(sections) if karta is not None else []}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
@@ -576,7 +647,7 @@ def first_paragraph(body, limit=DESCRIPTION_MAX):
 
 
 def card_fields(meta, decision=None):
-    """Pola karty: stan, faza, klient, próg, alias. Karta wygrywa z decyzją zbieracza.
+    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3). Karta wygrywa z decyzją zbieracza.
 
     decision: ostatnia decyzja zbieracza dla tego folderu ({"stan", "klient", "alias"}) albo None.
     Zwraca też listę błędów w wartościach pól (trafiają do braków karty).
@@ -607,7 +678,13 @@ def card_fields(meta, decision=None):
 
     alias = decision.get("alias")
     alias = alias.strip() if isinstance(alias, str) and alias.strip() else None
-    return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias, "errors": errors}
+
+    raw = meta.get("priorytet", "").strip()
+    priority = int(raw) if raw.isdigit() and int(raw) in PRIORITIES else PRIORITY_DEFAULT
+    if raw and not (raw.isdigit() and int(raw) in PRIORITIES):
+        errors.append("priorytet: %s (dozwolone: 1–5, 1 najważniejszy)" % raw)
+    return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
+            "priority": priority, "errors": errors}
 
 
 def stage_done(stage, tasks):
@@ -866,7 +943,8 @@ def next_value(value):
 def set_detail(root, file_rel, line_no, title, key, value):
     """Dopisuje, zmienia albo (pusta wartość) usuwa jeden klucz szczegółów pod wierszem zadania.
 
-    key: cel, gotowe gdy, materiał, wynik, decyzja, zostało, poprawka, następne albo krok. Materiał może mieć kilka
+    key: cel, gotowe gdy, materiał, wynik, decyzja, zostało, poprawka, następne, wyświetlenia, kliknięcia, konta,
+    link albo krok. Wyświetlenia, kliknięcia i konta to liczby całkowite nieujemne, link to adres http(s). Materiał może mieć kilka
     wartości (lista albo wartości w osobnych wierszach tekstu); zapis zastępuje wszystkie dotychczasowe wiersze
     materiału. „następne” to wiersz zadania bez stanu („Tytuł | kto: … | kiedy: …”), sprawdzany jak wiersz zadania.
     „krok” przyjmuje {"index": n, "done": bool} i zmienia znacznik n-tego wciętego kroku (liczone od 0).
@@ -888,6 +966,15 @@ def set_detail(root, file_rel, line_no, title, key, value):
         raise ValueError("wartość: najwyżej 2000 znaków")
     if field == "next":
         values = [next_value(v) for v in raw[:1] if v.strip()]
+    elif field in PUB_COUNTS:
+        values = [v.strip() for v in raw[:1] if v.strip()]
+        if values and count_of(values[0]) is None:
+            raise ValueError("%s: liczba całkowita nieujemna" % DETAIL_OUT[field])
+        values = [str(count_of(v)) for v in values]
+    elif field == "link":
+        values = [v.strip() for v in raw[:1] if v.strip()]
+        if values and (len(values[0]) > 500 or not LINK.match(values[0])):
+            raise ValueError("link: adres http:// albo https:// bez spacji")
     else:
         values = [v for v in (_clean(v, 300 if field == "refs" else 1000) for v in raw) if v]
     if field != "refs":
@@ -1024,24 +1111,31 @@ QUESTION = re.compile(r"^(?:(\d+)\.|[-*])\s+(.+)$")
 ANSWER = re.compile(r"^\s+Odpowiedź\s*:\s*(.*)$", re.I)
 QUESTION_DUE = re.compile(r"^\s+termin\s*:\s*(\d{4}-\d\d-\d\d|[+-]\d+)\s*$", re.I)
 QUESTION_DUE_TEXT = re.compile(r"\bdo\s+(\d{4}-\d\d-\d\d)\b")
+PROPOSAL = re.compile(r"^\s+propozycja\s*:\s*(.*?)\s*$", re.I)
 
 
 def parse_questions(sections):
     """Pytania z sekcji „Pytania do właściciela” w KARTA.md: wiersz „1. pytanie” albo „- pytanie”,
-    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD” i „Odpowiedź: …”. Termin może też stać w treści
-    („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, line}]; date to "RRRR-MM-DD" albo ""."""
+    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD”, „propozycja: …” (rekomendacja agenta) i „Odpowiedź: …”.
+    Termin może też stać w treści („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, proposal, line}];
+    date to "RRRR-MM-DD" albo "", proposal to tekst albo "".
+    """
     sec = section(sections, QUESTIONS_TITLE)
     out = []
     for no, line in (sec["body"] if sec else []):
         m = QUESTION.match(line)
         a = ANSWER.match(line)
         due = QUESTION_DUE.match(line)
+        prop = PROPOSAL.match(line)
         if a and out:
             out[-1]["answer"] = a.group(1).strip()
         elif due and out:
             out[-1]["date"] = due.group(1)
+        elif prop and out:
+            out[-1]["proposal"] = (out[-1]["proposal"] + " " + prop.group(1)).strip()
         elif m and PLACEHOLDER not in line:
-            out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "date": "", "line": no})
+            out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "date": "", "proposal": "",
+                        "line": no})
         elif line.startswith((" ", "\t")) and line.strip() and out and not out[-1]["answer"]:
             out[-1]["text"] += " " + line.strip()
     for q in out:
@@ -1084,9 +1178,9 @@ def set_answer(root, n, answer):
 
 
 def set_card_fields(root, changes):
-    """Zmienia albo dopisuje wiersze „- faza:”, „- klient:”, „- próg:” pod tytułem KARTA.md.
+    """Zmienia albo dopisuje wiersze „- faza:”, „- klient:”, „- próg:”, „- priorytet:” pod tytułem KARTA.md.
 
-    changes: {"phase"?, "client"?, "threshold"?}. ValueError przy złej wartości, OSError bez pliku karty.
+    changes: {"phase"?, "client"?, "threshold"?, "priority"? (1–5)}. ValueError przy złej wartości, OSError bez pliku karty.
     """
     values = {}
     if not isinstance(changes, dict):
@@ -1106,6 +1200,10 @@ def set_card_fields(root, changes):
             if v not in THRESHOLDS:
                 raise ValueError("próg: lekka albo pełna")
             values["próg"] = THRESHOLD_OUT[v]
+        elif k == "priority":
+            if isinstance(v, bool) or not isinstance(v, int) or v not in PRIORITIES:
+                raise ValueError("priorytet: liczba od 1 do 5")
+            values["priorytet"] = str(v)
         else:
             raise ValueError("nieznane pole")
     if not values:

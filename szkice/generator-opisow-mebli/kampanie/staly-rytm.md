@@ -3,6 +3,8 @@
 - stan: w toku
 - cel: pierwsze 10 kont Free do 2026-11-30, potem 40 kont do 2026-12-23
 - miernik: konta Free (metryki.md)
+- cel liczbowy: 10
+- wynik: 0
 - kanały: facebook, linkedin, reels
 - start: 2026-11-19
 
@@ -24,6 +26,7 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
   materiał: posty/2026-11-19-generator-dziala/post.md
   materiał: marketing/plan-10-kont.md#4
   Post 1 z planu. Link do opisarnia.pl w pierwszym komentarzu, w treści adres słownie.
+  Post kieruje do rejestracji, a DPA z dostawcami LLM nie jest potwierdzone: przed publikacją pytanie 13 w KARTA.md.
 - [ ] Nagraj film A: od atrybutów do opisu PL i DE w 60 sekund | kto: ty | kiedy: 2026-11-19 | czas: 30
   cel: gotowy film do slotu A, do 60 sekund
   gotowe gdy: plik filmu zapisany i obejrzany w całości; scenariusz z punktu 6 planu przeprowadzony

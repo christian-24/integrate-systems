@@ -17,6 +17,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/pm          uruchamia raport PM
   POST /api/agent/check       test połączenia z Claude Code albo Codex
   POST /api/agent/stop        zatrzymuje uruchomienie albo zdejmuje je z kolejki
+  POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
+  GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
   POST /api/project/add       dopisuje folder do rejestru projektów (opcjonalnie zakłada pliki standardu)
   POST /api/project/remove    usuwa projekt z rejestru; pliki zostają
@@ -96,6 +98,11 @@ PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
 EXTRA_HOSTS = [h.strip() for h in os.environ.get("PANEL_ALLOWED_HOSTS", "").split(",") if h.strip()]
 # Hasło panelu dla połączeń spoza tego komputera. Bez hasła takie połączenia są odrzucane.
 TOKEN = os.environ.get("PANEL_TOKEN", "").strip()
+# Klucz zapisu dla żądań z tego komputera bez sesji (nagłówek X-Panel-Klucz). Plik czytelny tylko dla użytkownika
+# panelu i root; agent (PANEL_AGENT_USER) nie może go przeczytać.
+LOCAL_KEY_FILE = os.path.expanduser(os.environ.get("PANEL_LOKALNY_KLUCZ_PLIK", "").strip())
+LOCAL_KEY_HEADER = "X-Panel-Klucz"
+DAY_MINUTES_DEFAULT = 120
 # Inne położenie rejestru projektów (testy, osobny zestaw projektów). Domyślnie ../projekty.json.
 if os.environ.get("PANEL_REGISTRY", "").strip():
     projekt.REGISTRY = os.path.abspath(os.path.expanduser(os.environ["PANEL_REGISTRY"].strip()))
@@ -232,7 +239,10 @@ def update_task(body):
     return (200, "") if ok else CONFLICT
 
 
-DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok")
+DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
+               "wyświetlenia", "kliknięcia", "konta", "link")
+DETAIL_ALIASES = {"nastepne": "następne", "wyswietlenia": "wyświetlenia", "klikniecia": "kliknięcia",
+                  "material": "materiał", "zostalo": "zostało"}
 
 
 def update_detail(body):
@@ -242,7 +252,7 @@ def update_detail(body):
     if error:
         return error
     key = str(body.get("key", "")).strip().lower()
-    key = {"nastepne": "następne"}.get(key, key)
+    key = DETAIL_ALIASES.get(key, key)
     if key not in DETAIL_KEYS:
         return 400, "Nie zapisano: klucz %s." % ", ".join(DETAIL_KEYS)
     try:
@@ -516,6 +526,7 @@ WRITES = {"/api/task/state": change_task, "/api/task/update": lambda b: update_t
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
+          "/api/agent/merge": lambda b: get_agents().merge(b.get("id", "")),
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
           "/api/agent/recheck": lambda b: get_agents().recheck_login(),
@@ -635,6 +646,7 @@ def build_data():
     out["generatedAt"] = datetime.datetime.now().isoformat(timespec="seconds")
     out["mode"] = "live"
     out["icsPath"] = "/terminy.ics" + ("?k=" + ics_key() if TOKEN else "")
+    out["dayMinutes"] = day_minutes()
     today = datetime.date.fromisoformat(out["today"])
     manager = get_agents()
     manager.annotate(out["tasks"], out["projectsSource"], today)
@@ -646,6 +658,15 @@ def build_data():
     out["history"] = project_history(out)
     out["server"] = server_state()
     return out
+
+
+def day_minutes():
+    """PANEL_DZIEN_MIN: dzienna pojemność właściciela w minutach (domyślnie 120)."""
+    try:
+        value = int(os.environ.get("PANEL_DZIEN_MIN", "").strip())
+    except ValueError:
+        return DAY_MINUTES_DEFAULT
+    return value if value > 0 else DAY_MINUTES_DEFAULT
 
 
 # ---------- stan serwera: kontrola zdrowia i kopie (uruchom/serwer/zdrowie.sh, kopia.sh) ----------
@@ -749,6 +770,60 @@ def session_ok(value, now=None):
 def logout_all(body):
     """POST /api/session/logout-all: nowy klucz sesji, wszystkie ciasteczka tracą ważność."""
     return get_agents().reset_sessions()
+
+
+_key_warned = []
+
+
+def local_guard():
+    """Czy zapis z tego komputera wymaga sesji albo klucza: przy pliku klucza, przy agentach jako osobny użytkownik
+    i na serwerze (PANEL_MACHINE=cloud). Na Macu i PC bez tych ustawień jak dotąd (agent i tak działa jako właściciel)."""
+    if LOCAL_KEY_FILE or os.environ.get("PANEL_AGENT_USER", "").strip():
+        return True
+    try:
+        return get_agents().machine == "cloud"
+    except Exception:
+        return True
+
+
+def key_file_exposed(st, agent_user=""):
+    """Czy plik klucza mógłby przeczytać ktoś poza właścicielem pliku, grupą panelu i root: prawa dla innych
+    albo prawa dla grupy, do której należy użytkownik agenta (PANEL_AGENT_USER)."""
+    if st.st_mode & 0o007:
+        return True
+    if not st.st_mode & 0o070:
+        return False
+    if not agent_user:
+        return False
+    try:
+        import grp
+        import pwd
+        user = pwd.getpwnam(agent_user)
+        group = grp.getgrgid(st.st_gid)
+    except (ImportError, KeyError):
+        return True                     # nie da się sprawdzić grupy: bezpieczniej odrzucić
+    return user.pw_gid == st.st_gid or agent_user in group.gr_mem or user.pw_uid == st.st_uid
+
+
+def local_key_ok(given):
+    """Nagłówek X-Panel-Klucz równy zawartości PANEL_LOKALNY_KLUCZ_PLIK. Plik, który mógłby przeczytać agent
+    (prawa dla innych albo dla grupy agenta, key_file_exposed), jest odrzucany; klucz krótszy niż 16 znaków też."""
+    given = str(given or "").strip()
+    if not LOCAL_KEY_FILE or not given:
+        return False
+    try:
+        if os.name != "nt" and key_file_exposed(os.stat(LOCAL_KEY_FILE),
+                                                os.environ.get("PANEL_AGENT_USER", "").strip()):
+            if not _key_warned:
+                _key_warned.append(1)
+                agents.log("Plik klucza lokalnego może przeczytać agent albo inni użytkownicy: chmod 640, "
+                           "grupa bez użytkownika agenta (%s)" % LOCAL_KEY_FILE)
+            return False
+        with open(LOCAL_KEY_FILE, encoding="utf-8") as f:
+            key = f.read().strip()
+    except (OSError, UnicodeDecodeError):
+        return False
+    return len(key) >= 16 and hmac.compare_digest(given.encode("utf-8"), key.encode("utf-8"))
 
 
 def ics_key():
@@ -957,6 +1032,7 @@ def preview_data():
     cal = load_json(SAMPLE_CAL, {"calendars": [], "events": []})
     out["projectsSource"] = "sample"
     out["standard"] = projekt.describe()
+    out["dayMinutes"] = day_minutes()
     out["pmNote"] = pm_note(True)
     out["history"] = historia.sample(SAMPLE_HISTORY)      # daty względne, jak w zadaniach i etapach
     out["calendar"] = {"calendars": cal.get("calendars", []), "events": cal.get("events", [])}
@@ -1013,7 +1089,12 @@ class Handler(BaseHTTPRequestHandler):
     def _allowed(self, path, query=""):
         """Dostęp według AGENCI.md. Gdy żądanie nie przechodzi, wysyła odmowę i zwraca False."""
         if self._client_local():
-            return True
+            if self.command != "POST" or path == "/wejscie" or not local_guard() or self._has_session() \
+                    or local_key_ok(self.headers.get(LOCAL_KEY_HEADER)):
+                return True
+            self._send(401, json.dumps({"ok": False, "error": "Zapis z tego komputera wymaga zalogowania albo klucza "
+                                        "lokalnego."}, ensure_ascii=False), "application/json; charset=utf-8")
+            return False
         if not TOKEN:
             self._send(403, "Dostęp z innego urządzenia wymaga hasła: ustaw PANEL_TOKEN na serwerze.",
                        "text/plain; charset=utf-8")
@@ -1059,7 +1140,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _login(self):
         """POST /wejscie: formularz z polem haslo. Błędna próba: odpowiedź po 1 s, najwyżej 10 na minutę."""
-        if self._client_local():
+        if self._client_local() and not (local_guard() and TOKEN):
             return self._redirect("/")
         if login_blocked():
             return self._send(429, login_page("Za dużo prób. Spróbuj za minutę."), "text/html; charset=utf-8")
@@ -1088,7 +1169,7 @@ class Handler(BaseHTTPRequestHandler):
         if not self._allowed(path, url.query):
             return
         if path == "/wejscie":
-            if self._client_local() or self._has_session():
+            if self._has_session() or (self._client_local() and not (local_guard() and TOKEN)):
                 return self._redirect("/")
             return self._send(200, login_page(), "text/html; charset=utf-8")
         if path in ("/", "/index.html"):
@@ -1099,6 +1180,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(build_data(), ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if path == "/api/agent/diff":
+            code, text = get_agents().diff((parse_qs(url.query).get("id") or [""])[0])
+            if code == 200:
+                return self._send(200, text, "text/plain; charset=utf-8")
+            return self._send(code, json.dumps({"ok": False, "error": text}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")

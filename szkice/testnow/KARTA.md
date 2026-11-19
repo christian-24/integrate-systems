@@ -4,6 +4,7 @@
 - faza: budowa
 - klient: tak
 - próg: lekka
+- priorytet: 4
 - maszyna: mac
 - repozytorium:
 - założono: 2026-10-27

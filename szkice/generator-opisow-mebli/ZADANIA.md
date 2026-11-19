@@ -45,20 +45,33 @@ termin: 2026-11-25
   wynik: re-audyt 2026-11-18: 0 CRITICAL, 0 HIGH; 1 MEDIUM (brak limitu body na Caddy) i 2 LOW naprawione w repo; 2 LOW zapisane jako dług
   decyzja: odebrać raport SEC-4 i zgodzić się na commit oraz wdrożenie limitu body na Caddy
   zostało: poprawki niezacommitowane i niewdrożone; `caddy validate` i pytest nieuruchomione (brak uprawnień)
-- [ ] Zacommituj poprawki SEC-2 na gałęzi agenta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
-  cel: poprawki 3 LOW z SAST frontendu zapisane w jednym commicie
-  gotowe gdy: lokalny commit na gałęzi agent/2026-11-21-sec-2, bez push; w wynik: gałąź, commit i wynik testów frontendu albo powód ich pominięcia
+- [ ] Zapisz poprawki SEC-2 (3 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
+  cel: poprawki 3 LOW z SAST frontendu zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
+  gotowe gdy: poprawki 3 LOW są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); testy frontendu zielone albo w zostało: powód ich pominięcia
   materiał: docs/security/raport-audytu.md
-- [ ] Zacommituj poprawki SEC-4 na gałęzi agenta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
-  cel: limit body na Caddy i poprawki 2 LOW zapisane w jednym commicie
-  gotowe gdy: lokalny commit na gałęzi agent/2026-11-21-sec-4, bez push; `caddy validate` i pytest zielone albo w zostało: powód; w wynik: gałąź i commit
+  Poprawki z re-audytu leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/generator-opisow-mebli), poza katalogiem uruchomienia.
+  Przenieś je stamtąd (`git -C /home/panel/projekty/generator-opisow-mebli diff -- <pliki frontendu>`); gdy nie masz dostępu, nanieś 3 LOW ponownie według raportu.
+- [ ] Zapisz poprawki SEC-4 (limit body Caddy, 2 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
+  cel: limit body na Caddy i poprawki 2 LOW zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
+  gotowe gdy: zmiany są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); `caddy validate` i pytest zielone albo w zostało: powód
   materiał: docs/security/raport-audytu.md
-- [ ] Wdróż poprawki SEC-2 na produkcję | kto: ty | kiedy: 2026-11-24 | czas: 15 | po: Zacommituj poprawki SEC-2
-  cel: poprawki SEC-2 działają na opisarnia.pl
-  gotowe gdy: gałąź z commitem SEC-2 wypchnięta i zmergowana do master, CI i auto-deploy zielone, opisarnia.pl otwiera się bez błędów
-- [ ] Wdróż poprawki SEC-4 na produkcję | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Zacommituj poprawki SEC-4
-  cel: limit body na Caddy i poprawki SEC-4 działają na serwerze Opisarni
-  gotowe gdy: gałąź z commitem SEC-4 zmergowana do master i wdrożona; na serwerze `caddy validate` zielone, opisarnia.pl odpowiada po przeładowaniu Caddy
+  Poprawki leżą niezacommitowane w głównym katalogu repozytorium; przenieś je jak przy SEC-2 albo nanieś ponownie według raportu.
+- [ ] Przejrzyj zmiany agenta SEC-2 i SEC-4 i scal w panelu | kto: ty | kiedy: 2026-11-22 | czas: 15 | po: Zapisz poprawki SEC-2, Zapisz poprawki SEC-4
+  cel: poprawki SEC-2 i SEC-4 w gałęzi master repozytorium Opisarni na serwerze
+  gotowe gdy: oba uruchomienia scalone w panelu do master (bez push); w notatce pod zadaniem liczba zmienionych plików
+  materiał: docs/security/raport-audytu.md
+  - [ ] panel, Agenci: uruchomienie „Zapisz poprawki SEC-2…”, lista zmian i diff przejrzane, scalone
+  - [ ] to samo dla „Zapisz poprawki SEC-4…”
+  Gdy scalenie zwraca 409 przez niezacommitowane zmiany w głównym katalogu: `ssh ops@2.29.181.133`, potem
+  `sudo -u panel git -C /home/panel/projekty/generator-opisow-mebli stash push -m sec-przed-scaleniem` i scal ponownie.
+- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: ty | kiedy: 2026-11-22 | czas: 20 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
+  cel: poprawki SEC-2 i limit body na Caddy działają na opisarnia.pl
+  gotowe gdy: master z poprawkami na GitHubie, CI i auto-deploy zielone, `caddy validate` na serwerze Opisarni zielone, opisarnia.pl odpowiada
+  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel git -C /home/panel/projekty/generator-opisow-mebli push origin master`
+  - [ ] GitHub, zakładka Actions repozytorium Opisarni: CI i auto-deploy zielone
+  - [ ] serwer Opisarni: `docker compose -f docker-compose.prod.yml exec caddy caddy validate --config /etc/caddy/Caddyfile`, potem `caddy reload` tym samym poleceniem
+  - [ ] `curl -sI https://opisarnia.pl` zwraca 200 i nagłówki Content-Security-Policy oraz Strict-Transport-Security
+  Nazwa usługi Caddy i ścieżka Caddyfile według docker-compose.prod.yml; push uruchamia auto-deploy (#70).
 
 ## Etap: Testy
 
@@ -70,6 +83,10 @@ termin: 2026-11-17
 - [ ] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: klucz Mistral z historii rozmowy przestaje działać
   gotowe gdy: klucz ma w konsoli Mistral stan unieważniony, a zapasowy silnik Opisarni działa na innym kluczu
+  - [ ] console.mistral.ai → API Keys: sprawdź, czy klucz z 26.10 (ostatnie znaki jak w rozmowie) jest kluczem produkcji
+  - [ ] gdy tak: utwórz nowy klucz, wpisz go w pliku .env produkcji Opisarni (zmienna z kluczem Mistral), `docker compose -f docker-compose.prod.yml up -d backend`
+  - [ ] console.mistral.ai → API Keys: przy kluczu z 26.10 „Revoke” albo „Delete”
+  - [ ] po zmianie: jedna generacja na opisarnia.pl działa (Haiku); zapasowy Mistral nie zgłasza błędu 401 w logach backendu
   Klucz leży jawnie w historii Claude Code z PC (archiwum rozmów na Macu, ksiega/MIGRACJA.md).
 - [x] Serwer Hetzner, Caddy z HTTPS, docker-compose.prod (ADR 0004, 0034)
 - [x] Auto-deploy przez GitHub Actions (#70)
@@ -85,6 +102,11 @@ termin: 2026-11-17
   - [ ] DPA Mistral (silnik zapasowy)
   - [ ] regulamin na opisarnia.pl wymienia obu dostawców
   - [ ] polityka prywatności na opisarnia.pl wymienia obu dostawców
+  Jak: Anthropic: anthropic.com/legal, DPA jest częścią warunków komercyjnych API; zapisz wersję i datę przy kroku.
+  Mistral: mistral.ai/terms, sekcja Data Processing Agreement; zapisz wersję i datę przy kroku.
+  Regulamin i polityka: stopka opisarnia.pl, w każdym dokumencie wyszukaj „Anthropic” i „Mistral” (Cmd+F).
+  Gdy dostawcy brakuje w dokumencie: zadanie dla Claude „Dopisz Anthropic i Mistral do regulaminu i polityki prywatności”; wdrożenie po Twojej zgodzie.
+  Zaproszenia do partii 1–3 i wiadomości do znajomych czekają na to zadanie (po:); posty: pytanie 13 w KARTA.md.
 
 ## Etap: Walidacja i marketing
 termin: 2026-12-23
@@ -125,7 +147,7 @@ termin: 2026-11-30
   gotowe gdy: tabela z punktu 8 planu ma wiersze 19.11–30.11 i wpisane liczby z 19.11
   materiał: marketing/plan-10-kont.md#8
   Tabela zawiera tylko liczby; nazwiska i adresy wyłącznie w marketing/outreach/rejestr-zgod.md (plan, pkt 9).
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | po: Załóż rejestr kontaktów
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 1
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 19.11
   materiał: marketing/plan-10-kont.md#5
@@ -139,7 +161,7 @@ termin: 2026-11-30
   - [ ] STIPA
   - [ ] Smartwood
   Przed zaproszeniem 2 minuty na sprawdzenie, czy firma działa i nie ma już opisów po niemiecku. Zaproszenie bez oferty.
-- [ ] Wyślij wiadomość do 5 znajomych z branży (wariant B, tura 1) | kto: ty | kiedy: 2026-11-20 | czas: 15
+- [ ] Wyślij wiadomość do 5 znajomych z branży (wariant B, tura 1) | kto: ty | kiedy: 2026-11-20 | czas: 15 | po: Potwierdź DPA
   cel: 5 osób z branży, które znasz osobiście, dostaje link do darmowego konta
   gotowe gdy: 5 wiadomości wysłanych; w tabeli z punktu 8 przy 20.11 wpisane „Linki podane: 5”
   materiał: marketing/plan-10-kont.md#5
@@ -149,7 +171,7 @@ termin: 2026-11-30
   gotowe gdy: pod postem 1 na LinkedIn i Facebooku nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
   Szkic odpowiedzi „jak to wypróbować” jest w punkcie 4.
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Załóż rejestr kontaktów
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 2
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 21.11
   materiał: marketing/plan-10-kont.md#5
@@ -176,7 +198,7 @@ termin: 2026-11-30
   cel: kolejne 5 osób z branży dostaje link do darmowego konta
   gotowe gdy: 5 wiadomości wysłanych; w tabeli z punktu 8 przy 23.11 wpisane „Linki podane”
   materiał: marketing/plan-10-kont.md#5
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Załóż rejestr kontaktów
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
   cel: 8 zaproszeń do osób od e-commerce lub marketingu w firmach z partii 3
   gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 24.11
   materiał: marketing/plan-10-kont.md#5

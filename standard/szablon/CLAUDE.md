@@ -14,4 +14,5 @@
 - Uruchomienie z panelu (bez nadzoru): robisz jedno wskazane zadanie i zmieniasz tylko jego wiersz. Innych zadań, terminów i KARTA.md nie zmieniasz.
 - Bez nadzoru nie wykonujesz działań nieodwracalnych ani wychodzących na zewnątrz (wysyłka, publikacja, wdrożenie, płatność): przygotuj, dopisz `wymaga: zgoda` i zatrzymaj się.
 - Praca do przeglądu: zostaw `[~]` i dopisz `wymaga: odbiór`. Odpowiedź kończ trzema punktami: Zrobione, Sprawdzone, Zostało.
+- Pytanie do właściciela (jedyna dozwolona zmiana KARTA.md) dopisz w sekcji „Pytania do właściciela”, pod nim wiersz `   propozycja: …` z Twoją rekomendacją. Odpowiedzi nie wpisujesz.
 <!-- standard-projektu:end -->

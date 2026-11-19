@@ -3,6 +3,7 @@
 - faza: budowa
 - klient: nie
 - próg: pełna
+- priorytet: 5
 - stan: wstrzymany
 - maszyna: chmura
 - repozytorium: GitHub christian-24/Warsztat, serwer `~/projekty/warsztat` (gałąź main, po migracji D13); build Windows (WPF) w GitHub Actions

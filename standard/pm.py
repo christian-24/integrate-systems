@@ -123,6 +123,46 @@ def stage_state(stage, tasks, today):
     return "ok"
 
 
+DURATION_NOTE = re.compile(r"^trwa\s*:\s*(\d+)\s*dni\b", re.I)
+DURATION_TITLE = re.compile(r"\b(\d+)\s*dni\b", re.I)
+
+
+def duration_days(t):
+    """Dni trwania zadania: notatka „trwa: N dni” pod zadaniem, inaczej „N dni” w tytule, inaczej 0."""
+    for note in (t.get("detail") or {}).get("notes") or []:
+        m = DURATION_NOTE.match(note)
+        if m:
+            return int(m.group(1))
+    m = DURATION_TITLE.search(t.get("title") or "")
+    return int(m.group(1)) if m else 0
+
+
+def stage_end(stage, tasks):
+    """(najpóźniejszy koniec otwartych zadań etapu z datą: data + dni trwania, zadanie) albo ("", None)."""
+    best, pick = "", None
+    for t in tasks:
+        if t["stage"] != stage["id"] or t["state"] == "done" or not is_day(t["date"]):
+            continue
+        end = (datetime.date.fromisoformat(t["date"]) + datetime.timedelta(days=duration_days(t))).isoformat()
+        if end > best:
+            best, pick = end, t
+    return best, pick
+
+
+def over_capacity(items, limit):
+    """Zadania do przesunięcia, gdy suma minut dzisiejszych spraw właściciela przekracza limit: najpierw najniższy
+    priorytet projektu (najwyższa liczba), potem najpóźniejsza data i najdłuższe, aż suma zmieści się w limicie."""
+    total = sum(t["minutes"] for t in items)
+    move = []
+    for t in sorted((t for t in items if t["minutes"]),
+                    key=lambda t: (t["priority"], t["date"] if is_day(t["date"]) else "", t["minutes"]), reverse=True):
+        if total <= limit:
+            break
+        move.append(t)
+        total -= t["minutes"]
+    return move
+
+
 def facts(today=None, runs_dir=None):
     today = today or datetime.date.today()
     key = today.isoformat()
@@ -130,6 +170,8 @@ def facts(today=None, runs_dir=None):
     week = (today + datetime.timedelta(days=7)).isoformat()
     d = load(today)
     names = {p["id"]: p["name"] for p in d["projects"]}
+    prio = {p["id"]: p.get("priority", projekt.PRIORITY_DEFAULT) for p in d["projects"]}
+    limit = projekt.day_minutes()
     stages = {s["id"]: s for s in d["stages"]}
     by_id = {t["id"]: t for t in d["tasks"]}
     for s in d["stages"]:
@@ -148,7 +190,8 @@ def facts(today=None, runs_dir=None):
 
     def brief(t):
         s = stages.get(t["stage"])
-        return {"project": names.get(t["project"], t["project"]), "title": t["title"], "state": t["state"],
+        return {"project": names.get(t["project"], t["project"]), "priority": prio.get(t["project"], 3),
+                "title": t["title"], "state": t["state"],
                 "kind": t["kind"], "executor": t["executor"], "date": t["date"], "minutes": t["minutes"],
                 "needsYou": need(t), "blocked": t["blocked"], "channel": t["channel"],
                 "stage": s["title"] if s else t["group"], "where": "%s:%d" % (t["file"], t["line"])}
@@ -159,9 +202,10 @@ def facts(today=None, runs_dir=None):
                 "state": s["state"], "done": sum(1 for t in mine if t["state"] == "done"), "total": len(mine)}
 
     def question(p, q):
-        return {"project": p["name"], "title": q["text"], "state": "todo", "kind": "pytanie", "executor": "ty",
-                "date": q["date"], "minutes": QUESTION_MINUTES, "needsYou": "", "blocked": "", "channel": "",
-                "stage": projekt.QUESTIONS_TITLE, "where": "KARTA.md:%d" % q["line"]}
+        return {"project": p["name"], "priority": prio.get(p["id"], 3), "title": q["text"], "state": "todo",
+                "kind": "pytanie", "executor": "ty", "date": q["date"], "minutes": QUESTION_MINUTES, "needsYou": "",
+                "blocked": "", "channel": "", "stage": projekt.QUESTIONS_TITLE, "where": "KARTA.md:%d" % q["line"],
+                "proposal": q.get("proposal", "")}
 
     you = [t for t in open_tasks if t["project"] not in quiet and projekt.for_owner(t)]
     questions = [(p, q) for p in d["projects"] if p["id"] not in quiet
@@ -169,7 +213,7 @@ def facts(today=None, runs_dir=None):
     decided = [t for t in you if need(t) or (is_day(t["date"]) and t["date"] <= tomorrow)]
     items = [(brief(t), late(t)) for t in decided]
     items += [(question(p, q), is_day(q["date"]) and q["date"] < key) for p, q in questions]
-    decisions = sorted(items, key=lambda x: (x[0]["date"] or "9999", x[0]["title"]))
+    decisions = sorted(items, key=lambda x: (x[0]["priority"], x[0]["date"] or "9999", x[0]["title"]))
     top = [b for b, _ in sorted(decisions, key=lambda x: importance(x[0], x[1], key))[:TOP]]
     active = {p["id"] for p in d["projects"] if p.get("state") == "active"}
     no_next = [p for p in d["projects"] if p["id"] in active and not any(
@@ -205,13 +249,27 @@ def facts(today=None, runs_dir=None):
             review.append(dict(brief(t), since=day_))
     questions_late = [question(p, q) for p, q in questions if is_day(q["date"]) and q["date"] < key]
 
+    no_slack = []
+    for s in d["stages"]:
+        if s["state"] in ("", "late", "done"):
+            continue
+        end, t = stage_end(s, d["tasks"])
+        if end and end >= s["date"]:
+            no_slack.append(dict(stage_brief(s), end=end, task=t["title"], days=duration_days(t)))
+
+    late_stages = {s["id"] for s in d["stages"] if s["state"] == "late"}
+    mine_today = [brief(t) for t in you if (is_day(t["date"]) and t["date"] <= key) or t["stage"] in late_stages]
+    today_minutes = sum(t["minutes"] for t in mine_today)
+    capacity = {"minutes": today_minutes, "limit": limit, "over": today_minutes > limit,
+                "move": over_capacity(mine_today, limit) if today_minutes > limit else []}
+
     projects = []
     for p in d["projects"]:
         mine = [t for t in d["tasks"] if t["project"] == p["id"] and t["kind"] != "publikacja"]
         st = [s for s in d["stages"] if s["project"] == p["id"]]
         upcoming = sorted((s for s in st if s["state"] not in ("", "done")), key=lambda s: s["date"])
         worst = min((s["state"] for s in st), key=WORST.index, default="")
-        projects.append({"id": p["id"], "name": p["name"], "done": sum(1 for t in mine if t["state"] == "done"),
+        projects.append({"id": p["id"], "name": p["name"], "priority": prio[p["id"]], "done": sum(1 for t in mine if t["state"] == "done"),
                          "total": len(mine), "state": worst, "next": stage_brief(upcoming[0]) if upcoming else None,
                          "docsOk": p["docsOk"], "docsTotal": p["docsTotal"],
                          "gaps": [{"file": x["file"], "gaps": x["gaps"]} for x in p["docs"] if x["status"] != "ok"]})
@@ -219,10 +277,11 @@ def facts(today=None, runs_dir=None):
     counts = {"you": len(you) + len(questions), "late": sum(1 for t in open_tasks if late(t)),
               "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),
               "blocked": sum(1 for t in open_tasks if t["state"] == "blocked"),
-              "noNextStep": len(no_next), "stagesNoDate": len(no_date)}
+              "noNextStep": len(no_next), "stagesNoDate": len(no_date), "noSlack": len(no_slack),
+              "overCapacity": 1 if capacity["over"] else 0}
     counts.update(projekt.owner_counts(d["projects"], d["stages"], d["tasks"], today))
     return {
-        "today": key, "source": d["source"],
+        "today": key, "source": d["source"], "dayMinutes": limit,
         "counts": counts,
         "decisions": [b for b, _ in decisions],
         "top": top,
@@ -231,6 +290,8 @@ def facts(today=None, runs_dir=None):
         "stagesNoDate": [stage_brief(s) for s in no_date],
         "stagesLate": [stage_brief(s) for s in d["stages"] if s["state"] == "late"],
         "stagesRisk": [stage_brief(s) for s in d["stages"] if s["state"] == "risk"],
+        "stagesNoSlack": no_slack,
+        "capacity": capacity,
         "blocked": [brief(t) for t in open_tasks if t["state"] == "blocked"],
         "order": order,
         "waitingOnYou": waiting_you,
@@ -238,12 +299,16 @@ def facts(today=None, runs_dir=None):
         "reviewWaiting": review,
         "questionsLate": questions_late,
         "late": [brief(t) for t in open_tasks if late(t)],
-        "today_tasks": [brief(t) for t in open_tasks if t["date"] == key],
-        "tomorrow_tasks": [brief(t) for t in open_tasks if t["date"] == tomorrow],
+        "today_tasks": sorted((brief(t) for t in open_tasks if t["date"] == key),
+                              key=lambda b: (b["priority"], b["title"])),
+        "tomorrow_tasks": sorted((brief(t) for t in open_tasks if t["date"] == tomorrow),
+                                 key=lambda b: (b["priority"], b["title"])),
         "publications": [brief(t) for t in sorted(pubs, key=lambda t: t["date"])],
         "projects": projects,
         "campaigns": [{"project": names.get(c["project"], c["project"]), "name": c["name"], "state": c["state"],
-                       "metric": c["metric"], "result": c["result"], "target": c["target"], "end": c["end"]}
+                       "metric": c["metric"], "result": c["result"], "target": c["target"], "end": c["end"],
+                       "progress": round(100 * c["result"] / c["target"]) if c["target"] and c["result"] is not None
+                       else None}
                       for c in d["campaigns"]],
     }
 
@@ -253,9 +318,11 @@ NEED_RANK = {"zgoda": 0, "pytanie": 1, "odbiór": 2}
 
 
 def importance(t, is_late, today):
-    """Kolejność najważniejszych decyzji: po terminie, potem najbliższa data, zgoda, pytanie, odbiór, krótsze najpierw."""
+    """Kolejność najważniejszych decyzji: po terminie, priorytet projektu (1 pierwszy), najbliższa data, zgoda,
+    pytanie, odbiór, krótsze najpierw."""
     need = "pytanie" if t.get("kind") == "pytanie" else t["needsYou"]
-    return (0 if is_late else 1, t["date"] if is_day(t["date"]) else "9999", NEED_RANK.get(need, 3),
+    return (0 if is_late else 1, t.get("priority", projekt.PRIORITY_DEFAULT),
+            t["date"] if is_day(t["date"]) else "9999", NEED_RANK.get(need, 3),
             t["minutes"] or 9999, t["title"])
 
 
@@ -280,9 +347,9 @@ def text(f):
     out = ["Raport PM · %s, %d %s %d%s" % (DNI[today.weekday()], today.day, MD[today.month - 1], today.year,
                                           " · projekty przykładowe" if f["source"] == "sample" else ""),
            "Wymaga Ciebie %d (dziś %d, 7 dni %d, później %d) · Po terminie %d · Zagrożone etapy %d · Zablokowane %d"
-           " · Bez następnego kroku %d · Etapy bez terminu %d"
+           " · Bez następnego kroku %d · Etapy bez terminu %d · Bez zapasu %d"
            % (c["you"], c["youToday"], c["youWeek"], c["youLater"], c["late"], c["risk"], c["blocked"],
-              c["noNextStep"], c["stagesNoDate"])]
+              c["noNextStep"], c["stagesNoDate"], c["noSlack"])]
 
     def block(title, rows):
         if rows:
@@ -293,7 +360,8 @@ def text(f):
 
     def decision(t):
         label = "pytanie" if t["kind"] == "pytanie" else t["needsYou"] or "Twoje"
-        return "◆ %-7s %s" % (label, task(t, " (%s, %s)" % (when(t["date"], today), minutes_text(t["minutes"]))))
+        row = "◆ %-7s %s" % (label, task(t, " (%s, %s)" % (when(t["date"], today), minutes_text(t["minutes"]))))
+        return row + (" · propozycja: %s" % t["proposal"] if t.get("proposal") else "")
 
     rest = [t for t in f["decisions"] if t not in f["top"]]
     rows = []
@@ -307,8 +375,16 @@ def text(f):
           ["%s %s: %s · etap %s (termin %s, %d/%d)" % (STAGE[s["state"]] + (s["project"], s["title"],
                                                         when(s["date"], today), s["done"], s["total"]))
            for s in f["stagesLate"] + f["stagesRisk"]]
+          + ["▲ bez zapasu: %s · etap %s (termin %s), ostatnie zadanie „%s” kończy się %s"
+             % (s["project"], s["title"], s["date"], s["task"], s["end"]) for s in f["stagesNoSlack"]]
+          + (["▲ ponad pojemność: Twoje sprawy na dziś %d min, limit %d min; do przesunięcia: %s"
+              % (f["capacity"]["minutes"], f["capacity"]["limit"],
+                 "; ".join("%s (%s, %d min)" % (task(t), "priorytet %d" % t["priority"], t["minutes"])
+                           for t in f["capacity"]["move"]))] if f["capacity"]["over"] else [])
           + ["■ zablokowane: %s" % task(t, " (%s)" % t["blocked"] if t["blocked"] else "") for t in f["blocked"]]
-          + ["■ pytanie po terminie: %s" % task(t, " (termin %s)" % when(t["date"], today)) for t in f["questionsLate"]]
+          + ["■ pytanie po terminie: %s" % task(t, " (termin %s%s)" % (when(t["date"], today), ", propozycja: %s"
+                                                                     % t["proposal"] if t.get("proposal") else ""))
+             for t in f["questionsLate"]]
           + ["◆ czeka na Ciebie: %s · po Twoim zadaniu „%s”" % (task(t), t["after"]) for t in f["waitingOnYou"]]
           + ["▲ kolejność: %s (%s) przed poprzednikiem „%s” (%s)"
              % (task(t), when(t["date"], today), t["after"], when(t["afterDate"], today)) for t in f["order"]]

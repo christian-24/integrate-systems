@@ -15,7 +15,7 @@ for u in kopia.service kopia.timer zdrowie.service zdrowie.timer; do
   install -m 644 "$LIB/$u" "/etc/systemd/system/$u"
 done
 install -d -m 700 -o panel -g panel /home/panel/kopie
-install -d -m 755 /etc/integrate
+install -d -o root -g panel -m 750 /etc/integrate   # agent (PANEL_AGENT_USER) nie wchodzi do /etc/integrate
 if [ ! -f /etc/integrate/serwer.env ]; then
   install -m 600 "$LIB/serwer.env.przyklad" /etc/integrate/serwer.env
   echo "Utworzono /etc/integrate/serwer.env (KOPIA_CEL pusty: kopia tylko na serwerze)."

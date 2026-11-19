@@ -7,8 +7,9 @@
 > Etap to nagłówek `## Etap: nazwa` i wiersz `termin: RRRR-MM-DD` pod nim. Etap bez otwartych zadań jest zamknięty.
 > Szczegóły zadania: wcięte wiersze pod zadaniem (cel:, gotowe gdy:, materiał:, kroki `- [ ]`, wynik:, decyzja:, zostało:).
 > Uzupełnione danymi z PC (audyt 2026-11-14). Stany T34–T44 z 2026-05-29; RC1 zmergowany 2026-10-27, więc część z nich mogła zostać zamknięta.
-> Ścieżka krytyczna do startu zamkniętego testu 29.11: zadania T48 22.11, merge PR #124 22.11, keystore 21.11, polityka prywatności 23.11,
-> podpisany build 24.11, test akceptacyjny 26.11, 12 testerów 27.11, start testu 29.11, wniosek o produkcję 13.12.
+> Ścieżka krytyczna do startu zamkniętego testu najpóźniej 27.11: keystore 21.11, T48 i merge PR #124 22.11, scalenie i master na GitHubie 23.11,
+> polityka pod publicznym URL 23.11, podpisany AAB i wgranie do ścieżki zamkniętego testu 24.11, zaproszenia 25.11, test akceptacyjny i 12 testerów 26.11,
+> start testu 27.11, wniosek o produkcję 11.12 (14 dni testu); termin etapu 13.12 to zapas na sprawdzenie wersji przez Google.
 > Pole `po:` wskazuje zadania z tego pliku, które muszą być zrobione wcześniej.
 
 ## Etap: v1.0.0 MVP
@@ -20,18 +21,20 @@
 - [x] T12–T17 Ruch portowy i usterki: tabele, DAO, formularze, oś czasu
 - [x] T18–T19 Sealed log i eksport PDF
 - [x] T20–T21 Limity Free Tier i onboarding
-- [ ] Zamknij test dymny E2E (T22)
+- [~] Zamknij test dymny E2E (T22) | wymaga: odbiór
   cel: T22 zamknięty: test dymny E2E zielony, test manualny przeniesiony
   gotowe gdy: T22 oznaczony jako zrobiony w docs/backlog/STATUS.md
   materiał: docs/backlog/STATUS.md
   wynik: test dymny E2E zielony
   zostało: test manualny przeniesiony do T44
-- [ ] Dokończ migrację starych ekranów (T23)
+  decyzja: sprawdź w docs/backlog/STATUS.md, czy T22 jest oznaczony jako zrobiony; jeśli tak, zamknij zadanie
+- [~] Dokończ migrację starych ekranów (T23) | wymaga: odbiór
   cel: stare ekrany korzystają z motywu i tokenów
   gotowe gdy: T23 oznaczony jako zrobiony w docs/backlog/STATUS.md
   materiał: docs/backlog/STATUS.md
   wynik: ekrany zmigrowane
   zostało: surowe wartości w features, przeniesione do T42
+  decyzja: sprawdź w docs/backlog/STATUS.md, czy T23 jest oznaczony jako zrobiony (surowe wartości przeniesione do T42); jeśli tak, zamknij zadanie
 
 ## Etap: v1.0.1 Zgodność UI z makietami
 
@@ -99,7 +102,10 @@ termin: 2026-12-13
 - [ ] Spisz listę 15 kandydatów na testerów zamkniętego testu | kto: ty | kiedy: 2026-11-20 | czas: 20
   cel: lista co najmniej 15 osób z kontem Google (zapas na rezygnacje do progu 12)
   gotowe gdy: lista 15 kandydatów zapisana poza repozytorium (adresy to dane osobowe)
-  Źródła: znajomi, grupy żeglarskie, kluby. Listę osób znasz tylko Ty.
+  - [ ] znajomi z telefonem z Androidem i kontem Google
+  - [ ] grupy żeglarskie i kluby: osoby, które odpowiedzą na post ze szkicu zaproszenia
+  - [ ] przy każdej osobie adres konta Google (potrzebny przy liście e-mail w Play Console)
+  Listę osób znasz tylko Ty. Trzymaj ją w menedżerze haseł albo w notatce na Macu, nie w repozytorium.
 - [ ] Wskaż zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
   cel: wiadomo, które z zadań T48 muszą wejść przed podpisanym buildem 24.11
   gotowe gdy: w wynik: każda pozycja z kroków oznaczona „przed v1.0.0” albo „po” z uzasadnieniem
@@ -120,59 +126,103 @@ termin: 2026-12-13
   gotowe gdy: w wynik: liczba testów zaliczonych i niezaliczonych na gałęzi PR #124
   Jeśli na serwerze nie ma Flutter SDK, uruchom suitę w GitHub Actions albo oznacz [!] z blokadą.
 - [ ] Odtwórz plan testów MVP usunięty z docs/testing 2026-05-29 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
-  cel: plan testów manualnych (TC-01..TC-20) dostępny przed testem akceptacyjnym 26.11
-  gotowe gdy: plan testów w docs/testing z historii git albo w wynik: wskazane jego nowe miejsce
+  cel: plan testów manualnych TC-01..TC-20 dostępny przed testem akceptacyjnym 26.11
+  gotowe gdy: plik docs/testing/plan-testow-mvp.md z TC-01..TC-20 (kroki, oczekiwany wynik, kolumna wyniku) odtworzony z historii git; w wynik: commit źródłowy
+  Usunięte pliki: `git log --diff-filter=D --name-only -- docs/testing`; treść: `git show <commit>^:<ścieżka>`.
 - [ ] Wygeneruj keystore do podpisu wydania | kto: ty | gdzie: mac | kiedy: 2026-11-21 | czas: 20
   cel: klucz podpisu wydania gotowy do budowania AAB
   gotowe gdy: keystore i hasła zapisane w menedżerze haseł z kopią zapasową; plik keystore poza repozytorium
-  Rozważ Play App Signing: Google trzyma klucz aplikacji, Ty klucz przesyłania.
-- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 10
+  - [ ] `mkdir -p ~/klucze && keytool -genkey -v -keystore ~/klucze/naulikapp-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
+  - [ ] plik `android/key.properties` w repozytorium na Macu: storePassword, keyPassword, keyAlias=upload, storeFile=/Users/krystianstryjakiewicz/klucze/naulikapp-upload.jks
+  - [ ] `android/.gitignore` zawiera `key.properties` i `*.jks`; `git status` nie pokazuje key.properties
+  - [ ] hasło keystore i hasło klucza w menedżerze haseł, plik .jks jako załącznik tego wpisu (kopia)
+  - [ ] `android/app/build.gradle` czyta key.properties w signingConfigs.release; gdy nie czyta, zgłoś to jako zadanie dla Claude
+  Play App Signing: przy pierwszym wgraniu AAB Google tworzy klucz aplikacji, a ten keystore zostaje kluczem przesyłania (można go odnowić u Google).
+- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 5
   cel: polityka prywatności ma pełne dane wydawcy wymagane przez Google Play
-  gotowe gdy: w plikach z docs/compliance/ brak pól do uzupełnienia przy danych wydawcy
+  gotowe gdy: pytanie 5 w KARTA.md ma odpowiedź z nazwą wydawcy, adresem i e-mailem kontaktowym
+  materiał: KARTA.md#Pytania do właściciela
+  Dane wpisuje agent do plików polityki w docs/compliance/ (treść, HTML, odpowiedzi do Play Console) w zadaniu „Zapisz politykę prywatności…”.
 - [ ] Zmerguj PR #124 po zielonej pełnej suicie testów | kto: ty | kiedy: 2026-11-22 | czas: 10 | po: Uruchom pełną suitę testów na PR #124
   cel: gałęzie fix/rc1-nagrania i marketing/kampania-rc1 w master przed podpisanym buildem
   gotowe gdy: PR #124 zmergowany, CI na master zielone
   materiał: KARTA.md#Pytania do właściciela
+  - [ ] github.com, repozytorium naulikapp, Pull requests → #124: wynik suity z zadania wyżej zielony, „Merge pull request”
   Właściciel (2026-11-14): merge możliwy; do rozważenia, czy materiały marketingowe mają być w repozytorium.
 - [ ] Zrealizuj zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Wskaż zadania T48 niezbędne
   cel: zadania T48 wskazane jako niezbędne zamknięte przed podpisanym buildem 24.11
-  gotowe gdy: każde wskazane zadanie T48 ma commit na gałęzi agent/2026-11-22-t48 (w wynik: gałąź i commit) albo opis w zostało:
+  gotowe gdy: każde wskazane zadanie T48 zrobione na gałęzi uruchomienia (panel zapisuje gałąź i listę zmian) albo opisane w zostało:; testy zielone
   materiał: docs/backlog/STATUS.md
-- [ ] Zacommituj poprawki polityki prywatności na gałęzi agenta | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
-  cel: treść polityki, HTML, odpowiedzi do Play Console i poprawiony ekran polityki zapisane w jednym commicie
-  gotowe gdy: lokalny commit na gałęzi agent/2026-11-22-polityka-prywatnosci, bez push; w wynik: gałąź i commit
+- [ ] Zapisz politykę prywatności na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
+  cel: treść polityki z danymi wydawcy, HTML, odpowiedzi do Play Console i poprawiony ekran polityki na gałęzi uruchomienia
+  gotowe gdy: zmiany w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); dane wydawcy z odpowiedzi na pytanie 5 w KARTA.md wpisane; testy zielone
   materiał: docs/compliance/
-- [ ] Wyślij zaproszenia do testu kandydatom z listy | kto: ty | kiedy: 2026-11-22 | czas: 30 | po: Przygotuj szkic zaproszenia dla testerów, Spisz listę 15 kandydatów
-  cel: co najmniej 15 kandydatów dostało zaproszenie z instrukcją dołączenia do testu
-  gotowe gdy: zaproszenia wysłane do wszystkich osób z listy; liczba potwierdzeń wpisana w notatce pod tym zadaniem
-  Wysyłka tylko przez Ciebie. Kto nie odpowie do 25.11, dostaje jedno przypomnienie.
-- [ ] Wdróż poprawki polityki prywatności do master | kto: ty | kiedy: 2026-11-23 | czas: 10 | po: Zacommituj poprawki polityki prywatności
-  cel: polityka i poprawiony ekran polityki w master przed podpisanym buildem
-  gotowe gdy: gałąź z commitem polityki wypchnięta i zmergowana do master, CI na master zielone
-- [ ] Opublikuj politykę prywatności pod publicznym URL | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wdróż poprawki polityki prywatności
+  materiał: KARTA.md#Pytania do właściciela
+  Pliki z 18.11 leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/naulikapp/docs/compliance/ i ekran polityki).
+  Przenieś je stamtąd; gdy nie masz dostępu, oznacz [!] z blokadą „brak dostępu do niezacommitowanych plików polityki”.
+- [ ] Przejrzyj zmiany agenta T48 i polityki prywatności i scal w panelu | kto: ty | kiedy: 2026-11-23 | czas: 20 | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi
+  cel: zmiany T48 i polityka prywatności w master repozytorium NaulikApp na serwerze
+  gotowe gdy: oba uruchomienia scalone w panelu do master (bez push)
+  - [ ] panel, Agenci: uruchomienie „Zrealizuj zadania T48…”, lista zmian i diff przejrzane, scalone
+  - [ ] to samo dla „Zapisz politykę prywatności…”
+  Gdy scalenie zwraca 409 przez niezacommitowane zmiany w głównym katalogu: `ssh ops@2.29.181.133`, potem
+  `sudo -u panel git -C /home/panel/projekty/naulikapp stash push -m przed-scaleniem` i scal ponownie.
+- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: ty | kiedy: 2026-11-23 | czas: 10 | po: Przejrzyj zmiany agenta T48, Zmerguj PR #124
+  cel: master na GitHubie i na Macu ma PR #124, zmiany T48 i politykę prywatności
+  gotowe gdy: CI na master zielone; na Macu `git log -1` pokazuje ten sam commit co GitHub
+  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel git -C /home/panel/projekty/naulikapp pull --no-rebase origin master` (wnosi PR #124)
+  - [ ] `sudo -u panel git -C /home/panel/projekty/naulikapp push origin master`
+  - [ ] na Macu w repozytorium naulikapp: `git switch master && git pull`
+- [ ] Opublikuj politykę prywatności pod publicznym URL | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wypchnij master NaulikApp na GitHub
   cel: Google Play i ekran w aplikacji wskazują ten sam publiczny adres polityki
   gotowe gdy: polityka otwiera się pod publicznym URL bez logowania, a URL wpisany w Play Console
-- [ ] Zbuduj podpisany AAB 1.0.0 z master | kto: ty | gdzie: mac | kiedy: 2026-11-24 | czas: 30 | po: Wygeneruj keystore, Zmerguj PR #124, Zrealizuj zadania T48, Wdróż poprawki polityki prywatności
+  materiał: docs/compliance/
+  - [ ] plik HTML z docs/compliance/ na stronie bez logowania, np. GitHub Pages z osobnego publicznego repozytorium (Settings → Pages → Deploy from branch)
+  - [ ] Play Console → aplikacja → Zasady i programy → Treści w aplikacji → Polityka prywatności: wpisany URL
+  - [ ] adres w aplikacji (ekran polityki) taki sam jak w Play Console
+- [ ] Zbuduj podpisany AAB 1.0.0 z master | kto: ty | gdzie: mac | kiedy: 2026-11-24 | czas: 30 | po: Wygeneruj keystore, Wypchnij master NaulikApp na GitHub
   cel: podpisany build wydania gotowy do testu akceptacyjnego i Play Console
   gotowe gdy: plik AAB podpisany keystore z 21.11, zbudowany z master po merge PR #124, zmian T48 i polityki prywatności
-  - [ ] zmiany T48 z gałęzi agenta zmergowane do master
-  - [ ] AAB zbudowany i podpisany
+  - [ ] na Macu: `git pull`, `flutter clean && flutter build appbundle --release`
+  - [ ] plik build/app/outputs/bundle/release/app-release.aab; podpis: `keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab` pokazuje alias upload
+  - [ ] wersja 1.0.0 i versionCode wyższy niż w RC1 (pubspec.yaml)
+- [ ] Wgraj AAB do ścieżki zamkniętego testu | kto: ty | kiedy: 2026-11-24 | czas: 30 | po: Zbuduj podpisany AAB, Opublikuj politykę prywatności
+  cel: wersja 1.0.0 w ścieżce zamkniętego testu wysłana do sprawdzenia przez Google z zapasem przed startem testu
+  gotowe gdy: w Play Console wersja w ścieżce zamkniętego testu ma stan „W trakcie sprawdzania” albo „Dostępna”; lista testerów przypisana do ścieżki
+  - [ ] Play Console → aplikacja → Testowanie → Testy zamknięte: ścieżka (np. Alpha), kraje: Polska
+  - [ ] Testerzy: Grupa Google (rekomendacja ze szkicu zaproszenia) albo lista adresów e-mail; skopiuj link do dołączenia
+  - [ ] Utwórz wersję: Play App Signing włączone, wgraj app-release.aab, opis zmian, zapisz
+  - [ ] Treści w aplikacji kompletne (polityka, dostęp do aplikacji, reklamy, klasyfikacja, bezpieczeństwo danych), „Wyślij do sprawdzenia”
+  Sprawdzenie pierwszej wersji nowej aplikacji może trwać kilka dni; dlatego wgranie 24.11, a start testu najpóźniej 27.11.
+- [ ] Wyślij zaproszenia do testu kandydatom z listy | kto: ty | kiedy: 2026-11-25 | czas: 30 | po: Wgraj AAB do ścieżki, Przygotuj szkic zaproszenia dla testerów, Spisz listę 15 kandydatów
+  cel: co najmniej 15 kandydatów dostało zaproszenie z instrukcją dołączenia do testu
+  gotowe gdy: zaproszenia wysłane do wszystkich osób z listy; liczba potwierdzeń wpisana w notatce pod tym zadaniem
+  materiał: docs/marketing/zaproszenie-testerzy-zamkniety-test.md
+  - [ ] w szkicu wpisane [LINK-GRUPA], [LINK-TEST] z Play Console i [KONTAKT]
+  - [ ] wiadomość prywatna do każdej osoby z listy 15 kandydatów
+  Wysyłka tylko przez Ciebie. Kto nie odpowie do 26.11, dostaje jedno przypomnienie (szkic przypomnienia w tym samym pliku).
 - [ ] Przeprowadź test akceptacyjny RC1 na podpisanym buildzie | kto: ty | kiedy: 2026-11-26 | czas: 60 | po: Zbuduj podpisany AAB, Odtwórz plan testów MVP
   cel: potwierdzenie, że podpisany build nadaje się do zamkniętego testu
-  gotowe gdy: wszystkie scenariusze planu testów przechodzą albo błędy zapisane jako nowe zadania
-  Plan testów: wynik zadania „Odtwórz plan testów MVP”.
+  gotowe gdy: wszystkie scenariusze TC-01..TC-20 przechodzą albo błędy zapisane jako nowe zadania
+  materiał: docs/testing/plan-testow-mvp.md
+  - [ ] instalacja z Play (jesteś testerem własnej ścieżki) albo `bundletool build-apks --bundle=app-release.aab --output=naulik.apks --ks=$HOME/klucze/naulikapp-upload.jks --ks-key-alias=upload` i `bundletool install-apks --apks=naulik.apks`
+  - [ ] TC-01..TC-20 przeprowadzone, wynik wpisany w kolumnie wyniku planu
+  Błąd blokujący: poprawka, nowy AAB z wyższym versionCode i ponowne wgranie przed 27.11.
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
-- [ ] Wpisz 12 adresów testerów w Play Console | kto: ty | kiedy: 2026-11-27 | czas: 15 | po: Wyślij zaproszenia do testu kandydatom
-  cel: co najmniej 12 osób z kontem Google zapisanych na liście testerów
-  gotowe gdy: lista testerów w Play Console ma co najmniej 12 adresów
-  Test trwa 14 dni, więc start najpóźniej 29.11. Przy mniej niż 12 potwierdzeniach 25.11 poszerz listę kandydatów.
-- [ ] Uruchom zamknięty test w Google Play (12+ testerów × 14 dni) | kto: ty | kiedy: 2026-11-29 | czas: 30 | po: Przeprowadź test akceptacyjny RC1, Wpisz 12 adresów testerów, Opublikuj politykę prywatności
-  cel: zamknięty test trwa od 29.11 do 13.12
-  gotowe gdy: test w Play Console ma stan aktywny, a co najmniej 12 testerów dołączyło
-  - [ ] AAB wgrany na ścieżkę testu zamkniętego
+- [ ] Sprawdź liczbę testerów zamkniętego testu (co najmniej 12) | kto: ty | kiedy: 2026-11-26 | czas: 10 | po: Wyślij zaproszenia do testu kandydatom
+  cel: co najmniej 12 osób z kontem Google dołączyło do zamkniętego testu
+  gotowe gdy: Play Console (Testy zamknięte → Testerzy) albo Grupa Google pokazuje co najmniej 12 osób
+  materiał: docs/marketing/zaproszenie-testerzy-zamkniety-test.md
+  - [ ] Play Console → Testowanie → Testy zamknięte → ścieżka → Testerzy: liczba osób, które dołączyły
+  - [ ] przy mniej niż 12: przypomnienie ze szkicu do osób, które nie dołączyły, i kolejni kandydaci z grup żeglarskich
+- [ ] Uruchom zamknięty test w Google Play (12+ testerów × 14 dni) | kto: ty | kiedy: 2026-11-27 | czas: 30 | po: Przeprowadź test akceptacyjny RC1, Sprawdź liczbę testerów, Wgraj AAB do ścieżki
+  cel: zamknięty test trwa od 27.11 do 11.12
+  gotowe gdy: wersja w ścieżce zamkniętego testu ma stan „Dostępna”, a co najmniej 12 testerów dołączyło
   - [ ] URL polityki prywatności w Play Console
   - [ ] lista testerów przypisana do ścieżki
-- [ ] Złóż wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-13 | po: Uruchom zamknięty test w Google Play
+  - [ ] wersja sprawdzona przez Google i dostępna dla testerów
+  Test trwa 14 dni od dnia, w którym 12 testerów jest zapisanych; start najpóźniej 27.11.
+- [ ] Złóż wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-11 | czas: 20 | po: Uruchom zamknięty test w Google Play
   cel: dostęp do produkcji w Google Play po zamkniętym teście
   gotowe gdy: wniosek wysłany w Play Console po 14 dniach testu z co najmniej 12 testerami
   materiał: KARTA.md#Definicja ukończenia

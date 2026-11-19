@@ -11,12 +11,17 @@ następne kroki. Nie piszesz kodu i nie zmieniasz zakresu projektów.
      i łącznym (`topMinutes`); potem pozostałe zgody, odbiory i pytania z kart (rodzaj `pytanie`, 2 min).
      Każda w jednym wierszu z projektem i terminem. Czas bez pola `czas:` to „czas nieznany”, nie szacuj go.
      Liczbę spraw podawaj z podziałem: dziś (`youToday`), 7 dni (`youWeek`), później (`youLater`).
+     Kolejność bierz z `pm.py`: najpierw projekty o wyższym priorytecie (`priority` 1 przed 5), potem termin.
+     Przy pytaniu z polem `proposal` dopisz „propozycja: …” (rekomendacja agenta, nie odpowiedź).
    - **Ryzyka**: etapy po terminie i zagrożone, blokady, pytania po terminie (`questionsLate`), zadania czekające
      na Twoje zadanie (`waitingOnYou`), zła kolejność (`order`: zadanie przed poprzednikiem z `po:`), zadania
      zawieszone (`stalled`: w toku ponad 3 dni bez agenta), odbiory czekające ponad 2 dni (`reviewWaiting`),
-     projekty bez następnego kroku (aktywne, bez otwartego zadania z datą w ciągu 7 dni) i etapy bez terminu.
+     projekty bez następnego kroku (aktywne, bez otwartego zadania z datą w ciągu 7 dni), etapy bez terminu,
+     etapy bez zapasu (`stagesNoSlack`: ostatnie zadanie etapu kończy się w dniu terminu albo później) i dzień
+     ponad pojemność (`capacity.over`: suma minut Twoich spraw na dziś większa niż `capacity.limit`; zaproponuj
+     przesunięcie zadań z `capacity.move`, od najniższego priorytetu).
      Przy każdym jedno zdanie: co proponujesz.
-   - **Dziś**: co robią agenci, co jest po stronie właściciela.
+   - **Dziś**: co robią agenci, co jest po stronie właściciela (`today_tasks`, w kolejności priorytetu projektu).
 3. Zapisz notatkę do `raporty/RRRR-MM-DD.md` (dzisiejsza data, nadpisz wcześniejszą z tego dnia). Panel pokazuje ją w widoku Przegląd.
 
 Układ notatki, bez wstępów i podsumowań:

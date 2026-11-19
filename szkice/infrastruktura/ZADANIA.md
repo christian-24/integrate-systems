@@ -35,12 +35,18 @@
   Opis kopii i kontroli zdrowia: ksiega/MIGRACJA.md, sekcja „Serwer: kopie i kontrola zdrowia”.
   - [ ] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-kopie-i-zdrowie.sh`
   - [ ] w wyniku: „zapisano /home/panel/kopie/…” i stany kontroli zdrowia bez „zle”
+  Stan serwera w panelu 2026-11-19 06:02: kopia „ok”, ostatnia kopia 2026-11-19 06:02, kopia poza serwerem „brak”. Gdy `systemctl list-timers` pokazuje oba timery, zamknij zadanie.
 - [ ] Włącz Backups serwera w Hetznerze | kto: ty | kiedy: 2026-11-20 | czas: 2
   cel: Hetzner robi codzienną kopię całego serwera (7 ostatnich dni) poza jego dyskiem
   gotowe gdy: w Hetzner Cloud Console przy serwerze zakładka Backups ma stan włączony i pierwszą kopię
+  - [ ] console.hetzner.cloud → projekt → Servers → serwer CAX11 (Helsinki) → zakładka Backups → „Enable backups”
+  - [ ] następnego dnia ta sama zakładka pokazuje pierwszą kopię
+  Koszt: 20% ceny serwera, ok. 1,87 $/mies. z VAT przy 9,34 $/mies. za serwer.
 - [ ] Dodaj zewnętrzny monitoring adresu panelu (UptimeRobot, darmowy) | kto: ty | kiedy: 2026-11-21 | czas: 10
   cel: powiadomienie, gdy adres panelu nie odpowiada z zewnątrz (awaria całego serwera albo Caddy)
   gotowe gdy: monitor HTTPS na https://2-29-181-133.sslip.io/wejscie ma stan Up i alert na e-mail albo w aplikacji
+  - [ ] uptimerobot.com: konto darmowe, „Add New Monitor”, typ HTTP(s), URL https://2-29-181-133.sslip.io/wejscie, interwał 5 min
+  - [ ] Alert Contacts: Twój e-mail albo aplikacja UptimeRobot na iPhonie; monitor ma stan Up
 - [ ] Skonfiguruj kopię poza serwerem (Storage Box) | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 20 | po: Zainstaluj kopie i kontrolę zdrowia
   cel: nocna kopia trafia zaszyfrowana poza serwer, więc utrata serwera nie zabiera danych
   gotowe gdy: `journalctl -u kopia` pokazuje „zaszyfrowano” i „wysłano poza serwer”, w /home/panel/kopie/ostatnia.json jest "off": true, a hasło kopii jest w menedżerze haseł
@@ -51,7 +57,33 @@
 - [ ] Wykonaj próbę odtworzenia (odtworz.sh --sprawdz) | kto: ty | gdzie: chmura | kiedy: 2026-11-22 | czas: 30 | po: Skonfiguruj kopię poza serwerem
   cel: wiadomo, że kopię z Storage Box da się odczytać i ile trwa odtworzenie
   gotowe gdy: `odtworz --sprawdz` na archiwum pobranym ze Storage Box kończy się „archiwum poprawne”, rozpakowanie do /tmp działa, a czas próby jest wpisany w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
-  Kroki: ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka; po próbie usuń /tmp/proba (dane klientów).
+  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel rclone copy storagebox:integrate/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/` (najnowsze archiwum)
+  - [ ] `sudo -u panel odtworz --sprawdz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg`: „archiwum poprawne”
+  - [ ] `sudo -u panel odtworz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/dane`; czas zanotowany
+  - [ ] `rm -rf /tmp/proba` (dane klientów); data i czas próby w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
+  Polecenia z ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka: niczego poza /tmp/proba nie nadpisuje.
+- [ ] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10
+  cel: agenci z panelu działają jako osobny użytkownik agent, bez dostępu do kluczy SSH, logowania Claude panelu, /etc/integrate i kopii
+  gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK poza „Claude agenta niezalogowany”
+  - [ ] zmiany rundy 3 są na GitHubie i na serwerze (zapis kart pobiera je co 15 min; inaczej `sudo -u panel git -C /home/panel/IntegrateSystems pull --ff-only`)
+  - [ ] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh`
+  - [ ] w raporcie na końcu jedyny BRAK to „Claude agenta niezalogowany”; panel działa po restarcie
+  Opis: ksiega/MIGRACJA.md, sekcja „Użytkownik agenta”. Restart panelu zatrzymuje trwające uruchomienia: instaluj, gdy żaden agent nie pracuje.
+- [ ] Zaloguj Claude dla agenta w panelu | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | po: Zainstaluj użytkownika agenta
+  cel: Claude użytkownika agent jest zalogowany kontem Max, więc Automat i przyciski panelu uruchamiają agentów jako agent
+  gotowe gdy: test połączenia w panelu kończy się „ok”, a `sudo systemctl start zdrowie && journalctl -u zdrowie -n 10 -o cat` pokazuje „claude-agent: ok”
+  - [ ] panel → agenci: przy Claude „Wymaga logowania” → Zaloguj; otwórz pokazany adres, zaloguj kontem Max, wklej kod w panelu
+  - [ ] panel → Test połączenia: „ok”
+  - [ ] `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz`: „Wszystko w porządku.”
+  Bez panelu: przez ssh jako ops `sudo -u agent -H /home/agent/.local/bin/claude auth login`.
+- [ ] Załóż Storage Box i konto tylko do zapisu | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 15
+  cel: Storage Box z kontem pomocniczym tylko dla serwera i codziennymi migawkami, których kod z serwera nie może usunąć
+  gotowe gdy: w Hetzner Console Storage Box (inna lokalizacja niż serwer) ma plan migawek codziennie, 14 sztuk, i konto pomocnicze z katalogiem integrate-serwer i samym SSH; login i hasło konta pomocniczego oraz konta głównego są w menedżerze haseł
+  - [ ] konto Hetzner ma włączone 2FA
+  - [ ] Hetzner Console: zamów Storage Box BX11 w innej lokalizacji niż serwer (serwer w Helsinkach → Falkenstein), zapisz uXXXXXX
+  - [ ] Snapshots: plan automatyczny codziennie o 05:00, 14 migawek
+  - [ ] Sub-accounts: nowe konto, katalog bazowy integrate-serwer, SSH tak, Samba i WebDAV nie; zapisz login uXXXXXX-subN
+  Opis i powód (migawki zamiast borg append-only i restic): ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Klucz i rclone na koncie pomocniczym: zadanie „Skonfiguruj kopię poza serwerem”.
 
 ## Etap: Migracja z PC
 
