@@ -102,6 +102,11 @@ def _price(prices, location):
     return None
 
 
+def _loc(x):
+    """Lokalizacja zasobu: pole „location” (obecne API) albo „datacenter.location” (starsze odpowiedzi)."""
+    return ((x.get("location") or {}).get("name")) or ((((x.get("datacenter") or {}).get("location")) or {}).get("name", ""))
+
+
 def _item(name, kind, detail, location, start, now, hourly, monthly):
     total, month = billed(start, now, hourly, monthly)
     return {"name": name, "kind": kind, "detail": detail, "location": location, "since": start.date().isoformat(),
@@ -117,7 +122,7 @@ def project_costs(get, token, now):
     items = []
     for s in servers:
         start = _when(s.get("created"))
-        loc = (((s.get("datacenter") or {}).get("location")) or {}).get("name", "")
+        loc = _loc(s)
         st = s.get("server_type") or {}
         p = _price(st.get("prices"), loc)
         if not start or not p:
@@ -130,7 +135,7 @@ def project_costs(get, token, now):
     ip_prices = {x.get("type"): x.get("prices") for x in pricing.get("primary_ips") or []}
     for ip in ips:
         start = _when(ip.get("created"))
-        loc = ((ip.get("location") or {}).get("name")) or ((((ip.get("datacenter") or {}).get("location")) or {}).get("name", ""))
+        loc = _loc(ip)
         p = _price(ip_prices.get(ip.get("type")), loc)
         if not start or not p or not (p[0] or p[1]):
             continue

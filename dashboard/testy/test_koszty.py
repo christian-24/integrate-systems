@@ -21,7 +21,7 @@ def price(loc, h, m):
 API = {
     "servers": {"servers": [
         {"name": "agenci", "created": "2026-11-17T12:00:00+00:00", "backup_window": None,
-         "datacenter": {"location": {"name": "hel1"}},
+         "location": {"name": "hel1"},                                       # obecne API: bez „datacenter”
          "server_type": {"name": "cax11", "prices": [price("fsn1", 0.01, 5), price("hel1", 0.01, 5.0)]}},
         {"name": "prod", "created": "2026-09-10T00:00:00+00:00", "backup_window": "22-02",
          "datacenter": {"location": {"name": "fsn1"}},
