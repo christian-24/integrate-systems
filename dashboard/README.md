@@ -69,8 +69,10 @@ Pełny opis: `AGENCI.md`.
 
 ## Publikacja
 
-Panel publikuje posty sam (`publikacja.py`): Facebook (strona projektu: zdjęcie, film, Reels), Instagram (konto
-firmowe połączone ze stroną; grafika jako JPEG albo film jako Reels) i LinkedIn (profil właściciela).
+Panel publikuje posty sam (`publikacja.py`): Facebook (strona projektu: zdjęcie, film, Reels) i Instagram (konto
+firmowe połączone ze stroną; grafika jako JPEG albo film jako Reels). LinkedIn nie: regulamin API LinkedIn zabrania
+automatycznego publikowania, więc w poście jest „Udostępnij” (telefon: systemowe menu z grafiką albo filmem
+i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpisanym tekstem); plan ustawiasz w LinkedIn.
 - Połączenie: Agenci → Publikacja. Facebook: App ID, App Secret i token z Graph API Explorer; panel zapisuje tokeny
   stron (nie wygasają) i przypisuje stronę do projektu. LinkedIn: token z OAuth Token Tools (60 dni).
   Tokeny w `PANEL_PUBLIKACJA_DIR` (domyślnie `~/dane/publikacja`, pliki 0600), nigdy w `/api/data`.

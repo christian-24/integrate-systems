@@ -1456,7 +1456,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
-        if path in ("/api/post", "/api/post/grafika"):
+        if path in ("/api/post", "/api/post/grafika", "/api/post/film"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             if not folder:
@@ -1465,6 +1465,13 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/post":
                 return self._send(200, json.dumps(dict(post_info(folder), ok=True), ensure_ascii=False),
                                   "application/json; charset=utf-8")
+            if path == "/api/post/film":                 # plik filmu do udostępnienia z telefonu
+                film = publikacja.Publisher.film(folder)
+                if not film:
+                    return self._send(404, "Brak filmu", "text/plain; charset=utf-8")
+                with open(film, "rb") as f:
+                    return self._send(200, f.read(), "video/quicktime" if film.endswith(".mov") else "video/mp4",
+                                      [("Content-Disposition", 'inline; filename="%s"' % os.path.basename(film))])
             png = post_image(folder)
             if not png:
                 return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")

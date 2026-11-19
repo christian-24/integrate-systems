@@ -234,6 +234,8 @@ class Publisher:
         if not t or t.get("kind") != "publikacja":
             return 404, "Nie ma tej publikacji."
         chans = [c for c in body.get("channels") or [] if c in CHANNELS]
+        if "linkedin" in chans:             # regulamin API LinkedIn zabrania automatycznego publikowania
+            return 400, "LinkedIn publikujesz sam: „Udostępnij” albo „Kopiuj i otwórz LinkedIn”, plan ustawiasz w LinkedIn."
         if not chans:
             return 400, "Wybierz co najmniej jeden kanał."
         at = str(body.get("at") or "")

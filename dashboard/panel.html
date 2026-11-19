@@ -2311,7 +2311,9 @@ function postBox(t,day,publish){
   if(!d.ok)return '<div class="post muted">Brak przygotowanego posta na '+esc(dd(day))+'.'+(prepDay(t)?'':' Przygotuje go agent w zadaniu „Przygotować post na …”.')+'</div>';
   const q='project='+encodeURIComponent(t.project)+'&date='+encodeURIComponent(day),S=d.sections||{};
   let h='<div class="post"><h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
+  if(canShare())shareFile(t.project,day,d);
   PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+
+    (canShare()?'<button class="btn sm" data-share="'+esc(k+'|'+n)+'">Udostępnij</button>':'')+
     (publish?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Kopiuj i otwórz '+n+'</button>':'')+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
   if(publish)h+=pubPlanBox(t,day,d);
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
@@ -2325,7 +2327,7 @@ function normPublish(p){
   return {fb:{connected:!!fb.connected,pages:(Array.isArray(fb.pages)?fb.pages:[]).map(x=>({id:String(x.id||''),name:String(x.name||''),project:String(x.project||''),instagram:String(x.instagram||'')}))},
     li:{connected:!!li.connected,name:String(li.name||''),expiresAt:String(li.expiresAt||'')},state:p.state&&typeof p.state==='object'?p.state:{}};
 }
-const PUBCH=[['facebook','Facebook'],['linkedin','LinkedIn'],['reels','Reels'],['instagram','Instagram']],PUBN={facebook:'Facebook',linkedin:'LinkedIn',reels:'Reels',instagram:'Instagram'};
+const PUBCH=[['facebook','Facebook'],['reels','Reels'],['instagram','Instagram']],PUBN={facebook:'Facebook',linkedin:'LinkedIn',reels:'Reels',instagram:'Instagram'};
 const PL={};          // wybór w formularzu planu: {id: {ch:{}, day, time}}
 const parseSched=v=>{const m=/^(\d{4}-\d\d-\d\d) (\d\d:\d\d)(?:;\s*(.*))?$/.exec(v||'');return m?{day:m[1],time:m[2],ch:(m[3]||'').split(/,\s*/).filter(c=>PUBN[c])}:null};
 const chanOk=(t,c)=>{const P=D.publish;return !!P&&(c==='linkedin'?P.li.connected:P.fb.pages.some(p=>p.project===t.project&&(c!=='instagram'||p.instagram)))};
@@ -2395,10 +2397,7 @@ function pubPanel(){
   h+='<details'+(P.fb.connected?'':' open')+'><summary>'+(P.fb.connected?'Połącz ponownie':'Połącz Facebook')+'</summary><form class="dform" onsubmit="return false"><ol class="steps"><li>developers.facebook.com → Utwórz aplikację, przypadek użycia „Zarządzaj stroną”.</li><li>Ustawienia → Podstawowe: skopiuj App ID i App Secret.</li><li>Narzędzia → Graph API Explorer: ta aplikacja, „Token użytkownika”, uprawnienia pages_show_list, pages_read_engagement, pages_manage_posts, publish_video, a dla Instagrama też instagram_basic i instagram_content_publish → Generate Access Token, zaznacz obie strony.</li><li>Instagram: konto firmowe połączone ze stroną (Meta Business Suite → Ustawienia → Konta). Panel znajdzie je sam.</li></ol>'+
     '<label class="fl"><span>App ID</span><input class="fi" data-pf="appId" inputmode="numeric" autocomplete="off"></label><label class="fl"><span>App Secret</span><input class="fi" type="password" data-pf="appSecret" autocomplete="off"></label><label class="fl"><span>Token użytkownika</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label>'+
     '<div class="row"><button type="button" class="btn sm" data-pub="fb">Połącz</button>'+(P.fb.connected?'<button type="button" class="btn sec sm" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form></details></div>';
-  h+='<div><h3>LinkedIn'+(P.li.connected?' <span class="lz green">połączony</span>':P.li.expiresAt?' <span class="lz red">token wygasł</span>':'')+'</h3>';
-  if(P.li.connected)h+='<p>'+esc(P.li.name||'Twój profil')+(exp?' · token do '+esc(dd(exp))+'.'+exp.slice(0,4):'')+'</p>';
-  h+='<details'+(P.li.connected?'':' open')+'><summary>'+(P.li.connected?'Wklej nowy token':'Połącz LinkedIn')+'</summary><form class="dform" onsubmit="return false"><ol class="steps"><li>linkedin.com/developers → Create app (wymaga strony firmy na LinkedIn).</li><li>Products: „Share on LinkedIn” i „Sign In with LinkedIn using OpenID Connect”.</li><li>Docs and tools → OAuth Token Tools → Create token: ta aplikacja, zakresy openid, profile, w_member_social → skopiuj token.</li></ol>'+
-    '<label class="fl"><span>Token</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label><div class="row"><button type="button" class="btn sm" data-pub="li">Połącz</button>'+(P.li.connected?'<button type="button" class="btn sec sm" data-pub="off" data-svc="linkedin">Odłącz</button>':'')+'</div><p class="note">Token LinkedIn działa 60 dni; potem wklejasz nowy.</p></form></details></div>';
+  h+='<div><h3>LinkedIn</h3><p class="note">Regulamin API LinkedIn zabrania automatycznego publikowania. W poście: „Udostępnij” (telefon: aplikacja LinkedIn z grafiką i tekstem) albo „Kopiuj i otwórz LinkedIn” (Mac: edytor z wpisanym tekstem); godzinę ustawiasz w LinkedIn (ikona zegara).</p></div>';
   return h+'</div></section>';
 }
 /* zadanie agenta „Przygotować post na RRRR-MM-DD…”: dzień posta z tytułu i publikacja z kampanii na ten dzień */
@@ -2412,8 +2411,26 @@ function yourMove(t){
   const L=(t.unlocksL||[]).filter(u=>!u.done);
   return 'Twój ruch: sprawdź wynik agenta i pliki wyżej. „Odebrane” zamyka zadanie'+(L.length?' i odblokowuje: '+esc(L.map(u=>u.title).join('; ')):'')+', „Do poprawy” wraca do agenta z Twoją uwagą.';
 }
+/* „Udostępnij”: systemowe menu udostępniania z grafiką albo filmem i tekstem; publikujesz i planujesz w aplikacji */
+const canShare=()=>!!(navigator.share&&navigator.canShare&&LIVE);
+const SF={};
+async function shareFile(pid,day,d){
+  const k=pid+'|'+day;if(SF[k]!==undefined)return;SF[k]=null;
+  const film=d.film&&d.film.size<=80*1048576,q='project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day);
+  if(!film&&!d.image)return;
+  try{const r=await fetch((film?'/api/post/film?':'/api/post/grafika?')+q);if(!r.ok)return;const b=await r.blob();
+    SF[k]=new File([b],film?d.film.name:(d.folder||'post')+'.png',{type:b.type||(film?'video/mp4':'image/png')})}catch(e){}
+}
+async function sharePost(key){
+  const i=key.lastIndexOf('|'),pk=key.slice(0,i),d=PD[pk],n=key.slice(i+1),text=d&&d.sections?d.sections[n]||'':'',f=SF[pk];
+  const data={text:text};if(f&&navigator.canShare({files:[f]}))data.files=[f];
+  copyText(text);                       // część aplikacji (LinkedIn, Facebook) pomija tekst z udostępniania: jest w schowku
+  try{await navigator.share(data);say('Gotowe. Jeśli tekstu nie ma w poście, wklej go: jest w schowku.')}
+  catch(e){if(e&&e.name!=='AbortError')say('Nie udało się udostępnić: '+(e.message||e))}
+}
 async function copyOpen(key,url){
   const i=key.lastIndexOf('|'),d=PD[key.slice(0,i)],n=key.slice(i+1),text=d&&d.sections?d.sections[n]||'':'';
+  if(n==='LinkedIn'&&text)url='https://www.linkedin.com/feed/?shareActive=true&text='+encodeURIComponent(text);   // edytor z wpisanym tekstem
   const p=copyText(text);
   if(/^https:\/\//.test(url))window.open(url,'_blank','noopener');
   say((await p)?'Skopiowano tekst: '+n+'. Wklej go w otwartej karcie, dołącz grafikę i opublikuj; potem kliknij „Opublikowane”.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
@@ -2879,6 +2896,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
   if(el=qq('[data-pub]')){pubAct(el);return}
+  if(el=qq('[data-share]')){sharePost(el.dataset.share);return}
   if(el=qq('[data-copyopen]')){copyOpen(el.dataset.copyopen,el.dataset.url||'');return}
   if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
   if(el=qq('[data-mat]')){openMat(el.dataset.mat);return}

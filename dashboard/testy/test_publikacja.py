@@ -40,6 +40,7 @@ class Api:
     def __init__(self):
         self.calls = []
         self.fail_li = False
+        self.fail_fb = False
 
     def __call__(self, method, url, headers=None, body=None, timeout=120):
         self.calls.append((method, url, headers or {}, body))
@@ -58,6 +59,8 @@ class Api:
         if "/m1?" in url:
             return ok({"permalink": "https://www.instagram.com/p/abc/"})
         if url.endswith("/111/photos"):
+            if self.fail_fb:
+                return 403, {}, json.dumps({"error": {"message": "brak uprawnień"}}).encode("utf-8")
             return ok({"id": "9", "post_id": "111_9"})
         if url.endswith("/v2/userinfo"):
             return ok({"sub": "abc", "name": "Właściciel"})
@@ -108,7 +111,9 @@ class Publikacja(unittest.TestCase):
 
     def post_info(self, folder):
         sections, name = {}, None
-        for line in open(os.path.join(folder, "post.md"), encoding="utf-8").read().split("\n"):
+        with open(os.path.join(folder, "post.md"), encoding="utf-8") as f:
+            text = f.read()
+        for line in text.split("\n"):
             if line.startswith("## "):
                 name = line[3:]
                 sections[name] = ""
@@ -141,35 +146,38 @@ class Publikacja(unittest.TestCase):
         self.assertIn("Facebook nie jest połączony", self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["facebook"],
                                                                      "at": "2026-11-21 09:00"})[1])
         self.connect()
-        code, err = self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["facebook", "linkedin"],
-                                   "at": "2026-11-21 09:00"})
+        self.assertIn("LinkedIn publikujesz sam", self.pub.plan({"id": t["id"], "title": t["title"],
+                                                               "channels": ["facebook", "linkedin"], "at": "2026-11-21 09:00"})[1])
+        code, err = self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["facebook"], "at": "2026-11-21 09:00"})
         self.assertEqual(code, 200, err)
-        self.assertEqual(self.task()["detail"]["scheduled"], "2026-11-21 09:00; facebook, linkedin")
+        self.assertEqual(self.task()["detail"]["scheduled"], "2026-11-21 09:00; facebook")
         self.pub.tick()
         t = self.task()
         self.assertEqual(t["state"], "done")
         self.assertEqual(t["detail"]["link"], "https://www.facebook.com/111_9")
-        self.assertIn("linkedin https://www.linkedin.com/feed/update/urn:li:share:7/", t["detail"]["result"])
         self.assertFalse(t["detail"].get("scheduled"))
-        body = json.loads(next(c[3] for c in self.api.calls if c[1].endswith("/rest/posts")))
-        self.assertEqual(body["commentary"], "Tekst \\(LI\\) \\#1 \\@firma")
-        self.assertEqual(body["content"]["media"], {"id": "urn:li:image:1", "altText": "Plansza"})
-        self.assertEqual(self.notes, ["Opublikowano: Opublikuj post „Start” (facebook, linkedin)"])
+        self.assertEqual(self.notes, ["Opublikowano: Opublikuj post „Start” (facebook)"])
+        self.assertEqual(publikacja.li_text("Tekst (LI) #1 @firma"), "Tekst \\(LI\\) \\#1 \\@firma")
 
     def test_blad_kanalu_i_ponowienie_bez_duplikatu(self):
         self.connect()
-        self.api.fail_li = True
+        publikacja.PUBLIC_URL, old = "https://panel.example", publikacja.PUBLIC_URL
+        self.pub.jpeg = lambda png, out: shutil.copy(png, out) and out
+        self.api.fail_fb = True
         t = self.task()
-        self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["facebook", "linkedin"], "at": "2026-11-21 09:00"})
-        self.pub.tick()
-        t = self.task()
-        self.assertEqual(t["state"], "todo")
-        self.assertIn("brak uprawnień", t["detail"]["left"])
-        self.assertIn("opublikowane już: facebook", t["detail"]["left"])
-        self.assertTrue(self.notes[-1].startswith("Nie opublikowano"))
-        self.api.fail_li = False
-        self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["facebook", "linkedin"], "now": True})
-        self.assertEqual(sum(1 for c in self.api.calls if c[1].endswith("/111/photos")), 1)   # Facebook raz
+        try:
+            self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["instagram", "facebook"], "at": "2026-11-21 09:00"})
+            self.pub.tick()
+            t = self.task()
+            self.assertEqual(t["state"], "todo")
+            self.assertIn("brak uprawnień", t["detail"]["left"])
+            self.assertIn("opublikowane już: instagram", t["detail"]["left"])
+            self.assertTrue(self.notes[-1].startswith("Nie opublikowano"))
+            self.api.fail_fb = False
+            self.pub.plan({"id": t["id"], "title": t["title"], "channels": ["instagram", "facebook"], "now": True})
+        finally:
+            publikacja.PUBLIC_URL = old
+        self.assertEqual(sum(1 for c in self.api.calls if c[1].endswith("/555/media_publish")), 1)   # Instagram raz
         self.assertEqual(self.task()["state"], "done")
 
     def test_instagram_z_publicznym_adresem(self):
