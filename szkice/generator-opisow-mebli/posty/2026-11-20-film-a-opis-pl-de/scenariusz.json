@@ -1,0 +1,19 @@
+{"url": "https://opisarnia.pl/generator",
+ "logowanie": "https://opisarnia.pl/logowanie",
+ "kroki": [
+  {"napis": "Opis mebla na Allegro i do Niemiec w 10 sekund", "przewin": "#g-nazwa", "pauza": 2},
+  {"napis": "Wpisujesz typ mebla", "wpisz": ["#g-nazwa", "Komoda Nordic, 4 szuflady"]},
+  {"wybierz": ["#g-kategoria", "komoda"]},
+  {"napis": "Wymiary, materiał i kolor", "wpisz": ["#g-w", "80"]},
+  {"wpisz": ["#g-h", "90"]},
+  {"wpisz": ["#g-d", "40"]},
+  {"wpisz": ["#g-mat", "płyta laminowana, fronty MDF"]},
+  {"rozwin": "details.st-wiecej"},
+  {"wpisz": ["#g-kolor", "biały mat i dąb"]},
+  {"napis": "Profil Allegro i „Generuj opis”", "kliknij": "[aria-label='Wybierz marketplace'] button:has-text('Allegro')"},
+  {"kliknij": "button:has-text('Generuj opis')"},
+  {"napis": "Kilka sekund…", "czekaj_na": "button:has-text('Kopiuj')", "limit": 90},
+  {"napis": "Opis po polsku gotowy", "przewin": "[role=tablist][aria-label='Język opisu']", "pauza": 3.5},
+  {"napis": "Ten sam mebel po niemiecku", "kliknij": "[role=tab]:has-text('Niemiecki')", "pauza": 4},
+  {"napis": "10 opisów miesięcznie za darmo · opisarnia.pl", "pauza": 3}
+ ]}
