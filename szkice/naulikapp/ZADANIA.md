@@ -81,11 +81,14 @@ termin: 2026-12-13
 - [x] Faza 0: T50a–d, T51 (2026-06-01)
 - [x] T48c (2026-07-17)
 - [x] RC1 1.0.0+2 zmergowany (#121/#122, 2026-10-27)
-- [ ] Przygotuj szkic zaproszenia dla testerów zamkniętego testu | kto: claude | gdzie: chmura | kiedy: 2026-11-19
+- [~] Przygotuj szkic zaproszenia dla testerów zamkniętego testu | kto: claude | gdzie: chmura | kiedy: 2026-11-19 | wymaga: odbiór
   cel: gotowy tekst zaproszenia do zamkniętego testu dla znajomych i grup żeglarskich
   gotowe gdy: szkic w repozytorium (wiadomość prywatna i post do grupy), z instrukcją dołączenia do testu w Google Play; nic nie wysłane
   materiał: KARTA.md#Cel
   Możesz skorzystać z materiałów z gałęzi marketing/kampania-rc1. Wysyłka i publikacja tylko przez właściciela.
+  wynik: szkic w docs/marketing/zaproszenie-testerzy-zamkniety-test.md (plik niezacommitowany): wiadomość prywatna i wersja krótka, post do grupy/forum, instrukcja dołączenia w Google Play z rozwiązywaniem problemów, przypomnienie po tygodniu; nic nie wysłane
+  decyzja: zatwierdź treść i wybierz sposób dodawania testerów (Grupa Google, rekomendowane, albo lista adresów e-mail); uzupełnij [LINK-GRUPA], [LINK-TEST], [KONTAKT]; żeby zdążyć do 13.12, dwunasty tester musi dołączyć do 29.11
+  zostało: wysyłka i publikacja (tylko właściciel); linki do testu powstaną dopiero po wgraniu buildu do ścieżki zamkniętego testu w Play Console
 - [ ] Uruchom pełną suitę testów na PR #124 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: wiadomo, czy PR #124 (fix/rc1-nagrania, marketing/kampania-rc1) można zmergować
   gotowe gdy: w wynik: liczba testów zaliczonych i niezaliczonych na gałęzi PR #124
