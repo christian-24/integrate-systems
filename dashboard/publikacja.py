@@ -154,9 +154,15 @@ class Publisher:
             q = urllib.parse.urlencode({"grant_type": "fb_exchange_token", "client_id": app_id,
                                         "client_secret": secret, "fb_exchange_token": token})
             long = _json(*self.http("GET", FB + "/oauth/access_token?" + q)[::2], what="Wymiana tokenu")["access_token"]
-            q = urllib.parse.urlencode({"fields": "id,name,access_token,instagram_business_account{id,username}",
-                                        "limit": 50, "access_token": long})
-            pages = _json(*self.http("GET", FB + "/me/accounts?" + q)[::2], what="Lista stron").get("data") or []
+            pages = None
+            for fields in ("id,name,access_token,instagram_business_account{id,username}", "id,name,access_token"):
+                q = urllib.parse.urlencode({"fields": fields, "limit": 50, "access_token": long})
+                try:                        # bez uprawnień Instagrama pole konta Instagram daje błąd: same strony
+                    pages = _json(*self.http("GET", FB + "/me/accounts?" + q)[::2], what="Lista stron").get("data") or []
+                    break
+                except ApiError:
+                    if fields == "id,name,access_token":
+                        raise
         except (ApiError, KeyError) as e:
             return 409, "Facebook nie przyjął danych: %s" % e
         if not pages:
@@ -174,10 +180,10 @@ class Publisher:
 
     @staticmethod
     def _guess_project(name, data):
-        n = name.lower()
+        n = str(name or "").lower()
         for p in data.get("projects") or []:
-            for key in (p.get("name", ""), p.get("alias", ""), p.get("id", "")):
-                word = key.lower().split(" (")[0].strip()
+            for key in (p.get("name"), p.get("alias"), p.get("id")):
+                word = str(key or "").lower().split(" (")[0].strip()
                 if word and (word in n or n in word):
                     return p["id"]
         return ""

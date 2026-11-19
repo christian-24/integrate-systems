@@ -1499,7 +1499,12 @@ class Handler(BaseHTTPRequestHandler):
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
-            result = WRITES[path](body)
+            try:
+                result = WRITES[path](body)
+            except Exception as e:  # noqa: BLE001  (błąd w obsłudze: odpowiedź z opisem zamiast zerwanego połączenia)
+                import traceback
+                traceback.print_exc()
+                result = (500, "Błąd serwera panelu (%s). Szczegóły w dzienniku usługi." % type(e).__name__)
             code, answer = result[0], {"ok": result[0] == 200, "error": result[1]}
             if len(result) > 2:
                 answer.update(result[2])            # np. id nowego uruchomienia

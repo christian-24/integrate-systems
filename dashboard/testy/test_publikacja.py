@@ -99,7 +99,8 @@ class Publikacja(unittest.TestCase):
             _, tasks = projekt.parse_campaign(f.read(), "opis", "kampanie/staly-rytm.md")
         for t in tasks:
             t.setdefault("waitingFor", [])
-        return {"tasks": tasks, "projects": [{"id": "opis", "name": "Opisarnia (generator)", "alias": ""}]}, {"opis": self.folder}
+        return {"tasks": tasks, "projects": [{"id": "inny", "name": "Inny projekt", "alias": None},
+                                             {"id": "opis", "name": "Opisarnia (generator)", "alias": None}]}, {"opis": self.folder}
 
     def post_folder(self, pid, day):
         path = os.path.join(self.folder, "posty", day + "-start")
@@ -192,6 +193,18 @@ class Publikacja(unittest.TestCase):
         self.assertEqual(name, ".instagram.jpg")
         self.assertTrue(self.pub.media_file(token).endswith(".instagram.jpg"))
         self.assertIsNone(self.pub.media_file("0" * 32))
+
+    def test_strony_bez_uprawnien_instagrama(self):
+        api = self.api
+
+        def bez_ig(method, url, headers=None, body=None, timeout=120):
+            if "/me/accounts" in url and "instagram_business_account" in urllib.parse.unquote(url):
+                return 400, {}, json.dumps({"error": {"message": "(#100) Missing permissions"}}).encode("utf-8")
+            return api(method, url, headers, body, timeout)
+        self.pub.http = bez_ig
+        code, err, extra = self.pub.connect_facebook({"appId": "123456", "appSecret": "ab" * 16, "token": "K" * 40})
+        self.assertEqual(code, 200, err)
+        self.assertEqual(extra["pages"][0]["project"], "opis")
 
     def test_plan_w_przyszlosci_czeka(self):
         self.connect()
