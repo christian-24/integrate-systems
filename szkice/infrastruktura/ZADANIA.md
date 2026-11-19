@@ -61,7 +61,7 @@
   - [ ] `sudo -u panel odtworz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/dane`; czas zanotowany
   - [ ] `rm -rf /tmp/proba` (dane klientów); data i czas próby w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
   Polecenia z ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka: niczego poza /tmp/proba nie nadpisuje.
-- [ ] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10 | sprawdza: claude-agent
+- [x] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10 | sprawdza: claude-agent
   cel: agenci z panelu działają jako osobny użytkownik agent, bez dostępu do kluczy SSH, logowania Claude panelu, /etc/integrate i kopii
   gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK poza „Claude agenta niezalogowany”
   - [ ] zmiany rundy 3 są na GitHubie i na serwerze (zapis kart pobiera je co 15 min; inaczej `sudo -u panel git -C /home/panel/IntegrateSystems pull --ff-only`)
@@ -69,13 +69,15 @@
   - [ ] w raporcie na końcu jedyny BRAK to „Claude agenta niezalogowany”; panel działa po restarcie
   Opis: ksiega/MIGRACJA.md, sekcja „Użytkownik agenta”. Restart panelu zatrzymuje trwające uruchomienia: instaluj, gdy żaden agent nie pracuje.
   Kontrola zdrowia 2026-11-19 nie ma jeszcze wiersza claude-agent; „ok” pojawi się po logowaniu Claude agenta (następne zadanie), wtedy oba zadania wyglądają na zrobione.
-- [ ] Zaloguj Claude dla agenta w panelu | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | po: Zainstaluj użytkownika agenta | sprawdza: claude-agent
+  zamknięte na podstawie kontroli serwera z 2026-11-19 17:38
+- [x] Zaloguj Claude dla agenta w panelu | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | po: Zainstaluj użytkownika agenta | sprawdza: claude-agent
   cel: Claude użytkownika agent jest zalogowany kontem Max, więc Automat i przyciski panelu uruchamiają agentów jako agent
   gotowe gdy: test połączenia w panelu kończy się „ok”, a `sudo systemctl start zdrowie && journalctl -u zdrowie -n 10 -o cat` pokazuje „claude-agent: ok”
   - [ ] panel → agenci: przy Claude „Wymaga logowania” → Zaloguj; otwórz pokazany adres, zaloguj kontem Max, wklej kod w panelu
   - [ ] panel → Test połączenia: „ok”
   - [ ] `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz`: „Wszystko w porządku.”
   Bez panelu: przez ssh jako ops `sudo -u agent -H /home/agent/.local/bin/claude auth login`.
+  zamknięte na podstawie kontroli serwera z 2026-11-19 17:38
 - [ ] Załóż Storage Box i konto tylko do zapisu | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 15
   cel: Storage Box z kontem pomocniczym tylko dla serwera i codziennymi migawkami, których kod z serwera nie może usunąć
   gotowe gdy: w Hetzner Console Storage Box (inna lokalizacja niż serwer) ma plan migawek codziennie, 14 sztuk, i konto pomocnicze z katalogiem integrate-serwer i samym SSH; login i hasło konta pomocniczego oraz konta głównego są w menedżerze haseł
