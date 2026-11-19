@@ -324,7 +324,7 @@ termin: 2026-11-30
   cel: pliki zadań w repozytorium opisują ZDJ-1 jako zmergowane za flagą (#126–#134), nie jako bez merge
   gotowe gdy: żaden plik w tasks/ nie opisuje ZDJ-1 jako niezmergowanego; zmiana w jednym commicie
   materiał: tasks/README.md
-- [ ] Zaktualizuj tasks/README.md do stanu z listopada | kto: claude | gdzie: chmura
+- [~] Zaktualizuj tasks/README.md do stanu z listopada | kto: claude | gdzie: chmura | wymaga: odbiór
   cel: tasks/README.md opisuje bieżący stan prac zamiast stanu z czerwca
   gotowe gdy: README nie zawiera nieaktualnych zadań z czerwca i wskazuje ZADANIA.md karty jako listę zadań
   materiał: tasks/README.md
@@ -354,3 +354,5 @@ termin: 2026-11-30
   wynik: w folderze karty powstał posty/2026-11-20-film-a-opis-pl-de/: post.md (opisy pod film na Facebook, LinkedIn i Reels oraz alt) i grafika.svg (plansza z szablonu, zmienione tylko teksty); w kampanie/staly-rytm.md wiersz filmu A dostał materiał: posty/2026-11-20-film-a-opis-pl-de/post.md; folder karty bez repozytorium, więc bez gałęzi i commita
   decyzja: zatwierdzić teksty pod film przed publikacją 20.11; tekst LinkedIn i Facebook opisuje film według scenariusza zastępczego z planu (komoda, profil Allegro, „Generuj”, „Kopiuj”), więc przy innym nagraniu popraw 2–3 zdania
   zostało: film A nie istnieje w repozytorium (nagranie to Twój wiersz „Nagraj film A”, pytanie 6 w KARTA.md bez odpowiedzi); grafika.png zrobi panel; publikacja po Twojej stronie
+- [ ] Przejrzyj stare filmy przed nagraniem filmu C | kto: ty | kiedy: 2026-11-26 | czas: 15
+  z pytania 6, 2026-11-19

@@ -77,6 +77,7 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
    termin: 2026-11-19
    propozycja: nagrać film A od nowa według scenariusza zastępczego z planu (punkt 6), nagranie ekranu do 60 s; stare filmy przejrzeć dopiero przed filmem C (27.11)
    skutek: nowe: Przejrzyj stare filmy przed nagraniem filmu C | kto: ty | kiedy: 2026-11-26 | czas: 15
+   Odpowiedź: nagrać film A od nowa według scenariusza zastępczego z planu (punkt 6), nagranie ekranu do 60 s; stare filmy przejrzeć dopiero przed filmem C (27.11)
 7. Czy posty z planu T1–T8 (od 03.11) były publikowane, i które? Od tego zależy, czy posty 2–4 (23.11, 25.11, 27.11) nie powtarzają tematu.
    termin: 2026-11-22
    propozycja: sprawdzić na LinkedIn (profil → Aktywność → Posty) posty od 03.11; gdy żaden z tematów postów 2–4 nie wyszedł, zostawić posty 2–4 bez zmian
