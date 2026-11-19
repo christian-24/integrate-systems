@@ -869,8 +869,25 @@ def build_data():
     out["history"] = project_history(out)
     out["server"] = server_state()
     out["costs"] = COSTS.state()
+    out["panelVersion"] = panel_version()
     add_checks(out["tasks"], index, out["server"])
     return out
+
+
+_VERSION = {"key": None, "value": ""}
+
+
+def panel_version():
+    """Skrót panel.html: otwarta aplikacja porównuje go ze swoim i po wdrożeniu przeładowuje się sama."""
+    try:
+        st = os.stat(PAGE)
+    except OSError:
+        return ""
+    key = (st.st_mtime_ns, st.st_size)
+    if _VERSION["key"] != key:
+        with open(PAGE, "rb") as f:
+            _VERSION.update(key=key, value=hashlib.sha256(f.read()).hexdigest()[:12])
+    return _VERSION["value"]
 
 
 def day_minutes():
