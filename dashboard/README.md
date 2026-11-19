@@ -67,6 +67,21 @@ Pełny opis: `AGENCI.md`.
 - Tryb uprawnień `acceptEdits`; polecenia powłoki dopuszcza `.claude/settings.json` projektu. Trybu z pominięciem uprawnień panel nie używa.
 - Rekordy: `../uruchomienia/<id>.json`, surowy zapis `<id>.log`.
 
+## Publikacja
+
+Panel publikuje posty sam (`publikacja.py`): Facebook (strona projektu: zdjęcie, film, Reels), Instagram (konto
+firmowe połączone ze stroną; grafika jako JPEG albo film jako Reels) i LinkedIn (profil właściciela).
+- Połączenie: Agenci → Publikacja. Facebook: App ID, App Secret i token z Graph API Explorer; panel zapisuje tokeny
+  stron (nie wygasają) i przypisuje stronę do projektu. LinkedIn: token z OAuth Token Tools (60 dni).
+  Tokeny w `PANEL_PUBLIKACJA_DIR` (domyślnie `~/dane/publikacja`, pliki 0600), nigdy w `/api/data`.
+- Plan: w publikacji z kampanii „Zaplanuj” (kanały, dzień, godzina) albo „Opublikuj teraz”; wiersz
+  `zaplanowane: RRRR-MM-DD GG:MM; kanały`. Pętla co 30 s publikuje tekst z `post.md` (sekcje Facebook, LinkedIn,
+  Reels, Instagram) z `grafika.png` albo `film.mp4|mov` (wgranie w poście, `POST /api/post/film`, do 300 MB).
+  Po sukcesie: link, wynik, stan zrobione i powiadomienie; po błędzie `zostało:` i powiadomienie; opublikowany
+  kanał nie wychodzi drugi raz (`stan.json`).
+- Instagram pobiera pliki z publicznego adresu `/media/<token>/…` (token na godzinę); wymaga `PANEL_PUBLIC_URL`
+  i biblioteki Pillow (`python3-pil`) do JPEG. TikTok: jeszcze nie (wymaga audytu aplikacji przez TikTok).
+
 ## Koszty Hetzner
 
 Widok Koszty (`#koszty`, w menu) i wiersz w Przeglądzie: ten miesiąc, łącznie od założenia, pełny

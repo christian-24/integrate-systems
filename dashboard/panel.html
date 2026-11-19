@@ -279,6 +279,13 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .ans{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:0}
 .ans dt{color:var(--ink-3)} .ans dd{margin:0}
 .dbox .move{margin:4px 0 8px;font-size:13.5px}
+.plan{border-top:1px solid var(--line);padding-top:10px;display:grid;gap:8px}
+.plan h3,.pubc h3{margin:0;font-size:14px}
+.plan .chk{display:inline-flex;gap:6px;align-items:center;font-size:13.5px}
+.fup{cursor:pointer}
+.pubc{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.pubc .steps{margin:4px 0 8px;padding-left:18px;font-size:13px;line-height:1.5;color:var(--ink-2)}
+.pubc summary{cursor:pointer;font-size:13.5px;margin:6px 0}
 .abox .move{margin:6px 0;font-size:13.5px;line-height:1.5}
 .post h3{margin:0;font-size:14px}
 .post .ptx p{margin:6px 0 0;font-size:13.5px;line-height:1.5;white-space:normal}
@@ -713,6 +720,7 @@ function normalize(raw){
       unlockCountIn:Number.isFinite(+z.unlockCount)&&z.unlockCount!==null&&z.unlockCount!==''?+z.unlockCount:null})),
     server:normServer(raw.server),
     costs:normCosts(raw.costs),
+    publish:normPublish(raw.publish),
     campaigns:(raw.campaigns||[]).map(c=>{
       const cn={},co=c.counters&&typeof c.counters==='object'?c.counters:{};
       Object.keys(co).forEach(k=>{const n=+co[k];if(k&&isFinite(n))cn[k]=n});
@@ -746,6 +754,7 @@ function normDetail(d){
     /* i: numer kroku w pliku (od 0), potrzebny do zapisu klucza krok */
     steps:L(d.steps).map((x,i)=>x&&typeof x.text==='string'&&x.text.trim()?{done:!!x.done,text:x.text.trim(),i:i}:null).filter(Boolean),
     result:s(d.result),decision:s(d.decision),left:s(d.left),fix:fix,next:parseNext(next),notes:notes,stats:stats,
+    scheduled:s(d.scheduled),
     branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,6),
     answers:L(d.answers).filter(a=>a&&typeof a.label==='string'&&a.label.trim()).map(a=>({label:a.label.trim(),value:s(a.value)}))};
 }
@@ -1732,6 +1741,7 @@ function vAgenci(){
   const a=D.agents;
   let h='<div class="pagehead"><div><h1>Agenci</h1><p>Claude Code i Codex na serwerze panelu, na logowaniu subskrypcji. Stan serwera i sesje urządzeń.</p></div></div><section class="panel" id="abar">'+agBarHtml()+'</section>';
   h+=srvPanel();
+  h+=pubPanel();
   if(!a)return h;
   const L=a.runs,act=L.filter(isAct).length,td=runsToday();
   h+='<section class="panel"><h2>Uruchomienia <small>'+(act?act+' w toku · ':'')+'naraz '+(a.maxParallel||1)+' · błędy dziś '+td.filter(r=>r.state==='error'||r.state==='timeout').length+'</small></h2>'+
@@ -2303,9 +2313,93 @@ function postBox(t,day,publish){
   let h='<div class="post"><h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
   PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+
     (publish?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Kopiuj i otwórz '+n+'</button>':'')+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
+  if(publish)h+=planBox(t,day,d);
   h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
     (publish?'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button><span class="rsn">'+(t.waits.length?'Najpierw: '+esc(t.waits.join('; '))+'. ':'')+'Potem wpiszesz link i wyniki.</span>':'')+'</div>';
   return h+'</div>';
+}
+/* ---------- publikacja automatyczna (publikacja.py): połączenia w Agenci, plan w poście ---------- */
+function normPublish(p){
+  if(!p||typeof p!=='object')return null;
+  const fb=p.facebook||{},li=p.linkedin||{};
+  return {fb:{connected:!!fb.connected,pages:(Array.isArray(fb.pages)?fb.pages:[]).map(x=>({id:String(x.id||''),name:String(x.name||''),project:String(x.project||''),instagram:String(x.instagram||'')}))},
+    li:{connected:!!li.connected,name:String(li.name||''),expiresAt:String(li.expiresAt||'')},state:p.state&&typeof p.state==='object'?p.state:{}};
+}
+const PUBCH=[['facebook','Facebook'],['linkedin','LinkedIn'],['reels','Reels'],['instagram','Instagram']],PUBN={facebook:'Facebook',linkedin:'LinkedIn',reels:'Reels',instagram:'Instagram'};
+const PL={};          // wybór w formularzu planu: {id: {ch:{}, day, time}}
+const parseSched=v=>{const m=/^(\d{4}-\d\d-\d\d) (\d\d:\d\d)(?:;\s*(.*))?$/.exec(v||'');return m?{day:m[1],time:m[2],ch:(m[3]||'').split(/,\s*/).filter(c=>PUBN[c])}:null};
+const chanOk=(t,c)=>{const P=D.publish;return !!P&&(c==='linkedin'?P.li.connected:P.fb.pages.some(p=>p.project===t.project&&(c!=='instagram'||p.instagram)))};
+function planBox(t,day,d){
+  const P=D.publish;if(!P||!LIVE)return '';
+  const want=String(t.channel||'').toLowerCase().split(/[,\s]+/).filter(c=>PUBN[c]),list=PUBCH.filter(([c])=>!want.length||want.indexOf(c)>=0);
+  const avail=list.filter(([c])=>chanOk(t,c)),sc=parseSched(t.detail.scheduled),st=P.state[t.project+'|'+t.file+'|'+t.title]||{};
+  let h='<div class="plan"><h3>Publikacja automatyczna</h3>';
+  if(!avail.length)return h+'<p class="note">Połącz '+esc(list.map(x=>x[1]).join(' i ')||'kanały')+' w widoku <a href="#agenci">Agenci → Publikacja</a>. Potem panel opublikuje post sam o wybranej godzinie.</p></div>';
+  const vid=list.some(([c])=>c==='reels'),film=d.film;
+  if(vid||film)h+='<p class="note">'+(film?'Film: '+esc(film.name)+' · '+(film.size/1048576).toFixed(1).replace('.',',')+' MB ':'Brak filmu. ')+
+    '<label class="btn sec sm fup">'+(A.film===t.id?'Wysyłam…':film?'Zmień film':'Dodaj film')+'<input type="file" accept="video/mp4,video/quicktime" data-film="'+esc(t.project+'|'+day)+'" data-id="'+esc(t.id)+'" hidden></label></p>';
+  if(sc)h+='<p class="move">Zaplanowane: <b>'+esc(ddl(sc.day))+', '+esc(sc.time)+'</b> · '+esc(sc.ch.map(c=>PUBN[c]).join(', '))+'. Panel opublikuje sam i wyśle powiadomienie.</p><div class="row"><button class="btn sec sm" data-pub="cancel" data-id="'+esc(t.id)+'">Anuluj plan</button></div>';
+  else{
+    const f=PL[t.id]||(PL[t.id]={ch:{},day:isDay(day)&&day>=D.todayKey?day:D.todayKey,time:'09:00'});
+    h+='<div class="row">'+avail.map(([c,n])=>{const on=f.ch[c]!=null?f.ch[c]:!(c==='reels'&&!film);return '<label class="chk"><input type="checkbox" data-pch="'+c+'"'+(on?' checked':'')+'> '+n+'</label>'}).join('')+'</div>'+
+      '<div class="row"><input class="fi" type="date" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji"><input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
+      '<button class="btn sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
+    const miss=list.filter(([c])=>!chanOk(t,c));
+    if(miss.length)h+='<p class="note">Niepołączone: '+esc(miss.map(x=>x[1]).join(', '))+' (Agenci → Publikacja).</p>';
+  }
+  const bad=Object.keys(st).filter(c=>st[c]&&!st[c].ok&&PUBN[c]),good=Object.keys(st).filter(c=>st[c]&&st[c].ok&&PUBN[c]);
+  if(good.length)h+='<p class="note">Opublikowane: '+good.map(c=>'<a href="'+esc(st[c].link)+'" target="_blank" rel="noopener noreferrer">'+PUBN[c]+'</a>').join(', ')+'</p>';
+  if(bad.length)h+='<p class="warn">Błąd: '+esc(bad.map(c=>PUBN[c]+': '+st[c].error).join('; '))+'</p>';
+  return h+'</div>';
+}
+function pubAct(el){
+  const id=el.dataset.id||'',t=D.tasks.find(x=>x.id===id),a=el.dataset.pub;
+  if(!LIVE){say(PRV);return}
+  if(a==='cancel'&&t){enqueue(async()=>{const x=await post('/api/publikacja/anuluj',{id:t.id,title:t.title});say(x.ok?'Plan publikacji anulowany.':failMsg(x,'Nie anulowano.'))});return}
+  if((a==='plan'||a==='now')&&t){
+    const f=PL[t.id]||{ch:{}},box=el.closest('.plan'),ch=[...box.querySelectorAll('[data-pch]')].filter(x=>x.checked).map(x=>x.dataset.pch);
+    const day=(box.querySelector('[data-pday]')||{}).value||'',time=(box.querySelector('[data-ptime]')||{}).value||'';
+    if(!ch.length){say('Zaznacz co najmniej jeden kanał.');return}
+    if(a==='plan'&&!(isDay(day)&&/^\d\d:\d\d$/.test(time))){say('Podaj dzień i godzinę.');return}
+    if(a==='plan'&&day+' '+time<D.todayKey+' '+new Date().toTimeString().slice(0,5)){say('Ta godzina już minęła. Wybierz późniejszą albo „Opublikuj teraz”.');return}
+    enqueue(async()=>{const x=await post('/api/publikacja/plan',{id:t.id,title:t.title,channels:ch,at:day+' '+time,now:a==='now'});
+      say(x.ok?(a==='now'?'Publikuję. Wynik przyjdzie w powiadomieniu i pojawi się w zadaniu.':'Zaplanowano na '+ddl(day)+', '+time+'.'):failMsg(x,'Nie zaplanowano.'))});
+    return}
+  if(a==='fb'||a==='li'){
+    const box=el.closest('form'),v=k=>((box.querySelector('[data-pf="'+k+'"]')||{}).value||'').trim();
+    const body=a==='fb'?{appId:v('appId'),appSecret:v('appSecret'),token:v('token')}:{token:v('token')};
+    box.querySelectorAll('[data-pf]').forEach(x=>{x.value=''});
+    enqueue(async()=>{const x=await post('/api/publikacja/'+(a==='fb'?'facebook':'linkedin'),body);
+      say(x.ok?(a==='fb'?'Facebook połączony: '+((x.data.pages||[]).map(p=>p.name).join(', ')||'strony')+'.':'LinkedIn połączony: '+(x.data.name||'profil')+'.'):failMsg(x,'Nie połączono.'))});
+    return}
+  if(a==='off'){enqueue(async()=>{const x=await post('/api/publikacja/odlacz',{service:el.dataset.svc});say(x.ok?'Odłączono.':failMsg(x,'Nie odłączono.'))});return}
+}
+async function uploadFilm(el){
+  const file=el.files&&el.files[0];if(!file)return;
+  const [pid,day]=el.dataset.film.split('|');
+  if(file.size>300*1048576){say('Film: najwyżej 300 MB.');return}
+  A.film=el.dataset.id;renderDrawer(true);say('Wysyłam film ('+(file.size/1048576).toFixed(0)+' MB)…');
+  let ok=false,msg='';
+  try{const r=await fetch('/api/post/film?project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day),{method:'POST',headers:{'Content-Type':file.type==='video/quicktime'?'video/quicktime':'video/mp4'},body:file});
+    if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));ok=r.ok&&j.ok!==false;msg=j.error||''}catch(e){msg='brak połączenia'}
+  A.film='';delete PD[pid+'|'+day];renderDrawer(true);
+  say(ok?'Film zapisany w poście.':'Nie zapisano filmu'+(msg?': '+msg:'')+'.');
+}
+function pubPanel(){
+  const P=D.publish;if(!P)return '';
+  const proj=D.projects.map(p=>[p.id,p.name]),exp=P.li.expiresAt?P.li.expiresAt.slice(0,10):'';
+  let h='<section class="panel" id="publikacja"><h2>Publikacja <small>panel publikuje zaplanowane posty sam</small></h2><div class="pad pubc">';
+  h+='<div><h3>Facebook'+(P.fb.connected?' <span class="lz green">połączony</span>':'')+'</h3>';
+  if(P.fb.connected)h+='<table><tbody>'+P.fb.pages.map(g=>'<tr><td>'+esc(g.name)+(g.instagram?' <span class="muted">· Instagram '+(g.instagram==='tak'?'':'@'+esc(g.instagram))+'</span>':'')+'</td><td><select class="fi" data-fbmap="'+esc(g.id)+'" aria-label="Projekt strony '+esc(g.name)+'">'+opt([['','– bez projektu']].concat(proj),g.project)+'</select></td></tr>').join('')+'</tbody></table>';
+  h+='<details'+(P.fb.connected?'':' open')+'><summary>'+(P.fb.connected?'Połącz ponownie':'Połącz Facebook')+'</summary><form class="dform" onsubmit="return false"><ol class="steps"><li>developers.facebook.com → Utwórz aplikację, przypadek użycia „Zarządzaj stroną”.</li><li>Ustawienia → Podstawowe: skopiuj App ID i App Secret.</li><li>Narzędzia → Graph API Explorer: ta aplikacja, „Token użytkownika”, uprawnienia pages_show_list, pages_read_engagement, pages_manage_posts, publish_video, a dla Instagrama też instagram_basic i instagram_content_publish → Generate Access Token, zaznacz obie strony.</li><li>Instagram: konto firmowe połączone ze stroną (Meta Business Suite → Ustawienia → Konta). Panel znajdzie je sam.</li></ol>'+
+    '<label class="fl"><span>App ID</span><input class="fi" data-pf="appId" inputmode="numeric" autocomplete="off"></label><label class="fl"><span>App Secret</span><input class="fi" type="password" data-pf="appSecret" autocomplete="off"></label><label class="fl"><span>Token użytkownika</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label>'+
+    '<div class="row"><button type="button" class="btn sm" data-pub="fb">Połącz</button>'+(P.fb.connected?'<button type="button" class="btn sec sm" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form></details></div>';
+  h+='<div><h3>LinkedIn'+(P.li.connected?' <span class="lz green">połączony</span>':P.li.expiresAt?' <span class="lz red">token wygasł</span>':'')+'</h3>';
+  if(P.li.connected)h+='<p>'+esc(P.li.name||'Twój profil')+(exp?' · token do '+esc(dd(exp))+'.'+exp.slice(0,4):'')+'</p>';
+  h+='<details'+(P.li.connected?'':' open')+'><summary>'+(P.li.connected?'Wklej nowy token':'Połącz LinkedIn')+'</summary><form class="dform" onsubmit="return false"><ol class="steps"><li>linkedin.com/developers → Create app (wymaga strony firmy na LinkedIn).</li><li>Products: „Share on LinkedIn” i „Sign In with LinkedIn using OpenID Connect”.</li><li>Docs and tools → OAuth Token Tools → Create token: ta aplikacja, zakresy openid, profile, w_member_social → skopiuj token.</li></ol>'+
+    '<label class="fl"><span>Token</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label><div class="row"><button type="button" class="btn sm" data-pub="li">Połącz</button>'+(P.li.connected?'<button type="button" class="btn sec sm" data-pub="off" data-svc="linkedin">Odłącz</button>':'')+'</div><p class="note">Token LinkedIn działa 60 dni; potem wklejasz nowy.</p></form></details></div>';
+  return h+'</div></section>';
 }
 /* zadanie agenta „Przygotować post na RRRR-MM-DD…”: dzień posta z tytułu i publikacja z kampanii na ten dzień */
 const prepDay=t=>{const m=/^Przygotować post na (\d{4}-\d\d-\d\d)/.exec(t.title||'');return m?m[1]:''};
@@ -2784,6 +2878,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('#refresh')){if(LIVE){say('Odświeżam…');load(true)}else say('Podgląd: dane przykładowe są stałe.');return}
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
+  if(el=qq('[data-pub]')){pubAct(el);return}
   if(el=qq('[data-copyopen]')){copyOpen(el.dataset.copyopen,el.dataset.url||'');return}
   if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
   if(el=qq('[data-mat]')){openMat(el.dataset.mat);return}
@@ -2816,6 +2911,10 @@ document.addEventListener('change',ev=>{
   if(!D)return;const el=ev.target;
   if(el.id==='mnav'){location.hash=el.value;return}
   if(el.dataset.step!=null){toggleStep(+el.dataset.step,el.checked);return}
+  if(el.dataset.film){uploadFilm(el);return}
+  if(el.dataset.pch&&DR){const f=PL[DR.id];if(f)f.ch[el.dataset.pch]=el.checked;return}
+  if((el.dataset.pday!=null||el.dataset.ptime!=null)&&DR){const f=PL[DR.id];if(f){if(el.dataset.pday!=null)f.day=el.value;else f.time=el.value}return}
+  if(el.dataset.fbmap){if(!LIVE){say(PRV);return}enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.dataset.fbmap,project:el.value});say(x.ok?'Zapisano projekt strony.':failMsg(x,'Nie zapisano.'))});return}
   if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.value;return}
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
   if(el.dataset.psel){const m=A.psel[el.dataset.psel]||(A.psel[el.dataset.psel]={});m[el.dataset.pid]=el.checked;render(true);return}

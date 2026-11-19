@@ -287,12 +287,12 @@ DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "ma
                "poprawka": "fix", "następne": "next", "nastepne": "next",
                "wyświetlenia": "views", "wyswietlenia": "views", "kliknięcia": "clicks", "klikniecia": "clicks",
                "konta": "accounts", "link": "link", "gałąź": "branch", "galaz": "branch", "pyta": "asks",
-               "odpowiedź": "answers", "odpowiedz": "answers"}
+               "odpowiedź": "answers", "odpowiedz": "answers", "zaplanowane": "scheduled"}
 DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
               "left": "zostało", "fix": "poprawka", "next": "następne", "views": "wyświetlenia",
               "clicks": "kliknięcia", "accounts": "konta", "link": "link", "branch": "gałąź", "asks": "pyta",
-              "answers": "odpowiedź"}
-DETAIL_ORDER = ["goal", "doneWhen", "refs", "branch", "asks", "answers", "steps", "views", "clicks", "accounts", "link", "result", "decision",
+              "answers": "odpowiedź", "scheduled": "zaplanowane"}
+DETAIL_ORDER = ["goal", "doneWhen", "refs", "branch", "asks", "answers", "scheduled", "steps", "views", "clicks", "accounts", "link", "result", "decision",
                 "left", "fix", "next"]   # kroki i notatki: "steps"
 # Wyniki publikacji (wiersze kampanii): liczby całkowite i adres. W szczegółach publikacji zawsze obecne
 # (None / ""), w zadaniach ZADANIA.md tylko wtedy, gdy wiersz jest zapisany.
@@ -381,6 +381,8 @@ def parse_detail(lines):
                 d["branch"] = value.strip()
             else:
                 d["notes"].append(s)
+        elif key == "scheduled":              # plan publikacji: „RRRR-MM-DD GG:MM; kanał, kanał”
+            d["scheduled"] = value.strip()
         elif key == "asks":                   # pola formularza dla właściciela: „pyta: etykieta; etykieta”
             d["asks"] = d.get("asks", []) + [a.strip() for a in value.split(";") if a.strip()]
         elif key == "answers":                # „odpowiedź: etykieta = wartość”, wiersz na pole

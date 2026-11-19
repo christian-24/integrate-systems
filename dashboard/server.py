@@ -95,6 +95,7 @@ import projekt  # noqa: E402  (standard projektu: odczyt, kontrola zgodności, z
 import historia  # noqa: E402  (dzienny stan zadań projektów, PULPIT.md sekcja 3)
 import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENCI.md)
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
+import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
@@ -716,6 +717,19 @@ _agents = None
 _agents_lock = threading.Lock()
 
 
+_publisher = None
+
+
+def get_publisher():
+    """Publikacja postów (publikacja.py); jedna na proces."""
+    global _publisher
+    with _agents_lock:
+        if _publisher is None:
+            _publisher = publikacja.Publisher(load_projects, _write_lock, projekt, post_folder, post_info, post_image,
+                                              notify=lambda text: get_agents()._send_ntfy(text))
+        return _publisher
+
+
 def get_agents():
     """Jeden zarządca uruchomień na proces; powstaje przy pierwszym użyciu (eksport podglądu go nie potrzebuje)."""
     global _agents
@@ -737,6 +751,12 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
+          "/api/publikacja/facebook": lambda b: get_publisher().connect_facebook(b),
+          "/api/publikacja/linkedin": lambda b: get_publisher().connect_linkedin(b),
+          "/api/publikacja/strona": lambda b: get_publisher().map_page(b),
+          "/api/publikacja/odlacz": lambda b: get_publisher().disconnect(b),
+          "/api/publikacja/plan": lambda b: get_publisher().plan(b),
+          "/api/publikacja/anuluj": lambda b: get_publisher().cancel(b),
           "/api/agent/merge": lambda b: get_agents().merge(b.get("id", ""), b.get("project", ""), b.get("branch", "")),
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
@@ -870,6 +890,7 @@ def build_data():
     out["server"] = server_state()
     out["costs"] = COSTS.state()
     out["panelVersion"] = panel_version()
+    out["publish"] = get_publisher().status()
     add_checks(out["tasks"], index, out["server"])
     return out
 
@@ -1209,6 +1230,8 @@ def post_info(folder):
             out["sections"][name] += line + "\n"
     out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
     out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
+    film = publikacja.Publisher.film(folder)
+    out["film"] = {"name": os.path.basename(film), "size": os.path.getsize(film)} if film else None
     return out
 
 
@@ -1333,6 +1356,8 @@ class Handler(BaseHTTPRequestHandler):
             return False
         if path == "/wejscie" or self._has_session() or self._app_file(path):
             return True
+        if self.command == "GET" and path.startswith("/media/"):     # plik dla Instagrama: jednorazowy token w ścieżce
+            return True
         if path == "/terminy.ics":
             key = (parse_qs(query).get("k") or [""])[0]
             if self.command == "GET" and hmac.compare_digest(key.encode("utf-8"), ics_key().encode("ascii")):
@@ -1400,6 +1425,14 @@ class Handler(BaseHTTPRequestHandler):
         path = url.path
         if not self._allowed(path, url.query):
             return
+        if path.startswith("/media/"):
+            parts = path.split("/")
+            f = get_publisher().media_file(parts[2]) if len(parts) == 4 and re.match(r"^[0-9a-f]{32}$", parts[2]) else None
+            if not f or os.path.basename(f) != parts[3]:
+                return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+            ctype = {".jpg": "image/jpeg", ".mp4": "video/mp4", ".mov": "video/quicktime"}.get(os.path.splitext(f)[1], "application/octet-stream")
+            with open(f, "rb") as fh:
+                return self._send(200, fh.read(), ctype, [("Cache-Control", "no-store")])
         if path == "/wejscie":
             if self._has_session() or (self._client_local() and not (local_guard() and TOKEN)):
                 return self._redirect("/")
@@ -1459,6 +1492,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/calendar/connect":
             connect_calendar()
             return self._send(202, json.dumps({"connecting": True}), "application/json; charset=utf-8")
+        if path == "/api/post/film":
+            return self._film_upload(urlparse(self.path).query)
         if path in WRITES:
             body = self._json_body()
             if body is None:
@@ -1470,6 +1505,40 @@ class Handler(BaseHTTPRequestHandler):
                 answer.update(result[2])            # np. id nowego uruchomienia
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
         return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+
+    def _film_upload(self, query):
+        """POST /api/post/film?project=&date=: surowy plik MP4 albo MOV (najwyżej 300 MB) jako film.mp4|mov posta."""
+        q = parse_qs(query)
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        ext = {"video/mp4": ".mp4", "video/quicktime": ".mov"}.get(ctype)
+        folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+        try:
+            size = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            size = 0
+        err = ("Nie ma posta na ten dzień." if not folder else "Film: MP4 albo MOV." if not ext
+               else "Film: najwyżej 300 MB." if not 0 < size <= publikacja.FILM_MAX else "")
+        if err:
+            self.close_connection = True
+            return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False), "application/json; charset=utf-8")
+        tmp = os.path.join(folder, ".film-wysylka")
+        left = size
+        with open(tmp, "wb") as f:
+            while left > 0:
+                chunk = self.rfile.read(min(left, 1 << 20))
+                if not chunk:
+                    break
+                f.write(chunk)
+                left -= len(chunk)
+        if left:
+            os.remove(tmp)
+            return self._send(400, json.dumps({"ok": False, "error": "Wysyłka przerwana."}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        for name in publikacja.FILM_NAMES:
+            with contextlib.suppress(OSError):
+                os.remove(os.path.join(folder, name))
+        os.replace(tmp, os.path.join(folder, "film" + ext))
+        return self._send(200, json.dumps({"ok": True, "error": "", "size": size}), "application/json; charset=utf-8")
 
     def _json_body(self):
         """Mały obiekt JSON. Wymagany typ application/json, więc obca strona nie wyśle go bez zgody CORS."""
@@ -1509,6 +1578,7 @@ if __name__ == "__main__":
         if hasattr(signal, name):
             signal.signal(getattr(signal, name), _stop)
     get_agents().start()                        # dopiero po zajęciu portu: drugi egzemplarz nie rusza rekordów
+    get_publisher().start()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
