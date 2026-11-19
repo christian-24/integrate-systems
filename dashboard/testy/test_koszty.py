@@ -20,14 +20,14 @@ def price(loc, h, m):
 
 API = {
     "servers": {"servers": [
-        {"name": "agenci", "created": "2026-11-17T12:00:00+00:00", "backup_window": None,
+        {"id": 1, "name": "agenci", "created": "2026-11-17T12:00:00+00:00", "backup_window": None,
          "location": {"name": "hel1"},                                       # obecne API: bez „datacenter”
          "server_type": {"name": "cax11", "prices": [price("fsn1", 0.01, 5), price("hel1", 0.01, 5.0)]}},
         {"name": "prod", "created": "2026-09-10T00:00:00+00:00", "backup_window": "22-02",
          "datacenter": {"location": {"name": "fsn1"}},
          "server_type": {"name": "cx22", "prices": [price("fsn1", 0.01, 5.0)]}}],
         "meta": {"pagination": {"next_page": None}}},
-    "primary_ips": {"primary_ips": [{"name": "ip-agenci", "type": "ipv4", "created": "2026-11-17T12:00:00+00:00",
+    "primary_ips": {"primary_ips": [{"name": "ip-agenci", "type": "ipv4", "assignee_id": 1, "assignee_type": "server", "created": "2026-11-17T12:00:00+00:00",
                                      "location": {"name": "hel1"}},
                                     {"name": "ip6", "type": "ipv6", "created": "2026-11-17T12:00:00+00:00",
                                      "location": {"name": "hel1"}}], "meta": {}},
@@ -62,7 +62,7 @@ class Koszty(unittest.TestCase):
         glowny, inny = out["projects"]
         self.assertEqual(inny["error"], "token odrzucony")
         kinds = [(i["name"], i["kind"]) for i in glowny["items"]]
-        self.assertEqual(kinds, [("agenci", "serwer"), ("prod", "serwer"), ("prod", "kopie"), ("ip-agenci", "adres")])
+        self.assertEqual(kinds, [("agenci", "serwer"), ("prod", "serwer"), ("prod", "kopie"), ("agenci", "adres")])
         agenci = glowny["items"][0]
         self.assertEqual((agenci["monthly"], agenci["month"], agenci["total"], agenci["since"]), (5.0, 0.48, 0.48, "2026-11-17"))
         self.assertEqual(glowny["items"][2]["monthly"], 1.0)                 # kopie: 20% ceny serwera

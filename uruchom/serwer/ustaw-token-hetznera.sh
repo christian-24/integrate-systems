@@ -25,4 +25,4 @@ grep -v "^$N=" "$F" > "$F.tmp" || true
 printf '%s=%s\n' "$N" "$T" >> "$F.tmp"
 install -m 640 -o root -g panel "$F.tmp" "$F"; rm -f "$F.tmp"
 unset T
-echo "Token projektu $N zapisany. Panel odczyta koszty w ciągu minuty (Agenci → Koszty Hetzner)."
+echo "Token projektu $N zapisany. Panel odczyta koszty w ciągu minuty (menu → Koszty)."

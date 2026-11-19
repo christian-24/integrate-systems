@@ -69,8 +69,8 @@ Pełny opis: `AGENCI.md`.
 
 ## Koszty Hetzner
 
-Widok Agenci, sekcja „Koszty Hetzner”, i pozycja w pasku stanu serwera: ten miesiąc, łącznie od założenia, pełny
-miesiąc, na każdy serwer, kopie zapasowe, adres IPv4 i dysk. Szacunek z cennika API Hetzner Cloud (godziny × stawka,
+Widok Koszty (`#koszty`, w menu) i wiersz w Przeglądzie: ten miesiąc, łącznie od założenia, pełny
+miesiąc; tabela na serwer (z kopiami i adresem IP) i lista pozycji. Szacunek z cennika API Hetzner Cloud (godziny × stawka,
 najwyżej cena miesięczna, brutto, EUR; kurs z NBP), odczyt co 6 h w tle (`koszty.py`). Usuniętych serwerów API nie
 pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzner) w `/etc/integrate/hetzner.tokeny`
 (`PANEL_HETZNER_TOKENY`), wpisuje je `sudo ustaw-token-hetznera` (`uruchom/serwer/ustaw-token-hetznera.sh`).

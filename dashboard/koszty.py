@@ -120,6 +120,7 @@ def project_costs(get, token, now):
     volumes = _all(get, token, "volumes", "volumes")
     pricing = get(API + "/pricing", token).get("pricing") or {}
     items = []
+    names = {s.get("id"): s.get("name", "") for s in servers}
     for s in servers:
         start = _when(s.get("created"))
         loc = _loc(s)
@@ -139,7 +140,9 @@ def project_costs(get, token, now):
         p = _price(ip_prices.get(ip.get("type")), loc)
         if not start or not p or not (p[0] or p[1]):
             continue
-        items.append(_item(ip.get("name", "") or ip.get("ip", ""), "adres", ip.get("type", ""), loc, start, now, *p))
+        owner = names.get(ip.get("assignee_id")) if ip.get("assignee_type", "server") == "server" else None
+        name = owner or "%s (nieprzypisany)" % (ip.get("ip") or ip.get("name") or "adres")   # nieprzypisany adres też kosztuje
+        items.append(_item(name, "adres", ip.get("type", ""), loc, start, now, *p))
     per_gb = _money((pricing.get("volume") or {}).get("price_per_gb_month"))
     for v in volumes:
         start = _when(v.get("created"))

@@ -271,6 +271,7 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .plan .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .post{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
 .post img{width:100%;max-width:420px;border-radius:8px;border:1px solid var(--line)}
+.cline{margin:6px 0 0;font-size:13.5px}
 .kpis{display:flex;flex-wrap:wrap;gap:12px 28px}
 .kpis>div{display:grid;gap:2px}
 .kpis b{font-size:20px}
@@ -634,8 +635,8 @@ const MACH={pc:'Windows',mac:'Mac',cloud:'serwer'};
 const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=['#fff','#fff','#0b2a1f','#2b1d00','#3a0f22','#fff','#fff','#fff'];
 const INBOX='Do rozplanowania';
-const VIEWS=['przeglad','wskazniki','ty','tablica','terminy','agenci','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',tablica:'Tablica zadań',terminy:'Terminy',agenci:'Agenci',projekty:'Projekty i standard'};
+const VIEWS=['przeglad','wskazniki','ty','tablica','terminy','agenci','koszty','projekty'];
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Wymaga Ciebie',tablica:'Tablica zadań',terminy:'Terminy',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
 const PTABS=[['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
@@ -1025,6 +1026,7 @@ const ICON={
  cal:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>',
  chart:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 13.5h12M4 11V8M7.3 11V4.5M10.6 11V6.5M13.5 11V3"/></svg>',
  you:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="5.5" r="2.8"/><path d="M2.8 14c.8-2.8 2.8-4.2 5.2-4.2s4.4 1.4 5.2 4.2"/></svg>',
+ money:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><circle cx="8" cy="8.25" r="2"/><path d="M4 6.5v3.5M12 6.5v3.5"/></svg>',
  agent:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="4" width="11" height="8.5" rx="2"/><path d="M8 1.5V4M5.5 8h.01M10.5 8h.01M6 10.5h4"/></svg>',
  folder:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 4.5a1 1 0 011-1h3l1.5 1.5H13a1 1 0 011 1v6.5a1 1 0 01-1 1H3a1 1 0 01-1-1z"/></svg>'};
 const CI={ok:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="var(--bar-done)"/><path d="M5.5 9.3l2.2 2.2 4.6-4.8" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -1194,8 +1196,6 @@ function srvItems(){
   chk('zapis-kart','zapis kart','działa','błąd','nie zainstalowany');
   chk('claude','logowanie Claude','tak','nie','brak danych');
   Object.keys(c).forEach(k=>{if(c[k]==='zle'&&['dysk','zapis-kart','claude','kopia'].indexOf(k)<0)it.push({dot:'bad',label:k+': błąd'})});
-  const k=D.costs;
-  if(k&&k.configured&&!k.loading)it.push({dot:k.projects.some(p=>p.error)?'warn':'ok',label:'Hetzner: '+eur(k.month)+' w tym miesiącu',title:'łącznie od założenia '+eur(k.total)+', miesięcznie '+eur(k.monthly)});
   const old=at?Math.round((Date.now()-at)/6e4):null;
   if(old!=null&&old>30)it.push({dot:'warn',label:'stan sprzed '+(old<120?old+' min':Math.floor(old/60)+' h')});
   const lvl=it.some(x=>x.dot==='bad')?'bad':it.some(x=>x.dot==='warn')?'warn':'ok';
@@ -1363,7 +1363,7 @@ function vPrzeglad(){
     if(lim)warn.push('Limit subskrypcji do '+hhmm(lim));
     if(e)warn.push(e+' '+pl(e,'błąd agenta','błędy agentów','błędów agentów')+' dziś');
     if(td.some(keyWarn))warn.push('Klucz API zamiast subskrypcji')}
-  let h='<div class="pagehead"><div style="min-width:0;flex:1"><h1>Przegląd</h1><p>'+esc(cap(dLong(D.todayKey)))+'</p><div class="sys">'+sys.join('')+'</div>'+srvBar()+statusLine(warn)+'</div></div>';
+  let h='<div class="pagehead"><div style="min-width:0;flex:1"><h1>Przegląd</h1><p>'+esc(cap(dLong(D.todayKey)))+'</p><div class="sys">'+sys.join('')+'</div>'+srvBar()+costLine()+statusLine(warn)+'</div></div>';
   if(warn.length)h+='<div class="banner bad pvwarn">'+esc(warn.join(' · '))+' · <a href="#agenci">Agenci</a></div>';
   h+=todayPanel(ys);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
@@ -1727,7 +1727,6 @@ function vAgenci(){
   const a=D.agents;
   let h='<div class="pagehead"><div><h1>Agenci</h1><p>Claude Code i Codex na serwerze panelu, na logowaniu subskrypcji. Stan serwera i sesje urządzeń.</p></div></div><section class="panel" id="abar">'+agBarHtml()+'</section>';
   h+=srvPanel();
-  h+=costPanel();
   if(!a)return h;
   const L=a.runs,act=L.filter(isAct).length,td=runsToday();
   h+='<section class="panel"><h2>Uruchomienia <small>'+(act?act+' w toku · ':'')+'naraz '+(a.maxParallel||1)+' · błędy dziś '+td.filter(r=>r.state==='error'||r.state==='timeout').length+'</small></h2>'+
@@ -1743,9 +1742,27 @@ function srvPanel(){
 const eur=n=>(+n||0).toFixed(2).replace('.',',')+' €';
 const pln=n=>D.costs&&D.costs.eurPln?' <span class="muted">≈ '+Math.round(n*D.costs.eurPln)+' zł</span>':'';
 const CKIND={serwer:'serwer',kopie:'kopie zapasowe',adres:'adres IP',dysk:'dysk'};
+function costLine(){
+  const k=D.costs;if(!k||!k.configured||k.loading)return '';
+  return '<p class="cline">Serwery: <b class="num">'+eur(k.month)+'</b>'+pln(k.month)+' w tym miesiącu · '+eur(k.monthly)+' za pełny miesiąc · <a href="#koszty">Koszty</a></p>';
+}
+function vKoszty(){
+  const k=D.costs;
+  let h='<div class="pagehead"><div><h1>Koszty</h1><p>Serwery Hetzner: ten miesiąc, pełny miesiąc i suma od założenia, z kopiami zapasowymi i adresami IP.</p></div></div>';
+  if(!k)return h+'<section class="panel"><p class="empty">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>';
+  if(k.configured&&!k.loading){
+    const S={};k.projects.forEach(p=>p.items.forEach(x=>{const o=S[x.name]||(S[x.name]={name:x.name,type:'',since:x.since,monthly:0,month:0,total:0});
+      if(x.kind==='serwer'){o.type=x.detail+(x.location?' · '+x.location:'');o.since=x.since}o.monthly+=x.monthly;o.month+=x.month;o.total+=x.total}));
+    const L=Object.values(S).sort((a,b)=>b.monthly-a.monthly);
+    if(L.length)h+='<section class="panel"><h2>Na serwer <small>razem z kopiami i adresem IP</small></h2><div class="tw"><table><thead><tr><th>Serwer</th><th>Typ</th><th>Od</th><th class="num">Pełny miesiąc</th><th class="num">Ten miesiąc</th><th class="num">Od założenia</th></tr></thead><tbody>'+
+      L.map(o=>'<tr><td>'+esc(o.name)+'</td><td>'+esc(o.type||'—')+'</td><td>'+(o.since?esc(dd(o.since)+'.'+o.since.slice(0,4)):'—')+'</td><td class="num">'+eur(o.monthly)+pln(o.monthly)+'</td><td class="num">'+eur(o.month)+pln(o.month)+'</td><td class="num">'+eur(o.total)+pln(o.total)+'</td></tr>').join('')+
+      '</tbody></table></div></section>';
+  }
+  return h+costPanel();
+}
 function costPanel(){
   const k=D.costs;if(!k)return '';
-  let h='<section class="panel" id="koszty"><h2>Koszty Hetzner'+(k.configured&&!k.loading?' <small>szacunek z cennika · stan z '+esc(whenT(k.at))+'</small>':'')+'</h2>';
+  let h='<section class="panel" id="kpoz"><h2>'+(k.configured&&!k.loading?'Pozycje <small>szacunek z cennika · stan z '+esc(whenT(k.at))+'</small>':'Koszty Hetzner')+'</h2>';
   if(!k.configured)return h+'<p class="empty">Brak tokenu Hetzner. Na serwerze (ssh jako ops): <code>sudo ustaw-token-hetznera</code>. Token tylko do odczytu, jeden na projekt w Hetzner Console.</p></section>';
   if(k.loading)return h+'<p class="empty">Pobieram koszty z API Hetzner…</p></section>';
   h+='<div class="pad"><div class="kpis"><div><b class="num">'+eur(k.month)+'</b>'+pln(k.month)+'<span>w tym miesiącu</span></div><div><b class="num">'+eur(k.total)+'</b>'+pln(k.total)+'<span>łącznie od założenia</span></div><div><b class="num">'+eur(k.monthly)+'</b>'+pln(k.monthly)+'<span>pełny miesiąc</span></div></div></div>';
@@ -2312,7 +2329,7 @@ function route(){
 }
 function renderSide(r){
   const you=youTotal(youState()),ag=runs().filter(isAct).length;
-  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['tablica',ICON.board],['terminy',ICON.cal],['agenci',ICON.agent,ag,'blue'],['projekty',ICON.folder]]
+  setHtml($('#nav'),[['przeglad',ICON.home],['wskazniki',ICON.chart],['ty',ICON.you,you],['tablica',ICON.board],['terminy',ICON.cal],['agenci',ICON.agent,ag,'blue'],['koszty',ICON.money],['projekty',ICON.folder]]
     .map(([h,ic,c,cl])=>'<a href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ic+VNAME[h]+(c?'<span class="count '+(cl||'')+'">'+c+'</span>':'')+'</a>').join(''));
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
   /* dolny pasek (telefon): ten sam licznik co w nawigacji i w widoku Wymaga Ciebie */
@@ -2347,7 +2364,7 @@ function setToast(t){const el=$('#toast');if(el&&el.textContent!==t)el.textConte
 function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);noticeT=setTimeout(()=>{notice='';setToast('')},ms||7000)}
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
-  return ({wskazniki:vWskazniki,ty:vTy,tablica:vTablica,terminy:vTerminy,agenci:vAgenci,projekty:vProjekty}[r.v]||vPrzeglad)();
+  return ({wskazniki:vWskazniki,ty:vTy,tablica:vTablica,terminy:vTerminy,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
