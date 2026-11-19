@@ -125,9 +125,12 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `trwa: N dni` | notatka: zadanie trwa N dni od `kiedy` (raport PM liczy z tego zapas etapu) | właściciel, PM |
 | `wyświetlenia:`, `kliknięcia:`, `konta:` | wynik publikacji, liczba całkowita (`1200` albo `1 200`) | właściciel, agent |
 | `link:` | adres opublikowanego wpisu, `http://` albo `https://` | właściciel, agent |
+| `gałąź:` | gałąź agenta `agent/…` do przejrzenia: panel pokazuje zmiany i „Scal”, scalenie zamyka zadanie | PM, agent |
+| `pyta:` | pola formularza dla właściciela, rozdzielone `;` (np. `pyta: Imię w commitach; E-mail w commitach`); bez haseł i kluczy | PM, agent |
+| `odpowiedź:` | `etykieta = wartość`, wiersz na pole; zapisuje panel z formularza `pyta:`, agent z `po:` na tym zadaniu dostaje je w poleceniu | panel |
 
 Kroki zmienia się po kolejności (od 0, liczone tylko wiersze `- [ ]`/`- [x]` pod zadaniem).
-`następne:` nie jest zadaniem: właściciel decyduje, czy je założyć. Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
+Zadanie właściciela nie zawiera kroków technicznych (git, commit, konfiguracja, polecenia w terminalu): scalenie to `gałąź:` i przycisk w panelu, a potrzebne dane to `pyta:` i zadanie agenta z `po:` na tym zadaniu. `następne:` nie jest zadaniem: właściciel decyduje, czy je założyć. Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
 Tytuł zaczyna się od czasownika („Wyślij”, „Przygotuj”) i ma najwyżej 120 znaków.
 
 Wyniki publikacji (`wyświetlenia`, `kliknięcia`, `konta`, `link`) zapisuje się pod wierszem publikacji w harmonogramie

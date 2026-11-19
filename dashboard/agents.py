@@ -616,6 +616,10 @@ class Manager:
         for key, label in (("notes", "Notatki"),):
             if d.get(key):
                 out.append("%s: %s" % (label, " / ".join(d[key])))
+        answers = [a for a in d.get("answers") or [] if isinstance(a, dict) and a.get("label")]
+        if answers:
+            out.append("Dane od właściciela (formularz w panelu):")
+            out += ["- %s: %s" % (a["label"], a.get("value", "")) for a in answers]
         for key, label in (("result", "Wynik poprzedniej pracy"), ("decision", "Decyzja do zatwierdzenia"),
                            ("left", "Zostało z poprzedniej pracy"), ("fix", "Poprawka od właściciela (wiersz poprawka:)"),
                            ("next", "Zaproponowane następne zadanie")):
@@ -655,6 +659,9 @@ class Manager:
             "- Nie wykonuj działań nieodwracalnych ani wychodzących na zewnątrz (wysyłka, publikacja, wdrożenie, płatność). "
             "Gdy zadanie tego wymaga, przygotuj wszystko i dopisz w wierszu zadania `wymaga: zgoda`.",
             "- Polecenia, na które nie masz uprawnień, pomiń i opisz w wierszu `zostało:`.",
+            "- Nie zlecaj właścicielowi kroków technicznych (git, commit, scalanie, konfiguracja, polecenia w terminalu): "
+            "panel sam zatwierdza i scala gałęzie agenta. Gdy do dokończenia potrzebujesz od właściciela danych "
+            "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to uwagi właściciela po odbiorze: popraw pracę według nich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
@@ -735,7 +742,8 @@ class Manager:
             priv = {"folder": folder, "client": project.get("client") is True,
                     "label": project.get("alias") or project.get("name") or task["project"],
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
-                             "line": task["line"], "title": title, "stage": stage, "detail": task.get("detail")}}
+                             "line": task["line"], "title": title, "stage": stage,
+                             "detail": with_answers(task, data["tasks"])}}
             self._task_command(priv)
             self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
@@ -893,8 +901,11 @@ class Manager:
             rec.update(branch=branch, changes=changes, commits=commits)
             self._save(rec)
 
-    def _run_repo(self, rid):
-        """(rekord, repozytorium) dla merge i diff albo (None, (kod, błąd))."""
+    def _run_repo(self, rid, project="", branch=""):
+        """(rekord, repozytorium) dla merge i diff albo (None, (kod, błąd)). Bez id: gałąź agenta z pola
+        `gałąź:` zadania (project, branch), z bazą w gałęzi wybranej teraz w repozytorium."""
+        if not rid and (project or branch):
+            return self._branch_repo(str(project), str(branch))
         rec = self.get(str(rid))
         if not rec or rec.get("kind") != "task" or not rec.get("branch"):
             return None, (404, "Nie ma gałęzi tego uruchomienia.")
@@ -909,9 +920,28 @@ class Manager:
             return None, (409, "Nie ma gałęzi %s." % rec["branch"])
         return (rec, top), None
 
-    def diff(self, rid):
+    def _branch_repo(self, project, branch):
+        if not self.projekt.BRANCH.match(branch) or ".." in branch:
+            return None, (400, "Gałąź agenta ma postać agent/nazwa.")
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(project)
+        top = self._git_top(folder) if folder else ""
+        if not top:
+            return None, (404, "Nie ma repozytorium projektu.")
+        if git_run(top, ["rev-parse", "--verify", "-q", "refs/heads/" + branch], timeout=15)[0] != 0:
+            return None, (409, "Nie ma gałęzi %s." % branch)
+        code, cur, _ = git_run(top, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+        base = cur.strip() if code == 0 else ""
+        if not base or base == branch:
+            return None, (409, "W repozytorium wybrana jest gałąź %s; wybierz gałąź bazową." % (base or "(brak)"))
+        code, mb, _ = git_run(top, ["merge-base", base, branch], timeout=15)
+        rec = {"id": "", "kind": "task", "state": "done", "project": project, "branch": branch, "base": base,
+               "baseCommit": mb.strip() if code == 0 else base, "title": branch}
+        return (rec, top), None
+
+    def diff(self, rid, project="", branch=""):
         """GET /api/agent/diff: (kod, tekst diffu gałęzi względem bazy, najwyżej DIFF_MAX bajtów | błąd)."""
-        found, error = self._run_repo(rid)
+        found, error = self._run_repo(rid, project, branch)
         if error:
             return error[0], error[1]
         rec, top = found
@@ -924,10 +954,11 @@ class Manager:
             out = raw[:DIFF_MAX].decode("utf-8", "ignore") + "\n… (diff obcięty do 200 KB)\n"
         return 200, out
 
-    def merge(self, rid):
-        """POST /api/agent/merge: git merge --no-ff gałęzi uruchomienia do bazy, bez push. Tylko na gałęzi bazowej,
-        bez niezatwierdzonych zmian (poza plikami standardu, które zmienia panel) i bez konfliktów; inaczej 409."""
-        found, error = self._run_repo(rid)
+    def merge(self, rid, project="", branch=""):
+        """POST /api/agent/merge: git merge --no-ff gałęzi uruchomienia (albo gałęzi z pola `gałąź:`) do bazy,
+        bez push. Tylko na gałęzi bazowej, bez niezatwierdzonych zmian (poza plikami standardu, które zmienia panel)
+        i bez konfliktów; inaczej 409."""
+        found, error = self._run_repo(rid, project, branch)
         if error:
             return error[0], error[1], {}
         rec, top = found
@@ -1989,6 +2020,16 @@ class Manager:
                 started.append(extra["id"])
                 free -= 1
         return started
+
+
+def with_answers(task, tasks):
+    """Szczegóły zadania z odpowiedziami właściciela z formularzy poprzedników (`po:`, pole `pyta:`)."""
+    d = dict(task.get("detail") or {})
+    ids = {w.get("id") for w in task.get("waitingFor") or [] if isinstance(w, dict) and w.get("done") and w.get("id")}
+    extra = [a for t in tasks if t.get("id") in ids for a in (t.get("detail") or {}).get("answers") or []]
+    if extra:
+        d["answers"] = list(d.get("answers") or []) + extra
+    return d
 
 
 POST_TASK = "Przygotować post na "

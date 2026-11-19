@@ -286,17 +286,20 @@ DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "ma
                "materialy": "refs", "wynik": "result", "decyzja": "decision", "zostało": "left", "zostalo": "left",
                "poprawka": "fix", "następne": "next", "nastepne": "next",
                "wyświetlenia": "views", "wyswietlenia": "views", "kliknięcia": "clicks", "klikniecia": "clicks",
-               "konta": "accounts", "link": "link"}
+               "konta": "accounts", "link": "link", "gałąź": "branch", "galaz": "branch", "pyta": "asks",
+               "odpowiedź": "answers", "odpowiedz": "answers"}
 DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
               "left": "zostało", "fix": "poprawka", "next": "następne", "views": "wyświetlenia",
-              "clicks": "kliknięcia", "accounts": "konta", "link": "link"}
-DETAIL_ORDER = ["goal", "doneWhen", "refs", "steps", "views", "clicks", "accounts", "link", "result", "decision",
+              "clicks": "kliknięcia", "accounts": "konta", "link": "link", "branch": "gałąź", "asks": "pyta",
+              "answers": "odpowiedź"}
+DETAIL_ORDER = ["goal", "doneWhen", "refs", "branch", "asks", "answers", "steps", "views", "clicks", "accounts", "link", "result", "decision",
                 "left", "fix", "next"]   # kroki i notatki: "steps"
 # Wyniki publikacji (wiersze kampanii): liczby całkowite i adres. W szczegółach publikacji zawsze obecne
 # (None / ""), w zadaniach ZADANIA.md tylko wtedy, gdy wiersz jest zapisany.
 PUB_COUNTS = ("views", "clicks", "accounts")
 PUB_KEYS = PUB_COUNTS + ("link",)
 LINK = re.compile(r"^https?://\S+$")
+BRANCH = re.compile(r"^agent/[A-Za-z0-9._/-]{1,120}$")
 STEP_KEY = "krok"           # set_detail: {"index": n, "done": bool} zmienia n-ty krok (od 0)
 DETAIL_INDENT = "  "
 DETAIL_LINE = re.compile(r"^(?:[-*]\s+)?([^:|\[\]`]{2,20}?)\s*:\s*(.*?)\s*$")
@@ -373,6 +376,16 @@ def parse_detail(lines):
             d["refs"] += [ref_of(v) for v in re.split(r",\s+", value) if v.strip()]
         elif key == "next":
             d["next"] = d["next"] or value
+        elif key == "branch":                 # gałąź agenta do przejrzenia i scalenia w panelu
+            if BRANCH.match(value.strip()):
+                d["branch"] = value.strip()
+            else:
+                d["notes"].append(s)
+        elif key == "asks":                   # pola formularza dla właściciela: „pyta: etykieta; etykieta”
+            d["asks"] = d.get("asks", []) + [a.strip() for a in value.split(";") if a.strip()]
+        elif key == "answers":                # „odpowiedź: etykieta = wartość”, wiersz na pole
+            label, _, val = value.partition("=")
+            d.setdefault("answers", []).append({"label": label.strip(), "value": val.strip()})
         elif key:
             d[key] = (d[key] + " " + value).strip() if d[key] else value
         else:
@@ -1076,7 +1089,7 @@ def set_detail(root, file_rel, line_no, title, key, value):
     if isinstance(value, list):
         raw = [str(v) for v in value]
     elif isinstance(value, str):
-        raw = value.split("\n") if field == "refs" else [value]
+        raw = value.split("\n") if field in ("refs", "answers") else [value]
     else:
         raise ValueError("wartość to tekst")
     if sum(len(v) for v in raw) > 2000:
@@ -1092,9 +1105,17 @@ def set_detail(root, file_rel, line_no, title, key, value):
         values = [v.strip() for v in raw[:1] if v.strip()]
         if values and (len(values[0]) > 500 or not LINK.match(values[0])):
             raise ValueError("link: adres http:// albo https:// bez spacji")
+    elif field == "branch":
+        values = [v.strip() for v in raw[:1] if v.strip()]
+        if values and (not BRANCH.match(values[0]) or ".." in values[0]):
+            raise ValueError("gałąź: agent/nazwa (litery, cyfry, . _ - /)")
+    elif field == "answers":
+        values = [_clean(v, 300) for v in raw if v.strip()]
+        if any("=" not in v for v in values):
+            raise ValueError("odpowiedź: etykieta = wartość")
     else:
         values = [v for v in (_clean(v, 300 if field == "refs" else 1000) for v in raw) if v]
-    if field != "refs":
+    if field not in ("refs", "answers"):
         values = values[:1]
     path = _task_file(root, file_rel)
     lines = _lines(path)

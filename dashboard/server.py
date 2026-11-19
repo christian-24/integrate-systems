@@ -332,9 +332,9 @@ def update_task(body):
 
 
 DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
-               "wyświetlenia", "kliknięcia", "konta", "link")
+               "wyświetlenia", "kliknięcia", "konta", "link", "gałąź", "pyta", "odpowiedź")
 DETAIL_ALIASES = {"nastepne": "następne", "wyswietlenia": "wyświetlenia", "klikniecia": "kliknięcia",
-                  "material": "materiał", "zostalo": "zostało"}
+                  "material": "materiał", "zostalo": "zostało", "galaz": "gałąź", "odpowiedz": "odpowiedź"}
 
 
 def update_detail(body):
@@ -737,7 +737,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
-          "/api/agent/merge": lambda b: get_agents().merge(b.get("id", "")),
+          "/api/agent/merge": lambda b: get_agents().merge(b.get("id", ""), b.get("project", ""), b.get("branch", "")),
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
           "/api/agent/recheck": lambda b: get_agents().recheck_login(),
@@ -1413,7 +1413,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
         if path == "/api/agent/diff":
-            code, text = get_agents().diff((parse_qs(url.query).get("id") or [""])[0])
+            qs = parse_qs(url.query)
+            code, text = get_agents().diff((qs.get("id") or [""])[0], (qs.get("project") or [""])[0],
+                                           (qs.get("branch") or [""])[0])
             if code == 200:
                 return self._send(200, text, "text/plain; charset=utf-8")
             return self._send(code, json.dumps({"ok": False, "error": text}, ensure_ascii=False),

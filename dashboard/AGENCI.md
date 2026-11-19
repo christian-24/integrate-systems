@@ -304,6 +304,11 @@ liczone od chwili otwarcia strony).
 | `/api/agent/stop` | `{"id": runId}` | zatrzymuje albo zdejmuje z kolejki |
 | `/api/agent/merge` | `{"id": runId}` | `git merge --no-ff` gałęzi uruchomienia do `base` w repozytorium projektu, bez push; odpowiedź `commit`; 404 bez gałęzi albo repozytorium; 409 z opisem: uruchomienie trwa, już scalona, w repozytorium wybrana inna gałąź niż `base`, trwa inne scalanie, niezatwierdzone zmiany (poza `KARTA.md`, `ZADANIA.md`, `DECYZJE.md`, które zmienia panel), brak zmian, pliki sekretów na gałęzi (dodane albo zmienione `.env*`, `*.key`, `*.pem`; scalenie nie startuje, lista plików w opisie), konflikt (scalenie przerwane, repozytorium bez zmian) |
 
+Gałąź bez uruchomienia (pole `gałąź:` zadania): `/api/agent/merge` z `{"project", "branch"}` i
+`/api/agent/diff?project=&branch=`; tylko gałęzie `agent/…`, baza to gałąź wybrana teraz w repozytorium.
+Zasada w poleceniu agenta: bez zlecania właścicielowi kroków technicznych; potrzebne dane jako pytanie w `KARTA.md`.
+Odpowiedzi z formularza `pyta:` poprzedników (`po:`) trafiają do polecenia jako „Dane od właściciela”.
+
 `GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
 błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.
 | `/api/agent/automat` | `{"enabled": bool}` | włącza i wyłącza Automat |
