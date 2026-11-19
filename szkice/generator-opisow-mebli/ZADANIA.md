@@ -47,15 +47,17 @@ termin: 2026-11-25
   zostało: poprawki niezacommitowane i niewdrożone; `caddy validate` i pytest nieuruchomione (brak uprawnień)
 - [ ] Zapisz poprawki SEC-2 (3 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-2
   cel: poprawki 3 LOW z SAST frontendu zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
-  gotowe gdy: poprawki 3 LOW są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); testy frontendu zielone albo w zostało: powód ich pominięcia
+  gotowe gdy: poprawki 3 LOW są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); testy frontendu zielone
   materiał: docs/security/raport-audytu.md
   Poprawki z re-audytu leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/generator-opisow-mebli), poza katalogiem uruchomienia.
   Przenieś je stamtąd (`git -C /home/panel/projekty/generator-opisow-mebli diff -- <pliki frontendu>`); gdy nie masz dostępu, nanieś 3 LOW ponownie według raportu.
+  Bez Node.js na serwerze testów frontendu nie uruchomisz: wtedy [!] z blokadą „brak Node.js do testów frontendu”, poprawki zostają w katalogu uruchomienia.
 - [ ] Zapisz poprawki SEC-4 (limit body Caddy, 2 LOW) na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Zamknij SEC-4
   cel: limit body na Caddy i poprawki 2 LOW zapisane na gałęzi uruchomienia, gotowe do scalenia w panelu
-  gotowe gdy: zmiany są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); `caddy validate` i pytest zielone albo w zostało: powód
+  gotowe gdy: zmiany są w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); `caddy validate` i pytest zielone
   materiał: docs/security/raport-audytu.md
   Poprawki leżą niezacommitowane w głównym katalogu repozytorium; przenieś je jak przy SEC-2 albo nanieś ponownie według raportu.
+  Gdy `caddy validate` albo pytest nie da się uruchomić (brak uprawnień): [!] z blokadą i poleceniem, które trzeba dopuścić.
 - [ ] Przejrzyj zmiany agenta SEC-2 i SEC-4 i scal w panelu | kto: ty | kiedy: 2026-11-22 | czas: 15 | po: Zapisz poprawki SEC-2, Zapisz poprawki SEC-4
   cel: poprawki SEC-2 i SEC-4 w gałęzi master repozytorium Opisarni na serwerze
   gotowe gdy: oba uruchomienia scalone w panelu do master (bez push); w notatce pod zadaniem liczba zmienionych plików
@@ -106,7 +108,7 @@ termin: 2026-11-17
   Mistral: mistral.ai/terms, sekcja Data Processing Agreement; zapisz wersję i datę przy kroku.
   Regulamin i polityka: stopka opisarnia.pl, w każdym dokumencie wyszukaj „Anthropic” i „Mistral” (Cmd+F).
   Gdy dostawcy brakuje w dokumencie: zadanie dla Claude „Dopisz Anthropic i Mistral do regulaminu i polityki prywatności”; wdrożenie po Twojej zgodzie.
-  Zaproszenia do partii 1–3 i wiadomości do znajomych czekają na to zadanie (po:); posty: pytanie 13 w KARTA.md.
+  Wszystkie wiadomości do ludzi (zaproszenia, wiadomości, przypomnienia) i publikacje w kampanie/staly-rytm.md czekają na to zadanie (po:); komentarze: pytanie 13 w KARTA.md.
 
 ## Etap: Walidacja i marketing
 termin: 2026-12-23
@@ -115,11 +117,12 @@ termin: 2026-12-23
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [x] Metryki: metryki.md w repozytorium, pomiar startowy 2026-11-18: 0 kont, 0 aktywnych, 0 płacących
 - [ ] Wpisz pomiar tygodniowy do metryki.md | kto: ty | kiedy: 2026-11-23 | czas: 10
-  cel: wiersz 2026-11-23 w tabeli pomiarów uzupełniony liczbami z produkcji
+  cel: liczby produktu z 23.11 (konta, aktywne, płacący, MRR) z produkcji, podstawa decyzji go/no-go
   gotowe gdy: w metryki.md, punkt 3, wiersz 2026-11-23 ma liczby w kolumnach konta Free, nowe konta, aktywne, płacący i MRR
   materiał: metryki.md#3
   materiał: metryki.md#6
   Pomiar co poniedziałek; kolejne: 2026-11-30 (checkpoint), 2026-12-07, 2026-12-14.
+  Bez licznika: konta w kampanii liczą zadania 25.11 i 30.11 (przyrost), żeby wynik kampanii nie liczył kont dwa razy.
 - [x] Plan pierwszych 10 kont do 30.11: marketing/plan-10-kont.md, przyjęty wariant B (2026-11-18)
 - [ ] Zdecyduj go/no-go dla Opisarni | kto: ty | kiedy: 2026-12-23
   cel: decyzja go, zamrożenie albo pivot zapisana w DECYZJE.md
@@ -132,6 +135,9 @@ termin: 2026-12-23
 ## Etap: Pierwsze 10 kont (wariant B)
 termin: 2026-11-30
 
+> Liczby kontaktów i kont zbiera pole `licznik:`: przy „Zrobione” podajesz liczbę, panel dopisuje ją w kampanie/staly-rytm.md, sekcja „Wyniki i wnioski”.
+> Licznik liczy przyrost od poprzedniego zadania z tym samym licznikiem. Wiadomości do ludzi czekają na „Potwierdź DPA” (po:).
+
 - [x] Sprawdź rejestrację na telefonie: mail weryfikacyjny dochodzi (działa od 2026-11-18, potwierdził właściciel)
 - [x] Załóż rejestr kontaktów marketing/kontakty.md bez nazwisk | kto: claude | gdzie: chmura | kiedy: 2026-11-19
   wynik: powstał marketing/kontakty.md: 10 wymaganych kolumn, 32 wiersze (po 8 firm w partiach 1–3 i 8 firm rezerwy w partii 4), wszystkie komórki stanu startowo „nie”, bez nazwisk, stanowisk i adresów; plik jest dodany do indeksu na gałęzi agent/2026-11-19-rejestr-kontaktow, bez commita
@@ -142,14 +148,35 @@ termin: 2026-11-30
   materiał: marketing/plan-10-kont.md#7
   materiał: marketing/plan-10-kont.md#9
   Bez nazwisk, stanowisk i adresów: dane osobowe tylko w marketing/outreach/rejestr-zgod.md. W kolumnach daty RRRR-MM-DD albo „tak”/„nie”.
-- [ ] Załóż tabelę dziennego pomiaru z planu (pkt 8) | kto: ty | kiedy: 2026-11-19 | czas: 5
-  cel: jedno miejsce na dzienne liczby kontaktów i kont od 19.11 do 30.11
-  gotowe gdy: tabela z punktu 8 planu ma wiersze 19.11–30.11 i wpisane liczby z 19.11
-  materiał: marketing/plan-10-kont.md#8
-  Tabela zawiera tylko liczby; nazwiska i adresy wyłącznie w marketing/outreach/rejestr-zgod.md (plan, pkt 9).
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
+- [ ] Scal rejestr kontaktów z gałęzi agent/2026-11-19-rejestr-kontaktow | kto: ty | kiedy: 2026-11-19 | czas: 5
+  cel: marketing/kontakty.md jest w master repozytorium Opisarni, więc zadania kontaktowe i agenci go widzą
+  gotowe gdy: `git log -1 -- marketing/kontakty.md` na master repozytorium na serwerze pokazuje commit z rejestrem
+  - [ ] `ssh ops@2.29.181.133`; w repozytorium /home/panel/projekty/generator-opisow-mebli ustaw `git config user.name` i `user.email` (jako panel)
+  - [ ] w katalogu uruchomienia gałęzi agent/2026-11-19-rejestr-kontaktow: `sudo -u panel git commit -m "docs(marketing): rejestr kontaktów partii 1–4"`
+  - [ ] panel, Agenci: uruchomienie „Załóż rejestr kontaktów…”, diff przejrzany, scalone do master
+  Plik leży w indeksie gałęzi bez commita (zostało: zadania „Załóż rejestr kontaktów…”), dlatego scalenie w panelu wymaga najpierw commita.
+- [ ] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
+  cel: przy każdej firmie z partii 1–3 gotowa wiadomość 1 ze zdaniem o tej firmie, do skopiowania bez poprawek
+  gotowe gdy: plik wiadomosci/wiadomosc-1-partie-1-3.md w folderze karty ma 24 sekcje (firma, partia, wiadomość 1 ze szkicu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu firmy); bez nazwisk i adresów; nic nie wysłane
+  materiał: marketing/plan-10-kont.md#5
+  materiał: marketing/outreach/drafts/
+  materiał: STYL.md
+  Firma bez draftu w marketing/outreach/drafts/: zdanie z punktu 5 planu (kolumna „Dlaczego te”) i dopisek „bez draftu” w sekcji.
+- [ ] Przygotuj 8 tez do komentarzy pod postami o Allegro i eksporcie mebli | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+  cel: właściciel ma gotowe merytoryczne tezy, które dopasowuje do cudzych postów w 5 minut
+  gotowe gdy: plik wiadomosci/komentarze-tezy.md w folderze karty ma 8 tez po 2–3 zdania, każda z jednym faktem albo liczbą z planu lub draftów postów, bez linku i bez nazwy Opisarni; nic nie opublikowane
+  materiał: marketing/plan-10-kont.md#10
+  materiał: marketing/linkedin/drafts/
+  materiał: STYL.md
+- [ ] Przygotuj szkic wiadomości do kont bez pierwszej generacji | kto: claude | gdzie: chmura | kiedy: 2026-11-27
+  cel: krótka wiadomość, po której osoba z kontem generuje pierwszy opis
+  gotowe gdy: plik wiadomosci/konta-bez-generacji.md w folderze karty ma szkic do 400 znaków z jednym krokiem (typ, wymiary, materiał, „Generuj”) i pytaniem, co przeszkodziło; oferta zgodna z punktem 2 planu; nic nie wysłane
+  materiał: marketing/plan-10-kont.md#2
+  materiał: marketing/plan-10-kont.md#3
+  materiał: STYL.md
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | po: Potwierdź DPA, Scal rejestr kontaktów | licznik: zaproszenia
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 1
-  gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 19.11
+  gotowe gdy: każda z 8 firm ma zaznaczony krok: zaproszenie wysłane albo notatkę, dlaczego nie (firma nie działa, ma już opisy po niemiecku)
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
   - [ ] Kedameble
@@ -161,9 +188,10 @@ termin: 2026-11-30
   - [ ] STIPA
   - [ ] Smartwood
   Przed zaproszeniem 2 minuty na sprawdzenie, czy firma działa i nie ma już opisów po niemiecku. Zaproszenie bez oferty.
-- [ ] Wyślij wiadomość do 5 znajomych z branży (wariant B, tura 1) | kto: ty | kiedy: 2026-11-20 | czas: 15 | po: Potwierdź DPA
+  marketing/kontakty.md: plik powstanie w master w zadaniu „Scal rejestr kontaktów…” (dziś tylko na gałęzi agenta).
+- [ ] Wyślij wiadomość do 5 znajomych z branży (wariant B, tura 1) | kto: ty | kiedy: 2026-11-20 | czas: 15 | po: Potwierdź DPA | licznik: linki
   cel: 5 osób z branży, które znasz osobiście, dostaje link do darmowego konta
-  gotowe gdy: 5 wiadomości wysłanych; w tabeli z punktu 8 przy 20.11 wpisane „Linki podane: 5”
+  gotowe gdy: 5 osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
   materiał: marketing/plan-10-kont.md#5
   Szkic „wiadomości do znajomego z branży” jest na końcu punktu 5. Listę osób znasz tylko Ty.
 - [ ] Odpowiedz na komentarze pod postem 1 | kto: ty | kiedy: 2026-11-20 | czas: 10
@@ -171,9 +199,9 @@ termin: 2026-11-30
   gotowe gdy: pod postem 1 na LinkedIn i Facebooku nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
   Szkic odpowiedzi „jak to wypróbować” jest w punkcie 4.
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Potwierdź DPA, Scal rejestr kontaktów | licznik: zaproszenia
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 2
-  gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 21.11
+  gotowe gdy: każda z 8 firm ma zaznaczony krok: zaproszenie wysłane albo notatkę, dlaczego nie (firma nie działa, ma już opisy po niemiecku)
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
   - [ ] ERMA Meble
@@ -184,23 +212,27 @@ termin: 2026-11-30
   - [ ] Miloni
   - [ ] VERYSIMPL
   - [ ] Lano Meble
-- [ ] Wyślij wiadomość 1 do osób z partii 1, które przyjęły zaproszenie | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 1
+  marketing/kontakty.md: plik powstanie w master w zadaniu „Scal rejestr kontaktów…”.
+- [ ] Wyślij wiadomość 1 do osób z partii 1, które przyjęły zaproszenie | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 1, Przygotuj szkice wiadomości 1, Potwierdź DPA | licznik: przyjęte
   cel: każda osoba, która przyjęła zaproszenie, dostaje pytanie bez linku
-  gotowe gdy: w tabeli z punktu 8 przy 21.11 wpisane liczby „Przyjęte” i „Rozmowy”
+  gotowe gdy: każda osoba z partii 1, która przyjęła zaproszenie, dostała wiadomość 1 bez linku
+  materiał: wiadomosci/wiadomosc-1-partie-1-3.md
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
-  Zdanie o firmie weź z pierwszego akapitu jej draftu w marketing/outreach/drafts/. Link dopiero po odpowiedzi „tak” (wiadomość 2).
-- [ ] Napisz 5 komentarzy pod cudzymi postami o Allegro i eksporcie mebli | kto: ty | kiedy: 2026-11-22 | czas: 30
+  Licznik: liczba osób, które przyjęły zaproszenie. wiadomosci/wiadomosc-1-partie-1-3.md: plik powstanie w zadaniu „Przygotuj szkice wiadomości 1…”. Link dopiero po odpowiedzi „tak” (wiadomość 2).
+- [ ] Napisz 5 komentarzy pod cudzymi postami o Allegro i eksporcie mebli | kto: ty | kiedy: 2026-11-22 | czas: 30 | po: Przygotuj 8 tez do komentarzy
   cel: wyjście poza własną sieć kontaktów bez kosztów
   gotowe gdy: 5 merytorycznych komentarzy pod postami 5 różnych autorów, bez linku do Opisarni
+  materiał: wiadomosci/komentarze-tezy.md
   materiał: marketing/plan-10-kont.md#10
-- [ ] Wyślij wiadomość do 5 kolejnych znajomych z branży (wariant B, tura 2) | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wyślij wiadomość do 5 znajomych z branży
+  wiadomosci/komentarze-tezy.md: plik powstanie w zadaniu „Przygotuj 8 tez do komentarzy…”.
+- [ ] Wyślij wiadomość do 5 kolejnych znajomych z branży (wariant B, tura 2) | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wyślij wiadomość do 5 znajomych z branży, Potwierdź DPA | licznik: linki
   cel: kolejne 5 osób z branży dostaje link do darmowego konta
-  gotowe gdy: 5 wiadomości wysłanych; w tabeli z punktu 8 przy 23.11 wpisane „Linki podane”
+  gotowe gdy: 5 kolejnych osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
   materiał: marketing/plan-10-kont.md#5
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Załóż rejestr kontaktów, Potwierdź DPA
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 3 | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: Potwierdź DPA, Scal rejestr kontaktów | licznik: zaproszenia
   cel: 8 zaproszeń do osób od e-commerce lub marketingu w firmach z partii 3
-  gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8” przy 24.11
+  gotowe gdy: każda z 8 firm ma zaznaczony krok: zaproszenie wysłane albo notatkę, dlaczego nie (firma nie działa, ma już opisy po niemiecku)
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
   - [ ] Meble Emilia
@@ -212,71 +244,79 @@ termin: 2026-11-30
   - [ ] Comforteo
   - [ ] MGK Meble
   Większe firmy: szukaj osoby od e-commerce lub marketingu, nie właściciela.
-- [ ] Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2 | kto: ty | kiedy: 2026-11-24 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 2
+  marketing/kontakty.md: plik powstanie w master w zadaniu „Scal rejestr kontaktów…”.
+- [ ] Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2 | kto: ty | kiedy: 2026-11-24 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 2, Przygotuj szkice wiadomości 1, Potwierdź DPA | licznik: przyjęte
   cel: każda osoba, która przyjęła zaproszenie po 21.11, dostaje pytanie bez linku
-  gotowe gdy: w tabeli z punktu 8 przy 24.11 wpisane liczby „Przyjęte” i „Rozmowy”
+  gotowe gdy: każda osoba z partii 1 i 2, która przyjęła zaproszenie po 21.11, dostała wiadomość 1 bez linku
+  materiał: wiadomosci/wiadomosc-1-partie-1-3.md
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
-- [ ] Wyślij przypomnienia do partii 1 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-25 | czas: 10 | po: Wyślij wiadomość 1 do osób z partii 1
+  Licznik: liczba osób, które przyjęły zaproszenie po 21.11.
+- [ ] Wyślij przypomnienia do partii 1 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-25 | czas: 10 | po: Wyślij wiadomość 1 do osób z partii 1, Potwierdź DPA | licznik: rozmowy
   cel: jedno przypomnienie do osób z partii 1, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa z partii 1 bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
-- [ ] Policz konta na punkt kontrolny 25.11 | kto: ty | kiedy: 2026-11-25 | czas: 10 | po: Załóż tabelę dziennego pomiaru
+  Licznik: liczba rozmów z partii 1 (osoby, które odpisały na wiadomość 1).
+- [ ] Policz konta na punkt kontrolny 25.11 | kto: ty | kiedy: 2026-11-25 | czas: 10 | licznik: konta
   cel: decyzja, czy uruchomić rezerwę z punktu 7 planu
-  gotowe gdy: liczba kont z 25.11 wpisana w tabeli z punktu 8; przy wyniku poniżej 4 uruchomiona rezerwa
+  gotowe gdy: liczba kont Free z 25.11 (bez własnych i testowych) podana przy zamknięciu; przy wyniku poniżej 4 w notatce pod zadaniem decyzja o rezerwie
   materiał: marketing/plan-10-kont.md#7
   materiał: metryki.md#6
+  Licznik: konta Free razem na 25.11 (start 18.11: 0, więc to przyrost).
   Rezerwa (partia 4): Kerbe Design, Lofthron, Albero Meble, Kverko, Mille Tavoli, Stol Poprosze, Sleep Home, Valor Meble.
   Rezerwa obejmuje też dodatkowy post 28.11 (marketing/linkedin/drafts/2026-06-24-chatgpt-nie-wystarcza-workflow.md).
-- [ ] Wyślij wiadomość 1 do kontaktów z partii 3 | kto: ty | kiedy: 2026-11-26 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 3
+- [ ] Wyślij wiadomość 1 do kontaktów z partii 3 | kto: ty | kiedy: 2026-11-26 | czas: 15 | po: Wyślij zaproszenia LinkedIn do 8 firm z partii 3, Przygotuj szkice wiadomości 1, Potwierdź DPA | licznik: przyjęte
   cel: każda osoba z partii 3, która przyjęła zaproszenie, dostaje pytanie bez linku
-  gotowe gdy: w tabeli z punktu 8 przy 26.11 wpisane liczby „Przyjęte” i „Rozmowy”
+  gotowe gdy: każda osoba z partii 3, która przyjęła zaproszenie, dostała wiadomość 1 bez linku
+  materiał: wiadomosci/wiadomosc-1-partie-1-3.md
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
+  Licznik: liczba osób z partii 3, które przyjęły zaproszenie.
 - [ ] Odpowiedz na komentarze pod postami 2 i 3 | kto: ty | kiedy: 2026-11-26 | czas: 15
   cel: każdy komentarz pod postami z 23.11 i 25.11 ma odpowiedź
   gotowe gdy: pod postami 2 i 3 nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
-- [ ] Wyślij przypomnienia do partii 2 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 10 | po: Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2
+- [ ] Wyślij przypomnienia do partii 2 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 10 | po: Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2, Potwierdź DPA | licznik: rozmowy
   cel: jedno przypomnienie do osób z partii 2, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa z partii 2 bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
+  Licznik: liczba rozmów z partii 2.
 - [ ] Wpisz zgody na kontakt mailowy do rejestru zgód | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: każda zgoda z rozmów na LinkedIn zapisana, zanim użyjesz draftu maila
   gotowe gdy: w marketing/outreach/rejestr-zgod.md każda zgoda ma datę, osobę i podstawę „LinkedIn”; prośby o brak kontaktu jako „opt-out”
   materiał: marketing/outreach/rejestr-zgod.md
   materiał: marketing/plan-10-kont.md#9
-- [ ] Wyślij wiadomość do ostatnich znajomych z branży (wariant B, tura 3) | kto: ty | kiedy: 2026-11-28 | czas: 15 | po: Wyślij wiadomość do 5 kolejnych znajomych
+- [ ] Wyślij wiadomość do ostatnich znajomych z branży (wariant B, tura 3) | kto: ty | kiedy: 2026-11-28 | czas: 15 | po: Wyślij wiadomość do 5 kolejnych znajomych, Potwierdź DPA | licznik: linki
   cel: łącznie 10–15 osób z branży dostało link do darmowego konta
-  gotowe gdy: wiadomości wysłane; w tabeli z punktu 8 przy 28.11 wpisane „Linki podane”
+  gotowe gdy: łącznie 10–15 osób z branży (z turami 1 i 2) dostało wiadomość z linkiem opisarnia.pl/rejestracja
   materiał: marketing/plan-10-kont.md#5
 - [ ] Sprawdź, które nowe konta nie wygenerowały opisu | kto: ty | kiedy: 2026-11-28 | czas: 10
   cel: lista kont bez pierwszej generacji do krótkiej wiadomości 29.11
-  gotowe gdy: liczba kont bez udanej generacji wpisana w tabeli z punktu 8 przy 28.11
+  gotowe gdy: lista osób z kontem bez udanej generacji gotowa poza repozytorium (dane osobowe), tylko osoby, z którymi już rozmawiasz
   materiał: metryki.md#6
   Konto bez wygenerowanego opisu nie liczy się do celu 20 aktywnych (plan, pkt 10).
-- [ ] Wyślij krótką wiadomość do nowych kont bez generacji | kto: ty | kiedy: 2026-11-29 | czas: 15 | po: które nowe konta nie wygenerowały opisu
+- [ ] Wyślij krótką wiadomość do nowych kont bez generacji | kto: ty | kiedy: 2026-11-29 | czas: 15 | po: które nowe konta nie wygenerowały opisu, Przygotuj szkic wiadomości do kont bez pierwszej generacji, Potwierdź DPA
   cel: osoby z kontem, ale bez opisu, generują pierwszy opis
   gotowe gdy: każda osoba z listy z 28.11, z którą już rozmawiasz, dostała jedną wiadomość
+  materiał: wiadomosci/konta-bez-generacji.md
   materiał: marketing/plan-10-kont.md#3
-  Tylko do osób, z którymi już rozmawiasz.
-- [ ] Uzupełnij tabelę kanałów w metryki.md | kto: ty | kiedy: 2026-11-29 | czas: 15
-  cel: wiadomo, który kanał dał konta przed checkpointem 30.11
-  gotowe gdy: w metryki.md, punkt 4, wiersze T3 i T4 mają publikacje, wyświetlenia, kliknięcia i nowe konta dla LinkedIn, Facebooka i filmów
-  materiał: metryki.md#4
-- [ ] Wpisz pomiar checkpointu 30.11 do metryki.md | kto: ty | kiedy: 2026-11-30 | czas: 10
+  Tylko do osób, z którymi już rozmawiasz. wiadomosci/konta-bez-generacji.md: plik powstanie w zadaniu „Przygotuj szkic wiadomości do kont bez pierwszej generacji”.
+- [ ] Wpisz pomiar checkpointu 30.11 do metryki.md | kto: ty | kiedy: 2026-11-30 | czas: 10 | licznik: konta
   cel: liczba kont Free na checkpoint 30.11 z produkcji
   gotowe gdy: w metryki.md, punkt 3, wiersz 2026-11-30 ma liczby we wszystkich kolumnach
   materiał: metryki.md#3
   materiał: metryki.md#6
-- [ ] Zdecyduj o kanałach na grudzień według progu z planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 10 | po: Wpisz pomiar checkpointu 30.11, Uzupełnij tabelę kanałów
+  Licznik: nowe konta Free od pomiaru 25.11, więc suma licznika kont w kampanii to stan na 30.11.
+- [ ] Zdecyduj o kanałach na grudzień według progu z planu (pkt 8) | kto: ty | kiedy: 2026-11-30 | czas: 10 | po: Wpisz pomiar checkpointu 30.11
   cel: decyzja, które kanały zostają, a które wymieniasz
   gotowe gdy: w DECYZJE.md wpis z 2026-11-30 z liczbą kont i wybranym wariantem z tabeli „Decyzja 30.11”
   materiał: marketing/plan-10-kont.md#8
+  materiał: kampanie/staly-rytm.md#Wyniki i wnioski
   materiał: KARTA.md#Definicja ukończenia
   Progi: 10 i więcej kont: kanały zostają; 5–9: zostaje najlepszy kanał; 0–4: zmiana kanałów, najpierw sprawdzenie rejestracji.
+  Dane kanałów: wyniki pod wierszami publikacji w kampanie/staly-rytm.md (wyświetlenia, kliknięcia, konta) i liczniki z sekcji „Wyniki i wnioski”.
 
 ## Do rozplanowania
 

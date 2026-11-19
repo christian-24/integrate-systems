@@ -9,6 +9,8 @@
 > Szczegóły: wiersze wcięte o 2 spacje pod zadaniem: `cel:`, `gotowe gdy:`, `materiał:` (ścieżka, opcjonalnie `#5`),
 > kroki `- [ ] krok`, notatka `trwa: N dni` (zadanie trwa dłużej niż jeden dzień). Agent dopisuje `wynik:`, `decyzja:`, `zostało:`.
 > Twoje zadanie (`kto: ty`) ma `czas:`, a na najbliższe 7 dni także kroki albo materiał. Zadanie agenta ma `kiedy:`.
+> Pola dodatkowe: `sprawdza: kopia` (kontrola serwera) albo `sprawdza: plik <ścieżka>` potwierdza wykonanie;
+> `licznik: zaproszenia` (liczba podawana przy zamknięciu, trafia do „Wyniki i wnioski” kampanii), `kampania: nazwa.md`.
 
 ## Etap: Start projektu
 termin: {{DATA+14}}

@@ -26,13 +26,34 @@ Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
 Agent może dopisać pod pytaniem swoją rekomendację: wcięty wiersz `   propozycja: …` (w danych `proposal`).
 Propozycja nie jest odpowiedzią: pytanie czeka na Twoją `Odpowiedź:`.
+Gdy propozycja zmienia zadania, pod nią stoją wcięte wiersze `   skutek: …` (w danych `effects`, lista tekstów),
+po jednym na operację w `ZADANIA.md` tego projektu:
+
+| Operacja | Działanie |
+|---|---|
+| `po: <fragment poprzednika> → <fragment tytułu>` | dopisuje fragment do pola `po:` zadania |
+| `kiedy: RRRR-MM-DD → <fragment tytułu>` | zmienia `kiedy:` zadania |
+| `stan: zrobione → <fragment tytułu>` | stan `[x]` |
+| `stan: wstrzymane → <fragment tytułu>` | stan `[!]`, a bez blokady pole `blokada: wstrzymane: z pytania N, RRRR-MM-DD` |
+| `nowe: <wiersz zadania bez stanu>` | nowe zadanie `- [ ] …` w „Do rozplanowania” |
+
+Strzałka: `→` albo `->`. Zadanie wskazuje fragment tytułu bez wielkości liter: jedno otwarte zadanie, a gdy otwartego
+nie ma, jedno dowolne; fragment pasujący do kilku zadań albo do żadnego to błąd tej operacji (pozostałe się wykonują).
+Poprzednik w `po:` musi pasować do jakiegoś wiersza pliku.
+
+Przyjęcie propozycji w panelu zapisuje `Odpowiedź:` równą propozycji i wykonuje skutki; pod każdym zmienionym
+(i nowym) zadaniem dopisuje notatkę `z pytania N, RRRR-MM-DD`. Odpowiedź o innej treści skutków nie wykonuje: panel
+zakłada zadanie agenta „Zastosuj odpowiedź na pytanie N” (`kto: claude`, `kiedy:` dziś,
+`materiał: KARTA.md#Pytania do właściciela`).
 
 ```
 ## Pytania do właściciela
-1. Który kolor logo?
+1. Czy wstrzymać posty do potwierdzenia DPA?
    termin: 2026-11-21
-   propozycja: niebieski, zgodny z kolorem strony
-   Odpowiedź: niebieski
+   propozycja: wstrzymać post 2 do potwierdzenia DPA
+   skutek: po: potwierdź DPA → opublikuj post 2
+   skutek: kiedy: 2026-11-23 → opublikuj post 2
+   Odpowiedź: wstrzymać post 2 do potwierdzenia DPA
 ```
 
 ## Jeden format wiersza
@@ -55,12 +76,26 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `blokada` | powód, przy stanie `[!]` |
 | `kanał` | kanał publikacji, w kampaniach |
 | `po` | fragmenty tytułów zadań z tego samego pliku (po przecinku), które muszą być `[x]` wcześniej |
+| `sprawdza` | kontrola, która potwierdza wykonanie: klucz kontroli serwera (`kopia`, `kopia-poza`, `claude`, `claude-agent`, `zapis-kart`, `panel`, `useme`, `dysk`) albo `plik <ścieżka>` (plik w folderze projektu albo karty) |
+| `licznik` | liczba podawana przy zamknięciu: zaproszenia, przyjęte, rozmowy, linki, konta, oferty, odpowiedzi |
+| `kampania` | plik kampanii, do której trafia licznik (`kampanie/nazwa.md`, `nazwa.md` albo `nazwa`); bez pola: pierwsza kampania w toku |
 
 Wszystkie pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
 `wymaga` może mieć kilka wartości po przecinku (`wymaga: odbiór, zgoda`); każda z nich obowiązuje.
 `po: makietę, zatwierdź teksty`: poprzednikiem jest pierwszy wiersz tego samego pliku, którego tytuł zawiera fragment
 (bez wielkości liter). Dopóki któryś poprzednik nie jest `[x]` (albo fragment nie pasuje do żadnego wiersza),
 zadania nie da się uruchomić („Czeka na: …”).
+W drugą stronę każde zadanie ma w danych `unlocks` (`[{"id", "title", "executor", "date"}]`: otwarte zadania z `po:`
+na nim, w kolejności wierszy) i `unlockCount` (ich liczba).
+
+`sprawdza: kopia` (albo `sprawdza: plik docs/WDROZENIE.md`): w danych zadania `check` = `{"key", "ok", "at"}`
+(bez pola `null`). `ok`: `true`, gdy kontrola serwera ma stan `ok` albo plik istnieje; `false` przy `zle`, `brak`
+albo braku pliku; `null` bez stanu serwera (Mac, PC) albo przy nieznanym kluczu. `at`: czas kontroli (ISO).
+Otwarte zadanie z `ok: true` nie trafia do „Dziś”; panel pokazuje „Wygląda na zrobione (…)” i „Zamknij”, które zapisuje
+`[x]` i notatkę `zamknięte na podstawie kontroli serwera z RRRR-MM-DD HH:MM`.
+
+`licznik: zaproszenia`: przy zamknięciu zadania podajesz liczbę; panel dopisuje w sekcji „Wyniki i wnioski” kampanii
+wiersz `- RRRR-MM-DD · zaproszenia 8 · <tytuł zadania>` (sekcję zakłada, gdy jej brak, wiersz `_Do uzupełnienia…_` usuwa).
 
 ## Szczegóły zadania
 
@@ -68,9 +103,9 @@ Pod wierszem zadania (w `ZADANIA.md` i w harmonogramie kampanii) mogą stać wie
 Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (także pustym).
 
 ```
-- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20
+- [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 1 | kto: ty | kiedy: 2026-11-19 | czas: 20 | licznik: zaproszenia
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 1
-  gotowe gdy: w tabeli z punktu 8 planu wpisane „Zaproszenia wysłane: 8”
+  gotowe gdy: 8 zaproszeń wysłanych do osób z listy partii 1
   materiał: marketing/plan-10-kont.md#5
   - [ ] Kedameble
   - [ ] Bambooko
@@ -121,6 +156,15 @@ liczą się otwarte zadania z `ZADANIA.md` (bez publikacji):
 | zadanie agenta bez `kiedy` | `kto: claude` albo `codex` w aktywnym projekcie, bez `kiedy`, poza sekcją „Do rozplanowania” |
 | `wynik:` bez odbioru | stan `[ ]`, jest `wynik:`, nie ma `wymaga` (praca zrobiona, a zadanie wisi: zamknij albo daj do odbioru) |
 | kampania bez celu liczbowego | kampania w stanie „w toku” bez pola `cel liczbowy` z liczbą |
+| `sprawdza:` z nieznanym kluczem | klucz spoza listy kontroli serwera i nie `plik <ścieżka>` |
+| słabe `gotowe gdy` | zawiera „albo w zostało” albo jest tylko wpisem do tabeli (słowa „tabel…” i „wpis…”, bez „i”, „oraz”, „a”, „;”) |
+
+Braki zgłaszane przy `KARTA.md` z pytań bez odpowiedzi:
+
+| Brak | Reguła |
+|---|---|
+| zły wiersz `skutek:` | operacja spoza listy albo zły zapis (brak strzałki, zła data, stan inny niż zrobione/wstrzymane) |
+| propozycja bez skutku | propozycja zawiera „wstrzymać”, „przesunąć”, „zamknąć” albo „dodać” (także formy „wstrzymaj”, „przesuń”, „zamknij”, „dodaj”), a pod pytaniem nie ma `skutek:` |
 
 ## Kampania
 
@@ -129,6 +173,17 @@ Pod tytułem pliku kampanii są pola: `stan` (plan, w toku, zakończona, wstrzym
 `cel liczbowy` i `wynik` to liczby (pierwsza liczba w wierszu: „40 kont” → 40, „1 200” → 1200); w danych kampanii
 `target` i `result` (liczba albo `null`). Kampania w toku powinna mieć `cel liczbowy`.
 Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
+
+Wiersze `- RRRR-MM-DD · <licznik> <n> · <tytuł zadania>` w sekcji „Wyniki i wnioski” (dopisuje je panel przy zamknięciu
+zadania z `licznik:`) dają w danych kampanii `counters` = `{licznik: suma}`; pozostałe wiersze to wnioski.
+Gdy `miernik` to nazwa licznika (`- miernik: konta`), `result` to większa z liczb: ręczny `wynik:` albo suma tego
+licznika (`resultManual`: sam ręczny wynik, `counterMetric`: nazwa licznika albo `""`).
+
+```
+## Wyniki i wnioski
+- 2026-11-19 · zaproszenia 8 · Wyślij zaproszenia LinkedIn do 8 firm z partii 1
+- 2026-11-21 · przyjęte 3 · Sprawdź przyjęte zaproszenia z partii 1
+```
 
 ## Raport PM
 
@@ -148,10 +203,12 @@ Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
 | najważniejsze decyzje | 3 pierwsze sprawy dla Ciebie: po terminie, potem najbliższa data, zgoda, pytanie, odbiór, z czasem `czas:` w minutach |
 | pytanie | otwarte pytanie z karty to decyzja rodzaju „pytanie”, 2 min; pytanie po terminie to ryzyko |
 | kolejność | otwarte zadanie z `po:`, którego data jest wcześniejsza niż data niezrobionego poprzednika albo poprzednik nie ma daty |
-| czeka na Ciebie | otwarte zadanie z `po:`, którego niezrobiony poprzednik ma `kto: ty` |
+| czeka na Ciebie | otwarte zadanie z `po:`, którego niezrobiony poprzednik ma `kto: ty`; raport grupuje po poprzedniku: jedno zadanie „· po Twoim zadaniu „…””, kilka „<poprzednik> wstrzymuje N zadań (najbliższe: …)” (`waitingOnYouBy`) |
+| do zamknięcia | otwarte zadanie z `sprawdza:`, którego kontrola ma `ok: true` (`toClose`); takie zadanie nie trafia do „Dziś”. Stan serwera z `PANEL_ZDROWIE_STAN` (domyślnie `/home/panel/.zdrowie-stan`); bez pliku kontrole serwera są pomijane, `plik <ścieżka>` zostaje |
+| kolejność „Dziś” i najważniejszych | po terminie najpierw (najstarsze), potem więcej odblokowanych zadań (`unlockCount`), potem priorytet projektu, potem data |
 | zawieszone | `[~]` bez odbioru i bez pracującego agenta dłużej niż 3 dni (od zmiany stanu, zapis panelu w `uruchomienia/stan.json`) |
 | odbiór czeka | otwarte zadanie z `wymaga: odbiór` dłużej niż 2 dni |
-| priorytet | `- priorytet:` z karty (1–5, brak = 3); decyzje, „Dziś” i „Jutro” sortowane po priorytecie projektu, potem po dacie; najważniejsze decyzje: po terminie, priorytet, data, zgoda, pytanie, odbiór |
+| priorytet | `- priorytet:` z karty (1–5, brak = 3); decyzje sortowane po priorytecie projektu, potem po dacie; „Dziś” i „Jutro”: po terminie, `unlockCount`, priorytet; najważniejsze decyzje: po terminie, `unlockCount`, priorytet, data, zgoda, pytanie, odbiór |
 | bez zapasu | etap z terminem (nie po terminie, nie zrobiony), w którym najpóźniejszy koniec otwartego zadania z datą (`kiedy` plus dni z notatki `trwa: N dni`, a bez niej z „N dni” w tytule) wypada w dniu terminu albo później |
 | ponad pojemność | suma `czas:` Twoich spraw na dziś (data najpóźniej dziś albo etap po terminie) większa niż `PANEL_DZIEN_MIN` (domyślnie 120 min); do przesunięcia zadania od najniższego priorytetu, aż suma się zmieści |
 | propozycja | pytanie z wierszem `propozycja:` pokazane z „propozycja: …” |
@@ -174,6 +231,9 @@ Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wy
 swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jeden wiersz `następne:`. Przy wierszu
 `poprawka:` poprawia pracę według niego. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
 (z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia, i z `   propozycja:`, gdy ma rekomendację).
+Propozycja, która zmienia zadania (wstrzymać, przesunąć, zamknąć, dodać, kolejność), zawsze ma wiersze `   skutek:`
+z operacjami z sekcji o pytaniach. Wiersza `gotowe gdy:` agent nie łagodzi: nie dopisuje „albo w zostało:”;
+warunek niespełniony kończy zadanie stanem `[!]`.
 W projekcie z repozytorium git panel zakłada osobny katalog roboczy (`<repo>/.agent/<id uruchomienia>`) na nowej gałęzi
 `agent/RRRR-MM-DD-krotka-nazwa` od bieżącego stanu; agent pracuje tylko tam. Po zakończeniu panel zapisuje
 niezacommitowane zmiany jednym lokalnym commitem na tej gałęzi (bez push), a scalenie do gałęzi bazowej następuje

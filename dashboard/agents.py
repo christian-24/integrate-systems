@@ -666,6 +666,13 @@ class Manager:
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
+            "- Gdy masz rekomendację, dopisz pod pytaniem wcięty wiersz `   propozycja: …`. Gdy przyjęcie propozycji "
+            "zmienia zadania w ZADANIA.md, pod propozycją zawsze dopisz każdą zmianę jako wcięty wiersz "
+            "`   skutek: <operacja>`, jedna operacja w wierszu: `po: <fragment poprzednika> → <fragment tytułu "
+            "zadania>`, `kiedy: RRRR-MM-DD → <fragment tytułu>`, `stan: zrobione|wstrzymane → <fragment tytułu>` "
+            "albo `nowe: <wiersz zadania>`. Panel wykona skutki dopiero po przyjęciu propozycji przez właściciela.",
+            "- Wiersza `gotowe gdy:` nie zmieniaj i nie łagodź (nie dopisuj „albo w zostało:” ani innych wyjątków). "
+            "Gdy warunku nie da się spełnić, opisz to w `zostało:` i zakończ stanem `[!]`.",
             "- Stan zmień w %s wyłącznie w wierszu tego zadania: gotowe to `[x]`; potrzebny przegląd właściciela to `[~]` "
             "i pole `wymaga: odbiór`. Gdy warunek „gotowe gdy” nie jest spełniony, zakończ stanem `[!]` z polem "
             "`blokada: powód` (bez `wymaga: odbiór`)." % (git["file"] if git else file),
@@ -946,6 +953,14 @@ class Manager:
             code, out, _ = git_run(top, ["rev-list", "--count", "%s..%s" % (base, rec["branch"])], timeout=15)
             if code == 0 and out.strip() == "0":
                 return 409, "Gałąź %s nie ma zmian do scalenia." % rec["branch"], {}
+            code, names, _ = git_run(top, ["diff", "--name-only", "--no-renames", "--diff-filter=d", "-z",
+                                           "%s...%s" % (base, rec["branch"])])
+            if code != 0:
+                return 409, "Nie udało się odczytać zmian gałęzi %s." % rec["branch"], {}
+            secret = [p for p in names.split("\0") if p and secret_file(p)]
+            if secret:
+                return 409, _short("Gałąź zawiera pliki z sekretami: %s. Usuń je z gałęzi i scal ponownie."
+                                   % ", ".join(secret[:5]), 300), {}
             msg = "Scalenie %s: %s" % (rec["branch"], rec["title"])
             code, out, err = git_run(top, git_ident(top) + ["-c", "commit.gpgsign=false", "merge", "--no-ff",
                                                             "--no-edit", "-m", msg, rec["branch"]], timeout=300)
@@ -1987,6 +2002,12 @@ STYLE_FILES = ("STYL.md", "marketing/STYL.md", "kampanie/STYL.md")
 PLAN_FILES = ("marketing/plan*.md", "kampanie/plan*.md", "PLAN.md", "plan*.md")
 RESULT_KEYS = ("result", "views", "clicks", "accounts", "wyswietlenia", "klikniecia", "konta")
 RESULT_NOTES = re.compile(r"^(wynik|wyświetlenia|wyswietlenia|kliknięcia|klikniecia|konta)\s*:\s*\S", re.I)
+
+
+def secret_file(path):
+    """Plik, którego panel nie scala: nazwa .env* albo rozszerzenie .key, .pem (bez wielkości liter)."""
+    name = os.path.basename(str(path).replace("\\", "/").rstrip("/")).lower()
+    return name.startswith(".env") or name.endswith((".key", ".pem"))
 
 
 def has_result(detail):

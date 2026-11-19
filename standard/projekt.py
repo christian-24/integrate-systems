@@ -72,6 +72,16 @@ PRIORITY_DEFAULT = 3                      # „- priorytet: 1–5” w KARTA.md;
 PRIORITIES = range(1, 6)
 DAY_MINUTES = 120                         # dzienna pojemność właściciela w minutach (PANEL_DZIEN_MIN)
 OWNER_SOON_DAYS = 7                       # zadanie właściciela z kiedy w tylu dniach potrzebuje kroków albo materiału
+# Pole „sprawdza:”: klucze kontroli serwera (uruchom/serwer/zdrowie.sh, „server.checks” w /api/data) albo „plik <ścieżka>”.
+SERVER_CHECKS = ("kopia", "kopia-poza", "claude", "claude-agent", "zapis-kart", "panel", "useme", "dysk")
+CHECK_FILE = "plik"
+HEALTH_FILE = "/home/panel/.zdrowie-stan"  # PANEL_ZDROWIE_STAN
+HEALTH_VALUES = ("ok", "zle", "brak")
+# Pole „licznik:”: nazwa liczby, którą właściciel podaje przy zamknięciu zadania (trafia do kampanii).
+COUNTERS = {"zaproszenia": "zaproszenia", "przyjęte": "przyjęte", "przyjete": "przyjęte", "rozmowy": "rozmowy",
+            "linki": "linki", "konta": "konta", "oferty": "oferty", "odpowiedzi": "odpowiedzi"}
+RESULTS_TITLE = "Wyniki i wnioski"
+CAMPAIGN_FILE = re.compile(r"^kampanie/[^/\\]+\.md$")
 
 TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
@@ -177,7 +187,8 @@ def parse_task(line):
         return None
     parts = re.split(r"\s*\|\s*", m.group(2))
     t = {"title": parts[0], "state": STATE[m.group(1)], "executor": "", "machine": "", "date": "", "slot": "",
-         "minutes": 0, "needsYou": "", "needs": [], "blocked": "", "channel": "", "after": [], "errors": []}
+         "minutes": 0, "needsYou": "", "needs": [], "blocked": "", "channel": "", "after": [], "check": None,
+         "counter": "", "campaignFile": "", "errors": []}
     for p in parts[1:]:
         k, sep, v = p.partition(":")
         k, v = k.strip().lower(), v.strip()
@@ -217,11 +228,49 @@ def parse_task(line):
         elif k == "po":
             t["after"] = [x.strip() for x in v.split(",") if x.strip()]
             bad = None if t["after"] else "po: podaj fragment tytułu zadania"
+        elif k == "sprawdza":
+            t["check"] = check_of(v)
+            bad = None if t["check"] else "sprawdza: podaj klucz kontroli serwera albo plik <ścieżka>"
+        elif k == "licznik":
+            t["counter"] = COUNTERS.get(v.lower(), "")
+            bad = None if t["counter"] else "licznik: %s (dozwolone: %s)" % (v, ", ".join(sorted(set(COUNTERS.values()))))
+        elif k == "kampania":
+            t["campaignFile"] = campaign_rel(v)
+            bad = None if t["campaignFile"] else "kampania: %s (plik kampanii, np. kampanie/nazwa.md)" % v
         else:
             bad = "nieznane pole „%s”" % k
         if bad:
             t["errors"].append(bad)
     return t
+
+
+def check_of(value):
+    """Wartość pola „sprawdza:” -> {"key", "ok": None, "at": ""} albo None przy pustej wartości.
+    Klucz kontroli serwera małymi literami; plik jako „plik <ścieżka>” (ścieżka względem folderu projektu)."""
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    head, _, rest = text.partition(" ")
+    if head.lower() == CHECK_FILE:
+        path = rest.strip().strip("`").strip()
+        return {"key": "%s %s" % (CHECK_FILE, path), "ok": None, "at": ""} if path else None
+    return {"key": text.lower(), "ok": None, "at": ""} if text else None
+
+
+def campaign_rel(value):
+    """Pole „kampania:” -> "kampanie/<plik>.md" albo "" przy złej wartości („nazwa”, „nazwa.md”, „kampanie/nazwa.md”)."""
+    v = str(value or "").strip().strip("`").replace("\\", "/")
+    if not v:
+        return ""
+    if not v.startswith("kampanie/"):
+        v = "kampanie/" + v
+    if not v.endswith(".md"):
+        v += ".md"
+    return v if CAMPAIGN_FILE.match(v) and ".." not in v else ""
+
+
+def known_check(key):
+    """Czy klucz pola „sprawdza:” jest znany: klucz kontroli serwera albo „plik <ścieżka>”."""
+    key = str(key or "")
+    return key in SERVER_CHECKS or (key.startswith(CHECK_FILE + " ") and bool(key[len(CHECK_FILE) + 1:].strip()))
 
 
 # ---------- szczegóły zadania: wcięte wiersze bezpośrednio pod wierszem zadania ----------
@@ -246,6 +295,16 @@ DETAIL_LINE = re.compile(r"^(?:[-*]\s+)?([^:|\[\]`]{2,20}?)\s*:\s*(.*?)\s*$")
 STEP = re.compile(r"^[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 TITLE_MAX = 120
 NOUN_START = re.compile(r"^\w{3,}(anie|enie|ęcie|ycie)$")   # „Wdrożenie”, „Przygotowanie”: rzeczownik zamiast czasownika
+DONE_LOOSE = re.compile(r"\balbo\s+w\s+[„\"]?zostało", re.I)    # „gotowe gdy: … albo w zostało: …” to nie warunek
+DONE_TABLE = re.compile(r"\btabel", re.I)
+DONE_ENTRY = re.compile(r"\bwpis", re.I)
+DONE_AND = re.compile(r"\b(i|oraz|a)\b|;", re.I)
+
+
+def weak_done(text):
+    """„gotowe gdy” niesprawdzalne: z wyjątkiem „albo w zostało” albo będące jedynie wpisem do tabeli."""
+    s = str(text or "")
+    return bool(DONE_LOOSE.search(s)) or bool(DONE_TABLE.search(s) and DONE_ENTRY.search(s) and not DONE_AND.search(s))
 
 
 def blank_detail():
@@ -357,6 +416,9 @@ def task_gaps(stages, tasks, today=None, active=True, campaigns=()):
     left_result = [t["title"] for t in open_ if t["state"] == "todo" and t["detail"]["result"]
                    and not t.get("needs") and not t.get("needsYou")]
     no_target = [c["name"] for c in campaigns if c.get("state") == "active" and c.get("target") is None]
+    bad_check = ["%s (%s)" % (t["title"], t["check"]["key"]) for t in open_
+                 if isinstance(t.get("check"), dict) and not known_check(t["check"].get("key"))]
+    weak = [t["title"] for t in open_ if t["detail"]["doneWhen"] and weak_done(t["detail"]["doneWhen"])]
     gaps = []
     if no_done:
         gaps.append("zadania bez „gotowe gdy” w etapie z terminem: %d (%s)" % (len(no_done), _examples(no_done)))
@@ -375,6 +437,11 @@ def task_gaps(stages, tasks, today=None, active=True, campaigns=()):
                     % (len(left_result), _examples(left_result)))
     if no_target:
         gaps.append("kampania w toku bez „cel liczbowy”: %d (%s)" % (len(no_target), _examples(no_target)))
+    if bad_check:
+        gaps.append("„sprawdza:” z nieznanym kluczem (dozwolone: %s, plik <ścieżka>): %d (%s)"
+                    % (", ".join(SERVER_CHECKS), len(bad_check), _examples(bad_check)))
+    if weak:
+        gaps.append("„gotowe gdy” z „albo w zostało” albo tylko z wpisem do tabeli: %d (%s)" % (len(weak), _examples(weak)))
     return gaps
 
 
@@ -384,6 +451,8 @@ def _task(t, pid, file_rel, no, kind, **extra):
               "stage": "", "group": "", "campaign": ""})
     t.setdefault("detail", blank_detail())
     t.setdefault("waitingFor", [])
+    t.setdefault("unlocks", [])
+    t.setdefault("unlockCount", 0)
     t.update(extra)
     return ["wiersz %d: %s" % (no, e) for e in errors]
 
@@ -393,6 +462,8 @@ def link_after(tasks):
 
     Poprzednik to pierwszy wiersz tego samego pliku (poza samym zadaniem), którego tytuł zawiera fragment,
     bez wielkości liter. Fragment bez pasującego wiersza: {"title": fragment, "done": False, "id": ""}.
+    W drugą stronę: "unlocks" [{"id", "title", "executor", "date"}] to otwarte zadania, które mają „po:” na tym
+    zadaniu (w kolejności wierszy), "unlockCount" ich liczba.
     """
     by_file = {}
     for t in tasks:
@@ -407,6 +478,18 @@ def link_after(tasks):
                 out.append({"title": hit["title"], "done": hit["state"] == "done", "id": hit["id"]} if hit
                            else {"title": frag, "done": False, "id": ""})
             t["waitingFor"] = out
+    by_id = {t["id"]: t for t in tasks}
+    for t in tasks:
+        t["unlocks"] = []
+    for t in sorted(tasks, key=lambda x: (x["project"], x["file"], x["line"])):
+        if t["state"] == "done":
+            continue
+        for w in t["waitingFor"]:
+            pred = by_id.get(w.get("id"))
+            if pred is not None and pred is not t and all(u["id"] != t["id"] for u in pred["unlocks"]):
+                pred["unlocks"].append({"id": t["id"], "title": t["title"], "executor": t["executor"], "date": t["date"]})
+    for t in tasks:
+        t["unlockCount"] = len(t["unlocks"])
     return tasks
 
 
@@ -481,12 +564,36 @@ def parse_campaign(text, pid, file_rel):
                 gaps.append("harmonogram bez publikacji")
         elif not is_filled(sec["body"]) and (title != "Wyniki i wnioski" or state == "done"):
             gaps.append("sekcja „%s” do uzupełnienia" % title)
+    counters = campaign_counters(section(sections, RESULTS_TITLE))
+    metric = re.sub(r"^licznik\s*:?\s*", "", meta.get("miernik", "").strip().lower())
+    counter_metric = COUNTERS.get(metric, "")
+    manual = number_of(meta.get("wynik"))
+    result = manual
+    if counter_metric in counters:            # wynik = większa z liczb: ręczny „wynik:” albo suma licznika miernika
+        total = counters[counter_metric]
+        result = total if manual is None else max(manual, total)
     camp = {"id": cid, "project": pid, "name": name, "state": state or "plan", "goal": meta.get("cel", ""),
             "metric": meta.get("miernik", ""), "target": number_of(meta.get("cel liczbowy")),
-            "result": number_of(meta.get("wynik")), "start": dates["start"], "end": dates["koniec"],
+            "result": result, "resultManual": manual, "counters": counters, "counterMetric": counter_metric,
+            "start": dates["start"], "end": dates["koniec"],
             "channels": [c.strip() for c in meta.get("kanały", "").split(",") if c.strip()],
             "budget": meta.get("budżet", ""), "file": file_rel, "gaps": gaps}
     return camp, tasks
+
+
+COUNT_ROW = re.compile(r"^\s*[-*]\s+(\d{4}-\d\d-\d\d)\s*·\s*(\S+)\s+(\d+)\s*·\s*(.*?)\s*$")
+
+
+def campaign_counters(sec):
+    """Sekcja „Wyniki i wnioski” -> {licznik: suma} z wierszy „- RRRR-MM-DD · <licznik> <n> · <tytuł zadania>”.
+    Liczą się tylko znane liczniki (COUNTERS); inne wiersze sekcji to wnioski."""
+    out = {}
+    for _, line in (sec["body"] if sec else []):
+        m = COUNT_ROW.match(line)
+        name = COUNTERS.get(m.group(2).lower()) if m else None
+        if name:
+            out[name] = out.get(name, 0) + int(m.group(3))
+    return out
 
 
 def _doc(key, label, file, status, gaps=()):
@@ -529,8 +636,10 @@ def read_project(path, pid=None, decision=None):
             description = first_paragraph(cel["body"])
     karta_doc = _check_sections("karta", "Karta", "KARTA.md", karta, DOCS[0][4])
     fields = card_fields(meta, decision)
-    if karta is not None and fields["errors"]:
-        karta_doc["gaps"] += fields["errors"]
+    questions = parse_questions(sections) if karta is not None else []
+    q_gaps = question_gaps(questions)
+    if karta is not None and (fields["errors"] or q_gaps):
+        karta_doc["gaps"] += fields["errors"] + q_gaps
         karta_doc["status"] = "gaps"
     docs.append(karta_doc)
 
@@ -590,7 +699,7 @@ def read_project(path, pid=None, decision=None):
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
                "priority": fields["priority"],
-               "questions": parse_questions(sections) if karta is not None else []}
+               "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
     if fields["phase"]:
@@ -1112,13 +1221,19 @@ ANSWER = re.compile(r"^\s+Odpowiedź\s*:\s*(.*)$", re.I)
 QUESTION_DUE = re.compile(r"^\s+termin\s*:\s*(\d{4}-\d\d-\d\d|[+-]\d+)\s*$", re.I)
 QUESTION_DUE_TEXT = re.compile(r"\bdo\s+(\d{4}-\d\d-\d\d)\b")
 PROPOSAL = re.compile(r"^\s+propozycja\s*:\s*(.*?)\s*$", re.I)
+EFFECT = re.compile(r"^\s+skutek\s*:\s*(.*?)\s*$", re.I)
+EFFECT_ARROW = re.compile(r"\s*(?:→|->)\s*")
+EFFECT_STATE = {"zrobione": "done", "zrobiony": "done", "wstrzymane": "blocked", "wstrzymany": "blocked"}
+# Propozycja, która zmienia zadania (heurystyka): bez „skutek:” panel nie wykona jej po przyjęciu.
+PROPOSAL_CHANGES = re.compile(r"\b(wstrzyma[ćjnł]|przesu[nń]|zamkn|doda[ćjn])", re.I)
 
 
 def parse_questions(sections):
     """Pytania z sekcji „Pytania do właściciela” w KARTA.md: wiersz „1. pytanie” albo „- pytanie”,
-    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD”, „propozycja: …” (rekomendacja agenta) i „Odpowiedź: …”.
-    Termin może też stać w treści („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, proposal, line}];
-    date to "RRRR-MM-DD" albo "", proposal to tekst albo "".
+    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD”, „propozycja: …” (rekomendacja agenta), „skutek: …”
+    (operacja na ZADANIA.md wykonywana po przyjęciu propozycji, apply_effects) i „Odpowiedź: …”.
+    Termin może też stać w treści („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, proposal, effects, line}];
+    date to "RRRR-MM-DD" albo "", proposal to tekst albo "", effects lista tekstów operacji.
     """
     sec = section(sections, QUESTIONS_TITLE)
     out = []
@@ -1127,15 +1242,19 @@ def parse_questions(sections):
         a = ANSWER.match(line)
         due = QUESTION_DUE.match(line)
         prop = PROPOSAL.match(line)
+        eff = EFFECT.match(line)
         if a and out:
             out[-1]["answer"] = a.group(1).strip()
+        elif eff and out:
+            if eff.group(1):
+                out[-1]["effects"].append(eff.group(1))
         elif due and out:
             out[-1]["date"] = due.group(1)
         elif prop and out:
             out[-1]["proposal"] = (out[-1]["proposal"] + " " + prop.group(1)).strip()
         elif m and PLACEHOLDER not in line:
             out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "date": "", "proposal": "",
-                        "line": no})
+                        "effects": [], "line": no})
         elif line.startswith((" ", "\t")) and line.strip() and out and not out[-1]["answer"]:
             out[-1]["text"] += " " + line.strip()
     for q in out:
@@ -1175,6 +1294,289 @@ def set_answer(root, n, answer):
     elif has:
         del lines[i]
     write_atomic(path, nl.join(lines))
+
+
+def parse_effect(text):
+    """Wiersz „skutek:” -> (operacja, argumenty) albo ValueError. Operacje:
+    „po: <fragment poprzednika> → <fragment tytułu>”, „kiedy: RRRR-MM-DD → <fragment tytułu>”,
+    „stan: zrobione|wstrzymane → <fragment tytułu>”, „nowe: <wiersz zadania>”. Strzałka: → albo ->."""
+    text = re.sub(r"\s+", " ", str(text or "")).strip()
+    op, sep, rest = text.partition(":")
+    op, rest = op.strip().lower(), rest.strip()
+    if not sep or op not in ("po", "kiedy", "stan", "nowe"):
+        raise ValueError("nieznana operacja (dozwolone: po, kiedy, stan, nowe)")
+    if op == "nowe":
+        row = re.sub(r"^[-*]\s+\[[ xX~!]\]\s+", "", rest)
+        t = parse_task("- [ ] " + row) if row else None
+        if not t or not t["title"].strip():
+            raise ValueError("nowe: podaj wiersz zadania")
+        if t["errors"]:
+            raise ValueError("nowe: %s" % t["errors"][0])
+        if len(t["title"]) > TITLE_MAX:
+            raise ValueError("nowe: tytuł dłuższy niż %d znaków" % TITLE_MAX)
+        return op, (row,)
+    parts = EFFECT_ARROW.split(rest, maxsplit=1)
+    if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
+        raise ValueError("%s: zapis „%s: … → fragment tytułu zadania”" % (op, op))
+    value, frag = parts[0].strip(), parts[1].strip()
+    if op == "kiedy":
+        try:
+            _day(value)
+        except ValueError:
+            raise ValueError("kiedy: data RRRR-MM-DD")
+    elif op == "stan" and value.lower() not in EFFECT_STATE:
+        raise ValueError("stan: zrobione albo wstrzymane")
+    return op, (value, frag)
+
+
+def question_gaps(questions):
+    """Braki karty z pytań bez odpowiedzi: zły wiersz „skutek:”, propozycja zmieniająca zadania bez „skutek:”."""
+    bad, missing = [], []
+    for q in questions:
+        if q.get("answer"):
+            continue
+        for e in q.get("effects") or []:
+            try:
+                parse_effect(e)
+            except ValueError as err:
+                bad.append("pytanie %d: %s" % (q["n"], err))
+        if q.get("proposal") and not q.get("effects") and PROPOSAL_CHANGES.search(q["proposal"]):
+            missing.append("pytanie %d" % q["n"])
+    gaps = []
+    if bad:
+        gaps.append("zły wiersz „skutek:”: %d (%s)" % (len(bad), _examples(bad)))
+    if missing:
+        gaps.append("propozycja zmienia zadania, a nie ma „skutek:”: %d (%s)" % (len(missing), _examples(missing)))
+    return gaps
+
+
+def _match_task(tasks, frag, exclude=None, open_first=True):
+    """Jedno zadanie, którego tytuł zawiera fragment (bez wielkości liter); najpierw wśród otwartych.
+    ValueError, gdy nie pasuje żadne albo pasuje kilka."""
+    low = frag.lower()
+    hits = [t for t in tasks if t is not exclude and low in t["title"].lower()]
+    if open_first:
+        open_ = [t for t in hits if t["state"] != "done"]
+        if len(open_) == 1:
+            return open_[0]
+        if len(open_) > 1:
+            raise ValueError("„%s” pasuje do %d otwartych zadań" % (frag, len(open_)))
+    if len(hits) == 1 or (hits and not open_first):
+        return hits[0]
+    raise ValueError("„%s” nie pasuje do żadnego zadania" % frag if not hits
+                     else "„%s” pasuje do %d zadań" % (frag, len(hits)))
+
+
+def _add_note(path, line_no, title, note):
+    """Wcięty wiersz notatki na końcu szczegółów zadania (bez powtórzeń). False, gdy wiersz zadania się zmienił."""
+    lines = _lines(path)
+    i = int(line_no) - 1
+    if i < 0 or i >= len(lines):
+        return False
+    t = parse_task(lines[i].rstrip("\r"))
+    if not t or t["title"] != title:
+        return False
+    end = i + 1
+    while end < len(lines) and is_detail(lines[end].rstrip("\r")):
+        if lines[end].strip() == note:
+            return True
+        end += 1
+    lines.insert(end, DETAIL_INDENT + note + ("\r" if lines[i].endswith("\r") else ""))
+    write_atomic(path, "\n".join(lines))
+    return True
+
+
+def _insert_inbox(path, rows):
+    """Dopisuje wiersze na końcu sekcji „Do rozplanowania” (zakłada ją, gdy jej nie ma)."""
+    text = "\n".join(_lines(path))
+    lines = text.split("\n")
+    sec = section(parse_doc(text)[2], INBOX)
+    if sec:
+        nums = [no for no, l in sec["body"] if l.strip()]
+        at = nums[-1] if nums else sec["line"]
+        lines[at:at] = rows
+    else:
+        while lines and not lines[-1].strip():
+            lines.pop()
+        lines += ["", "## " + INBOX] + rows + [""]
+    write_atomic(path, "\n".join(lines))
+
+
+def _apply_effect(root, effect, note):
+    """Jedna operacja „skutek:” na ZADANIA.md projektu. Zwraca tytuł zmienionego zadania; ValueError przy błędzie."""
+    op, args = parse_effect(effect)
+    path = _task_file(root, "ZADANIA.md")
+    _, tasks, _ = parse_tasks("\n".join(_lines(path)), "x")
+    if op == "nowe":
+        t = parse_task("- [ ] " + args[0])
+        if any(x["title"].lower() == t["title"].lower() and x["state"] != "done" for x in tasks):
+            raise ValueError("otwarte zadanie „%s” już jest" % t["title"])
+        _insert_inbox(path, ["- [ ] " + args[0], DETAIL_INDENT + note])
+        return t["title"]
+    value, frag = args
+    target = _match_task(tasks, frag)
+    if op == "po":
+        _match_task(tasks, value, exclude=target, open_first=False)      # poprzednik musi istnieć w pliku
+        after = list(target["after"])
+        if not any(value.lower() == a.lower() for a in after):
+            changes = {"after": after + [value]}
+        else:
+            changes = None
+    elif op == "kiedy":
+        changes = {"date": value}
+    else:
+        state = EFFECT_STATE[value.lower()]
+        changes = {"state": state}
+        if state == "blocked" and not target["blocked"]:
+            changes["blocked"] = "wstrzymane: %s" % note
+    if changes and not update_task(root, "ZADANIA.md", target["line"], target["title"], changes):
+        raise ValueError("wiersz „%s” zmienił się w trakcie" % target["title"])
+    if not _add_note(path, target["line"], target["title"], note):
+        raise ValueError("wiersz „%s” zmienił się w trakcie" % target["title"])
+    return target["title"]
+
+
+def apply_effects(root, effects, qn, day):
+    """Wykonuje skutki pytania qn („skutek:”) na ZADANIA.md tego projektu, po kolei; pod zmienionym (albo nowym)
+    zadaniem dopisuje notatkę „z pytania N, RRRR-MM-DD”. Zadanie dopasowane po fragmencie tytułu bez wielkości liter:
+    jedno otwarte zadanie, a bez otwartych jedno dowolne; fragment pasujący do kilku zadań to błąd.
+
+    day: "RRRR-MM-DD" albo date. Zwraca (applied, failed): listy tekstów, applied „<skutek> (zadanie „<tytuł>”)”,
+    failed „<skutek>: <powód>”. Operacja z błędem nie zatrzymuje kolejnych."""
+    day = day.isoformat() if isinstance(day, datetime.date) else _day(day)
+    note = "z pytania %d, %s" % (int(qn), day)
+    applied, failed = [], []
+    for raw in effects or []:
+        effect = re.sub(r"\s+", " ", str(raw)).strip()
+        if not effect:
+            continue
+        try:
+            title = _apply_effect(root, effect, note)
+        except (ValueError, OSError) as e:
+            failed.append("%s: %s" % (effect, e))
+        else:
+            applied.append("%s (zadanie „%s”)" % (effect, title))
+    return applied, failed
+
+
+# ---------- liczniki zadań i kampanie (pole „licznik:”, sekcja „Wyniki i wnioski”) ----------
+def active_campaign(root):
+    """Plik pierwszej kampanii w toku ("kampanie/<plik>.md", kolejność nazw plików) albo ""."""
+    root = os.path.realpath(os.path.expanduser(root))
+    for f in sorted(glob.glob(os.path.join(glob.escape(root), "kampanie", "*.md"))):
+        text = read(f)
+        rel = "kampanie/" + os.path.basename(f)
+        if text is not None and parse_campaign(text, "x", rel)[0]["state"] == "active":
+            return rel
+    return ""
+
+
+def append_campaign_count(root, campaign_file, name, n, title, day):
+    """Dopisuje w sekcji „Wyniki i wnioski” kampanii wiersz „- RRRR-MM-DD · <licznik> <n> · <tytuł zadania>”
+    (sekcję zakłada, gdy jej brak; wiersz szablonu „_Do uzupełnienia…_” usuwa). campaign_file: „kampanie/x.md”
+    (albo „x”, „x.md”); puste = pierwsza kampania w toku. name: licznik z COUNTERS, n: liczba całkowita od 0.
+    Zwraca True; ValueError przy złych danych albo bez kampanii."""
+    name = COUNTERS.get(str(name or "").strip().lower())
+    if not name:
+        raise ValueError("licznik: %s" % ", ".join(sorted(set(COUNTERS.values()))))
+    if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= 10 ** 6:
+        raise ValueError("liczba całkowita od 0")
+    day = day.isoformat() if isinstance(day, datetime.date) else _day(day)
+    title = _clean(title, 160)
+    rel = campaign_rel(campaign_file) if campaign_file else active_campaign(root)
+    if not rel:
+        raise ValueError("brak kampanii w toku" if not campaign_file else "zły plik kampanii")
+    path = _task_file(root, rel)
+    lines = _lines(path)
+    text = "\n".join(lines)
+    cr = "\r" if lines and lines[0].endswith("\r") else ""
+    row = "- %s · %s %d · %s%s" % (day, name, n, title, cr)
+    sec = section(parse_doc(text)[2], RESULTS_TITLE)
+    if not sec:
+        while lines and not lines[-1].strip():
+            lines.pop()
+        lines += [cr, "## " + RESULTS_TITLE + cr, row, ""]
+    else:
+        drop = {no - 1 for no, l in sec["body"] if PLACEHOLDER in l}
+        keep = [no for no, l in sec["body"] if l.strip() and PLACEHOLDER not in l]
+        at = (keep[-1] if keep else sec["line"]) - 1
+        out = []
+        for i, line in enumerate(lines):
+            if i not in drop:
+                out.append(line)
+            if i == at:
+                out.append(row)
+        lines = out
+    write_atomic(path, "\n".join(lines))
+    return True
+
+
+# ---------- kontrole przy zadaniu (pole „sprawdza:”) ----------
+def read_health(path=None):
+    """Plik kontroli zdrowia serwera (PANEL_ZDROWIE_STAN, domyślnie /home/panel/.zdrowie-stan), wiersze
+    nazwa=ok|zle|brak -> {"checks": {nazwa: stan}, "at": czas zmiany pliku ISO} albo None bez pliku."""
+    path = path or os.environ.get("PANEL_ZDROWIE_STAN", "").strip() or HEALTH_FILE
+    text = read(path)
+    if text is None:
+        return None
+    checks = {}
+    for line in text.splitlines():
+        name, sep, value = line.strip().partition("=")
+        if sep and re.match(r"^[\w.-]{1,40}$", name) and value.strip() in HEALTH_VALUES:
+            checks[name] = value.strip()
+    try:
+        at = datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(timespec="seconds")
+    except OSError:
+        at = ""
+    return {"checks": checks, "at": at}
+
+
+def _check_file(root, rel):
+    """Plik z „sprawdza: plik <ścieżka>” w folderze projektu albo folderze jego karty (KARTA.md jako dowiązanie)
+    -> pełna ścieżka istniejącego pliku albo None. Ścieżki wychodzące poza te foldery nie liczą się."""
+    rel = str(rel or "").strip().strip("`").replace("\\", "/")
+    if not rel or rel.startswith("/") or re.match(r"^[A-Za-z]:", rel):
+        return None
+    base = os.path.realpath(os.path.expanduser(root))
+    bases = [base]
+    card = os.path.join(base, "KARTA.md")
+    if os.path.islink(card):
+        bases.append(os.path.dirname(os.path.realpath(card)))
+    for b in bases:
+        path = os.path.realpath(os.path.join(b, rel))
+        if os.path.commonpath([b, path]) == b and os.path.exists(path):
+            return path
+    return None
+
+
+def check_task(task, server_checks=None, root=None):
+    """Kontrola zadania z polem „sprawdza:” -> {"key", "ok", "at"} albo None bez pola.
+
+    server_checks: "checks" ze stanu serwera ({nazwa: "ok"|"zle"|"brak"}) albo cały blok {"checks", "at"}
+    (wtedy "at" pochodzi z bloku); None, gdy stanu serwera nie ma. ok: True przy stanie „ok”, False przy
+    „zle”/„brak”, None bez danych (brak stanu serwera, kontroli w pliku albo nieznany klucz).
+    „plik <ścieżka>”: ok True, gdy plik istnieje w folderze projektu albo karty (at: czas zmiany pliku), inaczej False;
+    None bez root."""
+    c = task.get("check") if isinstance(task, dict) else None
+    key = str(c.get("key") if isinstance(c, dict) else c or "").strip()
+    if not key:
+        return None
+    if key.startswith(CHECK_FILE + " "):
+        if not root:
+            return {"key": key, "ok": None, "at": ""}
+        path = _check_file(root, key[len(CHECK_FILE) + 1:])
+        if not path:
+            return {"key": key, "ok": False, "at": ""}
+        at = datetime.datetime.fromtimestamp(os.path.getmtime(path)).isoformat(timespec="seconds")
+        return {"key": key, "ok": True, "at": at}
+    at = ""
+    checks = server_checks
+    if isinstance(checks, dict) and isinstance(checks.get("checks"), dict):
+        at = str(checks.get("at") or "")
+        checks = checks["checks"]
+    state = checks.get(key) if isinstance(checks, dict) and key in SERVER_CHECKS else None
+    return {"key": key, "ok": True if state == "ok" else False if state in ("zle", "brak") else None,
+            "at": at if state else ""}
 
 
 def set_card_fields(root, changes):

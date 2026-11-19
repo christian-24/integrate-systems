@@ -136,8 +136,18 @@ Zadanie ma też:
 "ownerNeeds": ["odbiór"],                                   wartości wymaga, które są sprawą właściciela (bez zgody przy kto: ty)
 "stateSince": "2026-11-15",                                 od kiedy w toku albo do odbioru ("" poza tymi stanami i w przykładach)
 "stalled": false,                                           [~] bez agenta dłużej niż 3 dni
-"reviewOverdue": false                                      odbiór czeka dłużej niż 2 dni
+"reviewOverdue": false,                                     odbiór czeka dłużej niż 2 dni
+"check": {"key": "kopia", "ok": true, "at": "2026-11-19T03:05:00"},   pole sprawdza:; null bez pola
+"unlocks": [{"id": "…", "title": "Zbuduj stronę", "executor": "claude", "date": ""}],   zadania z po: na tym zadaniu
+"unlockCount": 1
 ```
+
+Kontrola przy zadaniu (wiersz `sprawdza: <klucz>`, format w `standard/STANDARD.md`): klucz z `server.checks`
+(`kopia`, `kopia-poza`, `claude`, `claude-agent`, `zapis-kart`, `panel`, `useme`, `dysk`; `ok` = stan `ok`, `at` = czas
+pliku kontroli zdrowia) albo `plik <ścieżka>` (plik istnieje w folderze projektu albo karty). Bez stanu serwera
+(Mac, PC, podgląd) `ok` klucza serwera nie jest `true`. Otwarte zadanie z `check.ok: true` panel pokazuje jako
+„Wygląda na zrobione”; „Zamknij” (`POST /api/task/close-checked`) zapisuje `[x]` i notatkę
+`zamknięte na podstawie kontroli serwera z RRRR-MM-DD HH:MM`.
 
 Pola, które dodaje odczyt plików (`standard/STANDARD.md`: `priority` projektu, `proposal` pytania, `target`
 i `result` kampanii, szczegóły publikacji), serwer przekazuje bez filtrowania. `dayMinutes` na najwyższym poziomie
@@ -165,6 +175,19 @@ plik poza tymi folderami, dowiązanie wychodzące na zewnątrz, inny typ pliku, 
 Sekcja `## Pytania do właściciela` w `KARTA.md`: wiersze `1. pytanie` albo `- pytanie`, pod pytaniem wcięty wiersz `   Odpowiedź: …`.
 Panel pokazuje pytania bez odpowiedzi w Przeglądzie, w widoku Wymaga Ciebie i w księdze projektu. Odpowiedź z panelu
 (`/api/question/answer` `{id, n, answer}`) zapisuje albo zmienia ten wiersz; pusta odpowiedź go usuwa.
+
+Pod propozycją mogą stać wcięte wiersze `   skutek: <operacja>` (w danych pytania `effects`: lista tekstów operacji):
+`po: <fragment poprzednika> → <fragment tytułu>`, `kiedy: RRRR-MM-DD → <fragment tytułu>`,
+`stan: zrobione|wstrzymane → <fragment tytułu>`, `nowe: <wiersz zadania>`.
+
+- „Przyjmij propozycję” (`{id, n, "accept": true}`, albo pierwsza odpowiedź równa propozycji): odpowiedź = propozycja,
+  skutki wykonane na `ZADANIA.md` projektu, pod każdym zmienionym zadaniem notatka `z pytania N, RRRR-MM-DD`.
+  Odpowiedź `{"ok": true, "applied": [...], "failed": [...], "task": ""}`; operacja bez pasującego zadania trafia do `failed`.
+  Pytanie z odpowiedzią albo bez propozycji: 409 albo 400.
+- Inna odpowiedź na pytanie ze skutkami: skutki nie są wykonywane; panel zakłada w „Do rozplanowania” zadanie
+  „Zastosuj odpowiedź na pytanie N” (`kto: claude`, `kiedy:` dziś, `materiał: KARTA.md#Pytania do właściciela`),
+  gdy otwartego zadania o tym tytule jeszcze nie ma; `task` w odpowiedzi to jego tytuł.
+- Pytanie bez skutków: odpowiedź `{"ok": true, "error": ""}` jak dotąd.
 Pod pytaniem może stać wcięty wiersz `   termin: RRRR-MM-DD` (albo „do RRRR-MM-DD” w treści); pytanie w `questions`
 ma pole `date` (`"RRRR-MM-DD"` albo `""`). Pytanie po terminie to ryzyko w raporcie PM.
 
@@ -197,6 +220,9 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 
 | Żądanie | Zmiana |
 |---|---|
+| `POST /api/task/state` | `{id, title, state}`: stan zadania; z `"count": n` (tylko `state: done`) także wynik licznika jak `/api/task/count` |
+| `POST /api/task/count` | `{id, title, count}`: zadanie z polem `licznik: <nazwa>` dopisuje w kampanii (`kampania: <plik>` zadania, kampania publikacji, a bez tego pierwsza kampania projektu w toku) w sekcji „Wyniki i wnioski” wiersz `- RRRR-MM-DD · <nazwa> <n> · <tytuł>`; kampania ma `counters` {nazwa: suma}, a `result` to większa z liczb: ręczny `wynik:` i suma licznika z `miernik:`; 400 bez pola licznik albo przy złej liczbie (0–1000000), 409 bez kampanii (stan zadania wtedy bez zmian) |
+| `POST /api/task/close-checked` | `{id, title}`: `[x]` i notatka o kontroli serwera; 409, gdy `check.ok` nie jest `true` albo zadanie jest zrobione |
 | `POST /api/task/update` | pola zadania: tytuł, stan, kto, gdzie, kiedy, pora, czas, wymaga, blokada, kanał |
 | `POST /api/task/detail` | `{id, title, key, value}`: jeden klucz szczegółów pod wierszem zadania (`cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`; dla publikacji `wyświetlenia`, `kliknięcia`, `konta`, `link`); pusta wartość usuwa wiersz, `materiał` przyjmuje kilka wartości w osobnych wierszach; `następne` to „Tytuł \| kto: … \| kiedy: …” (sprawdzany jak wiersz zadania); `krok` z value `{"index": n, "done": bool}` zmienia n-ty krok (od 0) |
 | `POST /api/task/add` | nowe zadanie w etapie, w kampanii albo w „Do rozplanowania” (pod szczegółami ostatniego zadania) |
@@ -208,7 +234,7 @@ Panel zmienia `ZADANIA.md`, `kampanie/*.md` i pola karty (`KARTA.md`) projektów
 | `POST /api/plan/accept` | `{"id", "ids"}`: uruchamia wybrane zadania z planu; odpowiedź `started`, `failed` |
 | `POST /api/agent/check` | test połączenia |
 | `POST /api/agent/stop` | zatrzymuje uruchomienie albo zdejmuje je z kolejki |
-| `POST /api/agent/merge` | `{id}`: scala gałąź uruchomienia do bazy (`git merge --no-ff`, bez push); 409 z opisem przy konflikcie albo niezatwierdzonych zmianach |
+| `POST /api/agent/merge` | `{id}`: scala gałąź uruchomienia do bazy (`git merge --no-ff`, bez push); 409 z opisem przy konflikcie, niezatwierdzonych zmianach albo plikach sekretów na gałęzi (`.env*`, `*.key`, `*.pem`) |
 | `POST /api/agent/automat` | włącza i wyłącza Automat |
 | `POST /api/project/add` | dopisuje folder do rejestru; opcjonalnie zakłada brakujące pliki standardu |
 | `POST /api/project/remove` | usuwa projekt z rejestru; pliki zostają |
@@ -271,6 +297,8 @@ W folderze IntegrateSystems, bez sieci i bez zużycia limitu:
 Runda 2 (kolejność `po:`, kroki, poprawka, następne, terminy pytań, liczniki, Automat, stan serwera, sesje): `testy/test_runda2.py`.
 Runda 3, agenci (gałąź uruchomienia na tymczasowym repozytorium git, scalenie, diff, materiał z wyniku, szczegóły
 zadań Automatu, `PANEL_AGENT_USER`, klucz zapisu z loopback, nowe pola w `/api/data`): `testy/test_runda3_agenci.py`.
+Runda 5, serwer (`sprawdza:` i zamknięcie po kontroli, `licznik:` do kampanii, skutki pytań, `unlocks`, prompt agenta,
+odmowa scalenia z plikami sekretów): `testy/test_runda5_serwer.py`.
 
 ## Poza zakresem
 

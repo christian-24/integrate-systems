@@ -7,8 +7,10 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /wejscie               strona hasła dla połączeń spoza tego komputera (POST: pole haslo)
   GET  /api/data              projekty, etapy, zadania, kampanie, kalendarz i blok agents
   POST /api/task/update       zmienia pola zadania w ZADANIA.md albo w pliku kampanii
-  POST /api/task/state        zmienia sam stan zadania
-  POST /api/task/detail       jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…, poprawka, następne, krok)
+  POST /api/task/state        zmienia sam stan zadania (z "count": wynik licznika do kampanii)
+  POST /api/task/count        dopisuje wynik licznika zadania do kampanii projektu („Wyniki i wnioski”)
+  POST /api/task/close-checked  zamyka zadanie potwierdzone kontrolą serwera (pole sprawdza:)
+  POST /api/task/detail      jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…, poprawka, następne, krok)
   POST /api/task/add          dopisuje zadanie do etapu, do „Do rozplanowania” albo do harmonogramu kampanii
   POST /api/stage/update      zmienia termin etapu
   POST /api/campaign/update   zmienia wynik i stan kampanii
@@ -177,6 +179,10 @@ def load_projects(resolve=True):
     if resolve:
         for item in out["stages"] + out["tasks"]:
             item["date"] = resolve_date(item["date"])
+        for t in out["tasks"]:
+            for u in t.get("unlocks") or []:
+                if isinstance(u, dict):
+                    u["date"] = resolve_date(u.get("date", ""))
         for c in out["campaigns"]:
             c["start"], c["end"] = resolve_date(c["start"]), resolve_date(c["end"])
         for p in out["projects"]:
@@ -193,7 +199,12 @@ _write_lock = threading.Lock()
 
 
 def change_task(body):
-    """{"id", "title", "state"}: zadanie odszukujemy po stronie serwera, nigdy po ścieżce od klienta."""
+    """{"id", "title", "state", "count"?}: zadanie odszukujemy po stronie serwera, nigdy po ścieżce od klienta.
+    "count" (tylko ze stanem done): liczba dla pola licznik: zadania, dopisana do kampanii (count_task)."""
+    if "count" in body and body.get("count") is not None:
+        if body.get("state") != "done":
+            return 400, "Nie zapisano: licznik tylko przy stanie zrobione."
+        return count_task(body, state="done")
     parts = str(body.get("id", "")).split("|")
     if len(parts) != 3 or not parts[2].isdigit():
         return 400, "Nieznane zadanie."
@@ -207,6 +218,85 @@ def change_task(body):
     except (ValueError, OSError):
         return 400, "Nie udało się zapisać zmiany."
     return (200, "") if ok else (409, "Plik zmienił się od ostatniego odczytu. Odświeżam listę.")
+
+
+COUNT_MAX = 1000000
+
+
+def _find_task(task_id, title):
+    """(zadanie, dane, folder) z bieżącego odczytu albo (None, None, (kod, komunikat)). Tytuł musi się zgadzać."""
+    where, error = _locate(task_id)
+    if error:
+        return None, None, error
+    data, _ = load_projects(resolve=False)
+    t = next((x for x in data["tasks"] if x["id"] == str(task_id)), None)
+    if not t or t["title"] != str(title or ""):
+        return None, None, CONFLICT
+    return t, data, where[0]
+
+
+def task_counter(task):
+    """Nazwa licznika zadania (pole licznik:) albo ""."""
+    value = task.get("counter")
+    if isinstance(value, dict):
+        value = value.get("name")
+    return str(value or "").strip()
+
+
+def counter_campaign(task, campaigns):
+    """Kampania, do której trafia wynik licznika: wskazana polem kampania: zadania, kampania, w której stoi
+    publikacja, a bez tego pierwsza kampania projektu w toku. None, gdy żadna nie pasuje."""
+    own = [c for c in campaigns if c["project"] == task["project"]]
+    want = str(task.get("campaignFile") or "").strip().replace("\\", "/")
+    if want:
+        names = {want, want if want.startswith("kampanie/") else "kampanie/" + want}
+        names |= {n + ".md" for n in list(names) if not n.endswith(".md")}
+        return next((c for c in own if c["file"] in names or c["id"] == want), None)
+    if task.get("file", "").startswith("kampanie/"):
+        hit = next((c for c in own if c["file"] == task["file"]), None)
+        if hit:
+            return hit
+    return next((c for c in own if c.get("state") == "active"), None)
+
+
+def count_task(body, state=None):
+    """POST /api/task/count {id, title, count} (i /api/task/state z count): wiersz
+    „- RRRR-MM-DD · <licznik> <n> · <tytuł>” w sekcji „Wyniki i wnioski” kampanii projektu
+    (projekt.append_campaign_count). state="done" najpierw zamyka zadanie; gdy dopisanie się nie uda, stan wraca."""
+    n = body.get("count")
+    if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= COUNT_MAX:
+        return 400, "Nie zapisano: licznik to liczba całkowita od 0 do %d." % COUNT_MAX
+    title = str(body.get("title", ""))
+    t, data, folder = _find_task(body.get("id", ""), title)
+    if t is None:
+        return folder
+    name = task_counter(t)
+    if not name:
+        return 400, "Nie zapisano: zadanie nie ma pola licznik."
+    camp = counter_campaign(t, data["campaigns"])
+    if not camp:
+        return 409, "Nie zapisano: projekt nie ma kampanii w toku (albo kampanii z pola kampania:)."
+    day = datetime.date.today().isoformat()
+    try:
+        with _write_lock:
+            if state and t["state"] != state:
+                if not projekt.set_state(folder, t["file"], t["line"], title, state):
+                    return CONFLICT
+            try:
+                ok = projekt.append_campaign_count(folder, camp["file"], name, n, title, day)
+            except (ValueError, OSError):
+                if state and t["state"] != state:
+                    projekt.set_state(folder, t["file"], t["line"], title, t["state"])
+                raise
+            if ok is False and state and t["state"] != state:
+                projekt.set_state(folder, t["file"], t["line"], title, t["state"])
+    except ValueError as e:
+        return 400, "Nie zapisano: %s." % e
+    except OSError:
+        return 400, "Nie udało się zapisać zmiany."
+    if ok is False:
+        return CONFLICT
+    return 200, "", {"campaign": camp["id"], "counter": name, "count": n}
 
 
 def _locate(task_id):
@@ -263,6 +353,56 @@ def update_detail(body):
     except OSError:
         return 400, "Nie udało się zapisać zmiany."
     return (200, "") if ok else CONFLICT
+
+
+# ---------- kontrola serwera przy zadaniu (pole sprawdza:) ----------
+def task_check(task, srv, folder):
+    """"check" zadania: {"key", "ok", "at"} z projekt.check_task (stan serwera albo plik w folderze projektu
+    lub karty) albo None, gdy zadanie nie ma pola sprawdza:."""
+    if not task.get("check"):
+        return None
+    try:
+        out = projekt.check_task(task, srv, folder or None)
+    except (OSError, ValueError, TypeError) as e:
+        agents.log("sprawdza: %s (%s)" % (task.get("title", ""), e))
+        return None
+    return dict(out, at=out.get("at") or "") if isinstance(out, dict) else None
+
+
+def add_checks(tasks, index, srv):
+    """"check" każdego zadania z polem sprawdza: (stan serwera z server_state, pliki w folderze projektu)."""
+    for t in tasks:
+        t["check"] = task_check(t, srv, index.get(t["project"], ""))
+
+
+def check_stamp(at):
+    """Czas kontroli „RRRR-MM-DD HH:MM” z ISO; bez czasu: teraz."""
+    dt = _iso(at) if at else None
+    return (dt or datetime.datetime.now()).strftime("%Y-%m-%d %H:%M")
+
+
+def close_checked(body):
+    """POST /api/task/close-checked {id, title}: otwarte zadanie, które kontrola serwera potwierdza (check.ok),
+    dostaje stan zrobione i notatkę „zamknięte na podstawie kontroli serwera z RRRR-MM-DD HH:MM”."""
+    title = str(body.get("title", ""))
+    t, _, folder = _find_task(body.get("id", ""), title)
+    if t is None:
+        return folder
+    if t["state"] == "done":
+        return 409, "Zadanie jest już zrobione."
+    check = task_check(t, server_state(), folder)
+    if not check or check.get("ok") is not True:
+        return 409, "Kontrola serwera nie potwierdza tego zadania."
+    stamp = check_stamp(check.get("at"))
+    try:
+        with _write_lock:
+            if not projekt.set_state(folder, t["file"], t["line"], title, "done"):
+                return CONFLICT
+            projekt._add_note(projekt._task_file(folder, t["file"]), t["line"], title,
+                              "zamknięte na podstawie kontroli serwera z %s" % stamp)
+    except (ValueError, OSError):
+        return 400, "Nie udało się zapisać zmiany."
+    return 200, "", {"check": check, "at": stamp}
 
 
 # ---------- odczyt materiałów zadania (GET /api/plik) ----------
@@ -486,20 +626,87 @@ def update_meta(body):
     return 200, ""
 
 
+def _words(text):
+    return " ".join(str(text or "").split())
+
+
+APPLY_TITLE = "Zastosuj odpowiedź na pytanie %d"
+APPLY_REF = "KARTA.md#Pytania do właściciela"
+
+
+def apply_answer_task(folder, pid, n, today):
+    """Zadanie agenta „Zastosuj odpowiedź na pytanie N” w „Do rozplanowania” (kto: claude, kiedy: dziś,
+    materiał: sekcja pytań karty); gdy otwarte zadanie o tym tytule już jest, nowego nie zakłada.
+    Wywołujący trzyma _write_lock. Zwraca tytuł zadania."""
+    title = APPLY_TITLE % n
+
+    def rows():
+        return [t for t in projekt.read_project(folder, pid)["tasks"]
+                if t["file"] == "ZADANIA.md" and t["title"] == title]
+
+    if any(t["state"] != "done" for t in rows()):
+        return title
+    projekt.add_task(folder, title)
+    t = rows()[-1]
+    projekt.update_task(folder, t["file"], t["line"], title, {"executor": "claude", "date": today})
+    projekt.set_detail(folder, t["file"], t["line"], title, "cel",
+                       "zmiany w ZADANIA.md według odpowiedzi właściciela na pytanie %d w KARTA.md" % n)
+    projekt.set_detail(folder, t["file"], t["line"], title, "materiał", APPLY_REF)
+    return title
+
+
 def answer_question(body):
-    """{"id", "n", "answer"}: odpowiedź na pytanie z sekcji „Pytania do właściciela” w KARTA.md."""
+    """{"id", "n", "answer"} albo {"id", "n", "accept": true}: odpowiedź na pytanie z sekcji „Pytania do właściciela”
+    w KARTA.md. Przyjęcie propozycji (accept, albo pierwsza odpowiedź równa propozycji) zapisuje odpowiedź = propozycja
+    i wykonuje skutki pytania (skutek:) na ZADANIA.md (projekt.apply_effects). Inna odpowiedź na pytanie ze skutkami
+    zakłada zadanie agenta „Zastosuj odpowiedź na pytanie N”. Odpowiedź: "applied", "failed", "task"."""
     data, index = load_projects(resolve=False)
     pid = body.get("id")
     if data["projectsSource"] != "registry" or not isinstance(pid, str) or pid not in index:
         return 404, "Nie ma takiego projektu."
+    folder = index[pid]
+    project = next(p for p in data["projects"] if p["id"] == pid)
+    n = body.get("n")
+    qs = project.get("questions") or []
+    q = qs[n - 1] if isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= len(qs) else None
+    accept = body.get("accept") is True
+    if "accept" in body and not isinstance(body.get("accept"), bool):
+        return 400, "Nie zapisano: accept to true albo false."
+    if accept:
+        if not q:
+            return 400, "Nie zapisano: nie ma takiego pytania."
+        if not _words(q.get("proposal")):
+            return 400, "Nie zapisano: pytanie nie ma propozycji."
+        if _words(q.get("answer")):
+            return 409, "Pytanie ma już odpowiedź."
+        answer = _words(q["proposal"])
+    else:
+        answer = body.get("answer", "")
+    effects = [e for e in (q or {}).get("effects") or [] if str(e).strip()]
+    words, before = _words(answer) if isinstance(answer, str) else "", _words((q or {}).get("answer"))
+    applied, failed, task = [], [], ""
+    today = datetime.date.today().isoformat()
     try:
         with _write_lock:
-            projekt.set_answer(index[pid], body.get("n"), body.get("answer", ""))
+            projekt.set_answer(folder, n, answer)
+            if q and effects and words and words != before:
+                if accept or (not before and words == _words(q.get("proposal"))):
+                    try:
+                        applied, failed = projekt.apply_effects(folder, effects, n, today)
+                    except (ValueError, OSError) as e:
+                        failed = ["%s (%s)" % (e, "skutki pytania %d" % n)]
+                else:
+                    try:
+                        task = apply_answer_task(folder, pid, n, today)
+                    except (ValueError, OSError, StopIteration, IndexError) as e:
+                        failed = ["nie powstało zadanie „%s” (%s)" % (APPLY_TITLE % n, e or "brak ZADANIA.md")]
     except ValueError as e:
         return 400, "Nie zapisano: %s." % e
     except OSError:
         return 400, "Projekt nie ma pliku KARTA.md."
-    return 200, ""
+    if not (accept or effects):
+        return 200, ""
+    return 200, "", {"applied": list(applied), "failed": list(failed), "task": task}
 
 
 # ---------- agenci (agents.py) ----------
@@ -516,7 +723,9 @@ def get_agents():
         return _agents
 
 
-WRITES = {"/api/task/state": change_task, "/api/task/update": lambda b: update_task(b),
+WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
+          "/api/task/count": lambda b: count_task(b),
+          "/api/task/close-checked": lambda b: close_checked(b),
           "/api/task/detail": lambda b: update_detail(b),
           "/api/task/add": lambda b: add_task(b), "/api/stage/update": lambda b: update_stage(b),
           "/api/campaign/update": lambda b: update_campaign(b),
@@ -657,6 +866,7 @@ def build_data():
     out["agents"]["canRunTasks"] = out["projectsSource"] == "registry"
     out["history"] = project_history(out)
     out["server"] = server_state()
+    add_checks(out["tasks"], index, out["server"])
     return out
 
 
@@ -1038,6 +1248,8 @@ def preview_data():
     out["calendar"] = {"calendars": cal.get("calendars", []), "events": cal.get("events", [])}
     block = load_json(SAMPLE_AGENTS, None)
     block = block if isinstance(block, dict) else {}
+    # podgląd bez serwera: tylko kontrola plików
+    add_checks(out["tasks"], {projekt.slug(os.path.basename(f)): f for f in sample_folders()}, None)
     agents.annotate_sample(out["tasks"], block)    # w podglądzie zadania przykładowe wyglądają jak prawdziwe
     if block:
         out["agents"] = block

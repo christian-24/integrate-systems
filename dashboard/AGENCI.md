@@ -157,7 +157,10 @@ na zewnątrz. Na koniec agent odhacza wykonane kroki, dopisuje pod swoim wiersze
 (gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało), może dopisać jeden wiersz
 `następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` (propozycja; nowych zadań nie zakłada), pytania do właściciela dopisuje
 do sekcji „Pytania do właściciela” w `KARTA.md`, z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
-nie zmienia), zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
+nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyjęcie zmienia zadania, zawsze z wierszami
+`   skutek: <operacja>` (`po: … → …`, `kiedy: RRRR-MM-DD → …`, `stan: zrobione|wstrzymane → …`, `nowe: <wiersz zadania>`;
+panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela”). Wiersza `gotowe gdy:` agent nie zmienia
+i nie łagodzi (bez „albo w zostało:”); niespełniony warunek opisuje w `zostało:` i kończy stanem `[!]`. Agent zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
 albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
 Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”), prompt ją podaje, a agent poprawia pracę według niej.
 Folder bez repozytorium git (albo `PANEL_AGENT_WORKTREE=0`): pracę w repozytorium agent zapisuje na nowej gałęzi
@@ -261,8 +264,9 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
 
 Pola z odczytu plików (np. `priority` projektu, `proposal` pytania, `target` i `result` kampanii) serwer przekazuje
 bez filtrowania; `dayMinutes` to `PANEL_DZIEN_MIN`. Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`), `runBlock`,
-`stateSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, a z odczytu plików `detail`, `needs`, `after` i `waitingFor`
-(opis w `README.md`, „Szczegóły zadania i następny krok”). Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
+`stateSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, `check` (pole `sprawdza:` z `server.checks` albo plikiem;
+`null` bez pola), a z odczytu plików `detail`, `needs`, `after`, `waitingFor`, `unlocks` i `unlockCount`
+(opis w `README.md`, „Szczegóły zadania i następny krok”). Pytania mają `effects`, kampanie `counters`. Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
 i `server` (README, „Stan serwera”).
 
 ```
@@ -298,7 +302,7 @@ liczone od chwili otwarcia strony).
 | `/api/agent/pm` | `{}` | raport PM; 409, gdy już trwa |
 | `/api/agent/check` | `{"tool": "claude"}` | test połączenia |
 | `/api/agent/stop` | `{"id": runId}` | zatrzymuje albo zdejmuje z kolejki |
-| `/api/agent/merge` | `{"id": runId}` | `git merge --no-ff` gałęzi uruchomienia do `base` w repozytorium projektu, bez push; odpowiedź `commit`; 404 bez gałęzi albo repozytorium; 409 z opisem: uruchomienie trwa, już scalona, w repozytorium wybrana inna gałąź niż `base`, trwa inne scalanie, niezatwierdzone zmiany (poza `KARTA.md`, `ZADANIA.md`, `DECYZJE.md`, które zmienia panel), brak zmian, konflikt (scalenie przerwane, repozytorium bez zmian) |
+| `/api/agent/merge` | `{"id": runId}` | `git merge --no-ff` gałęzi uruchomienia do `base` w repozytorium projektu, bez push; odpowiedź `commit`; 404 bez gałęzi albo repozytorium; 409 z opisem: uruchomienie trwa, już scalona, w repozytorium wybrana inna gałąź niż `base`, trwa inne scalanie, niezatwierdzone zmiany (poza `KARTA.md`, `ZADANIA.md`, `DECYZJE.md`, które zmienia panel), brak zmian, pliki sekretów na gałęzi (dodane albo zmienione `.env*`, `*.key`, `*.pem`; scalenie nie startuje, lista plików w opisie), konflikt (scalenie przerwane, repozytorium bez zmian) |
 
 `GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
 błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.
@@ -310,4 +314,5 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 
 `python3 -m unittest discover -s dashboard/testy` — uruchamianie na atrapie polecenia `claude` (bez sieci i bez limitu).
 Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i klucz lokalny: `testy/test_runda3_agenci.py`
-(tymczasowe repozytorium git).
+(tymczasowe repozytorium git). Skutki pytań, licznik, kontrola serwera przy zadaniu, prompt (`skutek:`, `gotowe gdy`)
+i odmowa scalenia z plikami sekretów: `testy/test_runda5_serwer.py` (atrapa w trybie `sekret`).

@@ -14,6 +14,7 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   plan-zly plan dnia bez bloku JSON
   plik     jak ok, a w katalogu roboczym tworzy notatki/analiza.md i dopisuje pod zadaniem wynik: z tą ścieżką
   commit   jak plik, a zmiany zatwierdza sam (git commit w katalogu roboczym)
+  sekret   jak plik, a w katalogu roboczym tworzy też .env.local i certyfikat/serwer.pem (atrapy sekretów)
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
 """
 import json
@@ -164,7 +165,12 @@ def main(argv):
     edited = "" if how == "zostaw" else edit_row(prompt, "x")
     if edited:
         tool("Edit", {"file_path": os.path.join(os.getcwd(), edited)})
-    if how in ("plik", "commit") and edited:
+    if how in ("plik", "commit", "sekret") and edited:
+        if how == "sekret":
+            os.makedirs("certyfikat", exist_ok=True)
+            for name in (".env.local", os.path.join("certyfikat", "serwer.pem")):
+                with open(name, "w", encoding="utf-8") as f:
+                    f.write("ATRAPA=nie-sekret\n")
         os.makedirs("notatki", exist_ok=True)
         with open(os.path.join("notatki", "analiza.md"), "w", encoding="utf-8") as f:
             f.write("# Analiza\n\nTreść.\n")

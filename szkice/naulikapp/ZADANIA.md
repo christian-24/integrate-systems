@@ -151,7 +151,8 @@ termin: 2026-12-13
   Właściciel (2026-11-14): merge możliwy; do rozważenia, czy materiały marketingowe mają być w repozytorium.
 - [ ] Zrealizuj zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Wskaż zadania T48 niezbędne
   cel: zadania T48 wskazane jako niezbędne zamknięte przed podpisanym buildem 24.11
-  gotowe gdy: każde wskazane zadanie T48 zrobione na gałęzi uruchomienia (panel zapisuje gałąź i listę zmian) albo opisane w zostało:; testy zielone
+  gotowe gdy: każde wskazane zadanie T48 zrobione na gałęzi uruchomienia (panel zapisuje gałąź i listę zmian); testy zielone
+  Zadanie T48, którego nie da się zrobić przed 24.11: [!] z blokadą i nazwą zadania; nie zamykaj zadania bez niego.
   materiał: docs/backlog/STATUS.md
 - [ ] Zapisz politykę prywatności na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
   cel: treść polityki z danymi wydawcy, HTML, odpowiedzi do Play Console i poprawiony ekran polityki na gałęzi uruchomienia
@@ -205,6 +206,7 @@ termin: 2026-12-13
   cel: potwierdzenie, że podpisany build nadaje się do zamkniętego testu
   gotowe gdy: wszystkie scenariusze TC-01..TC-20 przechodzą albo błędy zapisane jako nowe zadania
   materiał: docs/testing/plan-testow-mvp.md
+  docs/testing/plan-testow-mvp.md: plik powstanie w zadaniu „Odtwórz plan testów MVP…” (po:).
   - [ ] instalacja z Play (jesteś testerem własnej ścieżki) albo `bundletool build-apks --bundle=app-release.aab --output=naulik.apks --ks=$HOME/klucze/naulikapp-upload.jks --ks-key-alias=upload` i `bundletool install-apks --apks=naulik.apks`
   - [ ] TC-01..TC-20 przeprowadzone, wynik wpisany w kolumnie wyniku planu
   Błąd blokujący: poprawka, nowy AAB z wyższym versionCode i ponowne wgranie przed 27.11.

@@ -16,7 +16,7 @@
 - [x] Adres panelu: https://2-29-181-133.sslip.io (bez domen Opisarni i Oprogramowani)
 - [x] Panel jako usługa systemd za Caddy z HTTPS (2026-11-17)
 - [x] Hasło panelu ustawione (2026-11-17)
-- [x] Zapis kart z serwera do GitHuba co 15 min: instalacja `uruchom/serwer/zainstaluj-zapis-kart.sh` | kto: ty | czas: 2
+- [x] Zapis kart z serwera do GitHuba co 15 min: instalacja `uruchom/serwer/zainstaluj-zapis-kart.sh` | kto: ty | czas: 2 | sprawdza: zapis-kart
 - [x] Pole „gdzie:” w zadaniach po D13: chmura, mac; pc tylko dla Windows i migracji (2026-11-17)
 - [x] Automat, raport PM o 7:00, powiadomienia ntfy (2026-11-17)
 - [ ] Uruchom synchronizację rozmów z Maca na serwer | kto: claude | gdzie: chmura
@@ -29,13 +29,13 @@
   gotowe gdy: dziennik w panelu pokazuje wpisy z obu maszyn z ostatnich 24 h
   materiał: KARTA.md#Zakres
   Zaczyna się po synchronizacji rozmów z Maca.
-- [ ] Zainstaluj kopie i kontrolę zdrowia | kto: ty | gdzie: chmura | kiedy: 2026-11-19 | czas: 5
+- [x] Zainstaluj kopie i kontrolę zdrowia | kto: ty | gdzie: chmura | kiedy: 2026-11-19 | czas: 5 | sprawdza: kopia
   cel: nocna kopia danych i kontrola zdrowia z powiadomieniami ntfy działają na serwerze
   gotowe gdy: `systemctl list-timers` pokazuje kopia.timer i zdrowie.timer, a w /home/panel/kopie jest archiwum z dzisiejszą datą
   Opis kopii i kontroli zdrowia: ksiega/MIGRACJA.md, sekcja „Serwer: kopie i kontrola zdrowia”.
-  - [ ] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-kopie-i-zdrowie.sh`
-  - [ ] w wyniku: „zapisano /home/panel/kopie/…” i stany kontroli zdrowia bez „zle”
-  Stan serwera w panelu 2026-11-19 06:02: kopia „ok”, ostatnia kopia 2026-11-19 06:02, kopia poza serwerem „brak”. Gdy `systemctl list-timers` pokazuje oba timery, zamknij zadanie.
+  - [x] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-kopie-i-zdrowie.sh`
+  - [x] w wyniku: „zapisano /home/panel/kopie/…” i stany kontroli zdrowia bez „zle”
+  zamknięte 2026-11-19 na podstawie kontroli serwera (kopia: ok, ostatnia kopia 2026-11-19 06:02; kopia poza serwerem: brak, osobne zadanie)
 - [ ] Włącz Backups serwera w Hetznerze | kto: ty | kiedy: 2026-11-20 | czas: 2
   cel: Hetzner robi codzienną kopię całego serwera (7 ostatnich dni) poza jego dyskiem
   gotowe gdy: w Hetzner Cloud Console przy serwerze zakładka Backups ma stan włączony i pierwszą kopię
@@ -47,12 +47,11 @@
   gotowe gdy: monitor HTTPS na https://2-29-181-133.sslip.io/wejscie ma stan Up i alert na e-mail albo w aplikacji
   - [ ] uptimerobot.com: konto darmowe, „Add New Monitor”, typ HTTP(s), URL https://2-29-181-133.sslip.io/wejscie, interwał 5 min
   - [ ] Alert Contacts: Twój e-mail albo aplikacja UptimeRobot na iPhonie; monitor ma stan Up
-- [ ] Skonfiguruj kopię poza serwerem (Storage Box) | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 20 | po: Zainstaluj kopie i kontrolę zdrowia
+- [ ] Skonfiguruj kopię poza serwerem (Storage Box) | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 20 | po: Zainstaluj kopie i kontrolę zdrowia, Załóż Storage Box | sprawdza: kopia-poza
   cel: nocna kopia trafia zaszyfrowana poza serwer, więc utrata serwera nie zabiera danych
   gotowe gdy: `journalctl -u kopia` pokazuje „zaszyfrowano” i „wysłano poza serwer”, w /home/panel/kopie/ostatnia.json jest "off": true, a hasło kopii jest w menedżerze haseł
-  Kroki: ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”.
-  - [ ] zamów Storage Box BX11 w Hetzner Robot, włącz SSH, zapisz użytkownika uXXXXXX
-  - [ ] klucz kopii panelu, zdalny rclone `storagebox`, plik hasła /home/panel/.kopia-haslo (600)
+  Kroki: ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Storage Box i konto pomocnicze zakłada zadanie „Załóż Storage Box i konto tylko do zapisu”.
+  - [ ] klucz kopii panelu na koncie pomocniczym, zdalny rclone `storagebox`, plik hasła /home/panel/.kopia-haslo (600)
   - [ ] KOPIA_CEL i KOPIA_HASLO_PLIK w /etc/integrate/serwer.env, `sudo systemctl start kopia`
 - [ ] Wykonaj próbę odtworzenia (odtworz.sh --sprawdz) | kto: ty | gdzie: chmura | kiedy: 2026-11-22 | czas: 30 | po: Skonfiguruj kopię poza serwerem
   cel: wiadomo, że kopię z Storage Box da się odczytać i ile trwa odtworzenie
@@ -62,14 +61,15 @@
   - [ ] `sudo -u panel odtworz --haslo-plik /home/panel/.kopia-haslo /tmp/proba/<RRRR-MM-DD>.tar.gz.gpg /tmp/proba/dane`; czas zanotowany
   - [ ] `rm -rf /tmp/proba` (dane klientów); data i czas próby w ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”
   Polecenia z ksiega/MIGRACJA.md, sekcja „Odtworzenie serwera”, próba bez ryzyka: niczego poza /tmp/proba nie nadpisuje.
-- [ ] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10
+- [ ] Zainstaluj użytkownika agenta | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 10 | sprawdza: claude-agent
   cel: agenci z panelu działają jako osobny użytkownik agent, bez dostępu do kluczy SSH, logowania Claude panelu, /etc/integrate i kopii
   gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK poza „Claude agenta niezalogowany”
   - [ ] zmiany rundy 3 są na GitHubie i na serwerze (zapis kart pobiera je co 15 min; inaczej `sudo -u panel git -C /home/panel/IntegrateSystems pull --ff-only`)
   - [ ] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh`
   - [ ] w raporcie na końcu jedyny BRAK to „Claude agenta niezalogowany”; panel działa po restarcie
   Opis: ksiega/MIGRACJA.md, sekcja „Użytkownik agenta”. Restart panelu zatrzymuje trwające uruchomienia: instaluj, gdy żaden agent nie pracuje.
-- [ ] Zaloguj Claude dla agenta w panelu | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | po: Zainstaluj użytkownika agenta
+  Kontrola zdrowia 2026-11-19 nie ma jeszcze wiersza claude-agent; „ok” pojawi się po logowaniu Claude agenta (następne zadanie), wtedy oba zadania wyglądają na zrobione.
+- [ ] Zaloguj Claude dla agenta w panelu | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | po: Zainstaluj użytkownika agenta | sprawdza: claude-agent
   cel: Claude użytkownika agent jest zalogowany kontem Max, więc Automat i przyciski panelu uruchamiają agentów jako agent
   gotowe gdy: test połączenia w panelu kończy się „ok”, a `sudo systemctl start zdrowie && journalctl -u zdrowie -n 10 -o cat` pokazuje „claude-agent: ok”
   - [ ] panel → agenci: przy Claude „Wymaga logowania” → Zaloguj; otwórz pokazany adres, zaloguj kontem Max, wklej kod w panelu
@@ -83,7 +83,15 @@
   - [ ] Hetzner Console: zamów Storage Box BX11 w innej lokalizacji niż serwer (serwer w Helsinkach → Falkenstein), zapisz uXXXXXX
   - [ ] Snapshots: plan automatyczny codziennie o 05:00, 14 migawek
   - [ ] Sub-accounts: nowe konto, katalog bazowy integrate-serwer, SSH tak, Samba i WebDAV nie; zapisz login uXXXXXX-subN
-  Opis i powód (migawki zamiast borg append-only i restic): ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Klucz i rclone na koncie pomocniczym: zadanie „Skonfiguruj kopię poza serwerem”.
+  Opis i powód (migawki zamiast borg append-only i restic): ksiega/MIGRACJA.md, sekcja „Kopia poza serwerem (Storage Box)”. Klucz i rclone na koncie pomocniczym: zadanie „Skonfiguruj kopię poza serwerem” (ma po: na tym zadaniu).
+- [ ] Zaktualizuj ochronę agenta (sekrety, zapora) | kto: ty | gdzie: chmura | kiedy: 2026-11-20 | czas: 5 | sprawdza: plik /etc/nftables.d/integrate-agent.nft
+  cel: agent nie czyta plików sekretów w repozytoriach projektów i nie łączy się z panelem, asystentem Useme ani API Caddy na serwerze
+  gotowe gdy: `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz` nie ma wierszy BRAK w częściach „Sekrety w projektach” i „Zapora agenta”
+  - [ ] zmiany rundy 5 są na GitHubie i na serwerze (zapis kart pobiera je co 15 min; inaczej `sudo -u panel git -C /home/panel/IntegrateSystems pull --ff-only`)
+  - [ ] ssh ops na serwer, `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh`
+  - [ ] w raporcie „Sekrety w projektach” i „Zapora agenta” bez BRAK; „w gicie” przy pliku: unieważnij ten sekret u dostawcy i usuń plik z repozytorium
+  - [ ] część „Przed sprzedażą PC” w raporcie: warunki z „nie” zostają w zadaniach kopii poza serwerem i próby odtworzenia
+  Opis: ksiega/MIGRACJA.md, sekcja „Użytkownik agenta”, „Sekrety i zapora”. Gdy „Zainstaluj użytkownika agenta” jest jeszcze otwarte, jedno uruchomienie instalatora zamyka oba zadania.
 
 ## Etap: Migracja z PC
 

@@ -48,6 +48,11 @@ i wiadomo, że da się z niej odtworzyć dane.
 2. Próba odtworzenia: archiwum pobrane ze Storage Box, `odtworz --sprawdz` kończy się „archiwum poprawne”, rozpakowanie
    do `/tmp/proba` działa, data i czas próby wpisane w sekcji „Odtworzenie serwera”.
 3. Dzień próbny bez PC (etap 4) zakończony bez braków.
+
+Stan warunków 1–3 pokazuje `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz`
+w części „Przed sprzedażą PC” (wiersze `tak` / `nie`, nie liczą się do `BRAK`): wysyłka poza serwer z `ostatnia.json`
+(`offAt` młodsze niż 26 h), próba odtworzenia z `/home/panel/kopie/proba-odtworzenia.json` (rozpakowanie archiwum `.gpg`
+albo `.age`), wpis czasu próby w sekcji „Odtworzenie serwera” i zadanie dnia próbnego `[x]` w Infrastrukturze.
 4. Dopiero wtedy kroki poniżej.
 
 - Usunąć z Harmonogramu zadań autostart asystenta, wyłączyć sshd, portproxy i reguły zapory (albo pełny reset).
@@ -103,6 +108,8 @@ sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-age
 | czytać resztę `IntegrateSystems` (standard, `pm.py`, rejestr, uruchomienia) | zmieniać kodu panelu i skryptów serwera |
 | zapisywać w repozytorium projektu obiekty, gałęzie i pliki swojego worktree | zmieniać `.git/config`, `.git/hooks`, `.git/info` i plików w samym `.git` |
 | — | używać sudo i logować się przez SSH (`DenyUsers agent`, hasło zablokowane) |
+| — | czytać plików sekretów w repozytoriach projektów (`.env*`, `*.key`, `*.pem`, `credentials*`, bazy SQLite): panel:panel 600 |
+| — | łączyć się z panelem (4801), asystentem Useme (8765) i API administracyjnym Caddy (2019) na adresach lokalnych (zapora nftables) |
 
 Co robi instalator: użytkownik `agent` (dom `/home/agent`, 711) i grupa `projekty` (panel i agent); prawa do katalogów
 jak w tabeli, `core.sharedRepository=group` i `.agent/` w `.git/info/exclude` w każdym repozytorium; reguła
@@ -111,8 +118,9 @@ sudo czyści środowisko i ustawia `HOME=/home/agent`, więc `SETENV` nie jest p
 (oficjalny instalator) i `safe.directory=*` w gicie agenta (worktree zakłada panel); w `/etc/integrate/panel.env`
 `PANEL_AGENT_USER=agent`, `PANEL_CLAUDE=/home/agent/.local/bin/claude` (reguła sudo dopuszcza tylko tę ścieżkę),
 `PANEL_LOKALNY_KLUCZ_PLIK=/etc/integrate/lokalny.klucz` (klucz losowy, root:panel 640; poprzednia wersja pliku:
-`panel.env.przed-agentem`); nowa wersja `zdrowie`; restart panelu. Na końcu raport (`ok` / `BRAK`), także gdy nic
-nie zmieniał.
+`panel.env.przed-agentem`); sekrety w projektach i zapora (niżej); nowe wersje `zdrowie` i `odtworz`; restart panelu
+(tylko po zmianie `panel.env` albo grup). Na końcu raport (`ok` / `BRAK` / `--` pominięte), także gdy nic nie zmieniał,
+i warunki sprzedaży PC (sekcja „Przed sprzedażą PC”).
 
 Logowanie Claude agenta (raz; ponownie, gdy kontrola zdrowia zgłosi `claude-agent`):
 1. Panel → agenci: przy Claude „Wymaga logowania” → Zaloguj. Panel uruchamia `claude auth login` jako agent
@@ -127,6 +135,42 @@ Wycofanie: w `/etc/integrate/panel.env` usuń `PANEL_AGENT_USER`, przywróć `PA
 Panel uruchamia git w repozytoriach, do których agent pisze, więc wywołuje go bez haków i fsmonitora; pliki, które agent
 mógł podmienić w swoim worktree (`.git` w worktree, `commondir`, `gitdir`), nie mogą decydować o tym, którą konfigurację
 gita panel czyta.
+
+### Sekrety i zapora
+
+Sekrety w projektach. Katalogi `/home/panel/projekty/*` mają ACL dla grupy `projekty`, więc bez tego kroku agent czytałby
+pliki `.env` i bazy aplikacji klientów. Instalator szuka w repozytoriach plików `.env*`, `*.env`, `*.key`, `*.pem`,
+`credentials*`, `*.sqlite`, `*.sqlite3`, `*.db` (z plikami `-wal`, `-shm`, `-journal`) i ustawia im właściciela `panel`,
+grupę `panel`, prawa 600 i usuwa ACL. Pomija katalogi testów (`test`, `tests`, `__tests__`, `spec`, `fixtures`,
+`testdata`), zależności (`node_modules`, `.venv`, `venv`), `.git`, worktree agentów (`.agent/`), wzory (`.example`,
+`.sample`, `.template`, `.przyklad`, `.dist`) i kod źródłowy o nazwie `credentials*` (np. `credentials.py`).
+Raport sprawdza każdy taki plik próbą odczytu jako `agent` (`BRAK`, gdy się udaje) i zgłasza pliki śledzone w gicie:
+ich treść agent czyta z `.git/objects` mimo praw 600, więc taki sekret trzeba unieważnić u dostawcy i usunąć z repozytorium.
+Ograniczenia: plik sekretu utworzony później w katalogu z ACL (np. nowy `.env`) dostaje prawa grupy; raport go zgłosi,
+ponowne uruchomienie instalatora poprawia prawa. Agent ma zapis w katalogu, więc może taki plik usunąć albo podmienić,
+nie może go przeczytać.
+
+Zapora. Agent nie łączy się z usługami lokalnymi, które ufają połączeniom z serwera: panel (`127.0.0.1:4801`), asystent
+Useme (`127.0.0.1:8765`) i API administracyjne Caddy (`localhost:2019`, bez hasła, pozwala zmienić konfigurację Caddy).
+Reguła w `/etc/nftables.d/integrate-agent.nft`:
+
+```
+table inet integrate_agent {
+	chain output {
+		type filter hook output priority 0; policy accept;
+		meta skuid agent ip daddr 127.0.0.0/8 tcp dport { 4801, 8765, 2019 } reject
+		meta skuid agent ip6 daddr ::1 tcp dport { 4801, 8765, 2019 } reject
+	}
+}
+```
+
+Ładuje ją jednostka `agent-zapora.service` (oneshot, `WantedBy=sysinit.target`, przed `panel.service`), także po
+restarcie serwera. Plik zakłada tabelę od nowa, więc ponowne ładowanie nie dubluje reguł; reguły ufw (osobne tabele)
+zostają bez zmian. Nie używa `nftables.service`: domyślny `/etc/nftables.conf` w Ubuntu zaczyna się od `flush ruleset`
+i usunąłby reguły ufw. Inne połączenia agenta (GitHub, Claude) bez zmian; panel przez Caddy (`https://…sslip.io`)
+wymaga logowania jak dla każdego z zewnątrz. Raport: plik, jednostka włączona i aktywna, tabela w `nft list`, potem
+`curl` jako `panel` (usługa odpowiada) i jako `agent` (kod 7: połączenie odrzucone). Usługa, która nie odpowiada także
+panelowi, jest pomijana (`--`), poza panelem (`BRAK`). Wycofanie: `sudo systemctl disable --now agent-zapora`.
 
 ## Kopia poza serwerem (Storage Box)
 
@@ -211,6 +255,7 @@ rm -rf /tmp/proba
 ```
 
 `odtworz.sh --sprawdz` sprawdza archiwum (odszyfrowanie, `gzip -t`, lista `tar`, brak ścieżek bezwzględnych i `..`, obecność `kopia-info.txt`) i wypisuje zawartość. Bez `--sprawdz` rozpakowuje do pustego katalogu, wstawia spójne kopie baz z `sqlite/` na miejsce i wypisuje kroki ręczne. Niczego poza wskazanym katalogiem nie nadpisuje.
+Po udanym sprawdzeniu i rozpakowaniu `odtworz` zapisuje wynik w `/home/panel/kopie/proba-odtworzenia.json` (`check` i `unpack`: czas, nazwa archiwum, `encrypted`, sekundy); raport `zainstaluj-uzytkownika-agenta.sh --sprawdz` uznaje próbę, gdy rozpakowane było archiwum `.gpg` albo `.age`.
 
 Na czystym serwerze (Ubuntu 24.04 Arm, Hetzner CAX11), jako root, potem ops:
 
@@ -239,6 +284,7 @@ Wzory bez haseł: `uruchom/serwer/konfiguracja/`. Bieżące pliki z serwera (war
 | `/etc/integrate/panel.env` | `konfiguracja/panel.env.przyklad` | `PANEL_TOKEN`, `PANEL_NTFY_URL` w menedżerze haseł |
 | `/etc/integrate/lokalny.klucz` | — (tworzy `zainstaluj-uzytkownika-agenta.sh`) | klucz lokalnych żądań POST; na nowym serwerze nowy |
 | `/etc/sudoers.d/90-panel-agent`, `/etc/ssh/sshd_config.d/90-agent.conf` | tworzy `zainstaluj-uzytkownika-agenta.sh` | brak |
+| `/etc/nftables.d/integrate-agent.nft`, `/etc/systemd/system/agent-zapora.service` | tworzy `zainstaluj-uzytkownika-agenta.sh` | brak |
 | `/home/agent` (Claude Code agenta, logowanie) | — | logowanie od nowa przez panel |
 | `/etc/integrate/serwer.env` | `uruchom/serwer/serwer.env.przyklad` | adres celu kopii; hasło kopii w osobnym pliku |
 | `/home/panel/.kopia-haslo` | — | hasło kopii, w menedżerze haseł |

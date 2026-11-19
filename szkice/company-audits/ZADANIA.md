@@ -46,15 +46,34 @@ termin: 2026-12-18
   gotowe gdy: w repozytorium projektu plik z 10 firmami (nazwa, powód wyboru, szkic pierwszej wiadomości); nic nie wysłane
   materiał: Reaserch/LeadyV2
   materiał: KARTA.md#Cel
+  materiał: kampanie/pozyskanie-klientow.md
   materiał: KARTA.md#Zasady pracy agentów
-  Lista LeadyV2 jest dziś tylko w kopii PC: dysk zewnętrzny, Migracja-PC-2026-11/projekty/Reaserch.
+  Reaserch/LeadyV2: folder powstanie w repozytorium w zadaniu „Wgraj folder Reaserch (LeadyV2) na serwer” (po:); dziś jest tylko na dysku zewnętrznym, Migracja-PC-2026-11/projekty/Reaserch.
   Zaczyna się po wgraniu folderu Reaserch na serwer (20.11). Gdy listy nadal nie ma w Reaserch/, agent oznacza [!] z blokadą „brak listy LeadyV2 na serwerze”.
   Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
 - [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | kiedy: 2026-11-25 | czas: 30 | po: Wybierz 10 firm z listy LeadyV2
   cel: pierwsza wiadomość do 10 firm wysłana nowym kanałem właściciela
-  gotowe gdy: 10 wiadomości wysłanych; data i kanał zapisane w notatce pod tym zadaniem
+  gotowe gdy: 10 firm dostało pierwszą wiadomość bez ceny; data i kanał zapisane w notatce pod tym zadaniem
   materiał: KARTA.md#Zasady pracy agentów
-  Szkice: wynik zadania „Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości”. Oferta z ceną wymaga osobnej zgody.
+  materiał: kampanie/pozyskanie-klientow.md
+  Szkice: wynik zadania „Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości” (panel dopisze plik jako materiał). Oferta z ceną wymaga osobnej zgody.
+  Termin 25.11: 4 dni po wyborze firm (21.11), zapas na wgranie listy i przegląd szkiców.
+- [ ] Przeprowadź rozmowy z firmami, które odpisały | kto: ty | kiedy: 2026-12-01 | czas: 60 | po: Napisz do 10 wybranych firm | licznik: rozmowy
+  cel: z każdą firmą, która odpisała, rozmowa o potrzebie integracji ERP ↔ sprzedaż albo jasna odmowa
+  gotowe gdy: każda firma, która odpisała, ma rozmowę za sobą albo odmowę; pod zadaniem po jednej notatce na rozmowę (klient N: potrzeba, ERP, kanały sprzedaży), bez nazwisk
+  materiał: KARTA.md#Poza zakresem
+  Licznik: liczba przeprowadzonych rozmów. Bez podawania cen na pierwszym spotkaniu (KARTA.md, Poza zakresem).
+- [ ] Przygotuj szkice ofert dla firm po rozmowie | kto: claude | gdzie: chmura | kiedy: 2026-12-02 | po: Przeprowadź rozmowy z firmami
+  cel: dla każdej firmy po rozmowie gotowy szkic oferty: audyt procesów jako pierwszy krok, zakres i cena
+  gotowe gdy: w repozytorium projektu plik oferty dla każdej firmy z notatek pod zadaniem „Przeprowadź rozmowy…” (klient N); cena wyliczona wzorem z godzin i stawki z karty; nic nie wysłane
+  materiał: KARTA.md#Zasoby i ograniczenia
+  materiał: KARTA.md#Zasady pracy agentów
+  Kwot nie wymyśla model: godziny × stawka 220 zł/h netto, rabat dla pierwszych firm według karty; zakres bez pozycji z „Poza zakresem”.
+- [ ] Wyślij oferty firmom po rozmowie | kto: ty | kiedy: 2026-12-04 | czas: 30 | po: Przygotuj szkice ofert dla firm po rozmowie | licznik: oferty
+  cel: każda firma po rozmowie dostała ofertę z ceną
+  gotowe gdy: każda firma z notatek rozmów dostała ofertę albo w notatce powód, dlaczego nie
+  materiał: kampanie/pozyskanie-klientow.md
+  Licznik: liczba wysłanych ofert. Oferta z ceną to Twoja decyzja; wysyłasz sam.
 - [x] Oferta na Useme: 2500 zł, 7 dni (bez odpowiedzi do 14.11)
 - [x] Asystent Useme na serwerze: usługa, 188 testów, bez automatycznej wysyłki i komentarzy (2026-11-17)
 - [x] Hasło do panelu zleceń: `ssh -t ops@2.29.181.133 sudo ustaw-haslo-zlecen` | kto: ty | czas: 2

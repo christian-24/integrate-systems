@@ -76,6 +76,7 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
 6. Ile jest filmów, o czym są i gdzie leżą? Od tego zależy, czy film A (slot 20.11) trzeba nagrać od nowa.
    termin: 2026-11-19
    propozycja: nagrać film A od nowa według scenariusza zastępczego z planu (punkt 6), nagranie ekranu do 60 s; stare filmy przejrzeć dopiero przed filmem C (27.11)
+   skutek: nowe: Przejrzyj stare filmy przed nagraniem filmu C | kto: ty | kiedy: 2026-11-26 | czas: 15
 7. Czy posty z planu T1–T8 (od 03.11) były publikowane, i które? Od tego zależy, czy posty 2–4 (23.11, 25.11, 27.11) nie powtarzają tematu.
    termin: 2026-11-22
    propozycja: sprawdzić na LinkedIn (profil → Aktywność → Posty) posty od 03.11; gdy żaden z tematów postów 2–4 nie wyszedł, zostawić posty 2–4 bez zmian
@@ -85,15 +86,20 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
 9. Czy „konto aktywne” to konto z co najmniej 1 udaną generacją w ostatnich 14 dniach, czy okno 30 dni albo co najmniej 3 generacje? Od tego zależy liczenie celu 20 aktywnych w pomiarze.
    termin: 2026-11-22
    propozycja: co najmniej 1 udana generacja w ostatnich 14 dniach; tak liczy zapytanie z metryki.md (punkt 6, kolumna aktywne_14d)
+   skutek: nowe: Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
 10. Czy 40 kont liczymy łącznie od początku, czy tylko konta założone od 2026-10-27? Od tego zależy pomiar w metryki.md i ocena checkpointu 30.11.
    termin: 2026-11-22
    propozycja: łącznie od początku, bez kont własnych i testowych; pomiar startowy 2026-11-18 to 0 kont, więc oba sposoby dają dziś ten sam wynik
 11. Które identyfikatory kont są własne lub testowe i mają być wyłączone z liczenia? Od tego zależy zapytanie z metryki.md (pkt 6) w pomiarze 23.11.
    termin: 2026-11-22
    propozycja: podać identyfikatory raz (panel admina, lista użytkowników) i wpisać je do `ARRAY[...]` w metryki.md (punkt 6); nowe konta testowe zakładać na adres z domeny opisarnia.pl
-12. Liczby kanałów: ręcznie ze statystyk LinkedIn, Facebooka i Instagrama, czy parametr UTM i pole źródła przy rejestracji (osobne zadanie w kodzie)? Od tego zależy tabela kanałów 29.11 i decyzja 30.11.
+12. Liczby kanałów: ręcznie ze statystyk LinkedIn, Facebooka i Instagrama, czy parametr UTM i pole źródła przy rejestracji (osobne zadanie w kodzie)? Od tego zależy podział kont na kanały w decyzji 30.11.
    termin: 2026-11-21
-   propozycja: do 30.11 ręcznie ze statystyk LinkedIn, Facebooka i Instagrama (ok. 5 min 29.11); UTM i pole źródła jako zadanie dla Claude po checkpoincie 30.11
+   propozycja: do 30.11 ręcznie: wyniki ze statystyk LinkedIn, Facebooka i Instagrama pod wierszami publikacji w kampanie/staly-rytm.md (wyświetlenia, kliknięcia, konta); UTM i pole źródła jako zadanie dla Claude po checkpoincie 30.11
+   skutek: nowe: Dodaj parametr UTM i pole źródła przy rejestracji | kto: claude | gdzie: chmura | kiedy: 2026-12-01
 13. Post 1 (19.11), film A (20.11) i wiadomości do znajomych kierują ludzi do rejestracji, a DPA z Anthropic i Mistral oraz regulamin nie są potwierdzone (zadanie z terminem 17.11). Czy wstrzymać posty do potwierdzenia DPA?
    termin: 2026-11-19
-   propozycja: wstrzymać posty do potwierdzenia DPA; potwierdzenie zajmuje ok. 15 min (zadanie „Potwierdź DPA…” w ZADANIA.md), więc post 1 może wyjść jeszcze 19.11
+   propozycja: wstrzymać posty i komentarze do potwierdzenia DPA; publikacje w kampanii i wiadomości mają już po: Potwierdź DPA, potwierdzenie zajmuje ok. 15 min, więc post 1 może wyjść jeszcze 19.11
+   skutek: po: Potwierdź DPA → Odpowiedz na komentarze pod postem 1
+   skutek: po: Potwierdź DPA → Odpowiedz na komentarze pod postami 2 i 3
+   skutek: po: Potwierdź DPA → Napisz 5 komentarzy pod cudzymi postami

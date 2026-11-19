@@ -8,6 +8,10 @@
 # ARCHIWUM: RRRR-MM-DD.tar.gz, RRRR-MM-DD.tar.gz.gpg (hasło z --haslo-plik PLIK albo KOPIA_HASLO_PLIK,
 # bez nich gpg pyta o hasło) albo RRRR-MM-DD.tar.gz.age (klucz prywatny z --klucz PLIK albo KOPIA_AGE_KLUCZ).
 # Skrypt niczego nie nadpisuje poza KATALOGIEM: dane do /home/panel przenosi właściciel według kroków na końcu.
+# Wynik udanej próby (sprawdzenie i rozpakowanie osobno) zapisuje w /home/panel/kopie/proba-odtworzenia.json
+# (KOPIA_PROBA_STAN), gdy katalog istnieje i jest zapisywalny: {"check": {...}, "unpack": {...}}, każde z polami
+# "at", "archive", "encrypted" (archiwum .gpg albo .age, czyli kopia poza serwerem), "seconds".
+# Czyta go raport zainstaluj-uzytkownika-agenta.sh --sprawdz (warunki sprzedaży PC).
 set -u
 umask 077
 log() { echo "odtworz: $*"; }
@@ -34,6 +38,33 @@ CEL="${ARGS[1]:-}"
 if [ "$SPRAWDZ" -eq 0 ] && [ -e "$CEL" ] && [ -n "$(ls -A "$CEL" 2>/dev/null)" ]; then
   blad "$CEL nie jest pusty; wskaż nowy katalog"
 fi
+
+PROBA_STAN="${KOPIA_PROBA_STAN:-/home/panel/kopie/proba-odtworzenia.json}"
+
+zapisz_probe() {  # check|unpack: wynik próby dla raportu warunków sprzedaży PC; błąd zapisu nie przerywa
+  local d szyfr=false
+  d="$(dirname "$PROBA_STAN")"
+  [ -d "$d" ] && [ -w "$d" ] && command -v python3 >/dev/null || return 0
+  case "$ARCH" in *.gpg|*.age) szyfr=true ;; esac
+  python3 - "$PROBA_STAN" "$1" "${ARCH##*/}" "$szyfr" "$((SECONDS - START))" <<'PY' || log "OSTRZEŻENIE: nie zapisano $PROBA_STAN"
+import datetime, json, os, sys
+cel, tryb, arch, szyfr, sek = sys.argv[1:6]
+try:
+    with open(cel, encoding="utf-8") as f:
+        d = json.load(f)
+    if not isinstance(d, dict):
+        d = {}
+except (OSError, ValueError):
+    d = {}
+teraz = datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(timespec="seconds")
+d[tryb] = {"at": teraz, "archive": arch, "encrypted": szyfr == "true", "seconds": int(sek)}
+tmp = cel + ".tmp"
+with open(tmp, "w", encoding="utf-8") as f:
+    json.dump(d, f)
+    f.write("\n")
+os.replace(tmp, cel)
+PY
+}
 
 ROB="$(mktemp -d "${TMPDIR:-/tmp}/odtworz.XXXXXX")" || blad "brak folderu roboczego"
 trap 'rm -rf "$ROB"' EXIT
@@ -86,6 +117,7 @@ if [ "$SPRAWDZ" -eq 1 ]; then
   grep -v '/$' "$ROB/lista" | sed 's/^/  /'
   echo
   log "archiwum poprawne (sprawdzenie trwało $((SECONDS - START)) s)"
+  zapisz_probe check
   exit 0
 fi
 
@@ -104,6 +136,8 @@ if [ -d "$CEL/sqlite" ]; then
 fi
 log "rozpakowano do $CEL; bazy SQLite na miejscu: $n_baz"
 log "czas: $((SECONDS - START)) s (wpisz w ksiega/MIGRACJA.md po próbie)"
+zapisz_probe check
+zapisz_probe unpack
 
 cat <<EOF
 

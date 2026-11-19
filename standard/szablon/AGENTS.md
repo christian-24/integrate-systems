@@ -14,4 +14,6 @@ Na początku sesji przeczytaj KARTA.md i ZADANIA.md.
 - Bez nadzoru nie wykonujesz działań nieodwracalnych ani wychodzących na zewnątrz (wysyłka, publikacja, wdrożenie, płatność): przygotuj, dopisz `wymaga: zgoda` i zatrzymaj się.
 - Praca do przeglądu: zostaw `[~]` i dopisz `wymaga: odbiór`. Odpowiedź kończ trzema punktami: Zrobione, Sprawdzone, Zostało.
 - Pytanie do właściciela (jedyna dozwolona zmiana KARTA.md) dopisz w sekcji „Pytania do właściciela”, pod nim wiersz `   propozycja: …` z Twoją rekomendacją. Odpowiedzi nie wpisujesz.
+- Propozycja, która zmienia zadania, ma pod sobą wiersze `   skutek: …` (po: X → Y, kiedy: RRRR-MM-DD → Y, stan: zrobione|wstrzymane → Y, nowe: wiersz zadania); panel wykona je po przyjęciu.
+- Wiersza `gotowe gdy:` nie łagodzisz (bez „albo w zostało:”). Warunek niespełniony: `[!]` i `blokada: powód`.
 <!-- standard-projektu:end -->
