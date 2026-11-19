@@ -79,14 +79,15 @@ termin: 2026-11-25
 ## Etap: Produkcja
 termin: 2026-11-17
 
-- [ ] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
+- [~] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: klucz Mistral z historii rozmowy przestaje działać
   gotowe gdy: klucz ma w konsoli Mistral stan unieważniony, a zapasowy silnik Opisarni działa na innym kluczu
-  - [ ] console.mistral.ai → API Keys: sprawdź, czy klucz z 26.10 (ostatnie znaki jak w rozmowie) jest kluczem produkcji
+  - [x] console.mistral.ai → API Keys: sprawdź, czy klucz z 26.10 (ostatnie znaki jak w rozmowie) jest kluczem produkcji
   - [ ] gdy tak: utwórz nowy klucz, wpisz go w pliku .env produkcji Opisarni (zmienna z kluczem Mistral), `docker compose -f docker-compose.prod.yml up -d backend`
   - [ ] console.mistral.ai → API Keys: przy kluczu z 26.10 „Revoke” albo „Delete”
   - [ ] po zmianie: jedna generacja na opisarnia.pl działa (Haiku); zapasowy Mistral nie zgłasza błędu 401 w logach backendu
   Klucz leży jawnie w historii Claude Code z PC (archiwum rozmów na Macu, ksiega/MIGRACJA.md).
+  wynik: Ale po co ci w konopi mistral ? \
 - [x] Serwer Hetzner, Caddy z HTTPS, docker-compose.prod (ADR 0004, 0034)
 - [x] Auto-deploy przez GitHub Actions (#70)
 - [x] Ręczny deploy do #125 (2026-11-03)
