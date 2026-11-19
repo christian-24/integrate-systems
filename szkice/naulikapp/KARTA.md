@@ -60,3 +60,4 @@ NaulikApp to mobilny dziennik pokładowy dla polskich kapitanów małych i śred
 5. Dane wydawcy do polityki prywatności NaulikApp i Play Console: nazwa wydawcy, adres, e-mail kontaktowy w sprawie danych?
    termin: 2026-11-21
    propozycja: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console
+   Odpowiedź: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console

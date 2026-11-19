@@ -194,11 +194,12 @@ termin: 2026-11-30
   gotowe gdy: 5 osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
   materiał: marketing/plan-10-kont.md#5
   Szkic „wiadomości do znajomego z branży” jest na końcu punktu 5. Listę osób znasz tylko Ty.
-- [ ] Odpowiedz na komentarze pod postem 1 | kto: ty | kiedy: 2026-11-20 | czas: 10
+- [ ] Odpowiedz na komentarze pod postem 1 | kto: ty | kiedy: 2026-11-20 | czas: 10 | po: Potwierdź DPA
   cel: każdy komentarz pod postem z 19.11 ma odpowiedź
   gotowe gdy: pod postem 1 na LinkedIn i Facebooku nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
   Szkic odpowiedzi „jak to wypróbować” jest w punkcie 4.
+  z pytania 13, 2026-11-19
 - [ ] Wyślij zaproszenia LinkedIn do 8 firm z partii 2 | kto: ty | kiedy: 2026-11-21 | czas: 20 | po: Potwierdź DPA, Scal rejestr kontaktów | licznik: zaproszenia
   cel: 8 zaproszeń do osób decyzyjnych w firmach z partii 2
   gotowe gdy: każda z 8 firm ma zaznaczony krok: zaproszenie wysłane albo notatkę, dlaczego nie (firma nie działa, ma już opisy po niemiecku)
@@ -220,12 +221,13 @@ termin: 2026-11-30
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
   Licznik: liczba osób, które przyjęły zaproszenie. wiadomosci/wiadomosc-1-partie-1-3.md: plik powstanie w zadaniu „Przygotuj szkice wiadomości 1…”. Link dopiero po odpowiedzi „tak” (wiadomość 2).
-- [ ] Napisz 5 komentarzy pod cudzymi postami o Allegro i eksporcie mebli | kto: ty | kiedy: 2026-11-22 | czas: 30 | po: Przygotuj 8 tez do komentarzy
+- [ ] Napisz 5 komentarzy pod cudzymi postami o Allegro i eksporcie mebli | kto: ty | kiedy: 2026-11-22 | czas: 30 | po: Przygotuj 8 tez do komentarzy, Potwierdź DPA
   cel: wyjście poza własną sieć kontaktów bez kosztów
   gotowe gdy: 5 merytorycznych komentarzy pod postami 5 różnych autorów, bez linku do Opisarni
   materiał: wiadomosci/komentarze-tezy.md
   materiał: marketing/plan-10-kont.md#10
   wiadomosci/komentarze-tezy.md: plik powstanie w zadaniu „Przygotuj 8 tez do komentarzy…”.
+  z pytania 13, 2026-11-19
 - [ ] Wyślij wiadomość do 5 kolejnych znajomych z branży (wariant B, tura 2) | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wyślij wiadomość do 5 znajomych z branży, Potwierdź DPA | licznik: linki
   cel: kolejne 5 osób z branży dostaje link do darmowego konta
   gotowe gdy: 5 kolejnych osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
@@ -273,10 +275,11 @@ termin: 2026-11-30
   materiał: marketing/plan-10-kont.md#5
   materiał: marketing/kontakty.md
   Licznik: liczba osób z partii 3, które przyjęły zaproszenie.
-- [ ] Odpowiedz na komentarze pod postami 2 i 3 | kto: ty | kiedy: 2026-11-26 | czas: 15
+- [ ] Odpowiedz na komentarze pod postami 2 i 3 | kto: ty | kiedy: 2026-11-26 | czas: 15 | po: Potwierdź DPA
   cel: każdy komentarz pod postami z 23.11 i 25.11 ma odpowiedź
   gotowe gdy: pod postami 2 i 3 nie ma komentarza bez odpowiedzi
   materiał: marketing/plan-10-kont.md#4
+  z pytania 13, 2026-11-19
 - [ ] Wyślij przypomnienia do partii 2 tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 10 | po: Wyślij wiadomość 1 do nowych kontaktów z partii 1 i 2, Potwierdź DPA | licznik: rozmowy
   cel: jedno przypomnienie do osób z partii 2, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa z partii 2 bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
@@ -356,3 +359,7 @@ termin: 2026-11-30
   zostało: film A nie istnieje w repozytorium (nagranie to Twój wiersz „Nagraj film A”, pytanie 6 w KARTA.md bez odpowiedzi); grafika.png zrobi panel; publikacja po Twojej stronie
 - [ ] Przejrzyj stare filmy przed nagraniem filmu C | kto: ty | kiedy: 2026-11-26 | czas: 15
   z pytania 6, 2026-11-19
+- [ ] Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
+  z pytania 9, 2026-11-19
+- [ ] Dodaj parametr UTM i pole źródła przy rejestracji | kto: claude | gdzie: chmura | kiedy: 2026-12-01
+  z pytania 12, 2026-11-19
