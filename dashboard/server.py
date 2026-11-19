@@ -94,6 +94,8 @@ sys.path.insert(0, HERE)
 import projekt  # noqa: E402  (standard projektu: odczyt, kontrola zgodności, zapis stanu zadań)
 import historia  # noqa: E402  (dzienny stan zadań projektów, PULPIT.md sekcja 3)
 import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENCI.md)
+import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
+COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
 # Dodatkowe nazwy hosta, pod którymi panel może być otwierany (np. adres Tailscale).
@@ -866,6 +868,7 @@ def build_data():
     out["agents"]["canRunTasks"] = out["projectsSource"] == "registry"
     out["history"] = project_history(out)
     out["server"] = server_state()
+    out["costs"] = COSTS.state()
     add_checks(out["tasks"], index, out["server"])
     return out
 

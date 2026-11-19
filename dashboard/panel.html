@@ -271,6 +271,12 @@ tbody tr[data-go]:hover td{background:var(--hover)}
 .plan .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .post{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:10px;display:grid;gap:10px}
 .post img{width:100%;max-width:420px;border-radius:8px;border:1px solid var(--line)}
+.kpis{display:flex;flex-wrap:wrap;gap:12px 28px}
+.kpis>div{display:grid;gap:2px}
+.kpis b{font-size:20px}
+.kpis span:last-child{color:var(--ink-3);font-size:12.5px}
+.abox .move{margin:6px 0;font-size:13.5px;line-height:1.5}
+.post h3{margin:0;font-size:14px}
 .post .ptx p{margin:6px 0 0;font-size:13.5px;line-height:1.5;white-space:normal}
 .post .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .lc{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -702,6 +708,7 @@ function normalize(raw){
       unlocksIn:Array.isArray(z.unlocks)?z.unlocks.filter(u=>u&&typeof u.title==='string'&&u.title).map(u=>({id:String(u.id||''),title:u.title,executor:WHO[u.executor]?u.executor:'',date:(v=>isDay(v)?v:'')(String(rr(u.date)||''))})):null,
       unlockCountIn:Number.isFinite(+z.unlockCount)&&z.unlockCount!==null&&z.unlockCount!==''?+z.unlockCount:null})),
     server:normServer(raw.server),
+    costs:normCosts(raw.costs),
     campaigns:(raw.campaigns||[]).map(c=>{
       const cn={},co=c.counters&&typeof c.counters==='object'?c.counters:{};
       Object.keys(co).forEach(k=>{const n=+co[k];if(k&&isFinite(n))cn[k]=n});
@@ -769,6 +776,15 @@ function normServer(s){
   const c=s.checks&&typeof s.checks==='object'?s.checks:{},o={};
   Object.keys(c).forEach(k=>{const v=String(c[k]);o[k]=v==='ok'||v==='zle'?v:'brak'});
   return {checks:o,backupAt:typeof s.backupAt==='string'?s.backupAt:'',backupOff:!!s.backupOff,at:typeof s.at==='string'?s.at:''};
+}
+/* koszty Hetznera (dashboard/koszty.py): szacunek z cennika API, kwoty brutto w EUR */
+function normCosts(c){
+  if(!c||typeof c!=='object')return null;
+  if(!c.configured)return {configured:false};
+  const n=v=>isFinite(+v)?+v:0,it=x=>({name:String(x.name||''),kind:String(x.kind||''),detail:String(x.detail||''),location:String(x.location||''),since:isDay(x.since)?x.since:'',monthly:n(x.monthly),month:n(x.month),total:n(x.total)});
+  return {configured:true,loading:!!c.loading,at:typeof c.at==='string'?c.at:'',eurPln:isFinite(+c.eurPln)&&+c.eurPln>0?+c.eurPln:0,rateDate:String(c.rateDate||''),
+    monthly:n(c.monthly),month:n(c.month),total:n(c.total),
+    projects:(Array.isArray(c.projects)?c.projects:[]).map(p=>({name:String(p.name||''),error:String(p.error||''),monthly:n(p.monthly),month:n(p.month),total:n(p.total),items:(Array.isArray(p.items)?p.items:[]).map(it)}))};
 }
 /* następny krok: z serwera, a gdy serwer go nie podaje, liczony tak samo z zadań */
 function calcNext(p,o){
@@ -1178,6 +1194,8 @@ function srvItems(){
   chk('zapis-kart','zapis kart','działa','błąd','nie zainstalowany');
   chk('claude','logowanie Claude','tak','nie','brak danych');
   Object.keys(c).forEach(k=>{if(c[k]==='zle'&&['dysk','zapis-kart','claude','kopia'].indexOf(k)<0)it.push({dot:'bad',label:k+': błąd'})});
+  const k=D.costs;
+  if(k&&k.configured&&!k.loading)it.push({dot:k.projects.some(p=>p.error)?'warn':'ok',label:'Hetzner: '+eur(k.month)+' w tym miesiącu',title:'łącznie od założenia '+eur(k.total)+', miesięcznie '+eur(k.monthly)});
   const old=at?Math.round((Date.now()-at)/6e4):null;
   if(old!=null&&old>30)it.push({dot:'warn',label:'stan sprzed '+(old<120?old+' min':Math.floor(old/60)+' h')});
   const lvl=it.some(x=>x.dot==='bad')?'bad':it.some(x=>x.dot==='warn')?'warn':'ok';
@@ -1709,6 +1727,7 @@ function vAgenci(){
   const a=D.agents;
   let h='<div class="pagehead"><div><h1>Agenci</h1><p>Claude Code i Codex na serwerze panelu, na logowaniu subskrypcji. Stan serwera i sesje urządzeń.</p></div></div><section class="panel" id="abar">'+agBarHtml()+'</section>';
   h+=srvPanel();
+  h+=costPanel();
   if(!a)return h;
   const L=a.runs,act=L.filter(isAct).length,td=runsToday();
   h+='<section class="panel"><h2>Uruchomienia <small>'+(act?act+' w toku · ':'')+'naraz '+(a.maxParallel||1)+' · błędy dziś '+td.filter(r=>r.state==='error'||r.state==='timeout').length+'</small></h2>'+
@@ -1720,6 +1739,25 @@ function srvPanel(){
   const lo=A.lo?'<span class="rsn">Wylogować wszystkie urządzenia? Każde, także to, zaloguje się ponownie hasłem panelu.</span><button class="btn sm" data-ag="lo-yes" data-k="lo-yes">Wyloguj</button><button class="btn sec sm" data-ag="lo-no" data-k="lo-no">Anuluj</button>'
     :'<button class="btn sec sm" data-ag="lo" data-k="lo"'+(A.busy.lo?' aria-disabled="true"':'')+'>'+(A.busy.lo?'Wylogowuję…':'Wyloguj wszystkie urządzenia')+'</button><span class="muted">Sesje wygasają same po 30 dniach.</span>';
   return '<section class="panel"><h2>Serwer</h2><div class="pad">'+(D.server?srvBar():'<p class="muted">Brak danych o stanie serwera. Kontrola zdrowia i kopie działają na serwerze w chmurze (<code>uruchom/serwer/</code>).</p>')+'</div><p class="ahint">'+lo+'</p></section>';
+}
+const eur=n=>(+n||0).toFixed(2).replace('.',',')+' €';
+const pln=n=>D.costs&&D.costs.eurPln?' <span class="muted">≈ '+Math.round(n*D.costs.eurPln)+' zł</span>':'';
+const CKIND={serwer:'serwer',kopie:'kopie zapasowe',adres:'adres IP',dysk:'dysk'};
+function costPanel(){
+  const k=D.costs;if(!k)return '';
+  let h='<section class="panel" id="koszty"><h2>Koszty Hetzner'+(k.configured&&!k.loading?' <small>szacunek z cennika · stan z '+esc(whenT(k.at))+'</small>':'')+'</h2>';
+  if(!k.configured)return h+'<p class="empty">Brak tokenu Hetzner. Na serwerze (ssh jako ops): <code>sudo ustaw-token-hetznera</code>. Token tylko do odczytu, jeden na projekt w Hetzner Console.</p></section>';
+  if(k.loading)return h+'<p class="empty">Pobieram koszty z API Hetzner…</p></section>';
+  h+='<div class="pad"><div class="kpis"><div><b class="num">'+eur(k.month)+'</b>'+pln(k.month)+'<span>w tym miesiącu</span></div><div><b class="num">'+eur(k.total)+'</b>'+pln(k.total)+'<span>łącznie od założenia</span></div><div><b class="num">'+eur(k.monthly)+'</b>'+pln(k.monthly)+'<span>pełny miesiąc</span></div></div></div>';
+  h+='<div class="tw"><table><thead><tr><th>Projekt Hetzner</th><th>Pozycja</th><th>Rodzaj</th><th>Od</th><th class="num">Miesięcznie</th><th class="num">Ten miesiąc</th><th class="num">Łącznie</th></tr></thead><tbody>';
+  k.projects.forEach(p=>{
+    if(p.error){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="warn">'+esc(p.error)+'</td></tr>';return}
+    if(!p.items.length){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="muted">brak płatnych zasobów</td></tr>';return}
+    p.items.forEach(x=>{h+='<tr><td>'+esc(p.name)+'</td><td>'+esc(x.name)+'</td><td>'+esc(CKIND[x.kind]||x.kind)+(x.detail?' <span class="muted">'+esc(x.detail)+(x.location?' · '+esc(x.location):'')+'</span>':'')+'</td><td>'+(x.since?esc(dd(x.since)+'.'+x.since.slice(0,4)):'—')+'</td>'+
+      '<td class="num">'+eur(x.monthly)+'</td><td class="num">'+eur(x.month)+'</td><td class="num">'+eur(x.total)+'</td></tr>'});
+  });
+  h+='</tbody></table></div><p class="ahint muted">Kwoty brutto, liczone jak u Hetznera: godziny × stawka, najwyżej cena miesięczna. Usunięte serwery i ruch ponad limit nie są liczone; dokładne kwoty są na fakturach w Hetzner Console.'+(k.eurPln?' Kurs NBP '+String(k.eurPln).replace('.',',')+' zł'+(k.rateDate?' z '+esc(k.rateDate):'')+'.':'')+'</p></section>';
+  return h;
 }
 function logoutAll(){
   A.lo=false;
@@ -1829,9 +1867,11 @@ function taskHtml(t){
   if(d.fix&&t.state!=='done')h+='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>';
   h+=checkBox(t);
   h+=planBlock(t);
-  if(pub&&isDay(t.date))h+=postBox(t);
+  const pday=prepDay(t);
+  if(pub&&isDay(t.date))h+=postBox(t,t.date.slice(0,10),t.state!=='done');
   if(pub&&t.state==='done')h+=pubBox(t);
   h+=wynBlock(t,d,zg||od,od,t.executor==='ty');
+  if(pday)h+=postBox(t,pday,false);
   const gr=lastGitRun(t);
   if(gr&&!od)h+='<div class="dbox"><h3>Zmiany agenta</h3>'+chgBlock(gr,true)+'</div>';
   if(zg)h+='<div class="abox you"><b>'+(pub?'Publikacja czeka na Twoją akceptację':'Agent czeka na Twoją zgodę')+'</b><div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>'+(pub?'Zatwierdź publikację':'Wyraź zgodę')+'</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div>'+dec+'</div>';
@@ -2085,7 +2125,7 @@ const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
 const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
-  let h='<div class="abox you"><b>Praca czeka na Twój odbiór</b>'+(d.left?'<p class="warn">Po odbiorze zostaje: '+esc(d.left)+'</p>':'')+chgBlock(lastGitRun(t));
+  let h='<div class="abox you"><b>Praca czeka na Twój odbiór</b><p class="move">'+yourMove(t)+'</p>'+(d.left?'<p class="warn">Po odbiorze zostaje: '+esc(d.left)+'</p>':'')+chgBlock(lastGitRun(t));
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
     '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
@@ -2197,17 +2237,39 @@ function closeDrawer(){
 }
 /* ---------- podgląd posta (stały rytm) ---------- */
 const PD={};
-function postBox(t){
-  const k=t.project+'|'+t.date,d=PD[k];
+/* kanały posta: sekcja post.md -> strona, na której wklejasz tekst (bez API: kopiujesz i publikujesz sam) */
+const PCH=[['Facebook','https://business.facebook.com/latest/composer'],['LinkedIn','https://www.linkedin.com/feed/?shareActive=true'],
+  ['Reels','https://business.facebook.com/latest/reels_composer'],['Instagram','https://business.facebook.com/latest/composer']];
+function postBox(t,day,publish){
+  const k=t.project+'|'+day,d=PD[k];
   if(!LIVE)return '<div class="post muted">Podgląd posta działa w panelu na serwerze.</div>';
-  if(d===undefined){PD[k]=null;loadPost(t.project,t.date);return '<div class="post muted">Wczytuję post…</div>'}
+  if(d===undefined){PD[k]=null;loadPost(t.project,day);return '<div class="post muted">Wczytuję post…</div>'}
   if(d===null)return '<div class="post muted">Wczytuję post…</div>';
-  if(!d.ok)return '<div class="post muted">Brak przygotowanego posta na ten dzień.</div>';
-  const q='project='+encodeURIComponent(t.project)+'&date='+encodeURIComponent(t.date),S=d.sections||{};
-  let h='<div class="post">'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
-  ['Facebook','LinkedIn','Instagram'].forEach(n=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button></div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
-  if(d.image)h+='<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>';
+  if(!d.ok)return '<div class="post muted">Brak przygotowanego posta na '+esc(dd(day))+'.'+(prepDay(t)?'':' Przygotuje go agent w zadaniu „Przygotować post na …”.')+'</div>';
+  const q='project='+encodeURIComponent(t.project)+'&date='+encodeURIComponent(day),S=d.sections||{};
+  let h='<div class="post"><h3>Post na '+esc(ddl(day))+'</h3>'+(d.image?'<img src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||d.title||'Grafika posta')+'">':'');
+  PCH.forEach(([n,url])=>{if(S[n])h+='<div class="ptx"><div class="row"><b>'+n+'</b><button class="btn sec sm" data-copy="'+esc(k+'|'+n)+'">Kopiuj tekst</button>'+
+    (publish?'<button class="btn sm" data-copyopen="'+esc(k+'|'+n)+'" data-url="'+esc(url)+'">Kopiuj i otwórz '+n+'</button>':'')+'</div><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p></div>'});
+  h+='<div class="row">'+(d.image?'<a class="btn sec sm" href="/api/post/grafika?'+q+'" download="'+esc(d.folder||'post')+'.png">Pobierz grafikę</a>':'')+
+    (publish?'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button><span class="rsn">'+(t.waits.length?'Najpierw: '+esc(t.waits.join('; '))+'. ':'')+'Potem wpiszesz link i wyniki.</span>':'')+'</div>';
   return h+'</div>';
+}
+/* zadanie agenta „Przygotować post na RRRR-MM-DD…”: dzień posta z tytułu i publikacja z kampanii na ten dzień */
+const prepDay=t=>{const m=/^Przygotować post na (\d{4}-\d\d-\d\d)/.exec(t.title||'');return m?m[1]:''};
+const pubOf=t=>{const day=prepDay(t);return day?D.tasks.find(x=>x.kind==='publikacja'&&x.project===t.project&&String(x.date).slice(0,10)===day&&x.state!=='done')||null:null};
+/* jedno zdanie w odbiorze: co właściciel robi teraz */
+function yourMove(t){
+  if(prepDay(t)){const x=pubOf(t);
+    return 'Twój ruch: przeczytaj teksty i obejrzyj grafikę wyżej. „Odebrane” je zatwierdza, a publikujesz '+
+      (x?'w zadaniu <button class="lk" data-task="'+esc(x.id)+'">'+esc(x.title)+'</button> ('+esc(ddl(x.date))+')'+(x.waits.length?', gdy będzie zrobione: '+esc(x.waits.join('; ')):''):'sam w dniu posta')+'.'}
+  const L=(t.unlocksL||[]).filter(u=>!u.done);
+  return 'Twój ruch: sprawdź wynik agenta i pliki wyżej. „Odebrane” zamyka zadanie'+(L.length?' i odblokowuje: '+esc(L.map(u=>u.title).join('; ')):'')+', „Do poprawy” wraca do agenta z Twoją uwagą.';
+}
+async function copyOpen(key,url){
+  const i=key.lastIndexOf('|'),d=PD[key.slice(0,i)],n=key.slice(i+1),text=d&&d.sections?d.sections[n]||'':'';
+  const p=copyText(text);
+  if(/^https:\/\//.test(url))window.open(url,'_blank','noopener');
+  say((await p)?'Skopiowano tekst: '+n+'. Wklej go w otwartej karcie, dołącz grafikę i opublikuj; potem kliknij „Opublikowane”.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
 async function loadPost(pid,day){
   const k=pid+'|'+day;let d={ok:false};
@@ -2657,6 +2719,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('#refresh')){if(LIVE){say('Odświeżam…');load(true)}else say('Podgląd: dane przykładowe są stałe.');return}
   if(el=qq('#theme')){PF.theme=PF.theme===''?'light':PF.theme==='light'?'dark':'';savePF();applyTheme();return}
   if(qq('[data-close]')){closeDrawer();return}
+  if(el=qq('[data-copyopen]')){copyOpen(el.dataset.copyopen,el.dataset.url||'');return}
   if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
   if(el=qq('[data-mat]')){openMat(el.dataset.mat);return}
   if(el=qq('[data-matcopy]')){copyMat();return}

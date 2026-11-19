@@ -269,6 +269,22 @@ class AutomatSzczegoly(Baza):
         self.assertEqual([r["path"] for r in res["detail"]["refs"]], ["kampanie/staly-rytm.md", "marketing/plan-10-kont.md"])
         self.assertEqual((res["executor"], res["minutes"]), ("ty", 3))
 
+    def test_post_do_filmu_po_nagraniu(self):
+        path = os.path.join(self.folder, "kampanie", "staly-rytm.md")
+        film = ("- [ ] Nagraj film A | kto: ty | kiedy: %s\n"
+                "- [ ] Opublikuj film A | kanał: facebook | kiedy: %s | po: Nagraj film A\n") % (day(0), day(1))
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(KAMPANIA.split("- [ ] Post jutro")[0] + film)
+        prep = lambda: [t["title"] for t in self.m.load_projects()[0]["tasks"] if t["title"].startswith(agents.POST_TASK)]
+        data, index = self.m.load_projects()
+        self.m._plan_rhythm(data, index, datetime.date.today())
+        self.assertEqual(prep(), [])                                              # filmu nie ma: bez opisu pod film
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(KAMPANIA.split("- [ ] Post jutro")[0] + film.replace("- [ ] Nagraj", "- [x] Nagraj"))
+        data, index = self.m.load_projects()
+        self.assertTrue(self.m._plan_rhythm(data, index, datetime.date.today()))
+        self.assertEqual(prep(), ["Przygotować post na %s: Opublikuj film A" % day(1)])
+
     def test_wynik_publikacji(self):
         self.assertTrue(agents.has_result({"result": "120 wyświetleń"}))
         self.assertTrue(agents.has_result({"notes": ["wyświetlenia: 120"]}))

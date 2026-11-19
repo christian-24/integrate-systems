@@ -54,6 +54,10 @@ Pełny opis: `AGENCI.md`.
 - Automat: sam bierze zadania z `kto: claude|codex`, `gdzie:` tego komputera (bez `gdzie:` na serwerze, węźle domyślnym)
   i datą `kiedy:` nie późniejszą niż dziś (także z przeszłości), gdy poprzednicy z `po:` są zrobieni; domyślnie wyłączony.
   Rytm marketingu (`kampanie/staly-rytm.md`) zakłada zadania postów i wpisania wyników; opis w `AGENCI.md`.
+  Wiersz „Nagraj film…” i publikacja z `po: Nagraj film…` nie dostają zadania posta, dopóki film nie jest nagrany.
+- Post: odbiór „Przygotować post na …” pokazuje teksty i grafikę oraz zdanie „Twój ruch”. Publikacja z kampanii ma
+  „Kopiuj i otwórz Facebook/LinkedIn/Reels” (kopiuje tekst i otwiera stronę publikowania; bez API) i „Opublikowane”,
+  po którym wpisujesz link i wyniki.
 - Zadania Claude dostają `--allowedTools` z listą bezpiecznych narzędzi (lokalny git, testy, pliki; bez push i sieci).
 - Projekt w repozytorium git: panel zakłada gałąź `agent/RRRR-MM-DD-nazwa` i katalog roboczy `.agent/<id>`, agent
   pracuje w nim, po zakończeniu panel zatwierdza zmiany, zapisuje listę zmienionych plików (`changes`) i usuwa katalog.
@@ -62,6 +66,14 @@ Pełny opis: `AGENCI.md`.
 - `PANEL_AGENT_USER`: agenci jako osobny użytkownik systemu (`sudo -n -u`).
 - Tryb uprawnień `acceptEdits`; polecenia powłoki dopuszcza `.claude/settings.json` projektu. Trybu z pominięciem uprawnień panel nie używa.
 - Rekordy: `../uruchomienia/<id>.json`, surowy zapis `<id>.log`.
+
+## Koszty Hetzner
+
+Widok Agenci, sekcja „Koszty Hetzner”, i pozycja w pasku stanu serwera: ten miesiąc, łącznie od założenia, pełny
+miesiąc, na każdy serwer, kopie zapasowe, adres IPv4 i dysk. Szacunek z cennika API Hetzner Cloud (godziny × stawka,
+najwyżej cena miesięczna, brutto, EUR; kurs z NBP), odczyt co 6 h w tle (`koszty.py`). Usuniętych serwerów API nie
+pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzner) w `/etc/integrate/hetzner.tokeny`
+(`PANEL_HETZNER_TOKENY`), wpisuje je `sudo ustaw-token-hetznera` (`uruchom/serwer/ustaw-token-hetznera.sh`).
 
 ## PM
 

@@ -1168,7 +1168,9 @@ class Manager:
                     continue
                 new = None
                 detail = t.get("detail") or {}
-                if t["state"] != "done" and today.isoformat() <= day <= horizon and not detail.get("refs") \
+                # nagranie to nie publikacja; opis pod film dopiero po nagraniu
+                film = t["title"].startswith(FILM_TASK) or any(w.startswith(FILM_TASK) for w in self.projekt.waiting_titles(t))
+                if t["state"] != "done" and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
                         and not any(n == day or n.startswith(day + "-") for n in folders):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
                     if title not in titles:
@@ -1996,6 +1998,7 @@ RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny pos
 RYTM_RESULT_DAYS = 2        # publikacja zrobiona dawniej niż tyle dni (48 h) bez wynik: → zadanie właściciela
 RYTM_KEEP = 500             # tyle kluczy publikacji z założonym zadaniem wyniku zostaje w stan.json
 RESULT_TASK = "Wpisz wynik publikacji "
+FILM_TASK = "Nagraj film"   # publikacja z „po: Nagraj film…”: post powstaje po nagraniu
 RESULT_MINUTES = 3
 POST_REVIEW_MINUTES = 5     # czas właściciela na przejrzenie i zatwierdzenie posta
 STYLE_FILES = ("STYL.md", "marketing/STYL.md", "kampanie/STYL.md")
