@@ -54,6 +54,13 @@ class Dowiazania(Baza):
         self.wait(extra["id"])
         self.assertNotIn("--add-dir", self.calls()[-1]["argv"])
 
+    def test_zapis_zachowuje_prawa_pliku(self):
+        zad = os.path.join(self.folder, "ZADANIA.md")
+        os.chmod(zad, 0o664)
+        t = self.task("Zadanie B")
+        projekt.update_task(self.folder, "ZADANIA.md", t["line"], "Zadanie B", {"state": "doing"})
+        self.assertEqual(os.stat(zad).st_mode & 0o777, 0o664)
+
 
 if __name__ == "__main__":
     unittest.main()

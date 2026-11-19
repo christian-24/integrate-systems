@@ -108,6 +108,14 @@ def write_atomic(path, text):
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".tmp-")
     with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
         f.write(text)
+    # mkstemp tworzy plik 0600; zapis nie może odbierać praw grupie (agent w grupie projekty czyta i zapisuje karty).
+    try:
+        mode = os.stat(path).st_mode & 0o7777
+    except OSError:
+        umask = os.umask(0)
+        os.umask(umask)
+        mode = 0o666 & ~umask
+    os.chmod(tmp, mode)
     os.replace(tmp, path)
 
 
