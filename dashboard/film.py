@@ -3068,7 +3068,14 @@ def record_page(folder, sc, brand, work):
                                   != login_path, timeout=20000)
             except Exception:  # noqa: BLE001
                 raise RuntimeError("logowanie kontem demo nie powiodło się (sprawdź e-mail i hasło)")
+            try:                        # strona po zalogowaniu zapisuje sesję; bez tego przejście dalej wraca do logowania
+                page.wait_for_load_state("networkidle", timeout=15000)
+            except Exception:  # noqa: BLE001
+                pass
+            page.wait_for_timeout(1500)
         page.goto(sc["url"], wait_until="networkidle", timeout=60000)
+        if sc.get("logowanie") and (_host(page.url)[0].path or "").rstrip("/") == login_path:
+            raise RuntimeError("logowanie: po zalogowaniu strona wróciła do logowania (sesja nie została zapisana)")
         landed("url")
         page.wait_for_timeout(800)
         t0 = time.monotonic()           # początek filmu: strona już wczytana

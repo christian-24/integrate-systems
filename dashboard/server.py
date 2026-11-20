@@ -762,6 +762,13 @@ def fix_post(body):
         return 404, "Nie ma posta na ten dzień."
     if not 3 <= len(note) <= 1000:
         return 400, "Napisz, co poprawić (do 1000 znaków)."
+    try:                                        # miejsce w filmie z edytora: sekunda i napis sceny
+        at = float(body.get("czas")) if body.get("czas") not in (None, "") else None
+    except (TypeError, ValueError):
+        at = None
+    scene = projekt._clean(str(body.get("napis") or ""), 120)
+    if at is not None and 0 <= at < 3600:
+        note = "[film %d:%02d%s] %s" % (int(at) // 60, int(at) % 60, (", scena „%s”" % scene) if scene else "", note)
     _, index = load_projects(resolve=False)
     proj = index.get(pid)
     rel = "posty/" + os.path.basename(folder)
@@ -775,7 +782,15 @@ def fix_post(body):
                                                       "date": datetime.date.today().isoformat()}, detail)
     except (ValueError, OSError, StopIteration) as e:
         return 409, "Nie dodano zadania: %s" % e
-    return 200, "", {"title": title}
+    started = False
+    try:                                        # agent od razu, bez czekania na Automat (gdy nie może, zrobi to Automat)
+        data, _ = load_projects()
+        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] != "done"), None)
+        if t:
+            started = get_agents().run_task(t["id"], t["title"])[0] == 200
+    except Exception:  # noqa: BLE001
+        pass
+    return 200, "", {"title": title, "started": started}
 
 
 def film_change(body):

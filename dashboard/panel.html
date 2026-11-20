@@ -594,6 +594,30 @@ p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
 video.md-m{background:var(--ink);object-fit:contain}
 .md-i{display:grid;gap:6px;padding:8px 10px;font-size:12.5px;min-width:0}
 .md-i b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ed{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;grid-template-rows:auto 1fr}
+body.ed-open{overflow:hidden}
+.ed-h{display:flex;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.ed-tt{display:grid;min-width:0}.ed-tt b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ed-tt span{font-size:12.5px}
+.ed-b{display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0}
+.ed-l{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:14px 16px;min-height:0;overflow:auto}
+.ed-tabs{display:flex;gap:6px}
+.ed-view{display:grid;place-items:center;min-height:0}
+.ed-video{max-width:100%;max-height:calc(100vh - 260px);aspect-ratio:9/16;background:var(--ink);border-radius:10px}
+.ed-img{max-width:100%;max-height:calc(100vh - 200px);border-radius:10px}
+.ed-txt{max-width:640px;width:100%}.ed-txt h4{margin:14px 0 4px;font-size:13px;color:var(--ink-3)}.ed-txt p{margin:0;line-height:1.55}
+.ed-st{margin:6px 0 0;font-size:13px;color:var(--ink-3);text-align:center}
+.ed-sc{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
+.ed-sc li button{all:unset;cursor:pointer;display:grid;gap:2px;min-width:120px;max-width:180px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.3;background:var(--surface)}
+.ed-sc li button .num{color:var(--ink-3);font-size:11px}
+.ed-sc li.on button{border-color:var(--accent);background:var(--accent-soft)}
+.ed-sc li button:focus-visible{outline:2px solid var(--accent)}
+.ed-r{border-left:1px solid var(--line);background:var(--surface);display:grid;grid-template-rows:auto 1fr auto auto;gap:10px;padding:14px 16px;min-height:0}
+.ed-r h3{margin:0;font-size:15px}
+.ed-chat{overflow:auto;display:grid;gap:8px;align-content:start;min-height:0}
+.ed-chat .cm{padding:8px 10px;border-radius:8px;font-size:13.5px;line-height:1.45}.ed-chat .cm.me{background:var(--accent-soft)}.ed-chat .cm.ai{background:var(--sunk)}
+.ed-chat .cm b{display:block;font-size:11.5px;color:var(--ink-3)}
+.ed-f{display:grid;gap:8px}.ed-at:empty{display:none}.ed-more{margin:0}
+@media (max-width:820px){.ed-b{grid-template-columns:1fr;overflow:auto}.ed-l{overflow:visible;grid-template-rows:auto auto auto}.ed-r{border-left:0;border-top:1px solid var(--line)}.ed-video{max-height:62vh}}
 .dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
 .move-box{border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;margin:0 0 12px;background:var(--sunk)}
 .move-box b{display:block;margin-bottom:4px}
@@ -5477,7 +5501,7 @@ function mCard(t,day){
   if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
   const raw=t.title.replace(/^Opublikuj\s+/,''),pm=/^((?:film|post)(?:\s+[A-Z0-9]{1,3})?)\s+(?=„)/i.exec(raw),title=cap(pm?raw.slice(pm[0].length):raw);
   const id=String(t.id).replace(/[^\w-]/g,'_'),fs=d&&d.ok?filmState(d,t,day):null,st=mkState(t,day,fs),r=d&&d.rec||{};
-  const open='<button type="button" class="mk-media" data-task="'+esc(t.id)+'" aria-label="'+esc('Otwórz post: '+title)+'">';
+  const open='<button type="button" class="mk-media" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'" aria-label="'+esc('Otwórz post: '+title)+'">';
   let media=open+'<span class="tl-ph">Wczytuję…</span></button>',why='';
   if(!LIVE)media=open+'<span class="tl-ph">Podgląd na serwerze</span></button>';
   else if(d&&d.ok){
@@ -5489,8 +5513,8 @@ function mCard(t,day){
     media=open+'<span class="tl-ph">Agent jeszcze nie przygotował posta'+(pr&&isDay(pr.date)?' (termin: '+esc(ddl(pr.date))+')':'')+'</span></button>'}
   const p=P(t.project),ch=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(' · ');
   const mc=fi?[fi.template?stuTpl(fi):'',fi.seconds&&!fi.error?stuLen(fi):'',fi.kindHelp||''].filter(Boolean).join(' · '):'';
-  const act=st[2]==='review'?'<button type="button" class="btn sm" data-task="'+esc(t.id)+'">Obejrzyj</button>':why?'<button type="button" class="btn sec sm" data-task="'+esc(t.id)+'">Otwórz i daj do poprawy</button>':'';
-  return '<article class="tl-card'+(why?' mk-err':'')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-task="'+esc(t.id)+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
+  const act=st[2]==='review'?'<button type="button" class="btn sm" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'">Obejrzyj</button>':why?'<button type="button" class="btn sec sm" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'">Otwórz i daj do poprawy</button>':'';
+  return '<article class="tl-card'+(why?' mk-err':'')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
     '<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>'+
     '<span class="mk-ttl">'+(pm?'<span class="muted mk-pre">'+esc(pm[1])+'</span> ':'')+'<b id="mkt-'+id+'">'+esc(title)+'</b></span>'+
     '<span class="mk-proj" id="mkp-'+id+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(projName(t.project))+'</span><span class="mk-ch">· '+esc(ch)+'</span></span>'+
@@ -5640,10 +5664,98 @@ async function copyOpen(key,url){
   if(/^https:\/\//.test(url))window.open(url,'_blank','noopener');
   say((await p)?'Skopiowano tekst: '+n+'. Wklej go w otwartej karcie, dołącz grafikę i opublikuj; potem kliknij „Opublikowane”.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
+/* ---------- edytor posta (pełny ekran): duży podgląd, sceny filmu (napisy .srt), czat poprawek dla agenta ---------- */
+const ED={cur:null,srt:null,at:null,scene:-1,tab:'film',v:0};
+const edFmt=s=>Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+function edHost(){let h=document.getElementById('edHost');if(!h){h=document.createElement('div');h.id='edHost';document.body.appendChild(h)}return h}
+function openEditor(key){
+  const parts=key.split('|'),pid=parts[0],day=parts[1],tid=parts.slice(2).join('|');ED.cur={pid:pid,day:day,tid:tid};ED.srt=null;ED.at=null;ED.scene=-1;ED.v=0;
+  const d=PD[pid+'|'+day];ED.tab=d&&d.ok&&!d.film&&d.image?'grafika':'film';
+  edHost().innerHTML=edShell();document.body.classList.add('ed-open');
+  if(!d||d===null){PD[pid+'|'+day]=null;loadPost(pid,day)}else edFill();
+  edSrt();const b=document.querySelector('#ed [data-edclose]');if(b)b.focus();
+}
+function closeEditor(){ED.cur=null;edHost().innerHTML='';document.body.classList.remove('ed-open');render(true)}
+function edShell(){
+  const c=ED.cur,t=D.tasks.find(x=>x.id===c.tid)||{title:'Post',channel:''};
+  return '<div class="ed" id="ed" role="dialog" aria-modal="true" aria-labelledby="ed-t">'+
+    '<header class="ed-h"><button type="button" class="btn sec sm" data-edclose>← Wróć</button><div class="ed-tt"><b id="ed-t">'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b><span class="muted">'+esc(projName(c.pid))+' · '+esc(ddl(c.day))+(t.channel?' · '+esc(t.channel):'')+'</span></div></header>'+
+    '<div class="ed-b"><section class="ed-l" aria-label="Podgląd"><div class="ed-tabs" role="tablist" id="ed-tabs"></div><div id="ed-view" class="ed-view"><p class="muted">Wczytuję post…</p></div><ol class="ed-sc" id="ed-sc" aria-label="Sceny filmu"></ol></section>'+
+    '<aside class="ed-r" aria-label="Poprawki"><h3>Co poprawić?</h3><div class="ed-chat" id="ed-chat" aria-live="polite"></div>'+
+    '<form class="ed-f" data-edfix><div class="ed-at" id="ed-at"></div><textarea class="fi" rows="3" maxlength="1000" data-edq placeholder="Np. w tym miejscu wolniej i większy napis; w opisie na LinkedIn krócej; zamiast komody pokaż sofę"></textarea>'+
+    '<div class="row"><button class="btn sm">Wyślij do poprawy</button></div><p class="note">Zatrzymaj film w miejscu, które chcesz zmienić — poprawka dotyczy tej sceny. Agent zaczyna od razu, film nagra się od nowa sam.</p></form>'+
+    '<p class="note ed-more"><button type="button" class="lk" data-task="'+esc(c.tid)+'" data-edclose2>Szczegóły zadania</button></p></aside></div></div>';
+}
+function edFill(){
+  if(!ED.cur)return;const c=ED.cur,d=PD[c.pid+'|'+c.day],v=document.getElementById('ed-view');if(!v)return;
+  if(!d){v.innerHTML='<p class="muted">Wczytuję post…</p>';return}
+  if(!d.ok){v.innerHTML='<p class="muted">Agent jeszcze nie przygotował tego posta.</p>';edChat();return}
+  const q=postQ(c.pid,c.day),S=d.sections||{},tabs=[];
+  if(d.film||d.scenario)tabs.push(['film','Film']);if(d.image)tabs.push(['grafika','Grafika']);tabs.push(['tekst','Tekst']);
+  if(!tabs.some(x=>x[0]===ED.tab))ED.tab=tabs[0][0];
+  document.getElementById('ed-tabs').innerHTML=tabs.map(([k,n])=>'<button type="button" role="tab" class="seg" data-edtab="'+k+'" aria-selected="'+(ED.tab===k)+'" aria-pressed="'+(ED.tab===k)+'">'+n+'</button>').join('');
+  const r=d.rec||{},run=r.state==='running'||r.state==='queued';
+  let h='';
+  if(ED.tab==='film'){
+    const at=d.film?d.film.at:0;
+    if(d.film&&(!v.querySelector('video')||ED.v!==at)){ED.v=at;h='<video id="ed-v" class="ed-video" controls playsinline preload="metadata" src="/api/post/film?'+q+'&v='+at+'"></video>'}
+    else if(d.film)h=null;                                  /* ten sam film: nie przeładowuj odtwarzacza */
+    else h='<p class="muted">Filmu jeszcze nie ma.</p>';
+    if(h!==null){v.innerHTML=h+'<p class="ed-st" id="ed-st"></p>';const vid=document.getElementById('ed-v');if(vid)edBindVideo(vid)}
+    const st=document.getElementById('ed-st');if(st)st.innerHTML=run?'Nagrywam nową wersję filmu… (2–4 min)':r.state==='error'?'<span class="warn">Ostatnie nagranie nie wyszło: '+esc(r.error||'')+'</span>':'';
+    edScenes();
+  }else{
+    document.getElementById('ed-sc').innerHTML='';
+    v.innerHTML=ED.tab==='grafika'?'<img class="ed-img" src="/api/post/grafika?'+q+'" alt="'+esc(S.Alt||'Grafika posta')+'">':
+      '<div class="ed-txt">'+Object.keys(S).filter(n=>n!=='Alt').map(n=>'<h4>'+esc(n)+'</h4><p>'+esc(S[n]).replace(/\n/g,'<br>')+'</p>').join('')+'</div>';
+  }
+  edChat();
+}
+function edBindVideo(vid){
+  const upd=()=>{const t=vid.currentTime,i=ED.srt?ED.srt.findIndex(x=>t>=x.a&&t<x.b):-1;if(i!==ED.scene){ED.scene=i;document.querySelectorAll('#ed-sc li').forEach((li,n)=>li.classList.toggle('on',n===i))}};
+  vid.addEventListener('timeupdate',upd);
+  vid.addEventListener('pause',()=>{ED.at=vid.currentTime;upd();edAt()});
+  vid.addEventListener('play',()=>{ED.at=null;edAt()});
+}
+async function edSrt(){
+  const c=ED.cur;if(!c)return;
+  try{const r=await fetch('/api/post/napisy?'+postQ(c.pid,c.day),{cache:'no-store'});if(r.ok){const tx=await r.text();
+    ED.srt=tx.replace(/\r/g,'').split(/\n\n+/).map(b=>{const m=/(\d+):(\d+):(\d+)[,.](\d+)\s*-->\s*(\d+):(\d+):(\d+)[,.](\d+)\n([\s\S]*)/.exec(b.trim());
+      return m?{a:+m[1]*3600+ +m[2]*60+ +m[3]+ +m[4]/1000,b:+m[5]*3600+ +m[6]*60+ +m[7]+ +m[8]/1000,t:m[9].replace(/\n/g,' ').trim()}:null}).filter(Boolean)}}catch(e){}
+  edScenes();
+}
+function edScenes(){
+  const el=document.getElementById('ed-sc');if(!el||ED.tab!=='film')return;
+  el.innerHTML=(ED.srt&&ED.srt.length)?ED.srt.map((x,i)=>'<li'+(i===ED.scene?' class="on"':'')+'><button type="button" data-edseek="'+x.a+'"><span class="num">'+edFmt(x.a)+'</span>'+esc(x.t)+'</button></li>').join(''):'';
+}
+function edAt(){
+  const el=document.getElementById('ed-at');if(!el)return;
+  if(ED.at==null){el.innerHTML='';return}
+  const sc=ED.scene>=0&&ED.srt?ED.srt[ED.scene].t:'';
+  el.innerHTML='<span class="chip">Miejsce: '+edFmt(ED.at)+(sc?' · '+esc(shortT(sc,40)):'')+' <button type="button" class="lk" data-edatx aria-label="Poprawka do całego filmu">×</button></span>';
+}
+function edChat(){
+  const el=document.getElementById('ed-chat');if(!el||!ED.cur)return;const c=ED.cur;
+  const L=D.tasks.filter(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0);
+  const stT=t=>t.state==='done'?'Zrobione'+(t.detail.result?': '+t.detail.result:'.'):t.state==='blocked'?'Nie udało się'+(t.detail.left?': '+t.detail.left:'.'):
+    t.state==='doing'||(t.runId&&t.state!=='done')?'Poprawiam…':'Czekam na agenta.';
+  el.innerHTML=L.length?L.map(t=>'<div class="cm me"><b>Ty</b><div>'+esc(t.detail.fix||t.title.replace(/^Popraw post na \S+: /,''))+'</div></div>'+
+    '<div class="cm ai"><b>Agent</b><div>'+esc(stT(t))+'</div></div>').join(''):'<p class="muted">Napisz, co zmienić w filmie, grafice albo tekście.</p>';
+}
+async function edSend(f){
+  const c=ED.cur,ta=f.querySelector('[data-edq]'),text=(ta.value||'').trim();if(!c)return;
+  if(text.length<3){say('Napisz, co poprawić.');ta.focus();return}
+  if(!LIVE){say(PRV);return}
+  const body={project:c.pid,date:c.day,uwaga:text};
+  if(ED.at!=null&&ED.tab==='film'){body.czas=Math.round(ED.at*10)/10;if(ED.scene>=0&&ED.srt)body.napis=ED.srt[ED.scene].t}
+  const x=await post('/api/post/popraw',body);
+  if(x.ok){ta.value='';ED.at=null;edAt();say(x.data&&x.data.started?'Agent poprawia. Nowa wersja pojawi się tutaj.':'Przyjęte. Agent zajmie się tym za chwilę.');await load(true);edChat()}
+  else say(failMsg(x,'Nie wysłano.'));
+}
 async function loadPost(pid,day){
   const k=pid+'|'+day;let d={ok:false};
   try{const r=await fetch('/api/post?project='+encodeURIComponent(pid)+'&date='+encodeURIComponent(day));if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){}
-  PD[k]=d;if(DR)renderDrawer(true);else if(CUR&&CUR.v==='marketing')render(true);
+  PD[k]=d;if(ED.cur&&ED.cur.pid+'|'+ED.cur.day===k){edFill();}else if(DR)renderDrawer(true);else if(CUR&&CUR.v==='marketing')render(true);
   const st=d&&d.rec&&d.rec.state;if(st==='running'||st==='queued')setTimeout(()=>{delete PD[k];if(DR||(CUR&&CUR.v==='marketing'))render(true)},15000);
 }
 async function copyText(text){
@@ -6146,6 +6258,8 @@ async function load(force){
     idle();offline=false;srvErr=0;
     if(D&&(hold||(force!==true&&sig===A.sig&&Date.now()-A.fullAt<60000))){applyAgents(raw);if(was)renderTop()}
     else{D=normalize(raw);D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;A.sig=sig;A.fullAt=Date.now();render(force===true)}
+    if(ED.cur){edChat();const c=ED.cur,k=c.pid+'|'+c.day,pd=PD[k];
+      if(pd&&pd.rec&&(pd.rec.state==='running'||pd.rec.state==='queued'||D.tasks.some(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0&&t.state!=='done'))){delete PD[k];loadPost(c.pid,c.day)}}
   }catch(e){console.error(e)}
   finally{
     if(arm){let busy=0;try{busy=D?nwBusy():0}catch(e){}
@@ -6181,6 +6295,12 @@ document.addEventListener('click',async ev=>{
   /* przycisk wysyłający formularz Publikacji: akcję wykona zdarzenie submit (także Enter w polu) */
   if(el=qq('[data-pub]')){if(el.type==='submit'&&el.form&&el.form.dataset.pubf)return;pubAct(el);return}
   if(el=qq('[data-mf]')){const F=A.mf||(A.mf={p:'',k:'',s:''});F[el.dataset.mf]=el.dataset.v;render(true);return}
+  if(el=qq('[data-medit]')){openEditor(el.dataset.medit);return}
+  if(el=qq('[data-edclose]')){closeEditor();return}
+  if(el=qq('[data-edclose2]')){const id=el.dataset.task;closeEditor();openDrawer('task',id);return}
+  if(el=qq('[data-edtab]')){ED.tab=el.dataset.edtab;ED.v=0;edFill();return}
+  if(el=qq('[data-edseek]')){const v=document.getElementById('ed-v');if(v){v.currentTime=+el.dataset.edseek+0.05;v.pause();ED.at=v.currentTime}return}
+  if(el=qq('[data-edatx]')){ED.at=null;edAt();return}
   if(el=qq('[data-film-rec]')){recFilm(el);return}
   if(el=qq('[data-fixfill]')){fixFill(el);return}
   if(el=qq('[data-stuhl]')){stuHighlight(el);return}
@@ -6301,6 +6421,7 @@ document.addEventListener('change',ev=>{
 });
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
+  if(f.dataset.edfix!=null){ev.preventDefault();edSend(f);return}
   if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.fixpost!=null){ev.preventDefault();sendFixPost(f);return}
   if(f.dataset.fset!=null){saveFilmEdit(f);return}
@@ -6363,6 +6484,7 @@ document.addEventListener('keydown',ev=>{
     if(k==='Enter'&&!ev.shiftKey&&tg==='TEXTAREA'&&a.closest('#drawerHost')){ev.preventDefault();a.blur()}
     return;
   }
+  if(k==='Escape'&&ED.cur){ev.preventDefault();closeEditor();return}
   if(k==='Escape'){if(DR){ev.preventDefault();closeDrawer();return}
     if(A.bnMore){ev.preventDefault();A.bnMore=false;renderSide(route());focusK('bnmore');return}
     /* potwierdzenie w treści strony (wylogowanie, usunięcie projektu): Esc = Anuluj, fokus wraca na przycisk, który je otworzył */
