@@ -117,14 +117,20 @@ termin: 2026-12-13
   decyzja: zatwierdź, że żadne zadanie T48 nie wchodzi przed buildem 24.11 (makiety T48 zastąpił redesign z 08–10.2026, a RC1 ma przegląd UI z 27.10)
   zostało: ocena z kodu i przeglądu UI z 27.10, bez uruchamiania aplikacji; plik niezatwierdzony commitem (brak uprawnień do indeksu git w katalogu roboczym), zatwierdzi panel
   następne: Przejrzyj zadania T48 pod nowy prototyp (zamknij nieaktualne, przepisz resztę) | kto: claude | kiedy: 2026-12-15
-- [ ] Uruchom pełną suitę testów na PR #124 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+- [!] Uruchom pełną suitę testów na PR #124 | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | blokada: brak Flutter SDK na serwerze i brak uprawnień agenta do poleceń gh (GitHub Actions)
   cel: wiadomo, czy PR #124 (fix/rc1-nagrania, marketing/kampania-rc1) można zmergować
   gotowe gdy: w wynik: liczba testów zaliczonych i niezaliczonych na gałęzi PR #124
   Jeśli na serwerze nie ma Flutter SDK, uruchom suitę w GitHub Actions albo oznacz [!] z blokadą.
-- [ ] Odtwórz plan testów MVP usunięty z docs/testing 2026-05-29 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+  wynik: suita nieuruchomiona, liczby testów zaliczonych i niezaliczonych brak. Na serwerze nie ma Flutter SDK (brak flutter, dart i fvm). Odczyt wyniku CI z GitHub Actions zablokowany: polecenia gh (pr view, pr checks, run list) wymagają zgody, której sesja agenta nie ma. Ustalone z lokalnego repozytorium: origin/fix/rc1-nagrania to 1 commit ponad master (534c8f0, 4 pliki w naulikapp/lib, +56/−10, bez zmian w testach); origin/marketing/kampania-rc1 to 1 commit z dokumentacją (5577d64). Workflow .github/workflows/ci.yml uruchamia `flutter analyze` i `flutter test` przy każdym PR, więc wynik dla PR #124 powinien już być w GitHub Actions. Plików nie utworzono.
+  zostało: odczytać z GitHub Actions wynik zadania „analyze + test” dla PR #124 (liczba testów zaliczonych i niezaliczonych); wymaga dopuszczenia agentowi poleceń gh tylko do odczytu (gh pr checks, gh run view) albo instalacji Flutter 3.41.5 na serwerze. Nie sprawdzono, której z dwóch gałęzi dotyczy PR #124.
+  następne: Odczytaj wynik CI dla PR #124 po dopuszczeniu gh w panelu | kto: claude | kiedy: 2026-11-23
+- [x] Odtwórz plan testów MVP usunięty z docs/testing 2026-05-29 | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: plan testów manualnych TC-01..TC-20 dostępny przed testem akceptacyjnym 26.11
   gotowe gdy: plik docs/testing/plan-testow-mvp.md z TC-01..TC-20 (kroki, oczekiwany wynik, kolumna wyniku) odtworzony z historii git; w wynik: commit źródłowy
   Usunięte pliki: `git log --diff-filter=D --name-only -- docs/testing`; treść: `git show <commit>^:<ścieżka>`.
+  wynik: odtworzony docs/testing/plan-testow-mvp.md: 20 przypadków TC-01..TC-20, każdy z krokami i oczekiwanym wynikiem, na końcu tabela wyników (kolumny Android, iOS, Notes). Commit źródłowy: 35cc410 (2026-05-12, „Add”, plik docs/testing/v1.0.0-mvp-test-plan.md); plik usunięty commitem 3daa56f (2026-05-29, „Clean backlog”), treść pobrana z 3daa56f^. Treść przypadków bez zmian, po angielsku jak w oryginale; dopisana tylko 6-wierszowa nota o pochodzeniu. Plik niezatwierdzony w gałęzi agenta (agent nie ma prawa zapisu do indeksu git), zatwierdzi go panel.
+  zostało: planu nie porównano z RC1: opisuje aplikację z maja 2026, więc nazwy przycisków, ekranów i limit jednostek w TC-13 mogą się różnić. Plan odsyła do plików, których nie ma w repozytorium: docs/testing/bugs-v1.0.0.md, docs/testing/web-platform-notes.md, naulikapp/integration_test/mvp_smoke_test.dart.
+  następne: Zaktualizuj plan testów MVP do stanu RC1 (nazwy ekranów i przycisków, TC-13) | kto: claude | kiedy: 2026-11-24
 - [ ] Wygeneruj keystore do podpisu wydania | kto: ty | gdzie: mac | kiedy: 2026-11-21 | czas: 20
   cel: klucz podpisu wydania gotowy do budowania AAB
   gotowe gdy: keystore i hasła zapisane w menedżerze haseł z kopią zapasową; plik keystore poza repozytorium
@@ -142,6 +148,7 @@ termin: 2026-12-13
   cel: gałęzie fix/rc1-nagrania i marketing/kampania-rc1 w master przed podpisanym buildem
   gotowe gdy: PR #124 zmergowany, CI na master zielone
   materiał: KARTA.md#Pytania do właściciela
+  materiał: .github/workflows/ci.yml
   - [ ] github.com, repozytorium naulikapp, Pull requests → #124: wynik suity z zadania wyżej zielony, „Merge pull request”
   Właściciel (2026-11-14): merge możliwy; do rozważenia, czy materiały marketingowe mają być w repozytorium.
 - [ ] Zrealizuj zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Wskaż zadania T48 niezbędne
