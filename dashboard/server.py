@@ -733,7 +733,7 @@ def get_recorder():
     global _recorder
     with _agents_lock:
         if _recorder is None:
-            _recorder = film.Recorder(notify=lambda text: get_agents()._send_ntfy(text))
+            _recorder = film.Recorder(notify=lambda text: get_agents()._send_ntfy(text, "#marketing"))
         return _recorder
 
 
@@ -1357,7 +1357,7 @@ def get_publisher():
     with _agents_lock:
         if _publisher is None:
             _publisher = publikacja.Publisher(load_projects, _write_lock, projekt, post_folder, post_info, post_image,
-                                              notify=lambda text: get_agents()._send_ntfy(text))
+                                              notify=lambda text, link="#marketing": get_agents()._send_ntfy(text, link))
         return _publisher
 
 
@@ -1417,7 +1417,11 @@ def pm_note(sample):
         if files:
             text = projekt.read(files[-1])
             if text and text.strip():
-                return {"date": os.path.basename(files[-1])[:10], "text": text.strip()[:4000]}
+                try:
+                    at = datetime.datetime.fromtimestamp(os.path.getmtime(files[-1])).isoformat(timespec="seconds")
+                except OSError:
+                    at = None
+                return {"date": os.path.basename(files[-1])[:10], "text": text.strip()[:4000], "at": at}
     else:
         text = projekt.read(SAMPLE_NOTE)
         if text and text.strip():

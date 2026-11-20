@@ -275,13 +275,15 @@ class Agent(Wspolne):
     def test_powiadomienie_o_logowaniu_raz_na_zmiane(self):
         sent = []
         m = self.new_manager(PANEL_NTFY_URL="http://127.0.0.1:9/nieuzywany")
-        m._send_ntfy = sent.append
+        m._send_ntfy = lambda body, link="": sent.append(body) or links.append(link)
+        links = []
         m._login_alert()
         self.assertEqual(sent, [])
         m._state["needsLogin"] = True
         m._login_alert()
         m._login_alert()
         self.assertEqual(sent, ["Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj."])
+        self.assertEqual(links, ["#agenci"])
         m._state["needsLogin"] = False
         m._tools, m._tools_at = {"claude": {"found": True, "loggedIn": True}}, time.time()
         m._login_alert()
@@ -290,12 +292,30 @@ class Agent(Wspolne):
         self.assertEqual(len(sent), 2)
         # zakończenie uruchomienia z błędem logowania: jedno powiadomienie o logowaniu i jedno o zadaniu
         sent.clear()
+        links.clear()
         m._tools, m._login_sent = {"claude": {"found": True, "loggedIn": True}}, False
         m.refresh_tools = lambda force=False, wait=False: None
         self.set_mode("login")
         self.wait(self.run_task("Przygotuj listę firm z partii 2", m)[2]["id"], manager=m)
         self.assertEqual(sent, ["Zadanie w projekcie Projekt testowy: wymaga logowania",
                                 "Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj."])
+        self.assertTrue(links[0].startswith("#ty?z=projekt-testowy|"), links[0])     # link do zadania
+        old = os.environ.get("PANEL_PUBLIC_URL")
+        os.environ["PANEL_PUBLIC_URL"] = "https://panel.example/"
+        try:
+            self.assertEqual(agents.click_url("#ty?z=opis|kampanie/jesień.md|4"),
+                             "https://panel.example/#ty?z=opis%7Ckampanie%2Fjesie%C5%84.md%7C4")
+            self.assertEqual(agents.click_url("#agenci"), "https://panel.example/#agenci")
+            self.assertEqual(agents.click_url(""), "")
+            os.environ["PANEL_PUBLIC_URL"] = ""
+            self.assertEqual(agents.click_url("#agenci"), "")
+        finally:
+            if old is None:
+                os.environ.pop("PANEL_PUBLIC_URL", None)
+            else:
+                os.environ["PANEL_PUBLIC_URL"] = old
+        self.assertEqual(agents.notify_link({"kind": "pm", "id": "r1"}), "#przeglad")
+        self.assertEqual(agents.notify_link({"kind": "chat", "id": "r1"}), "#agenci?u=r1")
 
 
 class Api(Serwer):

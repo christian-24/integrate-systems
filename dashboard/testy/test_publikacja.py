@@ -89,8 +89,9 @@ class Publikacja(unittest.TestCase):
             f.write(b"PNG")
         self.api = Api()
         self.notes = []
+        self.links = []
         self.pub = publikacja.Publisher(self.load, threading.Lock(), projekt, self.post_folder, self.post_info,
-                                        lambda pf: os.path.join(pf, "grafika.png"), notify=self.notes.append,
+                                        lambda pf: os.path.join(pf, "grafika.png"), notify=lambda text, link='': self.notes.append(text) or self.links.append(link),
                                         data_dir=os.path.join(self.tmp, "dane"), http_call=self.api, now=lambda: NOW)
         self.pub.sync = True
 
@@ -157,6 +158,7 @@ class Publikacja(unittest.TestCase):
         self.assertEqual(t["detail"]["link"], "https://www.facebook.com/111_9")
         self.assertFalse(t["detail"].get("scheduled"))
         self.assertEqual(self.notes, ["Opublikowano: Opublikuj post „Start” (facebook)"])
+        self.assertEqual(self.links, ["#marketing?z=" + t["id"]])
         self.assertEqual(publikacja.li_text("Tekst (LI) #1 @firma"), "Tekst \\(LI\\) \\#1 \\@firma")
 
     def test_blad_kanalu_i_ponowienie_bez_duplikatu(self):

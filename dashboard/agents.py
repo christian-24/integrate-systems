@@ -18,6 +18,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.parse
 import urllib.request
 import uuid
 
@@ -189,6 +190,26 @@ def _card_dirs(folder):
             dirs.append(where)
     return [x for d in dirs for x in ("--add-dir", d)]
 
+
+def notify_link(rec):
+    """Adres w panelu dla powiadomienia o uruchomieniu: zadanie otwiera szczegóły zadania, raport PM i plan dnia
+    Przegląd, reszta szczegóły uruchomienia w Agentach."""
+    if rec.get("kind") == "task" and rec.get("taskId"):
+        return "#ty?z=" + str(rec["taskId"])
+    if rec.get("kind") in ("pm", "plan"):
+        return "#przeglad"
+    return "#agenci?u=" + str(rec.get("id") or "") if rec.get("id") else "#agenci"
+
+
+def click_url(link):
+    """Pełny adres dla nagłówka Click: PANEL_PUBLIC_URL + link, tylko znaki ASCII; bez adresu publicznego pusty."""
+    base = (os.environ.get("PANEL_PUBLIC_URL") or "").strip().rstrip("/")
+    if not base or not link:
+        return ""
+    view, sep, query = link.partition("?")
+    if sep:
+        query = "&".join(k + "=" + urllib.parse.quote(v, safe="") for k, _, v in (x.partition("=") for x in query.split("&")))
+    return base + "/" + urllib.parse.quote(view, safe="#") + (("?" + query) if sep else "")
 
 class Manager:
     """Kolejka i przebieg uruchomień jednego węzła."""
@@ -2243,17 +2264,22 @@ class Manager:
         else:
             where = " (%s)" % rec["projectName"] if rec["projectName"] else ""
             body = "%s%s: %s" % (rec["title"], where, state)
-        self._send_ntfy(body)
+        self._send_ntfy(body, notify_link(rec))
 
-    def _send_ntfy(self, body):
+    def _send_ntfy(self, body, link=""):
+        """Powiadomienie ntfy; link (np. "#ty?z=<id zadania>") otwiera się po stuknięciu (nagłówek Click),
+        gdy PANEL_PUBLIC_URL jest ustawiony."""
         if not self.ntfy_url:
             return
         data = body.encode("utf-8")
+        headers = {"Content-Type": "text/plain; charset=utf-8"}
+        click = click_url(link)
+        if click:
+            headers["Click"] = click
 
         def send():
             try:
-                req = urllib.request.Request(self.ntfy_url, data=data, method="POST",
-                                             headers={"Content-Type": "text/plain; charset=utf-8"})
+                req = urllib.request.Request(self.ntfy_url, data=data, method="POST", headers=headers)
                 urllib.request.urlopen(req, timeout=5).close()
             except Exception:
                 pass
@@ -2270,7 +2296,7 @@ class Manager:
             send = needs and not self._login_sent
             self._login_sent = needs
         if send:
-            self._send_ntfy("Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj.")
+            self._send_ntfy("Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj.", "#agenci")
 
     # ---------- Automat ----------
     def tick(self, now=None):

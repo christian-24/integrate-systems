@@ -1680,7 +1680,7 @@ function normalize(raw){
       return Object.assign({},c,{start:rr(c.start),end:rr(c.end),channels:c.channels||[],gaps:c.gaps||[],counters:cn,
       target:isFinite(+c.target)&&+c.target>0?+c.target:0,result:Math.max(r0,rm)})}),
     standard:raw.standard||[],agents:normAgents(raw.agents),activity:normActivity(raw.activity),
-    pmNote:raw.pmNote?{date:rr(raw.pmNote.date),text:String(raw.pmNote.text||'')}:null,
+    pmNote:raw.pmNote?{date:rr(raw.pmNote.date),text:String(raw.pmNote.text||''),at:typeof raw.pmNote.at==='string'?raw.pmNote.at:''}:null,
     history:(Array.isArray(raw.history)?raw.history:[]).map(e=>({date:String(rr(e&&e.date)||''),projects:e&&e.projects&&typeof e.projects==='object'?e.projects:{}}))
       .filter(e=>isDay(e.date)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0),
     cal:{status:LIVE?(cal.status||'error'):'preview',source:LIVE?(cal.source||'sample'):'sample',error:cal.error||'',readAt:cal.readAt||'',connecting:!!cal.connecting,calendars:cals,events:events}});
@@ -1968,7 +1968,7 @@ function pmBtn(k){
   if(!D.agents)return '';
   const on=pmOn(),no=!D.agents.tools.claude.found;
   /* k='pm' (Agenci): pełna etykieta i opis braku claude w linii #ag-noc; k='pmr' (Przegląd): krótko, opis w title */
-  return '<button class="btn sec sm" data-ag="pm" data-k="'+k+'"'+(no?' aria-disabled="true"'+(k==='pm'?' aria-describedby="ag-noc"':' title="Brak polecenia claude"'):on?' aria-disabled="true"':'')+'>'+(on?'Raport PM w toku':k==='pm'?'Uruchom raport PM':'Raport PM')+'</button>';
+  return '<button class="btn sec sm" data-ag="pm" data-k="'+k+'"'+(no?' aria-disabled="true"'+(k==='pm'?' aria-describedby="ag-noc"':' title="Brak polecenia claude"'):on?' aria-disabled="true"':'')+'>'+(on?'Raport PM w toku':k==='pm'?'Uruchom raport PM':'Odśwież podsumowanie')+'</button>';
 }
 const loginCmd=()=>(D&&D.agents&&D.agents.tools.claude.loginCmd)||'claude auth login';
 const loginHint=k=>D.agents&&D.agents.loginWeb?loginWebHint():loginTermHint(k);
@@ -2501,15 +2501,19 @@ function acceptPlan(rid){
 }
 
 /* ---------- widoki ---------- */
-/* notatka PM: „## Najważniejsze” widoczne, „## Proponuję” zwinięte (stan w PF.more['pv-pmo']); bez tych nagłówków całość */
-function pmNoteHtml(text){
-  const L=String(text||'').split(/\r?\n/),secs=[{h:'',L:[]}];
-  L.forEach(l=>{if(/^#{1,6}\s+\S/.test(l))secs.push({h:l.replace(/^#{1,6}\s+/,'').trim(),L:[l]});else secs[secs.length-1].L.push(l)});
-  const isN=x=>/^najważniejsze(\s|:|$)/i.test(x.h),isP=x=>/^proponuję(\s|:|$)/i.test(x.h);
-  if(!secs.some(isN)&&!secs.some(isP))return '<div class="pmn">'+md(text)+'</div>';
-  const vis=secs.filter(x=>!isP(x)).map(x=>x.L.join('\n')).join('\n'),pr=secs.filter(isP);
-  const body=pr.map(x=>x.L.slice(1).join('\n')).join('\n'),n=body.split(/\r?\n/).filter(l=>/^\s*([-*+]|\d+[.)])\s+/.test(l)).length;
-  return '<div class="pmn">'+md(vis)+(pr.length?'<details class="pmn-more" data-pvdet="pv-pmo"'+(PF.more['pv-pmo']?' open':'')+'><summary>Proponuję'+(n?' <span class="num">('+n+')</span>':'')+'</summary>'+md(body)+'</details>':'')+'</div>';
+/* notatka PM: „## Najważniejsze” i „## Proponuję” widoczne w całości (notatka ma najwyżej 2 × 3 punkty) */
+function pmNoteHtml(text){return '<div class="pmn">'+md(text)+'</div>'}
+/* Podsumowanie PM na górze Przeglądu: notatka, kiedy powstała, stan bieżącego albo ostatniego nieudanego raportu, przycisk */
+function pmPanel(){
+  const note=D.pmNote,has=!!(note&&note.text.trim()),age=has&&isDay(note.date)?diff(D.todayKey,note.date):0,a=D.agents;
+  const pr=runs().filter(r=>r.kind==='pm').sort((x,y)=>String(y.startedAt||y.queuedAt||'').localeCompare(String(x.startedAt||x.queuedAt||''))),last=pr[0]||null;
+  const when=has?(age<=0?'<span>dziś'+(note.at&&tOf(note.at)?' '+esc(hhmm(tOf(note.at))):'')+'</span>':'<span class="lz yellow">'+(age===1?'wczoraj':'sprzed '+age+' dni')+'</span>'):'';
+  let st='';
+  if(last&&isAct(last))st='<p class="nw-note" role="status">PM układa nowe podsumowanie'+(last.activity?': '+nwStep(last.activity):'')+'.</p>';
+  else if(last&&(last.state==='error'||last.state==='timeout'||last.state==='limit'||last.state==='login'))
+    st='<p class="nw-note nw-bad">Ostatni raport PM nie powstał ('+esc(whenT(last.endedAt||last.startedAt))+'). <button class="lk" data-run="'+esc(last.id)+'">Szczegóły</button></p>';
+  return '<section class="panel pv-pm" id="pv-pm"><h2>Podsumowanie PM <small>'+when+pmBtn('pmr')+'</small></h2>'+st+
+    (has?pmNoteHtml(note.text):'<p class="empty">Brak podsumowania.'+(a?' Uruchom raport przyciskiem obok.':' W Claude Code: <code>/raport</code>')+'</p>')+'</section>';
 }
 /* Terminy w 7 dni: podgrupy Dziś, Jutro, Do końca tygodnia, Później w 7 dniach (ta sama reguła co w Terminach: w grupach
    wielodniowych podnagłówki dni, wiersz bez kolumny daty); domyślnie dziś i jutro (najwyżej 6), a gdy puste — pierwszy
@@ -2552,6 +2556,7 @@ function vPrzeglad(){
   /* awaryjnie (błąd w Teraz): logowanie przyciskiem nwLogin, a przy logowaniu przez stronę instrukcja loginHint('copy') */
   let nw;try{nw=nwPanel()}catch(e){console.error(e);const lw=!!(a&&a.needsLogin&&a.loginWeb);
     nw='<section class="panel nw-panel"><h2>Teraz</h2><p class="nw-note nw-bad">Nie udało się pokazać sekcji Teraz ('+esc(String(e&&e.message||e))+'). Reszta Przeglądu działa.'+(a&&a.needsLogin?' Claude wymaga logowania.'+(lw?'':' '+nwLogin):'')+'</p>'+(lw?'<div class="nw-lgw">'+lgBan('copy')+'</div>':'')+'</section>'}
+  h+=pmPanel();
   h+=nw;
   h+=todayPanel(ys);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
@@ -2560,9 +2565,6 @@ function vPrzeglad(){
   const rsm=[f.lateStages.length?'etapy po terminie: '+f.lateStages.length:'',lateT].filter(Boolean);
   if(risks.length)h+='<section class="panel"><h2>Ryzyka <small><span>'+dsCnt(risks.length,pl(risks.length,'ryzyko','ryzyka','ryzyk'))+(rsm.length?' · '+esc(rsm.join(' · ')):'')+'</span>'+dsNav('#blokady','Blokady')+'</small></h2><ul class="rows pv-rows">'+risks.join('')+'</ul></section>';
   else h+='<section class="panel pv-norisk"><h2>Ryzyka <small><span>brak'+(late&&lateT?' · '+lateT:'')+'</span>'+dsNav('#blokady','Blokady')+'</small></h2></section>';
-  const note=D.pmNote,has=!!(note&&note.text.trim()),age=has&&isDay(note.date)?diff(D.todayKey,note.date):0;
-  h+='<section class="panel pv-pm"><h2>Notatka PM <small>'+(has?(age<=0?'<span>dziś</span>':'<span class="lz yellow">'+(age===1?'wczoraj':'sprzed '+age+' dni')+'</span>'):'')+pmBtn('pmr')+'</small></h2>'+
-    (has?pmNoteHtml(note.text):'<p class="empty">Brak notatki.'+(a?'':' W Claude Code: <code>/raport</code>')+'</p>')+'</section>';
   if(LIVE||a)h+=planBox();
   h+=campGoals();
   /* projekty: aktywne, potem wstrzymane, potem backlog; nieaktywne przygaszone; na telefonie nieaktywne zwinięte */
@@ -5931,6 +5933,18 @@ function render(force){
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
   else if(r.v==='agenci')setHtml($('#abar'),agBarHtml());
   renderDrawer(force);
+  deepLink();
+}
+/* link z powiadomienia: #widok?z=<id zadania> otwiera zadanie, #widok?u=<id uruchomienia> uruchomienie;
+   parametr znika z adresu (replaceState, bez hashchange), żeby odświeżenie nie otwierało szuflady ponownie */
+function deepLink(){
+  const h=location.hash||'',m=/[?&](z|u)=([^&]*)/.exec(h);if(!m)return;
+  let id='';try{id=decodeURIComponent(m[2])}catch(e){}
+  const rest=h.replace(/([?&])(z|u)=[^&]*&?/,'$1').replace(/[?&]$/,'');
+  try{history.replaceState(null,'',location.pathname+location.search+rest)}catch(e){}
+  const ok=m[1]==='z'?!!D.tasks.find(x=>x.id===id):!!runById(id);
+  if(ok)openDrawer(m[1]==='z'?'task':'run',id);
+  else say(m[1]==='z'?'Zadania z powiadomienia już nie ma na liście (zmieniło się albo zostało zamknięte).':'Tego uruchomienia już nie ma na liście.');
 }
 
 /* ---------- zapis ---------- */
@@ -6270,7 +6284,7 @@ function applyAgents(raw){
   D.agents=normAgents(raw.agents);D.activity=normActivity(raw.activity);D.generatedAt=raw.generatedAt||D.generatedAt;D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;
   const m={};(raw.tasks||[]).forEach(z=>{m[z.id+'\n'+z.title]=z});
   D.tasks.forEach(t=>{const z=m[t.id+'\n'+t.title];if(z){t.runId=z.runId||'';t.runBlock=z.runBlock||''}});
-  if(raw.pmNote)D.pmNote={date:raw.pmNote.date,text:String(raw.pmNote.text||'')};
+  if(raw.pmNote)D.pmNote={date:raw.pmNote.date,text:String(raw.pmNote.text||''),at:typeof raw.pmNote.at==='string'?raw.pmNote.at:''};
   render();
 }
 /* po wdrożeniu nowej wersji panel przeładowuje się sam; gdy coś edytujesz, czeka, aż skończysz */

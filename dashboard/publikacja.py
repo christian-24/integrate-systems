@@ -367,7 +367,7 @@ class Publisher:
                 self.projekt.set_detail(*f, "zostało", "")
                 self.projekt.set_state(*f, "done")
         self.notify(("Nie opublikowano: %s. %s" % (t["title"], "; ".join(errors))) if errors
-                    else "Opublikowano: %s (%s)" % (t["title"], ", ".join(ch for ch in chans)))
+                    else "Opublikowano: %s (%s)" % (t["title"], ", ".join(ch for ch in chans)), "#marketing?z=" + t["id"])
 
     # ---------- Facebook ----------
     def _facebook(self, t, pf, info):
