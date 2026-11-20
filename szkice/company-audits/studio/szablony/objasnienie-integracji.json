@@ -4,7 +4,7 @@
  "dla_wlasciciela": "Cztery plansze: problem z przepisywaniem zamówień, jego skutek, integracja i audyt na start. Do postów o jednym konkretnym problemie firmy.",
  "typ": "objasnienie",
  "parametry": {
-  "problem": "Zamówienie z Allegro przepisujesz *ręcznie* do ERP",
+  "problem": "Zamówienia z Allegro wpisujesz *ręcznie*?",
   "skutek": "Pomyłki w stanach i *spóźnione* wysyłki",
   "rozwiazanie": "Integracja przenosi zamówienia i stany *sama*",
   "pierwszy_krok": "Zaczynamy od *audytu* Twojego procesu",
@@ -46,7 +46,7 @@
  ],
  "limity": {
   "problem": {
-   "max": 60
+   "max": 43
   }
  }
 }

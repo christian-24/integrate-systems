@@ -231,7 +231,7 @@ class Montaz(Karta):
         film.brand_card(self.brand(), BRAND["plansza_koncowa"], "plansza_koncowa", work, texts, "k.mp4")
         film.brand_card(self.brand(), BRAND["plansza_startowa"], "plansza_startowa", work, texts, "s.mp4", first=True)
         self.assertEqual([c["fade_out"] for c in self.cap.calls], [True, True, False, True])
-        self.assertEqual(film.transition("#fbf7f1", "#2b1d12"), "fade")     # do planszy końcowej bez czerni
+        self.assertEqual(film.transition("#fbf7f1", "#2b1d12"), "slideup")  # do planszy końcowej bez czerni i szarości
 
     def test_naglowek_i_pasek_pod_nakladka_reels(self):
         work = os.path.join(self.tmp, "w")
@@ -292,7 +292,9 @@ class StudioRealne(unittest.TestCase):
                 if t["kind"] == "objasnienie":
                     tpl = film.load_template(os.path.join(SZKICE, pid, "studio"), t["name"])
                     hook = film._uses(tpl["plansze"][0]["tekst"])[0][0]
-                    self.assertEqual(tpl["limity"][hook]["max"], 60, (pid, t["name"]))
+                    # limit haka = tyle znaków, ile da się przeczytać w HOOK_MAX (bez ostrzeżenia „hak za długi”)
+                    self.assertEqual(tpl["limity"][hook]["max"], film.HOOK_CHARS, (pid, t["name"]))
+                    self.assertLessEqual(len(str(tpl["parametry"].get(hook, ""))), film.HOOK_CHARS)
                     self.assertNotIn("podpis", tpl["plansze"][0], (pid, t["name"]))   # hak bez podpisu: ok. 3 s
                     self.assertGreater(len(tpl["wymagane"]), 1, (pid, t["name"]))   # treść posta, nie przykład
 
@@ -319,7 +321,7 @@ class Panel(Baza):
             json.dump({"szablon": "obj-b", "parametry": {"hak": "Hak"}}, f)
 
     def test_zmiana_liczby_przez_panel(self):
-        server.get_recorder().start = lambda folder, title="": (409, "zajęte")
+        server.get_recorder().start = lambda folder, title="": (409, "zajęte", {})
         code, _msg, *rest = server.film_change({"project": "projekt-testowy", "date": self.day.isoformat(),
                                                 "params": {"c": "6"}})
         self.assertEqual(code, 200)

@@ -1,6 +1,6 @@
 """Blokady: model zależności bkGraph z panel.html (czysta funkcja JS), uruchamiany przez JavaScriptCore (osascript na Macu).
 
-Bez osascript (np. serwer z Linuksem) testy są pomijane. Sprawdzają: korzenie, liczby zależnych (bezpośrednie i razem),
+Bez osascript (np. serwer z Linuksem) przez node; bez obu testy są pomijane. Sprawdzają: korzenie, liczby zależnych (bezpośrednie i razem),
 cykle bez korzenia i pod korzeniem, po: bez pasującego zadania, wspólnych następników, zablokowane korzenie i kolejność.
 """
 import json
@@ -12,6 +12,17 @@ import unittest
 
 PANEL = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "panel.html")
 OSA = shutil.which("osascript")
+NODE = shutil.which("node") or shutil.which("nodejs")
+JS = OSA or NODE
+
+
+def run_js(js):
+    """JavaScriptCore przez osascript (Mac) albo node (np. serwer z Linuksem): wynik ostatniego wyrażenia jako tekst."""
+    if OSA:
+        return subprocess.run([OSA, "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=60)
+    lines = js.rstrip().split("\n")
+    lines[-1] = "console.log(" + lines[-1].rstrip().rstrip(";") + ");"
+    return subprocess.run([NODE, "-e", "\n".join(lines)], capture_output=True, text=True, timeout=60)
 
 HARNESS = r"""
 %(src)s
@@ -69,11 +80,24 @@ CASES["krytyczna"] = [{"id": "R"}, {"id": "A", "after": ["R"]}, {"id": "A2", "af
                       {"id": "B", "after": ["R"]}, {"id": "C", "after": ["B"]}, {"id": "D", "after": ["C"]}, {"id": "F", "after": ["D"]}]
 # czas: Twojego zadania: 3 dni pracy na jednym kroku
 CASES["koszt"] = [{"id": "R"}, {"id": "K", "after": ["R"], "cost": 3, "date": "2026-11-21"}]
+CASES["koszt_korzenia"] = [{"id": "R", "cost": 3}, {"id": "K", "after": ["R"], "date": "2026-11-21"}]
+CASES["krotkie"] = [{"id": "R", "cost": 0.25}] + [{"id": "k%d" % i, "after": ["R" if i == 0 else "k%d" % (i - 1)],
+                                                   "cost": 0.0625} for i in range(5)]
+CASES["krotkie"][-1]["date"] = "2026-11-19"
+CASES["wlasny_termin"] = [{"id": "R", "cost": 2, "date": "2026-11-19"}, {"id": "X", "after": ["R"]}]
+CASES["pilnosc"] = [
+    {"id": "duzo"}] + [{"id": "d%d" % i, "after": ["duzo"], "date": "2026-12-20"} for i in range(5)] + [
+    {"id": "ciasny"}, {"id": "c1", "after": ["ciasny"], "cost": 2, "date": "2026-11-20"},
+    {"id": "moje", "ex": "ty"}, {"id": "m1", "after": ["moje"]}, {"id": "m2", "after": ["moje"]},
+    {"id": "dzis", "date": "2026-11-19"}, {"id": "z1", "after": ["dzis"]},
+    {"id": "zb_pozno", "state": "blocked"}, {"id": "zb1", "after": ["zb_pozno"]}, {"id": "zb2", "after": ["zb_pozno"]},
+    {"id": "zb_sam_po_terminie", "state": "blocked", "date": "2026-11-10"},
+]
 # długi łańcuch: bez rekurencji (dawniej Tarjan rekurencyjny mógł dać RangeError)
 CASES["dlugi"] = [{"id": "c0"}] + [{"id": "c%d" % i, "after": ["c%d" % (i - 1)]} for i in range(1, 5000)]
 
 
-@unittest.skipUnless(OSA, "brak osascript (JavaScriptCore)")
+@unittest.skipUnless(JS, "brak silnika JS (osascript albo node)")
 class Graf(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -81,7 +105,7 @@ class Graf(unittest.TestCase):
             html = f.read()
         src = re.search(r"/\*bkGraph:start\*/(.*?)/\*bkGraph:end\*/", html, re.S).group(1)
         js = HARNESS % {"src": src, "cases": json.dumps(CASES)}
-        r = subprocess.run([OSA, "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=60)
+        r = run_js(js)
         if r.returncode != 0:
             raise AssertionError("JS: " + r.stderr.strip())
         cls.out = json.loads(r.stdout)
@@ -123,22 +147,23 @@ class Graf(unittest.TestCase):
         self.assertEqual(o["blocked"], ["Z"])
         self.assertEqual(o["fix"], [])                  # W i V są pod zablokowanym, nie „do poprawy”
 
-    def test_kolejnosc_twoje_liczba_termin(self):
+    def test_kolejnosc_zapas_liczba_twoje(self):
         o = self.out["kolejnosc"]
-        # Twoje, potem zależne po terminie (jak raport PM: termin przed liczbą), potem najwięcej zależnych, termin
-        self.assertEqual(o["roots"], ["moje", "pilne", "duzo", "maly"])
+        # pilność z zapasu (po terminie najpierw), potem najwięcej zależnych; bez terminów: Twoje przed agentem
+        self.assertEqual(o["roots"], ["pilne", "duzo", "moje", "maly"])
         self.assertEqual((o["info"]["pilne"]["late"], o["info"]["pilne"]["next"]), (1, "2026-11-18"))
         self.assertEqual(o["info"]["duzo"]["next"], "2026-12-20")
 
     def test_zgoda_i_odbior_to_twoje(self):
         o = self.out["zgoda_to_twoje"]
-        self.assertEqual(o["roots"], ["odbior", "agent"])           # mniej zależnych, ale czeka na Ciebie
+        # bez terminów: więcej zależnych wyżej, także gdy to zadanie agenta (runda 1: agent nie spada pod Twoje)
+        self.assertEqual(o["roots"], ["agent", "odbior"])
 
     def test_bez_zapasu_i_zla_kolejnosc(self):
         o = self.out["zapas_i_kolejnosc"]
         self.assertEqual(o["info"]["R"]["chain"], 3)
-        # C (jutro) jest 2 kroki od R: zapas -1; najdłuższy łańcuch (3) nie ma tu znaczenia
-        self.assertEqual(o["info"]["R"]["tight"], {"steps": 2, "days": 1, "id": "C"})
+        # do C (jutro) 3 dni pracy (R, B, C), a są 2 dni (dziś i jutro): zapas -1
+        self.assertEqual(o["info"]["R"]["tight"], {"steps": 3, "days": 2, "id": "C"})
         self.assertEqual(o["info"]["C"]["early"], ["B"])            # C ma termin przed poprzednikiem B
         self.assertEqual(o["info"]["B"]["early"], [])
         self.assertIsNone(self.out["lancuch"]["info"]["A"]["tight"])
@@ -170,12 +195,24 @@ class Graf(unittest.TestCase):
     def test_sciezka_krytyczna_po_zapasie(self):
         o = self.out["krytyczna"]
         self.assertEqual(o["info"]["R"]["crit"], ["A", "A2", "R"])  # nie najdłuższa gałąź B-C-D-F
-        self.assertEqual(o["info"]["R"]["tight"], {"steps": 2, "days": 1, "id": "A2"})
+        self.assertEqual(o["info"]["R"]["tight"], {"steps": 3, "days": 2, "id": "A2"})
         # bez terminów: najdłuższy łańcuch
         self.assertEqual(self.out["lancuch"]["info"]["A"]["crit"], ["A", "B", "C"])
 
     def test_czas_zadania_w_dniach(self):
-        self.assertEqual(self.out["koszt"]["info"]["R"]["tight"], {"steps": 3, "days": 2, "id": "K"})
+        self.assertEqual(self.out["koszt"]["info"]["R"]["tight"], {"steps": 4, "days": 3, "id": "K"})
+        # praca nad samym korzeniem się liczy: korzeń 3 dni, zależny pojutrze (3 dni z dzisiejszym, razem 4 dni pracy)
+        self.assertEqual(self.out["koszt_korzenia"]["info"]["R"]["tight"], {"steps": 4, "days": 3, "id": "K"})
+        # krótkie zadania (ułamek dnia z czas:) nie dają fałszywego „ciasno”
+        self.assertIsNone(self.out["krotkie"]["info"]["R"]["tight"])
+        # własny termin korzenia też: 2 dni pracy na dziś
+        self.assertEqual(self.out["wlasny_termin"]["info"]["R"]["tight"], {"steps": 2, "days": 1, "id": "R"})
+
+    def test_ciasne_i_dzisiejsze_na_gorze(self):
+        o = self.out["pilnosc"]
+        # „ciasno” (1 zależny) przed korzeniem z 5 zależnymi za miesiąc; Twoje bez terminu pod agentem z terminem dziś
+        self.assertEqual(o["roots"], ["ciasny", "dzis", "duzo", "moje"])
+        self.assertEqual(o["blocked"], ["zb_pozno", "zb_sam_po_terminie"][::-1])
 
     def test_dlugi_lancuch_bez_rekurencji(self):
         o = self.out["dlugi"]
@@ -193,9 +230,10 @@ let FX=null;const facts=()=>FX||(FX={open:D.tasks.filter(t=>t.state!=='done')});
 %(graph)s
 %(model)s
 const m=bkModel(),y=bkYouL();
-JSON.stringify({roots:m.roots.map(n=>n.id),fix:m.fix.map(x=>[x.t.id,x.why.map(w=>w.kind)]),you:y.map(n=>n.id),
+const RES=JSON.stringify({roots:m.roots.map(n=>n.id),fix:m.fix.map(x=>[x.t.id,x.why.map(w=>w.kind)]),you:y.map(n=>n.id),
   kids:Object.fromEntries(D.tasks.filter(t=>m.byId(t.id)).map(t=>[t.id,m.kids(m.byId(t.id)).map(n=>n.id)])),
-  n:bkYouN(),txt:bkYouTxt(bkYouN())});
+  n:bkYouN(),txt:bkYouTxt(bkYouN()),pf:bkYouL('q').map(n=>n.id)});
+RES;
 """
 
 
@@ -206,7 +244,7 @@ def task(id, title, **kw):
     return t
 
 
-@unittest.skipUnless(OSA, "brak osascript (JavaScriptCore)")
+@unittest.skipUnless(JS, "brak silnika JS (osascript albo node)")
 class Model(unittest.TestCase):
     """bkModel: dane panelu (unlocksL z serwera, waits z frontu) → graf; duplikat tytułu, brakujące po:, Twoje."""
 
@@ -229,7 +267,7 @@ class Model(unittest.TestCase):
         graph = re.search(r"/\*bkGraph:start\*/(.*?)/\*bkGraph:end\*/", html, re.S).group(1)
         model = re.search(r"/\*bkModel:start\*/(.*?)/\*bkModel:end\*/", html, re.S).group(1)
         js = MODEL % {"tasks": json.dumps(tasks), "graph": graph, "model": model}
-        r = subprocess.run([OSA, "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=60)
+        r = run_js(js)
         self.assertEqual(r.returncode, 0, r.stderr)
         o = json.loads(r.stdout)
         self.assertEqual(sorted(o["kids"]["t1"]), ["t2", "t3"])     # „Wpis” bez id: po tytule w tym samym pliku
@@ -240,6 +278,7 @@ class Model(unittest.TestCase):
         self.assertNotIn("t7", [k for k, _ in o["fix"]])             # [!] tylko w Zablokowanych
         self.assertEqual(o["n"], {"tasks": 2, "n": 3, "all": 3})
         self.assertEqual(o["txt"], "Twoje zadania wstrzymują 3 inne zadania")
+        self.assertEqual(o["pf"], ["t9"])                            # filtr na projekt wstrzymany: jego Twoje zadania
 
 
 if __name__ == "__main__":

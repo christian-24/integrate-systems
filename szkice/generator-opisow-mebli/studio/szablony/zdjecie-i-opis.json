@@ -1,0 +1,51 @@
+{
+ "tytul": "Zdjęcie mebla i fragment gotowego opisu",
+ "opis": "Objaśnienie ze zdjęciem prawdziwego mebla (za zgodą właściciela zdjęcia): hak na środku, plansza „zrzut” ze zdjęciem i danymi wpisanymi do generatora, plansza „cytat” z fragmentem opisu, który z nich powstał. Na końcu plansza marki. Zdjęcie, dane i fragment są wymagane; zdjęcie to plik w folderze posta (właściciel wgrywa je w panelu).",
+ "dla_wlasciciela": "Zdjęcie prawdziwego mebla (za zgodą) i fragment opisu, który powstał z jego danych w Opisarni. Zdjęcie wgrasz w poście przyciskiem „Wgraj plik”. Do postów, które pokazują efekt na konkretnym meblu.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "Od zdjęcia mebla do *opisu* PL i DE",
+  "zdjecie": "zdjecie-mebla.jpg",
+  "dane": "[mebel, wymiary, materiał]",
+  "fragment": "[fragment opisu z generatora]"
+ },
+ "etykiety": {
+  "hak": "Plansza 1: hak",
+  "zdjecie": "Zdjęcie mebla (plik)",
+  "dane": "Plansza 2: dane wpisane do generatora",
+  "fragment": "Plansza 3: fragment gotowego opisu"
+ },
+ "wymagane": [
+  "zdjecie",
+  "dane",
+  "fragment"
+ ],
+ "limity": {
+  "hak": {
+   "max": 43
+  },
+  "dane": {
+   "max": 60
+  },
+  "fragment": {
+   "max": 85
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{dane}}",
+   "obraz": "{{zdjecie}}",
+   "uklad": "zrzut"
+  },
+  {
+   "tekst": "{{fragment}}",
+   "podpis": "fragment opisu z Opisarni",
+   "uklad": "cytat"
+  }
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "tytul": "Pytanie klienta i odpowiedź w punktach",
+ "opis": "Objaśnienie: hak na środku (prawdziwe pytanie klienta, bez nazwy firmy), plansza „lista” z odpowiedzią w 2–4 punktach wchodzących po kolei, plansza z pierwszym krokiem. Pytanie i punkty są wymagane (przykład to jawne pola w nawiasach).",
+ "dla_wlasciciela": "Pytanie, które naprawdę zadał klient, i krótka odpowiedź w punktach. Do postów z odpowiedzią na częste pytanie.",
+ "typ": "objasnienie",
+ "parametry": {
+  "pytanie": "[pytanie klienta]?",
+  "punkty": "[punkt 1]; [punkt 2]; [punkt 3]",
+  "krok": "Napisz, z czym *pracujesz*, odpowiemy"
+ },
+ "etykiety": {
+  "pytanie": "Plansza 1: pytanie klienta (hak)",
+  "punkty": "Plansza 2: odpowiedź w punktach (2–4)",
+  "krok": "Plansza 3: pierwszy krok"
+ },
+ "wymagane": [
+  "pytanie",
+  "punkty"
+ ],
+ "limity": {
+  "pytanie": {
+   "max": 43
+  },
+  "punkty": {
+   "max": 90
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{pytanie}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{punkty}}",
+   "uklad": "lista"
+  },
+  {
+   "tekst": "{{krok}}"
+  }
+ ]
+}

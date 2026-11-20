@@ -484,7 +484,9 @@ def link_after(tasks):
     """Pole „po:”: dla każdego zadania lista poprzedników "waitingFor" [{"title", "done", "id"}].
 
     Poprzednik to pierwszy wiersz tego samego pliku (poza samym zadaniem), którego tytuł zawiera fragment,
-    bez wielkości liter. Fragment bez pasującego wiersza: {"title": fragment, "done": False, "id": ""}.
+    bez wielkości liter; bez takiego wiersza pierwszy pasujący wiersz innego pliku tego projektu (ZADANIA.md,
+    potem pozostałe pliki w kolejności nazw; np. publikacja z kampanii „po: Potwierdź DPA” z ZADANIA.md).
+    Fragment bez pasującego wiersza w żadnym pliku: {"title": fragment, "done": False, "id": ""}.
     W drugą stronę: "unlocks" [{"id", "title", "executor", "date"}] to otwarte zadania, które mają „po:” na tym
     zadaniu (w kolejności wierszy), "unlockCount" ich liczba.
     """
@@ -493,11 +495,14 @@ def link_after(tasks):
         by_file.setdefault((t["project"], t["file"]), []).append(t)
     for rows in by_file.values():
         rows.sort(key=lambda t: t["line"])
+    for (pid, fname), rows in by_file.items():
+        others = [by_file[k] for k in sorted((k for k in by_file if k[0] == pid and k[1] != fname),
+                                             key=lambda k: (k[1] != "ZADANIA.md", k[1]))]
         for t in rows:
             out = []
             for frag in t.get("after") or []:
                 low = frag.lower()
-                hit = next((x for x in rows if x is not t and low in x["title"].lower()), None)
+                hit = next((x for L in [rows] + others for x in L if x is not t and low in x["title"].lower()), None)
                 out.append({"title": hit["title"], "done": hit["state"] == "done", "id": hit["id"]} if hit
                            else {"title": frag, "done": False, "id": ""})
             t["waitingFor"] = out

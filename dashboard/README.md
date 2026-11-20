@@ -54,7 +54,7 @@ Pełny opis: `AGENCI.md`.
 - Automat: sam bierze zadania z `kto: claude|codex`, `gdzie:` tego komputera (bez `gdzie:` na serwerze, węźle domyślnym)
   i datą `kiedy:` nie późniejszą niż dziś (także z przeszłości), gdy poprzednicy z `po:` są zrobieni; domyślnie wyłączony.
   Rytm marketingu (`kampanie/staly-rytm.md`) zakłada zadania postów i wpisania wyników; opis w `AGENCI.md`.
-  Wiersz „Nagraj film…” i publikacja z `po: Nagraj film…` nie dostają zadania posta, dopóki film nie jest nagrany.
+  Wiersz „Nagraj film…” albo „Obejrzyj film…” i publikacja z `po:` wskazującym taki wiersz nie dostają zadania posta, dopóki film nie jest nagrany.
 - Post: odbiór „Przygotować post na …” pokazuje teksty i grafikę oraz zdanie „Twój ruch”. Publikacja z kampanii ma
   „Kopiuj i otwórz Facebook/LinkedIn/Reels” (kopiuje tekst i otwiera stronę publikowania; bez API) i „Opublikowane”,
   po którym wpisujesz link i wyniki.
@@ -114,18 +114,26 @@ co najmniej czas czytania (nagrywarka czeka przed następnym). Plansze marki są
 doklejane do obu rodzajów; scenariusz może je wyłączyć (`false`) albo zmienić obiektem: z własnym `tytul` (hak) bierze
 z marki tylko kolory, bez tytułu uzupełnia planszę marki; przy szablonie łączy się z planszą szablonu. Pierwsza klatka
 pokazuje tekst bez animacji (miniatura). Między planszami treść najpierw gaśnie do tła, potem tło przenika w następną
-planszę (bez podwójnej ekspozycji i bez czerni przed planszą końcową); przez czerń tylko przy nagraniu strony. Układ trzyma
+planszę (bez podwójnej ekspozycji i bez czerni przed planszą końcową); między tłem jasnym i ciemnym następna plansza
+wsuwa się od dołu, a jej treść wchodzi po przejściu; przez czerń tylko przy nagraniu strony. Marka może mieć `ukryj`
+(selektory CSS elementów strony ukrywanych w pokazie: baner zgody, przycisk „Opinia”, czat; scenariusz pokazu też),
+`braki` (opisy braków marki dla właściciela) i `do_potwierdzenia` (`{"plansza_koncowa": "co potwierdzić"}`: tekst
+tymczasowy, ostrzeżenie przy filmie). Nieznany klucz marki to ostrzeżenie, nie błąd. Nagranie strony jest
+wyostrzane po powiększeniu 2×, napis na stronie ma prawie nieprzezroczyste pudełko i znika przed przejściem. Wersja 4:5
+w czasie nagrania strony pokazuje cały kadr zmniejszony na tle marki. Poprzedni film zostaje jako `.film-poprzedni.mp4`
+(porównanie w poście). Układ trzyma
 się poza strefami interfejsu Reels/TikTok (góra 250 px, dół 480 px), wiersze łamią się po polsku. W scenariuszu
 pisanym ręcznie `{{` to zwykły tekst, a klucz `opis` to komentarz.
 Sprawdzenie bez nagrania: `python3 dashboard/film.py sprawdz <folder posta>` (błędy, ostrzeżenia, długość; ostrzega
 też o powtórce szablonu i treści względem wcześniejszych postów, o planszach z przykładowym tekstem, o objaśnieniu
-powyżej 30 s, o długim haku i o filmie bez muzyki). Błąd wartości po podstawieniu wskazuje parametr posta, nie szablon. W poście
+powyżej 30 s, o długim haku i o filmie bez muzyki). Błąd wartości po podstawieniu wskazuje parametr posta, nie szablon; błąd w planszy albo podkładzie nadpisanym
+w poście to „scenariusz posta: …”. Parametr posta, którego szablon już nie ma, jest pomijany z ostrzeżeniem. W poście
 „Co jest w filmie, po kolei” ma grupy: Plansze (przycisk „Zmień” przy planszy), Napisy na filmie i Dane wpisywane
 w formularz (po jednym formularzu na grupę); skąd pochodzi każde pole, mówi serwer (`filmInfo.fields`), limity
 szablonu trafiają do formularza (długość, lista, cyfry), „Wyróżnij zaznaczone słowo” wstawia `*słowo*` z podglądem.
 `POST /api/film/zmien {project, date, params | slides}` zapisuje scenariusz po kontroli i nagrywa film od nowa; gdy
 scenariusz zmienił się w międzyczasie (np. agent), odpowiada 409. Szuflada zadania posta (także zablokowanego) i zadania
-„Nagraj film …” ma na górze skrót filmu: rodzaj, szablon, długość, kto i kiedy nagra, „Nagraj film”, „Obejrzyj”.
+„Nagraj film …” albo „Obejrzyj film …” (film nagrywa panel, właściciel ogląda) ma na górze skrót filmu: rodzaj, szablon, długość, kto i kiedy nagra, „Nagraj film”, „Obejrzyj”.
 Marketing pokazuje „Studio filmów” (każdy projekt zwinięty osobno) z marką, miniaturami plansz w jej kolorach,
 szablonami, postami, których scenariusz po zmianie szablonu się nie nagra, przykładowym filmem i prośbą do agenta o zmianę marki albo nowy
 szablon (`POST /api/studio/popros`, zadanie „Zmień studio filmów: …”).

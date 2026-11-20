@@ -29,5 +29,12 @@
   "podtytul": "Napisz w komentarzu, wyślemy zaproszenie do testu",
   "tlo": "#002b4f",
   "kolor": "#f6f9fb"
+ },
+ "braki": [
+  "Krój aplikacji nie jest zainstalowany na serwerze: w filmach zastępczo Inter.",
+  "Brak strony www: filmy NaulikApp to plansze i zrzuty aplikacji (bez pokazu strony)."
+ ],
+ "do_potwierdzenia": {
+  "plansza_koncowa": "wezwanie do testu na Androida (zamknięty test Google Play), potwierdź w KARTA.md, pytanie 6"
  }
 }

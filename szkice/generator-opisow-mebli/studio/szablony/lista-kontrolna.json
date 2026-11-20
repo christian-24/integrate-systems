@@ -1,0 +1,52 @@
+{
+ "tytul": "Lista: co musi mieć opis mebla",
+ "opis": "Objaśnienie w innym układzie niż 3 błędy: hak na środku, plansza „lista” (punkty wchodzą po kolei), plansza „liczba” z czasem od danych do opisu (oferta jest na planszy marki, więc plansza jej nie powtarza). Bez nagrania strony, bez planszy z logo na początku; na końcu plansza marki.",
+ "dla_wlasciciela": "Krótka lista kontrolna: hak, potem punkty pojawiające się jeden po drugim i duża liczba. Do postów z poradą, na zmianę z pokazem generatora.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "Czego brakuje w Twoim *opisie* mebla?",
+  "lista": "Wymiary w treści; Materiał i kolor; Wymiary paczki; Opis po niemiecku",
+  "podpis_lista": "Kupujący szuka tego przed zakupem",
+  "liczba": "*10 s* na opis po polsku i niemiecku",
+  "podpis_liczba": "Z wymiarów, materiału i koloru"
+ },
+ "etykiety": {
+  "hak": "Plansza 1: hak",
+  "lista": "Plansza 2: punkty listy (2–5)",
+  "podpis_lista": "Podpis 2",
+  "liczba": "Plansza 3: liczba na początku, potem opis",
+  "podpis_liczba": "Podpis 3"
+ },
+ "wymagane": [
+  "hak",
+  "lista"
+ ],
+ "limity": {
+  "hak": {
+   "max": 43
+  },
+  "lista": {
+   "max": 90
+  },
+  "liczba": {
+   "max": 60
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{lista}}",
+   "podpis": "{{podpis_lista}}",
+   "uklad": "lista"
+  },
+  {
+   "tekst": "{{liczba}}",
+   "podpis": "{{podpis_liczba}}",
+   "uklad": "liczba"
+  }
+ ]
+}

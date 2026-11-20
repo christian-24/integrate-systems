@@ -29,5 +29,8 @@
   "tytul": "Porozmawiajmy o Twoim procesie",
   "podtytul": "Na początek audyt procesów",
   "adres": "oprogramowani.com"
- }
+ },
+ "braki": [
+  "Kroje strony (Archivo Black, Space Grotesk) nie są zainstalowane na serwerze: w filmach zastępczo Inter, więc plansze nie wyglądają jak strona."
+ ]
 }

@@ -4,7 +4,7 @@
 Opis mebla po polsku i niemiecku w 10 sekund. Na filmie wpisuję typ, wymiary, materiał i kolor komody, wybieram profil Allegro i klikam „Generuj”: opis po polsku i po niemiecku jest gotowy do skopiowania do oferty. Konto jest darmowe: 10 opisów miesięcznie, bez karty. Sprawdź na jednym swoim meblu: opisarnia.pl
 
 ## LinkedIn
-Opis mebla po polsku i niemiecku w 10 sekund. Nagrałem to na ekranie, film trwa minutę.
+Opis mebla po polsku i niemiecku w 10 sekund. Nagrałem to na ekranie, film trwa krócej niż minutę.
 
 Biorę komodę. Wpisuję typ, wymiary, materiał i kolor, wybieram profil Allegro.
 

@@ -1,0 +1,54 @@
+{
+ "tytul": "Mit i fakt o integracjach",
+ "opis": "Objaśnienie w układzie mit, fakt, wniosek: hak na środku (przekonanie, które słychać od klientów), plansza z faktem i źródłem w podpisie, wniosek, wezwanie na środku. Fakt i źródło są wymagane i tylko z prawdziwych wdrożeń albo dokumentacji (przykład to jawne pole w nawiasach).",
+ "dla_wlasciciela": "Popularne przekonanie o integracjach i to, jak jest naprawdę. Do postów, które prostują błędne założenie klienta; fakt podaj z własnego wdrożenia.",
+ "typ": "objasnienie",
+ "parametry": {
+  "mit": "„Integracja to *miesiące* pracy”",
+  "fakt": "[jak jest naprawdę, z prawdziwego wdrożenia]",
+  "zrodlo": "[skąd to wiemy]",
+  "wniosek": "Zaczynamy od *audytu*, nie od kodu",
+  "wezwanie": "Sprawdźmy, co da się *połączyć* u Ciebie"
+ },
+ "etykiety": {
+  "mit": "Plansza 1: mit (hak)",
+  "fakt": "Plansza 2: fakt",
+  "zrodlo": "Podpis 2: źródło faktu",
+  "wniosek": "Plansza 3: wniosek",
+  "wezwanie": "Plansza 4: wezwanie"
+ },
+ "wymagane": [
+  "mit",
+  "fakt",
+  "zrodlo"
+ ],
+ "limity": {
+  "mit": {
+   "max": 43
+  },
+  "fakt": {
+   "max": 80
+  },
+  "zrodlo": {
+   "max": 60
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{mit}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{fakt}}",
+   "podpis": "{{zrodlo}}"
+  },
+  {
+   "tekst": "{{wniosek}}"
+  },
+  {
+   "tekst": "{{wezwanie}}",
+   "uklad": "srodek"
+  }
+ ]
+}

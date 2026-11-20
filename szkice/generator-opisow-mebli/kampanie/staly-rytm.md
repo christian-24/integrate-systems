@@ -10,10 +10,10 @@
 - koniec: 2026-12-23
 
 Post co 2 dni. Agent przygotowuje post według STYL.md; publikujesz Ty, w kanałach i w dniu z wiersza.
-Film nagrywasz dzień przed publikacją (osobny wiersz „Nagraj film”); `po:` wskazuje wiersz, który musi być zrobiony wcześniej.
+Film do posta nagrywa panel ze scenariusza posta (studio filmów), najpóźniej w dniu publikacji; wiersz „Obejrzyj film” to obejrzenie filmu nagranego przez panel i zamknięcie zadania (nie nagrywasz ekranu ręcznie). `po:` wskazuje wiersz, który musi być zrobiony wcześniej.
 Do 30.11 harmonogram idzie za planem pierwszych 10 kont (marketing/plan-10-kont.md, punkty 3, 4 i 6): 4 posty i film A.
 Ścieżki w „materiał:” są względem repozytorium Opisarni albo folderu karty (posty/).
-Post i opis pod filmem (teksty, podmiany akapitów, grafika) przygotowuje agent w zadaniu „Przygotować post na …”; Ty nagrywasz i publikujesz.
+Post, opis pod filmem i scenariusz filmu przygotowuje agent w zadaniu „Przygotować post na …”, film nagrywa panel; Ty oglądasz film i publikujesz.
 Publikacje czekają na „Potwierdź DPA…” z ZADANIA.md (po:). Wynik kampanii to suma licznika konta z zadań w ZADANIA.md.
 
 ## Grupa docelowa
@@ -30,14 +30,15 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
   materiał: marketing/plan-10-kont.md#4
   Post 1 z planu. Link do opisarnia.pl w pierwszym komentarzu, w treści adres słownie.
   Post kieruje do rejestracji: publikacja po „Potwierdź DPA…” w ZADANIA.md (pytanie 13 w KARTA.md).
-- [ ] Nagraj film A: od atrybutów do opisu PL i DE w 60 sekund | kto: ty | kiedy: 2026-11-20 | czas: 30
+- [ ] Obejrzyj film A nagrany przez panel: opis mebla PL i DE w 10 s | kto: ty | kiedy: 2026-11-20 | czas: 5
   cel: gotowy film do slotu A, do 60 sekund
-  gotowe gdy: plik filmu zapisany i obejrzany w całości; scenariusz z punktu 6 planu przeprowadzony
+  gotowe gdy: film.mp4 w posty/2026-11-20-film-a-opis-pl-de nagrany przez panel ze scenariusza posta i obejrzany w całości
+  materiał: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json
   materiał: marketing/plan-10-kont.md#6
-  - [ ] wybierz gotowy film albo nagraj ekran według scenariusza zastępczego (punkt 6)
-  Gotowych filmów nie ma w repozytorium; film o zmianie modelu nie nadaje się na slot A.
-- [ ] Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: ty | kanał: linkedin, facebook, reels | kiedy: 2026-11-20 | czas: 15 | po: Nagraj film A, Potwierdź DPA
-  cel: pokazać w 60 sekund drogę od atrybutów mebla do opisu PL i DE
+  - [ ] obejrzyj film nagrany przez panel (Marketing → post z 20.11) i zamknij zadanie albo napisz w „Co poprawić”, co zmienić
+  Film nagrywa panel ze scenariusza posta (studio filmów, szablon „Pokaz generatora”); nie nagrywasz ekranu ręcznie. Film o zmianie modelu nie nadaje się na slot A.
+- [ ] Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: ty | kanał: linkedin, facebook, reels | kiedy: 2026-11-20 | czas: 15 | po: Obejrzyj film A, Potwierdź DPA
+  cel: pokazać w krótkim filmie (do 60 s) drogę od atrybutów mebla do opisu PL i DE
   gotowe gdy: film opublikowany w kanałach z wiersza, opis pod filmem z linkiem opisarnia.pl
   materiał: posty/2026-11-20-film-a-opis-pl-de/post.md
   materiał: marketing/plan-10-kont.md#6

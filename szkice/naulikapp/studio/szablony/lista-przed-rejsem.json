@@ -1,0 +1,45 @@
+{
+ "tytul": "Lista kontrolna przed rejsem",
+ "opis": "Objaśnienie poradnikowe (bez nagrania, aplikacja nie ma strony): hak na środku, plansza „lista” (punkty wchodzą po kolei), plansza z tym, jak aplikacja w tym pomaga. Punkty i funkcja są wymagane; funkcja tylko taka, którą aplikacja naprawdę ma.",
+ "dla_wlasciciela": "Krótka lista rzeczy do sprawdzenia przed wyjściem z portu, potem jedna funkcja aplikacji, która w tym pomaga. Do postów z poradą dla żeglarzy, na zmianę z objaśnieniem funkcji.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "Co sprawdzasz przed *wyjściem* z portu?",
+  "lista": "[punkt 1]; [punkt 2]; [punkt 3]; [punkt 4]",
+  "funkcja": "[jak aplikacja w tym pomaga]"
+ },
+ "etykiety": {
+  "hak": "Plansza 1: pytanie (hak)",
+  "lista": "Plansza 2: punkty listy (2–5)",
+  "funkcja": "Plansza 3: jak pomaga aplikacja"
+ },
+ "wymagane": [
+  "lista",
+  "funkcja"
+ ],
+ "limity": {
+  "hak": {
+   "max": 43
+  },
+  "lista": {
+   "max": 90
+  },
+  "funkcja": {
+   "max": 80
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{lista}}",
+   "uklad": "lista"
+  },
+  {
+   "tekst": "{{funkcja}}"
+  }
+ ]
+}

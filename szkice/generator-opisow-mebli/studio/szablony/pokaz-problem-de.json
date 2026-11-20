@@ -1,11 +1,11 @@
 {
  "tytul": "Problem, potem szybki pokaz z opisem DE",
- "opis": "Dwie plansze z problemem sprzedawcy, potem krótkie nagranie generatora: mebel, wymiary, Allegro, od razu zakładka z opisem po niemiecku. Bez planszy z logo na początku (hak to pierwsza plansza), na końcu plansza marki. Do postów o sprzedaży do Niemiec.",
- "dla_wlasciciela": "Dwie plansze z problemem sprzedawcy, potem krótkie nagranie generatora z gotowym opisem po niemiecku. Do postów o sprzedaży mebli do Niemiec.",
+ "opis": "Trzy krótkie plansze: problem (hak, bez podpisu), szczegół problemu, obietnica sprzedawcy, potem krótkie nagranie generatora: mebel, wymiary, Allegro, od razu zakładka z opisem po niemiecku. Bez planszy z logo na początku (hak to pierwsza plansza), na końcu plansza marki. Do postów o sprzedaży do Niemiec.",
+ "dla_wlasciciela": "Trzy krótkie plansze z problemem sprzedawcy, potem krótkie nagranie generatora z gotowym opisem po niemiecku. Do postów o sprzedaży mebli do Niemiec.",
  "typ": "pokaz",
  "parametry": {
   "problem": "Sprzedajesz meble do *Niemiec*?",
-  "podpis_problem": "Opis po niemiecku zwykle trwa najdłużej",
+  "podpis_problem": "Opis po niemiecku zwykle trwa *najdłużej*",
   "obietnica": "Wpisujesz mebel raz, opis *DE* jest od razu",
   "typ_mebla": "Stół rozkładany, dąb",
   "kategoria": "stół",
@@ -24,7 +24,7 @@
  ],
  "limity": {
   "problem": {
-   "max": 60
+   "max": 43
   },
   "typ_mebla": {
    "max": 60
@@ -61,8 +61,8 @@
  },
  "etykiety": {
   "problem": "Plansza 1: problem (hak)",
-  "podpis_problem": "Podpis 1",
-  "obietnica": "Plansza 2: obietnica",
+  "podpis_problem": "Plansza 2: problem w szczegółach",
+  "obietnica": "Plansza 3: obietnica",
   "typ_mebla": "Mebel",
   "kategoria": "Kategoria",
   "szerokosc": "Szerokość (cm)",
@@ -76,8 +76,10 @@
  "plansza_startowa": false,
  "plansze_przed": [
   {
-   "tekst": "{{problem}}",
-   "podpis": "{{podpis_problem}}"
+   "tekst": "{{problem}}"
+  },
+  {
+   "tekst": "{{podpis_problem}}"
   },
   {
    "tekst": "{{obietnica}}"

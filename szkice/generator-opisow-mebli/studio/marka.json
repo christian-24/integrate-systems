@@ -29,5 +29,9 @@
   "tytul": "10 opisów miesięcznie za darmo",
   "podtytul": "Konto Free, bez karty",
   "adres": "opisarnia.pl"
- }
+ },
+ "ukryj": [
+  "[class*=\"zd-baner\"]",
+  ".fb-fab"
+ ]
 }

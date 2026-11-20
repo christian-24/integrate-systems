@@ -1,0 +1,46 @@
+{
+ "tytul": "Liczba z problemu i 4 kroki audytu",
+ "opis": "Objaśnienie w innym układzie niż problem i skutek: plansza „liczba” (przykład to jawne pole w nawiasach; dane z rozmowy z klientem albo z audytu, nie zmyślone), lista kroków audytu wchodzących po kolei, wezwanie. Hak to liczba od pierwszej sekundy; na końcu plansza marki.",
+ "dla_wlasciciela": "Duża liczba z prawdziwego procesu klienta (np. godziny przepisywania tygodniowo), potem kroki audytu jeden po drugim. Do postów o kosztach ręcznej pracy; liczbę podaj z rozmowy albo audytu.",
+ "typ": "objasnienie",
+ "parametry": {
+  "liczba": "*[liczba]* godzin tygodniowo na [czynność]",
+  "kroki": "Rozmowa o procesie; Mapa systemów; Lista przepisywanych danych; Plan integracji",
+  "podpis_kroki": "Audyt kończy się planem, nie fakturą za wdrożenie",
+  "wezwanie": "Policzmy, ile to kosztuje *u Ciebie*"
+ },
+ "etykiety": {
+  "liczba": "Plansza 1: liczba z rozmowy albo audytu, potem opis (hak)",
+  "kroki": "Plansza 2: kroki audytu (2–5)",
+  "podpis_kroki": "Podpis 2",
+  "wezwanie": "Plansza 3: wezwanie"
+ },
+ "wymagane": [
+  "liczba",
+  "kroki"
+ ],
+ "limity": {
+  "liczba": {
+   "max": 43
+  },
+  "kroki": {
+   "max": 90
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{liczba}}",
+   "uklad": "liczba"
+  },
+  {
+   "tekst": "{{kroki}}",
+   "podpis": "{{podpis_kroki}}",
+   "uklad": "lista"
+  },
+  {
+   "tekst": "{{wezwanie}}",
+   "uklad": "srodek"
+  }
+ ]
+}

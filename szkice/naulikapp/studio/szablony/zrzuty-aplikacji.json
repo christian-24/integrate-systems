@@ -1,0 +1,60 @@
+{
+ "tytul": "Zrzuty ekranu aplikacji krok po kroku",
+ "opis": "Objaśnienie dla aplikacji mobilnej (bez nagrania przeglądarki): hak na środku, potem 2 plansze „zrzut” (zrzut ekranu z telefonu w posty/<post>/ albo studio/obrazy/; pionowy zrzut na całą szerokość z przesuwaniem, krótki tekst pod nim) i efekt. Pliki zrzutów (png albo jpg) są wymagane; właściciel wgrywa je w panelu.",
+ "dla_wlasciciela": "Zrzuty ekranu aplikacji z telefonu, po jednym na krok, z krótkim opisem pod każdym. Zrzut wypełnia szerokość filmu i przesuwa się z góry na dół. Zrzuty wgrasz w poście (przycisk „Wgraj plik” przy polu zrzutu) albo przekażesz agentowi.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "Wpis do dziennika w *3 dotknięciach*",
+  "zrzut_1": "zrzut-1.png",
+  "tekst_1": "Wybierasz rejs i rodzaj wpisu",
+  "zrzut_2": "zrzut-2.png",
+  "tekst_2": "Godzina i pozycja zapisują się *same*",
+  "efekt": "Po rejsie dziennik w *PDF*"
+ },
+ "etykiety": {
+  "hak": "Plansza 1: hak",
+  "zrzut_1": "Zrzut 1 (plik z telefonu)",
+  "tekst_1": "Plansza 2: tekst pod zrzutem",
+  "zrzut_2": "Zrzut 2 (plik z telefonu)",
+  "tekst_2": "Plansza 3: tekst pod zrzutem",
+  "efekt": "Plansza 4: efekt"
+ },
+ "wymagane": [
+  "zrzut_1",
+  "zrzut_2",
+  "tekst_1",
+  "tekst_2"
+ ],
+ "limity": {
+  "hak": {
+   "max": 43
+  },
+  "tekst_1": {
+   "max": 60
+  },
+  "tekst_2": {
+   "max": 60
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{tekst_1}}",
+   "obraz": "{{zrzut_1}}",
+   "uklad": "zrzut"
+  },
+  {
+   "tekst": "{{tekst_2}}",
+   "obraz": "{{zrzut_2}}",
+   "uklad": "zrzut"
+  },
+  {
+   "tekst": "{{efekt}}",
+   "uklad": "srodek"
+  }
+ ]
+}

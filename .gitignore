@@ -22,3 +22,9 @@ credentials*
 *.db
 *.db-*
 !*.przyklad
+
+# zrzut strony z chwili błędu nagrania filmu (po zalogowaniu kontem demo): tylko w panelu, nie w repozytorium
+.film-blad.png
+
+# poprzednia wersja filmu posta (porównanie w panelu): tylko na dysku panelu
+.film-poprzedni.mp4

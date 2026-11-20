@@ -781,14 +781,18 @@ def fix_post(body):
 def film_change(body):
     """POST /api/film/zmien {project, date, params: {nazwa: wartość}} albo {…, slides: [{n, tekst, podpis}]}: zmiana
     treści filmu wprost w panelu (bez agenta). Zapis w scenariusz.json po tych samych kontrolach co nagranie
-    (film.apply_changes), potem nagranie od nowa (gdy nagrywarka jest wolna; inaczej czeka w kolejce)."""
+    (film.apply_changes), potem nagranie od nowa: od razu, gdy nagrywarka jest wolna; gdy nagrywa (ten albo inny
+    film), w kolejce nagrywarki zaraz po bieżącym nagraniu (Recorder.start). Panel bez nagrywarki: nagra Automat
+    nagrań na serwerze (wersja scenariusza jest nowsza niż film)."""
     pid, day = str(body.get("project") or ""), str(body.get("date") or "")
     folder = post_folder(pid, day)
     if not folder:
         return 404, "Nie ma posta na ten dzień."
-    params, slides = body.get("params"), body.get("slides")
-    if not params and not slides:
+    params, slides, music = body.get("params"), body.get("slides"), body.get("music", film.UNSET)
+    if not params and not slides and music is film.UNSET:
         return 400, "Podaj, co zmienić."
+    if music is not film.UNSET and not (music is False or (isinstance(music, str) and len(music) <= 100)):
+        return 400, "Podkład: nazwa pliku z listy marki, false (bez muzyki) albo pusty (na zmianę)."
     if params is not None and not (isinstance(params, dict) and len(params) <= 40
                                    and all(isinstance(k, str) and len(str(v)) <= 300 for k, v in params.items())):
         return 400, "Zmiany: najwyżej 40 pól po 300 znaków."
@@ -796,18 +800,25 @@ def film_change(body):
         return 400, "Zmiany plansz: lista najwyżej %d plansz." % film.MAX_CARDS
     try:
         with _write_lock:
-            info = film.apply_changes(folder, params=params or None, slides=slides or None)
+            info = film.apply_changes(folder, params=params or None, slides=slides or None, music=music)
     except film.ScenarioChanged:
         return 409, "Scenariusz filmu zmienił się w tym czasie (np. zapisał go agent). Odśwież i zmień jeszcze raz."
     except ValueError as e:
         return 400, "Nie zapisano: %s." % e
     except OSError as e:
         return 409, "Nie zapisano scenariusza (%s)." % e
-    code, msg, *rest = get_recorder().start(folder, str(body.get("title") or ""))
+    if info.get("missing"):              # zapisane, ale brakuje jeszcze pliku w innym polu obrazu: bez nagrania
+        with _films_lock:
+            _films_cache["at"] = 0.0
+        return 200, "", {"recording": False, "queued": False, "seconds": 0,
+                         "note": "Brakuje jeszcze pliku w polu „%s”; film nagra się po jego wgraniu." % info["missing"]}
+    code, msg, data = get_recorder().start(folder, str(body.get("title") or ""))
     with _films_lock:
         _films_cache["at"] = 0.0
-    recording = code == 202
-    return 200, "", {"recording": recording, "note": "" if recording else msg, "seconds": info.get("seconds", 0)}
+    recording = code == 202 and data.get("state") == "running"
+    note = "" if recording else data.get("note") or (msg if code >= 400 else "")
+    return 200, "", {"recording": recording, "queued": data.get("state") == "queued", "note": note,
+                     "seconds": info.get("seconds", 0)}
 
 
 STUDIO_KINDS = {"marka": "plansze i wygląd marki", "szablon": "nowy szablon filmu"}
@@ -844,6 +855,297 @@ def studio_request(body):
     except (ValueError, OSError, StopIteration) as e:
         return 409, "Nie dodano zadania: %s" % e
     return 200, "", {"title": title}
+
+
+STUDIO_TYPES = {"muzyka": {"audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/mp4": "m4a", "audio/x-m4a": "m4a",
+                           "audio/aac": "aac", "audio/wav": "wav", "audio/x-wav": "wav", "audio/wave": "wav",
+                           "audio/ogg": "ogg"},
+                "logo": {"image/png": "png", "image/jpeg": "jpg"}}
+
+
+def _studio_of(pid):
+    """(folder studio/ karty projektu, błąd). Studio nie może być dowiązaniem poza kartę projektu."""
+    _data, index = load_projects(resolve=False)
+    card = index.get(pid)
+    if not card:
+        return None, "Nie ma takiego projektu."
+    card = os.path.dirname(os.path.realpath(os.path.join(card, "KARTA.md")))
+    studio = os.path.join(card, film.STUDIO)
+    if os.path.lexists(studio) and not film._inside(studio, studio):
+        return None, "Folder studio/ wskazuje poza kartę projektu."
+    return studio, ""
+
+
+def _brand_edit(studio, change):
+    """Zmiana marka.json z panelu: odczyt, change(raw) (zwraca błąd albo ""), kontrola validate_brand i zapis
+    atomowy; pod _write_lock i z kontrolą czasu modyfikacji (zmiana agenta w międzyczasie nie zostanie nadpisana).
+    Brak pliku: marka zaczyna się od kolorów domyślnych (DEFAULT_BRAND), żeby wgrany podkład nie psuł filmów
+    projektu. (kod, błąd)."""
+    bpath = os.path.join(studio, film.BRAND)
+    with _write_lock:
+        try:
+            stamp = os.stat(bpath).st_mtime_ns if os.path.isfile(bpath) else None
+            raw = film._load_json(bpath) if stamp is not None else {
+                "nazwa": "", "kolory": dict(film.DEFAULT_BRAND["kolory"])}
+        except (OSError, ValueError) as e:
+            return 409, "marka.json jest uszkodzona (%s); popraw ją najpierw." % str(e)[:80]
+        if not isinstance(raw, dict):
+            return 409, "marka.json jest uszkodzona; popraw ją najpierw."
+        err = change(raw)
+        if err:
+            return 409, err
+        errors = film.validate_brand(raw)
+        if errors:
+            return 409, "Nie zapisano marki: %s." % errors[0]
+        now = os.stat(bpath).st_mtime_ns if os.path.isfile(bpath) else None
+        if now != stamp:
+            return 409, "marka.json zmieniła się w tym czasie (np. zapisał ją agent). Odśwież i spróbuj jeszcze raz."
+        tmp = bpath + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(raw, f, ensure_ascii=False, indent=1)
+            f.write("\n")
+        os.replace(tmp, bpath)
+    with _films_lock:
+        _films_cache["at"] = 0.0
+    return 200, ""
+
+
+def studio_add_file(pid, kind, ctype, data, licence, corner=None):
+    """Podkład albo logo wgrane w panelu: plik w studio/ projektu (kontrola treści jak przy nagraniu: media_error)
+    i wpis w marka.json: podkład dopisany do listy "muzyka" (filmy dostają podkłady na zmianę), logo w "logo"
+    (corner: True/False ustawia "logo_w_rogu", czyli logo w rogu przez cały film); licencja (skąd plik i na jakich
+    warunkach) dopisana do "zrodlo". Zmiana marki nagra od nowa filmy postów od dziś. (kod, błąd, dane)."""
+    if kind not in STUDIO_TYPES:
+        return 400, "Rodzaj: muzyka albo logo.", {}
+    studio, err = _studio_of(pid)
+    if not studio:
+        return (404 if err.startswith("Nie ma") else 409), err, {}
+    ext = STUDIO_TYPES[kind].get(ctype)
+    if not ext:
+        return 400, ("Podkład: plik mp3, m4a, wav albo ogg." if kind == "muzyka" else "Logo: plik png albo jpg."), {}
+    licence = re.sub(r"\s+", " ", str(licence or "")).strip()
+    if not 3 <= len(licence) <= 200:
+        return 400, "Napisz, skąd jest plik i na jakiej licencji (3–200 znaków).", {}
+    if kind == "muzyka":                 # limit podkładów przed zapisem pliku (bez osieroconych plików w studio/)
+        try:
+            cur = film._load_json(os.path.join(studio, film.BRAND)) if os.path.isfile(
+                os.path.join(studio, film.BRAND)) else {}
+        except (OSError, ValueError):
+            cur = {}
+        if isinstance(cur, dict) and len(film.music_list(cur.get("muzyka"))) >= film.MUSIC_MAX:
+            return 409, ("Marka ma już %d podkładów. Usuń któryś z listy podkładów w Studiu filmów "
+                         "(przycisk „Usuń z listy”)." % film.MUSIC_MAX), {}
+    os.makedirs(studio, exist_ok=True)
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    base = "muzyka-%s" % stamp if kind == "muzyka" else "logo-%s" % stamp
+    name = "%s.%s" % (base, ext)
+    n = 2
+    while os.path.lexists(os.path.join(studio, name)):      # dwa wgrania w tej samej sekundzie: osobne pliki
+        name, n = "%s-%d.%s" % (base, n, ext), n + 1
+    path = os.path.join(studio, name)
+    tmp = os.path.join(studio, ".%s.tmp" % name)
+    with open(tmp, "wb") as f:
+        f.write(data)
+    os.replace(tmp, path)
+    bad = film.media_error(path, "audio" if kind == "muzyka" else "image")
+    if bad:
+        os.remove(path)
+        return 400, "Plik odrzucony: %s." % bad, {}
+
+    def change(raw):
+        if kind == "muzyka":
+            songs = film.music_list(raw.get("muzyka"))
+            if len(songs) >= film.MUSIC_MAX:
+                return "Marka ma już %d podkładów; usuń któryś z listy." % film.MUSIC_MAX
+            raw["muzyka"] = songs + [name] if songs else name
+        else:
+            raw["logo"] = name
+            if corner is not None:
+                raw["logo_w_rogu"] = bool(corner)
+        raw["zrodlo"] = ("%s; %s %s: %s" % (str(raw.get("zrodlo") or "").rstrip("; "), kind, name,
+                                           licence)).lstrip("; ")
+        return ""
+    code, err = _brand_edit(studio, change)
+    if code != 200:
+        os.remove(path)
+        return code, err, {}
+    return 200, "", {"name": name}
+
+
+def studio_settings(body):
+    """POST /api/studio/ustaw {project, logo_w_rogu: true|false}: logo marki w rogu przez cały film (bez prośby do
+    agenta). Nagra od nowa filmy nadchodzących postów projektu."""
+    studio, err = _studio_of(str(body.get("project") or ""))
+    if not studio:
+        return 404, err
+    corner = body.get("logo_w_rogu")
+    if not isinstance(corner, bool):
+        return 400, "logo_w_rogu: true albo false."
+
+    def change(raw):
+        if corner and not raw.get("logo"):
+            return "Najpierw dodaj logo."
+        raw["logo_w_rogu"] = corner
+        return ""
+    return _brand_edit(studio, change)
+
+
+def studio_remove_music(body):
+    """POST /api/studio/usun {project, plik}: podkład znika z listy marki (plik zostaje w studio/, a w "zrodlo"
+    licencja). Nie usuwa podkładu, który wybrał scenariusz nadchodzącego posta."""
+    pid, name = str(body.get("project") or ""), str(body.get("plik") or "")
+    studio, err = _studio_of(pid)
+    if not studio:
+        return 404, err
+    if not film.AUDIO_RE.match(name):
+        return 400, "Podaj plik podkładu."
+    card = os.path.dirname(studio)
+    today = datetime.date.today().isoformat()
+    try:
+        posts = sorted(os.listdir(os.path.join(card, "posty")))
+    except OSError:
+        posts = []
+    for n in posts:
+        if n[:10] < today:
+            continue
+        try:
+            raw = film._load_json(os.path.join(card, "posty", n, film.SCENARIO))
+        except (OSError, ValueError):
+            continue
+        if isinstance(raw, dict) and raw.get("muzyka") == name:
+            return 409, "Ten podkład wybrał film posta z %s. Zmień tam podkład, potem usuń go z listy." % n[:10]
+
+    def change(raw):
+        songs = film.music_list(raw.get("muzyka"))
+        if name not in songs:
+            return "Tego podkładu nie ma na liście marki."
+        rest = [x for x in songs if x != name]
+        raw["muzyka"] = rest if len(rest) > 1 else (rest[0] if rest else "")
+        return ""
+    return _brand_edit(studio, change)
+
+
+def studio_music_file(pid, name):
+    """Plik podkładu z listy marki do odsłuchu w panelu: ścieżka albo None."""
+    studio, _err = _studio_of(pid)
+    if not studio or not film.AUDIO_RE.match(name or ""):
+        return None
+    brand, errors, _exists = film.load_brand(studio)
+    if errors or name not in film.music_list(brand.get("muzyka")):
+        return None
+    path = os.path.join(studio, name)
+    return path if os.path.isfile(path) and film._inside(path, studio) else None
+
+
+AUDIO_TYPES = {"mp3": "audio/mpeg", "m4a": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav", "ogg": "audio/ogg"}
+
+
+def post_add_image(pid, day, param, ctype, data):
+    """Zrzut ekranu albo zdjęcie do filmu posta (POST /api/post/obraz): plik w folderze posta i od razu w parametrze
+    szablonu, który jest obrazem planszy (np. „Zrzut 1”), potem nagranie od nowa. (kod, błąd, dane)."""
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień.", {}
+    ext = STUDIO_TYPES["logo"].get(ctype)
+    if not ext:
+        return 400, "Zrzut: plik png albo jpg.", {}
+    info = film.describe(folder)
+    images = ((info.get("fields") or {}).get("images") or []) if isinstance(info.get("fields"), dict) else []
+    if param not in images:
+        return 400, "Ten film nie ma takiego pola z obrazem.", {}
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    name = "%s-%s.%s" % (param.replace("_", "-"), stamp, ext)
+    n = 2
+    while os.path.lexists(os.path.join(folder, name)):
+        name, n = "%s-%s-%d.%s" % (param.replace("_", "-"), stamp, n, ext), n + 1
+    path = os.path.join(folder, name)
+    tmp = os.path.join(folder, ".%s.tmp" % name)
+    with open(tmp, "wb") as f:
+        f.write(data)
+    os.replace(tmp, path)
+    bad = film.media_error(path, "image")
+    if bad:
+        os.remove(path)
+        return 400, "Plik odrzucony: %s." % bad, {}
+    old = next((str(p.get("value") or "") for p in info.get("params") or [] if p.get("name") == param), "")
+    code, err, extra = _film_change3({"project": pid, "date": day, "params": {param: name}})
+    if code != 200:
+        os.remove(path)
+        return code, err, {}
+    _drop_old_image(folder, param, old, name)
+    return 200, "", dict(extra, name=name)
+
+
+def _drop_old_image(folder, param, old, new):
+    """Poprzedni zrzut tego pola wgrany w panelu (<pole>-RRRRMMDD-HHMMSS[-n].png|jpg w folderze posta) znika po
+    wgraniu nowego, jeśli scenariusz już go nie używa w innym polu (folder posta nie rośnie przy każdej poprawce)."""
+    if not old or old == new or not re.match(r"^%s-\d{8}-\d{6}(?:-\d+)?\.(?:png|jpe?g)$"
+                                              % re.escape(param.replace("_", "-")), old):
+        return
+    try:
+        raw = film._load_json(os.path.join(folder, film.SCENARIO))
+    except (OSError, ValueError):
+        return
+    used = (raw.get("parametry") or {}).values() if isinstance(raw, dict) and isinstance(raw.get("parametry"), dict) \
+        else ()
+    if old in [str(v) for v in used]:
+        return
+    path = os.path.join(folder, old)
+    if os.path.isfile(path) and not os.path.islink(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def _film_change3(body):
+    """film_change zawsze jako (kod, błąd, dane)."""
+    res = film_change(body)
+    return res[0], res[1], (res[2] if len(res) > 2 else {})
+
+
+FILM_TASK = re.compile(r"^(?:nagra[jć]|obejrzyj)\s+film", re.I)    # „Obejrzyj film A”: film nagrywa panel
+
+
+def film_link(task, tasks, index):
+    """Folder posta, którego film robi zadanie „Nagraj film …” (jedno źródło dla panelu: Dziś, Blokady, szuflada):
+    materiał: w posty/<post>/ albo publikacja z kanałem, która czeka na to zadanie (po:), z postem na swój dzień.
+    None: zadanie nie jest powiązane z postem."""
+    if not FILM_TASK.match(task.get("title") or "") or task.get("channel"):
+        return None
+    card = index.get(task.get("project"))
+    if not card:
+        return None
+    base = os.path.join(os.path.dirname(os.path.realpath(os.path.join(card, "KARTA.md"))), "posty")
+    for r in (task.get("detail") or {}).get("refs") or []:
+        m = re.match(r"^posty/([^/#]+)", str((r or {}).get("path") or "") if isinstance(r, dict) else str(r))
+        if m and os.path.isdir(os.path.join(base, m.group(1))):
+            return os.path.join(base, m.group(1))
+    title = (task.get("title") or "").lower()
+    for y in tasks:
+        if y is task or y.get("project") != task.get("project") or y.get("kind") != "publikacja" \
+                or not y.get("channel"):
+            continue
+        if any(str(a).strip() and title.startswith(str(a).strip().lower()) for a in y.get("after") or []):
+            folder = post_folder(task["project"], str(resolve_date(y.get("date") or "") or "")[:10])
+            if folder:
+                return folder
+    return None
+
+
+def film_links(tasks, index):
+    """Zadania „Nagraj film …” powiązane z postem: t["filmPost"] = {"day", "post", "scenario", "film", "state"}.
+    film: film nagrany i nie starszy niż scenariusz posta (właściciel tylko go ogląda); do tego czasu film robi panel."""
+    for t in tasks:
+        folder = film_link(t, tasks, index)
+        if not folder:
+            continue
+        fpath = publikacja.Publisher.film(folder)
+        sv = film.scenario_version(folder) if fpath else None
+        t["filmPost"] = {"day": post_day(folder), "post": os.path.basename(folder),
+                         "scenario": os.path.isfile(os.path.join(folder, film.SCENARIO)),
+                         "film": bool(fpath) and not (sv is not None and sv > os.path.getmtime(fpath)),
+                         "state": film.read_state(folder).get("state", "")}
 
 
 def film_refs(folder):
@@ -916,11 +1218,38 @@ def studio_summary(index):
                               "outro": card_of("plansza_koncowa") if not errors else None,
                               "sites": list(brand.get("strony") or []),
                               "music": bool(brand.get("muzyka")) and not errors,
+                              "musicCount": len(film.music_list(brand.get("muzyka"))) if not errors else 0,
+                              "songs": [{"name": m, "source": _song_source(brand.get("zrodlo"), m)}
+                                        for m in film.music_list(brand.get("muzyka"))] if not errors else [],
                               "logo": bool(brand.get("logo")) and not errors,
+                              "logoCorner": bool(brand.get("logo_w_rogu")) and bool(brand.get("logo")) and not errors,
                               "caption": {"color": (brand.get("napisy") or {}).get("kolor", ""),
-                                          "bg": (brand.get("napisy") or {}).get("tlo", "")} if not errors else None}
+                                          "bg": (brand.get("napisy") or {}).get("tlo", "")} if not errors else None,
+                              # kroje z marki (nazwy, bez grubości po „:”): podgląd plansz w panelu tymi krojami
+                              "fonts": {k: str(v).partition(":")[0] for k, v in (brand.get("czcionki") or {}).items()
+                                        if v} if not errors else {},
+                              "gaps": [str(x) for x in brand.get("braki") or []] if not errors else [],
+                              "pending": [{"card": film.CARD_NAMES.get(k, k), "what": str(v)}
+                                          for k, v in (brand.get("do_potwierdzenia") or {}).items()]
+                              if not errors else [],
+                              "hidden": len(brand.get("ukryj") or []) if not errors else 0,
+                              "warnings": _brand_warnings(studio)}
                     if exists else None}
     return out
+
+
+def _brand_warnings(studio):
+    """Ostrzeżenia marka.json (nieznane klucze: pomijane, filmy się nagrywają)."""
+    try:
+        return film.brand_warnings(film._load_json(os.path.join(studio, film.BRAND)))[:3]
+    except (OSError, ValueError):
+        return []
+
+
+def _song_source(zrodlo, name):
+    """Licencja podkładu z „zrodlo” marki (wpis panelu: „muzyka <plik>: <skąd i licencja>”) albo ""."""
+    m = re.search(r"muzyka %s: ([^;]{1,200})" % re.escape(name), str(zrodlo or ""))
+    return m.group(1).strip() if m else ""
 
 
 def auto_record():
@@ -937,31 +1266,73 @@ def auto_record():
     published = published_days(data["tasks"])
     with rec.lock:
         busy = set(os.path.realpath(b) for b in rec.busy)
+    now = datetime.datetime.now()
     for _pid, _n, pf in _post_dirs(index):
         st = film.read_state(pf)
-        if film_stale(st) and os.path.realpath(pf) not in busy:
+        if os.path.realpath(pf) in busy:
+            continue
+        # za długo albo osierocone na tym hoście (proces nie żyje, po FILM_GRACE s): od razu błąd, żeby kolejka
+        # nie stała do film.TIMEOUT + 60 s, a stan w panelu („przerwane”) zgadzał się z kolejką
+        err = FILM_STALE if film_stale(st, now) else FILM_ORPHAN if film_orphan(st, now) else ""
+        if err:
             keep = {"scenario": st["scenario"]} if "scenario" in st else {}
             try:
-                film.write_state(pf, state="error", error=FILM_STALE, **keep)
+                film.write_state(pf, state="error", error=err, **keep)
             except OSError:
                 pass
     for _pid, n, pf, mt in film_queue(index, published=published):
-        if not pokaz and film.describe(pf)["kind"] == "pokaz":     # pokaz czeka na maszynę z Playwright
-            continue
-        film.write_state(pf, state="queued", scenario=mt)
-        rec.start(pf, n)
+        try:
+            if not pokaz and film.describe(pf)["kind"] == "pokaz":     # pokaz czeka na maszynę z Playwright
+                continue
+            film.write_state(pf, state="queued", scenario=mt)
+            res = rec.start(pf, n)
+        except Exception as e:  # noqa: BLE001
+            res = (500, "%s: %s" % (type(e).__name__, e))
+        # start nie ruszył (np. wyścig z dostępnością nagrywarki): stan „queued” ze scenario tej wersji zniknąłby
+        # z panelu bez śladu; zapisujemy błąd (scenario zostaje: tej wersji Automat nie powtarza w kółko,
+        # „Nagraj ponownie” w panelu tak)
+        if res and res[0] >= 400:
+            st = film.read_state(pf)
+            if st.get("state") == "queued":
+                try:
+                    film.write_state(pf, state="error", error="nagranie nie ruszyło: %s" % str(res[1])[:200],
+                                     scenario=mt)
+                except OSError:
+                    pass
         with _films_lock:
             _films_cache["at"] = 0.0
         return
 
 
+def film_orphan(st, now=None):
+    """„running” tego hosta, którego nie nagrywa żywy proces (nie inny żywy PID; wołający sprawdza, że ten proces
+    go nie nagrywa), starsze niż FILM_GRACE s: nagranie przerwane."""
+    if st.get("state") != "running" or not st.get("host") or film_elsewhere(st):
+        return False          # bez host (stan sprzed tej wersji) nie wiadomo, czyj to proces: zostaje film_stale
+    at = _iso(st.get("at"))
+    now = now or datetime.datetime.now()
+    return at is not None and now - at > datetime.timedelta(seconds=FILM_GRACE)
+
+
+_auto_rec = {"error": "", "logged": None}
+
+
 def auto_record_loop():
+    """Automat nagrań co minutę. Błąd jest logowany (raz na zmianę treści) i widoczny w Teraz (activity.error),
+    a nie połykany po cichu."""
     while True:
         time.sleep(60)
         try:
             auto_record()
-        except Exception:  # noqa: BLE001
-            pass
+            _auto_rec["error"] = ""
+        except Exception as e:  # noqa: BLE001
+            msg = "%s: %s" % (type(e).__name__, e)
+            _auto_rec["error"] = msg[:200]
+            if msg != _auto_rec["logged"]:
+                _auto_rec["logged"] = msg
+                import traceback
+                print("auto_record:", file=sys.stderr)
+                traceback.print_exception(type(e), e, e.__traceback__)
 
 
 def get_publisher():
@@ -1003,6 +1374,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/post/popraw": fix_post,
           "/api/film/zmien": film_change,
           "/api/studio/popros": studio_request,
+          "/api/studio/ustaw": studio_settings,
+          "/api/studio/usun": studio_remove_music,
           "/api/publikacja/facebook": lambda b: get_publisher().connect_facebook(b),
           "/api/publikacja/linkedin": lambda b: get_publisher().connect_linkedin(b),
           "/api/publikacja/strona": lambda b: get_publisher().map_page(b),
@@ -1115,7 +1488,9 @@ CLOSED_FILE = os.path.join("teraz", "zamkniete.json")
 CLOSED_OLD = "zamkniete.json"         # dawne miejsce pliku; przenoszony przy pierwszym odczycie
 FILM_INTERRUPTED = "nagrywanie przerwane przy restarcie panelu"
 FILM_STALE = "nagrywanie nie skończyło się w limicie czasu (proces przerwany)"
-_films_cache = {"at": 0.0, "key": None, "value": []}
+FILM_ORPHAN = "nagrywanie przerwane: proces nagrywarki nie działa"
+FILM_GRACE = 60                       # s: świeże „running” bez procesu to zwykle chwila przed wpisaniem do busy
+_films_cache = {"at": 0.0, "key": None, "value": [], "error": None}
 _films_lock = threading.Lock()
 _closed_lock = threading.Lock()
 _closed_mem = {}                      # ścieżka pliku -> stan track_closed (readAt: ostatni odczyt, bez zapisu na dysk)
@@ -1232,11 +1607,26 @@ def film_queue(index, today=None, published=None):
     out = []
     published = published or set()
     for pid, n, pf in _post_dirs(index, (film.SCENARIO,)):
-        mt = film_pending(pf, today=today, published=(pid, n[:10]) in published)
+        try:
+            mt = film_pending(pf, today=today, published=(pid, n[:10]) in published)
+        except Exception as e:  # noqa: BLE001  (jeden uszkodzony post nie zatrzymuje kolejki pozostałych)
+            _film_skip(pf, e)
+            continue
         if mt is not None:
             out.append((pid, n, pf, mt))
     out.sort(key=lambda x: (x[3], x[2]))
     return out
+
+
+_film_bad = {}
+
+
+def _film_skip(pf, e):
+    """Błąd jednego folderu posta: zapamiętany (film_activity pokazuje go jako pozycję „film: błąd”), w logu raz."""
+    msg = "%s: %s" % (type(e).__name__, e)
+    if _film_bad.get(pf) != msg:
+        print("film (%s): %s" % (pf, msg), file=sys.stderr)
+    _film_bad[pf] = msg
 
 
 def _post_title(pf, n):
@@ -1252,33 +1642,62 @@ def film_activity(index, now=None, busy=(), queue=False, published=None):
     albo z błędem w ostatnich 24 h.
 
     „running” jest pokazywane, gdy nagrywa ten proces (busy) albo inny proces według host/pid w stanie
-    (film_elsewhere, najwyżej film.TIMEOUT od startu); bez tego to pozostałość po restarcie (mark_interrupted_films).
+    (film_elsewhere, najwyżej film.TIMEOUT od startu). Osierocone „running” tego hosta (proces nie żyje, starsze niż
+    FILM_GRACE s, z 24 h) pokazujemy jako błąd FILM_ORPHAN, żeby nie znikało bez śladu (stanu nie zmieniamy:
+    zrobi to auto_record albo mark_interrupted_films).
     queue=True (nagrywarka dostępna): posty ze scenariuszem do nagrania jako „queued”, z pozycją w kolejce
     (auto_record nagrywa je po jednym, od najstarszego scenariusza).
     [{"project", "post", "day", "title", "state", "at", "error", "pos"}], najnowsze najpierw."""
     now = now or datetime.datetime.now()
     busy = set(os.path.realpath(b) for b in busy or ())
     out, seen = [], set()
+
+    def bad(pid, n, pf, e):
+        """Jeden folder z błędem odczytu: pozycja „film: błąd” zamiast pustej listy dla wszystkich projektów."""
+        out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "", "title": n,
+                    "state": "error", "at": now.isoformat(timespec="seconds"),
+                    "error": ("nie odczytano stanu filmu (%s: %s)" % (type(e).__name__, e))[:200], "pos": 0})
+
     for pid, n, pf in _post_dirs(index):
-        st = film.read_state(pf)
-        state, at = st.get("state"), _iso(st.get("at"))
-        if state == "running":
-            if os.path.realpath(pf) not in busy and not (
-                    film_elsewhere(st) and at is not None and now - at <= datetime.timedelta(seconds=film.TIMEOUT + 60)):
+        try:
+            st = film.read_state(pf)
+            state, at = st.get("state"), _iso(st.get("at"))
+            err = str(st.get("error") or "")
+            if state == "running":
+                if os.path.realpath(pf) not in busy and not (
+                        film_elsewhere(st) and at is not None
+                        and now - at <= datetime.timedelta(seconds=film.TIMEOUT + 60)):
+                    if film_elsewhere(st) or at is None or not _recent(at, now) or \
+                            now - at <= datetime.timedelta(seconds=FILM_GRACE):
+                        continue
+                    state, err = "error", FILM_ORPHAN
+            elif state not in ("done", "error") or not _recent(at, now):
                 continue
-        elif state not in ("done", "error") or not _recent(at, now):
-            continue
-        seen.add(pf)
-        out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
+            item = {"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
                     "title": _post_title(pf, n), "state": state,
                     "at": at.isoformat(timespec="seconds") if at else "",
-                    "error": str(st.get("error") or "")[:200], "pos": 0})
+                    "error": err[:200], "pos": 0}
+        except Exception as e:  # noqa: BLE001
+            bad(pid, n, pf, e)
+            continue
+        seen.add(pf)
+        out.append(item)
     if queue:
         for i, (pid, n, pf, mt) in enumerate(film_queue(index, published=published)):
-            out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
-                        "title": _post_title(pf, n), "state": "queued",
-                        "at": datetime.datetime.fromtimestamp(mt).replace(microsecond=0).isoformat(),
-                        "error": "", "pos": i + 1})
+            try:
+                at = datetime.datetime.fromtimestamp(mt).replace(microsecond=0).isoformat()
+                out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "",
+                            "title": _post_title(pf, n), "state": "queued", "at": at, "error": "", "pos": i + 1})
+            except Exception as e:  # noqa: BLE001
+                bad(pid, n, pf, e)
+        # posty ze scenariuszem, których kolejka nie odczytała (film_pending rzucił wyjątek)
+        names = {pf: (pid, n) for pid, n, pf in _post_dirs(index, (film.SCENARIO,))}
+        for pf, msg in list(_film_bad.items()):
+            if pf in names and pf not in seen:
+                pid, n = names[pf]
+                out.append({"project": pid, "post": n, "day": n[:10] if POST_DAY.match(n[:10]) else "", "title": n,
+                            "state": "error", "at": now.isoformat(timespec="seconds"),
+                            "error": ("nie odczytano scenariusza (%s)" % msg)[:200], "pos": 0})
     out.sort(key=lambda f: f["at"], reverse=True)
     return out
 
@@ -1305,8 +1724,15 @@ def films_cached(index, busy=(), queue=False, published=None):
     key = (tuple(sorted(index.items())), tuple(sorted(busy)), bool(queue), tuple(sorted(published or ())))
     with _films_lock:
         if _films_cache["key"] != key or time.time() - _films_cache["at"] >= ACTIVITY_TTL:
-            _films_cache.update(value=film_activity(index, busy=busy, queue=queue, published=published), key=key,
-                                at=time.time())
+            _film_bad.clear()
+            try:
+                value, err = film_activity(index, busy=busy, queue=queue, published=published), None
+            except Exception as e:  # noqa: BLE001  (np. rejestr projektów zmienił się w trakcie skanu)
+                value, err = [], "%s: %s" % (type(e).__name__, e)
+            _films_cache.update(value=value, key=key, at=time.time(), error=err)
+        if _films_cache.get("error") is not None:
+            # nowy wyjątek z zapamiętanego tekstu (ponowne podnoszenie tego samego obiektu wydłuża jego ślad)
+            raise RuntimeError(_films_cache["error"])
         return _films_cache["value"]
 
 
@@ -1355,7 +1781,11 @@ def track_closed(tasks, prev, now=None, when=None):
 def closed_recent(tasks, runs_dir, now=None, when=None):
     """track_closed ze stanem w pamięci procesu i w <katalog uruchomień>/teraz/zamkniete.json; zwraca zamknięte
     w ostatnich 24 h. readAt (dolna granica czasu zamknięcia) to ostatni odczyt w tym procesie; plik zapisuje się
-    tylko wtedy, gdy zmienił się zbiór otwartych albo zamkniętych (po restarcie readAt to ostatni zapis pliku)."""
+    tylko wtedy, gdy zmienił się zbiór otwartych albo zamkniętych (po restarcie readAt to ostatni zapis pliku).
+    Zapis z wnętrza GET /api/data jest bezpieczny w jednym procesie (budowę szereguje _data_build_lock, najwyżej raz
+    na DATA_TTL). Dwa panele na jednym katalogu uruchomień (np. Mac i serwer ze wspólnym szkice/) nie mają blokady
+    między procesami: ostatni zapis wygrywa, więc każdy host powinien mieć własny PANEL_RUNS_DIR. Lista nie jest
+    pełnym dziennikiem: zamknięcie ze zmianą tytułu w jednym zapisie nie jest wykrywane."""
     now = now or datetime.datetime.now()
     path = os.path.join(runs_dir, CLOSED_FILE)
     with _closed_lock:
@@ -1441,34 +1871,63 @@ def note_closed(project, file, title, runs_dir=None, now=None):
             pass
 
 
+_activity_log = {"last": None}
+
+
 def activity(out, index, manager):
     """Blok "activity" w /api/data: to, czego panel nie ma w innych polach (uruchomienia w toku, publikacje
     i Automat są). "runs": zakończone uruchomienia z 24 h, których nie ma w agents.runs (tam tylko ostatnie 40).
     Kolejka nagrań jest liczona zawsze (szkice/ mogą być wspólne z serwerem); "recorder": czy ten host ma nagrywarkę
-    (bez niej panel pisze „nagra serwer”). Błąd w tym bloku nie wywraca /api/data: puste listy i "error"."""
-    empty = {"films": [], "chats": [], "closed": [], "runs": [], "recorder": False}
+    (bez niej panel pisze „nagra serwer”). Każde źródło osobno: błąd w jednym (np. skan filmów) zostawia pozostałe,
+    "error" nazywa źródła z błędem. Ślad błędu w logu raz na zmianę treści (panel pyta co 3 s)."""
+    empty = {"films": [], "chats": [], "chatsDone": [], "closed": [], "runs": [], "recorder": False}
     if out["projectsSource"] != "registry":
         return empty
-    try:
-        recent = manager.recent_runs(RECENT_HOURS)
-        shown = set(r.get("id") for r in ((out.get("agents") or {}).get("runs") or []) if isinstance(r, dict))
-        rec = get_recorder()
+    res, errs = dict(empty), []
+
+    def part(label, fn, default=None):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            errs.append((label, e))
+            return default
+
+    recent = part("uruchomienia", lambda: manager.recent_runs(RECENT_HOURS), [])
+    rec = part("nagrywarka", get_recorder)
+    busy = set()
+    if rec is not None:
         with rec.lock:
             busy = set(rec.busy)
-        return {"films": films_cached(index, busy, queue=True, published=published_days(out["tasks"])),
-                "chats": manager.chat_pending(),
-                "closed": closed_recent(out["tasks"], manager.runs_dir, when=close_times(index, recent)),
-                "runs": [r for r in recent if r["id"] not in shown],
-                "recorder": bool(rec.available())}
-    except Exception as e:  # noqa: BLE001
-        import traceback
-        traceback.print_exc()
-        return dict(empty, error="Nie odczytano aktywności (%s)." % type(e).__name__)
+        res["recorder"] = bool(part("nagrywarka", rec.available, False))
+    res["films"] = part("filmy", lambda: films_cached(index, busy, queue=True,
+                                                      published=published_days(out["tasks"])), [])
+    res["chats"] = part("rozmowy", manager.chat_pending, [])
+    done = getattr(manager, "chat_recent", None)
+    res["chatsDone"] = part("rozmowy", lambda: done(RECENT_HOURS), []) if done else []
+    res["closed"] = part("zamknięte zadania", lambda: closed_recent(out["tasks"], manager.runs_dir,
+                                                                    when=close_times(index, recent)), [])
+    shown = set(r.get("id") for r in ((out.get("agents") or {}).get("runs") or []) if isinstance(r, dict))
+    res["runs"] = [r for r in recent if isinstance(r, dict) and r.get("id") not in shown]
+    sig = "; ".join("%s: %s %s" % (lab, type(e).__name__, e) for lab, e in errs) or None
+    if sig != _activity_log["last"]:
+        _activity_log["last"] = sig
+        if errs:
+            import traceback
+            for lab, e in errs:
+                print("activity (%s):" % lab, file=sys.stderr)
+                traceback.print_exception(type(e), e, e.__traceback__)
+    if errs:
+        res["error"] = "Nie odczytano: %s (%s)." % (", ".join(lab for lab, _ in errs),
+                                                    ", ".join(sorted(set(type(e).__name__ for _, e in errs))))
+    if _auto_rec["error"]:
+        res["error"] = ((res.get("error") or "") + " Automat nagrań: błąd (%s)." % _auto_rec["error"]).strip()
+    return res
 
 
 DATA_TTL = 1.5                        # s: /api/data z pamięci (panel pyta co 3 s z kilku urządzeń, gdy coś trwa)
 _data_lock = threading.Lock()
-_data_cache = {"at": 0.0, "body": None}
+_data_cache = {"at": 0.0, "body": None, "gen": 0}
+_data_build_lock = threading.Lock()
 
 
 def data_cached(ttl=None):
@@ -1478,15 +1937,66 @@ def data_cached(ttl=None):
     with _data_lock:
         if _data_cache["body"] is not None and time.time() - _data_cache["at"] < ttl:
             return _data_cache["body"]
-    body = json.dumps(build_data(), ensure_ascii=False)
-    with _data_lock:
-        _data_cache.update(at=time.time(), body=body)
+    # kilka urządzeń naraz po wygaśnięciu: buduje jedno żądanie, reszta czeka i bierze jego wynik
+    with _data_build_lock:
+        with _data_lock:
+            if _data_cache["body"] is not None and time.time() - _data_cache["at"] < ttl:
+                return _data_cache["body"]
+            gen = _data_cache.get("gen", 0)
+        try:
+            body = json.dumps(build_data(), ensure_ascii=False)
+        except Exception as e:  # noqa: BLE001
+            # błąd budowy: ostatnia dobra odpowiedź (przez ttl, żeby czekające żądania nie budowały od nowa po kolei)
+            # ze znacznikiem "stale" (panel ostrzega, że dane są sprzed błędu); bez niej błąd idzie dalej (500)
+            log_once("data", "build_data", e)
+            with _data_lock:
+                last = _data_cache.get("last")
+                if last is None:
+                    raise
+                body = stale_body(last, e)
+                _data_cache.update(at=time.time(), body=body)
+            return body
+        with _data_lock:
+            if _data_cache.get("gen", 0) == gen:          # zapis w trakcie budowy: nie zapamiętuj starszego stanu
+                _data_cache.update(at=time.time(), body=body)
+            _data_cache["last"] = body
     return body
+
+
+def stale_body(last, e):
+    """Ostatnia dobra odpowiedź ze znacznikiem "stale" {"since": generatedAt tej odpowiedzi, "error": rodzaj błędu}
+    i zdaniem w activity.error (Teraz)."""
+    try:
+        d = json.loads(last)
+    except ValueError:
+        return last
+    since = d.get("generatedAt") or ""
+    d["stale"] = {"since": since, "error": type(e).__name__}
+    a = d.get("activity") if isinstance(d.get("activity"), dict) else {}
+    hm = since[11:16] if len(since) >= 16 else ""
+    a["error"] = "Dane sprzed %s: błąd odczytu na serwerze (%s)." % (hm or "błędu", type(e).__name__)
+    d["activity"] = a
+    return json.dumps(d, ensure_ascii=False)
+
+
+_log_last = {}
+
+
+def log_once(key, label, e):
+    """Ślad wyjątku w logu raz na zmianę treści (panel pyta co 3 s z kilku urządzeń: stały błąd nie zalewa stderr)."""
+    sig = (label, type(e).__name__, str(e))
+    if _log_last.get(key) == sig:
+        return False
+    _log_last[key] = sig
+    import traceback
+    print("%s:" % label, file=sys.stderr)
+    traceback.print_exception(type(e), e, e.__traceback__)
+    return True
 
 
 def data_invalidate():
     with _data_lock:
-        _data_cache.update(at=0.0, body=None)
+        _data_cache.update(at=0.0, body=None, gen=_data_cache.get("gen", 0) + 1)
 
 
 def build_data():
@@ -1525,12 +2035,33 @@ def build_data():
     out["server"] = server_state()
     out["costs"] = COSTS.state()
     out["panelVersion"] = panel_version()
-    out["publish"] = get_publisher().status()
-    out["film"] = {"available": get_recorder().available(), "account": film.account_email(),
-                   "explainer": get_recorder().available("objasnienie")}
-    out["studio"] = studio_summary(index) if out["projectsSource"] == "registry" else {}
-    out["activity"] = activity(out, index, manager)
-    add_checks(out["tasks"], index, out["server"])
+    # części poza rdzeniem (zadania, projekty): błąd w jednej nie daje 500 na całym /api/data; nazwa części trafia
+    # do activity.error (Teraz: „Nie odczytano: …”), ślad do logu
+    errs = []
+
+    def part(label, fn, default):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            errs.append(label)
+            log_once("build_data:" + label, "build_data (%s)" % label, e)
+            return default
+
+    out["publish"] = part("publikacje", lambda: get_publisher().status(), None)
+    out["film"] = part("nagrywarka", lambda: {"available": get_recorder().available(), "account": film.account_email(),
+                                              "explainer": get_recorder().available("objasnienie")},
+                       {"available": False, "account": "", "explainer": False})
+    out["studio"] = part("studio", lambda: studio_summary(index), {}) if out["projectsSource"] == "registry" else {}
+    if out["projectsSource"] == "registry":
+        part("filmy zadań", lambda: film_links(out["tasks"], index) or True, False)
+    out["activity"] = part("aktywność", lambda: activity(out, index, manager),
+                           {"films": [], "chats": [], "chatsDone": [], "closed": [], "runs": [], "recorder": False})
+    if part("kontrole zadań", lambda: add_checks(out["tasks"], index, out["server"]) or True, False) is False:
+        for t in out["tasks"]:
+            t.setdefault("check", None)
+    if errs:
+        a = out["activity"]
+        a["error"] = ("Nie odczytano: %s. " % ", ".join(errs) + (a.get("error") or "")).strip()
     return out
 
 
@@ -1870,14 +2401,24 @@ def post_info(folder):
     out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
     out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
     fpath = publikacja.Publisher.film(folder)
+    # at: zmiana pliku (ctime) do odświeżenia odtwarzacza; czas modyfikacji filmu to wersja scenariusza (Recorder)
     out["film"] = {"name": os.path.basename(fpath), "size": os.path.getsize(fpath),
-                   "at": int(os.path.getmtime(fpath))} if fpath else None
+                   "at": int(os.stat(fpath).st_ctime)} if fpath else None
     out["scenario"] = os.path.isfile(os.path.join(folder, film.SCENARIO))
     out["filmInfo"] = film.describe(folder) if out["scenario"] else None     # rodzaj filmu, szablon, błąd scenariusza
     st = film.read_state(folder)
-    out["rec"] = {"state": st.get("state", ""), "error": st.get("error", ""), "at": st.get("at", "")}
+    out["rec"] = {"state": st.get("state", ""), "error": st.get("error", ""), "at": st.get("at", ""),
+                  "hint": film.record_hint(st.get("error", "")) if st.get("state") == "error" else "",
+                  "shot": st.get("state") == "error" and os.path.isfile(os.path.join(folder, film.ERROR_SHOT))}
     out["filmManual"] = bool(fpath) and os.path.exists(os.path.join(folder, film.MANUAL))
     out["filmStale"] = bool(out["scenario"] and fpath) and studio_stale(folder, fpath)   # starszy niż szablon/marka
+    # film starszy niż treść posta (scenariusz albo obrazy posta zmienione po nagraniu): nagra się od nowa
+    sv = film.scenario_version(folder) if out["scenario"] and fpath else None
+    out["filmOld"] = bool(sv is not None and sv > os.path.getmtime(fpath) and not out["filmManual"])
+    out["srt"] = bool(fpath) and os.path.isfile(os.path.join(folder, film.SRT))
+    out["film4x5"] = bool(fpath) and os.path.isfile(os.path.join(folder, film.FEED))
+    prev = os.path.join(folder, film.PREVIOUS)      # poprzednia wersja filmu (porównanie w panelu)
+    out["filmPrev"] = {"at": int(os.stat(prev).st_ctime)} if fpath and os.path.isfile(prev) else None
     return out
 
 
@@ -2106,7 +2647,16 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
-        if path in ("/api/post", "/api/post/grafika", "/api/post/film"):
+        if path == "/api/studio/podklad":            # odsłuch podkładu z listy marki
+            qs = parse_qs(url.query)
+            fpath = studio_music_file((qs.get("project") or [""])[0], (qs.get("plik") or [""])[0])
+            if not fpath:
+                return self._send(404, "Brak podkładu", "text/plain; charset=utf-8")
+            with open(fpath, "rb") as f:
+                return self._send(200, f.read(), AUDIO_TYPES.get(os.path.splitext(fpath)[1][1:].lower(),
+                                                                 "application/octet-stream"),
+                                  [("Cache-Control", "no-store")])
+        if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             if not folder:
@@ -2115,8 +2665,26 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/post":
                 return self._send(200, json.dumps(dict(post_info(folder), ok=True), ensure_ascii=False),
                                   "application/json; charset=utf-8")
+            if path in ("/api/post/bladfilmu", "/api/post/napisy"):   # zrzut z błędu nagrania, napisy .srt filmu
+                name = film.ERROR_SHOT if path == "/api/post/bladfilmu" else film.SRT
+                fpath = os.path.join(folder, name)
+                if not os.path.isfile(fpath):
+                    return self._send(404, "Brak pliku", "text/plain; charset=utf-8")
+                with open(fpath, "rb") as f:
+                    return self._send(200, f.read(), "image/png" if name.endswith(".png") else
+                                      "application/x-subrip; charset=utf-8",
+                                      [("Content-Disposition", ('inline; filename="blad-filmu.png"'
+                                                                if name.endswith(".png") else
+                                                                'attachment; filename="%s.srt"'
+                                                                % os.path.basename(folder))),
+                                       ("Cache-Control", "no-store")])
             if path == "/api/post/film":                 # plik filmu do udostępnienia z telefonu
                 fpath = publikacja.Publisher.film(folder)
+                if (q.get("wariant") or [""])[0] == "4x5":   # wersja 4:5 do feedu (film.py: FEED)
+                    fpath = os.path.join(folder, film.FEED) if os.path.isfile(os.path.join(folder, film.FEED)) else None
+                elif (q.get("wariant") or [""])[0] == "poprzedni":   # poprzednia wersja (film.py: PREVIOUS)
+                    prev = os.path.join(folder, film.PREVIOUS)
+                    fpath = prev if os.path.isfile(prev) and not os.path.islink(prev) else None
                 if not fpath:
                     return self._send(404, "Brak filmu", "text/plain; charset=utf-8")
                 ctype, size = "video/quicktime" if fpath.endswith(".mov") else "video/mp4", os.path.getsize(fpath)
@@ -2164,6 +2732,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(202, json.dumps({"connecting": True}), "application/json; charset=utf-8")
         if path == "/api/post/film":
             return self._film_upload(urlparse(self.path).query)
+        if path == "/api/studio/plik":
+            return self._studio_upload(urlparse(self.path).query)
+        if path == "/api/post/obraz":
+            return self._post_image_upload(urlparse(self.path).query)
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/film/zmien") else 4096)
             if body is None:
@@ -2181,6 +2753,59 @@ class Handler(BaseHTTPRequestHandler):
                 answer.update(result[2])            # np. id nowego uruchomienia
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
         return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+
+    def _raw_body(self, limit):
+        """(bajty, błąd): surowe ciało żądania do limit bajtów (wgranie pliku)."""
+        size = 0
+        with contextlib.suppress(ValueError):
+            size = int(self.headers.get("Content-Length") or 0)
+        if not 0 < size <= limit:
+            self.close_connection = True
+            return None, "Plik do %d MB." % (limit // (1 << 20))
+        data, left = [], size
+        while left > 0:
+            chunk = self.rfile.read(min(left, 1 << 20))
+            if not chunk:
+                break
+            data.append(chunk)
+            left -= len(chunk)
+        if left:
+            return None, "Wysyłka przerwana."
+        return b"".join(data), ""
+
+    def _studio_upload(self, query):
+        """POST /api/studio/plik?project=&rodzaj=muzyka|logo&licencja=[&rog=1|0]: surowy plik podkładu (mp3, m4a,
+        wav, ogg) albo logo (png, jpg) do studio/ projektu i wpis w marka.json (studio_add_file; rog: logo w rogu
+        przez cały film)."""
+        q = parse_qs(query)
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        limit = film.AUDIO_MAX if (q.get("rodzaj") or [""])[0] == "muzyka" else film.IMAGE_MAX
+        data, err = self._raw_body(limit)
+        if data is None:
+            return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        rog = (q.get("rog") or [""])[0]
+        code, err, extra = studio_add_file((q.get("project") or [""])[0], (q.get("rodzaj") or [""])[0], ctype,
+                                           data, (q.get("licencja") or [""])[0],
+                                           corner={"1": True, "0": False}.get(rog))
+        data_invalidate()
+        return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                          "application/json; charset=utf-8")
+
+    def _post_image_upload(self, query):
+        """POST /api/post/obraz?project=&date=&param=: zrzut ekranu (png, jpg) do folderu posta, wpisany w pole
+        obrazu szablonu filmu (post_add_image)."""
+        q = parse_qs(query)
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        data, err = self._raw_body(film.IMAGE_MAX)
+        if data is None:
+            return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        code, err, extra = post_add_image((q.get("project") or [""])[0], (q.get("date") or [""])[0],
+                                          (q.get("param") or [""])[0], ctype, data)
+        data_invalidate()
+        return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                          "application/json; charset=utf-8")
 
     def _film_upload(self, query):
         """POST /api/post/film?project=&date=: surowy plik MP4 albo MOV (najwyżej 300 MB) jako film.mp4|mov posta."""
@@ -2210,7 +2835,7 @@ class Handler(BaseHTTPRequestHandler):
             os.remove(tmp)
             return self._send(400, json.dumps({"ok": False, "error": "Wysyłka przerwana."}, ensure_ascii=False),
                               "application/json; charset=utf-8")
-        for name in publikacja.FILM_NAMES:
+        for name in publikacja.FILM_NAMES + (film.FEED, film.SRT):   # wersja 4:5 i napisy były z poprzedniego filmu
             with contextlib.suppress(OSError):
                 os.remove(os.path.join(folder, name))
         os.replace(tmp, os.path.join(folder, "film" + ext))

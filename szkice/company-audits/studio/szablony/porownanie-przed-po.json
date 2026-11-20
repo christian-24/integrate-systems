@@ -4,7 +4,7 @@
  "dla_wlasciciela": "Pytanie do widza, potem jak jest dziś i jak jest po integracji. Do postów, które pokazują zmianę w codziennej pracy zespołu.",
  "typ": "objasnienie",
  "parametry": {
-  "pytanie": "Ile razy dziennie *przepisujesz* zamówienie?",
+  "pytanie": "Ile razy dziennie wpisujesz *zamówienie*?",
   "przed": "*Dziś*: Allegro, potem ERP, potem magazyn",
   "podpis_przed": "Trzy razy te same dane",
   "po": "*Po integracji*: zamówienie samo trafia do ERP",
@@ -18,7 +18,7 @@
  ],
  "limity": {
   "pytanie": {
-   "max": 60
+   "max": 43
   }
  },
  "etykiety": {

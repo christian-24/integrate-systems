@@ -4,7 +4,7 @@
  "dla_wlasciciela": "Nagranie strony opisarnia.pl: widz widzi, jak ktoś wpisuje mebel, a po kilku sekundach dostaje opis po polsku i po niemiecku. Do postów o tym, jak działa generator.",
  "typ": "pokaz",
  "parametry": {
-  "hak": "Opis mebla na Allegro i do Niemiec w 10 sekund",
+  "hak": "Opis mebla na Allegro i do Niemiec w 10 s",
   "typ_mebla": "Komoda Nordic, 4 szuflady",
   "kategoria": "komoda",
   "szerokosc": "80",
@@ -27,7 +27,7 @@
  ],
  "limity": {
   "hak": {
-   "max": 60
+   "max": 43
   },
   "typ_mebla": {
    "max": 60

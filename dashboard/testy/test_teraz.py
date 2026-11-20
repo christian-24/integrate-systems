@@ -179,8 +179,11 @@ class Filmy(Baza):
         _, index = server.load_projects(resolve=False)
         busy = {os.path.join(self.folder, "posty", "2026-11-20-start")}
         got = {f["post"]: f for f in server.film_activity(index, now, busy)}
-        # running tylko z busy (nagrywa ten proces); queued, running bez busy i bez czasu: pominięte
-        self.assertEqual(sorted(got), ["2026-11-17-blad", "2026-11-18-wczoraj", "2026-11-20-start"])
+        # running z busy (nagrywa ten proces); queued i running bez czasu: pominięte; running bez procesu z 24 h:
+        # błąd „przerwane” (runda 1: wcześniej znikało bez śladu)
+        self.assertEqual(sorted(got), ["2026-11-09-zawieszony", "2026-11-17-blad", "2026-11-18-wczoraj", "2026-11-20-start"])
+        self.assertEqual((got["2026-11-09-zawieszony"]["state"], got["2026-11-09-zawieszony"]["error"]),
+                         ("error", server.FILM_ORPHAN))
         start = got["2026-11-20-start"]
         self.assertEqual((start["title"], start["state"], start["day"], start["project"]),
                          ("Start sklepu", "running", "2026-11-20", "projekt-testowy"))
@@ -205,12 +208,16 @@ class Filmy(Baza):
         now = datetime.datetime.now().replace(microsecond=0)
         at = (now - datetime.timedelta(minutes=1)).isoformat()
         other = self.post("2026-11-20-inny-host", {"state": "running", "at": at, "host": "inny-komputer", "pid": 1})
-        dead = self.post("2026-11-21-martwy", {"state": "running", "at": at, "host": film.HOST, "pid": 999999})
+        dead = self.post("2026-11-21-martwy", {"state": "running", "host": film.HOST, "pid": 999999,
+                                               "at": (now - datetime.timedelta(minutes=3)).isoformat()})
+        fresh = self.post("2026-11-23-swiezy", {"state": "running", "at": now.isoformat(), "host": film.HOST, "pid": 999999})
         old = self.post("2026-11-22-stary", {"state": "running", "at": "2026-01-01T10:00:00", "host": "inny-komputer"})
         _, index = server.load_projects(resolve=False)
         got = {f["post"]: f["state"] for f in server.film_activity(index, now)}
-        self.assertEqual(got, {"2026-11-20-inny-host": "running"})          # stare i martwy proces: nie
-        self.assertEqual(server.mark_interrupted_films(index), 1)           # tylko własny host i martwy proces
+        # inny host: trwa; martwy proces tego hosta: błąd; świeży (poniżej FILM_GRACE) i stary z innego hosta: pominięte
+        self.assertEqual(got, {"2026-11-20-inny-host": "running", "2026-11-21-martwy": "error"})
+        self.assertEqual(server.mark_interrupted_films(index), 2)           # tylko własny host i martwy proces
+        self.assertEqual(film.read_state(fresh)["state"], "error")
         self.assertEqual(film.read_state(other)["state"], "running")
         self.assertEqual(film.read_state(old)["state"], "running")
         self.assertEqual(film.read_state(dead)["state"], "error")
@@ -264,14 +271,14 @@ class Filmy(Baza):
     def test_tryb_przykladowy_puste_bez_zapisu(self):
         data = {"projectsSource": "sample", "tasks": [task("A")]}
         got = server.activity(data, {}, self.manager)
-        self.assertEqual(got, {"films": [], "chats": [], "closed": [], "runs": [], "recorder": False})
+        self.assertEqual(got, {"films": [], "chats": [], "chatsDone": [], "closed": [], "runs": [], "recorder": False})
         self.assertFalse(os.path.exists(os.path.join(self.manager.runs_dir, server.CLOSED_FILE)))
 
     def test_activity_w_danych(self):
         self.post("2026-11-20-start", {"state": "done", "at": datetime.datetime.now().isoformat(timespec="seconds")})
         server._films_cache.update(at=0.0, key=None, value=[])
         data = server.build_data()
-        self.assertEqual(sorted(data["activity"]), ["chats", "closed", "films", "recorder", "runs"])
+        self.assertEqual(sorted(data["activity"]), ["chats", "chatsDone", "closed", "films", "recorder", "runs"])
         self.assertEqual([f["post"] for f in data["activity"]["films"]], ["2026-11-20-start"])
         self.assertEqual(data["activity"]["chats"], [])
 
@@ -382,9 +389,39 @@ class Odpornosc(Baza):
         finally:
             server.closed_recent = orig
         act = data["activity"]
-        self.assertEqual((act["films"], act["chats"], act["closed"], act["runs"]), ([], [], [], []))
+        self.assertEqual(act["closed"], [])
         self.assertIn("RuntimeError", act["error"])
+        self.assertIn("zamknięte zadania", act["error"])
         self.assertTrue(data["tasks"])
+
+    def test_blad_jednego_zrodla_zostawia_inne(self):
+        # runda 1: błąd skanu filmów nie wymazuje rozmów, zamknięć i uruchomień; ślad w logu raz na zmianę błędu
+        orig_f, orig_c = server.film_activity, self.manager.chat_pending
+        calls = []
+
+        def boom(*a, **kw):
+            calls.append(1)
+            raise OSError("zniknął")
+        server.film_activity = boom
+        self.manager.chat_pending = lambda: [{"taskId": "x", "project": "p", "file": "Z.md", "title": "Rozmowa", "since": ""}]
+        server._films_cache.update(at=0.0, key=None)
+        server._activity_log["last"] = None
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                _, index = server.load_projects(resolve=False)
+                out = {"projectsSource": "registry", "tasks": [], "agents": {}}
+                a1 = server.activity(out, index, self.manager)
+                a2 = server.activity(out, index, self.manager)
+        finally:
+            server.film_activity, self.manager.chat_pending = orig_f, orig_c
+            server._films_cache.update(at=0.0, key=None, error=None)
+        self.assertEqual(a1["films"], [])
+        self.assertEqual(a1["chats"][0]["title"], "Rozmowa")
+        self.assertIn("filmy", a1["error"])
+        self.assertEqual(a2["error"], a1["error"])
+        self.assertEqual(len(calls), 1)                       # błąd zapamiętany na ACTIVITY_TTL: bez ponownego skanu
+        self.assertEqual(err.getvalue().count("activity (filmy)"), 1)
 
     def test_zamkniecie_z_panelu_dokladny_czas(self):
         runs = os.path.join(self.tmp, "u-set")

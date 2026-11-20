@@ -150,9 +150,12 @@ class Studio(unittest.TestCase):
         bad["plansza_startowa"] = {"podtytul": "bez tytułu", "czas": 0}
         bad["plansza_koncowa"]["tlo"] = "red"
         errors = film.validate_brand(bad)
-        for part in ("kolory.tlo", "kolory.inny", "napisy.rozmiar", "napisy.krycie", "plansza_startowa.tytul",
+        for part in ("kolory.tlo", "napisy.rozmiar", "napisy.krycie", "plansza_startowa.tytul",
                      "plansza_startowa.czas", "plansza_koncowa.tlo"):
             self.assertTrue(any(e.startswith(part) for e in errors), (part, errors))
+        # nieznany kolor nie blokuje filmów projektu: ostrzeżenie (runda 3 recenzji)
+        self.assertFalse(any("kolory.inny" in e for e in errors))
+        self.assertIn("marka.json: nieznany klucz „kolory.inny” (pomijany)", film.brand_warnings(bad))
         self.assertTrue(film.validate_brand([]))
         self.assertIn("kolory.akcent: brak", film.validate_brand({"kolory": {"tlo": "#fff", "tekst": "#000"}}))
 
@@ -292,7 +295,9 @@ class Studio(unittest.TestCase):
         for bad in ("---", "/usr/share/fonts/a,b.ttf", "Inter:Heavy", "../x", "a" * 50):
             self.assertTrue(film.validate_brand(dict(BRAND, czcionki={"tytul": bad})), bad)
         self.assertEqual(film.font_spec("---", "/x.ttf"), ("/x.ttf", 0.0))       # pusty klucz: nie pierwsza lepsza
-        self.assertTrue(film.validate_brand(dict(BRAND, inne=1)))                     # literówka w kluczu marki
+        self.assertEqual(film.validate_brand(dict(BRAND, inne=1)), [])                # literówka w kluczu marki:
+        self.assertEqual(film.brand_warnings(dict(BRAND, inne=1)),                    # ostrzeżenie, nie błąd
+                         ["marka.json: nieznany klucz „inne” (pomijany)"])
         self.assertTrue(film.validate_brand(dict(BRAND, strony=["https://x.pl"])))
         self.assertTrue(film.validate_brand(dict(BRAND, muzyka="../a.mp3")))
         self.write("studio/marka.json", dict(BRAND, muzyka="podklad.mp3"))
@@ -339,7 +344,8 @@ class Studio(unittest.TestCase):
         st = film.caption_style(film.DEFAULT_BRAND)
         filters = film.caption_filters(texts, [(0, "Podpis " * 9)], 3, st)
         boxes = [x for x in filters if x.startswith("drawbox")]
-        self.assertEqual(len(boxes), 1)                                     # jedno pudełko na cały napis
+        # jedno pudełko na cały napis (wejście w krokach krycia: te same wymiary, kolejne odcinki czasu)
+        self.assertEqual(len({x.split(":color=")[0] for x in boxes}), 1)
         y, h = [int(v) for v in boxes[0].split(":y=")[1].split(":w=")[0:1] + [boxes[0].split(":h=")[1].split(":")[0]]]
         self.assertLessEqual(y + h, film.SIZE[1] - film.SAFE_BOTTOM)          # nad strefą interfejsu Reels
         self.assertTrue(all("max_glyph_a" in x for x in filters if x.startswith("drawtext")))  # linia bazowa
@@ -349,7 +355,7 @@ class Studio(unittest.TestCase):
         self.assertEqual(film.card_time({"tekst": "Krótko", "podpis": "Pod"})[0], film.CARD_DEFAULT)
         sec, need = film.card_time({"tekst": "x" * 47, "podpis": "y" * 45, "czas": 3}, hook=True)   # 1. plansza: hak
         self.assertGreaterEqual(sec, film.HOOK_BASE + 92 / 15 - 0.01)
-        self.assertGreaterEqual(film.card_time({"tekst": "x" * 47, "podpis": "y" * 45})[0], 1.2 + 92 / 15 - 0.01)
+        self.assertGreaterEqual(film.card_time({"tekst": "x" * 47, "podpis": "y" * 45})[0], 1.2 + 92 / film.CARD_CPS - 0.01)
         self.scenario({"typ": "objasnienie", "plansze": [{"tekst": "x" * 47, "podpis": "y" * 45, "czas": 3},
                                                          {"tekst": "*Jedno* słowo"}]})
         info = film.describe(self.post)
@@ -384,9 +390,9 @@ class Studio(unittest.TestCase):
                        "plansza_startowa": {"tytul": "Hak posta", "czas": 1}})
         info = film.describe(self.post)
         self.assertEqual(info["error"], "")
-        # hak nie dziedziczy podtytułu marki; czas wydłużony do czytania (0,6 s + 9 znaków / 15 + przejście): hak
+        # hak nie dziedziczy podtytułu marki; czas wydłużony do czytania (0,6 s + 9 znaków / 15 + pół przejścia): hak
         # stoi od pierwszej klatki
-        self.assertEqual(info["introCard"], {"title": "Hak posta", "subtitle": "", "address": "", "seconds": 1.55,
+        self.assertEqual(info["introCard"], {"title": "Hak posta", "subtitle": "", "address": "", "seconds": 1.38,
                                              "hook": True})
         self.assertIn("Plansza startowa trwa 1 s, za krótko na przeczytanie", info["warnings"][0])
         self.assertEqual(info["outroCard"]["address"], "example.org")
@@ -470,7 +476,7 @@ class Studio(unittest.TestCase):
             self.assertEqual(rec.start(self.post)[0], 202)
             film.shutil.which = lambda name: None
             rec.busy.clear()
-            code, msg = rec.start(self.post)
+            code, msg, _ = rec.start(self.post)
             self.assertEqual(code, 409)
             self.assertIn("ffmpeg", msg)
         finally:
@@ -481,7 +487,7 @@ class Studio(unittest.TestCase):
         rec.available = lambda kind="pokaz": True
         rec._run = lambda folder, title: self.fail("bez nagrania przy błędnym scenariuszu")
         self.scenario({"szablon": "nie-ma"})
-        code, msg = rec.start(self.post)
+        code, msg, _ = rec.start(self.post)
         self.assertEqual(code, 409)
         self.assertIn("brak szablonu", msg)
         st = film.read_state(self.post)
@@ -573,7 +579,8 @@ class StudioProjektow(unittest.TestCase):
         self.assertEqual(info["introCard"]["title"], raw["parametry"]["hak"])  # hak w pierwszej sekundzie
         self.assertEqual(info["introCard"]["subtitle"], "")                   # hak bez podtytułu marki
         self.assertGreaterEqual(info["introCard"]["seconds"],
-                                film.HOOK_BASE + len(raw["parametry"]["hak"]) / 15 + film.XFADE - 0.01)   # da się przeczytać
+                                film.HOOK_BASE + len(raw["parametry"]["hak"]) / 15 + film.XFADE / 2 - 0.01)   # da się przeczytać
+        self.assertLessEqual(info["introCard"]["seconds"], film.HOOK_MAX + film.XFADE / 2)   # strona przed 3,5 s
         self.assertFalse([w for w in info["warnings"] if "za krótko" in w])
         self.assertEqual(film.site_errors(sc, brand), [])
 

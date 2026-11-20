@@ -14,7 +14,7 @@ Krok (klucze opcjonalne, wykonywane w tej kolejności; inne klucze to błąd):
   "przewin": selektor              przewinięcie do elementu
   "rozwin": selektor               rozwinięcie <details>, gdy jest zwinięte
   "czekaj_na": selektor            czekanie, aż element się pojawi ("limit": sekundy 1–120, domyślnie 60);
-                                   czekanie dłuższe niż 1,5 s jest w filmie wycięte
+                                   środek czekania dłuższego niż 1,5 s jest w filmie przyspieszony (znak „×N”)
   "pauza": sekundy 0–30
   "opcjonalnie": true              błąd kroku nie przerywa nagrania
 Wynik: <folder posta>/film.mp4, pion 1080×1920, 30 kl./s, napisy wtopione, ścieżka dźwięku (cisza albo
@@ -48,6 +48,7 @@ Objaśnienie nie potrzebuje Playwright (wystarczy ffmpeg; nagrywa je interpreter
 """
 import datetime
 import json
+import math
 import os
 import re
 import shutil
@@ -76,9 +77,21 @@ except Exception:  # noqa: BLE001
 
 SCENARIO = "scenariusz.json"
 STATE = ".film-stan.json"
+SRT = "film.srt"                  # napisy filmu jako osobny plik (platformy, które wolą napisy obok wideo)
+FEED = "film-4x5.mp4"             # wersja 4:5 do feedu LinkedIn i Facebook (kadr 1080×1350 ze środka filmu)
+FEED_CROP = (1350, 300)           # wysokość i górna krawędź kadru 4:5: nagłówek planszy i napisy zostają w kadrze
+ERROR_SHOT = ".film-blad.png"     # zrzut strony z chwili błędu kroku pokazu (panel pokazuje go przy błędzie)
+PREVIOUS = ".film-poprzedni.mp4"  # poprzednia wersja filmu po nagraniu nowej (panel: porównanie wersji)
+MUSIC_PIN = ".film-podklad"       # podkład z listy marki wybrany przy pierwszym nagraniu (stała rotacja podkładów)
 MANUAL = ".film-wgrany"          # film wgrany ręcznie w panelu: zmiana studia nie nagrywa go sama od nowa
 VIEW = (540, 960)                 # CSS px; nagranie 2× = 1080×1920
-FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+# czcionka zastępcza (marka bez czcionek albo czcionka nie znaleziona): pierwszy istniejący plik; Linux (serwer), macOS
+FONT_FALLBACKS = ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+                  "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+                  "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+                  "/Library/Fonts/Arial Bold.ttf",
+                  "/System/Library/Fonts/Supplemental/Verdana Bold.ttf")
+FONT = next((f for f in FONT_FALLBACKS if os.path.isfile(f)), FONT_FALLBACKS[0])
 TIMEOUT = 600
 HOST = socket.gethostname()   # w stanie nagrania: kto nagrywa (panel na Macu i na serwerze mogą dzielić szkice/)
 
@@ -115,7 +128,15 @@ CURSOR_JS = """
       'background:%(fill)s;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);' +
       'pointer-events:none;transform:translate(-50%%,-50%%);left:-50px;top:-50px;transition:left .25s,top .25s';
     document.documentElement.appendChild(c);
-    addEventListener('mousemove', e => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }, true);
+    try {          // po przejściu na inną stronę kursor zostaje tam, gdzie był (bez znikania do następnego ruchu)
+      const p = JSON.parse(sessionStorage.getItem('__kursor') || 'null');
+      if (p) { c.style.transition = 'none'; c.style.left = p[0] + 'px'; c.style.top = p[1] + 'px';
+               requestAnimationFrame(() => { c.style.transition = 'left .25s,top .25s'; }); }
+    } catch (e) {}
+    addEventListener('mousemove', e => {
+      c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px';
+      try { sessionStorage.setItem('__kursor', JSON.stringify([e.clientX, e.clientY])); } catch (err) {}
+    }, true);
     addEventListener('mousedown', e => {
       const r = document.createElement('div');
       r.style.cssText = 'position:fixed;z-index:2147483646;width:16px;height:16px;border-radius:50%%;' +
@@ -129,6 +150,52 @@ CURSOR_JS = """
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', add); else add();
 })();
 """
+
+
+# aktywny element pokazu: przewinięcie płynne do pasa między górną strefą aplikacji a napisem (CSS px kadru 540×960;
+# dół: nad pudełkiem napisu, które sięga ok. y 1250 z 1920). Zwraca przesunięcie w px (0: bez przewijania).
+BAND = (145, 600)                 # SAFE_TOP / 2 + 20 (CSS px)
+BAND_JS = """(el, band) => {
+  const r = el.getBoundingClientRect();
+  let dy = 0;
+  if (r.top < band[0] || r.height > band[1] - band[0]) dy = r.top - band[0];
+  else if (r.bottom > band[1]) dy = r.bottom - band[1];
+  if (Math.abs(dy) < 3) return 0;
+  window.scrollBy({top: dy, behavior: 'smooth'});
+  return Math.abs(dy);
+}"""
+
+
+HIDE_JS = """
+(() => {
+  const sels = %s;
+  const add = () => {
+    if (document.getElementById('__ukryj')) return;
+    const st = document.createElement('style'); st.id = '__ukryj';
+    (document.head || document.documentElement).appendChild(st);
+    for (const s of sels) {          // każdy selektor osobno: błędny nie psuje pozostałych
+      try { st.sheet.insertRule(s + '{display:none!important}', st.sheet.cssRules.length); } catch (e) {}
+    }
+  };
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', add); else add();
+})();
+"""
+
+
+def hide_list(brand, sc):
+    """Selektory elementów ukrywanych w pokazie: z marki („ukryj”, np. baner zgody na całej stronie) i ze scenariusza
+    (tylko ten film), bez powtórzeń, najwyżej HIDE_MAX."""
+    out = []
+    for src in ((brand or {}).get("ukryj"), (sc or {}).get("ukryj")):
+        for x in src if isinstance(src, list) else []:
+            if isinstance(x, str) and HIDE_RE.match(x) and "/*" not in x and x.strip() not in out:
+                out.append(x.strip())
+    return out[:HIDE_MAX]
+
+
+def hide_js(sels):
+    """Skrypt ukrywający elementy strony (CSS display:none) od pierwszego wczytania każdej strony pokazu."""
+    return HIDE_JS % json.dumps(list(sels))
 
 
 def cursor_js(brand):
@@ -173,6 +240,7 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,60}$")
 PARAM_NAME_RE = re.compile(r"^[a-z0-9_]{1,40}$")
 PARAM_RE = re.compile(r"\{\{\s*([a-z0-9_]+)\s*\}\}")
 ANY_PARAM_RE = re.compile(r"\{\{(.*?)\}\}")
+NUMBER_RE = re.compile(r"[0-9]{1,9}(?:[.,][0-9]{1,6})?")
 COLOR_RE = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 WEIGHTS = {"Thin": 100, "ExtraLight": 200, "Light": 300, "Regular": 400, "Medium": 500, "SemiBold": 600,
            "Bold": 700, "ExtraBold": 800, "Black": 900}
@@ -191,44 +259,64 @@ CARD_SHORT = 2.5                  # s: plansza bez podpisu bez podanego czasu (k
 TEXT_MAX, CAPTION_MAX, NAPIS_MAX = 90, 70, 80
 READ_CPS = 15                     # znaki na sekundę: czas czytania planszy (1,2 s + znaki / 15)
 READ_BASE = 1.2
+CARD_CPS = 17                     # znaki na sekundę na planszach w środku objaśnienia (krótkie zdania, szybsze tempo
+                                  # Reels); hak i plansze marki: READ_CPS
 XFADE = 0.35                      # przejście między klipami (s)
+LOOP_X = 1.5                      # s: przenikanie na szwie podkładu krótszego niż film
 FADE_OUT = 0.2                    # s: treść planszy gaśnie do tła tuż przed przejściem (bez podwójnej ekspozycji)
 CARD_TIMES = {"plansza_startowa": 1.2, "plansza_koncowa": 3.0}
-CAPTION_AT = 1.1                  # s: podpis planszy wchodzi jako druga informacja, po tekście
+CAPTION_AT = 0.9                  # s: podpis planszy wchodzi jako druga informacja, po tekście (wcześniej 1,1 s: widz czekał)
 HOOK_CAPTION_AT = 0.6             # s: podpis haka (pierwsza plansza filmu, tekst od pierwszej klatki)
 HOOK_BASE = 0.6                   # s: hak stoi od pierwszej klatki, więc bez czasu na wejście tekstu
 HOOK_MAX = 3.5                    # s: dłuższy hak dostaje ostrzeżenie (pierwsze sekundy decydują o obejrzeniu)
-POKAZ_MAX = 75                    # s: dłuższy pokaz dostaje ostrzeżenie
+HOOK_CHARS = int((HOOK_MAX - HOOK_BASE) * READ_CPS)   # znaków haka (bez gwiazdek) mieszczących się w HOOK_MAX: 43
+END_MAX = 4.0                     # s: plansza końcowa bez podanego czasu (wezwanie wchodzi etapami, nie stoi długo)
+POKAZ_MAX = 60                    # s: dłuższy pokaz dostaje ostrzeżenie (cel kampanii: film do 60 s)
 OBJ_MAX = 30                      # s: dłuższe objaśnienie dostaje ostrzeżenie (Reels)
 HEAD_Y = 380                      # linia bazowa nazwy marki i licznika plansz (ok. 20% wysokości, pod nakładką Reels)
 BAR_Y = 408                       # pasek postępu planszy: pod nazwą marki i licznikiem
 CTRL_RE = re.compile(r"[\x00-\x1f\x7f]")      # znaki sterujące (nowy wiersz, tabulator, \x00) w tekstach filmu
 IMAGE_MAX = 15 * 1024 * 1024      # obraz planszy albo logo
 AUDIO_MAX = 30 * 1024 * 1024      # muzyka marki
+MUSIC_MAX = 12                    # podkładów marki na zmianę (kolejne filmy projektu dostają kolejne)
 # Bez marka.json: wygląd napisów jak dotąd (biały tekst na ciemnym pasku), plansze w neutralnych kolorach.
 DEFAULT_BRAND = {"nazwa": "", "zrodlo": "", "strony": [], "muzyka": "", "logo": "", "logo_w_rogu": False,
                  "kolory": {"tlo": "#f4f4f2", "tekst": "#1d1d1f", "akcent": "#3b5bdb", "akcent2": "#868e96"},
                  "czcionki": {"tytul": "", "tekst": "", "napisy": ""},
                  "napisy": {"rozmiar": 56, "kolor": "#ffffff", "tlo": "#2b1d12", "krycie": 0.85},
-                 "plansza_startowa": None, "plansza_koncowa": None}
+                 "plansza_startowa": None, "plansza_koncowa": None,
+                 # elementy strony ukrywane w pokazie (selektory CSS: baner zgody, pływający przycisk „Opinia”, czat)
+                 "ukryj": [],
+                 # braki marki dla właściciela (np. krój strony niedostępny na serwerze): panel pokazuje je w Studiu
+                 "braki": [],
+                 # plansze marki z tekstem tymczasowym: {"plansza_koncowa": "co potwierdzić i gdzie"}
+                 "do_potwierdzenia": {}}
 BRAND_KEYS = set(DEFAULT_BRAND)
+HIDE_MAX = 20                     # selektorów „ukryj” (marka i scenariusz razem)
+HIDE_RE = re.compile(r"^[^{}<>\\\x00-\x1f]{1,120}$")    # selektor CSS bez nawiasów klamrowych, znaczników i odwrotnego ukośnika
 CARD_KEYS = {"tytul", "podtytul", "adres", "czas", "tlo", "kolor"}
 CARD_COLORS = ("tlo", "kolor")    # nadpisanie tytułu planszy w filmie dziedziczy z marki tylko kolory
-BRAND_HELP = ('marka.json: {"nazwa", "zrodlo", "strony": ["host"], "muzyka": "plik w studio/", '
-              '"logo": "plik .png w studio/ (przezroczyste tło)", "logo_w_rogu": true|false, '
+BRAND_HELP = ('marka.json: {"nazwa", "zrodlo", "strony": ["host"], "muzyka": "plik w studio/" albo ["plik", …] (na zmianę), '
+              '"logo": "plik .png (przezroczyste tło) albo .jpg w studio/", "logo_w_rogu": true|false, '
               '"kolory": {"tlo", "tekst", "akcent", "akcent2"} (#rrggbb), "czcionki": {"tytul", "tekst", "napisy"} '
               '(nazwa czcionki, opcjonalnie ":Bold" itp.), "napisy": {"rozmiar" 24–120, "kolor", "tlo", "krycie" 0–1}, '
-              '"plansza_startowa" / "plansza_koncowa": {"tytul", "podtytul", "adres", "czas" s, "tlo", "kolor"}}')
-# klucze scenariusza według rodzaju; "opis" to komentarz (pomijany); szablon ma dodatkowo TEMPLATE_EXTRA
-SC_KEYS = {"pokaz": {"typ", "opis", "url", "logowanie", "kroki", "plansze_przed", "plansze_po",
-                     "plansza_startowa", "plansza_koncowa"},
-           "objasnienie": {"typ", "opis", "plansze", "plansza_startowa", "plansza_koncowa"}}
-TEMPLATE_EXTRA = {"opis", "tytul", "parametry", "etykiety", "wymagane", "limity", "dla_wlasciciela"}
+              '"plansza_startowa" / "plansza_koncowa": {"tytul", "podtytul", "adres", "czas" s, "tlo", "kolor"}, '
+              '"ukryj": ["selektor CSS elementu strony ukrytego w pokazie"], "braki": ["brak marki dla właściciela"], '
+              '"do_potwierdzenia": {"plansza_koncowa": "co potwierdzić"}}')
+# klucze scenariusza według rodzaju; "opis" i "komentarz" to komentarze (pomijane), "muzyka" to podkład tego filmu;
+# szablon ma dodatkowo TEMPLATE_EXTRA
+COMMENT_KEYS = {"opis", "komentarz"}
+SC_KEYS = {"pokaz": {"typ", "url", "logowanie", "kroki", "plansze_przed", "plansze_po",
+                     "plansza_startowa", "plansza_koncowa", "muzyka", "ukryj"} | COMMENT_KEYS,
+           "objasnienie": {"typ", "plansze", "plansza_startowa", "plansza_koncowa", "muzyka"} | COMMENT_KEYS}
+TEMPLATE_EXTRA = {"opis", "tytul", "parametry", "etykiety", "wymagane", "limity", "dla_wlasciciela", "aliasy"}
+LOGIN_KEYS = {"url": None, "email": "#lg-email", "haslo": "#lg-pass", "wyslij": "button[type=submit]"}
 LIMIT_KEYS = {"max", "opcje", "cyfry"}
 TEXT_KEYS = {"napis", "tekst", "podpis", "tytul", "podtytul", "adres"}   # liczba z parametru staje się tekstem
-WITH_TEMPLATE = {"szablon", "parametry", "plansza_startowa", "plansza_koncowa", "opis"}
+WITH_ORDER = ("szablon", "parametry", "plansza_startowa", "plansza_koncowa", "muzyka", "opis", "komentarz")
+WITH_TEMPLATE = set(WITH_ORDER)
 STEP_KEYS = ("napis", "wpisz", "wybierz", "kliknij", "przewin", "rozwin", "czekaj_na", "limit", "pauza", "opcjonalnie")
-CARD_SC_KEYS = {"tekst", "podpis", "czas", "obraz"}
+CARD_SC_KEYS = {"tekst", "podpis", "czas", "obraz", "uklad"}
 
 
 def studio_dir(folder):
@@ -252,7 +340,8 @@ def _load_json(path):
 
 
 def _num(value):
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    """Liczba skończona (bez True/False, NaN i nieskończoności)."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
 def _strings(value):
@@ -329,13 +418,14 @@ def _image_size(path, ext):
     return None
 
 
-def media_input(path, seconds=None):
+def media_input(path, seconds=None, loop=True):
     """Argumenty wejścia ffmpeg dla pliku z karty: tylko protokół file i jawny demuxer (obraz: image2 bez wzorca
-    nazw, zapętlony przez seconds; muzyka: demuxer z rozszerzenia, zapętlona)."""
+    nazw, zapętlony przez seconds; muzyka: demuxer z rozszerzenia, zapętlona, gdy loop)."""
     ext = os.path.splitext(path)[1].lower().lstrip(".")
     if ext in DEMUXER:
-        return ["-protocol_whitelist", "file", "-stream_loop", "-1", "-f", DEMUXER[ext], "-i", path]
-    return ["-protocol_whitelist", "file", "-f", "image2", "-pattern_type", "none", "-loop", "1",
+        return ["-protocol_whitelist", "file"] + (["-stream_loop", "-1"] if loop else []) + \
+            ["-f", DEMUXER[ext], "-i", path]
+    return ["-protocol_whitelist", "file", "-f", "image2", "-pattern_type", "none", "-loop", "1", "-framerate", "30",
             "-t", "%.2f" % (seconds or 1), "-i", path]
 
 
@@ -360,21 +450,44 @@ def _card_errors(card, key, need_title=True):
     return err
 
 
+def hide_errors(value, key="ukryj"):
+    """Błędy listy selektorów CSS elementów ukrywanych w pokazie (marka albo scenariusz)."""
+    if not (isinstance(value, list) and len(value) <= HIDE_MAX
+            and all(isinstance(x, str) and HIDE_RE.match(x) and x.strip() and "/*" not in x for x in value)):
+        return ["%s: lista do %d selektorów CSS (np. \"#baner-zgody\", \".opinia\"), bez { } < >" % (key, HIDE_MAX)]
+    return []
+
+
+def brand_warnings(b):
+    """Nieznane klucze marka.json (literówka, pole dodane przez agenta): ostrzeżenie, nie błąd blokujący filmy."""
+    if not isinstance(b, dict):
+        return []
+    out = ["marka.json: nieznany klucz „%s” (pomijany)" % k for k in b if k not in BRAND_KEYS]
+    kol = b.get("kolory")
+    if isinstance(kol, dict):
+        out += ["marka.json: nieznany klucz „kolory.%s” (pomijany)" % k for k in kol
+                if k not in ("tlo", "tekst", "akcent", "akcent2")]
+    return out
+
+
 def validate_brand(b):
-    """Błędy marka.json po polsku (pusta lista: poprawna)."""
+    """Błędy marka.json po polsku (pusta lista: poprawna). Nieznane klucze nie są błędem (brand_warnings)."""
     if not isinstance(b, dict):
         return ["marka.json: oczekiwany obiekt JSON"]
-    err = ["%s: nieznany klucz" % k for k in b if k not in BRAND_KEYS]
+    err = []
     for key in ("nazwa", "zrodlo"):
         if key in b and not isinstance(b[key], str):
             err.append("%s: tekst" % key)
     if "strony" in b and not (isinstance(b["strony"], list) and len(b["strony"]) <= 5
                               and all(isinstance(h, str) and HOST_RE.match(h) for h in b["strony"])):
         err.append("strony: lista hostów, np. [\"opisarnia.pl\"]")
-    if b.get("muzyka") and not (isinstance(b["muzyka"], str) and AUDIO_RE.match(b["muzyka"])):
-        err.append("muzyka: nazwa pliku mp3/m4a/wav/ogg w studio/")
+    if b.get("muzyka") and not (isinstance(b["muzyka"], str) and AUDIO_RE.match(b["muzyka"])) and not (
+            isinstance(b["muzyka"], list) and 1 <= len(b["muzyka"]) <= MUSIC_MAX
+            and all(isinstance(m, str) and AUDIO_RE.match(m) for m in b["muzyka"])):
+        err.append("muzyka: nazwa pliku mp3/m4a/wav/ogg w studio/ albo lista do %d takich plików (filmy dostają "
+                   "je na zmianę)" % MUSIC_MAX)
     if b.get("logo") and not (isinstance(b["logo"], str) and IMAGE_RE.match(b["logo"])):
-        err.append("logo: nazwa pliku .png w studio/")
+        err.append("logo: nazwa pliku .png albo .jpg w studio/ (najlepiej png z przezroczystym tłem)")
     if "logo_w_rogu" in b and not isinstance(b["logo_w_rogu"], bool):
         err.append("logo_w_rogu: true albo false")
     kol = b.get("kolory")
@@ -386,8 +499,8 @@ def validate_brand(b):
                 err.append("kolory.%s: brak" % key)
         for key, value in kol.items():
             if key not in ("tlo", "tekst", "akcent", "akcent2"):
-                err.append("kolory.%s: nieznany klucz" % key)
-            elif not (isinstance(value, str) and COLOR_RE.match(value)):
+                continue                         # nieznany kolor: ostrzeżenie (brand_warnings)
+            if not (isinstance(value, str) and COLOR_RE.match(value)):
                 err.append("kolory.%s: kolor #rrggbb" % key)
     cz = b.get("czcionki", {})
     if not isinstance(cz, dict) or any(k not in ("tytul", "tekst", "napisy") for k in cz):
@@ -410,6 +523,15 @@ def validate_brand(b):
     for key in ("plansza_startowa", "plansza_koncowa"):
         if b.get(key) is not None:
             err += _card_errors(b[key], key)
+    if "ukryj" in b:
+        err += hide_errors(b["ukryj"])
+    if "braki" in b and not (isinstance(b["braki"], list) and len(b["braki"]) <= 8
+                             and all(isinstance(x, str) and 0 < len(x.strip()) <= 200 for x in b["braki"])):
+        err.append("braki: lista do 8 krótkich opisów (do 200 znaków)")
+    tmp = b.get("do_potwierdzenia")
+    if tmp is not None and not (isinstance(tmp, dict) and all(k in CARD_NAMES for k in tmp)
+                                and all(isinstance(v, str) and 0 < len(v.strip()) <= 200 for v in tmp.values())):
+        err.append("do_potwierdzenia: obiekt {\"plansza_startowa\" albo \"plansza_koncowa\": \"co potwierdzić\"}")
     return err
 
 
@@ -427,10 +549,12 @@ def load_brand(studio):
     errors = validate_brand(raw)
     brand = json.loads(json.dumps(DEFAULT_BRAND))
     for key, kind in (("muzyka", "audio"), ("logo", "image")):
-        if not errors and raw.get(key):
-            path = os.path.join(studio, raw[key])
+        for name in (music_list(raw.get(key)) if key == "muzyka" else [raw.get(key)] if raw.get(key) else []):
+            if errors:
+                break
+            path = os.path.join(studio, name)
             if not (os.path.isfile(path) and _inside(path, studio)):
-                errors.append("%s: brak pliku studio/%s" % (key, raw[key]))
+                errors.append("%s: brak pliku studio/%s" % (key, name))
             else:
                 bad = media_error(path, kind)
                 if bad:
@@ -438,7 +562,11 @@ def load_brand(studio):
     if errors:
         return brand, errors, True
     for key, value in raw.items():
-        if isinstance(value, dict) and isinstance(brand.get(key), dict):
+        if key not in BRAND_KEYS:              # nieznany klucz: pomijany (ostrzeżenie w brand_warnings)
+            continue
+        if key == "kolory":
+            brand[key].update({k: v for k, v in value.items() if k in brand[key]})
+        elif isinstance(value, dict) and isinstance(brand.get(key), dict):
             brand[key].update(value)
         else:
             brand[key] = value
@@ -447,11 +575,71 @@ def load_brand(studio):
     return brand, [], True
 
 
+def music_list(value):
+    """Podkłady marki jako lista nazw plików (marka.json: "muzyka" to jeden plik albo lista)."""
+    if isinstance(value, str):
+        return [value] if value else []
+    return [m for m in value if isinstance(m, str) and m] if isinstance(value, list) else []
+
+
+def music_name(folder, brand, sc):
+    """Podkład filmu: "muzyka" ze scenariusza (plik w studio/; false: film bez muzyki), inaczej kolejny z listy
+    marki według liczby wcześniejszych postów projektu ze scenariuszem (kolejne filmy mają różne podkłady). "" bez
+    muzyki."""
+    own = sc.get("muzyka") if isinstance(sc, dict) else None
+    if own is False:
+        return ""
+    if isinstance(own, str) and own:
+        return own
+    names = music_list((brand or {}).get("muzyka"))
+    pinned = music_pinned(folder)
+    if pinned and pinned in names:        # podkład z pierwszego nagrania: nowy albo usunięty wcześniejszy post go nie zmienia
+        return pinned
+    if len(names) < 2:
+        return names[0] if names else ""
+    me = os.path.basename(os.path.abspath(folder)) if folder else ""
+    try:
+        base = os.path.dirname(os.path.abspath(folder))
+        earlier = [n for n in os.listdir(base) if n < me and os.path.isfile(os.path.join(base, n, SCENARIO))]
+    except (OSError, TypeError):
+        earlier = []
+    return names[len(earlier) % len(names)]
+
+
+def music_pinned(folder):
+    """Podkład zapisany przy pierwszym nagraniu filmu posta (plik MUSIC_PIN w folderze posta) albo ""."""
+    if not folder:
+        return ""
+    try:
+        with open(os.path.join(folder, MUSIC_PIN), encoding="utf-8") as f:
+            name = f.read().strip()
+    except OSError:
+        return ""
+    return name if AUDIO_RE.match(name) else ""
+
+
+def pin_music(folder, name):
+    """Zapisuje podkład filmu posta (kolejne posty i zmiany listy marki go nie przesuwają)."""
+    if folder and name and AUDIO_RE.match(name) and music_pinned(folder) != name:
+        try:
+            _write_atomic(os.path.join(folder, MUSIC_PIN), name + "\n")
+        except OSError:
+            pass
+
+
+TYPE_NAMES = {"NoneType": "puste pole (null)", "bool": "prawda/fałsz", "dict": "obiekt", "list": "lista",
+              "str": "tekst", "int": "liczba", "float": "liczba"}
+
+
+def type_name(value):
+    """Rodzaj wartości JSON po polsku (komunikat o złym typie)."""
+    return TYPE_NAMES.get(type(value).__name__, "inna wartość")
+
+
 def _param_value(name, value):
     if isinstance(value, str) or _num(value):
         return value
-    raise ValueError("parametr „%s”: tekst albo liczba (jest %s)" % (
-        name, "null" if value is None else type(value).__name__.replace("dict", "obiekt").replace("list", "lista")))
+    raise ValueError("parametr „%s”: tekst albo liczba (jest %s)" % (name, type_name(value)))
 
 
 def fill(value, params):
@@ -543,6 +731,15 @@ def _slides_errors(cards, what, limit):
             err.append("%s: czas %g–%g s" % ((label,) + CARD_TIME))
         if "obraz" in c and not (isinstance(c["obraz"], str) and IMAGE_RE.match(c["obraz"])):
             err.append("%s: obraz to nazwa pliku .png albo .jpg" % label)
+        if "uklad" in c:
+            lay = c["uklad"]
+            if lay not in LAYOUTS:
+                err.append("%s: uklad jeden z: %s" % (label, ", ".join(LAYOUTS)))
+            elif lay == "zrzut" and not c.get("obraz"):
+                err.append("%s: układ zrzut wymaga obrazu (obraz)" % label)
+            elif lay == "lista" and isinstance(c.get("tekst"), str) and not \
+                    2 <= len([x for x in c["tekst"].split(";") if x.strip()]) <= LIST_MAX:
+                err.append("%s: układ lista to 2–%d punktów oddzielonych średnikiem" % (label, LIST_MAX))
     return err
 
 
@@ -565,8 +762,12 @@ def validate_scenario(sc, extra=(), template=False):
     unknown = sorted(k for k in sc if k not in SC_KEYS[typ] and k not in extra)
     if unknown:
         err.append("nieznany klucz „%s” w scenariuszu rodzaju %s" % (unknown[0], typ))
-    if "opis" in sc and not isinstance(sc["opis"], str):
-        err.append("opis: tekst (komentarz)")
+    for key in COMMENT_KEYS:
+        if key in sc and not isinstance(sc[key], str):
+            err.append("%s: tekst (komentarz)" % key)
+    if "muzyka" in sc and not (sc["muzyka"] is False or (isinstance(sc["muzyka"], str)
+                                                        and AUDIO_RE.match(sc["muzyka"]))):
+        err.append("muzyka: nazwa pliku mp3/m4a/wav/ogg w studio/ albo false (film bez muzyki)")
     if typ == "objasnienie":
         bad = _slides_errors(sc.get("plansze"), "plansze", MAX_CARDS)
         if bad and bad[0].startswith("plansze:"):
@@ -575,8 +776,8 @@ def validate_scenario(sc, extra=(), template=False):
     else:
         if not (isinstance(sc.get("url"), str) and sc["url"].strip()):
             err.append("url: adres strony do nagrania (https://…)")
-        if "logowanie" in sc and not isinstance(sc["logowanie"], str):
-            err.append("logowanie: adres strony logowania (https://…)")
+        if "logowanie" in sc:
+            err += login_errors(sc["logowanie"])
         steps = sc.get("kroki")
         if not isinstance(steps, list) or not 1 <= len(steps) <= MAX_STEPS:
             err.append("kroki: lista 1–%d kroków" % MAX_STEPS)
@@ -586,6 +787,8 @@ def validate_scenario(sc, extra=(), template=False):
         for key in ("plansze_przed", "plansze_po"):
             if key in sc:
                 err += _slides_errors(sc[key], key, MAX_EXTRA_CARDS)
+        if "ukryj" in sc:
+            err += hide_errors(sc["ukryj"])
     for key in ("plansza_startowa", "plansza_koncowa"):
         if key in sc and not isinstance(sc[key], bool):
             err += _card_errors(sc[key], key, need_title=False) if isinstance(sc[key], dict) else \
@@ -619,6 +822,30 @@ def _host(url):
     return u, (u.hostname or "").lower()
 
 
+def login_spec(value):
+    """Logowanie pokazu: adres strony logowania (tekst; pola jak w Opisarni) albo {"url", "email", "haslo",
+    "wyslij"} z selektorami pól innej aplikacji. Zwraca słownik z uzupełnionymi selektorami."""
+    if isinstance(value, dict):
+        return {k: (value.get(k) if value.get(k) else d) for k, d in LOGIN_KEYS.items()}
+    return dict(LOGIN_KEYS, url=value if isinstance(value, str) else None)
+
+
+def login_errors(value):
+    """Błędy pola "logowanie" scenariusza (adres albo obiekt z selektorami)."""
+    if isinstance(value, str):
+        return [] if value.strip() else ["logowanie: adres strony logowania (https://…)"]
+    if not isinstance(value, dict):
+        return ["logowanie: adres strony logowania albo {\"url\", \"email\", \"haslo\", \"wyslij\"} (selektory pól)"]
+    err = ["logowanie: nieznany klucz „%s” (dozwolone: %s)" % (k, ", ".join(LOGIN_KEYS)) for k in sorted(value)
+           if k not in LOGIN_KEYS]
+    if not (isinstance(value.get("url"), str) and value["url"].strip()):
+        err.append("logowanie.url: adres strony logowania (https://…)")
+    for k in ("email", "haslo", "wyslij"):
+        if k in value and not (isinstance(value[k], str) and value[k].strip() and len(value[k]) <= 200):
+            err.append("logowanie.%s: selektor pola (tekst)" % k)
+    return err
+
+
 def site_errors(sc, brand):
     """Adresy pokazu: tylko https i tylko hosty z "strony" w marce (i ich subdomeny); bez "strony" pokaz się nie
     nagra (nazwa publiczna może wskazywać adres lokalny, np. przez DNS). Logowanie tylko na hoście z marki i z url."""
@@ -634,7 +861,7 @@ def site_errors(sc, brand):
     elif not host_allowed(host, sites):
         err.append("url: host %s spoza stron marki (marka.json: strony)" % host)
     if sc.get("logowanie"):
-        lu, lhost = _host(sc["logowanie"])
+        lu, lhost = _host(login_spec(sc["logowanie"])["url"])
         if not lu or lu.scheme != "https" or not lhost or lu.username or lu.password:
             err.append("logowanie: tylko adres https://")
         elif not sites or not host_allowed(lhost, sites):
@@ -680,6 +907,11 @@ def load_template(studio, name):
     req = tpl.get("wymagane", [])
     if not (isinstance(req, list) and all(isinstance(x, str) and x in names for x in req)):
         raise ValueError("szablon %s: wymagane to lista nazw parametrów szablonu" % name)
+    al = tpl.get("aliasy", {})
+    if not (isinstance(al, dict) and all(isinstance(k, str) and PARAM_NAME_RE.match(k) and k not in names
+                                         and isinstance(v, str) and v in names for k, v in al.items())):
+        raise ValueError("szablon %s: aliasy to obiekt {stara nazwa parametru: obecna nazwa} (po zmianie nazwy "
+                         "parametru starsze posty dalej się nagrywają)" % name)
     lim = tpl.get("limity", {})
     if not isinstance(lim, dict):
         raise ValueError("szablon %s: limity to obiekt {parametr: {max, opcje}}" % name)
@@ -701,7 +933,34 @@ def load_template(studio, name):
     unknown = sorted(k for k in tpl if k not in SC_KEYS.get(typ, set()) | TEMPLATE_EXTRA)
     if unknown:
         raise ValueError("szablon %s: nieznany klucz „%s”" % (name, unknown[0]))
+    for k, v in params.items():          # wartość przykładowa w limitach szablonu (inaczej każdy post bez własnej
+        try:                             # wartości dostaje błąd, choć winny jest szablon)
+            _check_value(k, v, lim)
+        except ValueError as e:
+            raise ValueError("szablon %s: przykład parametru „%s”: %s" % (name, k, str(e).split(": ", 1)[-1]))
     return tpl
+
+
+DUMMIES = ("Tekst; tekst", 3, "obraz.png")   # wartości zastępcze parametrów bez przykładu (tekst, liczba, plik)
+
+
+def template_check(tpl):
+    """Pierwszy błąd treści szablonu po podstawieniu wartości przykładowych (np. nieznany klucz planszy, tekst ponad
+    limit) albo "". Parametr bez przykładu dostaje po kolei wartości zastępcze; błąd liczy się tylko wtedy, gdy
+    wychodzi przy każdej z nich (inaczej to sprawa wartości w poście, nie szablonu)."""
+    defaults = tpl.get("parametry") or {}
+    names = template_params(tpl)
+    found = None
+    for dummy in DUMMIES:
+        params = dict({k: dummy for k in names}, **defaults)
+        try:
+            errs = validate_scenario(_as_text(fill(_body(tpl), params)), template=True)
+        except ValueError as e:
+            errs = [str(e)]
+        found = set(errs) if found is None else found & set(errs)
+        if not found:
+            return ""
+    return next((e for e in errs if e in found), "")
 
 
 def _body(tpl):
@@ -737,8 +996,10 @@ def _check_value(name, value, limits):
         if CTRL_RE.search(value):      # \n w kroku „wpisz” to Enter w formularzu, \x00 obcina tekst planszy
             raise ValueError("parametr „%s”: bez znaków sterujących (nowy wiersz, tabulator)" % name)
     lim = limits.get(name) or {}
-    if "max" in lim and len(str(value)) > lim["max"]:
-        raise ValueError("parametr „%s”: najwyżej %d znaków (jest %d)" % (name, lim["max"], len(str(value))))
+    # gwiazdki wyróżnienia *słowo* nie są widoczne w filmie: limit liczy znaki bez nich (jak HOOK_CHARS)
+    seen = len(str(value).replace("*", ""))
+    if "max" in lim and seen > lim["max"]:
+        raise ValueError("parametr „%s”: najwyżej %d znaków (jest %d)" % (name, lim["max"], seen))
     if lim.get("cyfry") and not re.fullmatch(r"[0-9]+", str(value)):
         raise ValueError("parametr „%s”: same cyfry (jest „%s”)" % (name, value))
     if "opcje" in lim and str(value) not in [str(o) for o in lim["opcje"]]:
@@ -757,11 +1018,15 @@ def _as_text(value, key=None):
     return value
 
 
-def expand(sc, studio, meta=None):
+def expand(sc, studio, meta=None, lenient=False):
     """(scenariusz po podstawieniu szablonu, nazwa szablonu albo ""). ValueError przy błędzie.
     meta (słownik): uzupełniany opisem szablonu, etykietami i parametrami z wartościami (dla panelu).
+    Błąd w wartości jednego parametru posta (brak wymaganej treści, limit znaków, opcje): ScenarioError z opisem
+    filmu (meta) i nazwą parametru, więc panel pokazuje pole do poprawy także wtedy, gdy film się nie rozwinął.
     Plansza startowa albo końcowa ze scenariusza jako obiekt łączy się z planszą szablonu (po podstawieniu);
-    false albo true zastępuje ją w całości."""
+    false albo true zastępuje ją w całości.
+    lenient: parametr posta, którego szablon już nie ma (usunięty z szablonu), jest pomijany zamiast błędu; jego
+    nazwy trafiają do meta["dropped"] (ostrzeżenie w opisie filmu). Bez lenient: ValueError (zmiana z panelu)."""
     if not isinstance(sc, dict):
         raise ValueError("scenariusz: oczekiwany obiekt JSON")
     if "szablon" not in sc:
@@ -770,25 +1035,43 @@ def expand(sc, studio, meta=None):
     tpl = load_template(studio, name)
     extra = sorted(k for k in sc if k not in WITH_TEMPLATE)
     if extra:
-        raise ValueError("obok „szablon” dozwolone tylko parametry, plansza_startowa, plansza_koncowa (jest „%s”)"
-                         % extra[0])
+        raise ValueError("obok „szablon” dozwolone tylko: %s (jest „%s”)"
+                         % (", ".join(k for k in WITH_ORDER if k != "szablon"), extra[0]))
     given = sc.get("parametry", {})
     if not isinstance(given, dict):
         raise ValueError("parametry: obiekt {nazwa: wartość}")
+    given = with_aliases(tpl, given)
     body = _body(tpl)
     defaults = tpl.get("parametry") or {}
     names = template_params(tpl)
     unknown = sorted(set(given) - set(names))
-    if unknown:
+    if unknown and not lenient:
         raise ValueError("szablon %s nie ma parametru „%s”" % (name, unknown[0]))
+    if unknown:
+        given = {k: v for k, v in given.items() if k not in unknown}
+        if meta is not None:
+            meta["dropped"] = unknown
     limits = tpl.get("limity") or {}
     given = coerce_params(tpl, given)
+    bad = None                            # (parametr, opis błędu): pierwszy błąd wartości posta
     for k, v in given.items():
-        _check_value(k, v, limits)
+        try:
+            _check_value(k, v, limits)
+        except ValueError as e:
+            bad = bad or (k, str(e))
     for k in tpl.get("wymagane") or []:
         v = given.get(k)
-        if v is None or (isinstance(v, str) and not v.strip()):
-            raise ValueError("brak parametru „%s” (wymagany w szablonie %s: treść tego posta)" % (k, name))
+        if bad is None and (v is None or (isinstance(v, str) and not v.strip())):
+            bad = (k, "brak parametru „%s” (wymagany w szablonie %s: treść tego posta)" % (k, name))
+    if bad is not None:
+        info = {}
+        for vals in (given, {k: v for k, v in given.items() if k != bad[0]}):   # błędna wartość w polu do poprawy
+            try:
+                _template_meta(tpl, name, body, sc, vals, info, placeholder=True)
+                break
+            except ValueError:
+                info = {}
+        raise ScenarioError(bad[1], info, bad[0])
     params = dict(defaults, **given)
     for k, v in defaults.items():
         if k not in given:
@@ -798,50 +1081,103 @@ def expand(sc, studio, meta=None):
         if key in sc:
             mine, base = sc[key], out.get(key)
             out[key] = dict(base, **mine) if isinstance(mine, dict) and isinstance(base, dict) else mine
+    if "muzyka" in sc:                    # podkład tego filmu zamiast podkładu z szablonu albo marki
+        out["muzyka"] = sc["muzyka"]
     left = _leftover(out)
     if left:
         raise ValueError("niepodstawiony znacznik %s (nazwy parametrów: małe litery, cyfry, _)" % left)
     if meta is not None:
-        labels = tpl.get("etykiety") or {}
-        changed = {k for k, v in given.items() if k not in defaults or str(v) != str(defaults[k])}
-        fields = field_map(body, out, sc)
-        groups = _param_groups(fields)
-        params_meta = []
-        for k in names:
-            lim = limits.get(k) or {}
-            item = {"name": k, "label": labels.get(k) or k.replace("_", " "),
-                    "value": str(params[k]) if k in params else "", "changed": k in changed,
-                    "group": groups.get(k, "inne"), "markup": k in fields["markup"],
-                    "max": int(lim["max"]) if "max" in lim else _default_max(k, fields),
-                    "required": k in (tpl.get("wymagane") or [])}
-            if "opcje" in lim:
-                item["options"] = [str(o) for o in lim["opcje"]]
-            if lim.get("cyfry"):
-                item["digits"] = True
-            params_meta.append(item)
-        # plansze z przykładowym tekstem szablonu: filmy z tego szablonu nie mogą być co tydzień takie same
-        cards = [c for key in ("slides", "before", "after") for c in fields[key] if c["text"] or c["params"]]
-        stock = [c for c in cards if c["params"] and not any(p in changed for p in c["params"])]
-        meta.update(desc=tpl.get("opis") or "", owner=str(tpl.get("dla_wlasciciela") or "").strip(),
-                    title=template_title(tpl, name), params=params_meta, fields=fields,
-                    same=bool(defaults) and not changed and not tpl.get("wymagane"),
-                    stock=(len(stock), len(cards)), values={k: str(v) for k, v in params.items()},
-                    required=list(tpl.get("wymagane") or []))
+        _template_meta(tpl, name, body, sc, given, meta, out=out)
     return out, name
+
+
+def _template_meta(tpl, name, body, sc, given, meta, out=None, placeholder=False):
+    """Opis filmu z szablonu dla panelu: parametry (etykieta, wartość, grupa, limit), mapa pól, opis szablonu.
+    placeholder: film się nie rozwinął (błąd wartości posta), więc brakujące parametry dostają pustą wartość tylko
+    do zbudowania mapy pól."""
+    defaults = tpl.get("parametry") or {}
+    names = template_params(tpl)
+    limits = tpl.get("limity") or {}
+    params = dict(defaults, **given)
+    if out is None:
+        safe = {k: params.get(k, "") for k in names}
+        out = _as_text(fill(body, safe))
+    labels = tpl.get("etykiety") or {}
+    changed = {k for k, v in given.items() if k not in defaults or str(v) != str(defaults[k])}
+    fields = field_map(body, out, sc)
+    groups = _param_groups(fields)
+    params_meta = []
+    for k in names:
+        lim = limits.get(k) or {}
+        item = {"name": k, "label": labels.get(k) or k.replace("_", " "),
+                "value": str(params[k]) if k in params else "", "changed": k in changed,
+                "group": groups.get(k, "inne"), "markup": k in fields["markup"],
+                "max": int(lim["max"]) if "max" in lim else _default_max(k, fields),
+                "required": k in (tpl.get("wymagane") or [])}
+        if k in fields.get("list", []):
+            item["list"] = True          # punkty listy: w panelu każdy w osobnym wierszu (zapis: „; ”)
+        if k in fields.get("images", []):
+            item["image"] = True         # obraz planszy: w panelu wgranie pliku zamiast wpisywania nazwy
+        if "opcje" in lim:
+            item["options"] = [str(o) for o in lim["opcje"]]
+        if lim.get("cyfry"):
+            item["digits"] = True
+        params_meta.append(item)
+    # plansze z przykładowym tekstem szablonu: filmy z tego szablonu nie mogą być co tydzień takie same
+    cards = [c for key in ("slides", "before", "after") for c in fields[key] if c["text"] or c["params"]]
+    stock = [c for c in cards if c["params"] and not any(p in changed for p in c["params"])]
+    meta.update(desc=tpl.get("opis") or "", owner=str(tpl.get("dla_wlasciciela") or "").strip(),
+                title=template_title(tpl, name), params=params_meta, fields=fields,
+                same=bool(defaults) and not changed and not tpl.get("wymagane"),
+                stock=(len(stock), len(cards)), values={k: str(v) for k, v in params.items()},
+                required=list(tpl.get("wymagane") or []), kind=kind_of(tpl))
+    return meta
+
+
+def with_aliases(tpl, given):
+    """Parametry posta po zmianie nazwy parametru w szablonie ("aliasy": {stara: obecna}): stara nazwa liczy się jak
+    obecna (gdy post ma obie, wygrywa obecna)."""
+    al = tpl.get("aliasy") or {}
+    out = {k: v for k, v in given.items() if k not in al}
+    for k, v in given.items():
+        if k in al:
+            out.setdefault(al[k], v)
+    return out
 
 
 def coerce_params(tpl, given):
     """Wartość z formularza panelu (tekst) dla parametru, którego wartość przykładowa w szablonie jest liczbą: liczba
-    (np. "5" → 5 w polu czas). Tekst, który nie jest liczbą, zostaje (kontrola zgłosi błąd w polu)."""
+    (np. "5" → 5 w polu czas, "4,5" → 4.5). Tylko zapis cyframi (bez „nan”, „inf”, „1e400”, „1_0”): inny tekst
+    zostaje tekstem (kontrola zgłosi błąd w polu), a w scenariuszu nie powstaje NaN ani Infinity."""
     defaults = tpl.get("parametry") or {}
+    numeric = _numeric_params(_body(tpl))
     out = dict(given)
     for k, v in given.items():
-        if isinstance(v, str) and _num(defaults.get(k)):
-            try:
-                num = float(v.strip().replace(",", "."))
-            except ValueError:
+        if isinstance(v, str) and (_num(defaults.get(k)) or k in numeric) and NUMBER_RE.fullmatch(v.strip()):
+            num = float(v.strip().replace(",", "."))
+            if not math.isfinite(num):
                 continue
-            out[k] = int(num) if num.is_integer() and isinstance(defaults[k], int) else num
+            out[k] = int(num) if num.is_integer() and isinstance(defaults.get(k, 0), int) else num
+    return out
+
+
+NUMERIC_KEYS = ("czas", "pauza", "limit")
+
+
+def _numeric_params(value, out=None):
+    """Parametry, które w treści szablonu są całą wartością pola liczbowego (czas, pauza, limit): wartość z formularza
+    panelu staje się liczbą także wtedy, gdy parametr nie ma przykładu w szablonie."""
+    out = set() if out is None else out
+    if isinstance(value, dict):
+        for k, v in value.items():
+            m = PARAM_RE.fullmatch(v.strip()) if k in NUMERIC_KEYS and isinstance(v, str) else None
+            if m:
+                out.add(m.group(1))
+            else:
+                _numeric_params(v, out)
+    elif isinstance(value, list):
+        for v in value:
+            _numeric_params(v, out)
     return out
 
 
@@ -865,7 +1201,7 @@ def field_map(body, out, raw):
     "text"/"caption"/"fields": parametr, gdy całe pole to jeden znacznik (inaczej pole ma kilka parametrów albo stały
     tekst i panel pokazuje do zmiany same parametry)."""
     fm = {"intro": None, "outro": None, "slides": [], "before": [], "after": [], "captions": [], "form": [],
-          "markup": []}
+          "markup": [], "list": [], "images": []}
     for key, which in (("plansza_startowa", "intro"), ("plansza_koncowa", "outro")):
         card, own = body.get(key), raw.get(key)
         if not isinstance(card, dict) or (key in raw and not isinstance(own, dict)):
@@ -886,6 +1222,11 @@ def field_map(body, out, raw):
             fm[which].append({"params": tn + [n for n in cn if n not in tn], "text": tn[0] if tw else "",
                               "caption": cn[0] if cw else ""})
             fm["markup"] += [n for n in tn if n not in fm["markup"]]
+            if c.get("uklad") == "lista" and tw and tn[0] not in fm["list"]:
+                fm["list"].append(tn[0])
+            on, ow = _uses(c.get("obraz"))
+            if ow and on[0] not in fm["images"]:
+                fm["images"].append(on[0])       # obraz planszy z parametru: w panelu wgranie pliku
     steps, done = body.get("kroki") or [], out.get("kroki") or []
     for ts, es in zip(steps, done):
         if not isinstance(ts, dict):
@@ -944,6 +1285,38 @@ def list_templates(studio):
             tpl = load_template(studio, name)
             labels = tpl.get("etykiety") or {}
             params = template_params(tpl)
+            try:                       # podgląd z wartości przykładowych (parametr bez przykładu: bez podglądu)
+                body = _as_text(fill(_body(tpl), tpl.get("parametry") or {}))
+            except ValueError:
+                body = {}
+            first = next((c for key in ("plansze", "plansze_przed") for c in (body.get(key) or [])
+                          if isinstance(c, dict)), None)
+            item["preview"] = {"text": str(first.get("tekst") or "")[:120], "caption": str(first.get("podpis") or "")[:80],
+                               "layout": str(first.get("uklad") or "")} if first else None
+            if not first and kind_of(tpl) == "pokaz" and body:      # pokaz bez plansz przed: hak i kadr nagrania
+                hook = body.get("plansza_startowa")
+                cap = next((str(k.get("napis")) for k in body.get("kroki") or [] if isinstance(k, dict)
+                            and k.get("napis")), "")
+                item["preview"] = {"text": "", "caption": cap[:80], "layout": "", "page": True,
+                                   "hook": str(hook.get("tytul") or "")[:80] if isinstance(hook, dict) else ""}
+            raw_body = _body(tpl)
+            item["layouts"] = sorted({str(c.get("uklad")) for key in ("plansze", "plansze_przed", "plansze_po")
+                                      for c in (raw_body.get(key) or []) if isinstance(c, dict) and c.get("uklad")})
+            # plansza startowa marki (z nazwą marki): nie false i nie własny tytuł (hak posta)
+            item["intro"] = raw_body.get("plansza_startowa", True) is not False and not (
+                isinstance(raw_body.get("plansza_startowa"), dict) and raw_body["plansza_startowa"].get("tytul"))
+            bad = template_check(tpl)
+            if bad:
+                item["error"] = "szablon %s: %s" % (name, bad)
+            req = list(tpl.get("wymagane") or [])
+            defaults = tpl.get("parametry") or {}
+            imgs = [n for key in ("plansze", "plansze_przed", "plansze_po") for c in (raw_body.get(key) or [])
+                    if isinstance(c, dict) for n in _uses(c.get("obraz"))[0]]
+            # szablon wymaga danych, których agent nie zmyśli (cytat, zdjęcie, fakt): przykład w nawiasach albo obraz
+            needs = [k for k in req if k in imgs or str(defaults.get(k, "")).lstrip("*„").startswith("[")]
+            item["needsData"] = bool(needs)
+            # czego szablon potrzebuje od właściciela (etykiety pól; obraz: zrzut albo zdjęcie do wgrania)
+            item["needs"] = [{"label": labels.get(k) or k.replace("_", " "), "image": k in imgs} for k in needs]
             item.update(kind=kind_of(tpl), desc=str(tpl.get("opis") or "")[:400], params=params,
                         forOwner=str(tpl.get("dla_wlasciciela") or "").strip()[:300],
                         title=template_title(tpl, name), required=list(tpl.get("wymagane") or []),
@@ -951,6 +1324,7 @@ def list_templates(studio):
         except ValueError as e:
             item["error"] = str(e)
         item["kindLabel"] = KINDS[item["kind"]]
+        item["kindHelp"] = KIND_HELP.get(item["kind"], "")
         out.append(item)
     return out
 
@@ -1006,7 +1380,7 @@ def card_time(c, hook=False):
         need = HOOK_BASE + (text + cap) / READ_CPS
         default = 0.0
     else:
-        need = READ_BASE + (text + cap) / READ_CPS
+        need = READ_BASE + (text + cap) / CARD_CPS
         default = CARD_DEFAULT if cap else CARD_SHORT
     given = float(c["czas"]) if _num(c.get("czas")) else default
     return round(min(CARD_TIME[1], max(given, need)), 2), round(need, 1)
@@ -1015,11 +1389,18 @@ def card_time(c, hook=False):
 def brand_time(card, which, hook=False):
     """Czas planszy startowej albo końcowej: podany (albo CARD_TIMES), wydłużony do czasu czytania tytułu,
     podtytułu i adresu (1,2 s + 15 znaków/s) plus przejście, które zabiera koniec planszy. hook: plansza startowa
-    z hakiem posta, stoi od pierwszej klatki (HOOK_BASE zamiast READ_BASE). (czas, potrzebny)."""
+    z hakiem posta, stoi od pierwszej klatki (HOOK_BASE zamiast READ_BASE). Plansza końcowa bez podanego czasu
+    najwyżej END_MAX: tytuł, podtytuł i adres wchodzą po kolei, więc widz czyta je w trakcie, a długo stojące
+    wezwanie traci widzów. (czas, potrzebny)."""
     chars = sum(len(str(card.get(k) or "")) for k in ("tytul", "podtytul", "adres"))
-    need = (HOOK_BASE if hook else READ_BASE) + chars / READ_CPS + XFADE
+    # hak czyta się także w pierwszej połowie przejścia (treść następnego klipu wchodzi dopiero w drugiej)
+    need = (HOOK_BASE if hook else READ_BASE) + chars / READ_CPS + (XFADE / 2 if hook else XFADE)
     given = float(card["czas"]) if _num(card.get("czas")) else CARD_TIMES[which]
-    return round(min(CARD_TIME[1], max(given, need)), 2), round(need, 1)
+    sec = min(CARD_TIME[1], max(given, need))
+    if which == "plansza_koncowa" and not _num(card.get("czas")):
+        sec = min(sec, max(given, END_MAX))
+        need = min(need, sec)
+    return round(sec, 2), round(need, 1)
 
 
 def is_hook(sc):
@@ -1082,8 +1463,9 @@ def _slides_info(cards, folder, label, warnings, hook=False):
         if _num(c.get("czas")) and c["czas"] < need:
             warnings.append(_slow("%s %d" % (label.capitalize(), i), c["czas"], sec))
         if first and sec > HOOK_MAX:
-            warnings.append("Pierwsza plansza (hak) trwa %s; widz decyduje w pierwszych 3 s. Skróć hak albo jego "
-                            "podpis." % sec_text(sec))
+            warnings.append("Pierwsza plansza (hak) trwa %s; widz decyduje w pierwszych 3 s. Skróć hak do %d znaków"
+                            "%s." % (sec_text(sec), HOOK_CHARS, " razem z podpisem albo usuń podpis" if c.get("podpis")
+                                                               else ""))
         out.append({"text": _plain(c["tekst"]), "caption": c.get("podpis", ""), "seconds": sec,
                     "image": c.get("obraz", ""), "markup": c["tekst"], "hook": first})
     return out
@@ -1106,16 +1488,35 @@ def _culprit(raw, studio, error):
     except ValueError:
         return ""
     for k in given:
-        if k not in defaults:
+        # parametr bez przykładu w szablonie: wartości zastępcze (tekst, liczba, plik); któraś usuwa błąd = winne pole
+        for alt in ([defaults[k]] if k in defaults else list(DUMMIES)):
+            trial = dict(raw, parametry=dict(given, **{k: alt}))
+            try:
+                sc, name = expand(trial, studio, lenient=True)
+            except ValueError:
+                continue
+            errs = validate_scenario(sc, template=True)
+            if not errs or errs[0] != error:
+                return k
+    return ""
+
+
+OVERRIDES = ("plansza_startowa", "plansza_koncowa", "muzyka")   # pola posta nadpisujące szablon (poza parametrami)
+
+
+def _override_culprit(raw, studio, error):
+    """Pole posta nadpisujące szablon (plansza startowa, końcowa, muzyka), które powoduje błąd: bez niego błąd
+    znika. "" gdy błąd jest w szablonie."""
+    for key in OVERRIDES:
+        if key not in raw or not error.startswith(key):
             continue
-        trial = dict(raw, parametry=dict(given, **{k: defaults[k]}))
+        trial = {k: v for k, v in raw.items() if k != key}
         try:
-            sc, name = expand(trial, studio)
+            sc, _name = expand(trial, studio, lenient=True)
         except ValueError:
             continue
-        errs = validate_scenario(sc, template=True)
-        if not errs or errs[0] != error:
-            return k
+        if error not in validate_scenario(sc, template=True):
+            return key
     return ""
 
 
@@ -1152,6 +1553,7 @@ def repeat_warnings(raw, folder, meta):
     labels = {p["name"]: p["label"] for p in meta.get("params", [])}
     values = meta.get("values") or {}
     hits = {}
+    recent = []                           # szablony ostatnich filmów (najnowszy pierwszy): rotacja A-B-A-B
     for n in earlier:
         try:
             other = _load_json(os.path.join(base, n, SCENARIO))
@@ -1159,6 +1561,8 @@ def repeat_warnings(raw, folder, meta):
             continue
         if not isinstance(other, dict):
             continue
+        if len(recent) < REPEAT_WINDOW:
+            recent.append((n[:10], other.get("szablon")))
         if not prev_seen:
             prev_seen = True
             if other.get("szablon") == name:
@@ -1170,10 +1574,18 @@ def repeat_warnings(raw, folder, meta):
             v = values.get(k, "").strip().lower()
             if k not in hits and v and str(other["parametry"].get(k, "")).strip().lower() == v:
                 hits[k] = n[:10]
+    same = [d for d, t in recent if t == name]
+    if len(same) >= 2 and not (recent and recent[0][1] == name):
+        out.append("Ten szablon był w %d z %d ostatnich filmów (%s). Widz zobaczy ten sam układ co kilka dni: użyj "
+                   "innego szablonu albo poproś o nowy w Studiu filmów." % (len(same), len(recent),
+                                                                         ", ".join(_day_label(d) for d in same)))
     for k, d in hits.items():
         out.append("„%s” taki sam jak w filmie z %s. Podaj inną treść, żeby filmy się nie powtarzały."
                    % (labels.get(k, k), _day_label(d)))
     return out
+
+
+REPEAT_WINDOW = 4                         # tyle ostatnich filmów projektu sprawdza ostrzeżenie o rotacji szablonów
 
 
 def prepare_raw(raw, folder):
@@ -1181,7 +1593,7 @@ def prepare_raw(raw, folder):
     (ScenarioError, gdy po podstawieniu szablonu: z parametrami dla panelu i nazwą winnego parametru)."""
     studio = studio_dir(folder)
     meta = {}
-    sc, name = expand(raw, studio, meta)
+    sc, name = expand(raw, studio, meta, lenient=True)
     errors = validate_scenario(sc, template=bool(name))
     if errors:
         if not name:
@@ -1191,6 +1603,8 @@ def prepare_raw(raw, folder):
         if culprit:
             raise ScenarioError("parametr „%s”, pole „%s”: %s" % (culprit, labels.get(culprit, culprit), errors[0]),
                                 meta, culprit)
+        if _override_culprit(raw, studio, errors[0]):     # pole nadpisane w poście, nie błąd szablonu
+            raise ScenarioError("scenariusz posta: %s" % errors[0], meta)
         raise ScenarioError("szablon %s: %s" % (name, errors[0]), meta)
     brand, berr, _ = load_brand(studio)
     if berr:
@@ -1201,12 +1615,29 @@ def prepare_raw(raw, folder):
     kind = kind_of(sc)
     intro, outro = _card(brand, sc, "plansza_startowa"), _card(brand, sc, "plansza_koncowa")
     hook = is_hook(sc)
+    song = music_name(folder, brand, sc)
+    if song and isinstance(sc.get("muzyka"), str):        # podkład wybrany w scenariuszu: plik musi być w studiu
+        mpath = os.path.join(studio, song)
+        bad = media_error(mpath, "audio") if os.path.isfile(mpath) and _inside(mpath, studio) else \
+            "brak pliku studio/%s" % song
+        if bad:
+            raise ValueError("muzyka: %s" % bad)
     info = {"kind": kind, "template": name, "templateTitle": meta.get("title", ""),
             "templateDesc": meta.get("desc", ""), "templateOwner": meta.get("owner", ""),
             "params": meta.get("params", []), "fields": meta.get("fields"),
-            "intro": bool(intro), "outro": bool(outro), "warnings": [], "music": bool(brand.get("muzyka")),
+            "intro": bool(intro), "outro": bool(outro), "warnings": [], "music": bool(song), "musicName": song,
+            # podkład wybrany dla tego filmu: plik, "off" (bez muzyki) albo "" (z listy marki na zmianę)
+            "musicChoice": sc["muzyka"] if isinstance(sc.get("muzyka"), str) else "off" if sc.get("muzyka") is False
+            else "",
             "editable": [], "before": [], "after": []}
     stock, total = meta.get("stock") or (0, 0)
+    for k in meta.get("dropped") or []:
+        info["warnings"].append("Szablon nie ma już pola „%s”: ta wartość posta jest pomijana. Usuń ją ze scenariusza "
+                                "albo przekaż agentowi." % k)
+    try:
+        info["warnings"] += [w + "." for w in brand_warnings(_load_json(os.path.join(studio, BRAND)))]
+    except (OSError, ValueError):
+        pass
     if meta.get("same"):
         info["warnings"].append("Film ma same wartości z szablonu (jak przykład w studiu). Podaj treść tego posta.")
     elif total >= 3 and stock * 2 > total:
@@ -1222,15 +1653,36 @@ def prepare_raw(raw, folder):
         sec, need = brand_time(card, which, hook=own_hook)
         if _num(card.get("czas")) and card["czas"] < need:
             info["warnings"].append(_slow(CARD_NAMES[which], card["czas"], sec))
-        if own_hook and sec > HOOK_MAX + XFADE:
-            info["warnings"].append("Hak na początku trwa %s; widz decyduje w pierwszych 3 s. Skróć go do ok. "
-                                    "40 znaków." % sec_text(sec))
+        if own_hook and sec > HOOK_MAX + XFADE / 2:
+            info["warnings"].append("Hak na początku trwa %s, zanim widz zobaczy %s; widz decyduje w pierwszych 3 s. "
+                                    "Skróć go do %d znaków." % (sec_text(sec), "stronę" if kind == "pokaz" else
+                                                                "treść", HOOK_CHARS))
         info[key] = {"title": card.get("tytul", ""), "subtitle": card.get("podtytul", ""),
                      "address": card.get("adres", ""), "seconds": sec, "hook": own_hook}
+        pending = (brand.get("do_potwierdzenia") or {}).get(which)
+        own = sc.get(which) if isinstance(sc.get(which), dict) else {}
+        if pending and not any(own.get(k) for k in ("tytul", "podtytul", "adres")):   # tekst marki, nie posta
+            info[key]["pending"] = pending
+            info["warnings"].append("%s marki jest tymczasowa (do potwierdzenia: %s). Film wyjdzie z tym tekstem."
+                                    % (CARD_NAMES[which], pending.rstrip(".")))
     parts = [c["seconds"] for c in (info["introCard"], info["outroCard"]) if c]
+    try:
+        if kind == "objasnienie":
+            info["cards"] = len(sc["plansze"])
+            info["slides"] = _slides_info(sc["plansze"], folder, "plansza", info["warnings"], hook=not intro)
+        else:
+            info["before"] = _slides_info(sc.get("plansze_przed") or [], folder, "plansza przed pokazem",
+                                          info["warnings"], hook=not intro)
+            info["after"] = _slides_info(sc.get("plansze_po") or [], folder, "plansza po pokazie", info["warnings"])
+    except ValueError as e:
+        # brak albo błąd obrazu z parametru szablonu (np. zrzut ekranu): pole do wgrania pliku w panelu
+        images = (meta.get("fields") or {}).get("images") or []
+        values = meta.get("values") or {}
+        culprit = next((k for k in images if values.get(k) and values[k] in str(e)), "")
+        if name and culprit:
+            raise ScenarioError(str(e), meta, culprit)
+        raise
     if kind == "objasnienie":
-        info["cards"] = len(sc["plansze"])
-        info["slides"] = _slides_info(sc["plansze"], folder, "plansza", info["warnings"], hook=not intro)
         parts += [c["seconds"] for c in info["slides"]]
         if not name:          # plansze pisane w scenariuszu: tekst i podpis do zmiany w panelu
             info["editable"] = ["slides"]
@@ -1238,14 +1690,9 @@ def prepare_raw(raw, folder):
         info["steps"] = len(sc.get("kroki") or [])
         info["captions"] = [str(k["napis"]) for k in sc.get("kroki") or [] if k.get("napis")]
         info["sequence"] = _sequence(sc)
-        info["before"] = _slides_info(sc.get("plansze_przed") or [], folder, "plansza przed pokazem", info["warnings"],
-                                      hook=not intro)
-        info["after"] = _slides_info(sc.get("plansze_po") or [], folder, "plansza po pokazie", info["warnings"])
         parts += [c["seconds"] for c in info["before"] + info["after"]]
         est, paused = _pokaz_timeline(sc)
         info["captionPauses"] = paused
-        if est > POKAZ_MAX:
-            info["warnings"].append("Pokaz potrwa około %d s; krótszy film lepiej się ogląda." % est)
         parts.append(est)
     if name:
         info["editable"] = ["params"]
@@ -1254,12 +1701,15 @@ def prepare_raw(raw, folder):
     if marked and _PILFont is None:
         _log_no_pil()
     info["seconds"] = round(sum(parts) - XFADE * max(0, len(parts) - 1), 1)
+    if kind == "pokaz" and info["seconds"] > POKAZ_MAX:
+        info["warnings"].append("Film potrwa około %d s, a ma trwać do %d s. Usuń część kroków albo napisów."
+                                % (info["seconds"], POKAZ_MAX))
     if kind == "objasnienie" and info["seconds"] > OBJ_MAX:
         info["warnings"].append("Objaśnienie potrwa ok. %d s; na Reels lepiej do %d s (mniej plansz albo krótsze "
                                 "teksty)." % (info["seconds"], OBJ_MAX))
-    if not info["music"]:
+    if not info["music"] and sc.get("muzyka") is not False:        # muzyka: false to świadomy film bez podkładu
         info["warnings"].append("Film bez muzyki: Reels i TikTok słabiej pokazują ciche filmy. Podkład dodasz w "
-                                "Marketing → Studio filmów → „Zmień plansze i wygląd”.")
+                                "Marketing → Studio filmów → projekt → „Dodaj podkład”.")
     return sc, brand, info
 
 
@@ -1286,10 +1736,15 @@ def prepare(folder):
     return prepare_raw(raw, folder)
 
 
-def apply_changes(folder, params=None, slides=None):
+UNSET = object()
+
+
+def apply_changes(folder, params=None, slides=None, music=UNSET):
     """Zmiana treści filmu z panelu bez agenta: parametry szablonu ({nazwa: wartość}) albo tekst i podpis plansz
-    objaśnienia pisanego w scenariuszu ([{"n": numer od 1, "tekst", "podpis"}]). Zapis scenariusz.json tylko, gdy
-    scenariusz po zmianie przechodzi te same kontrole co nagranie. Zwraca opis filmu; ValueError z opisem."""
+    objaśnienia pisanego w scenariuszu ([{"n": numer od 1, "tekst", "podpis"}]). Pusty tekst w polu, które nie jest
+    wymagane, przywraca wartość przykładową szablonu (klucz znika z parametrów posta). Zapis scenariusz.json tylko,
+    gdy scenariusz po zmianie przechodzi te same kontrole co nagranie. music: podkład tego filmu (plik z listy marki,
+    False: film bez muzyki, "": podkład z marki na zmianę). Zwraca opis filmu; ValueError z opisem."""
     path = os.path.join(folder, SCENARIO)
     try:
         stamp = os.stat(path).st_mtime_ns
@@ -1306,23 +1761,44 @@ def apply_changes(folder, params=None, slides=None):
         if not isinstance(params, dict):
             raise ValueError("parametry: obiekt {nazwa: wartość}")
         cur = dict(raw.get("parametry") or {})
-        for k, v in params.items():
-            if not isinstance(v, (str, int, float)) or isinstance(v, bool):
-                raise ValueError("parametr „%s”: tekst" % k)
-            cur[k] = v.strip() if isinstance(v, str) else v
-        try:                         # liczba z pola formularza zostaje liczbą (np. czas planszy z parametru)
-            cur = coerce_params(load_template(studio_dir(folder), raw.get("szablon")), cur)
+        try:
+            tpl = load_template(studio_dir(folder), raw.get("szablon"))
         except ValueError:
-            pass                     # brak szablonu: zgłosi prepare_raw niżej
+            tpl = None               # brak szablonu: zgłosi prepare_raw niżej
+        required = set((tpl or {}).get("wymagane") or [])
+        if tpl is not None:          # pole spoza szablonu z panelu: błąd (post z usuniętym polem nagra się bez niego)
+            known = set(template_params(tpl)) | set(tpl.get("aliasy") or {})
+            bad = sorted(k for k in params if k not in known)
+            if bad:
+                raise ValueError("szablon %s nie ma parametru „%s”" % (raw.get("szablon"), bad[0]))
+        for k, v in params.items():
+            if not isinstance(v, (str, int, float)) or isinstance(v, bool) or (isinstance(v, float)
+                                                                              and not math.isfinite(v)):
+                raise ValueError("parametr „%s”: tekst" % k)
+            v = v.strip() if isinstance(v, str) else v
+            if v == "" and tpl is not None and k not in required and k in (tpl.get("parametry") or {}):
+                cur.pop(k, None)     # puste pole: wartość przykładowa szablonu (także pod starą nazwą)
+                for old, new in (tpl.get("aliasy") or {}).items():
+                    if new == k:
+                        cur.pop(old, None)
+            else:
+                cur[k] = v
+        if tpl is not None:          # liczba z pola formularza zostaje liczbą (np. czas planszy z parametru)
+            cur = coerce_params(tpl, with_aliases(tpl, cur))
         raw["parametry"] = cur
     if slides:
         cards = raw.get("plansze")
         if "szablon" in raw or raw.get("typ") != "objasnienie" or not isinstance(cards, list):
             raise ValueError("plansze zmienia się tu tylko w objaśnieniu bez szablonu")
-        for ch in slides if isinstance(slides, list) else []:
-            n = ch.get("n") if isinstance(ch, dict) else None
-            if not (isinstance(n, int) and 1 <= n <= len(cards) and isinstance(cards[n - 1], dict)):
-                raise ValueError("plansza %s: nie ma takiej planszy" % n)
+        if not isinstance(slides, list):
+            raise ValueError("zmiany plansz: lista [{n, tekst, podpis}]")
+        for ch in slides:
+            if not isinstance(ch, dict) or "n" not in ch:
+                raise ValueError("zmiana planszy bez numeru (n)")
+            n = ch["n"]
+            if not (isinstance(n, int) and not isinstance(n, bool) and 1 <= n <= len(cards)
+                    and isinstance(cards[n - 1], dict)):
+                raise ValueError("plansza %s: nie ma takiej planszy (jest %d)" % (n, len(cards)))
             for key in ("tekst", "podpis"):
                 if key in ch:
                     if not isinstance(ch[key], str):
@@ -1331,7 +1807,24 @@ def apply_changes(folder, params=None, slides=None):
                         cards[n - 1].pop("podpis", None)
                     else:
                         cards[n - 1][key] = ch[key].strip()
-    _sc, _brand, info = prepare_raw(raw, folder)
+    if music is not UNSET:
+        if music == "" or music is None:
+            raw.pop("muzyka", None)
+        elif music is False:
+            raw["muzyka"] = False
+        else:
+            brand = load_brand(studio_dir(folder))[0]
+            if not (isinstance(music, str) and music in music_list(brand.get("muzyka"))):
+                raise ValueError("podkład: wybierz plik z listy podkładów marki")
+            raw["muzyka"] = music
+    try:
+        _sc, _brand, info = prepare_raw(raw, folder)
+    except ScenarioError as e:
+        # brak pliku w innym polu obrazu (zrzuty wgrywa się po jednym): zapis tej zmiany, film nagra się po ostatnim
+        img = next((p for p in e.meta.get("params") or [] if p["name"] == e.param and p.get("image")), None)
+        if not img or e.param in (params or {}):
+            raise
+        info = {"seconds": 0, "error": str(e), "missing": img["label"]}
     fd, tmp = tempfile.mkstemp(dir=folder, prefix=".scenariusz-", suffix=".tmp")   # własny plik: bez wyścigu
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
@@ -1356,6 +1849,16 @@ class ScenarioChanged(Exception):
 
 
 ERROR_HINTS = (("wymagany w szablonie", "Brakuje treści tego posta (szablon wymaga jej w scenariuszu)."),
+               ("scenariusz posta:", "Błąd w polu tego posta (plansza startowa, końcowa albo podkład), nie w szablonie. "
+                                     "Przekaż agentowi do poprawy scenariusza posta."),
+               ("muzyka:", "Podkład tego filmu jest niedostępny albo ma zły format. Wybierz inny podkład przy filmie "
+                           "albo wgraj plik w Studiu filmów."),
+               ("parametry: obiekt", "Dane filmu w scenariuszu mają zły format. Przekaż agentowi do poprawy."),
+               ("ukryj:", "Lista elementów strony do ukrycia w pokazie ma zły format. Przekaż agentowi do poprawy."),
+               ("obok „szablon”", "Scenariusz ma pole, którego film z szablonu nie przyjmuje (np. „typ”). "
+                                  "Przekaż agentowi do poprawy."),
+               ("przykład parametru", "Błąd w szablonie studia: wartość przykładowa nie mieści się w limicie. "
+                                      "Przekaż agentowi do poprawy szablonu."),
                ("brak parametru", "W scenariuszu brakuje danych do szablonu."),
                ("parametr „", "Jedna z wartości w filmie jest niepoprawna."),
                ("błąd obrazu", "Obraz do planszy jest za duży albo uszkodzony."),
@@ -1366,7 +1869,7 @@ ERROR_HINTS = (("wymagany w szablonie", "Brakuje treści tego posta (szablon wym
                ("logowanie:", "Adres logowania w filmie jest niedozwolony."),
                ("studio/marka.json", "Błąd w ustawieniach marki projektu (studio/marka.json)."),
                ("brak szablonu", "Scenariusz wskazuje szablon, którego nie ma w studiu."),
-               ("brak obrazu", "Brakuje obrazu do planszy."),
+               ("brak obrazu", "Brakuje obrazu do planszy (zrzutu ekranu albo zdjęcia)."),
                ("szablon ", "Błąd w szablonie studia."))
 
 
@@ -1400,6 +1903,14 @@ def describe(folder):
             out.update(params=e.meta["params"], fields=e.meta.get("fields"), editable=["params"],
                        errorParam=e.param, templateTitle=e.meta.get("title", ""),
                        templateDesc=e.meta.get("desc", ""), templateOwner=e.meta.get("owner", ""))
+            pm = next((p for p in e.meta["params"] if p["name"] == e.param), {})
+            label = pm.get("label", "")
+            if label and pm.get("image"):
+                out["errorHint"] = "Brakuje pliku w polu „%s”: wgraj zrzut ekranu albo zdjęcie przyciskiem niżej." % label
+            elif label and "wymagany w szablonie" in out["error"]:
+                out["errorHint"] = "Brakuje treści tego posta: uzupełnij pole „%s”." % label
+            elif label and out["error"].startswith("parametr „%s”: " % e.param):
+                out["errorHint"] = "Popraw pole „%s” (%s)." % (label, out["error"].split(": ", 1)[1])
         try:
             raw = _load_json(os.path.join(folder, SCENARIO))
             out["template"] = str(raw.get("szablon") or "") if isinstance(raw, dict) else ""
@@ -1409,6 +1920,7 @@ def describe(folder):
                 out["kind"], out["templateTitle"] = kind_of(tpl), template_title(tpl, out["template"])
         except (OSError, ValueError, AttributeError):
             pass
+    out["limit"] = POKAZ_MAX if out["kind"] == "pokaz" else OBJ_MAX      # długość docelowa (próg ostrzeżenia)
     out["kindLabel"] = KINDS.get(out["kind"], out["kind"])
     out["kindHelp"] = KIND_HELP.get(out["kind"], "")
     return out
@@ -1446,8 +1958,9 @@ def _version_paths(folder):
     except (OSError, ValueError):
         brand = None
     if isinstance(brand, dict):
-        if isinstance(brand.get("muzyka"), str) and AUDIO_RE.match(brand["muzyka"]):
-            studio_files.append(os.path.join(studio, brand["muzyka"]))
+        song = music_name(folder, brand, sc if isinstance(raw, dict) else {})
+        if song and AUDIO_RE.match(song):
+            studio_files.append(os.path.join(studio, song))
         if isinstance(brand.get("logo"), str) and IMAGE_RE.match(brand["logo"]):
             studio_files.append(os.path.join(studio, brand["logo"]))
     return post, studio_files
@@ -1617,7 +2130,8 @@ def _tokens(text):
     merged, carry = [], ""
     for n, w in enumerate(out):
         bare = w.strip("*„\"(").lower()
-        if bare in GLUE and n < len(out) - 1:
+        # krótki przyimek i liczba („3 dotknięcia”, „10 opisów”, „12 h”) zostają z następnym słowem
+        if (bare in GLUE or re.fullmatch(r"[0-9]+(?:[.,][0-9]+)?", bare)) and n < len(out) - 1:
             carry += w + NBSP
             continue
         merged.append(carry + w)
@@ -1656,7 +2170,8 @@ def _split_long(token, font, maxw):
 
 
 def wrap(text, font, maxw, hyphen=False):
-    """Wiersze o podobnej długości (najmniejsza liczba wierszy, potem najmniejsza najdłuższa linia).
+    """Wiersze o podobnej długości: najmniejsza liczba wierszy, potem najmniejsza suma kwadratów luzu wierszy
+    (bez wiersza z jednym krótkim słowem w środku tekstu wyśrodkowanego), przy remisie krótsza najdłuższa linia.
     None, gdy słowo nie mieści się w wierszu (i hyphen=False)."""
     toks = _tokens(text)
     if hyphen:
@@ -1667,6 +2182,9 @@ def wrap(text, font, maxw, hyphen=False):
         return None
     n = len(toks)
     joined = lambda i, j: " ".join(toks[i:j])  # noqa: E731
+    stars = [0] * (n + 1)                # gwiazdki przed słowem j (nieparzysta liczba: wewnątrz wyróżnienia)
+    for k, t in enumerate(toks):
+        stars[k + 1] = stars[k] + t.count("*")
     w = {}
     for i in range(n):
         for j in range(i + 1, n + 1):
@@ -1685,8 +2203,12 @@ def wrap(text, font, maxw, hyphen=False):
                 prev = best.get((k - 1, i))
                 if prev is None or w[i, j] > maxw:
                     continue
-                score = (max(prev[0], w[i, j]), prev[1] + (maxw - w[i, j]) ** 2, i)
-                if cand is None or score[:2] < cand[:2]:
+                # samotne krótkie słowo w wierszu, który nie jest ostatni: kara (w tekście na środku wygląda jak dziura)
+                lone = (0.6 * maxw) ** 2 if j < n and j - i == 1 and w[i, j] < 0.5 * maxw else 0.0
+                # koniec wiersza w środku wyróżnienia *…*: fraza rozdzielona na dwa wiersze (kara)
+                split = (0.5 * maxw) ** 2 if j < n and stars[j] % 2 else 0.0
+                score = (max(prev[0], w[i, j]), prev[1] + (maxw - w[i, j]) ** 2 + lone + split, i)
+                if cand is None or (score[1], score[0]) < (cand[1], cand[0]):
                     cand = score
             if cand:
                 best[k, j] = cand
@@ -1698,12 +2220,21 @@ def wrap(text, font, maxw, hyphen=False):
     return [ln.replace(NBSP, " ") for ln in reversed(out)]
 
 
-def fit(text, font, maxw, sizes, max_lines):
-    """(czcionka, wiersze): największy rozmiar z sizes, przy którym tekst mieści się w max_lines wierszach."""
-    for size in sizes:
+def fit(text, font, maxw, sizes, max_lines, fewer=0.0):
+    """(czcionka, wiersze): największy rozmiar z sizes, przy którym tekst mieści się w max_lines wierszach.
+    fewer (np. 0.84): mniejszy rozmiar (do tej części największego pasującego), gdy daje mniej wierszy (tytuł
+    w dwóch wierszach zamiast trzech)."""
+    for n, size in enumerate(sizes):
         f = font.at(size)
         lines = wrap(text, f, maxw)
         if lines is not None and len(lines) <= max_lines:
+            for smaller in sizes[n + 1:] if fewer and len(lines) > 1 else []:
+                if smaller < size * fewer:
+                    break
+                g = font.at(smaller)
+                other = wrap(text, g, maxw)
+                if other is not None and len(other) < len(lines):
+                    return g, other
             return f, lines
     for size in sizes:                  # bardzo długie słowo: najpierw łącznik na większym rozmiarze
         f = font.at(size)
@@ -1820,10 +2351,11 @@ def _box_fade(x, top, width, height, color_hex, alpha, at, stop, steps=12, dur=0
     return out
 
 
-def caption_filters(texts, captions, end, style, start_at=None, align="center"):
+def caption_filters(texts, captions, end, style, start_at=None, align="center", last_stop=None):
     """Napisy: [(od, tekst)], każdy do następnego; jedno pudełko pod wszystkimi wierszami, dół pudełka nad dolną
     strefą bezpieczną. style: marka["napisy"] + "font" (Font). start_at: wejście (pudełko i tekst płynnie od tej
-    chwili, plansze objaśnienia); align "left": pudełko i tekst przy lewym marginesie (jak tekst planszy)."""
+    chwili, plansze objaśnienia); align "left": pudełko i tekst przy lewym marginesie (jak tekst planszy).
+    last_stop: ostatni napis znika w tej chwili (przed przejściem do następnego klipu), inaczej stoi do końca."""
     out = []
     font = style["font"]
     size = int(style.get("rozmiar", 56))
@@ -1833,7 +2365,7 @@ def caption_filters(texts, captions, end, style, start_at=None, align="center"):
     sizes = list(range(size, max(30, int(size * 0.7)) - 1, -2))
     bottom = SIZE[1] - SAFE_BOTTOM
     for n, (at, text) in enumerate(captions):
-        stop = captions[n + 1][0] if n + 1 < len(captions) else end + 1
+        stop = captions[n + 1][0] if n + 1 < len(captions) else (last_stop if last_stop is not None else end + 1)
         f, lines = fit(text, font.at(size), TEXT_W - 60, sizes, 3)
         if not lines:
             continue
@@ -1846,13 +2378,11 @@ def caption_filters(texts, captions, end, style, start_at=None, align="center"):
         tx = str(MARGIN + pad_x) if align == "left" else "(w-text_w)/2"
         begin = at if start_at is None else start_at
         on = "between(t,%.2f,%.2f)" % (begin, stop)
-        if start_at is None:
-            out.append("drawbox=x=%s:y=%d:w=%d:h=%d:color=%s:t=fill:enable='%s'" % (bx, top, width, height, box, on))
-        else:
-            out += _box_fade(bx, top, width, height, box_hex, alpha, begin, stop)
+        # wejście jak na planszach objaśnienia (pudełko narasta, tekst wjeżdża): jeden styl napisów w całym filmie
+        out += _box_fade(bx, top, width, height, box_hex, alpha, begin, stop, steps=8, dur=0.3)
         for j, line in enumerate(lines):
             base = top + pad_y + int(f.size * 0.78) + j * line_h
-            out.append(_draw(texts, line, f, color, tx, base, start_at, ":enable='%s'" % on))
+            out.append(_draw(texts, line, f, color, tx, base, begin, ":enable='%s'" % on))
     return out
 
 
@@ -1875,18 +2405,26 @@ def _encode(args, out, final=False, seconds=None):
         ["-an", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "12", "-pix_fmt", "yuv420p", "-r", "30"]
     if seconds:
         codec += ["-t", "%.3f" % seconds]
-    r = subprocess.run(["ffmpeg", "-y", "-v", "error"] + args + codec + [out], capture_output=True, text=True)
+    try:
+        r = subprocess.run(["ffmpeg", "-y", "-v", "error"] + args + codec + [out], capture_output=True, text=True,
+                           timeout=ENCODE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("montaż: ffmpeg nie skończył w %d s" % ENCODE_TIMEOUT)
     if r.returncode != 0:
         raise RuntimeError("montaż: " + (r.stderr.strip().splitlines() or ["ffmpeg"])[-1][:200])
     return out
 
 
-def _clip(out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fade_out=True):
+def _clip(out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fade_out=True, fade_from=None,
+          zoom=False):
     """Plansza: tło w kolorze, opcjonalny obraz (image: (plik, y, maks. wysokość)), logo (logo: (plik, x, y,
     maks. wysokość), x="c" = środek), teksty, pasek postępu (bar: (kolor, y)) przez cały czas planszy.
     first: pierwszy klip filmu, obraz i logo widoczne od pierwszej klatki (miniatura). fade_out: treść gaśnie do
     koloru tła tuż przed przejściem do następnej planszy (FADE_OUT, kończy się w dur − XFADE), więc w przenikaniu
-    jest samo tło i nie nakładają się dwa teksty; ostatni klip filmu bez tego."""
+    jest samo tło i nie nakładają się dwa teksty; ostatni klip filmu bez tego. fade_from (y): gaśnie tylko treść
+    poniżej tej linii (nagłówek z nazwą marki, licznik i pasek postępu planszy objaśnienia stoją bez mrugnięcia).
+    bar: (kolor, y) albo (kolor, y, od, do): pasek rośnie od części od do części do szerokości przez czas planszy
+    do początku przejścia (postęp całej serii plansz). zoom: obraz powoli się przybliża (zrzut ekranu)."""
     args = ["-f", "lavfi", "-i", "color=c=%s:s=%dx%d:r=30:d=%.2f" % (bg, SIZE[0], SIZE[1], dur)]
     graph, cur = [], "[0:v]"
     n = 1
@@ -1894,8 +2432,23 @@ def _clip(out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fad
     if image:
         path, y, maxh = image
         args += media_input(path, dur)
-        graph.append("[%d:v]scale=w=%d:h=%d:force_original_aspect_ratio=decrease,format=rgba%s[img]"
-                     % (n, TEXT_W, maxh, fade))
+        dims = _image_size(path, os.path.splitext(path)[1].lower().lstrip(".")) if zoom else None
+        if dims and dims[1] > dims[0] * PORTRAIT:
+            # pionowy zrzut telefonu: cała szerokość kadru, okno przesuwa się płynnie z góry na dół (pan), zamiast
+            # mieścić cały ekran w 1/3 szerokości
+            run = max(0.5, dur - XFADE - FADE_OUT - 0.9)
+            graph.append("[%d:v]scale=w=%d:h=-2,crop=w=%d:h=%d:x=0:y='(ih-oh)*(0.5-0.5*cos(PI*clip((t-0.6)/%.2f,0,1)))'"
+                         ",format=rgba%s[img]" % (n, TEXT_W, TEXT_W, maxh, run, fade))
+        elif dims:
+            # przybliżenie bez drgań: obraz powiększony 3× przed zoompan (położenie co 1/3 piksela), +10% przez planszę
+            k = min(TEXT_W / dims[0], maxh / dims[1])
+            w0, h0 = max(2, int(dims[0] * k) // 2 * 2), max(2, int(dims[1] * k) // 2 * 2)
+            frames = max(1, int(dur * 30))
+            graph.append("[%d:v]scale=w=%d:h=%d,zoompan=z='1+0.10*on/%d':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2'"
+                         ":d=1:s=%dx%d:fps=30,format=rgba%s[img]" % (n, w0 * 3, h0 * 3, frames, w0, h0, fade))
+        else:
+            graph.append("[%d:v]scale=w=%d:h=%d:force_original_aspect_ratio=decrease,format=rgba%s[img]"
+                         % (n, TEXT_W, maxh, fade))
         graph.append("%s[img]overlay=x=(W-w)/2:y=%d+(%d-h)/2:shortest=1[b%d]" % (cur, y, maxh, n))
         cur, n = "[b%d]" % n, n + 1
     if logo:
@@ -1907,12 +2460,22 @@ def _clip(out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fad
         cur, n = "[b%d]" % n, n + 1
     graph.append("%s%s[txt]" % (cur, ",".join(draws) if draws else "null"))
     cur = "[txt]"
+    fading = fade_out and dur > XFADE + FADE_OUT + 0.5
+    if fading and fade_from is not None:       # treść gaśnie pod nagłówkiem, nagłówek i pasek zostają
+        bg_hex = bg[2:8] if bg.startswith("0x") else bg
+        graph.append("%s%s[faded]" % (cur, ",".join(_box_fade("0", fade_from, SIZE[0], SIZE[1] - fade_from,
+                                                                 "#" + bg_hex, 1.0, dur - XFADE - FADE_OUT, dur + 1,
+                                                                 steps=6, dur=FADE_OUT))))
+        cur = "[faded]"
     if bar:
-        color, y = bar
+        color, y = bar[:2]
+        f0, f1 = (bar[2], bar[3]) if len(bar) >= 4 else (0.0, 1.0)
+        run = max(0.5, dur - XFADE) if len(bar) >= 4 else dur
         args += ["-f", "lavfi", "-i", "color=c=%s:s=%dx8:r=30:d=%.2f" % (color, SIZE[0], dur)]
-        graph.append("%s[%d:v]overlay=x='-w+w*t/%.2f':y=%d:shortest=1[bar]" % (cur, n, dur, y))
+        graph.append("%s[%d:v]overlay=x='-w+w*min(%.4f,%.4f+%.4f*t/%.2f)':y=%d:shortest=1[bar]"
+                     % (cur, n, f1, f0, f1 - f0, run, y))
         cur = "[bar]"
-    if fade_out and dur > XFADE + FADE_OUT + 0.5:
+    if fading and fade_from is None:
         graph.append("%sfade=t=out:st=%.2f:d=%.2f:color=%s[faded]" % (cur, dur - XFADE - FADE_OUT, FADE_OUT, bg))
         cur = "[faded]"
     graph.append("%sformat=yuv420p[out]" % cur)
@@ -1929,12 +2492,13 @@ def logo_path(brand, studio):
     return path if os.path.isfile(path) and _inside(path, studio) and not media_error(path, "image") else None
 
 
-def brand_card(brand, card, which, work, texts, name, first=False, studio=None, hook=False):
+def brand_card(brand, card, which, work, texts, name, first=False, studio=None, hook=False, delay=0.0):
     """Plansza startowa albo końcowa (kolory odwrócone: tło = kolor tekstu marki). Logo (gdy jest), tytuł, podtytuł,
     kreska akcentu i adres w jednym bloku na środku kadru (poza strefami zasłanianymi przez interfejs aplikacji).
     Podtytuł i adres w kolorze tekstu planszy (na startowej co najmniej 52 px, na końcowej, gdzie są wezwaniem do
     działania, co najmniej rozmiar napisów); akcent tylko na kresce. first: tekst stoi od pierwszej klatki
-    (miniatura, hak). hook: plansza startowa z hakiem posta (krótszy czas, brand_time)."""
+    (miniatura, hak). hook: plansza startowa z hakiem posta (krótszy czas, brand_time). delay (s): treść wchodzi
+    później (plansza po planszy w innym kolorze tła: tytuł nie wjeżdża w trakcie przenikania tła)."""
     kol = brand["kolory"]
     bg_hex, fg_hex = card.get("tlo") or kol["tekst"], card.get("kolor") or kol["tlo"]
     bg, fg = _col(bg_hex), _col(fg_hex)
@@ -1955,7 +2519,7 @@ def brand_card(brand, card, which, work, texts, name, first=False, studio=None, 
     top = max(SAFE_TOP, (SAFE_TOP + SIZE[1] - SAFE_BOTTOM) // 2 - block // 2)
     still = first                  # pierwsza klatka filmu: bez wejścia
     quick = dur < 2.5
-    at = lambda t: None if still else t  # noqa: E731
+    at = lambda t: None if still else t + delay  # noqa: E731
     draws = []
     y = top + (logo_h + 60 if logo else 0)
     draws += [_draw(texts, ln, title_f, fg, "(w-text_w)/2", y + int(title_f.size * 0.9) + j * t_h,
@@ -1963,7 +2527,7 @@ def brand_card(brand, card, which, work, texts, name, first=False, studio=None, 
     y += len(title) * t_h
     if rule:
         draws.append("drawbox=x=(iw-120)/2:y=%d:w=120:h=6:color=%s:t=fill%s"
-                     % (y + 22, accent, "" if still else ":enable='gte(t,0.3)'"))
+                     % (y + 22, accent, "" if still else ":enable='gte(t,%.2f)'" % (0.3 + delay)))
         y += 40
     if sub:
         y += 36
@@ -1972,18 +2536,68 @@ def brand_card(brand, card, which, work, texts, name, first=False, studio=None, 
         y += len(sub) * s_h
     if card.get("adres"):
         draws.append("drawbox=x=(iw-160)/2:y=%d:w=160:h=6:color=%s:t=fill%s"
-                     % (y + 44, accent, "" if still else ":enable='gte(t,0.5)'"))
+                     % (y + 44, accent, "" if still else ":enable='gte(t,%.2f)'" % (0.5 + delay)))
         draws.append(_draw(texts, card["adres"], addr_f, fg, "(w-text_w)/2", y + 136, at(0.55)))
     return _clip(os.path.join(work, name), bg, dur, draws, logo=(logo, "c", top, logo_h) if logo else None,
                  first=first, fade_out=not outro)
 
 
-def explainer_clips(cards, brand, work, texts, folder=None, prefix="plansza", counter=True, first=False):
+LAYOUTS = {"tekst": "tekst od lewej, podpis w pudełku", "srodek": "tekst na środku",
+           "liczba": "duża liczba albo słowo *w gwiazdkach* na środku, opis pod nią",
+           "cytat": "cytat z dużym cudzysłowem, podpis jako autor",
+           "lista": "lista do 5 punktów (oddzielonych średnikiem) wchodzących po kolei",
+           "zrzut": "duży obraz pod nagłówkiem, tekst pod nim: pionowy zrzut telefonu na całą szerokość, przesuwany "
+                    "z góry na dół; zdjęcie albo poziomy zrzut z powolnym przybliżeniem"}
+LIST_MAX = 5
+PORTRAIT = 1.25                   # obraz wyższy niż szerszy o tyle: zrzut telefonu (układ „zrzut”: pełna szerokość i pan)
+
+
+def _layout_center(c):
+    """Plansza, która sama nadaje się na środek: bez podpisu i obrazu, pytanie albo krótkie hasło."""
+    return not c.get("obraz") and not c.get("podpis") and (_plain(c["tekst"]).strip().endswith("?")
+                                                          or len(_plain(c["tekst"])) <= 32)
+
+
+def layouts(cards):
+    """Układ każdej planszy serii: "uklad" z planszy, inaczej według serii, nie długości jednego tekstu: plansza
+    otwierająca (pytanie, krótkie hasło) może być na środku, pozostałe są na środku tylko wtedy, gdy wszystkie się
+    do tego nadają (kroki 1, 2 i 3 w tym samym układzie)."""
+    rest = cards[1:]
+    rest_center = bool(rest) and all(_layout_center(c) for c in rest)
+    out = []
+    for i, c in enumerate(cards):
+        own = c.get("uklad")
+        if own in LAYOUTS:
+            out.append(own)
+        elif c.get("obraz"):
+            out.append("tekst")
+        elif _layout_center(c) and (i == 0 or rest_center):
+            out.append("srodek")
+        else:
+            out.append("tekst")
+    return out
+
+
+def _number_split(text):
+    """Plansza „liczba”: (liczba, opis) z pierwszego *wyróżnienia* (albo pierwszego słowa)."""
+    m = re.search(r"\*([^*]+)\*", text)
+    if m:
+        return m.group(1).strip(), (text[:m.start()] + text[m.end():]).replace("*", "").strip(" ,.:–-")
+    head, _, tail = text.strip().partition(" ")
+    return head.replace("*", ""), tail.replace("*", "").strip()
+
+
+def explainer_clips(cards, brand, work, texts, folder=None, prefix="plansza", counter=True, first=False,
+                    fade_last=False, delay_first=0.0):
     """Plansze objaśnienia, każda osobnym klipem. Nazwa marki (albo logo w rogu) i licznik pod górną strefą,
-    pasek postępu w kolorze akcentu pod nimi, tekst (dopasowany rozmiar, *słowo* w akcencie) wchodzi wiersz po
-    wierszu i powoli dryfuje, opcjonalny obraz nad tekstem, podpis wchodzi jako druga informacja w pudełku napisów
-    przy lewym marginesie, nad dolną strefą. cards: lista plansz (także plansze_przed / plansze_po pokazu).
-    first: pierwsza plansza jest pierwszym klipem filmu, więc tekst stoi od pierwszej klatki (hak, miniatura)."""
+    pasek postępu całej serii w kolorze akcentu pod nimi: te elementy stoją bez wygaszania, gaśnie tylko treść.
+    Układ planszy (layouts): tekst od lewej (wchodzi wiersz po wierszu i powoli dryfuje, podpis w pudełku przy lewym
+    marginesie nad dolną strefą), środek, liczba, cytat, lista punktów, zrzut (duży obraz z przybliżeniem).
+    cards: lista plansz (także plansze_przed / plansze_po pokazu). first: pierwsza plansza jest pierwszym klipem
+    filmu, więc tekst stoi od pierwszej klatki (hak, miniatura). fade_last: po ostatniej planszy idzie plansza
+    w innym kolorze tła (plansza końcowa marki), więc gaśnie cała klatka, także nazwa marki, licznik i pasek
+    (w przenikaniu tła nie zostaje nagłówek na wchodzącej planszy). delay_first (s): treść pierwszej planszy wchodzi
+    później (plansza wsuwa się po planszy w innym kolorze tła: tekst dopiero po przejściu)."""
     kol = brand["kolory"]
     bg_hex, fg_hex = kol["tlo"], kol["tekst"]
     bg, fg = _col(bg_hex), _col(fg_hex)
@@ -1998,73 +2612,172 @@ def explainer_clips(cards, brand, work, texts, folder=None, prefix="plansza", co
     corner = logo_path(brand, studio) if brand.get("logo_w_rogu") else None
     out = []
     head = HEAD_Y                              # linia bazowa nazwy marki i licznika: pod górną nakładką aplikacji
+    plan = layouts(cards)
+    total = sum(card_time(c, hook=first and i == 0)[0] for i, c in enumerate(cards))
+    done = 0.0
+    bottom = SIZE[1] - SAFE_BOTTOM
     for i, c in enumerate(cards):
         still = first and i == 0
         dur = card_time(c, hook=still)[0]
+        lay = plan[i]
         img = image_path(folder, c["obraz"]) if folder and c.get("obraz") else None
-        # pytanie albo krótkie hasło bez podpisu i obrazu: większy tekst na środku (inny rytm niż plansze z podpisem)
-        center = not img and not c.get("podpis") and (_plain(c["tekst"]).strip().endswith("?")
-                                                      or len(_plain(c["tekst"])) <= 32)
-        sizes, max_lines = (list(range(80, 55, -4)), 3) if img else \
-            (list(range(104, 67, -4)), 4) if center else (list(range(92, 59, -4)), 5)
-        f, lines = fit(c["tekst"].strip(), _font(brand, "tytul", sizes[0]), TEXT_W, sizes, max_lines)
-        line_h = int(f.size * 1.18)
-        region = (1010, 1330) if img else (530, SIZE[1] - SAFE_BOTTOM - (230 if c.get("podpis") else 80))
-        block = len(lines) * line_h
-        top = max(region[0], (region[0] + region[1]) // 2 - block // 2)
+        d0 = 0.0 if still or i else float(delay_first or 0.0)
+        at = lambda t: None if still else t + d0  # noqa: E731
         draws = []
         if brand.get("nazwa") and not corner:
             draws.append(_draw(texts, brand["nazwa"], small, head_col, str(MARGIN), head))
         if counter and len(cards) > 1:
-            draws.append(_draw(texts, "%d/%d" % (i + 1, len(cards)), small,
-                               _col(readable(bg_hex, kol.get("akcent2"), kol["akcent"], fg_hex)),
-                               "w-%d-text_w" % MARGIN, head))
-        rule_x = "(iw-120)/2" if center else str(MARGIN)
-        draws.append("drawbox=x=%s:y=%d:w=120:h=10:color=%s:t=fill%s"
-                     % (rule_x, top - 56, accent, "" if still else ":enable='gte(t,0.1)'"))
-        step = min(0.12, 0.6 / max(1, len(lines)))
-        state = False
-        for j, ln in enumerate(lines):
-            x = str(int(round((SIZE[0] - f.width(_plain(ln))) / 2))) if center else str(MARGIN)
-            part, state = _draw_line(texts, ln, f, fg, accent, x, top + int(f.size * 0.92) + j * line_h,
-                                     None if still else 0.15 + step * j, drift=(dur, 18), state=state)
-            draws += part
-        if c.get("podpis"):
-            at = HOOK_CAPTION_AT if still else min(dur - 1.0, max(CAPTION_AT, 0.45 + step * len(lines)))
-            draws += caption_filters(texts, [(at, c["podpis"])], dur, style, start_at=at, align="left")
-        out.append(_clip(os.path.join(work, "%s-%02d.mp4" % (prefix, i + 1)), bg, dur, draws,
-                         image=(img, 470, 500) if img else None, bar=(accent, BAR_Y),
-                         logo=(corner, MARGIN, HEAD_Y - 58, 64) if corner else None, first=still))
+            # w czasie przenikania licznik pokazuje jeszcze poprzedni numer (bez mieszania „1/4” z „2/4”)
+            cnt_col = _col(readable(bg_hex, kol.get("akcent2"), kol["akcent"], fg_hex))
+            if i:
+                draws.append(_draw(texts, "%d/%d" % (i, len(cards)), small, cnt_col, "w-%d-text_w" % MARGIN, head,
+                                   extra=":enable='lt(t,%.2f)'" % XFADE))
+            draws.append(_draw(texts, "%d/%d" % (i + 1, len(cards)), small, cnt_col, "w-%d-text_w" % MARGIN, head,
+                               extra=":enable='gte(t,%.2f)'" % XFADE if i else ""))
+        caption_left = True
+        if lay == "liczba":
+            num, rest = _number_split(c["tekst"])
+            nf, nl = fit(num, _font(brand, "tytul", 300), TEXT_W, list(range(300, 119, -20)), 1)
+            df, dl = fit(rest, _font(brand, "tytul", 76), TEXT_W, list(range(76, 51, -4)), 3, fewer=0.84) \
+                if rest else (None, [])
+            nh, dh = int(nf.size * 1.05), (int(df.size * 1.2) if df else 0)
+            block = nh + (40 + len(dl) * dh if dl else 0)
+            top = max(530, (530 + bottom - (230 if c.get("podpis") else 80)) // 2 - block // 2)
+            draws += [_draw(texts, ln, nf, accent, "(w-text_w)/2", top + int(nf.size * 0.92), at(0.1))
+                      for ln in nl]
+            draws += [_draw(texts, ln, df, fg, "(w-text_w)/2", top + nh + 40 + int(df.size * 0.92) + j * dh,
+                            at(0.45 + 0.1 * j)) for j, ln in enumerate(dl)]
+        elif lay == "cytat":
+            f, lines = fit(c["tekst"].strip().strip("„”\""), _font(brand, "tytul", 84), TEXT_W - 40,
+                           list(range(84, 55, -4)), 5)
+            line_h = int(f.size * 1.22)
+            qf = _font(brand, "tytul", 260)
+            block = 170 + len(lines) * line_h + (110 if c.get("podpis") else 0)
+            top = max(500, (500 + bottom - 80) // 2 - block // 2)
+            # duży górny cudzysłów nad tekstem (znak cytatu, nie zamknięcie); wchodzi po przejściu z poprzedniej planszy
+            draws.append(_draw(texts, "“", qf, accent, str(MARGIN - 10), top + 190, at(XFADE)))
+            state = False
+            for j, ln in enumerate(lines):
+                part, state = _draw_line(texts, ln, f, fg, accent, str(MARGIN), top + 170 + int(f.size * 0.92)
+                                         + j * line_h, at(0.2 + 0.1 * j), state=state)
+                draws += part
+            if c.get("podpis"):
+                af = _font(brand, "tekst", 52)
+                draws.append(_draw(texts, "— " + c["podpis"], af, accent, str(MARGIN),
+                                   top + 170 + len(lines) * line_h + 80, at(CAPTION_AT if not still else 0.4)))
+            caption_left = False
+        elif lay == "lista":
+            items = [x.strip() for x in c["tekst"].split(";") if x.strip()][:LIST_MAX]
+            sizes = list(range(76, 51, -4))
+            f = _font(brand, "tytul", sizes[0])
+            for size in sizes:
+                f = f.at(size)
+                if all(wrap(x, f, TEXT_W - 110) and len(wrap(x, f, TEXT_W - 110)) <= 2 for x in items):
+                    break
+            rows = [wrap(x, f, TEXT_W - 110) or [x] for x in items]
+            line_h, gap = int(f.size * 1.18), int(f.size * 0.55)
+            block = sum(len(r) for r in rows) * line_h + gap * (len(rows) - 1)
+            top = max(530, (530 + bottom - (230 if c.get("podpis") else 80)) // 2 - block // 2)
+            y = top
+            step = min(0.6, max(0.3, (dur - 1.5) / max(1, len(rows))))
+            for k, r in enumerate(rows):
+                when = None if still and k == 0 else 0.2 + step * k + d0
+                draws.append(_draw(texts, "%d." % (k + 1), f, accent, str(MARGIN), y + int(f.size * 0.92), when))
+                state = False
+                for j, ln in enumerate(r):
+                    part, state = _draw_line(texts, ln, f, fg, accent, str(MARGIN + 110),
+                                             y + int(f.size * 0.92) + j * line_h, when, state=state)
+                    draws += part
+                y += len(r) * line_h + gap
+        else:
+            center = lay == "srodek"
+            big = lay == "zrzut" and img
+            sizes, max_lines = (list(range(64, 47, -4)), 2) if big else (list(range(80, 55, -4)), 3) if img else \
+                (list(range(104, 67, -4)), 4) if center else (list(range(92, 59, -4)), 5)
+            f, lines = fit(c["tekst"].strip(), _font(brand, "tytul", sizes[0]), TEXT_W, sizes, max_lines,
+                           fewer=0.84 if center else 0.0)
+            line_h = int(f.size * 1.18)
+            region = (1330, bottom - (230 if c.get("podpis") else 60)) if big else (1010, 1330) if img else \
+                (530, bottom - (230 if c.get("podpis") else 80))
+            block = len(lines) * line_h
+            top = max(region[0], (region[0] + region[1]) // 2 - block // 2)
+            rule_x = "(iw-120)/2" if center else str(MARGIN)
+            if not big:
+                draws.append("drawbox=x=%s:y=%d:w=120:h=10:color=%s:t=fill%s"
+                             % (rule_x, top - 56, accent, "" if still else ":enable='gte(t,%.2f)'" % (0.1 + d0)))
+            step = min(0.12, 0.6 / max(1, len(lines)))
+            state = False
+            for j, ln in enumerate(lines):
+                x = str(int(round((SIZE[0] - f.width(_plain(ln))) / 2))) if center else str(MARGIN)
+                part, state = _draw_line(texts, ln, f, fg, accent, x, top + int(f.size * 0.92) + j * line_h,
+                                         None if still else 0.15 + step * j + d0, drift=(dur, 18), state=state)
+                draws += part
+        if c.get("podpis") and caption_left:
+            n_items = len(draws)
+            at_cap = HOOK_CAPTION_AT if still else min(dur - 1.0, max(CAPTION_AT, 0.45 + 0.1 * min(6, n_items)) + d0)
+            draws += caption_filters(texts, [(at_cap, c["podpis"])], dur, style, start_at=at_cap, align="left")
+        image = None
+        if img:
+            image = (img, 470, 820) if lay == "zrzut" else (img, 470, 500)
+        f0, f1 = done / total if total else 0.0, (done + dur) / total if total else 1.0
+        done += dur
+        out.append(_clip(os.path.join(work, "%s-%02d.mp4" % (prefix, i + 1)), bg, dur, draws, image=image,
+                         bar=(accent, BAR_Y, f0, f1), logo=(corner, MARGIN, HEAD_Y - 58, 64) if corner else None,
+                         first=still, fade_from=None if fade_last and i == len(cards) - 1 else BAR_Y + 14,
+                         zoom=lay == "zrzut" and bool(img)))
     return out
 
 
+PROBE_DEMUXER = dict(DEMUXER, mp4="mov", webm="matroska")    # klipy montażu i nagranie Playwright
+PROBE_TIMEOUT = 30                # s: ffprobe jednego pliku
+ENCODE_TIMEOUT = 300              # s: jedno wywołanie ffmpeg (także `film.py nagraj` z wiersza poleceń)
+
+
 def _duration(path):
-    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
-                           capture_output=True, text=True)
+    """Długość pliku (s) z ffprobe: tylko pliki lokalne, demuxer z rozszerzenia (jak media_input), z limitem czasu;
+    0.0, gdy się nie da."""
+    ext = os.path.splitext(path)[1].lower().lstrip(".")
+    fmt = ["-f", PROBE_DEMUXER[ext]] if ext in PROBE_DEMUXER else []
+    try:
+        probe = subprocess.run(["ffprobe", "-v", "error", "-protocol_whitelist", "file"] + fmt +
+                               ["-show_entries", "format=duration", "-of", "csv=p=0", path],
+                               capture_output=True, text=True, timeout=PROBE_TIMEOUT)
+    except (OSError, subprocess.TimeoutExpired):
+        return 0.0
     try:
         return float(probe.stdout.strip() or 0)
     except ValueError:
         return 0.0
 
 
+def far_bg(a, b):
+    """Tła o dużej różnicy jasności (jasna plansza objaśnienia i ciemna plansza marki): przenikanie przeszłoby przez
+    szarość, więc przejście to przesunięcie."""
+    try:
+        return bool(a and b) and contrast(str(a), str(b)) >= 3
+    except (TypeError, ValueError):
+        return False
+
+
 def transition(a, b):
-    """Przejście między klipami o tłach a i b (#rrggbb albo None = nagranie strony). Między planszami: przenikanie
-    (treść poprzedniej planszy najpierw gaśnie do jej tła, _clip fade_out, więc teksty się nie nakładają, a tło
-    przechodzi wprost w kolor następnej planszy, bez czerni przed wezwaniem na końcu). Z nagraniem strony: przez
-    czerń (obraz strony nie ma wygaszenia)."""
+    """Przejście między klipami o tłach a i b (#rrggbb albo None = nagranie strony). Między planszami w podobnych
+    kolorach: przenikanie (treść poprzedniej planszy najpierw gaśnie do jej tła, _clip fade_out, więc teksty się nie
+    nakładają). Jasne tło ↔ ciemne: następna plansza wsuwa się od dołu (bez brudnej szarości w przenikaniu), a jej
+    treść wchodzi po przejściu. Z nagraniem strony: przez czerń."""
     if a and b:
-        return "fade"
+        return "slideup" if far_bg(a, b) else "fade"
     return "fadeblack"
 
 
-def assemble(parts, out, work, music=None):
-    """Skleja klipy [(plik, czas)] albo [(plik, czas, tło)] przejściem (XFADE) w film.mp4 z dźwiękiem (muzyka marki
-    albo cisza); zapis przez plik tymczasowy."""
+def assemble(parts, out, work, music=None, previous=None):
+    """Skleja klipy [(plik, czas)] albo [(plik, czas, tło)] przejściem (XFADE) w film.mp4 z dźwiękiem (podkład
+    z normalizacją głośności albo cisza); zapis przez plik tymczasowy. previous: dotychczasowy film zostaje pod tą
+    nazwą (porównanie wersji w panelu)."""
     tmp = os.path.join(work, "film.mp4")
     parts = [tuple(p) + (None,) * (3 - len(p)) for p in parts]
     args, graph = [], []
     for i, (p, _d, _bg) in enumerate(parts):
-        args += ["-i", p]
+        args += ["-protocol_whitelist", "file", "-i", p]
         graph.append("[%d:v]settb=AVTB,fps=30,setsar=1,format=yuv420p[v%d]" % (i, i))
     prev, total = "[v0]", parts[0][1]
     for i in range(1, len(parts)):
@@ -2074,23 +2787,41 @@ def assemble(parts, out, work, music=None):
     graph.append("%snull[vout]" % prev)
     n = len(parts)
     if music:
-        args += media_input(music)
-        graph.append("[%d:a]atrim=0:%.3f,afade=t=in:d=0.5,afade=t=out:st=%.3f:d=1.5,volume=0.8[aout]"
-                     % (n, total, max(0, total - 1.5)))
+        mdur = _duration(music)
+        src = "[%d:a]" % n
+        if LOOP_X * 2 < mdur < total + 0.5:
+            # utwór krótszy niż film: kolejne kopie z przenikaniem na szwie (bez słyszalnego cięcia pętli)
+            copies = min(8, max(2, int(math.ceil((total - LOOP_X) / (mdur - LOOP_X)))))
+            for _ in range(copies):
+                args += media_input(music, loop=False)
+            for k in range(1, copies):
+                graph.append("%s[%d:a]acrossfade=d=%.2f:c1=tri:c2=tri[m%d]" % (src, n + k, LOOP_X, k))
+                src = "[m%d]" % k
+        else:
+            args += media_input(music)
+        # głośność wyrównana do poziomu platform (ok. -14 LUFS, szczyty do -1,5 dBTP), potem wejście i wyciszenie
+        graph.append("%satrim=0:%.3f,asetpts=PTS-STARTPTS,loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000,"
+                     "afade=t=in:d=0.5,afade=t=out:st=%.3f:d=1.5[aout]" % (src, total, max(0, total - 1.5)))
     else:
         args += ["-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo"]
         graph.append("[%d:a]atrim=0:%.3f[aout]" % (n, total))
     _encode(args + ["-filter_complex", ";".join(graph), "-map", "[vout]", "-map", "[aout]"], tmp, final=True,
             seconds=total)
     shutil.move(tmp, out + ".tmp")
+    if previous and os.path.isfile(out):
+        try:
+            os.replace(out, previous)
+        except OSError:
+            pass
     os.replace(out + ".tmp", out)
     return out
 
 
 def record(folder, expect_kind=None):
     """Nagrywa scenariusz do film.mp4 (pokaz albo objaśnienie, z planszami marki; pokaz także z planszami przed
-    i po nagraniu strony). Zwraca ścieżkę filmu; błąd: wyjątek z opisem po polsku. expect_kind: rodzaj ustalony
-    przy starcie (zmiana w trakcie: błąd)."""
+    i po nagraniu strony), obok film.srt (napisy i teksty plansz z czasami) i film-4x5.mp4 (wersja do feedu).
+    Zwraca ścieżkę filmu; błąd: wyjątek z opisem po polsku. expect_kind: rodzaj ustalony przy starcie (zmiana
+    w trakcie: błąd)."""
     try:
         sc, brand, info = prepare(folder)
     except ValueError as e:
@@ -2102,33 +2833,174 @@ def record(folder, expect_kind=None):
     studio = studio_dir(folder)
     kol = brand["kolory"]
     try:
-        parts = []
+        parts, subs = [], []          # subs: napisy każdej części [(od, do, tekst)] względem jej początku
         intro, outro = _card(brand, sc, "plansza_startowa"), _card(brand, sc, "plansza_koncowa")
         card_bg = lambda c: c.get("tlo") or kol["tekst"]  # noqa: E731
+        card_text = lambda c: "\n".join(str(c.get(k)) for k in ("tytul", "podtytul", "adres") if c.get(k))  # noqa: E731
         if intro:
             hook = is_hook(sc)                  # hak: sam tekst, bez logo, krótszy czas
             parts.append(brand_card(brand, intro, "plansza_startowa", work, texts, "start.mp4", first=True,
                                     studio=None if hook else studio, hook=hook) + (card_bg(intro),))
+            subs.append([(0.0, parts[-1][1] - XFADE, card_text(intro))])
 
-        def slides(cards, prefix, counter=True):
-            return [p + (kol["tlo"],) for p in explainer_clips(cards, brand, work, texts, folder, prefix, counter,
-                                                               first=not parts)]
+        # po ostatniej planszy plansza końcowa w innym kolorze tła: cała klatka gaśnie, tytuł wchodzi po przejściu
+        contrast_end = bool(outro) and str(card_bg(outro)).lower() != str(kol["tlo"]).lower()
+
+        def slides(cards, prefix, counter=True, last=False):
+            # po planszy w innym kolorze tła (hak, plansza marki) plansza wsuwa się, a tekst wchodzi po przejściu
+            late = XFADE if parts and far_bg(parts[-1][2], kol["tlo"]) else 0.0
+            out = [p + (kol["tlo"],) for p in explainer_clips(cards, brand, work, texts, folder, prefix, counter,
+                                                              first=not parts, fade_last=last and contrast_end,
+                                                              delay_first=late)]
+            for c, p in zip(cards, out):
+                subs.append([(0.15 if parts or p is not out[0] else 0.0, p[1] - XFADE,
+                              _plain(c["tekst"]) + ("\n" + c["podpis"] if c.get("podpis") else ""))])
+            return out
         if info["kind"] == "objasnienie":
-            parts += slides(sc["plansze"], "plansza")
+            parts += slides(sc["plansze"], "plansza", last=True)
         else:
             if sc.get("plansze_przed"):
                 parts += slides(sc["plansze_przed"], "przed", counter=False)
-            clip = record_page(folder, sc, brand, work)
+            clip, page_subs = record_page(folder, sc, brand, work)
             parts.append((clip, _duration(clip), None))
+            subs.append(page_subs)
             if sc.get("plansze_po"):
-                parts += slides(sc["plansze_po"], "po", counter=False)
+                parts += slides(sc["plansze_po"], "po", counter=False, last=True)
         if outro:
-            parts.append(brand_card(brand, outro, "plansza_koncowa", work, texts, "koniec.mp4", studio=studio)
-                         + (card_bg(outro),))
-        music = os.path.join(studio, brand["muzyka"]) if brand.get("muzyka") else None
-        return assemble(parts, os.path.join(folder, "film.mp4"), work, music)
+            after_card = bool(parts) and parts[-1][2] is not None and contrast_end
+            late = XFADE if after_card and far_bg(parts[-1][2], card_bg(outro)) else XFADE * 0.7 if after_card else 0.0
+            parts.append(brand_card(brand, outro, "plansza_koncowa", work, texts, "koniec.mp4", studio=studio,
+                                    delay=late) + (card_bg(outro),))
+            subs.append([(0.05, parts[-1][1], card_text(outro))])
+        song = music_name(folder, brand, sc)
+        music = os.path.join(studio, song) if song else None
+        out = assemble(parts, os.path.join(folder, "film.mp4"), work, music,
+                       previous=os.path.join(folder, PREVIOUS))
+        if song and not isinstance(sc.get("muzyka"), str):
+            pin_music(folder, song)           # podkład z listy marki zostaje przy tym poście
+        for name in (FEED, SRT):              # dodatki poprzedniego filmu nie mogą zostać przy nowym
+            try:
+                os.remove(os.path.join(folder, name))
+            except OSError:
+                pass
+        timeline, at, page_span = [], 0.0, None
+        for n, ((_p, dur, bg), items) in enumerate(zip(parts, subs)):
+            # napis części kończy się przed początkiem następnej (SRT bez nakładających się wpisów)
+            cap = dur - XFADE if n + 1 < len(parts) else dur
+            timeline += [(at + a, at + min(b, cap), t) for a, b, t in items if t and min(b, cap) > a]
+            if bg is None:                    # nagranie strony: środek przejść przez czerń (zmiana kadru 4:5)
+                page_span = (at + (XFADE / 2 if n else 0.0), at + dur - (XFADE / 2 if n + 1 < len(parts) else 0.0))
+                # zmiana kadru 4:5 w środku przejścia przez czerń (feed_crop): skok niewidoczny
+            at += dur - XFADE
+        _write_atomic(os.path.join(folder, SRT), srt_text(timeline))
+        try:
+            feed_variant(out, os.path.join(folder, FEED), work, page=page_span, bg=kol["tlo"])
+        except RuntimeError as e:             # wersja 4:5 to dodatek: film główny zostaje
+            print("film.py: wersja 4:5: %s" % e, file=sys.stderr)
+        return out
     finally:
         shutil.rmtree(work, ignore_errors=True)
+
+
+def _srt_time(sec):
+    ms = int(round(max(0.0, sec) * 1000))
+    return "%02d:%02d:%02d,%03d" % (ms // 3600000, ms // 60000 % 60, ms // 1000 % 60, ms % 1000)
+
+
+def srt_text(items):
+    """Napisy SRT z [(od, do, tekst)] (tekst może mieć kilka wierszy)."""
+    out = []
+    for n, (a, b, text) in enumerate(items, 1):
+        out += [str(n), "%s --> %s" % (_srt_time(a), _srt_time(b)), str(text).strip(), ""]
+    return "\n".join(out)
+
+
+def _write_atomic(path, text):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def feed_crop(page=None, bg="#000000"):
+    """Filtr kadru 4:5 (-filter_complex, wyjście [v]): plansze przycięte FEED_CROP. W czasie nagrania strony (page:
+    (od, do) w filmie) cały pionowy kadr zmniejszony do wysokości 1350 na tle marki (bg): zostaje pasek strony
+    z logo i napis na dole (przycięcie zabrałoby jedno albo drugie)."""
+    h, y = FEED_CROP
+    crop = "crop=%d:%d:0:%d" % (SIZE[0], h, y)
+    if not page:
+        return "[0:v]%s[v]" % crop
+    w = int(SIZE[0] * h / SIZE[1]) // 2 * 2
+    return ("[0:v]split[a][b];[a]%s[c];[b]scale=%d:%d:flags=lanczos,pad=%d:%d:(ow-iw)/2:0:color=%s[p];"
+            "[c][p]overlay=0:0:enable='between(t,%.3f,%.3f)'[v]" % (crop, w, h, SIZE[0], h, "0x" + _hex6(bg),
+                                                                     page[0], page[1]))
+
+
+def feed_variant(src, out, work, page=None, bg="#000000"):
+    """Wersja 4:5 (1080×1350) do feedu LinkedIn i Facebook: kadr ze środka filmu pionowego (FEED_CROP; nagranie
+    strony zmniejszone na tle marki, feed_crop), dźwięk bez zmian; zapis przez plik tymczasowy."""
+    tmp = os.path.join(work, "feed.mp4")
+    try:
+        r = subprocess.run(["ffmpeg", "-y", "-v", "error", "-protocol_whitelist", "file", "-i", src,
+                            "-filter_complex", feed_crop(page, bg), "-map", "[v]", "-map", "0:a?",
+                            "-c:v", "libx264", "-preset", "medium", "-crf", "21",
+                            "-pix_fmt", "yuv420p", "-c:a", "copy", "-movflags", "+faststart", tmp],
+                           capture_output=True, text=True, timeout=ENCODE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("ffmpeg nie skończył w %d s" % ENCODE_TIMEOUT)
+    if r.returncode != 0:
+        raise RuntimeError((r.stderr.strip().splitlines() or ["ffmpeg"])[-1][:200])
+    shutil.move(tmp, out + ".tmp")
+    os.replace(out + ".tmp", out)
+    return out
+
+
+def step_label(k):
+    """Krok pokazu po polsku dla komunikatu błędu (bez selektorów): co robi i z jakim napisem."""
+    what = "wpisanie „%s”" % str(k["wpisz"][1])[:40] if k.get("wpisz") else \
+        "wybór „%s”" % str(k["wybierz"][1])[:40] if k.get("wybierz") else \
+        "kliknięcie" if k.get("kliknij") else "czekanie na wynik" if k.get("czekaj_na") else \
+        "przewinięcie strony" if k.get("przewin") else "rozwinięcie sekcji" if k.get("rozwin") else "napis"
+    return what + (", napis „%s”" % str(k["napis"])[:40] if k.get("napis") and what != "napis" else
+                   " „%s”" % str(k["napis"])[:40] if k.get("napis") else "")
+
+
+def step_error(e):
+    """Pierwsze zdanie błędu Playwright po polsku tam, gdzie się da."""
+    msg = str(e).split("\n")[0][:200]
+    if "Timeout" in msg or "timeout" in msg:
+        return "element strony nie pojawił się na czas (zmieniła się strona albo selektor w scenariuszu)"
+    if "not attached" in msg or "not visible" in msg or "outside of the viewport" in msg:
+        return "element strony jest niewidoczny albo zniknął"
+    return msg
+
+
+RECORD_HINTS = (("brak konta demo", "Dodaj konto demo do nagrań: Agenci → Publikacja → Konto do nagrań."),
+                ("logowanie kontem demo", "Panel nie zalogował się kontem demo. Sprawdź e-mail i hasło w Agenci → "
+                                          "Publikacja → Konto do nagrań."),
+                ("logowanie:", "Logowanie nie zadziałało tak, jak zakłada scenariusz. Przekaż błąd agentowi."),
+                ("przekierowała poza", "Strona przekierowała na adres spoza marki. Przekaż błąd agentowi."),
+                ("krok ", "Strona nie zareagowała tak, jak zakłada scenariusz (zrzut ekranu z chwili błędu niżej). "
+                          "Przekaż błąd agentowi albo kliknij „Nagraj ponownie”, jeśli strona chwilowo nie działała."),
+                ("montaż:", "Nie udało się złożyć filmu z części (ffmpeg). Przekaż błąd agentowi."),
+                ("ponad 10 minut", "Nagranie trwało za długo (strona mogła się zawiesić). Kliknij „Nagraj ponownie”."),
+                ("przerwan", "Nagranie przerwał restart panelu. Kliknij „Nagraj ponownie”."),
+                ("nie ruszyło", "Nagranie nie ruszyło. Kliknij „Nagraj ponownie”."))
+
+
+def record_hint(error):
+    """Jedno zdanie dla właściciela do błędu nagrania (szczegół techniczny zostaje osobno)."""
+    error = str(error or "")
+    if not error:
+        return ""
+    if error.startswith("Błąd nagrania: "):
+        error = error[len("Błąd nagrania: "):]
+    if error.startswith("scenariusz: "):
+        return error_hint(error[len("scenariusz: "):])
+    for key, text in RECORD_HINTS:
+        if key in error:
+            return text
+    return "Nie udało się nagrać filmu. Przekaż błąd agentowi albo kliknij „Nagraj ponownie”."
 
 
 def record_page(folder, sc, brand, work):
@@ -2146,6 +3018,9 @@ def record_page(folder, sc, brand, work):
                                   # (540×960) mimo device_scale_factor=2, większy rozmiar tylko dokleja szare pole
                                   record_video_size={"width": VIEW[0], "height": VIEW[1]})
         ctx.add_init_script(cursor_js(brand))
+        hidden = hide_list(brand, sc)
+        if hidden:                      # baner zgody, przycisk „Opinia”, czat: poza kadrem całego pokazu
+            ctx.add_init_script(hide_js(hidden))
         sites = [h.lower() for h in (brand.get("strony") or [])] or [_host(sc["url"])[1]]
         blocked = []
 
@@ -2163,6 +3038,7 @@ def record_page(folder, sc, brand, work):
             return route.continue_()
         ctx.route("**/*", guard)
         page = ctx.new_page()
+        t_open = time.monotonic()       # nagranie Playwright zaczyna się z otwarciem strony (zapas, gdy brak ffprobe)
 
         def landed(what):
             u, host = _host(page.url)
@@ -2175,14 +3051,21 @@ def record_page(folder, sc, brand, work):
                     acc = json.load(f)
             except (OSError, ValueError):
                 raise RuntimeError("brak konta demo do nagrań (panel: Agenci → Publikacja → Konto do nagrań)")
-            page.goto(sc["logowanie"], wait_until="networkidle", timeout=60000)
-            if landed("logowanie") != _host(sc["logowanie"])[1]:      # konto demo tylko na hoście logowania
+            login = login_spec(sc["logowanie"])
+            page.goto(login["url"], wait_until="networkidle", timeout=60000)
+            if landed("logowanie") != _host(login["url"])[1]:      # konto demo tylko na hoście logowania
                 raise RuntimeError("logowanie: strona wylądowała na innym hoście niż adres logowania")
-            page.fill("#lg-email", acc["email"])
-            page.fill("#lg-pass", acc["haslo"])
-            page.locator("button[type=submit]").first.click()
+            login_path = (_host(login["url"])[0].path or "/").rstrip("/") or "/"
             try:
-                page.wait_for_url(lambda u: "/logowanie" not in u, timeout=20000)
+                page.fill(login["email"], acc["email"], timeout=15000)
+                page.fill(login["haslo"], acc["haslo"], timeout=15000)
+                page.locator(login["wyslij"]).first.click(timeout=15000)
+            except Exception as e:  # noqa: BLE001
+                raise RuntimeError("logowanie: nie znaleziono pól logowania na stronie (%s); sprawdź selektory "
+                                   "email, haslo, wyslij w polu logowanie scenariusza" % step_error(e))
+            try:
+                page.wait_for_url(lambda u: ((_host(u)[0].path if _host(u)[0] else "") or "/").rstrip("/") or "/"
+                                  != login_path, timeout=20000)
             except Exception:  # noqa: BLE001
                 raise RuntimeError("logowanie kontem demo nie powiodło się (sprawdź e-mail i hasło)")
         page.goto(sc["url"], wait_until="networkidle", timeout=60000)
@@ -2190,6 +3073,20 @@ def record_page(folder, sc, brand, work):
         page.wait_for_timeout(800)
         t0 = time.monotonic()           # początek filmu: strona już wczytana
         page.mouse.move(VIEW[0] / 2, VIEW[1] / 3)
+
+        def bring(loc):
+            """Element do pasa między strefami (płynnie); potem jeszcze kontrola Playwright (przewijane ramki)."""
+            dy = loc.evaluate(BAND_JS, list(BAND))
+            if dy:
+                page.wait_for_timeout(int(min(900, 300 + dy)))
+            loc.scroll_into_view_if_needed(timeout=10000)
+
+        def point(loc):
+            """Kursor dojeżdża do środka elementu przed kliknięciem (pierścień kliknięcia tam, gdzie kursor)."""
+            box = loc.bounding_box()
+            if box:
+                page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, steps=8)
+                page.wait_for_timeout(300)
 
         def let_read():
             """Poprzedni napis stoi w filmie co najmniej czas czytania (wycięte czekanie się nie liczy)."""
@@ -2208,25 +3105,27 @@ def record_page(folder, sc, brand, work):
                     page.locator(k["rozwin"]).first.evaluate("el => { el.open = true }")
                     page.wait_for_timeout(300)
                 if k.get("przewin"):
-                    page.locator(k["przewin"]).first.scroll_into_view_if_needed(timeout=10000)
-                    page.wait_for_timeout(400)
+                    bring(page.locator(k["przewin"]).first)
+                    page.wait_for_timeout(200)
                 if k.get("wpisz"):
                     sel, text = k["wpisz"]
                     text = str(text)
                     loc = page.locator(sel).first
-                    loc.scroll_into_view_if_needed(timeout=10000)
+                    bring(loc)
+                    point(loc)
                     loc.click(timeout=10000)
                     loc.press_sequentially(text, delay=max(20, min(55, int(1400 / max(1, len(text))))))
                 if k.get("wybierz"):
                     sel, value = k["wybierz"]
                     loc = page.locator(sel).first
-                    loc.scroll_into_view_if_needed(timeout=10000)
+                    bring(loc)
+                    point(loc)
                     loc.click(timeout=10000)
                     loc.select_option(str(value), timeout=10000)
                 if k.get("kliknij"):
                     loc = page.locator(k["kliknij"]).first
-                    loc.scroll_into_view_if_needed(timeout=10000)
-                    page.wait_for_timeout(250)
+                    bring(loc)
+                    point(loc)
                     loc.click(timeout=15000)
                 if k.get("czekaj_na"):
                     w0 = time.monotonic() - t0
@@ -2237,21 +3136,36 @@ def record_page(folder, sc, brand, work):
                 if k.get("opcjonalnie"):        # krok, który może nie zadziałać (np. zamknięcie baneru)
                     continue
                 try:                    # zrzut ekranu z chwili błędu: łatwiej poprawić scenariusz
-                    page.screenshot(path=os.path.join(folder, ".film-blad.png"), full_page=True)
+                    page.screenshot(path=os.path.join(folder, ERROR_SHOT), full_page=False)
                 except Exception:  # noqa: BLE001
                     pass
-                raise RuntimeError("krok %d (%s): %s" % (i + 1, k.get("napis") or k.get("kliknij") or k.get("wpisz"),
-                                                       str(e).split("\n")[0][:200]))
+                raise RuntimeError("krok %d (%s): %s" % (i + 1, step_label(k), step_error(e)))
         let_read()
+        # ostatni napis znika przed przejściem do następnej planszy (jak treść planszy), więc stoi o tyle dłużej
+        if captions:
+            page.wait_for_timeout(int((XFADE + FADE_OUT) * 1000))
         end = time.monotonic() - t0
         video = page.video.path()
         ctx.close()
         browser.close()
-    return render(video, os.path.join(work, "pokaz.mp4"), captions, end, work, caption_style(brand), waits)
+    cuts = cuts_for(waits)
+    caps = [(shift_time(at, cuts) + LEAD_PAD, text) for at, text in captions]
+    # ostatni napis strony kończy się przed przejściem (SRT bez nakładania na pierwszy napis następnej części)
+    stop = shift_time(end, cuts) + LEAD_PAD - XFADE - FADE_OUT
+    page_subs = [(a, caps[n + 1][0] if n + 1 < len(caps) else stop, text) for n, (a, text) in enumerate(caps)]
+    return render(video, os.path.join(work, "pokaz.mp4"), captions, end, work, caption_style(brand), waits,
+                  logo=logo_path(brand, studio_dir(folder)) if brand.get("logo_w_rogu") else None,
+                  lead_hint=t0 - t_open), page_subs
+
+
+PAGE_CAPTION_ALPHA = 0.97         # krycie pudełka napisu na nagraniu strony (co najmniej)
+FAST_LEN = 0.8                    # s: tyle trwa w filmie przyspieszony środek długiego czekania (znak „×N” w rogu)
+LEAD_PAD = 0.2                    # s: klip nagrania strony zaczyna się tyle przed początkiem filmu (t0)
 
 
 def cuts_for(waits, keep_head=0.6, keep_tail=0.5, min_len=1.5):
-    """Odcinki czekania do wycięcia: z czekania dłuższego niż min_len zostaje początek i koniec."""
+    """Odcinki czekania do przyspieszenia: z czekania dłuższego niż min_len zostaje początek i koniec w normalnym
+    tempie, środek trwa w filmie najwyżej FAST_LEN (przyspieszenie z oznaczeniem, nie ukryte cięcie)."""
     out = []
     for a, b in waits:
         if b - a > min_len:
@@ -2259,32 +3173,70 @@ def cuts_for(waits, keep_head=0.6, keep_tail=0.5, min_len=1.5):
     return out
 
 
+def _kept(a, b):
+    """Czas w filmie przyspieszonego odcinka (a, b)."""
+    return min(b - a, FAST_LEN)
+
+
+def speed_of(a, b):
+    """Przyspieszenie odcinka (a, b): ×N w filmie."""
+    return (b - a) / _kept(a, b) if b > a else 1.0
+
+
 def shift_time(t, cuts):
-    """Czas w filmie po wycięciu odcinków cuts (napisy przesuwają się razem z obrazem)."""
+    """Czas w filmie po przyspieszeniu odcinków cuts (napisy przesuwają się razem z obrazem)."""
     removed = 0.0
     for a, b in cuts:
+        cut = (b - a) - _kept(a, b)
         if t >= b:
-            removed += b - a
+            removed += cut
         elif t > a:
-            removed += t - a
+            removed += (t - a) * cut / (b - a)
     return t - removed
 
 
-def render(src, out, captions, end, work, style=None, waits=()):
-    """Przycięcie początku (wczytywanie strony), wycięcie długiego czekania, napisy wtopione (styl marki),
-    H.264 1080×1920 30 kl./s (klip pośredni do sklejenia)."""
+def render(src, out, captions, end, work, style=None, waits=(), logo=None, lead_hint=None):
+    """Przycięcie początku (wczytywanie strony), przyspieszenie długiego czekania (początek i koniec czekania
+    w normalnym tempie, środek szybciej ze znakiem „×N”), napisy wtopione (styl marki) w chwili akcji, logo marki
+    w prawym górnym rogu (logo_w_rogu), H.264 1080×1920 30 kl./s (klip pośredni do sklejenia). lead_hint (s): czas
+    od otwarcia strony do początku filmu, gdy ffprobe nie poda długości nagrania (bez niego do filmu weszłoby
+    wczytywanie strony i logowanie)."""
     total = _duration(src)
-    lead = max(0.0, total - end - 0.2)    # nagranie zaczyna się przed t0 (wczytywanie strony): odcinamy
+    if total > 0:
+        lead = max(0.0, total - end - LEAD_PAD)   # nagranie zaczyna się przed t0 (wczytywanie strony): odcinamy
+    else:
+        lead = max(0.0, (lead_hint or 0.0) - LEAD_PAD)
     if style is None:
         style = dict(DEFAULT_BRAND["napisy"], font=Font(FONT, 56))
+    # na ruchliwej stronie pudełko napisu prawie nieprzezroczyste (przy 0,85–0,9 prześwituje tekst strony)
+    style = dict(style, krycie=max(PAGE_CAPTION_ALPHA, float(style.get("krycie", 0.85))))
     cuts = cuts_for(waits)
-    filters = ["scale=1080:1920:flags=lanczos", "fps=30"]
+    texts = _Texts(work, "napis")
+    # nagranie 540×960 powiększone 2×: lanczos i lekkie wyostrzenie (drobny tekst strony mniej rozmyty)
+    filters = ["scale=1080:1920:flags=lanczos", "unsharp=5:5:0.7:5:5:0.0"]
     if cuts:
-        cond = "+".join("between(t,%.3f,%.3f)" % (a + 0.2, b + 0.2) for a, b in cuts)   # 0,2 s: zapas z lead
-        filters += ["select='not(%s)'" % cond, "setpts=N/30/TB"]
-    caps = [(shift_time(at, cuts), text) for at, text in captions]
-    filters += caption_filters(_Texts(work, "napis"), caps, shift_time(end, cuts), style)
-    return _encode(["-ss", "%.2f" % lead, "-i", src, "-vf", ",".join(filters)], out)
+        # czas w klipie = czas od t0 + LEAD_PAD; każdy odcinek czekania trwa w filmie _kept zamiast całej długości
+        expr = "+".join("clip(T-%.3f,0,%.3f)*%.5f" % (a + LEAD_PAD, b - a, 1 - _kept(a, b) / (b - a))
+                        for a, b in cuts)
+        filters.append("setpts='(T-(%s))/TB'" % expr)
+    filters.append("fps=30")
+    for a, b in cuts:                     # znak przyspieszenia w lewym górnym rogu na czas przyspieszonego odcinka
+        at = shift_time(a, cuts) + LEAD_PAD
+        filters.append(_draw(texts, "przyspieszone ×%d" % round(speed_of(a, b)), style["font"].at(40),
+                             _col(style.get("kolor", "#ffffff")), str(MARGIN), SAFE_TOP + 70,
+                             extra=":box=1:boxcolor=%s:boxborderw=16:enable='between(t,%.2f,%.2f)'"
+                             % (_col(style.get("tlo", "#2b1d12"), float(style.get("krycie", 0.85))), at,
+                                at + _kept(a, b))))
+    # napisy w chwili akcji: klip zaczyna się LEAD_PAD przed t0, więc czasy napisów (względem t0) + LEAD_PAD
+    caps = [(shift_time(at, cuts) + LEAD_PAD, text) for at, text in captions]
+    clip_end = shift_time(end, cuts) + LEAD_PAD
+    filters += caption_filters(texts, caps, clip_end, style, last_stop=clip_end - XFADE - FADE_OUT)
+    if not logo:
+        return _encode(["-ss", "%.2f" % lead, "-protocol_whitelist", "file", "-i", src, "-vf", ",".join(filters)], out)
+    graph = "[0:v]%s[pg];[1:v]scale=w=-1:h=64,format=rgba[lg];[pg][lg]overlay=x=W-w-%d:y=%d:shortest=1[out]" % (
+        ",".join(filters), MARGIN, SAFE_TOP + 20)
+    return _encode(["-ss", "%.2f" % lead, "-protocol_whitelist", "file", "-i", src] + media_input(logo, total or end + 5) +
+                   ["-filter_complex", graph, "-map", "[out]"], out)
 
 
 class Recorder:
@@ -2298,44 +3250,91 @@ class Recorder:
         self.lock = threading.Lock()
         self.busy = set()
         self.kinds = {}               # rodzaj ustalony w start(), przekazywany do nagrania
+        self.versions = {}            # wersja filmu (version()) z chwili startu: czas modyfikacji nagranego pliku
+        self.waiting = []             # [(folder, tytuł)]: czekają na koniec bieżącego nagrania (jedno naraz)
 
     def available(self, kind="pokaz"):
-        """Pokaz: Playwright (osobny interpreter) i ffmpeg; objaśnienie: tylko ffmpeg."""
-        return bool(shutil.which("ffmpeg")) and (kind == "objasnienie" or os.path.isfile(self.python))
+        """Pokaz: Playwright (osobny interpreter) i ffmpeg; objaśnienie: tylko ffmpeg. Oba: plik czcionki zastępczej
+        (FONT), bez niej montaż plansz i napisów kończy się błędem ffmpeg."""
+        return bool(shutil.which("ffmpeg")) and os.path.isfile(FONT) and (kind == "objasnienie"
+                                                                          or os.path.isfile(self.python))
 
     def interpreter(self, kind):
         """Objaśnienie bez Playwright: interpreter panelu (ma PIL do pomiaru tekstu, gdy jest zainstalowany)."""
         return self.python if kind != "objasnienie" else sys.executable
 
     def start(self, folder, title=""):
+        """Nagranie filmu posta w tle: (kod, komunikat, dane). Jedno nagranie naraz: gdy nagrywa się inny film (albo
+        ten sam, a scenariusz zmienił się w trakcie), ten czeka w kolejce i rusza zaraz po bieżącym ({"state":
+        "queued"}). Zawsze trzy elementy."""
         if not folder:
-            return 404, "Nie ma posta na ten dzień."
+            return 404, "Nie ma posta na ten dzień.", {}
         if not os.path.isfile(os.path.join(folder, SCENARIO)):
-            return 409, "Post nie ma scenariusza filmu (scenariusz.json)."
+            return 409, "Post nie ma scenariusza filmu (scenariusz.json).", {}
         info = describe(folder)
         if info["error"]:          # błąd szablonu albo marki: widoczny w poście od razu, bez uruchamiania nagrania
             keep = {k: v for k, v in read_state(folder).items() if k == "scenario"}
             write_state(folder, state="error", error="scenariusz: " + info["error"], **keep)
-            return 409, "Scenariusz filmu: %s." % info["error"]
+            return 409, "Scenariusz filmu: %s." % info["error"], {}
         if not (self.available() if info["kind"] == "pokaz" else self.available(info["kind"])):
-            return 409, ("Na serwerze nie ma narzędzi do nagrywania (Playwright, ffmpeg)." if info["kind"] == "pokaz"
-                         else "Na serwerze nie ma ffmpeg (potrzebny do objaśnień).")
+            return 409, ("Ten panel nie ma narzędzi do nagrywania (Playwright, ffmpeg); film nagra panel na serwerze."
+                         if info["kind"] == "pokaz" else
+                         "Ten panel nie ma ffmpeg (potrzebny do objaśnień); film nagra panel na serwerze."), {}
         with self.lock:
-            if folder in self.busy:
-                return 409, "Film już się nagrywa."
-            self.busy.add(folder)
-            self.kinds[folder] = info["kind"]
+            same = folder in self.busy
+            wait = same or bool(self.busy)
+            if wait:
+                if all(f != folder for f, _t in self.waiting):
+                    self.waiting.append((folder, title))
+                pos = 1 + [f for f, _t in self.waiting].index(folder)
+            else:
+                self.busy.add(folder)
+                self.kinds[folder] = info["kind"]
+                self.versions[folder] = version(folder)
+        keep = {k: v for k, v in read_state(folder).items() if k == "scenario"}
+        if wait:
+            if not same:           # ten sam folder: stan „running” zostaje do końca bieżącego nagrania
+                write_state(folder, state="queued", error="", host=HOST, pid=os.getpid(), kind=info["kind"], **keep)
+            return 202, "", {"state": "queued", "position": pos,
+                             "note": "Nagrywa się teraz ten film; zmiana nagra się zaraz po nim." if same else
+                             "Nagrywa się inny film; ten nagra się zaraz po nim."}
         # host i pid: drugi egzemplarz panelu na tych samych plikach nie uzna tego nagrania za przerwane;
         # scenario zostaje (auto_record nagrywa jedną wersję scenariusza raz, także po błędzie)
-        keep = {k: v for k, v in read_state(folder).items() if k == "scenario"}
-        write_state(folder, state="running", error="", host=HOST, pid=os.getpid(), kind=info["kind"], **keep)
+        write_state(folder, state="running", error="", host=HOST, pid=os.getpid(), kind=info["kind"],
+                    version=self.versions.get(folder), **keep)
         threading.Thread(target=self._run, args=(folder, title), daemon=True).start()
         return 202, "", {"state": "running"}
 
+    def _next(self):
+        """Następny film z kolejki (po zakończeniu bieżącego). Start, który nie ruszył: błąd w stanie posta (stan
+        „queued” nie może zostać bez nagrania)."""
+        with self.lock:
+            if self.busy or not self.waiting:
+                return
+            folder, title = self.waiting.pop(0)
+        try:
+            code, msg, _data = self.start(folder, title)
+        except Exception as e:  # noqa: BLE001
+            code, msg = 500, "%s: %s" % (type(e).__name__, e)
+        if code >= 400 and read_state(folder).get("state") == "queued":
+            keep = {k: v for k, v in read_state(folder).items() if k == "scenario"}
+            try:
+                write_state(folder, state="error", error="nagranie nie ruszyło: %s" % str(msg)[:200], **keep)
+            except OSError:
+                pass
+
     def _run(self, folder, title):
         """Nagranie w osobnej grupie procesów (przy przekroczeniu limitu ginie też ffmpeg i Chromium). Zawsze, także
-        po nieoczekiwanym wyjątku, zapisuje stan i zwalnia folder (inaczej automat nagrań stałby do restartu)."""
+        po nieoczekiwanym wyjątku, zapisuje stan i zwalnia folder (inaczej automat nagrań stałby do restartu).
+        Udany film dostaje czas modyfikacji wersji, z której powstał (version() z chwili startu): zmiana scenariusza
+        w trakcie nagrania jest nowsza niż film, więc automat nagra ją jeszcze raz. Zrzut z błędu kroku pokazu
+        (.film-blad.png) znika na starcie nagrania: przy następnym, innym błędzie (scenariusz, ffmpeg, przerwanie)
+        panel nie pokaże starego zrzutu."""
         ok, err = False, "nieznany błąd"
+        try:
+            os.remove(os.path.join(folder, ERROR_SHOT))
+        except OSError:
+            pass
         try:
             with self.lock:
                 kind = self.kinds.pop(folder, None)
@@ -2352,14 +3351,20 @@ class Recorder:
         except Exception as e:  # noqa: BLE001
             ok, err = False, "nie uruchomiono nagrania (%s)" % (str(e)[:200] or type(e).__name__)
         finally:
+            with self.lock:
+                v = self.versions.pop(folder, None)
             try:
-                keep = {k: v for k, v in read_state(folder).items() if k == "scenario"}
+                keep = {k: val for k, val in read_state(folder).items() if k == "scenario"}
                 write_state(folder, state="done" if ok else "error", error=err, **keep)
                 if ok:
-                    try:
-                        os.remove(os.path.join(folder, MANUAL))
-                    except OSError:
-                        pass
+                    for name in (MANUAL, ERROR_SHOT):
+                        try:
+                            os.remove(os.path.join(folder, name))
+                        except OSError:
+                            pass
+                    path = os.path.join(folder, "film.mp4")
+                    if v and os.path.isfile(path):
+                        os.utime(path, (v, v))
             except OSError:
                 pass
             with self.lock:
@@ -2367,6 +3372,7 @@ class Recorder:
                 self.kinds.pop(folder, None)
         self.notify(("Film nagrany: %s. Obejrzyj go w poście." % (title or os.path.basename(folder))) if ok
                     else "Nie nagrano filmu (%s): %s" % (title or os.path.basename(folder), err))
+        self._next()
 
 
 def _kill_group(proc):

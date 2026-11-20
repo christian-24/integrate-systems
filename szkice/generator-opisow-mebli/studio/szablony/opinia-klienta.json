@@ -1,0 +1,57 @@
+{
+ "tytul": "Opinia klienta i jak to działa",
+ "opis": "Objaśnienie z cytatem: hak, plansza „cytat” (prawdziwa wypowiedź klienta, podpis to autor), krok rozwiązania, plansza „liczba” (czas od danych do opisu; oferta jest na planszy marki, więc jej nie powtarza). Cytat tylko prawdziwy i za zgodą autora: parametry cytat i autor są wymagane, a ich przykłady to jawne pola do wpisania w nawiasach.",
+ "dla_wlasciciela": "Cytat prawdziwego klienta (za jego zgodą), potem jak Opisarnia rozwiązuje problem i oferta. Do postów z opinią użytkownika; bez prawdziwej opinii nie używaj tego szablonu.",
+ "typ": "objasnienie",
+ "parametry": {
+  "hak": "Sprzedawca mebli o *opisach* na Allegro",
+  "cytat": "[cytat klienta jego słowami, za zgodą]",
+  "autor": "[kto to powiedział, np. sprzedawca mebli]",
+  "rozwiazanie": "Wpisujesz wymiary, materiał i kolor, opis jest *gotowy*",
+  "liczba": "*10 s* od danych mebla do opisu PL i DE"
+ },
+ "etykiety": {
+  "hak": "Plansza 1: hak",
+  "cytat": "Plansza 2: cytat klienta (prawdziwy, za zgodą)",
+  "autor": "Podpis cytatu: kto to powiedział",
+  "rozwiazanie": "Plansza 3: jak to działa",
+  "liczba": "Plansza 4: liczba na początku, potem opis"
+ },
+ "wymagane": [
+  "cytat",
+  "autor"
+ ],
+ "limity": {
+  "hak": {
+   "max": 43
+  },
+  "cytat": {
+   "max": 90
+  },
+  "autor": {
+   "max": 50
+  },
+  "liczba": {
+   "max": 60
+  }
+ },
+ "plansza_startowa": false,
+ "plansze": [
+  {
+   "tekst": "{{hak}}",
+   "uklad": "srodek"
+  },
+  {
+   "tekst": "{{cytat}}",
+   "podpis": "{{autor}}",
+   "uklad": "cytat"
+  },
+  {
+   "tekst": "{{rozwiazanie}}"
+  },
+  {
+   "tekst": "{{liczba}}",
+   "uklad": "liczba"
+  }
+ ]
+}

@@ -247,7 +247,9 @@ class Manager:
         self._chat_lock = threading.Lock()    # pliki rozmów i _chat_live
         self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
         self._chat_meta = {}                  # plik rozmowy -> zadanie i czas pytania (widok Teraz w panelu)
+        self._chat_done = []                  # zakończone rozmowy (Teraz → Ostatnie 24 h), najnowsze na końcu
         self._load()
+        self._chat_restore()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
 
     # ---------- narzędzia (claude, codex) ----------
@@ -838,6 +840,45 @@ class Manager:
             return sorted((dict(m) for f, m in self._chat_meta.items() if f in self._chat_live),
                           key=lambda m: m["since"])
 
+    CHAT_DONE_MAX = 50
+    CHAT_FILE = os.path.join("teraz", "rozmowy.json")
+    CHAT_CUT = "przerwana: panel uruchomiono ponownie w trakcie odpowiedzi"
+
+    def _chat_save(self):
+        """Rozmowy w toku i zakończone w <katalog uruchomień>/teraz/rozmowy.json (wywołanie pod _chat_lock): po restarcie
+        panelu „Ostatnie 24 h” ma nadal rozmowy, a przerwane dostają błąd z „Zapytaj ponownie”."""
+        path = os.path.join(self.runs_dir, self.CHAT_FILE)
+        try:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            self._write_json(path, {"live": [self._chat_meta[f] for f in self._chat_live if f in self._chat_meta],
+                                    "done": self._chat_done[-self.CHAT_DONE_MAX:]})
+        except OSError:
+            pass
+
+    def _chat_restore(self):
+        """Przy starcie: zakończone rozmowy z pliku, a rozmowy w toku poprzedniego procesu jako przerwane (błąd)."""
+        try:
+            with open(os.path.join(self.runs_dir, self.CHAT_FILE), encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, ValueError):
+            return
+        if not isinstance(data, dict):
+            return
+        ok = lambda m: isinstance(m, dict) and isinstance(m.get("title"), str) and m.get("title")  # noqa: E731
+        done = [m for m in data.get("done") or [] if ok(m) and m.get("at")]
+        cut = [dict(m, at=now_iso(), ok=False, error=self.CHAT_CUT) for m in data.get("live") or [] if ok(m)]
+        with self._chat_lock:
+            self._chat_done = (done + cut)[-self.CHAT_DONE_MAX:]
+            if cut:
+                self._chat_save()
+
+    def chat_recent(self, hours=24):
+        """Zakończone rozmowy z ostatnich `hours` godzin (od startu tego procesu), najnowsze najpierw:
+        [{"taskId", "project", "file", "title", "since", "at", "ok", "error"}]."""
+        low = (datetime.datetime.now() - datetime.timedelta(hours=hours)).isoformat(timespec="seconds")
+        with self._chat_lock:
+            return [dict(m) for m in reversed(self._chat_done) if str(m.get("at", "")) >= low]
+
     def chat_prompt(self, name, task, stage, detail, folder, text):
         """Pierwsza wiadomość rozmowy: kontekst zadania, zasady i pytanie właściciela (ostatnie wiersze)."""
         lines = ["Rozmawiasz z właścicielem projektu „%s” o jednym zadaniu z pliku %s, wiersz %d: „%s”."
@@ -904,6 +945,7 @@ class Manager:
             self._chat_live.add(file)
             self._chat_meta[file] = {"taskId": task["id"], "project": task["project"], "file": task["file"],
                                      "title": task["title"], "since": now_iso()}
+            self._chat_save()
         try:
             if session:
                 prompt = text + "\n"
@@ -971,7 +1013,11 @@ class Manager:
                 pass
             finally:
                 self._chat_live.discard(file)
-                self._chat_meta.pop(file, None)
+                meta = self._chat_meta.pop(file, None)
+                if meta:
+                    self._chat_done.append(dict(meta, at=now_iso(), ok=not error, error=str(error or "")[:200]))
+                    del self._chat_done[:-self.CHAT_DONE_MAX]
+                self._chat_save()
 
     def _chat_parse(self, out, err, code, resumed):
         """Wynik `claude -p --output-format json`: (odpowiedź, sesja, błąd). Błąd krótko, bez śladu stosu."""
@@ -1397,9 +1443,11 @@ class Manager:
         if templates:
             film = ("przy filmie także scenariusz.json z szablonu studia: {\"szablon\": \"<nazwa>\", \"parametry\": "
                     "{…}} (szablony: %s; wartości przykładowe w szablonie, wymagane podaj zawsze; szablon dobierz "
-                    "według sekcji Filmy w STYL.md) albo objaśnienie "
-                    "{\"typ\": \"objasnienie\", \"plansze\": [{\"tekst\", \"podpis\", \"czas\"}]}; "
-                    "sprawdź: python3 %s sprawdz <folder posta>; film nagrywa panel sam"
+                    "według sekcji Filmy w STYL.md, inny niż w poprzednim filmie projektu) albo objaśnienie "
+                    "{\"typ\": \"objasnienie\", \"plansze\": [{\"tekst\", \"podpis\", \"czas\", \"obraz\", "
+                    "\"uklad\": tekst|srodek|liczba|cytat|lista|zrzut}]}; cytat tylko prawdziwy, liczby tylko "
+                    "z materiałów projektu; sprawdź: python3 %s sprawdz <folder posta> (bez ostrzeżeń o haku i długości); "
+                    "film nagrywa panel sam"
                     % ("; ".join(self._template_line(t) for t in templates), FILM_PY))
         else:
             film = ("przy filmie także scenariusz.json (wzór: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json "
@@ -2358,7 +2406,7 @@ RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny pos
 RYTM_RESULT_DAYS = 2        # publikacja zrobiona dawniej niż tyle dni (48 h) bez wynik: → zadanie właściciela
 RYTM_KEEP = 500             # tyle kluczy publikacji z założonym zadaniem wyniku zostaje w stan.json
 RESULT_TASK = "Wpisz wynik publikacji "
-FILM_TASK = "Nagraj film"   # publikacja z „po: Nagraj film…”: post powstaje po nagraniu
+FILM_TASK = ("Nagraj film", "Obejrzyj film")   # publikacja z „po: Nagraj/Obejrzyj film…”: post powstaje po nagraniu
 RESULT_MINUTES = 3
 POST_REVIEW_MINUTES = 5     # czas właściciela na przejrzenie i zatwierdzenie posta
 STYLE_FILES = ("STYL.md", "marketing/STYL.md", "kampanie/STYL.md")

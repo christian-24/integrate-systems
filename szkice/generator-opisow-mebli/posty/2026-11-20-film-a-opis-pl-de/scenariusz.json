@@ -1,6 +1,7 @@
-{"szablon": "pokaz-generatora",
+{
+ "szablon": "pokaz-generatora",
  "parametry": {
-  "hak": "Opis mebla na Allegro i do Niemiec w 10 sekund",
+  "hak": "Opis mebla na Allegro i do Niemiec w 10 s",
   "typ_mebla": "Komoda Nordic, 4 szuflady",
   "kategoria": "komoda",
   "szerokosc": "80",
@@ -8,4 +9,5 @@
   "glebokosc": "40",
   "material": "płyta laminowana, fronty MDF",
   "kolor": "biały mat i dąb"
- }}
+ }
+}

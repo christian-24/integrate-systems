@@ -39,7 +39,7 @@ po jednym na operację w `ZADANIA.md` tego projektu:
 
 Strzałka: `→` albo `->`. Zadanie wskazuje fragment tytułu bez wielkości liter: jedno otwarte zadanie, a gdy otwartego
 nie ma, jedno dowolne; fragment pasujący do kilku zadań albo do żadnego to błąd tej operacji (pozostałe się wykonują).
-Poprzednik w `po:` musi pasować do jakiegoś wiersza pliku.
+Poprzednik w `po:` musi pasować do jakiegoś wiersza zadań projektu (najpierw tego samego pliku).
 
 Przyjęcie propozycji w panelu zapisuje `Odpowiedź:` równą propozycji i wykonuje skutki; pod każdym zmienionym
 (i nowym) zadaniem dopisuje notatkę `z pytania N, RRRR-MM-DD`. Odpowiedź o innej treści skutków nie wykonuje: panel
@@ -75,7 +75,7 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `wymaga` | zgoda (agent czeka na decyzję), odbiór (praca czeka na przegląd) |
 | `blokada` | powód, przy stanie `[!]` |
 | `kanał` | kanał publikacji, w kampaniach |
-| `po` | fragmenty tytułów zadań z tego samego pliku (po przecinku), które muszą być `[x]` wcześniej |
+| `po` | fragmenty tytułów zadań tego projektu (po przecinku), które muszą być `[x]` wcześniej; najpierw z tego samego pliku |
 | `sprawdza` | kontrola, która potwierdza wykonanie: klucz kontroli serwera (`kopia`, `kopia-poza`, `claude`, `claude-agent`, `zapis-kart`, `panel`, `useme`, `dysk`) albo `plik <ścieżka>` (plik w folderze projektu albo karty) |
 | `licznik` | liczba podawana przy zamknięciu: zaproszenia, przyjęte, rozmowy, linki, konta, oferty, odpowiedzi |
 | `kampania` | plik kampanii, do której trafia licznik (`kampanie/nazwa.md`, `nazwa.md` albo `nazwa`); bez pola: pierwsza kampania w toku |
@@ -83,7 +83,9 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 Wszystkie pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
 `wymaga` może mieć kilka wartości po przecinku (`wymaga: odbiór, zgoda`); każda z nich obowiązuje.
 `po: makietę, zatwierdź teksty`: poprzednikiem jest pierwszy wiersz tego samego pliku, którego tytuł zawiera fragment
-(bez wielkości liter). Dopóki któryś poprzednik nie jest `[x]` (albo fragment nie pasuje do żadnego wiersza),
+(bez wielkości liter). Gdy w tym pliku nie ma takiego wiersza, poprzednikiem jest pierwszy pasujący wiersz innego pliku
+zadań tego projektu: najpierw `ZADANIA.md`, potem pliki kampanii w kolejności nazw (np. publikacja w kampanii z
+`po: Potwierdź DPA` czeka na zadanie z `ZADANIA.md`). Dopóki któryś poprzednik nie jest `[x]` (albo fragment nie pasuje do żadnego wiersza),
 zadania nie da się uruchomić („Czeka na: …”).
 W drugą stronę każde zadanie ma w danych `unlocks` (`[{"id", "title", "executor", "date"}]`: otwarte zadania z `po:`
 na nim, w kolejności wierszy) i `unlockCount` (ich liczba).

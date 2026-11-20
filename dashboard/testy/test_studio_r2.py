@@ -31,9 +31,10 @@ class _Capture:
     def __init__(self):
         self.calls = []
 
-    def __call__(self, out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fade_out=True):
+    def __call__(self, out, bg, dur, draws, image=None, bar=None, logo=None, first=False, fade_out=True,
+                 fade_from=None, zoom=False):
         self.calls.append({"out": out, "bg": bg, "dur": dur, "draws": draws, "bar": bar, "logo": logo, "first": first,
-                           "fade_out": fade_out, "image": image})
+                           "fade_out": fade_out, "image": image, "fade_from": fade_from, "zoom": zoom})
         return out, dur
 
 
@@ -71,13 +72,15 @@ class Plansze(Karta):
         card = info["introCard"]
         self.assertEqual((card["subtitle"], card["address"]), ("", ""))             # tylko hak
         # hak stoi od pierwszej klatki: bez czasu na wejście tekstu (HOOK_BASE zamiast READ_BASE)
-        self.assertGreaterEqual(card["seconds"], film.HOOK_BASE + len(card["title"]) / 15 + film.XFADE - 0.01)
+        self.assertGreaterEqual(card["seconds"], film.HOOK_BASE + len(card["title"]) / 15 + film.XFADE / 2 - 0.01)
         self.assertTrue(card["hook"])
         self.assertEqual([w for w in info["warnings"] if "muzyki" not in w], [])   # czas liczy panel: bez ostrzeżeń
-        # plansza końcowa: tytuł, podtytuł i adres w czasie czytania
+        # plansza końcowa: tytuł, podtytuł i adres wchodzą po kolei, plansza stoi najwyżej END_MAX (wezwanie nie stoi
+        # długo nieruchomo), ale co najmniej domyślny czas planszy końcowej
         out = info["outroCard"]
         chars = len("Koniec") + len("Wezwanie do działania") + len("example.org")
-        self.assertGreaterEqual(out["seconds"], 1.2 + chars / 15 + film.XFADE - 0.01)
+        self.assertEqual(out["seconds"], min(film.END_MAX, max(film.CARD_TIMES["plansza_koncowa"],
+                                                               1.2 + chars / 15 + film.XFADE)))
 
     def test_za_krotka_plansza_marki_daje_ostrzezenie(self):
         self.scenario({"typ": "objasnienie", "plansze": [{"tekst": "A"}],
@@ -113,7 +116,9 @@ class Plansze(Karta):
         self.scenario({"szablon": "pokaz-a"})
         info = film.describe(self.post)
         self.assertIn("brak parametru „mebel” (wymagany", info["error"])
-        self.assertEqual(info["errorHint"], "Brakuje treści tego posta (szablon wymaga jej w scenariuszu).")
+        self.assertTrue(info["errorHint"].startswith("Brakuje treści tego posta: uzupełnij pole „Mebel"), info["errorHint"])
+        self.assertEqual(info["errorParam"], "mebel")                                # pole do poprawy w panelu
+        self.assertEqual(info["editable"], ["params"])
         self.assertEqual(info["templateTitle"], "Pokaz formularza")
         cases = (({"mebel": "  "}, "parametr „mebel”: same spacje"), ({"mebel": "Sofa", "napis": "   "}, "parametr „napis”: same spacje"),
                  ({"mebel": "x" * 21}, "parametr „mebel”: najwyżej 20 znaków"),
@@ -276,7 +281,8 @@ class Montaz(Karta):
 
     def test_przejscie_bez_podwojnej_ekspozycji(self):
         # między planszami przenikanie (treść gaśnie do tła przed przejściem), bez czerni przed planszą końcową
-        self.assertEqual(film.transition("#2b1d12", "#fbf7f1"), "fade")
+        self.assertEqual(film.transition("#2b1d12", "#fbf7f1"), "slideup")   # jasne ↔ ciemne: bez szarości
+        self.assertEqual(film.transition("#fbf7f1", "#f0e6d8"), "fade")
         self.assertEqual(film.transition("#fbf7f1", "#fbf7f1"), "fade")
         self.assertEqual(film.transition("#2b1d12", None), "fadeblack")       # nagranie strony: przez czerń
 
@@ -478,6 +484,11 @@ class RenderSerwer(unittest.TestCase):
                     tpl = json.load(f)
                 with open(os.path.join(post, film.SCENARIO), "w", encoding="utf-8") as f:
                     json.dump({"szablon": t["name"], "parametry": {k: tpl["parametry"][k] for k in t["required"]}}, f)
+                for v in tpl["parametry"].values():       # zrzut telefonu (pionowy) albo zdjęcie (poziome) do planszy
+                    if isinstance(v, str) and film.IMAGE_RE.match(v):
+                        size = "1170x2532" if v.startswith("zrzut") else "1600x1200"
+                        self.run_ff("-f", "lavfi", "-i", "testsrc2=s=%s" % size, "-frames:v", "1",
+                                    os.path.join(post, v))
                 info = film.describe(post)
                 self.assertEqual(info["error"], "", (pid, t["name"]))
                 out = film.record(post, "objasnienie")

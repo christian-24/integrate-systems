@@ -4,7 +4,7 @@
  "dla_wlasciciela": "Pytanie z życia na pokładzie, potem jedna funkcja aplikacji w trzech krokach i efekt. Do postów o jednej konkretnej funkcji.",
  "typ": "objasnienie",
  "parametry": {
-  "pytanie": "Usterka silnika w *rejsie*. Gdzie ją zapisać?",
+  "pytanie": "Usterka w *rejsie*. Gdzie ją zapisać?",
   "krok_1": "*1.* Otwierasz dziennik bieżącego rejsu",
   "krok_2": "*2.* Wybierasz usterkę i opisujesz ją",
   "krok_3": "*3.* Zapis ma godzinę i pozycję",
@@ -19,7 +19,7 @@
  ],
  "limity": {
   "pytanie": {
-   "max": 60
+   "max": 43
   }
  },
  "etykiety": {
