@@ -582,6 +582,18 @@ p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
 .bkm-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:0 16px 8px;font-size:12.5px;color:var(--ink-3)}
 .bkm-k{display:inline-block;width:12px;height:12px;border-radius:3px;border-left:4px solid}
 .bkm-k.me{border-color:var(--l-purple)} .bkm-k.ag{border-color:var(--l-blue)} .bkm-k.bl{border-color:var(--l-red)}
+.md-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding:12px 16px 4px}
+.md-p{min-width:200px}
+.md-up{cursor:pointer;margin-left:auto}
+.md-up.md-off{opacity:.55;cursor:not-allowed}
+.md-hint,.md-cnt{margin:4px 16px}
+@media (max-width:620px){.md-p{flex:1 1 100%;min-width:0}.md-p select{width:100%}.md-up{margin-left:0;flex:1 1 100%;justify-content:center;text-align:center}}
+.md-grid{list-style:none;margin:0;padding:8px 16px 16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr))}
+.md-c{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);display:grid;min-width:0}
+.md-m{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--sunk)}
+video.md-m{background:var(--ink);object-fit:contain}
+.md-i{display:grid;gap:6px;padding:8px 10px;font-size:12.5px;min-width:0}
+.md-i b{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
 .move-box{border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;margin:0 0 12px;background:var(--sunk)}
 .move-box b{display:block;margin-bottom:4px}
@@ -1541,11 +1553,11 @@ const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 /* tekst inicjałów awatara: tokeny --av-inkN (kontrast ≥4,5 na tle --avN) */
 const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
-const VIEWS=['przeglad','wskazniki','ty','marketing','tablica','terminy','blokady','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',tablica:'Tablica zadań',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
+const VIEWS=['przeglad','wskazniki','ty','marketing','media','tablica','terminy','blokady','agenci','koszty','projekty'];
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica zadań',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
-  marketing:'Marketing: tydzień postów i filmów',tablica:'Tablica zadań ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
+  marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica zadań ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
   agenci:'Agenci: uruchomienia, serwer, publikacja',koszty:'Koszty serwerów',projekty:'Projekty i standard: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 6 widoków; pozostałe w „Więcej” */
 const BNAV=['przeglad','ty','blokady','marketing','tablica','agenci'];
@@ -1990,6 +2002,7 @@ const ICON={
  cal:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>',
  chart:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 13.5h12M4 11V8M7.3 11V4.5M10.6 11V6.5M13.5 11V3"/></svg>',
  you:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="5.5" r="2.8"/><path d="M2.8 14c.8-2.8 2.8-4.2 5.2-4.2s4.4 1.4 5.2 4.2"/></svg>',
+ photo:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><circle cx="5.5" cy="6" r="1.3"/><path d="M2 12l4-4 3 3 2-2 3.5 3.5"/></svg>',
  film:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3" width="13" height="10" rx="1.5"/><path d="M6.5 6v4l3.5-2z"/></svg>',
  money:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="4" width="13" height="8.5" rx="1.5"/><circle cx="8" cy="8.25" r="2"/><path d="M4 6.5v3.5M12 6.5v3.5"/></svg>',
  agent:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="4" width="11" height="8.5" rx="2"/><path d="M8 1.5V4M5.5 8h.01M10.5 8h.01M6 10.5h4"/></svg>',
@@ -5363,6 +5376,54 @@ async function sendFixPost(f){
 /* ---------- widok Marketing: oś czasu tygodnia z postami i filmami ---------- */
 function weekStart(off){const d=fromKey(D.todayKey);const wd=(d.getDay()+6)%7;d.setDate(d.getDate()-wd+7*off);return d}
 const keyOf=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+/* ---------- widok Media: zdjęcia i filmy ze wszystkich projektów (GET /api/media, wgrywanie POST /api/media/wgraj) ---------- */
+const MDS={items:null,loading:false,err:'',up:''};
+async function loadMedia(force){
+  if(MDS.loading||(MDS.items&&!force))return;
+  MDS.loading=true;
+  try{const r=await fetch('/api/media',{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json();MDS.items=Array.isArray(j.items)?j.items:[];MDS.err=''}catch(e){MDS.err='Nie udało się wczytać mediów.';MDS.items=MDS.items||[]}
+  MDS.loading=false;if(CUR&&CUR.v==='media')render(true);
+}
+const mUrl=(i,dl)=>'/api/media/plik?project='+encodeURIComponent(i.project)+'&path='+encodeURIComponent(i.path)+(dl?'&pobierz=1':'')+'&v='+i.at;
+const MSRC={posty:'post',media:'wgrane',studio:'studio'};
+const mSize=n=>n>=1048576?(n/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(n/1024))+' kB';
+function vMedia(){
+  const F=A.mf||(A.mf={p:'',k:'',s:''});
+  let h='<div class="pagehead"><div><h1>Media</h1><p>Zdjęcia i filmy ze wszystkich projektów: posty, studio i Twoje wgrane pliki.</p></div></div>';
+  if(!LIVE)return h+'<section class="panel"><p class="empty">Media są widoczne w panelu na serwerze.</p></section>';
+  if(!MDS.items){loadMedia();return h+'<section class="panel"><p class="empty">Wczytuję zdjęcia i filmy…</p></section>'}
+  const L=MDS.items.filter(i=>(!F.p||i.project===F.p)&&(!F.k||i.kind===F.k)&&(!F.s||i.source===F.s));
+  const seg=(k,v,n)=>'<button class="seg" data-mf="'+k+'" data-v="'+v+'" aria-pressed="'+(F[k]===v)+'">'+n+'</button>';
+  h+='<section class="panel"><div class="md-bar">'+
+    '<label class="fl md-p"><span>Projekt</span><select class="fi" data-mfp>'+opt([['','Wszystkie projekty']].concat(D.projects.map(p=>[p.id,p.name])),F.p)+'</select></label>'+
+    '<div class="row" role="group" aria-label="Rodzaj">'+seg('k','','Wszystko')+seg('k','image','Zdjęcia')+seg('k','video','Filmy')+'</div>'+
+    '<div class="row" role="group" aria-label="Skąd">'+seg('s','','Wszystkie')+seg('s','posty','Z postów')+seg('s','media','Wgrane')+seg('s','studio','Studio')+'</div>'+
+    '<label class="btn sm md-up'+(F.p?'':' md-off')+'"'+(F.p?'':' title="Najpierw wybierz projekt"')+'>'+(MDS.up||'Wgraj zdjęcia lub filmy')+'<input type="file" multiple accept="image/*,video/mp4,video/quicktime" data-mup hidden'+(F.p?'':' disabled')+'></label>'+
+    '</div>'+(F.p?'':'<p class="note md-hint">Żeby wgrać pliki, wybierz projekt. Trafią do folderu media/ jego karty.</p>')+
+    (MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
+    '<p class="note md-cnt">'+L.length+' '+pl(L.length,'plik','pliki','plików')+(L.length<MDS.items.length?' z '+MDS.items.length:'')+'</p>';
+  if(!L.length)return h+'<p class="empty">Brak plików'+(F.p||F.k||F.s?' dla wybranych filtrów':'')+'.</p></section>';
+  h+='<ul class="md-grid">'+L.slice(0,300).map(i=>{
+    const pub=i.day?D.tasks.find(t=>t.kind==='publikacja'&&t.project===i.project&&String(t.date).slice(0,10)===i.day):null;
+    const media=i.kind==='video'?'<video class="md-m" controls playsinline preload="metadata" src="'+mUrl(i)+'"></video>':'<a href="'+mUrl(i)+'" target="_blank" rel="noopener"><img class="md-m" loading="lazy" src="'+mUrl(i)+'" alt="'+esc(i.name)+'"></a>';
+    return '<li class="md-c">'+media+'<div class="md-i"><b title="'+esc(i.path)+'">'+esc(i.name)+'</b><span class="muted">'+esc(projName(i.project))+' · '+esc(dd(new Date(i.at*1000).toISOString().slice(0,10)))+' · '+mSize(i.size)+'</span>'+
+      '<span class="row"><span class="lz grey">'+MSRC[i.source]+'</span>'+(i.kind==='video'?'<span class="lz blue">film</span>':'')+'</span>'+
+      '<span class="row"><a class="btn sec sm" href="'+mUrl(i,1)+'" download>Pobierz</a>'+(pub?'<button class="btn sec sm" data-task="'+esc(pub.id)+'">Post</button>':'')+'</span></div></li>'}).join('')+'</ul>';
+  if(L.length>300)h+='<p class="note">Pokazano 300 najnowszych. Zawęź filtrem projektu albo rodzaju.</p>';
+  return h+'</section>';
+}
+async function uploadMedia(el){
+  const F=A.mf||{},files=[...(el.files||[])];if(!files.length||!F.p)return;
+  let ok=0,err='';
+  for(let n=0;n<files.length;n++){const f=files[n];
+    if(f.size>300*1048576){err=f.name+': ponad 300 MB';continue}
+    MDS.up='Wysyłam '+(n+1)+'/'+files.length+'…';render(true);
+    try{const r=await fetch('/api/media/wgraj?project='+encodeURIComponent(F.p)+'&name='+encodeURIComponent(f.name),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:f});
+      if(r.status===401){location.assign('/wejscie');return}
+      const j=await r.json().catch(()=>({}));if(r.ok&&j.ok!==false)ok++;else err=f.name+': '+(j.error||'błąd')}catch(e){err=f.name+': brak połączenia'}}
+  MDS.up='';say('Wgrano '+ok+' z '+files.length+'.'+(err?' '+err:''));loadMedia(true);
+}
 function vMarketing(){
   const off=A.mweek||0,m=weekStart(off),days=[...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return keyOf(x)});
   const items=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)&&t.date>=days[0]&&t.date<=days[6]);
@@ -5623,7 +5684,7 @@ function route(){
 }
 /* liczba w menu z modelu Blokad: błąd w modelu nie może wywrócić menu i dolnego paska we wszystkich widokach */
 const bkSafe=()=>{try{return bkYouN()}catch(e){console.error(e);return {tasks:0,n:0,all:0}}};
-const VICON={przeglad:'home',wskazniki:'chart',ty:'you',marketing:'film',tablica:'board',terminy:'cal',blokady:'tree',agenci:'agent',koszty:'money',projekty:'folder'};
+const VICON={przeglad:'home',wskazniki:'chart',ty:'you',marketing:'film',media:'photo',tablica:'board',terminy:'cal',blokady:'tree',agenci:'agent',koszty:'money',projekty:'folder'};
 /* licznik przy nazwie: liczba z jednostką dla czytnika (bez „Dla Ciebie38”) */
 /* Blokady: ta sama nazwa liczby co w h1 Blokad (bkYouCntT), w title i dla czytnika */
 const navCnt=(c,cl,unit,ttl)=>c?'<span class="count '+(cl||'')+'"'+(ttl?' title="'+esc(ttl)+'"':'')+'><span class="sr-only">, </span>'+(ttl?'<span aria-hidden="true">'+c+'</span><span class="sr-only">'+esc(ttl)+'</span>':c+'<span class="sr-only"> '+unit+'</span>')+'</span>':'';
@@ -5689,7 +5750,7 @@ function setToast(t){const el=$('#toast');if(el&&el.textContent!==t)el.textConte
 function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);noticeT=setTimeout(()=>{notice='';setToast('')},ms||7000)}
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
-  return ({wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,tablica:vTablica,terminy:vTerminy,blokady:vBlokady,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
+  return ({wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,media:vMedia,tablica:vTablica,terminy:vTerminy,blokady:vBlokady,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
@@ -6119,6 +6180,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-agpub]')){const v=el.getAttribute('aria-expanded')!=='true';try{localStorage.setItem(PUB_OPEN_KEY,v?'1':'0')}catch(e){}render(true);focusK('agpub');return}
   /* przycisk wysyłający formularz Publikacji: akcję wykona zdarzenie submit (także Enter w polu) */
   if(el=qq('[data-pub]')){if(el.type==='submit'&&el.form&&el.form.dataset.pubf)return;pubAct(el);return}
+  if(el=qq('[data-mf]')){const F=A.mf||(A.mf={p:'',k:'',s:''});F[el.dataset.mf]=el.dataset.v;render(true);return}
   if(el=qq('[data-film-rec]')){recFilm(el);return}
   if(el=qq('[data-fixfill]')){fixFill(el);return}
   if(el=qq('[data-stuhl]')){stuHighlight(el);return}
@@ -6214,6 +6276,8 @@ document.addEventListener('change',ev=>{
   if(el.id==='mnav'){location.hash=el.value;return}
   if(el.dataset.step!=null){toggleStep(+el.dataset.step,el.checked);return}
   if(el.dataset.film){uploadFilm(el);return}
+  if(el.dataset.mup!=null){uploadMedia(el);return}
+  if(el.dataset.mfp!=null){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.value;render(true);return}
   if(el.dataset.fixtpl!=null){if(el.value)fixFill(el,el.value);fixTplPrev(el);return}
   if(el.dataset.postimg){uploadPostImage(el);return}
   if(el.dataset.filmmus!=null){setFilmMusic(el);return}

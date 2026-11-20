@@ -3,6 +3,7 @@
 # Archiwum <BAZA>/kopie/RRRR-MM-DD.tar.gz zawiera:
 #   dane/                                 (asystent Useme i inne; bazy SQLite jako spójna kopia przez sqlite3 backup)
 #   IntegrateSystems/uruchomienia/, IntegrateSystems/historia/
+#   IntegrateSystems/szkice/*/posty/**/*.mp4|mov, szkice/*/media/, projekty/*/rozmowy/   (poza gitem)
 #   projekty/<repo>/...                   pliki z `git status --porcelain` (zmienione i nieśledzone, bez ignorowanych)
 #   git/<repo>.bundle                     commity, których nie ma na zdalnym repozytorium (gdy są)
 #   kopia-info.txt                        data, liczby plików, HEAD każdego repozytorium
@@ -92,6 +93,15 @@ if [ -s "$ROB/bazy" ]; then
   mv "$LISTA.2" "$LISTA"
 fi
 n_dane=$(tr -cd '\0' < "$LISTA" | wc -c | tr -d ' ')
+
+# 1b. Pliki celowo poza gitem: filmy postów i wgrane media w kartach, rozmowy przeniesione z Maca do projektów.
+while IFS= read -r -d '' p; do
+  printf '%s\0' "${p#./}" >> "$LISTA"
+  n_dane=$((n_dane + 1))
+done < <(cd "$BAZA" && {
+  find ./IntegrateSystems/szkice -type f \( -path '*/posty/*' \( -iname '*.mp4' -o -iname '*.mov' \) -o -path '*/media/*' \) -print0 2>/dev/null
+  find ./projekty -mindepth 2 -maxdepth 2 -type d -name rozmowy -print0 2>/dev/null | xargs -0 -r -I{} find {} -type f -print0
+})
 
 # 2. Niezacommitowane zmiany i niewypchnięte commity w repozytoriach projektów.
 mkdir -p "$ROB/git"

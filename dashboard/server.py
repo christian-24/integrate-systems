@@ -2360,6 +2360,62 @@ def build_ics():
 POST_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+MEDIA_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
+               ".gif": "image/gif", ".mp4": "video/mp4", ".mov": "video/quicktime"}
+MEDIA_MAX = 300 * 1024 * 1024
+MEDIA_DIRS = ("posty", "media", "studio")      # w folderze karty: posty, Twoje wgrane pliki, studio filmów
+
+
+def card_dir(pid):
+    """Folder karty projektu (tam, gdzie leży KARTA.md) albo None."""
+    _, index = load_projects(resolve=False)
+    folder = index.get(str(pid or ""))
+    return os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))) if folder else None
+
+
+def media_list():
+    """Zdjęcia i filmy ze wszystkich projektów: posty/, media/ (wgrane), studio/. Najnowsze najpierw."""
+    _, index = load_projects(resolve=False)
+    out = []
+    for pid, folder in index.items():
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        for sub in MEDIA_DIRS:
+            for root, dirs, files in os.walk(os.path.join(cards, sub)):
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
+                for f in files:
+                    ext = os.path.splitext(f)[1].lower()
+                    if f.startswith(".") or ext not in MEDIA_TYPES:
+                        continue
+                    path = os.path.join(root, f)
+                    try:
+                        st = os.stat(path)
+                    except OSError:
+                        continue
+                    rel = os.path.relpath(path, cards).replace(os.sep, "/")
+                    item = {"project": pid, "path": rel, "name": f, "kind": "video" if ext in (".mp4", ".mov") else "image",
+                            "size": st.st_size, "at": int(st.st_mtime), "source": sub}
+                    m = re.match(r"^posty/(\d{4}-\d\d-\d\d)", rel)
+                    if m:
+                        item["day"] = m.group(1)
+                    out.append(item)
+    out.sort(key=lambda x: -x["at"])
+    return out[:3000]
+
+
+def media_file(pid, rel):
+    """Ścieżka pliku z media_list (tylko w posty/, media/, studio/ karty, tylko znane rozszerzenia) albo None."""
+    cards = card_dir(pid)
+    rel = str(rel or "")
+    parts = rel.split("/")
+    if not cards or not rel or rel.startswith("/") or parts[0] not in MEDIA_DIRS or any(x.startswith(".") or not x for x in parts):
+        return None
+    path = os.path.realpath(os.path.join(cards, rel))
+    if os.path.commonpath([cards, path]) != cards or os.path.splitext(path)[1].lower() not in MEDIA_TYPES \
+            or not os.path.isfile(path) or os.path.basename(path).startswith("."):
+        return None
+    return path
+
+
 def post_folder(pid, day):
     """Folder posta: <karta projektu>/posty/<dzień>-<nazwa>/. None, gdy go nie ma albo dane są niepoprawne."""
     if not POST_DAY.match(day or ""):
@@ -2656,6 +2712,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, f.read(), AUDIO_TYPES.get(os.path.splitext(fpath)[1][1:].lower(),
                                                                  "application/octet-stream"),
                                   [("Cache-Control", "no-store")])
+        if path == "/api/media":
+            return self._send(200, json.dumps({"ok": True, "items": media_list()}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        if path == "/api/media/plik":
+            q = parse_qs(url.query)
+            fpath = media_file((q.get("project") or [""])[0], (q.get("path") or [""])[0])
+            if not fpath:
+                return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+            return self._send_file(fpath, MEDIA_TYPES[os.path.splitext(fpath)[1].lower()], bool((q.get("pobierz") or [""])[0]))
         if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
@@ -2687,21 +2752,7 @@ class Handler(BaseHTTPRequestHandler):
                     fpath = prev if os.path.isfile(prev) and not os.path.islink(prev) else None
                 if not fpath:
                     return self._send(404, "Brak filmu", "text/plain; charset=utf-8")
-                ctype, size = "video/quicktime" if fpath.endswith(".mov") else "video/mp4", os.path.getsize(fpath)
-                hdr = [("Content-Disposition", 'inline; filename="%s"' % os.path.basename(fpath)),
-                       ("Accept-Ranges", "bytes")]
-                m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
-                with open(fpath, "rb") as f:
-                    if m and (m.group(1) or m.group(2)):    # Safari (iPhone) odtwarza wideo tylko z odpowiedzi 206
-                        a, b = m.group(1), m.group(2)
-                        start = int(a) if a else max(0, size - int(b))
-                        end = min(size - 1, int(b)) if a and b else size - 1
-                        if start > end or start >= size:
-                            return self._send(416, b"", ctype, [("Content-Range", "bytes */%d" % size)])
-                        f.seek(start)
-                        return self._send(206, f.read(end - start + 1), ctype,
-                                          hdr + [("Content-Range", "bytes %d-%d/%d" % (start, end, size))])
-                    return self._send(200, f.read(), ctype, hdr)
+                return self._send_file(fpath, "video/quicktime" if fpath.endswith(".mov") else "video/mp4")
             png = post_image(folder)
             if not png:
                 return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")
@@ -2732,6 +2783,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(202, json.dumps({"connecting": True}), "application/json; charset=utf-8")
         if path == "/api/post/film":
             return self._film_upload(urlparse(self.path).query)
+        if path == "/api/media/wgraj":
+            return self._media_upload(urlparse(self.path).query)
         if path == "/api/studio/plik":
             return self._studio_upload(urlparse(self.path).query)
         if path == "/api/post/obraz":
@@ -2805,6 +2858,63 @@ class Handler(BaseHTTPRequestHandler):
                                           (q.get("param") or [""])[0], ctype, data)
         data_invalidate()
         return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                          "application/json; charset=utf-8")
+
+    def _send_file(self, fpath, ctype, download=False):
+        """Plik z obsługą Range (Safari na iPhonie odtwarza wideo tylko z odpowiedzi 206)."""
+        size = os.path.getsize(fpath)
+        hdr = [("Content-Disposition", '%s; filename="%s"' % ("attachment" if download else "inline",
+                                                             os.path.basename(fpath).replace('"', ""))),
+               ("Accept-Ranges", "bytes")]
+        m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
+        with open(fpath, "rb") as f:
+            if m and (m.group(1) or m.group(2)):
+                a, b = m.group(1), m.group(2)
+                start = int(a) if a else max(0, size - int(b))
+                end = min(size - 1, int(b)) if a and b else size - 1
+                if start > end or start >= size:
+                    return self._send(416, b"", ctype, [("Content-Range", "bytes */%d" % size)])
+                f.seek(start)
+                return self._send(206, f.read(end - start + 1), ctype,
+                                  hdr + [("Content-Range", "bytes %d-%d/%d" % (start, end, size))])
+            return self._send(200, f.read(), ctype, hdr)
+
+    def _media_upload(self, query):
+        """POST /api/media/wgraj?project=&name=: zdjęcie albo film (najwyżej 300 MB) do <karta>/media/."""
+        q = parse_qs(query)
+        pid, name = (q.get("project") or [""])[0], (q.get("name") or [""])[0]
+        cards = card_dir(pid)
+        ext = os.path.splitext(name)[1].lower()
+        try:
+            size = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            size = 0
+        err = ("Wybierz projekt." if not cards else "Plik: zdjęcie (JPG, PNG, WEBP, GIF) albo film (MP4, MOV)."
+               if ext not in MEDIA_TYPES else "Plik: najwyżej 300 MB." if not 0 < size <= MEDIA_MAX else "")
+        if err:
+            self.close_connection = True
+            return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False), "application/json; charset=utf-8")
+        base = re.sub(r"[^\w.-]+", "-", os.path.splitext(os.path.basename(name))[0]).strip("-.")[:60] or "plik"
+        folder = os.path.join(cards, "media")
+        os.makedirs(folder, exist_ok=True)
+        stem = "%s-%s" % (datetime.date.today().isoformat(), base)
+        target, n = os.path.join(folder, stem + ext), 2
+        while os.path.exists(target):
+            target, n = os.path.join(folder, "%s-%d%s" % (stem, n, ext)), n + 1
+        tmp, left = os.path.join(folder, ".wysylka-" + os.path.basename(target)), size
+        with open(tmp, "wb") as f:
+            while left > 0:
+                chunk = self.rfile.read(min(left, 1 << 20))
+                if not chunk:
+                    break
+                f.write(chunk)
+                left -= len(chunk)
+        if left:
+            os.remove(tmp)
+            return self._send(400, json.dumps({"ok": False, "error": "Wysyłka przerwana."}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        os.replace(tmp, target)
+        return self._send(200, json.dumps({"ok": True, "error": "", "path": os.path.relpath(target, cards)}, ensure_ascii=False),
                           "application/json; charset=utf-8")
 
     def _film_upload(self, query):

@@ -33,6 +33,14 @@ class Panel(unittest.TestCase):
             names = re.findall(r"^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(", f.read(), re.M)
         self.assertEqual([n for n, c in collections.Counter(names).items() if c > 1], [])
 
+    def test_bez_zdublowanych_stalych(self):
+        """Dwie stałe const/let o tej samej nazwie na najwyższym poziomie skryptu: SyntaxError i pusty panel."""
+        import collections
+        import re
+        with open(server.PAGE, encoding="utf-8") as f:
+            names = re.findall(r"^(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=", f.read(), re.M)
+        self.assertEqual([n for n, c in collections.Counter(names).items() if c > 1], [])
+
 
 if __name__ == "__main__":
     unittest.main()

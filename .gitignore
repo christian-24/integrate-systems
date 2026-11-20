@@ -28,3 +28,7 @@ credentials*
 
 # poprzednia wersja filmu posta (porównanie w panelu): tylko na dysku panelu
 .film-poprzedni.mp4
+# filmy postów i wgrane media: tylko na serwerze i w nocnej kopii (uruchom/serwer/kopia.sh), nie w repozytorium
+szkice/*/posty/**/*.mp4
+szkice/*/posty/**/*.mov
+szkice/*/media/
