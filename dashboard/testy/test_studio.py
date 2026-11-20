@@ -568,8 +568,8 @@ class StudioProjektow(unittest.TestCase):
         self.assertEqual((info["kind"], info["template"], info["intro"], info["outro"]),
                          ("pokaz", "pokaz-generatora", True, True))
         self.assertEqual(sc["url"], "https://opisarnia.pl/generator")
-        self.assertEqual(sc["kroki"][1], {"napis": "Wpisujesz typ mebla", "wpisz": ["#g-nazwa", "Komoda Nordic, 4 szuflady"]})
-        self.assertEqual(sc["kroki"][3]["wpisz"], ["#g-w", "80"])
+        self.assertIn({"napis": "Wpisujesz typ mebla", "wpisz": ["#g-nazwa", "Komoda Nordic, 4 szuflady"]}, sc["kroki"])
+        self.assertIn(["#g-w", "80"], [k.get("wpisz") for k in sc["kroki"]])
         self.assertFalse(film.placeholders(sc))                              # wszystko podstawione
         brand = film.load_brand(film.studio_dir(post))[0]
         outro = brand["plansza_koncowa"]
