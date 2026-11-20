@@ -1,0 +1,29 @@
+# Panel testowy z gałęzi rozwoj (ROZWOJ.md): kod z kopii roboczej agenta, dane przykładowe, bez agentów,
+# bez publikacji i powiadomień. Instaluje uruchom/serwer/zainstaluj-rozwoj.sh (podstawia @HOST_TEST@).
+[Unit]
+Description=Panel testowy (gałąź rozwoj, dane przykładowe)
+After=network.target
+
+[Service]
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/rozwoj/IntegrateSystems
+Environment=HOME=/home/agent/rozwoj/dane-testowe
+Environment=PANEL_HOST=127.0.0.1
+Environment=PANEL_PORT=4802
+Environment=PANEL_ALLOWED_HOSTS=@HOST_TEST@
+Environment=PANEL_MACHINE=cloud
+Environment=PANEL_REGISTRY=/nonexistent/projekty.json
+Environment=PANEL_CLAUDE=/nonexistent/claude
+Environment=PANEL_CODEX=/nonexistent/codex
+Environment=PANEL_AGENTS_MAX=0
+Environment=PANEL_HISTORY_DIR=/home/agent/rozwoj/dane-testowe/historia
+Environment=PANEL_RUNS_DIR=/home/agent/rozwoj/dane-testowe/uruchomienia
+Environment=PANEL_LOKALNY_KLUCZ_PLIK=/home/agent/rozwoj/dane-testowe/lokalny.klucz
+EnvironmentFile=/etc/integrate/panel-testowy.env
+ExecStart=/usr/bin/python3 dashboard/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

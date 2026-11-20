@@ -1383,6 +1383,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
+          "/api/wdroz": lambda b: start_deploy(b),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
           "/api/film/nagraj": record_film,
@@ -2069,6 +2070,7 @@ def build_data():
 
     out["publish"] = part("publikacje", lambda: get_publisher().status(), None)
     out["resources"] = part("zasoby", resources_state, None)
+    out["deploy"] = part("wdrożenie", deploy_state, None)
     out["film"] = part("nagrywarka", lambda: {"available": get_recorder().available(), "account": film.account_email(),
                                               "explainer": get_recorder().available("objasnienie")},
                        {"available": False, "account": "", "explainer": False})
@@ -2127,6 +2129,103 @@ def _iso(value):
     except ValueError:
         return None
     return dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt
+
+
+# ---------- rozwój panelu na serwerze (ROZWOJ.md): gałąź rozwoj kopii roboczej agenta, przycisk „Wdróż” ----------
+DEV_REPO = os.environ.get("PANEL_ROZWOJ_REPO", "").strip() or "/home/agent/rozwoj/IntegrateSystems"
+DEV_BRANCH = "rozwoj"
+DEPLOY_DIR = os.environ.get("PANEL_WDROZENIE_DIR", "").strip() or os.path.expanduser("~/dane/wdrozenie")
+TEST_ENV = os.environ.get("PANEL_TEST_ENV", "").strip() or "/etc/integrate/panel-testowy.env"
+TEST_URL = os.environ.get("PANEL_TEST_URL", "").strip() or "https://test.2-29-181-133.sslip.io"
+DEPLOY_CMD = ["sudo", "-n", "/usr/bin/systemctl", "start", "--no-block", "wdroz-panel.service"]
+DEPLOY_TTL = 30
+PROD_REPO = os.path.dirname(HERE)
+_deploy = {"at": 0.0, "value": None, "lock": threading.Lock()}
+
+
+def _git_out(repo, *args, timeout=20):
+    try:
+        r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return 1, ""
+    return r.returncode, r.stdout.strip()
+
+
+def _deploy_branch():
+    """Commity gałęzi rozwoj, których nie ma na produkcji (pobrane do refs/rozwoj/kandydat), co DEPLOY_TTL s."""
+    with _deploy["lock"]:
+        if _deploy["value"] is not None and time.time() - _deploy["at"] < DEPLOY_TTL:
+            return _deploy["value"]
+        repo = PROD_REPO
+        code, _ = _git_out(repo, "fetch", "-q", "--no-tags", DEV_REPO, "+%s:refs/rozwoj/kandydat" % DEV_BRANCH)
+        if code:
+            value = {"error": "Nie odczytano gałęzi %s z kopii roboczej." % DEV_BRANCH}
+        else:
+            _, log = _git_out(repo, "log", "--format=%h%x09%cI%x09%s", "-n", "30", "HEAD..refs/rozwoj/kandydat")
+            _, ahead = _git_out(repo, "rev-list", "--count", "HEAD..refs/rozwoj/kandydat")
+            _, behind = _git_out(repo, "rev-list", "--count", "refs/rozwoj/kandydat..HEAD", "--", ".",
+                                 ":(exclude)szkice", ":(exclude)raporty")
+            _, stat = _git_out(repo, "diff", "--shortstat", "HEAD...refs/rozwoj/kandydat")
+            commits = []
+            for line in log.splitlines():
+                sha, _, rest = line.partition("\t")
+                at, _, subject = rest.partition("\t")
+                commits.append({"sha": sha, "at": at, "subject": subject})
+            value = {"ahead": int(ahead or 0), "behind": int(behind or 0), "stat": stat, "commits": commits}
+        _deploy.update(at=time.time(), value=value)
+        return value
+
+
+def _test_password():
+    try:
+        with open(TEST_ENV, encoding="utf-8") as f:
+            for line in f:
+                name, sep, value = line.strip().partition("=")
+                if sep and name == "PANEL_TOKEN":
+                    return value.strip().strip("\"'")
+    except OSError:
+        pass
+    return ""
+
+
+def deploy_state():
+    """Blok "deploy" w /api/data albo None, gdy na tej maszynie nie ma kopii roboczej rozwoju."""
+    if not os.path.isdir(os.path.join(DEV_REPO, ".git")):
+        return None
+    out = dict(_deploy_branch())
+    last = load_json(os.path.join(DEPLOY_DIR, "stan.json"), None)
+    out["last"] = last if isinstance(last, dict) else None
+    if out["last"] and out["last"].get("state") in ("error", "rolledback"):
+        text = projekt.read(os.path.join(DEPLOY_DIR, "ostatnie.log")) or ""
+        out["log"] = "\n".join(text.splitlines()[-40:])
+    out.update(branch=DEV_BRANCH, repo=DEV_REPO, testUrl=TEST_URL, testPassword=_test_password())
+    return out
+
+
+def start_deploy(body):
+    """POST /api/wdroz: uruchamia wdroz-panel.service (testy, scalenie, restart, kontrola, powrót przy błędzie)."""
+    st = deploy_state()
+    if st is None:
+        return 400, "Rozwój na serwerze nie jest zainstalowany (uruchom/serwer/zainstaluj-rozwoj.sh)."
+    last = st.get("last") or {}
+    if last.get("state") in ("queued", "running"):
+        started = _iso(last.get("at"))
+        if started and datetime.datetime.now() - started < datetime.timedelta(minutes=30):
+            return 409, "Wdrożenie już trwa."
+    if not st.get("ahead"):
+        return 400, "Na gałęzi %s nie ma nowych zmian." % DEV_BRANCH
+    try:
+        r = subprocess.run(DEPLOY_CMD, capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError) as e:
+        return 500, "Nie uruchomiono wdrożenia: %s" % e
+    if r.returncode:
+        return 500, "Nie uruchomiono wdrożenia: %s" % ((r.stderr or r.stdout).strip()[:200] or "błąd sudo")
+    os.makedirs(DEPLOY_DIR, exist_ok=True)
+    now = datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+    projekt.write_atomic(os.path.join(DEPLOY_DIR, "stan.json"),
+                         json.dumps({"state": "queued", "text": "W kolejce", "at": now, "startedAt": now}, ensure_ascii=False))
+    _deploy["at"] = 0.0
+    return 200, ""
 
 
 _resources = {"obj": None}

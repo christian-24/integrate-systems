@@ -1,0 +1,9 @@
+# Wdrożenie panelu z gałęzi rozwoj (ROZWOJ.md). Start: przycisk „Wdróż” w panelu
+# (sudo systemctl start --no-block wdroz-panel.service). Instaluje uruchom/serwer/zainstaluj-rozwoj.sh.
+[Unit]
+Description=Wdrożenie panelu z gałęzi rozwoj
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wdroz-panel
+TimeoutStartSec=1800
