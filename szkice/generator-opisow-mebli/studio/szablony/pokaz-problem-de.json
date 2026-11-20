@@ -89,6 +89,11 @@
  "logowanie": "https://opisarnia.pl/logowanie",
  "kroki": [
   {
+   "kliknij": "button[aria-label=\"Zamknij informację o zmianie dostawcy\"]",
+   "opcjonalnie": true,
+   "pauza": 0.4
+  },
+  {
    "napis": "{{napis_typ}}",
    "wpisz": [
     "#g-nazwa",
