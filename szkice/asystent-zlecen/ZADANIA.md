@@ -22,8 +22,12 @@
 
 - [x] Rozdział: szukanie auta osobno, Useme do Oprogramowani (2026-11-14)
 - [x] Część aut w osobnym repozytorium szukanie-auta (2026-11-16)
-- [~] Opisz uruchomienie i harmonogram w README repozytorium szukanie-auta | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+- [~] Opisz uruchomienie i harmonogram w README repozytorium szukanie-auta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: README pozwala uruchomić narzędzie na Macu bez PC
   gotowe gdy: README ma sekcje „Jak uruchomić” (backend, rozszerzenie Chrome, Codex CLI) i „Harmonogram” (kiedy i jak działa przegląd)
   materiał: README.md
   materiał: KARTA.md#Zakres
+  wynik: nowy README.md w katalogu głównym repozytorium (wcześniej go nie było): sekcja „Jak uruchomić” dla Maca (Codex CLI, backend, rozszerzenie Chrome, połączenie z „Garażem”, po restarcie, testy) i „Harmonogram” (pasma godzin, przebieg cyklu, limity, warunki działania, sterowanie, kontrola). Szczegóły nadal w olx-chrome/README.md.
+  decyzja: przejdź instrukcję na Macu i potwierdź, że działa — powstała z analizy kodu, nie była wykonana na Macu. Uwaga: backend jest w Node.js, a KARTA.md#Zakres mówi „Backend w Pythonie”.
+  zostało: instrukcji i testów nie uruchomiono (na serwerze nie ma Node.js, Chrome ani Codex CLI). Na Macu brak autostartu i skryptu startowego (start-all.ps1 działa tylko w Windows). Dane połączenia z panelem „Garaż” z PC są zaszyfrowane przez Windows i nie przenoszą się — na Macu trzeba je podać ponownie.
+  następne: Dodaj skrypt startowy i autostart backendu dla Maca w repozytorium szukanie-auta | kto: claude | kiedy: 2026-11-24
