@@ -99,6 +99,7 @@ import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENC
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
+import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
@@ -2063,6 +2064,7 @@ def build_data():
             return default
 
     out["publish"] = part("publikacje", lambda: get_publisher().status(), None)
+    out["resources"] = part("zasoby", resources_state, None)
     out["film"] = part("nagrywarka", lambda: {"available": get_recorder().available(), "account": film.account_email(),
                                               "explainer": get_recorder().available("objasnienie")},
                        {"available": False, "account": "", "explainer": False})
@@ -2121,6 +2123,31 @@ def _iso(value):
     except ValueError:
         return None
     return dt.astimezone().replace(tzinfo=None) if dt.tzinfo else dt
+
+
+_resources = {"obj": None}
+
+
+def _resource_projects():
+    """{id: (nazwa, [repozytorium, folder karty])} z rejestru dla rozmiarów projektów."""
+    data, index = load_projects(resolve=False)
+    names = {p["id"]: p["name"] for p in data["projects"]}
+    return {pid: (names.get(pid, pid), [folder, card_dir(pid) or ""]) for pid, folder in index.items()}
+
+
+def resources_state():
+    """Blok "resources" w /api/data: tylko na serwerze z Linuksem (na Macu None)."""
+    if not sys.platform.startswith("linux") and not os.environ.get("PANEL_ZASOBY"):
+        return None
+    if _resources["obj"] is None:
+        home = os.path.expanduser("~")
+        folders = [("Repozytoria projektów", os.path.join(home, "projekty")),
+                   ("Karty, posty i media", os.path.join(os.path.dirname(HERE), "szkice")),
+                   ("Kopie zapasowe", os.path.join(home, "kopie")),
+                   ("Dane panelu", os.path.join(home, "dane")),
+                   ("Narzędzia (nagrywanie)", os.path.join(home, "narzedzia"))]
+        _resources["obj"] = zasoby.Resources(folders, _resource_projects)
+    return _resources["obj"].state()
 
 
 def server_state(now=None):

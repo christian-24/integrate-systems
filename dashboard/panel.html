@@ -642,6 +642,12 @@ body.ed-open{overflow:hidden}
 /* marketing */
 .meter{display:flex;align-items:center;gap:10px}
 .meter .track{flex:1;height:10px}
+.rs{display:grid;gap:10px}
+.rs-row{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;font-size:13px}
+.rs-row .track{height:10px}
+.rs-v{white-space:nowrap;color:var(--ink-2)}
+.rs-ex{margin:4px 0 0;font-size:13px;color:var(--ink-2)}
+@media (max-width:560px){.rs-row{grid-template-columns:1fr auto}.rs-row .track{grid-column:1/-1;order:3}}
 
 /* szuflada */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
@@ -1578,11 +1584,11 @@ const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 const VIEWS=['przeglad','wskazniki','ty','marketing','media','tablica','terminy','blokady','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica zadań',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Koszty',projekty:'Projekty i standard'};
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica zadań',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty i standard'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica zadań ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
-  agenci:'Agenci: uruchomienia, serwer, publikacja',koszty:'Koszty serwerów',projekty:'Projekty i standard: rejestr i zgodność plików'};
+  agenci:'Agenci: uruchomienia, serwer, publikacja',koszty:'Serwer: pamięć, dysk, foldery i koszty',projekty:'Projekty i standard: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 6 widoków; pozostałe w „Więcej” */
 const BNAV=['przeglad','ty','blokady','marketing','tablica','agenci'];
 const PTABS=[['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
@@ -1661,6 +1667,7 @@ function normalize(raw){
       unlockCountIn:Number.isFinite(+z.unlockCount)&&z.unlockCount!==null&&z.unlockCount!==''?+z.unlockCount:null})),
     server:normServer(raw.server),
     costs:normCosts(raw.costs),
+    resources:normRes(raw.resources),
     publish:normPublish(raw.publish),
     film:raw.film&&typeof raw.film==='object'?{available:!!raw.film.available,explainer:!!raw.film.explainer,account:String(raw.film.account||'')}:null,
     studio:raw.studio&&typeof raw.studio==='object'&&!Array.isArray(raw.studio)?raw.studio:{},
@@ -2279,6 +2286,9 @@ function srvItems(){
   it.push({dot:ageH==null||ageH>=36||c.kopia==='zle'?'bad':ageH>=26?'warn':'ok',label:'kopia: '+(ageH==null?'brak':ageH<1?'mniej niż 1 h temu':Math.floor(ageH)+' h temu'),title:b?'ostatnia kopia '+whenT(s.backupAt):''});
   it.push({dot:s.backupOff?'ok':'warn',label:'poza serwerem: '+(s.backupOff?'tak':'nie'),title:'kopia wysłana poza serwer w ostatnich 26 h'});
   chk('dysk','dysk','w normie','mało miejsca','brak danych');
+  const R=D.resources,pc=(u,t)=>t?Math.round(u/t*100):0;
+  if(R&&R.memory){const p=pc(R.memory.total-R.memory.available,R.memory.total);it.push({dot:p>=90?'bad':p>=75?'warn':'ok',label:'RAM: '+p+'%',title:'wolne '+gb(R.memory.available)+' z '+gb(R.memory.total)})}
+  if(R&&R.disk){const p=pc(R.disk.used,R.disk.total);it.push({dot:p>=90?'bad':p>=80?'warn':'ok',label:'dysk zajęty: '+p+'%',title:'wolne '+gb(R.disk.free)+' z '+gb(R.disk.total)})}
   chk('zapis-kart','zapis kart','działa','błąd','nie zainstalowany');
   chk('claude','logowanie Claude','tak','nie','brak danych');
   Object.keys(c).forEach(k=>{if(c[k]==='zle'&&['dysk','zapis-kart','claude','kopia'].indexOf(k)<0)it.push({dot:'bad',label:k+': błąd'})});
@@ -4099,9 +4109,48 @@ function costLine(){
   const k=D.costs;if(!k||!k.configured||k.loading)return '';
   return '<p class="cline">Serwery: <b class="num">'+eur(k.month)+'</b>'+pln(k.month)+' w tym miesiącu · '+eur(k.monthly)+' za pełny miesiąc · <a href="#koszty">Koszty</a></p>';
 }
+/* /api/data resources: liczby i listy sprawdzone, reszta odrzucona */
+function normRes(r){
+  if(!r||typeof r!=='object')return null;
+  const n=v=>Number.isFinite(+v)&&v!==null&&v!==''?+v:null,o=(x,k)=>x&&typeof x==='object'?Object.fromEntries(k.map(y=>[y,n(x[y])||0])):null;
+  const m=o(r.memory,['total','available','swapTotal','swapFree']),d=o(r.disk,['total','used','free']);
+  return {memory:m&&m.total?m:null,disk:d&&d.total?d:null,cpus:n(r.cpus)||1,uptime:n(r.uptime),at:n(r.at)||Date.now()/1e3,sizesAt:n(r.sizesAt),
+    load:Array.isArray(r.load)?r.load.slice(0,3).map(x=>+x||0):null,
+    folders:Array.isArray(r.folders)?r.folders.filter(f=>f&&typeof f.label==='string').map(f=>({label:f.label,path:String(f.path||''),size:n(f.size)||0,files:n(f.files)||0})):null,
+    projects:Array.isArray(r.projects)?r.projects.filter(p=>p&&typeof p.id==='string').map(p=>({id:p.id,name:String(p.name||p.id),size:n(p.size)||0,git:n(p.git)||0,files:n(p.files)||0})):null};
+}
+/* zasoby serwera: pamięć, swap, dysk (pasek z procentem), obciążenie, foldery i projekty po rozmiarze */
+const gb=n=>{n=+n||0;return n>=1073741824?(n/1073741824).toFixed(1).replace('.',',')+' GB':n>=1048576?Math.round(n/1048576)+' MB':Math.max(0,Math.round(n/1024))+' kB'};
+function resBar(label,used,total,hint){
+  const pct=total?Math.min(100,Math.round(used/total*100)):0,col=pct>=90?'--l-red':pct>=75?'--bar-warn':'--bar-done';
+  return '<div class="rs-row" title="'+esc(hint||'')+'"><span class="rs-l">'+label+'</span><span class="track" role="img" aria-label="'+label+': '+pct+'% zajęte"><i style="width:'+pct+'%;background:var('+col+')"></i></span>'+
+    '<span class="num rs-v"><b>'+gb(used)+'</b> z '+gb(total)+' · '+pct+'%</span></div>';
+}
+function resPanel(){
+  const r=D.resources;
+  if(!r)return '<section class="panel" id="zasoby"><h2>Zasoby</h2><p class="empty" role="status">Zasoby widać w panelu na serwerze w chmurze.</p></section>';
+  const m=r.memory,d=r.disk,up=r.uptime;
+  let h='<section class="panel" id="zasoby"><h2>Zasoby <small>stan z '+esc(whenT(new Date(r.at*1000).toISOString()))+'</small></h2><div class="pad rs">';
+  if(m)h+=resBar('Pamięć RAM',m.total-m.available,m.total,'Zajęta pamięć (bez pamięci podręcznej, którą system zwalnia sam). Wolne: '+gb(m.available));
+  if(m&&m.swapTotal)h+=resBar('Swap',m.swapTotal-m.swapFree,m.swapTotal,'Pamięć wymiany na dysku: używana, gdy brakuje RAM');
+  if(d)h+=resBar('Dysk',d.used,d.total,'Wolne: '+gb(d.free));
+  const ex=[];
+  if(r.load)ex.push('obciążenie '+r.load.map(x=>x.toFixed(2).replace('.',',')).join(' · ')+' <span class="muted">(1, 5, 15 min; '+r.cpus+' rdzenie)</span>');
+  if(up!=null)ex.push('działa od '+(up>=86400?Math.floor(up/86400)+' d ':'')+Math.floor(up%86400/3600)+' h');
+  if(ex.length)h+='<p class="rs-ex">'+ex.join(' · ')+'</p>';
+  h+='</div>';
+  if(!r.folders)return h+'<p class="note ds-pad" role="status">Liczę rozmiary folderów…</p></section>';
+  const row=(n,sz,x)=>'<tr><td>'+n+'</td><td class="num">'+gb(sz)+'</td><td class="num muted">'+x+'</td></tr>';
+  h+='<div class="tw"><table><thead><tr><th>Folder</th><th class="num">Rozmiar</th><th class="num">Pliki</th></tr></thead><tbody>'+
+    r.folders.map(f=>row(esc(f.label)+' <span class="muted"><code>'+esc(f.path)+'</code></span>',f.size,fmtN(f.files))).join('')+'</tbody></table></div>';
+  if(r.projects&&r.projects.length)h+='<div class="tw"><table><thead><tr><th>Projekt</th><th class="num">Pliki projektu</th><th class="num">Historia git</th></tr></thead><tbody>'+
+    r.projects.map(p=>row('<a href="'+phref(p)+'">'+esc(p.name)+'</a>',p.size,p.git?gb(p.git):'—')).join('')+'</tbody></table></div>';
+  return h+'<p class="note ds-pad">Rozmiary folderów liczone co 10 minut'+(r.sizesAt?', ostatnio '+esc(whenT(new Date(r.sizesAt*1000).toISOString())):'')+'. Pliki projektu obejmują rozmowy, filmy i zdjęcia z karty.</p></section>';
+}
 function vKoszty(){
   const k=D.costs;
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="Serwery Hetzner: ten miesiąc, pełny miesiąc i suma od założenia, z kopiami zapasowymi i adresami IP">Koszty</h1><p>'+(k&&k.configured&&!k.loading?'W tym miesiącu '+eur(k.month)+', pełny miesiąc '+eur(k.monthly)+'.':'Serwery Hetzner z kopiami zapasowymi i adresami IP.')+'</p></div></div>';
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="Zasoby serwera i koszty Hetzner">Serwer</h1><p>'+(D.resources&&D.resources.disk?'Dysk: wolne '+gb(D.resources.disk.free)+'. ':'')+(k&&k.configured&&!k.loading?'Koszty w tym miesiącu '+eur(k.month)+', pełny miesiąc '+eur(k.monthly)+'.':'')+'</p></div></div>';
+  h+=resPanel();
   if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>';
   if(k.configured&&!k.loading){
     const S={};k.projects.forEach(p=>p.items.forEach(x=>{const o=S[x.name]||(S[x.name]={name:x.name,type:'',since:x.since,monthly:0,month:0,total:0});
