@@ -1518,6 +1518,59 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   .chartbox svg text.lb,.chartbox svg text.wk-ax2{display:none}
   .linkbtn[data-toggle]{min-height:40px;display:inline-flex;align-items:center}
 }
+/* poprawki UI: elementy wspólne, Agenci, Serwer, Projekty i standard (wykonawca D) */
+.bn-dot{position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--l-purple)}
+.bn-dot.red{background:var(--l-red)}
+.bs-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 10px 2px;border-top:1px solid var(--line);margin-top:4px}
+.bn-sheet .bs-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bn-sheet .count{font-size:12px;font-weight:700;background:var(--l-purple-bg);color:var(--l-purple);border-radius:9px;padding:0 6px;line-height:18px}
+.bn-sheet .count.red{background:var(--l-red-bg);color:var(--l-red)}
+.bn-sheet .count.blue{background:var(--l-blue-bg);color:var(--l-blue)}
+.bn-sheet .count.plain{background:var(--surface);color:var(--ink-3);border:1px solid var(--line)}
+.ag-sum{margin:0;padding:14px 16px 0;font-size:var(--fs-md);color:var(--ink)}
+#abar .ahint{padding-top:8px}
+.ag-tools .ag-st{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.ag-tools>summary small,.prx-stdall>summary small,.rs-det>summary small,.prx-cdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
+.ag-srvl{margin:-6px 0 16px;padding:0 4px;font-size:13.5px;color:var(--ink-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pub-sum{padding:4px 16px 14px}
+.rs-det{border-top:1px solid var(--line);padding-top:12px!important}
+.rs-det .tw{margin:0 -16px}
+.pn-s{display:none}
+.prx-more{grid-column:2;grid-row:1;justify-self:end;font-size:13px}
+.prx-more>summary{font-weight:500;font-size:12px;color:var(--ink-3)}
+.prx-more[open]{grid-column:1/-1;grid-row:auto;justify-self:stretch}
+.prx-more .pf{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;margin:6px 0 4px}
+.prx-more .r{justify-content:flex-start}
+.prx-add .padd{margin:0;border-top:0;padding-top:8px}
+.panel>details.prx-add{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.prx-cdet{display:none}
+.prx-cdet .prx-cards{padding:8px 0 0}
+.prx-zl{margin-top:4px}
+.prx-gp .prx-zl{margin:6px 0 4px 20px}
+.prx-stdall>summary{font-size:var(--fs-md)}
+.panel.prx-stdp>details{padding-top:14px;padding-bottom:14px}
+.prx-stdall>details{border-top:1px solid var(--line);padding:10px 0}
+.prx-stdall>details:last-child{padding-bottom:0}
+@media (max-width:820px){
+  .mobilenav{display:none}
+  .topbar.tbar-bare{padding-top:0;padding-bottom:0;border-bottom:0;min-height:0}
+  .topbar.tbar-bare .tstat{display:none}
+  .bnav{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .bn-sheet{max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px);overflow-y:auto;overscroll-behavior:contain}
+}
+@media (max-width:620px){
+  .kbd-h{display:none}
+  .rs-path{display:none}
+  .pn-f{display:none}
+  .pn-s{display:inline}
+  .plx .prx-s .av{display:none}
+  .plx li{grid-template-columns:minmax(0,1fr) auto}
+  .prx-more>summary{display:inline-flex;min-height:40px;align-items:center;padding-left:8px}
+  .prx-cdet{display:block}
+  .prx-cdet>summary,.prx-stdall>details>summary,.rs-det>summary,.ag-tools>summary,.prx-add>summary{min-height:40px;display:flex;align-items:center;gap:6px}
+  .prx-keysd{display:none}
+  .panel>details.prx-stdall>summary{display:list-item;min-height:40px;padding-top:9px;box-sizing:border-box}
+}
 </style>
 
 <div class="app">
@@ -1604,9 +1657,9 @@ const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketi
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica zadań ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
-  agenci:'Agenci: uruchomienia, serwer, publikacja',koszty:'Serwer: pamięć, dysk, foldery i koszty',projekty:'Projekty i standard: rejestr i zgodność plików'};
-/* dolny pasek (telefon): 6 widoków; pozostałe w „Więcej” */
-const BNAV=['przeglad','ty','blokady','marketing','tablica','agenci'];
+  agenci:'Agenci: kto pracuje, uruchomienia, publikacja',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty i standard: rejestr i zgodność plików'};
+/* dolny pasek (telefon): 4 widoki + „Więcej” (pozostałe widoki z licznikami i lista projektów) */
+const BNAV=['przeglad','ty','tablica','marketing'];
 const PTABS=[['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
@@ -4042,18 +4095,25 @@ function vWskazniki(){
 function agBarHtml(){
   const a=D.agents;
   if(!a)return '<p class="empty">Serwer nie obsługuje uruchamiania agentów.</p>';
-  /* dwa rzędy: stan narzędzi (ag-st) i akcje (ag-ac); baner logowania nad nimi; licznik dnia jest w nagłówku Uruchomień */
+  /* najpierw jedno zdanie (kto pracuje, co czeka na Ciebie), potem akcje; stan narzędzi zwinięty w „Narzędzia”.
+     Bez claude albo bez logowania przyciski raportu i testu znikają: zostaje zdanie z powodem (baner logowania ma własną akcję) */
   const ck=A.busy.check||runs().some(r=>r.kind==='check'&&isAct(r)),no=!a.tools.claude.found,lg=lgNeed();
+  const act=runs().filter(isAct).length,ys=youState(),wait=ys.youToday.concat(ys.youWeek).filter(x=>x.t&&(x.t.executor==='claude'||x.t.executor==='codex')).length;
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
-  h+='<div class="abar"><div class="ag-st">'+pill(toolState('claude'))+pill(toolState('codex'))+
-    '<span class="pill">Działa na: <b>'+esc(MACH[a.machine]||a.machine||'brak')+'</b></span></div>'+
-    '<div class="ag-ac"><button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="Automat sam uruchamia zaplanowane zadania tego węzła">Automat: '+(a.automat?'wł.':'wył.')+'</button>'+
-    pmBtn('pm')+
-    '<button class="btn sec sm" data-ag="check" data-k="check"'+(no?' aria-disabled="true" aria-describedby="ag-noc"':lg?' aria-disabled="true" aria-describedby="ag-lg"':ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button></div></div>';
-  h+='<p class="ahint ag-auto" id="ag-auto"><span class="muted">'+(a.automat?'Automat sam uruchamia zaplanowane zadania tego węzła.':'Automat wyłączony: zaplanowane zadania czekają na ręczne uruchomienie.')+'</span></p>';
-  if(no)h+='<p class="ahint" id="ag-noc">Brak polecenia claude na tym węźle: raport PM i sprawdzenie Claude niedostępne.</p>';
+  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Teraz żaden agent nie pracuje')+
+    (wait?' · '+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Ciebie <a href="#ty">Dla Ciebie →</a>':'')+'.</p>';
+  if(no)h+='<p class="ahint" id="ag-noc">Claude nie jest zainstalowany na tym serwerze. Raport PM i test połączenia pojawią się po instalacji (INSTALACJA.md).</p>';
+  const auT=a.automat?'Automat sam uruchamia zaplanowane zadania tego węzła.':'Automat wyłączony: zaplanowane zadania czekają na ręczne uruchomienie.';
+  h+='<div class="abar"><div class="ag-ac"><button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Automat: '+(a.automat?'wł.':'wył.')+'</button>'+
+    (no?'':pmBtn('pm'))+
+    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>')+'</div></div>';
+  h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   if(limitT())h+='<p class="ahint">'+limitHint()+(a.automat?' · Automat czeka':'')+'</p>';
   if(!a.canRunTasks)h+='<p class="ahint">Projekty przykładowe: bez uruchamiania zadań. <a href="#projekty">Dodaj projekt</a></p>';
+  const tc=toolState('claude'),tx=toolState('codex'),to=!!(A.agDet&&A.agDet.tools);
+  const TSH={ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'},tsh=(n,x)=>n+': '+(TSH[x.dot]||x.dot);
+  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia <small>· '+esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx))+'</small></summary>'+
+    '<div class="ag-st">'+pill(tc)+pill(tx)+'<span class="pill">Działa na: <b>'+esc(MACH[a.machine]||a.machine||'brak')+'</b></span></div></details>';
   return h;
 }
 /* rodzaj uruchomienia w wierszu (krótko); pełna nazwa KIND w szufladzie */
@@ -4092,34 +4152,42 @@ function runGroup(id,name,R,coll){
 /* kolejność: stan agentów, uruchomienia (zmieniają się codziennie), serwer i publikacja (konfiguracja, ustawiana raz) */
 function vAgenci(){
   const a=D.agents;
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.agenci)+'">Agenci</h1><p>Kto pracuje, co uruchomiono i co trzeba podłączyć.</p></div></div><section class="panel" id="abar" aria-label="Stan agentów">'+agBarHtml()+'</section>';
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.agenci)+'">Agenci</h1></div></div><section class="panel" id="abar" aria-label="Stan agentów">'+agBarHtml()+'</section>'+srvLine();
   if(a){
     const L=a.runs,act=L.filter(isAct).length,td=runsToday(),n=a.today.runs,tdI={};td.forEach(r=>{tdI[r.id]=1});
     const isErr=r=>r.state==='error'||r.state==='timeout',er=td.filter(isErr).length,fe=!!A.runErr&&er>0;
     const F=fe?L.filter(isErr):L;
-    h+='<section class="panel" id="ag-runs"><h2>Uruchomienia <small><span>Dziś '+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+'</span>'+(act?'<span class="lz blue">'+act+' w toku</span>':'')+
-      '<span>do '+(a.maxParallel||1)+' naraz</span>'+(er?'<span class="lz red">'+er+' '+pl(er,'błąd','błędy','błędów')+' dziś</span>':'<span>0 błędów dziś</span>')+'</small></h2>'+
-      '<p class="ahint">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+' (równowartość, przy subskrypcji nie jest pobierana) · <a href="#koszty">Koszty serwerów</a></p>'+
+    /* nagłówek: tylko liczby różne od zera; zużycie (tokeny, równowartość) tylko, gdy coś zużyto */
+    h+='<section class="panel" id="ag-runs"><h2>Uruchomienia <small title="'+esc('Najwyżej '+(a.maxParallel||1)+' naraz')+'">'+(n?'<span>Dziś '+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+'</span>':'')+(act?'<span class="lz blue">'+act+' w toku</span>':'')+
+      (er?'<span class="lz red">'+er+' '+pl(er,'błąd','błędy','błędów')+' dziś</span>':'')+'</small></h2>'+
+      (a.today.tokens?'<p class="ahint" title="Równowartość w cenniku API; przy subskrypcji nie jest pobierana">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+'</p>':'')+
       (er?'<p class="ahint"><button class="chip ag-errf" data-agerr="1" data-k="agerr" aria-pressed="'+fe+'">Pokaż błędy ('+er+')</button></p>':'');
     h+=L.length?runGroup('act','W toku',F.filter(isAct))+runGroup('today','Dziś',F.filter(r=>!isAct(r)&&tdI[r.id]))+runGroup('old','Wcześniej',F.filter(r=>!isAct(r)&&!tdI[r.id]),true):
       '<p class="empty">Brak uruchomień. Otwórz zadanie na <a href="#tablica">Tablicy</a> i kliknij Uruchom. <span class="kbd-h">(klawisz r)</span></p>';
     h+='</section>';
   }
-  h+=srvPanel();
   h+=pubPanel();
   return h;
 }
 /* serwer: stan z kontroli zdrowia i kopii; wylogowanie wszystkich urządzeń (nowy klucz sesji, sesje i tak wygasają po 30 dniach) */
-function srvPanel(){
+function srvPanel(o){
   /* potwierdzenie: Wyloguj w wariancie ostrzegawczym (.btn.danger), Escape = Anuluj (obsługa klawiszy, A.lo) */
   const lo=A.lo?'<p class="rsn" id="lo-q">Wylogować wszystkie urządzenia? Każde, także to, zaloguje się ponownie hasłem panelu.</p><div class="row"><button class="btn danger sm" data-ag="lo-yes" data-k="lo-yes" aria-describedby="lo-q">Wyloguj</button><button class="btn sec sm" data-ag="lo-no" data-k="lo-no">Anuluj</button></div>'
     :'<div class="row"><button class="btn sec sm" data-ag="lo" data-k="lo"'+(A.busy.lo?' aria-disabled="true"':'')+'>'+(A.busy.lo?'Wylogowuję…':'Wyloguj wszystkie urządzenia')+'</button></div>';
   const so=!!(A.lo||A.busy.lo||(A.agDet&&A.agDet.ses));
-  const ses='<details class="ag-ses" data-agdet="ses"'+(so?' open':'')+'><summary>Sesje urządzeń</summary>'+lo+'<p class="muted">Sesje wygasają same po 30 dniach.</p></details>';
-  const v=D.server?srvItems():null,LV={ok:['green','w normie'],warn:['yellow','do sprawdzenia'],bad:['red','problem']};
-  if(!v)return '<section class="panel" id="ag-srv"><h2>Serwer <small><a href="#koszty">Koszty</a></small></h2><p class="ahint" title="Brak danych o stanie serwera. Kontrola zdrowia i kopie działają na serwerze w chmurze (uruchom/serwer/).">Stan serwera widać w panelu na serwerze w chmurze.</p>'+ses+'</section>';
-  return '<section class="panel" id="ag-srv"><h2><span class="ag-h">Serwer <span class="lz '+LV[v.lvl][0]+'">'+LV[v.lvl][1]+'</span></span><small>'+(v.at?'<span>stan z '+esc(whenT(D.server.at))+'</span>':'')+'<a href="#koszty">Koszty</a></small></h2>'+
-    '<div class="pad">'+srvBar(true)+'</div>'+ses+'</section>';
+  const ses='<details class="ag-ses ds-det" data-agdet="ses"'+(so?' open':'')+'><summary>Sesje urządzeń</summary>'+lo+'<p class="muted">Sesje wygasają same po 30 dniach.</p></details>';
+  const v=D.server?srvItems():null,LV=SRV_LV;
+  /* widok Serwer: stan (kontrola zdrowia i kopie) na górze, sesje urządzeń (wylogowanie) zwinięte na końcu */
+  if(o==='ses')return '<section class="panel" id="ag-ses">'+ses+'</section>';
+  if(!v)return '';
+  return '<section class="panel" id="ag-srv"><h2><span class="ag-h">Stan serwera <span class="lz '+LV[v.lvl][0]+'">'+LV[v.lvl][1]+'</span></span><small>'+(v.at?'<span>stan z '+esc(whenT(D.server.at))+'</span>':'')+'</small></h2>'+
+    '<div class="pad">'+srvBar(true)+'</div></section>';
+}
+const SRV_LV={ok:['green','w normie'],warn:['yellow','do sprawdzenia'],bad:['red','problem']};
+/* Agenci: stan serwera jednym wierszem z odsyłaczem; szczegóły i sesje urządzeń są w widoku Serwer */
+function srvLine(){
+  const v=D.server?srvItems():null;if(!v)return '';
+  return '<p class="ag-srvl">Serwer: <span class="lz '+SRV_LV[v.lvl][0]+'">'+SRV_LV[v.lvl][1]+'</span> <a href="#koszty">Serwer →</a></p>';
 }
 const eur=n=>(+n||0).toFixed(2).replace('.',',')+' €';
 const pln=n=>D.costs&&D.costs.eurPln?' <span class="muted">≈ '+Math.round(n*D.costs.eurPln)+' zł</span>':'';
@@ -4153,18 +4221,22 @@ function resPanel(){
   if(m)h+=resBar('Pamięć RAM',m.total-m.available,m.total,'Zajęta pamięć (bez pamięci podręcznej, którą system zwalnia sam). Wolne: '+gb(m.available));
   if(m&&m.swapTotal)h+=resBar('Swap',m.swapTotal-m.swapFree,m.swapTotal,'Pamięć wymiany na dysku: używana, gdy brakuje RAM');
   if(d)h+=resBar('Dysk',d.used,d.total,'Wolne: '+gb(d.free));
-  const ex=[];
-  if(r.load)ex.push('obciążenie '+r.load.map(x=>x.toFixed(2).replace('.',',')).join(' · ')+' <span class="muted">(1, 5, 15 min; '+r.cpus+' rdzenie)</span>');
+  /* obciążenie w title; w tekście tylko, gdy przekracza liczbę rdzeni */
+  const ex=[],ld=r.load?'obciążenie '+r.load.map(x=>x.toFixed(2).replace('.',',')).join(' · ')+' (1, 5, 15 min; '+r.cpus+' '+pl(r.cpus,'rdzeń','rdzenie','rdzeni')+')':'';
+  if(r.load&&r.load[0]>r.cpus)ex.push('<span class="warn">wysokie obciążenie: '+r.load[0].toFixed(2).replace('.',',')+'</span>');
   if(up!=null)ex.push('działa od '+(up>=86400?Math.floor(up/86400)+' d ':'')+Math.floor(up%86400/3600)+' h');
-  if(ex.length)h+='<p class="rs-ex">'+ex.join(' · ')+'</p>';
+  if(ex.length)h+='<p class="rs-ex"'+(ld?' title="'+esc(ld)+'"':'')+'>'+ex.join(' · ')+'</p>';
   h+='</div>';
   if(!r.folders)return h+'<p class="note ds-pad" role="status">Liczę rozmiary folderów…</p></section>';
-  const row=(n,sz,x)=>'<tr><td>'+n+'</td><td class="num">'+gb(sz)+'</td><td class="num muted">'+x+'</td></tr>';
+  /* rozmiary folderów i projektów zwinięte; kolumna „Historia git” tylko, gdy któryś projekt ma historię */
+  const git=!!(r.projects&&r.projects.some(p=>p.git)),row=(n,sz,x)=>'<tr><td>'+n+'</td><td class="num">'+gb(sz)+'</td>'+(x==null?'':'<td class="num muted">'+x+'</td>')+'</tr>';
+  const nF=r.folders.length+(r.projects?r.projects.length:0),fo=!!(A.agDet&&A.agDet.rsdet);
+  h+='<details class="ds-det rs-det" data-agdet="rsdet"'+(fo?' open':'')+'><summary>Rozmiary folderów <small>· '+nF+'</small></summary>';
   h+='<div class="tw"><table><thead><tr><th>Folder</th><th class="num">Rozmiar</th><th class="num">Pliki</th></tr></thead><tbody>'+
-    r.folders.map(f=>row(esc(f.label)+' <span class="muted"><code>'+esc(f.path)+'</code></span>',f.size,fmtN(f.files))).join('')+'</tbody></table></div>';
-  if(r.projects&&r.projects.length)h+='<div class="tw"><table><thead><tr><th>Projekt</th><th class="num">Pliki projektu</th><th class="num">Historia git</th></tr></thead><tbody>'+
-    r.projects.map(p=>row('<a href="'+phref(p)+'">'+esc(p.name)+'</a>',p.size,p.git?gb(p.git):'—')).join('')+'</tbody></table></div>';
-  return h+'<p class="note ds-pad">Rozmiary folderów liczone co 10 minut'+(r.sizesAt?', ostatnio '+esc(whenT(new Date(r.sizesAt*1000).toISOString())):'')+'. Pliki projektu obejmują rozmowy, filmy i zdjęcia z karty.</p></section>';
+    r.folders.map(f=>row('<span title="'+esc(f.path)+'">'+esc(f.label)+'</span> <span class="muted rs-path"><code>'+esc(f.path).replace(/\//g,'/<wbr>')+'</code></span>',f.size,fmtN(f.files))).join('')+'</tbody></table></div>';
+  if(r.projects&&r.projects.length)h+='<div class="tw"><table><thead><tr><th>Projekt</th><th class="num">Pliki projektu</th>'+(git?'<th class="num">Historia git</th>':'')+'</tr></thead><tbody>'+
+    r.projects.map(p=>row('<a href="'+phref(p)+'">'+esc(p.name)+'</a>',p.size,git?(p.git?gb(p.git):'—'):null)).join('')+'</tbody></table></div>';
+  return h+'<p class="note ds-pad">Liczone co 10 minut'+(r.sizesAt?', ostatnio '+esc(whenT(new Date(r.sizesAt*1000).toISOString())):'')+'. Pliki projektu obejmują rozmowy, filmy i zdjęcia z karty.</p></details></section>';
 }
 /* rozwój panelu na serwerze (ROZWOJ.md): zmiany na gałęzi rozwoj, panel testowy, przycisk „Wdróż” z potwierdzeniem */
 const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
@@ -4172,29 +4244,39 @@ function devPanel(){
   const d=D.deploy;if(!d)return '';
   const L=d.last||null,on=!!(L&&(L.state==='queued'||L.state==='running'))||!!A.busy.wd,cm=Array.isArray(d.commits)?d.commits:[];
   if(L&&!(L.state==='queued'||L.state==='running'))A.busy.wd=false;
+  const bad=!!(L&&!on&&(L.state==='error'||L.state==='rolledback')),can=!!d.ahead&&!d.error;
+  /* jedno zdanie stanu; przycisk tylko, gdy jest co wdrożyć; reszta (panel testowy, dziennik, instrukcja) zwinięta */
   let h='<section class="panel" id="rozwoj"><h2>Rozwój panelu <small><span>gałąź '+esc(d.branch||'rozwoj')+'</span></small></h2><div class="pad dv">';
   if(d.error)h+='<p class="warn">'+esc(d.error)+'</p>';
-  else h+='<p>'+(d.auto?'Wdrażanie automatyczne: każdy commit na gałęzi rozwoj trafia na produkcję po zielonych testach. ':'')+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana jeszcze nie wdrożona','zmiany jeszcze nie wdrożone','zmian jeszcze nie wdrożonych')+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak nowych zmian na gałęzi rozwoj.')+
+  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana jeszcze nie wdrożona','zmiany jeszcze nie wdrożone','zmian jeszcze nie wdrożonych')+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak zmian do wdrożenia.')+
     (d.behind?' <span class="lz yellow" title="Na produkcji są zmiany kodu, których gałąź rozwoj jeszcze nie ma; wdrożenie je połączy">na produkcji '+d.behind+' '+pl(d.behind,'nowsza zmiana','nowsze zmiany','nowszych zmian')+'</span>':'')+'</p>';
   if(cm.length)h+='<ul class="dv-c">'+cm.slice(0,10).map(c=>'<li><code>'+esc(c.sha)+'</code><span>'+esc(c.subject)+'</span><span class="muted">'+esc(whenT(c.at))+'</span></li>').join('')+(cm.length>10?'<li class="muted">i '+(cm.length-10)+' więcej</li>':'')+'</ul>';
   const b=[];
   if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(L&&L.text?': '+esc(L.text):'')+'</span>');
   else if(A.wdConf)b.push('<span>Testy, scalenie, restart panelu (chwila przerwy), kontrola; przy błędzie powrót do obecnej wersji.</span><button class="btn sm" data-ag="wd-yes" data-k="wd-yes">Wdróż teraz</button><button class="btn sec sm" data-ag="wd-no" data-k="wd-no">Anuluj</button>');
-  else b.push('<button class="'+(d.auto?'btn sec sm':'btn sm')+'" data-ag="wd" data-k="wd"'+(d.ahead&&!d.error?'':' aria-disabled="true" title="Brak nowych zmian"')+'>'+(L&&(L.state==='error'||L.state==='rolledback')?'Wdróż ponownie':d.auto?'Wdróż teraz':'Wdróż')+'</button>');
-  h+='<div class="row dv-b">'+b.join('')+'</div>';
-  if(L&&!on){const w=WDS[L.state]||['out',L.state];
-    h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>';
-    if(d.log)h+='<details class="ds-det"><summary>Dziennik wdrożenia</summary><pre class="res">'+esc(d.log)+'</pre></details>'}
+  else if(can)b.push('<button class="'+(d.auto?'btn sec sm':'btn sm')+'" data-ag="wd" data-k="wd">'+(bad?'Wdróż ponownie':d.auto?'Wdróż teraz':'Wdróż')+'</button>');
+  if(b.length)h+='<div class="row dv-b">'+b.join('')+'</div>';
+  if(bad){const w=WDS[L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
+  const op=bad||!!(A.agDet&&A.agDet.dvdet);
+  h+='<details class="ds-det" data-agdet="dvdet"'+(op?' open':'')+'><summary>Panel testowy i wdrożenia</summary>';
+  if(d.auto)h+='<p class="dv-l">Wdrażanie automatyczne: każdy commit na gałęzi rozwoj trafia na produkcję po zielonych testach.</p>';
+  if(L&&!on&&!bad){const w=WDS[L.state]||['out',L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
+  if(L&&!on&&d.log)h+='<details class="ds-det"><summary>Dziennik wdrożenia</summary><pre class="res">'+esc(d.log)+'</pre></details>';
   h+='<p class="dv-l">Panel testowy (kod z gałęzi rozwoj, dane przykładowe): <a href="'+esc(d.testUrl)+'" target="_blank" rel="noopener">'+esc(String(d.testUrl).replace(/^https?:\/\//,''))+'</a>'+
     (d.testPassword?' · hasło: <code>'+(A.wdPw?esc(d.testPassword):'••••••••')+'</code> <button class="lk" data-ag="wd-pw" data-k="wd-pw">'+(A.wdPw?'Ukryj':'Pokaż')+'</button> <button class="lk" data-ag="wd-copy" data-k="wd-copy">Kopiuj</button>':'')+'</p>';
   h+='<details class="ds-det"><summary>Jak rozwijać panel na serwerze</summary><p>W aplikacji Claude (zakładka Code) dodaj połączenie SSH: użytkownik <code>agent</code>, serwer <code>2.29.181.133</code>, folder <code>'+esc(d.repo||'')+'</code>. Agent pracuje na gałęzi rozwoj i sprawdza zmiany w panelu testowym; commit na rozwoj wdraża się sam, a przy błędzie panel wraca do poprzedniej wersji. Zasady w ROZWOJ.md.</p></details>';
-  return h+'</div></section>';
+  return h+'</details></div></section>';
 }
+/* Serwer: werdykt w podtytule, potem stan, zasoby, koszty; rozwój panelu i sesje urządzeń na końcu */
 function vKoszty(){
-  const k=D.costs;
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="Zasoby serwera i koszty Hetzner">Serwer</h1><p>'+(D.resources&&D.resources.disk?'Dysk: wolne '+gb(D.resources.disk.free)+'. ':'')+(k&&k.configured&&!k.loading?'Koszty w tym miesiącu '+eur(k.month)+', pełny miesiąc '+eur(k.monthly)+'.':'')+'</p></div></div>';
-  h+=devPanel()+resPanel();
-  if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>';
+  const k=D.costs,v=D.server?srvItems():null,sub=[];
+  if(v)sub.push({ok:'Serwer w normie',warn:'Serwer: do sprawdzenia',bad:'Serwer: problem'}[v.lvl]);
+  if(D.resources&&D.resources.disk)sub.push('dysk: wolne '+gb(D.resources.disk.free));
+  if(k&&k.configured&&!k.loading)sub.push('koszty w tym miesiącu '+eur(k.month));else if(k&&!k.configured)sub.push('koszty niepodłączone');
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="Zasoby serwera i koszty Hetzner">Serwer</h1><p>'+esc(cap(sub.join(' · ')))+(sub.length?'.':'')+'</p></div></div>';
+  h+=srvPanel()+resPanel();
+  const tail=devPanel()+srvPanel('ses');
+  if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>'+tail;
   if(k.configured&&!k.loading){
     const S={};k.projects.forEach(p=>p.items.forEach(x=>{const o=S[x.name]||(S[x.name]={name:x.name,type:'',since:x.since,monthly:0,month:0,total:0});
       if(x.kind==='serwer'){o.type=x.detail+(x.location?' · '+x.location:'');o.since=x.since}o.monthly+=x.monthly;o.month+=x.month;o.total+=x.total}));
@@ -4203,7 +4285,7 @@ function vKoszty(){
       L.map(o=>'<tr><td>'+esc(o.name)+'</td><td>'+esc(o.type||'—')+'</td><td>'+(o.since?esc(dd(o.since)+'.'+o.since.slice(0,4)):'—')+'</td><td class="num">'+eur(o.monthly)+pln(o.monthly)+'</td><td class="num">'+eur(o.month)+pln(o.month)+'</td><td class="num">'+eur(o.total)+pln(o.total)+'</td></tr>').join('')+
       '</tbody></table></div></section>';
   }
-  return h+costPanel();
+  return h+costPanel()+tail;
 }
 function costPanel(){
   const k=D.costs;if(!k)return '';
@@ -4284,7 +4366,33 @@ function prxGo(b){
   n.setAttribute('tabindex','-1');n.scrollIntoView({block:'center'});n.focus({preventScroll:true});
 }
 const prxGaps=g=>g.length===1?' '+esc(g[0]):'<ul>'+g.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
-const prxEnt=(p,cls)=>'<a class="prx-ent'+(cls?' '+cls:'')+'" href="'+phref(p,'ksiega')+'">'+esc(p.name)+'</a>';
+const prxEnt=(p,cls,sh)=>'<a class="prx-ent'+(cls?' '+cls:'')+'" href="'+phref(p,'ksiega')+'"'+(sh?' title="'+esc(p.name)+'"':'')+'>'+esc(sh?pShort(p):p.name)+'</a>';
+/* „Zleć agentowi uzupełnienie plików”: jedno zadanie dla Claude w ZADANIA.md projektu (POST /api/task/add, potem kto i cel);
+   gdy takie zadanie już jest otwarte, zamiast przycisku odsyłacz do niego */
+const PRX_ZL='Uzupełnić pliki projektu według standardu';
+const prxZlT=pid=>D.tasks.find(t=>t.project===pid&&t.state!=='done'&&t.title===PRX_ZL);
+function prxZl(p){
+  const t=prxZlT(p.id);
+  if(t)return '<button class="lk" data-task="'+esc(t.id)+'">Zlecone agentowi: '+esc(TS[t.state]?TS[t.state][1]:t.state)+'</button>';
+  return '<button type="button" class="btn sec sm" data-ag="prx-zl" data-id="'+esc(p.id)+'" data-k="zl:'+esc(p.id)+'"'+(A.busy['zl:'+p.id]?' aria-disabled="true"':'')+' aria-label="'+esc('Zleć agentowi uzupełnienie plików: '+p.name)+'">'+(A.busy['zl:'+p.id]?'Zlecam…':'Zleć agentowi uzupełnienie')+'</button>';
+}
+function prxDelegate(pid){
+  const p=P(pid);if(!p||prxZlT(pid))return;
+  const docs=D.standard.filter(d=>d.key!=='kampania'),gaps=[];
+  docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;gaps.push(d.label+(x.status==='missing'?' (brak pliku)':' ('+(x.gaps||[]).length+' '+pl((x.gaps||[]).length,'brak','braki','braków')+')'))});
+  const goal=cleanT('Uzupełnić według standard/STANDARD.md: '+gaps.join(', ')+'. Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.').slice(0,300);
+  if(!LIVE){say(PRV);return}
+  A.busy['zl:'+pid]=true;render(true);
+  enqueue(async()=>{
+    const r=await post('/api/task/add',{project:pid,title:PRX_ZL});
+    if(!r.ok){A.busy['zl:'+pid]=false;if(r.status!==401)say(r.error||'Nie udało się zlecić zadania.');return}
+    const id=r.id||await newTaskId(pid,PRX_ZL,'');
+    if(id){const u=await post('/api/task/update',{id:id,title:PRX_ZL,changes:{executor:'claude'}});
+      if(u.ok)await detailPost({id:id,title:PRX_ZL},'cel',goal)}
+    A.busy['zl:'+pid]=false;
+    say(id?'Zlecono agentowi: '+PRX_ZL+' ('+p.name+').':'Dodano zadanie: '+PRX_ZL+'. Ustaw wykonawcę w szczegółach zadania.');
+  });
+}
 const prxFiles=(p,txt)=>'<span class="lz '+(p.docsOk===p.docsTotal?'green':'yellow')+'">'+txt+'</span>';
 function vProjekty(){
   const reg=D.projectsSource==='registry',canAdd=!LIVE||!!D.agents,docs=D.standard.filter(d=>d.key!=='kampania');
@@ -4302,27 +4410,35 @@ function vProjekty(){
     g.camp.push('<li id="'+prxB(c.project,'k-'+(c.id||c.name))+'"><b>Kampania „'+esc(c.name)+'”:</b>'+prxGaps(c.gaps)+'</li>')});
   const gN=grp.reduce((s,g)=>s+g.n,0);
   /* nagłówek: opis, stan w pigułkach, skok do formularza */
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.projekty)+'">Projekty i standard</h1><a class="linkbtn prx-back" href="#przeglad">← Przegląd</a><p>Dodaj albo zdejmij projekt. Sprawdź, których plików brakuje.</p></div>'+
-    '<div class="prx-acts">'+(nP?'<span class="pill"><b>'+nP+'</b> '+pl(nP,'projekt','projekty','projektów')+'</span><span class="pill"><b>'+okN+'</b> z '+nP+' kompletnych</span><span class="pill"><b>'+gN+'</b> '+pl(gN,'brak','braki','braków')+'</span>':'')+
-    (canAdd?'<button type="button" class="btn sec" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button>':'')+'</div></div>';
+  /* nagłówek: liczby raz, jednym zdaniem; „Dodaj projekt” rozwija formularz pod listą */
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.projekty)+'">Projekty i standard</h1><p>'+(nP?nP+' '+pl(nP,'projekt','projekty','projektów')+', '+(okN===nP?'wszystkie z kompletem plików.':okN?okN+' z kompletem plików, '+gN+' '+pl(gN,'brak','braki','braków')+' w pozostałych.':'żaden nie ma kompletu plików ('+gN+' '+pl(gN,'brak','braki','braków')+').'):'Dodaj pierwszy projekt.')+'</p></div>'+
+    (canAdd?'<div class="prx-acts"><button type="button" class="btn sec" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button></div>':'')+'</div>';
   /* lista projektów */
-  h+='<section class="panel"><h2>Projekty <small>'+nP+' '+pl(nP,'projekt','projekty','projektów')+'</small></h2>'+
+  /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
+  const PSO={late:0,risk:1,you:2,ok:3,none:4,paused:6,backlog:7,finished:8,done:8},PL=D.projects.map((p,i)=>[p,i]).sort((a,b)=>((PSO[a[0].pst]!=null?PSO[a[0].pst]:5)-(PSO[b[0].pst]!=null?PSO[b[0].pst]:5))||a[1]-b[1]).map(x=>x[0]);
+  h+='<section class="panel"><h2>Projekty</h2>'+
     (!reg&&nP?'<p class="note">'+(canAdd?'Projekty przykładowe. Dodaj pierwszy projekt poniżej.':'Projekty przykładowe.')+'</p>':'')+
-    (nP?'<ul class="rows plx">'+D.projects.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
+    (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li><div><a class="t" href="'+phref(x)+'">'+esc(x.name)+'</a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
+      let r='<li><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="pn-f">'+esc(x.name)+'</span><span class="pn-s">'+esc(pShort(x))+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
         '<a class="lz '+(x.docsOk===x.docsTotal?'green':'yellow')+' prx-files" href="'+phref(x,'ksiega')+'" aria-label="Pliki projektu: '+x.docsOk+' z '+x.docsTotal+', otwiera Księgę">pliki '+x.docsOk+' z '+x.docsTotal+'</a></div>'+
-        (LIVE&&full?'<div class="pf"><span class="muted" title="'+esc(full)+'">'+esc(last)+'</span><details class="prx-path"><summary>ścieżka</summary><code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></details></div>':'')+'</div><div class="r'+(cf?' prx-cf':'')+'">';
+        '</div>';
+      /* folder, ścieżka i usuwanie zwinięte w „Więcej” (otwarte przy potwierdzaniu usunięcia) */
+      const mo=cf||prxOpen('m:'+x.id,false);
+      r+='<details class="prx-more" data-prxdet="'+esc('m:'+x.id)+'"'+(mo?' open':'')+'><summary>Więcej</summary>'+
+        (LIVE&&full?'<div class="pf"><span class="muted">Folder:</span> <code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'<div class="r'+(cf?' prx-cf':'')+'">';
       if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu." aria-describedby="prx-col-'+id+'">ze zbieracza</span><span class="note prx-coln" id="prx-col-'+id+'">Aby zdjąć, zmień decyzję w zbieraczu.</span>';
       else if(reg&&canAdd)r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
         :'<button type="button" class="linkbtn prx-rm" data-ag="prm" data-id="'+id+'" data-k="pr:'+id+'" aria-label="'+esc('Usuń z rejestru: '+x.name)+'">Usuń z rejestru…</button>';
-      return r+'</div></li>'}).join('')+'</ul>':'<p class="empty">'+(canAdd?'Nie masz jeszcze projektów. Wpisz ścieżkę folderu poniżej i kliknij Dodaj projekt.':'Brak projektów.')+'</p>');
+      return r+'</div></details></li>'}).join('')+'</ul>':'<p class="empty">'+(canAdd?'Nie masz jeszcze projektów. Wpisz ścieżkę folderu poniżej i kliknij Dodaj projekt.':'Brak projektów.')+'</p>');
   const F=A.padd||{},busy=!!A.busy.add;
-  h+=(canAdd?'<form class="padd" id="padd" aria-labelledby="prx-new-h"><h3 class="prx-h3" id="prx-new-h">Nowy projekt</h3>'+
+  /* formularz zwinięty: otwiera go „Dodaj projekt” w nagłówku albo summary; otwarty, gdy nie ma projektów albo trwa wpisywanie */
+  const ao=!nP||busy||!!F.bad||!!F.ppath||prxOpen('add',false);
+  h+=(canAdd?'<details class="prx-add" id="padd-d" data-prxdet="add"'+(ao?' open':'')+'><summary id="prx-new-h">Nowy projekt</summary><form class="padd" id="padd" aria-labelledby="prx-new-h">'+
       '<label class="fl"><span>Folder projektu</span><input class="fi" id="ppath" placeholder="np. ~/Projekty/nazwa" autocomplete="off" spellcheck="false" value="'+esc(F.ppath||'')+'"'+(F.bad?' aria-invalid="true"':'')+'></label>'+
       '<label class="fl"><span>Nazwa (opcjonalnie)</span><input class="fi" id="pname" autocomplete="off" value="'+esc(F.pname||'')+'"></label>'+
       '<label class="prx-chk"><input type="checkbox" id="pfiles"'+(F.nofiles?'':' checked')+'> Załóż brakujące pliki (nic nie nadpisuje)</label>'+
-      '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj projekt')+'</button></div></form>'
+      '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj projekt')+'</button></div></form></details>'
     :'<p class="empty">Serwer nie obsługuje dodawania projektów. Dodaj projekt w terminalu: <code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code></p>')+'</section>';
   /* pliki projektów: zdanie podsumowania, tabela (karty na telefonie), braki pogrupowane */
   if(!nP)h+='<p class="empty prx-none">Pliki projektów pokażą się po dodaniu pierwszego projektu.</p>';
@@ -4337,21 +4453,23 @@ function vProjekty(){
       docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;const b=prxB(p.id,d.key),n=(x.gaps||[]).length;
         if(x.status==='missing'&&!PRX_CRIT[d.key])miss.push(esc(d.label));
         else marks.push('<a class="lz '+(x.status==='missing'?'red':'yellow')+'" href="#'+b+'" data-prxgo="'+b+'">'+esc(d.label)+': '+(x.status==='missing'?'brak pliku':n+' '+pl(n,'brak','braki','braków'))+'</a>')});
-      cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
-        (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+'</li>'});
+      if(p.docsOk!==p.docsTotal)cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p,'',true)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
+        (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+(reg&&canAdd?'<div class="prx-zl">'+prxZl(p)+'</div>':'')+'</li>'});
+    const nC=D.projects.filter(p=>p.docsOk!==p.docsTotal).length;
     const gl=grp.filter(g=>g.n).map(g=>{const k='g:'+g.p.id;
       return '<details class="prx-gp" data-prxdet="'+esc(k)+'"'+(prxOpen(k,true)?' open':'')+'><summary>'+av(g.p,'sm')+prxEnt(g.p)+' <small>· '+g.n+'</small></summary><ul class="prx-gl">'+
-        g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul></details>'}).join('');
-    h+='<section class="panel"><h2>Pliki projektów <small>'+okN+' z '+nP+' kompletnych</small></h2>'+
-      (allMiss.length?'<p class="note prx-sum">'+esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. Brakujące pliki zakłada (nic nie nadpisuje): <code>python3 standard/projekt.py nowy &lt;folder&gt;</code></p>':'')+
+        g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul>'+(reg&&canAdd&&P(g.p.id)?'<div class="prx-zl">'+prxZl(g.p)+'</div>':'')+'</details>'}).join('');
+    /* jedno zdanie i akcja (zleć agentowi w kartach i w Brakach); na telefonie karty projektów zwinięte, na komputerze tabela */
+    h+='<section class="panel"><h2>Pliki projektów</h2>'+
+      ((allMiss.length||(nC&&reg&&canAdd))?'<p class="note prx-sum">'+(allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>':'')+
       '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Pliki projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
-      '<ul class="prx-cards">'+cards+'</ul>'+
+      (nC?'<details class="prx-cdet" data-prxdet="cards"'+(prxOpen('cards',false)?' open':'')+'><summary>Projekty z brakami <small>· '+nC+'</small></summary><ul class="prx-cards">'+cards+'</ul></details>':'')+
       (gN?'<details class="ds-gap prx-gaps" data-prxdet="gaps"'+(prxOpen('gaps',false)?' open':'')+'><summary>Braki <small>· '+gN+'</small></summary>'+gl+'</details>':'<p class="empty">Wszystkie projekty mają komplet plików.</p>')+'</section>';
   }
   /* jak działa standard: dla osób, które edytują pliki ręcznie */
-  const D2=(k,s,body)=>'<details data-prxdet="'+k+'"'+(prxOpen(k,false)?' open':'')+'><summary>'+s+'</summary>'+body+'</details>';
+  const D2=(k,s,body,cls)=>'<details data-prxdet="'+k+'"'+(cls?' class="'+cls+'"':'')+(prxOpen(k,false)?' open':'')+'><summary>'+s+'</summary>'+body+'</details>';
   const wf=f=>esc(f).replace(/\//g,'/<wbr>');
-  h+='<section class="panel"><h2>Jak działa standard</h2><p class="note">Dla osób, które edytują pliki ręcznie.</p>'+
+  h+='<section class="panel prx-stdp"><details class="prx-stdall" data-prxdet="std"'+(prxOpen('std',false)?' open':'')+'><summary>Jak działa standard <small>· dla osób, które edytują pliki ręcznie</small></summary>'+
     D2('std-files','Jakie pliki ma mieć projekt <small>· '+D.standard.length+'</small>',
       '<div class="tw prx-stdt"><table class="mx prx-std"><thead><tr><th scope="col">Dokument</th><th scope="col">Plik</th><th scope="col">Do czego służy</th><th scope="col">Stałe sekcje</th></tr></thead><tbody>'+
       D.standard.map(d=>'<tr><td><b>'+esc(d.label)+'</b></td><td><code>'+wf(d.file)+'</code></td><td class="soft">'+esc(d.purpose)+'</td><td>'+esc((d.sections||[]).join(', '))+'</td></tr>').join('')+'</tbody></table></div>'+
@@ -4359,7 +4477,7 @@ function vProjekty(){
     D2('std-line','Zapis zadania w pliku','<pre class="prx-pre"><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></pre>'+
       '<p class="note pj-legend prx-leg"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>')+
     D2('std-cmd','Polecenia w terminalu <small>· 4</small>','<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul>')+
-    D2('std-keys','Skróty klawiszowe (klawiatura)','<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>p</kbd> przegląd, <kbd>w</kbd> wskaźniki, <kbd>t</kbd> tablica, <kbd>d</kbd> terminy, <kbd>b</kbd> blokady, <kbd>a</kbd> agenci</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>')+'</section>';
+    D2('std-keys','Skróty klawiszowe (klawiatura)','<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>p</kbd> przegląd, <kbd>w</kbd> wskaźniki, <kbd>t</kbd> tablica, <kbd>d</kbd> terminy, <kbd>b</kbd> blokady, <kbd>a</kbd> agenci</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>','prx-keysd')+'</details></section>';
   return h;
 }
 
@@ -5742,11 +5860,14 @@ async function uploadFilm(el){
 function pubPanel(){
   const P=D.publish;if(!P)return '';
   const proj=D.projects.map(p=>[p.id,p.name]),exp=P.li.expiresAt?P.li.expiresAt.slice(0,10):'';
-  const F=D.film||{},fb=!!P.fb.connected,acc=!!F.account,open=pubOpen(!fb||!acc);
-  /* sekcja zwijana (stan właściciela w localStorage, domyślnie rozwinięta, gdy czegoś brakuje); w small skrót stanu */
+  const F=D.film||{},fb=!!P.fb.connected,acc=!!F.account,open=pubOpen(false);
+  /* sekcja zwijana (stan właściciela w localStorage, domyślnie zwinięta); w small skrót stanu */
   let h='<section class="panel" id="publikacja"><h2><button class="nw-tog" data-agpub="1" data-k="agpub" aria-expanded="'+open+'"'+(open?' aria-controls="pub-b"':'')+'><span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>Publikacja</button>'+
-    '<small>Facebook: '+(fb?'połączony':'niepołączony')+' · Konto do nagrań: '+(acc?'ustawione':'brak')+' · LinkedIn: ręcznie</small></h2>';
-  if(!open)return h+'</section>';
+    (open?'<small>Facebook: '+(fb?'połączony':'niepołączony')+' · Konto do nagrań: '+(acc?'ustawione':'brak')+' · LinkedIn: ręcznie</small>':'')+'</h2>';
+  /* zwinięte (domyślnie): jedno zdanie stanu i jedna akcja, która rozwija sekcję */
+  if(!open){const miss=[fb?'':'Facebook',acc?'':'konto do nagrań'].filter(Boolean);
+    return h+'<p class="ahint pub-sum">'+(miss.length?'Nie połączono: '+esc(miss.join(' i '))+'. Posty publikujesz ręcznie.':'Facebook i konto do nagrań połączone.')+
+      (miss.length?' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto do nagrań':'Połącz Facebook')+'</button>':'')+'</p></section>'}
   h+='<div class="pad" id="pub-b"><p class="note">Panel publikuje sam tylko posty, które po odbiorze zaplanujesz (Facebook, Instagram). Bez planu nic nie publikuje się samo.</p><div class="pubc">';
   h+='<div><h3>Facebook '+(fb?'<span class="lz green">połączony</span>':'<span class="lz yellow">niepołączony</span>')+'</h3>';
   if(fb)h+='<table><tbody>'+P.fb.pages.map(g=>'<tr><td>'+esc(g.name)+(g.instagram?' <span class="muted">· Instagram '+(g.instagram==='tak'?'':'@'+esc(g.instagram))+'</span>':'')+'</td><td><select class="fi" data-fbmap="'+esc(g.id)+'" aria-label="Projekt strony '+esc(g.name)+'">'+opt([['','– bez projektu']].concat(proj),g.project)+'</select></td></tr>').join('')+'</tbody></table>';
@@ -5945,15 +6066,16 @@ function renderSide(r){
   const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],h==='blokady'?bkYouCntT(C[h][0]):''):'';
   setHtml($('#nav'),VIEWS.map(h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+cnt(h)+'</a>').join(''));
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
-  /* dolny pasek (telefon i wąskie okno): 6 widoków z tym samym licznikiem co menu + „Więcej” z pozostałymi (zaznaczone, gdy otwarty widok jest poza paskiem) */
-  const inBar=BNAV.indexOf(r.v)>=0,shortN={tablica:'Tablica'};
+  /* dolny pasek (telefon i wąskie okno): 4 widoki z tym samym licznikiem co menu + „Więcej” z pozostałymi (zaznaczone, gdy otwarty widok jest poza paskiem) */
+  const inBar=BNAV.indexOf(r.v)>=0,shortN={tablica:'Tablica'},moreDot=VIEWS.some(v=>BNAV.indexOf(v)<0&&C[v]&&C[v][0]);
   const bnl=h=>esc(VNAME[h]+(C[h]&&C[h][0]?', '+(h==='blokady'?bkYouCntT(C[h][0]):C[h][0]+' '+NAVU[h]):''));
   setHtml($('#bnav'),BNAV.map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'" title="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bn-l" aria-hidden="true">'+(shortN[h]||VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
     '<button type="button" data-bnmore="1" data-k="bnmore" aria-haspopup="true" aria-expanded="'+!!A.bnMore+'" aria-controls="bnsheet"'+(!inBar?' aria-current="page"':'')+'>'+
-    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg><span class="bn-l">Więcej</span></button>');
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg><span class="bn-l">Więcej</span>'+(moreDot?'<i class="bn-dot'+(C.terminy[0]?' red':'')+'" aria-hidden="true"></i><span class="sr-only">, są sprawy w pozostałych widokach</span>':'')+'</button>');
   const sh=$('#bnsheet');if(sh){sh.hidden=!A.bnMore;
-    setHtml(sh,VIEWS.filter(v=>BNAV.indexOf(v)<0).map(h=>'<a role="menuitem" href="#'+h+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+esc(VNAME[h])+'</a>').join('')+
-      (r.v==='projekt'?'<a role="menuitem" href="'+phref(r.p)+'" aria-current="page">'+av(r.p,'sm')+esc(r.p.name)+'</a>':''))}
+    /* arkusz „Więcej”: widoki spoza paska z tym samym licznikiem co menu, potem projekty (zastępują górny select na telefonie) */
+    setHtml(sh,VIEWS.filter(v=>BNAV.indexOf(v)<0).map(h=>'<a role="menuitem" href="#'+h+'" aria-label="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bs-n">'+esc(VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
+      (D.projects.length?'<div class="bs-h" role="presentation">Projekty</div>'+D.projects.map(p=>'<a role="menuitem" href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span></a>').join(''):''))}
   $('#pcount').textContent=D.projects.length;
   setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted side-empty">Brak wyników</p>');
   const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='blokady'&&byc.n?' ('+byc.n+')':v==='terminy'&&tl?' ('+tl+')':'')]);
@@ -5980,17 +6102,21 @@ function staleT(){
   return g&&Date.now()-g>STALE_MS?'dane sprzed '+at+' (serwer nie odświeża)':'';
 }
 function renderTop(){
-  let h='';
+  let h='',vis=!LIVE;
   if(!LIVE)h+='<span class="lz yellow" title="Zmiany działają do odświeżenia strony i nie są zapisywane.">Podgląd · dane przykładowe</span>';
   else{
     if(D.projectsSource!=='registry')h+='<span class="lz yellow" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Projekty i standard.">Projekty przykładowe</span>';
     /* kalendarz w ramie tylko przy problemie; przy „połączony” kropka z odsyłaczem do Terminów (pełny stan dla czytnika) */
     /* problem z kalendarzem na Przeglądzie pokazuje pigułka w nagłówku (.sys): tu zostaje tylko dla czytnika i przycisk */
-    const c=calStatus(),pv=calProb()&&route().v==='przeglad';
-    h+=c.dot==='ok'?'<a class="tst-ok" href="#terminy" title="'+esc(c.t+': '+c.s)+'"><i class="dot ok" aria-hidden="true"></i><span class="sr-only">Kalendarz: '+esc(c.short)+'</span></a>':
-      (pv?'<span class="sr-only">Kalendarz: '+esc(c.short)+'</span>':pill({dot:c.dot,label:'Kalendarz: '+c.short,title:c.s}))+c.btn;
+    /* pigułka tylko przy prawdziwym problemie albo z akcją; „tylko na Macu” (serwer) to stan stały: nic nie pokazujemy */
+    const c=calStatus(),prob=calProb(),pv=prob&&route().v==='przeglad';
+    if(D.projectsSource!=='registry')vis=true;
+    if(c.dot==='ok')h+='<a class="tst-ok" href="#terminy" title="'+esc(c.t+': '+c.s)+'"><i class="dot ok" aria-hidden="true"></i><span class="sr-only">Kalendarz: '+esc(c.short)+'</span></a>';
+    else if(prob||c.btn){h+=(pv?'<span class="sr-only">Kalendarz: '+esc(c.short)+'</span>':pill({dot:c.dot,label:'Kalendarz: '+c.short,title:c.s}))+c.btn;if(!pv||c.btn)vis=true}
   }
   setHtml($('#tstat'),h);
+  /* telefon: pusty pasek górny (bez selecta widoku i bez pigułek) nie zajmuje miejsca */
+  const tb=$('.topbar');if(tb)tb.classList.toggle('tbar-bare',!vis);
   const b=[];
   if(offline)b.push('<div class="banner bad">'+offBanner()+'</div>');
   else{const st=staleT();if(st)b.push('<div class="banner warn">'+esc(cap(st))+'. Agenci i Teraz mogą być nieaktualne; szczegóły w logu serwera.</div>')}
@@ -6336,7 +6462,8 @@ function agentAct(el){
   else if(a==='prm'){A.confirm=id;render(true);focusK('pn:'+id)}
   else if(a==='prm-no'){A.confirm='';render(true);focusK('pr:'+id)}
   else if(a==='prm-yes')removeProject(id);
-  else if(a==='padd-go'){const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
+  else if(a==='padd-go'){const d=$('#padd-d');if(d&&!d.open){d.open=true;(A.prxDet||(A.prxDet={})).add=true}const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
+  else if(a==='prx-zl')prxDelegate(id);
   else if(a==='plan-go')acceptPlan(id);
   else if(a==='lo'){A.lo=true;render(true);focusK('lo-no')}
   else if(a==='lo-no'){A.lo=false;render(true);focusK('lo')}
