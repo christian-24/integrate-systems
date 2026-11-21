@@ -78,6 +78,8 @@ Projekt to działalność konsultingowo-wdrożeniowa dla firm meblarskich zatrud
    skutek: nowe: Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (1–8.12) i scenariusz filmu objaśniającego | kto: claude | gdzie: chmura | kiedy: 2026-11-30
    skutek: nowe: Przyjmij film i opis pokazu integracji | kto: ty | kiedy: 2026-12-02 | czas: 45
    skutek: nowe: Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (10–17.12) z surowca po rozmowach | kto: claude | gdzie: chmura | kiedy: 2026-12-07
+   Odpowiedź: wariant 2, czyli formy A, B i C: bezpłatny 30-minutowy przegląd drogi zamówienia, pokaz integracji z jednostronicowym opisem, seria 6 wpisów na LinkedIn „Gdzie ginie zamówienie”; 0 zł, ok. 1,5 h tygodniowo
 7. Czy istnieje działające demo integracji ERP ↔ sprzedaż (np. zamówienie z Allegro albo BaseLinkera trafia do programu magazynowego), które studio może nagrać jako pokaz, i gdzie leży? Bez demo film z formy B powstanie jako objaśnienie na planszach.
    termin: 2026-11-26
    propozycja: jeśli demo nie ma, zacząć od objaśnienia na planszach, a przykład na zmyślonych danych zbudować w osobnym zadaniu po pierwszych rozmowach
+   Odpowiedź: jeśli demo nie ma, zacząć od objaśnienia na planszach, a przykład na zmyślonych danych zbudować w osobnym zadaniu po pierwszych rozmowach

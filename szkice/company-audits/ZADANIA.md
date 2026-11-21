@@ -115,3 +115,13 @@ termin: 2026-12-18
   wynik: powstał marketing/formy-grudzien.md (folder karty): 5 form (bezpłatny przegląd drogi zamówienia, pokaz integracji z jednostronicowym opisem, seria na LinkedIn „Gdzie ginie zamówienie”, list papierowy, grupy na Facebooku), każda z kanałem, odbiorcą, przykładem tematu, częstotliwością, nakładem pracy i filmem ze studia (pokaz albo objaśnienie); rekomendacja na start: przegląd, pokaz integracji, seria na LinkedIn; 4 warianty z kosztem i oś czasu 24.11–18.12; pytania 6 i 7 w KARTA.md
   decyzja: które formy wchodzą na grudzień (propozycja: A, B, C; pytanie 6 w KARTA.md) i czy jest demo integracji do nagrania (pytanie 7)
   następne: Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | kiedy: 2026-11-24
+- [ ] Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | gdzie: chmura | kiedy: 2026-11-24
+  z pytania 6, 2026-11-21
+- [ ] Przygotuj scenariusz filmu i jednostronicowy opis pokazu integracji | kto: claude | gdzie: chmura | kiedy: 2026-11-27
+  z pytania 6, 2026-11-21
+- [ ] Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (1–8.12) i scenariusz filmu objaśniającego | kto: claude | gdzie: chmura | kiedy: 2026-11-30
+  z pytania 6, 2026-11-21
+- [ ] Przyjmij film i opis pokazu integracji | kto: ty | kiedy: 2026-12-02 | czas: 45
+  z pytania 6, 2026-11-21
+- [ ] Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (10–17.12) z surowca po rozmowach | kto: claude | gdzie: chmura | kiedy: 2026-12-07
+  z pytania 6, 2026-11-21

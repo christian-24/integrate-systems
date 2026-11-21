@@ -117,3 +117,4 @@ Opisarnia to narzędzie SaaS, które z ustrukturyzowanych atrybutów mebla gener
    skutek: nowe: Przygotuj ogłoszenie, przypomnienie i szablony darmowego przeglądu opisu | kto: claude | gdzie: chmura | kiedy: 2026-11-30
    skutek: nowe: Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy | kto: ty | kiedy: 2026-12-01 | czas: 30
    skutek: nowe: Przygotuj teksty 3 maili aktywacyjnych z oceną RODO | kto: claude | gdzie: chmura | kiedy: 2026-12-02
+   Odpowiedź: wariant 2: darmowy przegląd opisu (A), grupy sprzedawców na Facebooku (C) i maile aktywacyjne do założonych kont (D); 0 zł wydatków, ok. 2 h tygodniowo ponad stały rytm; pozostałe wiersze z punktu 5 pliku dopisze agent po przyjęciu
