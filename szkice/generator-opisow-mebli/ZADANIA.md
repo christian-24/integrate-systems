@@ -213,10 +213,12 @@ termin: 2026-11-30
 
 ## Do rozplanowania
 
-- [~] Popraw stan ZDJ-1 w plikach zadań repozytorium | kto: claude | gdzie: chmura
+- [x] Popraw stan ZDJ-1 w plikach zadań repozytorium | kto: claude | gdzie: chmura
   cel: pliki zadań w repozytorium opisują ZDJ-1 jako zmergowane za flagą (#126–#134), nie jako bez merge
   gotowe gdy: żaden plik w tasks/ nie opisuje ZDJ-1 jako niezmergowanego; zmiana w jednym commicie
   materiał: tasks/README.md
+  wynik: ZDJ-1 opisane jako zrobione i w master od 2026-11-06 (#134), wyłączone flagą VISION_ENABLED, w docs/tasks/task-zdjecia/00-README-zdjecia.md i docs/tasks/task-zdjecia/01-backend-analiza-zdjec.md; z docs/tasks/README.md usunięta uwaga o nieaktualnym nagłówku. W docs/tasks/ nie ma już wzmianki „bez merge”.
+  zostało: agent nie miał uprawnień do zapisania commita, więc trzy zmienione pliki czekają na zatwierdzenie przez panel jako jeden commit. Sam merge ZDJ-1 to #134; #126–#133 z celu zadania to inne zmiany (eksport, landing, quota), więc w plikach podany jest tylko #134.
 - [x] Zaktualizuj tasks/README.md do stanu z listopada | kto: claude | gdzie: chmura
   cel: tasks/README.md opisuje bieżący stan prac zamiast stanu z czerwca
   gotowe gdy: README nie zawiera nieaktualnych zadań z czerwca i wskazuje ZADANIA.md karty jako listę zadań
