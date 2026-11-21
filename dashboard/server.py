@@ -2436,7 +2436,7 @@ def login_page(error=""):
 
 # ---------- eksport terminów do kalendarza (ICS) ----------
 def ics_escape(text):
-    return str(text).replace("\\", "\\\\").replace(";", "\;").replace(",", "\\,").replace("\n", "\\n")
+    return str(text).replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
 
 def ics_fold(line):
