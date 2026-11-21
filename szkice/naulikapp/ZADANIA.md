@@ -147,6 +147,7 @@ termin: 2026-12-13
 - [ ] Zmerguj PR #124 po zielonej pełnej suicie testów | kto: ty | kiedy: 2026-11-22 | czas: 10 | po: Uruchom pełną suitę testów na PR #124
   cel: gałęzie fix/rc1-nagrania i marketing/kampania-rc1 w master przed podpisanym buildem
   gotowe gdy: PR #124 zmergowany, CI na master zielone
+  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
   materiał: .github/workflows/ci.yml
   - [ ] github.com, repozytorium naulikapp, Pull requests → #124: wynik suity z zadania wyżej zielony, „Merge pull request”
@@ -225,3 +226,12 @@ termin: 2026-12-13
   cel: wiadomo, które zadania T54–T66 zostały zamknięte w RC1, a które są otwarte
   gotowe gdy: w wynik: lista T54–T66 ze stanem; w decyzja: które otwarte są potrzebne przed 13.12
   materiał: docs/backlog/STATUS.md
+- [ ] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+  cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
+  - [ ] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
+  - [ ] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
+  - [ ] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
+  - [ ] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
+  gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
+  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
+  materiał: KARTA.md#Pytania do właściciela

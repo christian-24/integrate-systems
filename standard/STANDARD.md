@@ -239,6 +239,10 @@ swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jed
 Propozycja, która zmienia zadania (wstrzymać, przesunąć, zamknąć, dodać, kolejność), zawsze ma wiersze `   skutek:`
 z operacjami z sekcji o pytaniach. Wiersza `gotowe gdy:` agent nie łagodzi: nie dopisuje „albo w zostało:”;
 warunek niespełniony kończy zadanie stanem `[!]`.
+Agent angażuje Cię tylko w sprawy, których nie rozstrzygnie nikt inny: pieniądze, dane prawne i firmowe, działania
+nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko Tobie. Najwyżej jedno otwarte
+pytanie na projekt. Resztę rozstrzyga sam odwracalną opcją i zapisuje w `DECYZJE.md` (`- Kto: agent`). `wymaga: odbiór`
+tylko dla pracy wychodzącej na zewnątrz, z `decyzja:` albo z kodem do scalenia; prace wewnętrzne kończy `[x]`.
 W projekcie z repozytorium git panel zakłada osobny katalog roboczy (`<repo>/.agent/<id uruchomienia>`) na nowej gałęzi
 `agent/RRRR-MM-DD-krotka-nazwa` od bieżącego stanu; agent pracuje tylko tam. Po zakończeniu panel zapisuje
 niezacommitowane zmiany jednym lokalnym commitem na tej gałęzi (bez push), a scalenie do gałęzi bazowej następuje

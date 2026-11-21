@@ -157,7 +157,10 @@ na zewnątrz. Na koniec agent odhacza wykonane kroki, dopisuje pod swoim wiersze
 (gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało; tylko sprawy ważne dla właściciela, bez technicznych:
 miejsca pliku, commita, gałęzi), może dopisać jeden wiersz
 `następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` (propozycja; nowych zadań nie zakłada), pytania do właściciela dopisuje
-do sekcji „Pytania do właściciela” w `KARTA.md`, z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
+do sekcji „Pytania do właściciela” w `KARTA.md` (tylko sprawy, których nie rozstrzygnie nikt poza właścicielem:
+pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty
+znane tylko jemu; najwyżej jedno otwarte pytanie na projekt; resztę agent rozstrzyga sam i zapisuje w `DECYZJE.md`
+z `- Kto: agent`; `wymaga: odbiór` tylko dla pracy wychodzącej na zewnątrz, z `decyzja:` albo z kodem do scalenia), z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
 nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyjęcie zmienia zadania, zawsze z wierszami
 `   skutek: <operacja>` (`po: … → …`, `kiedy: RRRR-MM-DD → …`, `stan: zrobione|wstrzymane → …`, `nowe: <wiersz zadania>`;
 panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela”). Wiersza `gotowe gdy:` agent nie zmienia

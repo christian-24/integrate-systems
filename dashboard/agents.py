@@ -111,6 +111,22 @@ def git_numstat(top, base, branch):
     return changes[:CHANGES_MAX]
 
 
+# Mniej spraw do właściciela (decyzja 2026-11-21): pytania tylko o to, czego nikt poza nim nie rozstrzygnie,
+# najwyżej jedno otwarte pytanie na projekt, odbiór tylko dla pracy wychodzącej na zewnątrz albo z decyzją.
+OWNER_RULES = [
+    "- Właściciela angażuj tylko w sprawy, których nikt poza nim nie rozstrzygnie: pieniądze i koszty, dane prawne "
+    "i firmowe, działania nieodwracalne albo wychodzące na zewnątrz, zakres i terminy projektu, rzeczy fizyczne "
+    "(nagranie, urządzenie, dysk) i fakty znane tylko jemu. Resztę (definicje, nazwy, kolejność, sprawy techniczne, "
+    "to, co sprawdzisz sam w plikach, repozytorium albo w sieci) rozstrzygnij sam: wybierz rozsądną, odwracalną "
+    "opcję i dopisz ją na górze DECYZJE.md obok karty (`## RRRR-MM-DD: tytuł`, Kontekst, Decyzja, Skutki, "
+    "`- Kto: agent`).",
+    "- Najwyżej jedno otwarte pytanie do właściciela na projekt: gdy w sekcji „Pytania do właściciela” w KARTA.md "
+    "jest już pytanie bez odpowiedzi, nie dodawaj nowego; przyjmij domyślną opcję i zapisz ją w DECYZJE.md.",
+    "- `wymaga: odbiór` tylko wtedy, gdy praca wyjdzie na zewnątrz (post, wiadomość, materiał dla klienta), ma "
+    "wiersz `decyzja:` albo zmienia kod do scalenia. Notatki, plany i analizy wewnętrzne kończ stanem `[x]`.",
+]
+
+
 def log(text):
     """Wpis do dziennika serwera. Pod pythonw stderr nie istnieje, więc zapis nie może przerwać pracy."""
     try:
@@ -692,7 +708,8 @@ class Manager:
         return "\n".join(head + [
             "",
             "Zasady:",
-            "- Rób tylko to zadanie. Nie zmieniaj innych zadań ani terminów. W KARTA.md możesz tylko dopisać pytanie.",
+            "- Rób tylko to zadanie. Nie zmieniaj innych zadań ani terminów. W KARTA.md możesz tylko dopisać pytanie. "
+            "Wyjątek: zadanie, którego tytuł zaczyna się od „Porządki spraw właściciela”, robi to, co opisuje jego cel.",
             "- Nigdy nie zmieniaj tytułu zadania (tekstu wiersza przed pierwszym „|”) i nie dopisuj do niego raportu.",
             "- Nie wykonuj działań nieodwracalnych ani wychodzących na zewnątrz (wysyłka, publikacja, wdrożenie, płatność). "
             "Gdy zadanie tego wymaga, przygotuj wszystko i dopisz w wierszu zadania `wymaga: zgoda`.",
@@ -708,7 +725,7 @@ class Manager:
             "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + film_rules(title) + [
+        ] + git_rules + film_rules(title) + OWNER_RULES + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
