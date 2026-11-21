@@ -60,6 +60,7 @@ class Wdrozenie(unittest.TestCase):
         st = self.state()
         self.assertEqual((st["ahead"], st["behind"]), (1, 0))
         self.assertEqual(st["commits"][0]["subject"], "Nowy widok")
+        self.assertFalse(os.path.exists(os.path.join(self.prod, ".git", "FETCH_HEAD")))   # FETCH_HEAD należy do zapisu kart
         self.assertIn("1 file changed", st["stat"])
         self.assertEqual(server.start_deploy({}), (200, ""))
         last = self.state()["last"]

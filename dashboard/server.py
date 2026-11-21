@@ -2154,11 +2154,13 @@ def _git_out(repo, *args, timeout=20):
 
 def _deploy_branch():
     """Commity gałęzi rozwoj, których nie ma na produkcji (pobrane do refs/rozwoj/kandydat), co DEPLOY_TTL s."""
+    # --no-write-fetch-head: FETCH_HEAD należy do git pull zapisu kart (zapis-kart.sh); wspólny plik dawał
+    # „Cannot rebase onto multiple branches”, gdy oba pobierania zbiegły się w czasie
     with _deploy["lock"]:
         if _deploy["value"] is not None and time.time() - _deploy["at"] < DEPLOY_TTL:
             return _deploy["value"]
         repo = PROD_REPO
-        code, _ = _git_out(repo, "fetch", "-q", "--no-tags", DEV_REPO, "+%s:refs/rozwoj/kandydat" % DEV_BRANCH)
+        code, _ = _git_out(repo, "fetch", "-q", "--no-tags", "--no-write-fetch-head", DEV_REPO, "+%s:refs/rozwoj/kandydat" % DEV_BRANCH)
         if code:
             value = {"error": "Nie odczytano gałęzi %s z kopii roboczej." % DEV_BRANCH}
         else:

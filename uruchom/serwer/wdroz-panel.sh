@@ -31,7 +31,7 @@ mkdir -p "$DIR" && chown panel:panel "$DIR" && chmod 750 "$DIR"
 if [ -n "$AUTO" ]; then
   sleep "${WDROZ_ZWLOKA:-20}"     # agent kończy serię commitów
   SHA=$(as_agent git -C "$DEV" rev-parse --verify -q "$GAL^{commit}") || exit 0
-  as_panel git -C "$PROD" fetch -q --no-tags "$DEV" "+$GAL:refs/rozwoj/kandydat" || exit 0
+  as_panel git -C "$PROD" fetch -q --no-tags --no-write-fetch-head "$DEV" "+$GAL:refs/rozwoj/kandydat" || exit 0
   as_panel git -C "$PROD" merge-base --is-ancestor "$SHA" HEAD && exit 0          # nic nowego
   if python3 - "$STAN" "$SHA" <<'PY'
 import json, sys
@@ -111,7 +111,7 @@ stan running "Scalam z produkcją"
 [ "$(as_panel git -C "$PROD" branch --show-current)" = "main" ] || blad "produkcja nie jest na gałęzi main"
 as_panel git -C "$PROD" pull -q --rebase --autostash || blad "git pull na produkcji nieudany"
 PREV=$(as_panel git -C "$PROD" rev-parse HEAD)
-as_panel git -C "$PROD" fetch -q --no-tags "$DEV" "+$GAL:refs/rozwoj/kandydat" || blad "nie pobrano gałęzi $GAL"
+as_panel git -C "$PROD" fetch -q --no-tags --no-write-fetch-head "$DEV" "+$GAL:refs/rozwoj/kandydat" || blad "nie pobrano gałęzi $GAL"
 [ "$(as_panel git -C "$PROD" rev-parse refs/rozwoj/kandydat)" = "$SHA" ] || blad "gałąź $GAL zmieniła się w trakcie testów; wdróż ponownie"
 N=$(as_panel git -C "$PROD" rev-list --count "HEAD..$SHA")
 [ "$N" -gt 0 ] || { stan ok "Nic nowego do wdrożenia"; log "Brak nowych commitów"; exit 0; }
