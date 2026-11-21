@@ -659,7 +659,12 @@ body.ed-open{overflow:hidden}
 /* szuflada */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(460px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;padding:20px;padding-right:max(20px,env(safe-area-inset-right,0px));padding-top:max(20px,env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--shadow-2)}
-#dbody{display:grid;gap:14px;align-content:start}
+#dbody{display:grid;gap:14px;align-content:start;grid-template-columns:minmax(0,1fr)}
+#dbody>*,.abox>*,.mat>*,.rd>*{min-width:0}
+.dhead>.dh-proj{flex:1 1 auto}
+.dhead>.x{flex:none}
+.drawer{overflow-x:hidden}
+@media (max-width:620px){.drawer{padding-left:14px;padding-right:max(14px,env(safe-area-inset-right,0px))}.rdx{max-height:none}}
 .dhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .drawer h2{font-size:18px;font-weight:650;overflow-wrap:anywhere}
 .drawer textarea.ttl{font-size:17px;font-weight:650;line-height:1.3}
@@ -672,7 +677,7 @@ body.ed-open{overflow:hidden}
 .seg{border:1px solid var(--ctl-line);min-height:var(--ctl-h-sm);background:var(--surface);border-radius:var(--r);padding:2px 9px;cursor:pointer;font-size:13px}
 .seg[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent);font-weight:600}
 .x{border:1px solid var(--ctl-line);min-height:var(--ctl-h-sm);background:var(--surface);border-radius:var(--r);padding:4px 10px;cursor:pointer}
-.abox{border:1px solid var(--line);background:var(--sunk);border-radius:var(--r-lg);padding:10px 12px;display:grid;gap:8px}
+.abox{border:1px solid var(--line);background:var(--sunk);border-radius:var(--r-lg);padding:10px 12px;display:grid;gap:8px;grid-template-columns:minmax(0,1fr)}
 .abox.you{border-color:var(--bar-rev);background:var(--l-purple-bg)}
 .abox.bad{border-color:var(--l-red);background:var(--l-red-bg)}
 .act{font-size:13px;color:var(--ink-2);overflow-wrap:anywhere}
@@ -818,13 +823,13 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .steps-ro .ok{color:var(--ink-3);text-decoration:line-through}
 .notes{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2)}
 .mats{display:flex;flex-wrap:wrap;gap:6px}
-.rd{display:grid;gap:8px;margin-top:10px;min-width:0}
+.rd{display:grid;gap:8px;min-width:0;grid-template-columns:minmax(0,1fr)}
 .rd .sub{margin:0}
 .rdx{max-height:70vh}
 .rd .mat .mh:last-child{border-bottom:0}
 .mats .btn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-content:flex-start}
 .mats .btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-.mat{border:1px solid var(--line);border-radius:6px;background:var(--sunk);display:grid;min-width:0}
+.mat{border:1px solid var(--line);border-radius:6px;background:var(--sunk);display:grid;min-width:0;grid-template-columns:minmax(0,1fr)}
 .mat .mh{display:flex;gap:6px;align-items:center;justify-content:space-between;padding:6px 8px 6px 10px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .mat .mh b{font-size:13px;overflow-wrap:anywhere;min-width:0}
 .mat .mh span{display:flex;gap:6px}
@@ -4379,7 +4384,7 @@ function agentBlock(t){
 }
 function taskHtml(t){
   const pub=t.kind==='publikacja',p=P(t.project),s=stageOf(t.stage),c=t.campaign?D.campaigns.find(x=>x.id===t.campaign):null;
-  let h='<div class="dhead"><span class="muted dh-proj">'+(isFilmTask(t)?'Film do obejrzenia':pub?'Publikacja':'Zadanie')+' · '+av(p,'sm')+'<span class="dh-nm">'+esc(projName(t.project))+'</span></span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
+  let h='<div class="dhead"><span class="muted dh-proj">'+(isFilmTask(t)?'Film do obejrzenia · ':pub?'Publikacja · ':'')+av(p,'sm')+'<span class="dh-nm">'+esc(projName(t.project))+'</span></span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
     '<h2 class="dttl" id="dtitle">'+esc(t.title)+'</h2>';
   const d=t.detail||normDetail(null),zg=t.needsYou==='zgoda'&&t.state!=='done',od=t.needsYou==='odbiór'&&t.state!=='done';
   const dec=d.decision?'<p class="dcap" id="ddec">Zatwierdzasz: '+esc(d.decision)+'</p>':'',db=d.decision?' aria-describedby="ddec"':'';
@@ -4406,7 +4411,7 @@ function taskHtml(t){
   if(fday&&!shown.post){mv+=filmTop(t,fday,ftask,false);if(full){mv+=postBox(t,fday,false,'film');shown.film=1}}
   /* „gotowe, gdy” i pełny następny krok (w listach są skrócone do dwóch wierszy) */
   const readUp=t.state!=='done'&&!!t.detail&&resFiles(t).length>0;
-  if(readUp)mv+=readBlock(t);
+  if(readUp)mv=readBlock(t)+mv;            /* najpierw treść, potem decyzja i przyciski */
   h+=mv;
   if(t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w')}
   h+=chatBox(t);
@@ -4779,7 +4784,9 @@ const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
 const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
-  let h='<div class="abox you"><b>Praca czeka na Twój odbiór</b><p class="move">'+yourMove(t)+'</p>'+(d.left?'<p class="warn">Po odbiorze zostaje: '+esc(d.left)+'</p>':'')+chgBlock(lastGitRun(t),false,t);
+  const rf=!prepDay(t)&&resFiles(t).length;
+  let h='<div class="abox you"><b>Odbierz pracę agenta</b><p class="move">'+yourMove(t)+'</p>'+(!rf&&d.result?'<p class="move">'+esc(d.result)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
+  dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
     '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
@@ -5769,7 +5776,8 @@ function yourMove(t){
     return 'Twój ruch: przeczytaj teksty i obejrzyj grafikę wyżej. „Odebrane” je zatwierdza, a publikujesz '+
       (x?'w zadaniu <button class="lk" data-task="'+esc(x.id)+'">'+esc(x.title)+'</button> ('+esc(ddl(x.date))+')'+(x.waits.length?', gdy będzie zrobione: '+esc(x.waits.join('; ')):''):'sam w dniu posta')+'.'}
   const L=(t.unlocksL||[]).filter(u=>!u.done);
-  return 'Twój ruch: sprawdź wynik agenta i pliki wyżej. „Odebrane” zamyka zadanie'+(L.length?' i odblokowuje: '+esc(L.map(u=>u.title).join('; ')):'')+', „Do poprawy” wraca do agenta z Twoją uwagą.';
+  const n=resFiles(t).length;
+  return (n?'Przeczytaj '+(n>1?'pliki':'plik')+' wyżej. ':'')+'„Odebrane” zamyka zadanie'+(L.length?' i odblokowuje: '+esc(L.map(u=>u.title).join('; ')):'')+'.';
 }
 /* „Udostępnij”: systemowe menu udostępniania z grafiką albo filmem i tekstem; publikujesz i planujesz w aplikacji */
 const canShare=()=>!!(navigator.share&&navigator.canShare&&LIVE);
