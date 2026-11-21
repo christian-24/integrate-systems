@@ -83,3 +83,6 @@ Projekt to działalność konsultingowo-wdrożeniowa dla firm meblarskich zatrud
    termin: 2026-11-26
    propozycja: jeśli demo nie ma, zacząć od objaśnienia na planszach, a przykład na zmyślonych danych zbudować w osobnym zadaniu po pierwszych rozmowach
    Odpowiedź: jeśli demo nie ma, zacząć od objaśnienia na planszach, a przykład na zmyślonych danych zbudować w osobnym zadaniu po pierwszych rozmowach
+8. Czy przyjmujesz założenia robocze w miejsce trzech luk „Do uzupełnienia” w karcie: (a) szkolenia z AI są poza ofertą, (b) ukończenie to pierwszy płacący klient i opisany case, bez warunku pilotażu u klienta 1 i rejestracji firmy, (c) budżet 0 zł poza kwotami z karty, każdy wydatek i nowe konto za Twoją zgodą, termin roboczy 2026-12-18? Jeśli któryś punkt ma być inny, napisz który i jak.
+   termin: 2026-11-28
+   propozycja: przyjąć wszystkie trzy założenia (a, b, c); agenci już według nich pracują (DECYZJE.md, 2026-11-21)

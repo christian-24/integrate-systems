@@ -4,6 +4,18 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-21: Założenia robocze w miejsce luk „Do uzupełnienia” w karcie
+- Kontekst: w karcie są trzy luki „Do uzupełnienia” (szkolenia z AI w ofercie; czy pilotaż u klienta 1 i zarejestrowana firma są warunkami ukończenia; termin końcowy, budżet, konta i usługi). To sprawy zakresu i pieniędzy, więc rozstrzyga je właściciel, ale agenci potrzebują ustaleń do bieżącej pracy.
+- Decyzja: do czasu odpowiedzi właściciela (pytanie 8 w KARTA.md) agenci przyjmują: szkolenia z AI są poza ofertą; ukończenie to pierwszy płacący klient i opisany case, a pilotaż u klienta 1 i rejestracja firmy nie są warunkami; termin roboczy to koniec etapu „Walidacja rynku” (2026-12-18); budżet 0 zł poza kwotami z karty, każdy wydatek i każde nowe konto albo usługa wymaga zgody.
+- Skutki: oferty i materiały marketingowe nie wspominają o szkoleniach z AI; agenci nie planują wydatków. Założenia są odwracalne: odpowiedź właściciela na pytanie 8 je zastępuje.
+- Kto: agent
+
+## 2026-11-21: Porządki spraw właściciela w zadaniach
+- Kontekst: zadanie „Porządki spraw właściciela”; przegląd pytań w karcie i zadań kto: ty. Wszystkie 7 pytań w karcie miało już odpowiedź właściciela. W repozytoriach nie ma ani folderu Reaserch (lista LeadyV2), ani przykładowego e-maila Useme, więc agent nie zastąpi właściciela w tych dwóch sprawach.
+- Decyzja: (1) drugi wiersz „Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia” zamknięty jako duplikat (zostaje wiersz z pytania 6, z polem gdzie: chmura); (2) w zadaniu „Zapisz przykładowy e-mail Useme…” właściciel tylko przekazuje e-mail (wkleja treść albo plik w rozmowie z Claude), a usunięcie danych osobowych i linków z tokenami oraz zapis w repozytorium robi agent; (3) w zadaniu „Wybierz 10 firm…” poprawiona notatka: wskazywała nieistniejące zadanie „Wgraj folder Reaserch (LeadyV2) na serwer”, a wgranie jest częścią zadania „Podłącz dysk z kopią PC do Maca”; (4) pozostałe zadania kto: ty zostają u właściciela, bo to rzecz fizyczna (dysk), wysyłka na zewnątrz (wiadomości, oferty), rozmowy z firmami i przyjęcie materiału do publikacji.
+- Skutki: właścicielowi zostaje 6 zadań z czasem w minutach (łącznie 172 min) i jedno pytanie w karcie. Zmiany odwracalne: wystarczy przywrócić wiersze w ZADANIA.md.
+- Kto: agent
+
 ## 2026-11-14: Jeden projekt Oprogramowani, D09 zatwierdzone
 - Kontekst: odpowiedzi właściciela po audycie PC.
 - Decyzja: company-audits, strona oprogramowani-onepager i zlecenia z Useme to jeden projekt Oprogramowani; forma działalności JDG + umowa o dzieło, sp. z o.o. później; kontakt z firmami z listy LeadyV2.

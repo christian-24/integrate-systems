@@ -53,10 +53,12 @@ NaulikApp to mobilny dziennik pokładowy dla polskich kapitanów małych i śred
    Odpowiedź: Na rzecz materiał symbols
 2. Czy gałęzie `fix/rc1-nagrania` i `marketing/kampania-rc1` mają być zmergowane przed zamkniętym testem?
    Odpowiedź: Może być ale to są branch marketingowe, tutaj możemy zastanowić się czy marketing powinien być na gicie
+   Odpowiedź: materiały marketingowe zostają w repozytorium w `docs/marketing/` (jedna historia zmian, agenci mają je pod ręką); merge obu gałęzi robi agent przed podpisanym buildem (agent, DECYZJE.md)
 3. Czy konto Google Play i keystore już są, a 12 testerów zebranych (test ma trwać do 13.12)?
    Odpowiedź: Nie mam 12 testerów ale konto założone
 4. Które zadania T48 (a/e/g/h/m/n/q/t/v/w) wchodzą przed wydaniem v1.0.0, a które po?
    Odpowiedź: Moze zrealizujmy wszystko niezbędne
+   Odpowiedź: żadne z dziesięciu zadań T48 nie jest niezbędne przed v1.0.0, wszystkie po wydaniu; uzasadnienie w `docs/backlog/v1.0.2/T48-zakres-v1.0.0.md` (agent, DECYZJE.md)
 5. Dane wydawcy do polityki prywatności NaulikApp i Play Console: nazwa wydawcy, adres, e-mail kontaktowy w sprawie danych?
    termin: 2026-11-21
    propozycja: dane działalności z CEIDG (nazwa i adres jak we wpisie) oraz osobny adres e-mail dla aplikacji, ten sam w polityce i w Play Console

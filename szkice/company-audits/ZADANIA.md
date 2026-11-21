@@ -43,7 +43,7 @@ termin: 2026-12-18
   materiał: KARTA.md#Cel
   materiał: kampanie/pozyskanie-klientow.md
   materiał: KARTA.md#Zasady pracy agentów
-  Reaserch/LeadyV2: folder powstanie w repozytorium w zadaniu „Wgraj folder Reaserch (LeadyV2) na serwer” (po:); dziś jest tylko na dysku zewnętrznym, Migracja-PC-2026-11/projekty/Reaserch.
+  Reaserch/LeadyV2: folder powstanie w repozytorium w zadaniu „Podłącz dysk z kopią PC do Maca (folder Reaserch)” (po:); dziś jest tylko na dysku zewnętrznym, Migracja-PC-2026-11/projekty/Reaserch.
   Zaczyna się po wgraniu folderu Reaserch na serwer (20.11). Gdy listy nadal nie ma w Reaserch/, agent oznacza [!] z blokadą „brak listy LeadyV2 na serwerze”.
   Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
 - [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | kiedy: 2026-11-25 | czas: 30 | po: Wybierz 10 firm z listy LeadyV2
@@ -75,7 +75,7 @@ termin: 2026-12-18
 - [ ] Zapisz przykładowy e-mail Useme o nowym zleceniu w repozytorium asystenta | kto: ty | czas: 5
   cel: agent ma wzór e-maila do napisania odczytu zleceń
   gotowe gdy: plik .eml z jednym e-mailem Useme o nowym zleceniu leży w repozytorium asystent-useme (np. w danych testowych)
-  Przed zapisaniem usuń dane osobowe i linki z tokenami logowania.
+  Wystarczy, że wkleisz treść e-maila (albo plik .eml) w rozmowie z Claude. Dane osobowe i linki z tokenami logowania usuwa agent i to on zapisuje plik w repozytorium (porządki 2026-11-21).
 - [ ] Napisz odczyt e-maili Useme na serwerze, który przekazuje zlecenia asystentowi | kto: claude | gdzie: chmura | po: Zapisz przykładowy e-mail Useme
   cel: nowe zlecenie z e-maila Useme trafia do asystenta bez ręcznego kopiowania
   gotowe gdy: test na przykładowym e-mailu przechodzi, a zlecenie pojawia się w kolejce asystenta; usługa niewdrożona bez zgody
@@ -125,13 +125,17 @@ termin: 2026-12-18
   z pytania 6, 2026-11-21
 - [ ] Przygotuj 3 wpisy serii „Gdzie ginie zamówienie” (10–17.12) z surowca po rozmowach | kto: claude | gdzie: chmura | kiedy: 2026-12-07
   z pytania 6, 2026-11-21
-- [ ] Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | kiedy: 2026-11-24
-- [ ] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+- [x] Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia | kto: claude | kiedy: 2026-11-24
+  wynik: zamknięte przy porządkach 2026-11-21 (duplikat: to samo zadanie jest wyżej, z pytania 6, z polem gdzie: chmura)
+- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
-  - [ ] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
-  - [ ] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
-  - [ ] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
-  - [ ] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
+  - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
+  - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
+  - [x] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
+  - [x] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
   gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
+  - [x] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
+  wynik: pytania rozstrzygnięte przez agenta: 0 (wszystkie 7 miało już Twoją odpowiedź, powtórzeń nie było); zadania przekazane agentom: 0 w całości, 1 częściowo (przy „Zapisz przykładowy e-mail Useme…” tylko przekazujesz e-mail, resztę robi agent); zamknięte: 1 (duplikat „Przygotuj arkusz i wzór notatki…”); odbiory prac wewnętrznych do zamknięcia: 0; poprawiona notatka w „Wybierz 10 firm…”. Zostało Tobie 6 zadań, razem 172 min: podłączenie dysku (2), e-mail Useme (5), wiadomości do 10 firm (30), rozmowy (60), wysyłka ofert (30), przyjęcie filmu i opisu pokazu (45) oraz 1 pytanie w karcie (nr 8: założenia robocze w miejsce luk „Do uzupełnienia”). Dwa wpisy w DECYZJE.md (2026-11-21).
+  decyzja: przyjęcie porządków: zamknięcie duplikatu, uproszczenie zadania z e-mailem Useme i założenia robocze z pytania 8 w KARTA.md
+  zostało: „Podłącz dysk z kopią PC do Maca” miało termin 20.11 i nadal czeka; bez niego nie ruszy wybór 10 firm (21.11) ani wysyłka wiadomości (25.11). Terminów nie zmieniałem.

@@ -35,3 +35,10 @@ Na 28.01.2027: 60+ zapytań z reklam łącznie, 11+ nowych klientów z marketing
 - Materiały: `Plan-do-28-stycznia.md`, `Plan-filmow-do-28-stycznia.md`, `Plan-reklam-do-28-stycznia.md`, `Shield-and-Silent-Campaign-Plan.md`, `Strategia-zysku.md`, `Leady-i-kamienie-milowe.md`, `audyt/`, `google-ads/`, `meta-ads/`, `landing-pages/`, `google-wizytowka/`.
 - Zdjęcia prac i filmy: w panelu, widok Media (projekt Shield & Silent – marketing).
 - Rozmowy, w których powstała kampania: `rozmowy/` (poza gitem).
+
+## Pytania do właściciela
+1. Przerwa świąteczna w reklamach: w zadaniach wstrzymanie ma termin 24 grudnia, a włączenie 3 stycznia; plan reklam mówi: wstrzymać 23 grudnia wieczorem, włączyć 27 grudnia rano. Przesunąć oba terminy według planu reklam?
+   termin: 2026-12-01
+   propozycja: tak, wstrzymanie 23 grudnia i włączenie 27 grudnia; przy terminie 3 stycznia reklamy stoją tydzień dłużej (ok. 315 zł budżetu bez wyświetleń, mniej zapytań przed kontrolą 2)
+   skutek: kiedy: 2026-12-23 → Wstrzymać wszystkie reklamy
+   skutek: kiedy: 2026-12-27 → Włączyć z powrotem Google i Meta

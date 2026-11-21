@@ -136,38 +136,39 @@ termin: 2026-12-13
   gotowe gdy: keystore i hasła zapisane w menedżerze haseł z kopią zapasową; plik keystore poza repozytorium
   - [ ] `mkdir -p ~/klucze && keytool -genkey -v -keystore ~/klucze/naulikapp-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
   - [ ] plik `android/key.properties` w repozytorium na Macu: storePassword, keyPassword, keyAlias=upload, storeFile=/Users/krystianstryjakiewicz/klucze/naulikapp-upload.jks
-  - [ ] `android/.gitignore` zawiera `key.properties` i `*.jks`; `git status` nie pokazuje key.properties
+  - [x] `android/.gitignore` zawiera `key.properties` i `*.jks` (sprawdził agent 2026-11-21)
   - [ ] hasło keystore i hasło klucza w menedżerze haseł, plik .jks jako załącznik tego wpisu (kopia)
-  - [ ] `android/app/build.gradle` czyta key.properties w signingConfigs.release; gdy nie czyta, zgłoś to jako zadanie dla Claude
+  - [x] `android/app/build.gradle.kts` czyta key.properties w signingConfigs.release (sprawdził agent 2026-11-21)
   Play App Signing: przy pierwszym wgraniu AAB Google tworzy klucz aplikacji, a ten keystore zostaje kluczem przesyłania (można go odnowić u Google).
 - [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 2
   cel: polityka prywatności ma dane wydawcy wymagane przez Google Play
   pyta: Wydawca (imię i nazwisko albo firma); Adres wydawcy; E-mail kontaktowy
   Wpisz trzy pola i „Zapisz i zakończ”. Resztę zrobi agent w zadaniu „Zapisz politykę prywatności…”.
-- [ ] Zmerguj PR #124 po zielonej pełnej suicie testów | kto: ty | kiedy: 2026-11-22 | czas: 10 | po: Uruchom pełną suitę testów na PR #124
+- [ ] Zmerguj PR #124 po zielonej pełnej suicie testów | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Uruchom pełną suitę testów na PR #124
   cel: gałęzie fix/rc1-nagrania i marketing/kampania-rc1 w master przed podpisanym buildem
-  gotowe gdy: PR #124 zmergowany, CI na master zielone
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
+  gotowe gdy: commity 534c8f0 (fix/rc1-nagrania) i 5577d64 (marketing/kampania-rc1) scalone na gałęzi uruchomienia (panel scala ją do master); testy zielone
   materiał: KARTA.md#Pytania do właściciela
   materiał: .github/workflows/ci.yml
-  - [ ] github.com, repozytorium naulikapp, Pull requests → #124: wynik suity z zadania wyżej zielony, „Merge pull request”
+  - [ ] scal origin/fix/rc1-nagrania i origin/marketing/kampania-rc1 na gałęzi uruchomienia (po jednym commicie ponad master: kod w naulikapp/lib i dokumentacja)
+  Przekazane agentowi przy porządkach 2026-11-21: scalanie to krok techniczny, zgodę na merge właściciel dał 2026-11-14. Wypchnięcie na GitHub jest w zadaniu „Wypchnij master…” (wymaga: zgoda).
   Właściciel (2026-11-14): merge możliwy; do rozważenia, czy materiały marketingowe mają być w repozytorium.
-- [ ] Zrealizuj zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Wskaż zadania T48 niezbędne
+- [x] Zrealizuj zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Wskaż zadania T48 niezbędne
   cel: zadania T48 wskazane jako niezbędne zamknięte przed podpisanym buildem 24.11
   gotowe gdy: każde wskazane zadanie T48 zrobione na gałęzi uruchomienia (panel zapisuje gałąź i listę zmian); testy zielone
   Zadanie T48, którego nie da się zrobić przed 24.11: [!] z blokadą i nazwą zadania; nie zamykaj zadania bez niego.
   materiał: docs/backlog/STATUS.md
   materiał: docs/backlog/v1.0.2/T48-zakres-v1.0.0.md
+  wynik: zamknięte przy porządkach 2026-11-21 (zbędne: lista niezbędnych zadań T48 jest pusta, wszystkie dziesięć przesunięte po v1.0.0; uzasadnienie w docs/backlog/v1.0.2/T48-zakres-v1.0.0.md)
 - [ ] Zapisz politykę prywatności na gałęzi uruchomienia | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przygotuj politykę prywatności NaulikApp, Uzupełnij dane wydawcy
   cel: treść polityki z danymi wydawcy, HTML, odpowiedzi do Play Console i poprawiony ekran polityki na gałęzi uruchomienia
   gotowe gdy: zmiany w katalogu uruchomienia (panel zapisuje gałąź i listę zmian); dane wydawcy z formularza wpisane; testy zielone
   materiał: docs/compliance/
   Pliki z 18.11 leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/naulikapp/docs/compliance/ i ekran polityki).
   Przenieś je stamtąd; gdy nie masz dostępu, oznacz [!] z blokadą „brak dostępu do niezacommitowanych plików polityki”.
-- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: ty | kiedy: 2026-11-23 | czas: 2 | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
+- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: zgoda | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
   cel: master na GitHubie i na Macu ma PR #124, zmiany T48 i politykę prywatności
-  gotowe gdy: na Macu master ma ten sam commit co GitHub
-  Napisz w rozmowie z Claude: „wypchnij master NaulikApp”. Claude scali PR #124 na serwerze, wypchnie master i pobierze go na Macu.
+  gotowe gdy: origin/master na GitHubie ma ten sam commit co master na serwerze (z PR #124 i polityką prywatności)
+  Przekazane agentowi przy porządkach 2026-11-21: Twoja część to tylko zgoda w panelu (wypchnięcie wychodzi na zewnątrz). Pobranie na Macu to pierwszy krok zadania „Zbuduj podpisany AAB…” (`git pull`).
 - [ ] Opublikuj politykę prywatności pod publicznym URL | kto: ty | kiedy: 2026-11-23 | czas: 15 | po: Wypchnij master NaulikApp na GitHub
   cel: Google Play i ekran w aplikacji wskazują ten sam publiczny adres polityki
   gotowe gdy: polityka otwiera się pod publicznym URL bez logowania, a URL wpisany w Play Console
@@ -226,12 +227,15 @@ termin: 2026-12-13
   cel: wiadomo, które zadania T54–T66 zostały zamknięte w RC1, a które są otwarte
   gotowe gdy: w wynik: lista T54–T66 ze stanem; w decyzja: które otwarte są potrzebne przed 13.12
   materiał: docs/backlog/STATUS.md
-- [ ] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
-  - [ ] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
-  - [ ] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
-  - [ ] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
-  - [ ] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
+  - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
+  - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
+  - [x] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
+  - [x] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
   gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
+  - [x] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
+  wynik: Pytania: w karcie 6 pytań, wszystkie miały już odpowiedź właściciela, bez odpowiedzi zostaje 0; agent rozstrzygnął 2 wątki otwarte w tych odpowiedziach (pyt. 2: materiały marketingowe zostają w repozytorium w docs/marketing; pyt. 4: żadne zadanie T48 nie wchodzi przed v1.0.0); powtórzonych pytań nie było. Zadania przekazane agentom: 2 („Zmerguj PR #124…” na kto: claude; „Wypchnij master…” na kto: claude z wymaga: zgoda). Zamknięte: 1 („Zrealizuj zadania T48 niezbędne do v1.0.0”, lista pusta). Odbiory prac wewnętrznych do zamknięcia: 0 (żadne zadanie nie czekało na odbiór). W „Wygeneruj keystore…” odhaczone 2 kroki sprawdzone w repozytorium (.gitignore, build.gradle.kts); spod „Zmerguj PR #124…” usunięty zabłąkany krok z tego zadania. Właścicielowi zostaje 10 zadań kto: ty, razem 257 minut: lista 15 testerów (20), keystore na Macu (20), dane wydawcy (2), publikacja polityki pod URL (15), podpisany AAB na Macu (30), wgranie AAB do Play Console (30), wysyłka zaproszeń (30), test akceptacyjny (60), start zamkniętego testu (30), wniosek o produkcję (20); do tego jedna zgoda w panelu na wypchnięcie master. Trzy decyzje agenta w DECYZJE.md (2026-11-21). Plików w repozytorium nie zmieniono.
+  decyzja: przyjęcie porządków: 2 zadania przekazane agentom (merge PR #124, wypchnięcie master za Twoją zgodą), 1 zamknięte (realizacja T48, lista pusta), materiały marketingowe zostają w repozytorium, żadne zadanie T48 przed v1.0.0
+  zostało: „Zmerguj PR #124…” czeka na zablokowane „Uruchom pełną suitę testów na PR #124” (na serwerze nie ma Flutter SDK, agent nie ma odczytu GitHub Actions), więc termin 22.11 jest zagrożony. Wiersze karty „Do uzupełnienia” (czy plan TC-01..TC-20 jest warunkiem wydania; budżet, backend) leżą poza sekcją pytań i zostały bez zmian.

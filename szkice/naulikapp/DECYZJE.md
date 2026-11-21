@@ -3,6 +3,24 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-21: Merge PR #124 i wypchnięcie master robi agent
+- Kontekst: porządki spraw właściciela; zadania „Zmerguj PR #124…” i „Wypchnij master NaulikApp…” były przypisane właścicielowi, choć to kroki techniczne (git). Zgodę na merge właściciel dał 2026-11-14.
+- Decyzja: oba zadania przechodzą na agenta. Merge: agent scala commity 534c8f0 i 5577d64 na gałęzi uruchomienia, panel scala ją do master. Wypchnięcie na GitHub: agent, z polem `wymaga: zgoda`, bo wychodzi na zewnątrz. Pobranie na Macu zostaje pierwszym krokiem zadania „Zbuduj podpisany AAB…”.
+- Skutki: właścicielowi zostaje 10 zadań (257 minut) i jedna zgoda na wypchnięcie; merge nadal czeka na wynik pełnej suity testów. Odwracalne: wystarczy przywrócić `kto: ty`.
+- Kto: agent
+
+## 2026-11-21: Żadne zadanie T48 nie wchodzi przed v1.0.0
+- Kontekst: właściciel (2026-11-14): „zrealizujmy wszystko niezbędne”. Analiza z 20.11 (`docs/backlog/v1.0.2/T48-zakres-v1.0.0.md`) wykazała, że żadne z zadań T48 a/e/g/h/m/n/q/t/v/w nie jest niezbędne: makiety T48 zastąpił redesign z 08–10.2026, a RC1 ma przegląd UI z 27.10.
+- Decyzja: wszystkie dziesięć zadań T48 po v1.0.0; zadanie „Zrealizuj zadania T48 niezbędne do v1.0.0” zamknięte jako zbędne (lista pusta).
+- Skutki: podpisany build 24.11 nie czeka na T48; przegląd T48 pod nowy prototyp zaplanowany na 2026-12-15. Ocena z kodu i przeglądu UI, bez uruchamiania aplikacji.
+- Kto: agent
+
+## 2026-11-21: Materiały marketingowe zostają w repozytorium
+- Kontekst: pytanie 2 w karcie; właściciel dopuścił merge gałęzi `marketing/kampania-rc1` i zostawił do rozważenia, czy marketing ma być w gicie.
+- Decyzja: dokumenty marketingowe (plany, szkice tekstów) zostają w repozytorium w `docs/marketing/`; nie zakładamy osobnego miejsca. Dane osobowe (lista testerów, adresy) poza repozytorium.
+- Skutki: gałąź `marketing/kampania-rc1` (1 commit, sama dokumentacja) wchodzi do master razem z PR #124. Odwracalne: katalog można później przenieść.
+- Kto: agent
+
 ## 2026-11-14: Material Symbols zamiast własnych ikon, T48 niezbędne przed v1.0.0
 - Kontekst: T41 zablokowane od 16.05; otwarte zadania T48.
 - Decyzja: rezygnacja z MarineIcons.ttf na rzecz Material Symbols; przed v1.0.0 realizujemy wszystkie niezbędne zadania T48.
