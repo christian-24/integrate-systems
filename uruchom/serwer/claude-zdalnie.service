@@ -1,0 +1,22 @@
+# Stała sesja Claude Code do rozwoju panelu (ROZWOJ.md): Remote Control w kopii roboczej agenta, sterowana
+# z aplikacji Claude (zakładka Code) albo claude.ai/code. Konto: logowanie Claude użytkownika agent.
+# Jednorazowo przed pierwszym startem: zaufanie folderu i zgoda na Remote Control (zainstaluj-rozwoj.sh, ROZWOJ.md).
+# Instaluje uruchom/serwer/zainstaluj-rozwoj.sh.
+[Unit]
+Description=Claude Code Remote Control: rozwój panelu
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=agent
+Group=agent
+WorkingDirectory=/home/agent/rozwoj/IntegrateSystems
+Environment=HOME=/home/agent
+Environment=PATH=/home/agent/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/agent/.local/bin/claude remote-control --name "Rozwój panelu" --spawn=same-dir
+StandardInput=null
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

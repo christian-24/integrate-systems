@@ -1,7 +1,8 @@
 # Rozwój panelu na serwerze
 
-Panel (IntegrateSystems) rozwija agent na serwerze, nie na Macu. Właściciel rozmawia z nim w aplikacji Claude
-(zakładka Code, połączenie SSH) i wdraża zmiany przyciskiem w panelu.
+Panel (IntegrateSystems) rozwija agent na serwerze, nie na Macu. Właściciel rozmawia z nim w aplikacji Claude:
+na telefonie i w przeglądarce przez Remote Control (zakładka Code, sesja „Rozwój panelu”), na Macu także przez SSH.
+Commit na gałęzi `rozwoj` wdraża się sam.
 
 ## Układ
 
@@ -10,6 +11,7 @@ Panel (IntegrateSystems) rozwija agent na serwerze, nie na Macu. Właściciel ro
 | Produkcja | `/home/panel/IntegrateSystems`, port 4801, https://2-29-181-133.sslip.io | użytkownik `panel`; agent jej nie zmienia |
 | Kopia robocza | `/home/agent/rozwoj/IntegrateSystems`, gałąź `rozwoj` | użytkownik `agent` (sesje SSH i Claude) |
 | Panel testowy | port 4802, https://test.2-29-181-133.sslip.io, dane przykładowe, bez agentów | `panel-testowy.service` jako `agent` |
+| Sesja Claude na telefonie | `claude-zdalnie.service`: Remote Control w kopii roboczej, aplikacja Claude → Code → „Rozwój panelu” | użytkownik `agent` |
 | Wdrożenie | `/usr/local/bin/wdroz-panel` | samo po commicie na `rozwoj` (`wdroz-panel-auto.path`, zapasowo co 5 min); ręcznie przycisk w panelu: Serwer → Rozwój panelu |
 
 Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj.sh` (w repozytorium produkcji).

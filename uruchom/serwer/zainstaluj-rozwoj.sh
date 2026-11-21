@@ -68,5 +68,27 @@ install -d -m 750 -o panel -g panel /home/panel/dane/wdrozenie
 systemctl daemon-reload
 systemctl enable --now panel-testowy.service >/dev/null
 systemctl enable --now wdroz-panel-auto.path wdroz-panel-auto.timer >/dev/null   # automat: commit na rozwoj = wdrożenie
+
+echo "5. Stała sesja Claude (Remote Control) w kopii roboczej: aplikacja Claude → Code → „Rozwój panelu”"
+install -m 644 "$SRC/claude-zdalnie.service" /etc/systemd/system/claude-zdalnie.service
+# zaufanie folderu dla Claude agenta (bez terminala nikt by o nie nie zapytał)
+runuser -u agent -- python3 - "$DEV" <<'PY'
+import json, os, sys
+p = os.path.expanduser("~/.claude.json")
+try:
+    d = json.load(open(p))
+except (OSError, ValueError):
+    d = {}
+d.setdefault("projects", {}).setdefault(sys.argv[1], {})["hasTrustDialogAccepted"] = True
+tmp = p + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(d, f, indent=2)
+os.chmod(tmp, 0o600)
+os.replace(tmp, p)
+PY
+systemctl daemon-reload
+systemctl enable --now claude-zdalnie.service >/dev/null
+echo "   Jeśli „Rozwój panelu” nie pojawia się w aplikacji: journalctl -u claude-zdalnie. Pierwsza zgoda na Remote"
+echo "   Control wymaga jednorazowej odpowiedzi „y”: sudo -u agent -H script -qc '/home/agent/.local/bin/claude remote-control --spawn=same-dir' /dev/null"
 systemctl restart panel-testowy.service
 echo "Gotowe. Panel testowy: https://$HOST_TEST (hasło w panelu: Serwer → Rozwój panelu)."
