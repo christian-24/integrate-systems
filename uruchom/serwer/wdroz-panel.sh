@@ -100,7 +100,8 @@ rmdir "$TMP"
 as_agent git -C "$DEV" worktree add -q --detach "$TMP" "$SHA" || blad "nie przygotowano kopii do testów"
 log "Testy na ${SHA:0:7}"
 WYNIK=$(mktemp)
-(cd "$TMP/dashboard/testy" && timeout 1200 runuser -u agent -- python3 -m unittest discover -q) >"$WYNIK" 2>&1
+# bez renderowania filmów (ffmpeg trwa na serwerze kilkanaście minut); render: dashboard/testy/render_na_serwerze.sh
+(cd "$TMP/dashboard/testy" && timeout 1200 runuser -u agent -- env PANEL_TESTY_BEZ_RENDERU=1 python3 -m unittest discover -q) >"$WYNIK" 2>&1
 st=$?
 tail -n 40 "$WYNIK"; rm -f "$WYNIK"
 [ "$st" = 0 ] || blad "testy nie przeszły (dziennik wdrożenia)"
