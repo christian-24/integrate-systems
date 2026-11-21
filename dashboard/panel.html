@@ -818,6 +818,10 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .steps-ro .ok{color:var(--ink-3);text-decoration:line-through}
 .notes{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2)}
 .mats{display:flex;flex-wrap:wrap;gap:6px}
+.rd{display:grid;gap:8px;margin-top:10px;min-width:0}
+.rd .sub{margin:0}
+.rdx{max-height:70vh}
+.rd .mat .mh:last-child{border-bottom:0}
 .mats .btn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-content:flex-start}
 .mats .btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
 .mat{border:1px solid var(--line);border-radius:6px;background:var(--sunk);display:grid;min-width:0}
@@ -4389,7 +4393,7 @@ function taskHtml(t){
   else if(zg)mv='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>'+(pub?'Zatwierdź publikację':'Wyraź zgodę')+'</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>';
   else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+accBox(t,d,db,dec);shown.post=1}
   else if(d.asks.length&&!d.answers.length){mv=askBox(t);shown.ask=1}
-  else if(br){mv='<div class="abox you"><b>Twój ruch: przejrzyj zmiany i kliknij „Scal”</b><p class="move">Scalenie zamyka to zadanie.</p>'+chgBlock(br,true)+'</div>'}
+  else if(br){mv='<div class="abox you"><b>Twój ruch: przejrzyj zmiany i kliknij „Scal”</b><p class="move">Scalenie zamyka to zadanie.</p>'+chgBlock(br,true,t)+'</div>'}
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
   else if(needsResult(t)||needsCount(t)||dForm(t,'done'))mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p></div>'+finBox(t);
   else if(!mine)mv='<div class="move-box"><b>To robi agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.</b><p>'+esc(doWhat(t))+'</p></div>';
@@ -4401,6 +4405,8 @@ function taskHtml(t){
   const full=!!fday&&!shown.post;
   if(fday&&!shown.post){mv+=filmTop(t,fday,ftask,false);if(full){mv+=postBox(t,fday,false,'film');shown.film=1}}
   /* „gotowe, gdy” i pełny następny krok (w listach są skrócone do dwóch wierszy) */
+  const readUp=t.state!=='done'&&!!t.detail&&resFiles(t).length>0;
+  if(readUp)mv+=readBlock(t);
   h+=mv;
   if(t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w')}
   h+=chatBox(t);
@@ -4410,10 +4416,10 @@ function taskHtml(t){
   h+=checkBox(t);
   h+=planBlock(t);
   if(pub&&t.channel&&isDay(t.date)&&!shown.post)h+=postBox(t,t.date.slice(0,10),false,shown.film?'text':'');
-  h+=wynBlock(t,d,zg||od,od,t.executor==='ty');
+  h+=wynBlock(t,d,zg||od,od,t.executor==='ty',readUp);
   if(pday&&!shown.post)h+=postBox(t,pday,false,shown.film&&pday===fday?'text':'');
   if(ftask)h+=postBox(t,fday,false,'text');
-  if(gr&&!od)h+='<div class="dbox"><h3>Zmiany agenta</h3>'+chgBlock(gr,true)+'</div>';
+  if(gr&&!od)h+='<div class="dbox"><h3>Zmiany agenta</h3>'+chgBlock(gr,true,t)+'</div>';
   if(d.answers.length)h+='<div class="dbox"><h3>Twoje dane</h3><dl class="ans">'+d.answers.map(a=>'<dt>'+esc(a.label)+'</dt><dd>'+esc(a.value)+'</dd>').join('')+'</dl></div>';
   h+=afterBlock(t);
   h+='<div id="dag">'+agentBlock(t)+'</div><dl>';
@@ -4507,7 +4513,7 @@ function resFiles(t){
   let m;
   while((m=re.exec(txt))){
     const path=m[2].replace(/^\.\//,''),anchor=m[3]||'',k=path+'#'+anchor;
-    if(/(^|\/)\.\.(\/|$)/.test(path)||seen[k])continue;
+    if(/(^|\/)\.\.(\/|$)/.test(path)||/^ZADANIA\.md$/i.test(path)||seen[k])continue;
     seen[k]=1;out.push({path:path,anchor:anchor});
   }
   return out.slice(0,12);
@@ -4588,17 +4594,18 @@ function savePub(t){
 }
 /* zmiany agenta w gałęzi git: lista plików, diff (GET /api/agent/diff), scalenie do bazy (POST /api/agent/merge) */
 const DF={};
-const lastGitRun=t=>runs().find(r=>r.kind==='task'&&!isAct(r)&&sameTask(r,t)&&(r.branch||r.changes.length))||null;
-function chgBlock(r,bare){
+/* gałąź bez zmienionych plików (agent zapisał wynik poza repozytorium, np. w folderze karty) nie jest pokazywana */
+const lastGitRun=t=>runs().find(r=>r.kind==='task'&&!isAct(r)&&sameTask(r,t)&&r.changes.length)||null;
+function chgBlock(r,bare,t){
   if(!r||!(r.branch||r.changes.length))return '';
-  const id=esc(r.id),merged=r.merged||!!A.merged[r.id],base=r.base||'bazy',open=!!A.diff[r.id],n=r.changes.length;
+  const n=r.changes.length,id=esc(r.id),merged=r.merged||!!A.merged[r.id],base=r.base||'bazy',open=diffOpen(r,t);
   const add=r.changes.reduce((a,c)=>a+(c.added||0),0),rem=r.changes.reduce((a,c)=>a+(c.removed||0),0);
   let h='<div class="chg">'+(bare?'':'<div class="sub">Zmiany agenta</div>')+
     '<div class="br">'+(r.branch?'Gałąź <code>'+esc(r.branch)+'</code>'+(r.base?' od <code>'+esc(r.base)+'</code>':''):'')+
     (n?(r.branch?' · ':'')+n+' '+pl(n,'plik','pliki','plików')+' · <span class="num ad">+'+add+'</span> <span class="num rm">−'+rem+'</span>':'')+(merged?' <span class="lz green">scalone</span>':'')+'</div>';
   h+=r.pseudo?'':n?'<ul class="chl">'+r.changes.map(c=>'<li><code>'+esc(c.path)+'</code><span class="num ad">'+(c.added==null?'plik binarny':'+'+c.added)+'</span><span class="num rm">'+(c.removed==null?'':'−'+c.removed)+'</span></li>').join('')+'</ul>'
     :'<p class="note">Brak zmienionych plików względem '+esc(base)+'.</p>';
-  const b=['<button type="button" class="btn sec sm" data-ag="diff" data-id="'+id+'" data-k="diff:'+id+'" aria-expanded="'+open+'">'+(open?'Ukryj zmiany':'Pokaż zmiany')+'</button>'];
+  const b=n||r.pseudo?['<button type="button" class="btn sec sm" data-ag="diff" data-id="'+id+'" data-k="diff:'+id+'" aria-expanded="'+open+'">'+(open?'Ukryj zmiany':'Pokaż zmiany')+'</button>']:[];
   let cf='';
   if(r.branch&&(n||r.pseudo)&&!merged){
     if(A.mconf===r.id)cf='<div class="row"><span class="rsn">Scalić <code>'+esc(r.branch)+'</code> do <code>'+esc(base)+'</code> w repozytorium projektu? Tylko lokalnie, bez push. Przy konflikcie nic się nie zmieni.</span>'+
@@ -4660,10 +4667,16 @@ async function loadDiff(id){
       d=res.ok&&j.ok!==false&&tx!=null?{ok:true,text:tx,cut:!!(j.truncated||j.cut)}:{ok:false,error:String(j.error||(res.status===404?'Brak zmian tego uruchomienia na serwerze.':'Nie udało się wczytać zmian.'))};
     }else{const tx=await res.text();d=res.ok?{ok:true,text:tx}:{ok:false,error:res.status===404?'Brak zmian tego uruchomienia na serwerze.':'Nie udało się wczytać zmian.'}}
   }catch(e){}
-  DF[id]=d;if(DR)renderDrawer(true);
+  DF[id]=d;if(DR)renderDrawer();          /* bez wymuszenia: diff wczytany sam nie przerywa pisania w polu */
 }
+/* diff od razu widoczny; zwinięty, gdy plików jest więcej niż 5 albo właściciel kliknął „Ukryj zmiany” */
+const DIFF_OPEN_MAX=5;
+/* zmienione pliki to same pliki z „Do przeczytania”: ich treść jest już wyżej, diff startuje zwinięty */
+const readAll=(r,t)=>{const L=t&&t.detail&&t.state!=='done'?resFiles(t).map(x=>x.path):[];
+  return !!L.length&&r.changes.length>0&&r.changes.every(c=>L.some(p=>c.path===p||c.path.endsWith('/'+p)))};
+const diffOpen=(r,t)=>A.diff[r.id]!=null?!!A.diff[r.id]:(r.pseudo||(r.changes.length>0&&r.changes.length<=DIFF_OPEN_MAX&&!readAll(r,t)));
 function toggleDiff(id){
-  A.diff[id]=!A.diff[id];if(A.diff[id]&&DF[id]&&!DF[id].ok)delete DF[id];
+  const r=runById(id)||BR[id],t=DR&&DR.kind==='task'?findTask(DR.ref,true):null;A.diff[id]=!(r?diffOpen(r,t):!!A.diff[id]);if(A.diff[id]&&DF[id]&&!DF[id].ok)delete DF[id];
   renderDrawer(true);focusK('diff:'+id);
 }
 function mergeRun(id){
@@ -4683,25 +4696,60 @@ function matInner(t,r){
   const k=matKey(t,r),m=MV[k],ok=!!(m&&m.ok);
   let body;
   if(!LIVE)body='<p class="mdx muted">Podgląd materiału działa w panelu na serwerze.</p>';
-  else if(m===undefined){MV[k]=null;loadMat(t.project,r);body='<p class="mdx muted">Wczytuję…</p>'}
+  else if(m===undefined){MV[k]=null;loadMat(t.project,r,readBranch(t));body='<p class="mdx muted">Wczytuję…</p>'}
   else if(m===null)body='<p class="mdx muted">Wczytuję…</p>';
   else if(!ok)body='<p class="mdx">'+esc(m.error)+'</p>';
   else body='<div class="mdx">'+(md(m.text)||'<p class="muted">Sekcja jest pusta.</p>')+'</div>';
   return '<div class="mh"><b>'+esc(ok&&m.title?m.title:refLabel(r))+'</b><span>'+(ok?'<button class="btn sec sm" data-matcopy="1" data-k="matcopy">Kopiuj</button>':'')+
     '<button class="btn sec sm" data-matclose="1" data-k="matclose">Zwiń</button></span></div>'+body;
 }
-async function loadMat(pid,r){
+async function loadMat(pid,r,br){
   const k=pid+'|'+r.path+'#'+r.anchor;let d={ok:false,error:'Nie udało się wczytać pliku.'};
   try{
-    const res=await fetch('/api/plik?project='+encodeURIComponent(pid)+'&path='+encodeURIComponent(r.path)+(r.anchor?'&anchor='+encodeURIComponent(r.anchor):''),{cache:'no-store'});
+    const res=await fetch('/api/plik?project='+encodeURIComponent(pid)+'&path='+encodeURIComponent(r.path)+(r.anchor?'&anchor='+encodeURIComponent(r.anchor):'')+(br?'&branch='+encodeURIComponent(br):''),{cache:'no-store'});
     if(res.status===401){location.assign('/wejscie');return}
     let j={};try{j=await res.json()}catch(e){}
     d=res.ok&&j.ok!==false&&typeof j.text==='string'?{ok:true,title:String(j.title||''),text:j.text}:{ok:false,error:String(j.error||(res.status===404?'Nie znaleziono pliku albo sekcji.':'Nie udało się wczytać pliku.'))};
   }catch(e){}
   MV[k]=d;
+  if(DR&&DR.kind==='task'){const t=findTask(DR.ref,true);
+    if(t&&t.detail)document.querySelectorAll('#dbody [data-rdk]').forEach(el=>{if(el.dataset.rdk===k){const i=+el.dataset.rdi,x=resFiles(t)[i];if(x)setHtml(el,readItem(t,x,i))}})}
   if(DR&&DR.kind==='task'&&DR.mat&&DR.mat.slice(2)===k){const t=findTask(DR.ref,true),el=$('#dmat');
     const cur=t&&t.detail?matList(t,DR.mat[0]).find(x=>matKey(t,x)===k):null;
     if(el&&cur)setHtml(el,matInner(t,cur));else renderDrawer()}
+}
+/* „Do przeczytania”: pliki .md/.txt z wyniku agenta pokazane od razu w zadaniu (bez klikania); „Zwiń” chowa plik.
+   Przy więcej niż 3 plikach startują zwinięte. Pliku jeszcze nie ma w folderze: treść z nie scalonej gałęzi agenta */
+const RO={};
+const READ_MAX=3;
+function readBranch(t){const r=lastGitRun(t)||branchRun(t);return r&&r.branch&&!(r.merged||A.merged[r.id])?r.branch:''}
+function readItem(t,r,i){
+  const k=matKey(t,r),m=MV[k],ok=!!(m&&m.ok),many=resFiles(t).length>READ_MAX,open=RO[k]!=null?RO[k]:!many;
+  let body='';
+  if(open){
+    if(!LIVE)body='<p class="mdx muted">Podgląd pliku działa w panelu na serwerze.</p>';
+    else if(m===undefined){MV[k]=null;loadMat(t.project,r,readBranch(t));body='<p class="mdx muted">Wczytuję…</p>'}
+    else if(m===null)body='<p class="mdx muted">Wczytuję…</p>';
+    else if(!ok)body='<p class="mdx">'+esc(m.error)+'</p>';
+    else body='<div class="mdx rdx">'+(md(m.text)||'<p class="muted">Plik jest pusty.</p>')+'</div>';
+  }
+  return '<div class="mh"><b title="'+esc(r.path+(r.anchor?'#'+r.anchor:''))+'">'+esc(ok&&m.title?m.title:refLabel(r))+(ok&&m.title?' <span class="muted">· '+esc(refLabel(r))+'</span>':'')+'</b><span>'+
+    (open&&ok?'<button type="button" class="btn sec sm" data-rdcopy="'+i+'" data-k="rdcopy:'+i+'">Kopiuj</button>':'')+
+    '<button type="button" class="btn sec sm" data-rd="'+i+'" data-k="rd:'+i+'" aria-expanded="'+open+'">'+(open?'Zwiń':'Pokaż')+'</button></span></div>'+body;
+}
+function readBlock(t){
+  const L=resFiles(t);if(!L.length)return '';
+  return '<div class="rd"><div class="sub">Do przeczytania'+(L.length>1?' · '+L.length+' '+pl(L.length,'plik','pliki','plików'):'')+'</div>'+
+    L.map((r,i)=>'<div class="mat" data-rdk="'+esc(matKey(t,r))+'" data-rdi="'+i+'">'+readItem(t,r,i)+'</div>').join('')+'</div>';
+}
+function toggleRead(i){
+  if(!DR||DR.kind!=='task')return;const t=findTask(DR.ref,true),L=t&&t.detail?resFiles(t):[],r=L[+i];if(!r)return;
+  const k=matKey(t,r),open=RO[k]!=null?RO[k]:L.length<=READ_MAX;RO[k]=!open;if(RO[k]&&MV[k]&&!MV[k].ok)delete MV[k];
+  renderDrawer(true);focusK('rd:'+i);
+}
+async function copyRead(i){
+  const t=DR&&DR.kind==='task'?findTask(DR.ref,true):null,r=t&&t.detail?resFiles(t)[+i]:null,m=r?MV[matKey(t,r)]:null;if(!m||!m.ok)return;
+  say(await copyText(m.text)?'Skopiowano treść pliku.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
 function openMat(code){
   if(!DR||DR.kind!=='task')return;
@@ -4716,9 +4764,9 @@ async function copyMat(){
   say(await copyText(m.text)?'Skopiowano treść materiału.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
 /* wynik pracy agenta; decyzja i reszta trafiają do pola odbioru, gdy ono jest widoczne */
-function wynBlock(t,d,decIn,leftIn,own){
+function wynBlock(t,d,decIn,leftIn,own,readUp){
   if(!hasWyn(d))return '';
-  const rf=resFiles(t);
+  const rf=readUp?[]:resFiles(t);
   return '<div class="dbox wyn"><h3>'+(own?'Wynik':'Wynik agenta')+'</h3>'+(d.result?'<p>'+esc(d.result)+'</p>':'')+(!decIn&&d.decision?'<p><b>Do zatwierdzenia:</b> '+esc(d.decision)+'</p>':'')+
     (!leftIn&&d.left?'<p class="warn">Zostało: '+esc(d.left)+'</p>':'')+(d.next?'<p><b>Następne:</b> '+nextText(d.next)+'</p>':'')+
     (rf.length?'<div class="sub">Pliki z wyniku</div>'+matButtons(t,'w'):'')+'</div>';
@@ -4731,7 +4779,7 @@ const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
 const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
-  let h='<div class="abox you"><b>Praca czeka na Twój odbiór</b><p class="move">'+yourMove(t)+'</p>'+(d.left?'<p class="warn">Po odbiorze zostaje: '+esc(d.left)+'</p>':'')+chgBlock(lastGitRun(t));
+  let h='<div class="abox you"><b>Praca czeka na Twój odbiór</b><p class="move">'+yourMove(t)+'</p>'+(d.left?'<p class="warn">Po odbiorze zostaje: '+esc(d.left)+'</p>':'')+chgBlock(lastGitRun(t),false,t);
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
     '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
@@ -6449,6 +6497,8 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-copy]')){copyPost(el.dataset.copy);return}
   if(el=qq('[data-mat]')){openMat(el.dataset.mat);return}
   if(el=qq('[data-matcopy]')){copyMat();return}
+  if(el=qq('[data-rdcopy]')){copyRead(el.dataset.rdcopy);return}
+  if(el=qq('[data-rd]')){toggleRead(el.dataset.rd);return}
   if(el=qq('[data-matclose]')){if(DR){const k=DR.mat;DR.mat='';renderDrawer(true);const t=findTask(DR.ref,true);
     if(t&&t.detail&&k){const loc=k[0],i=matList(t,loc).findIndex(r=>loc+'|'+matKey(t,r)===k);if(i>=0)focusK('mat:'+loc+':'+i)}}return}
   if(el=qq('[data-colsw]')){PF.col=el.dataset.colsw;savePF();render(true);focusK('colsw:'+PF.col);return}

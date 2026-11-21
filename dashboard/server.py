@@ -486,11 +486,17 @@ def file_section(text, anchor):
 def read_project_file(query):
     """GET /api/plik: (kod, odpowiedź)."""
     q = parse_qs(query)
-    pid, rel, anchor = ((q.get(k) or [""])[0] for k in ("project", "path", "anchor"))
+    pid, rel, anchor, branch = ((q.get(k) or [""])[0] for k in ("project", "path", "anchor", "branch"))
     path, error = project_file(pid, rel)
-    if not path:
+    if path:
+        text = projekt.read(path)
+    elif branch and error == "Nie ma takiego pliku.":
+        # plik dopisany na gałęzi agenta, jeszcze nie scalony: treść z gałęzi (git show)
+        text, error = get_agents().branch_file(pid, branch, rel)
+        if text is None:
+            return 404, {"ok": False, "error": error}
+    else:
         return 404, {"ok": False, "error": error}
-    text = projekt.read(path)
     if text is None:
         return 404, {"ok": False, "error": "Nie udało się odczytać pliku."}
     h1 = next((m.group(2) for m in map(HEADING.match, text.split("\n")) if m and len(m.group(1)) == 1), "")

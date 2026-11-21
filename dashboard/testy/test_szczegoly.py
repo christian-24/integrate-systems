@@ -3,6 +3,7 @@ ciasteczko Secure, prompt agenta, powiadomienia i ryzyka raportu PM."""
 import datetime
 import json
 import os
+import subprocess
 import sys
 import time
 import unittest
@@ -394,6 +395,35 @@ class Api(Serwer):
         self.assertEqual((status, answer["text"], answer["title"]), (200, "brief klienta\n", "brief.txt"))
         self.assertEqual(self.plik("../projekt/KARTA.md")[0], 200)              # karta jest w dozwolonym folderze
         self.assertEqual(self.plik("../../poza.md")[0], 404)
+
+    def test_plik_z_galezi_agenta(self):
+        """Plik dopisany przez agenta na gałęzi agent/…, jeszcze nie scalony: /api/plik z branch= czyta go z gałęzi."""
+        def git(*args):
+            subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"] + list(args),
+                           cwd=self.folder, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        git("init", "-q", "-b", "master")
+        git("add", "-A")
+        git("commit", "-q", "-m", "start")
+        git("checkout", "-q", "-b", "agent/2026-11-21-formy")
+        with open(os.path.join(self.folder, "marketing", "formy.md"), "w", encoding="utf-8") as f:
+            f.write("# Formy na grudzień\n\n- przegląd opisu\n")
+        git("add", "-A")
+        git("commit", "-q", "-m", "formy")
+        git("checkout", "-q", "master")
+        self.assertEqual(self.plik("marketing/formy.md")[0], 404)                   # bez gałęzi: nie ma pliku
+        from urllib.parse import urlencode
+        def plik(path, branch):
+            q = urlencode({"project": "projekt-testowy", "path": path, "branch": branch})
+            status, _, text = self.request("GET", "/api/plik?" + q)
+            return status, json.loads(text)
+        status, answer = plik("marketing/formy.md", "agent/2026-11-21-formy")
+        self.assertEqual((status, answer["title"]), (200, "Formy na grudzień"), answer)
+        self.assertIn("przegląd opisu", answer["text"])
+        self.assertEqual(plik("marketing/plan.md", "agent/2026-11-21-formy")[1]["text"], PLAN)   # folder ma pierwszeństwo
+        for path, branch in (("marketing/formy.md", "master"), ("marketing/formy.md", "agent/../master"),
+                             ("../formy.md", "agent/2026-11-21-formy"), ("marketing/nie-ma.md", "agent/2026-11-21-formy"),
+                             ("marketing/formy.md", "agent/nie-ma")):
+            self.assertEqual(plik(path, branch)[0], 404, (path, branch))
 
     def test_zapis_szczegolow(self):
         t = next(x for x in self.data()["tasks"] if x["title"] == "Sprawdź ofertę")

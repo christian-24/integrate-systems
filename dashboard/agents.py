@@ -9,6 +9,7 @@ import glob
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shlex
 import shutil
@@ -1211,6 +1212,33 @@ class Manager:
         if git_run(top, ["rev-parse", "--verify", "-q", "refs/heads/" + rec["branch"]], timeout=15)[0] != 0:
             return None, (409, "Nie ma gałęzi %s." % rec["branch"])
         return (rec, top), None
+
+    def branch_file(self, project, branch, rel):
+        """GET /api/plik z branch=: (tekst | None, błąd) pliku .md/.txt z gałęzi agent/… w folderze projektu."""
+        branch, rel = str(branch), str(rel or "").strip().replace("\\", "/")
+        if not self.projekt.BRANCH.match(branch) or ".." in branch:
+            return None, "Gałąź agenta ma postać agent/nazwa."
+        if not rel.lower().endswith((".md", ".txt")):
+            return None, "Panel pokazuje tylko pliki .md i .txt."
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(project)
+        top = self._git_top(folder) if folder else ""
+        if not top:
+            return None, "Nie ma takiego pliku."
+        base = os.path.relpath(os.path.realpath(folder), top).replace(os.sep, "/")
+        path = posixpath.normpath(posixpath.join("" if base == "." else base, rel))
+        if rel.startswith("/") or path == ".." or path.startswith("../") or "\x00" in rel:
+            return None, "Nie ma takiego pliku."
+        spec = "refs/heads/%s:%s" % (branch, path)
+        code, size, _ = git_run(top, ["cat-file", "-s", spec], timeout=15)
+        if code != 0 or not size.strip().isdigit():
+            return None, "Nie ma takiego pliku w folderze ani na gałęzi %s." % branch
+        if int(size.strip()) > DIFF_MAX:
+            return None, "Plik jest większy niż 200 KB."
+        code, out, _ = git_run(top, ["show", "--no-textconv", spec], timeout=30)
+        if code != 0:
+            return None, "Nie udało się odczytać pliku z gałęzi %s." % branch
+        return out, ""
 
     def _branch_repo(self, project, branch):
         if not self.projekt.BRANCH.match(branch) or ".." in branch:
