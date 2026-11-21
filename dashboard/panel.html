@@ -580,8 +580,8 @@ p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
 .bkm-n.root{box-shadow:0 0 0 2px var(--accent-soft)}
 .bkm-n:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .bkm-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:0 16px 8px;font-size:12.5px;color:var(--ink-3)}
-.bkm-k{display:inline-block;width:12px;height:12px;border-radius:3px;border-left:4px solid}
-.bkm-k.me{border-color:var(--l-purple)} .bkm-k.ag{border-color:var(--l-blue)} .bkm-k.bl{border-color:var(--l-red)}
+.bkm-k{display:inline-block;width:10px;height:10px;border-radius:3px}
+.bkm-k.me{background:var(--l-purple)} .bkm-k.ag{background:var(--l-blue)} .bkm-k.bl{background:var(--l-red)}
 .md-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding:12px 16px 4px}
 .md-p{min-width:200px}
 .md-up{cursor:pointer;margin-left:auto}
@@ -1518,6 +1518,47 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   .chartbox svg text.lb,.chartbox svg text.wk-ax2{display:none}
   .linkbtn[data-toggle]{min-height:40px;display:inline-flex;align-items:center}
 }
+/* poprawki UI: Tablica, Terminy, Blokady */
+.tb-gh{margin:2px 0 0;font-size:13px}
+.tb-gt{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;background:none;border:0;border-radius:6px;padding:4px 6px;font:inherit;font-weight:650;color:var(--ink-2);cursor:pointer;text-align:left}
+.tb-gt:hover{color:var(--accent);background:var(--hover)}
+.tb-gn{font-weight:500;color:var(--ink-3)}
+.tb-gh.late .tb-gn{color:var(--l-red);font-weight:650}
+.tb-gh.sub{border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
+.tb-cw{position:relative}
+.tb-cw>.card.tb-hasact.tb-actwho{padding-bottom:50px}
+.card.tb-hasact .foot{min-height:32px}
+.tb-act{position:absolute;left:11px;bottom:11px;z-index:1}
+.colsw .seg.tb-segrev .num{color:var(--accent);font-weight:700}
+.col>.ds-more{margin:0;padding:0 6px}
+.tm-rep .tm-pn{display:none}
+.tm-flt>summary{list-style:none;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ctl-line);border-radius:var(--r);padding:4px 10px;background:var(--surface);font-weight:500}
+.tm-flt>summary::-webkit-details-marker{display:none}
+.tm-flt>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
+.tm-flt[open]>summary::before{content:"▾"}
+.tm-flt[open]{flex:1 1 100%}
+.tm-fltb{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px}
+.rows li.tm-dup{display:block}
+.tm-dup>details>summary{display:flex;align-items:baseline;gap:8px;cursor:pointer;min-height:32px}
+.tm-dup>details>summary .tm-ic{align-self:center}
+.tm-dup>details>.rows{margin:4px 0 0 22px}
+.tm-agd{padding:0 0 8px}
+.tm-agd>summary{padding:8px 16px;cursor:pointer;font-size:var(--fs-sm);font-weight:600;color:var(--ink-2)}
+.tm-agd>summary .num{color:var(--ink-3);font-weight:500}
+.bk-mapd{margin:0;padding:0 16px 6px;font-size:var(--fs-sm);color:var(--ink-3)}
+.bk-tree>.bk-you>.bk-row{background:transparent}
+@media (max-width:620px){
+  .card .tb-st{display:none}
+  .tb-pn{max-width:none}
+  .tb-head .tb-cnt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tb-act{min-height:40px}
+  .tb-cw>.card.tb-hasact.tb-actwho{padding-bottom:58px}
+  .card.tb-hasact .foot{min-height:40px}
+  .tm-cnt,.tm-pl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .bk-sum{flex-wrap:wrap;overflow:visible}
+  .bk-row .bk-next{display:none}
+  .bk-allb{display:none}
+}
 </style>
 
 <div class="app">
@@ -2389,7 +2430,7 @@ function answerQ(pid,n,text,accept){
    Cały wiersz klika się jak tytuł (nakładka ::after), przycisk akcji jest nad nakładką. */
 const TM_IC={
  etap:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 14.5V2M3.5 2.5h8.5l-2 3.25 2 3.25H3.5"/></svg>',
- zadanie:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2"/></svg>',
+ zadanie:'<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.5" fill="currentColor"/></svg>',
  publikacja:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5v3h2.5l6 3.5V3L4.5 6.5zM12.5 6a2.5 2.5 0 010 4M4.5 9.5l1.2 4"/></svg>'};
 const TM_KN={etap:'etap',zadanie:'zadanie',publikacja:'publikacja',kalendarz:'wydarzenie z kalendarza'};
 function dlRow(x,o){
@@ -2402,43 +2443,49 @@ function dlRow(x,o){
     x.stage&&p?'<a class="t" href="'+phref(p,'etapy')+'">'+esc(x.t)+'<span class="tm-arr" aria-hidden="true">→</span><span class="sr-only"> (otwiera etapy projektu)</span></a>':
     '<span class="t">'+sr+esc(x.t)+'</span>';
   const S=[];
-  if(p&&showP)S.push('<span class="tm-pj" title="'+esc(p.name)+'">'+av(p,'sm')+'<span class="tm-pn">'+esc(pShort(p))+'</span></span>');
+  if(p&&showP)S.push('<span class="tm-pj'+(o.repP?' tm-rep':'')+'" title="'+esc(p.name)+'">'+av(p,'sm')+'<span class="tm-pn">'+esc(pShort(p))+'</span></span>');
   if(x.ev)S.push('<span>'+esc(x.ev.cal||'kalendarz')+(x.tm&&showD?' · '+esc(x.tm):'')+'</span>');
   if(x.kind==='etap'&&!(x.st==='late'&&d<0))S.push(lz(x.st));
   if(t){const w=WHO[t.executor]?t.executor:'',W=WHO[w];
-    S.push(w==='ty'?'<span class="who"><i class="tm-w-ty" role="img" aria-label="Ty" title="Ty">'+W.i+'</i></span>':'<span class="who"><i class="tm-w-'+(w||'none')+'" aria-hidden="true">'+W.i+'</i>'+W.n+'</span>');
+    if(!(w==='ty'&&o.noTy))S.push(w==='ty'?'<span class="who"><i class="tm-w-ty" role="img" aria-label="Ty" title="Ty">'+W.i+'</i></span>':'<span class="who"><i class="tm-w-'+(w||'none')+'" aria-hidden="true">'+W.i+'</i>'+W.n+'</span>');
     if(t.needsYou)S.push('<span class="lz purple">'+esc(t.needsYou)+'</span>')}
   /* telefon: data w linii projektu i znaczników (kopia w .s; na danej szerokości widać tylko jedną, druga ma display:none) */
-  if(showD)S.push('<span class="tm-dm'+(d<0?' late':'')+'"><time datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'">'+ddl(x.d)+'</time>, '+relN(d)+'</span>');
+  /* grupa „Po terminie”: sama liczba dni (nagłówek mówi „po terminie”) */
+  const rl=o.lateShort&&d<0?(-d)+' '+pl(-d,'dzień','dni','dni'):relN(d);
+  if(showD)S.push('<span class="tm-dm'+(d<0?' late':'')+'"><time datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'">'+ddl(x.d)+'</time>, '+rl+'</span>');
   const a=t&&needsMe(t)?ACTB(t):null;
   const act=a?'<button class="btn sec sm tm-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tma:'+esc(t.id)+'">'+a[1]+'</button>':'';
-  const dt=showD?'<time class="tm-due'+(d<0?' late':'')+'" datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'"><b aria-hidden="true">'+ddl(x.d)+'</b><span class="sr-only">'+esc(dLong(x.d))+'</span><span class="tm-sep">, </span><span class="tm-rel">'+relN(d)+'</span></time>':
+  const dt=showD?'<time class="tm-due'+(d<0?' late':'')+'" datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'"><b aria-hidden="true">'+ddl(x.d)+'</b><span class="sr-only">'+esc(dLong(x.d))+'</span><span class="tm-sep">, </span><span class="tm-rel">'+rl+'</span></time>':
     (x.tm?'<span class="num tm-tm">'+esc(x.tm)+'</span>':'');
   return '<li class="tm-row'+(x.ev?' tm-evr':'')+'"><div class="tm-m"><div class="tm-tl">'+ic+title+'</div>'+(S.length?'<div class="s">'+S.join('')+'</div>':'')+'</div>'+
     '<div class="r'+(showD&&d<0?' late':'')+'">'+act+dt+'</div></li>';
 }
-/* „czeka na” na karcie tablicy: jedna plakietka (pierwszy tytuł, 40 znaków, +N), pełna lista w title; Przegląd używa waitLz */
-const waitLzC=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="lz yellow tb-wt" title="'+esc('Czeka na: '+t.waits.join('; '))+'">czeka na: '+esc(shortT(String(t.waits[0]),40))+(t.waits.length>1?' +'+(t.waits.length-1):'')+'</span>':'';
+/* „czeka na” na karcie tablicy: krótko „czeka na N zadań”, tytuły w title (karty czekające są w zwiniętej grupie) */
+const waitLzC=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="lz yellow tb-wt" title="'+esc('Czeka na: '+t.waits.join('; '))+'">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span>':'';
 /* data na karcie: do 7 dni względnie („dziś”, „jutro”, „za 3 dni”, „po terminie 3 dni”), dalej „do 24.11”; pełna data w title */
 function tbDate(t){
   if(!isDay(t.date)||t.state==='done')return '';
   const d=dTo(t.date),txt=d<0||d<=7?relN(d):'do '+dd(t.date);
   return '<span class="dl'+(d<0?' late':'')+'" title="'+esc(ddl(t.date))+'"><span class="sr-only">termin </span><time datetime="'+esc(t.date)+'">'+esc(txt)+'</time></span>';
 }
-/* karta tablicy; plakietki: zablokowane, etap po terminie (data po terminie widać na czerwono), zgoda/odbiór, agent, czeka na */
+/* karta tablicy; plakietki: zablokowane, etap po terminie (data po terminie widać na czerwono), zgoda/odbiór, agent, czeka na.
+   Wykonawca tylko, gdy to nie Ty. Akcja właściciela (Zrobione, Zatwierdź, Odbierz) jako osobny przycisk obok karty
+   (karta sama jest przyciskiem, przycisk w przycisku jest niepoprawny) */
 function card(t,showProj,old){
   const p=P(t.project),w=WHO[t.executor]||WHO[''],ar=D.agents?runOf(t):null,b=[],lt=lateT(t);
   if(t.state==='blocked')b.push('<span class="lz red">zablokowane</span>'+(t.blocked?'<span>'+esc(t.blocked)+'</span>':''));
   if(lt&&!isLate(t))b.push('<span class="lz red">etap po terminie</span>');
-  (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(x)+'</span>'));
+  (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(BK_NEED[x]?BK_NEED[x][0]:x)+'</span>'));
   if(ar)b.push('<span class="lz blue">'+(ar.state==='running'?'agent pracuje':'agent w kolejce')+'</span>');
   else if(A.starting[t.id])b.push('<span class="lz grey">uruchamianie</span>');
   const wl=waitLzC(t);if(wl)b.push(wl);
-  const who=t.state==='done'&&!t.executor?'':t.executor==='ty'?'<span class="who"><i role="img" aria-label="Ty" title="Ty" style="background:'+w.c+'">'+w.i+'</i></span>':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
-  const cl=(old?' old':'')+(t.state==='blocked'?' tb-blk':'')+(lt?' tb-late':'');
-  return '<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span><span class="meta">'+(showProj&&p?av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span>':'')+'<span class="tb-st">'+esc(t.group||INBOX)+'</span></span>'+
+  const who=t.state==='done'||t.executor==='ty'||!t.executor?'':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
+  const a=needsMe(t)&&!t.waits.length&&t.state!=='blocked'?ACTB(t):null;
+  const cl=(old?' old':'')+(t.state==='blocked'?' tb-blk':'')+(lt?' tb-late':'')+(a?' tb-hasact'+(who?' tb-actwho':''):'');
+  const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span><span class="meta">'+(showProj&&p?av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span>':'')+'<span class="tb-st">'+esc(t.group||INBOX)+'</span></span>'+
     (b.length?'<span class="bd">'+b.join('')+'</span>':'')+
-    (who||dl?'<span class="foot">'+(who||'<span></span>')+dl+'</span>':'')+'</button>';
+    (who||dl||a?'<span class="foot">'+(who||'<span></span>')+dl+'</span>':'')+'</button>';
+  return a?'<div class="tb-cw'+(old?' old':'')+'">'+c+'<button class="btn sec sm tb-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tba:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button></div>':c;
 }
 /* kolejność kart: otwarte — po terminie, potem data rosnąco (bez daty na końcu), przy remisie Twoje przed agentami, potem plik;
    „Zrobione” — od najnowszego (odwrócona kolejność z plików); sortowanie na kopii, D.tasks bez zmian */
@@ -2449,17 +2496,45 @@ function tbSort(L,k){
     const ya=a.executor==='ty'?0:1,yb=b.executor==='ty'?0:1;return ya!==yb?ya-yb:x[1]-y[1]}).map(x=>x[0]);
 }
 const TB_EMPTY={todo:'Brak zadań do zrobienia.',wip:'Nic w toku.',rev:'Nic do odbioru.',done:'Nic jeszcze nie zrobiono.'};
-/* do 1100 px widać jedną kolumnę (przełącznik nad tablicą); w „Zrobione” 10 najnowszych, starsze po „Pokaż starsze” (stan w A.tbAll) */
+/* poprawki UI: kolumna „Do zrobienia” w grupach. Twoje (i zgody, odbiory) po okresach: Po terminie, Dziś, Do 7 dni
+   rozwinięte, Później i Bez terminu zwinięte; dalej zwinięte „Czekają na inne” i „Agenci”. Rozwinięte grupy razem
+   pokazują 15 kart, reszta po „Pokaż wszystkie”. Stan zwinięcia w A.tbGrp (sesja), „Pokaż wszystkie” w PF.more */
+const TB_CUT=15;
+const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Do 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
+const tbMine=t=>t.executor==='ty'||!t.executor||needsMe(t);
+const tbPer=t=>{if(isLate(t))return 'late';if(!isDay(t.date))return 'none';const d=dTo(t.date);return d<=0?'today':d<=7?'week':'later'};
+function tbGrpHead(key,label,n,open,cls){
+  return '<h4 class="tb-gh'+(cls?' '+cls:'')+'"><button class="tb-gt" data-tbg="'+esc(key)+'" data-k="tbg:'+esc(key)+'" aria-expanded="'+open+'"><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span>'+label+' <span class="num tb-gn">'+n+'</span></button></h4>'}
+function tbTodo(L,showProj,b){
+  const G=A.tbGrp||{},op=(k,d)=>G[k]!=null?G[k]:d,mine=L.filter(tbMine),ready=mine.filter(t=>!t.waits.length),wait=mine.filter(t=>t.waits.length),ag=L.filter(t=>!tbMine(t));
+  const per={};TB_PER.forEach(p=>{per[p[0]]=ready.filter(t=>tbPer(t)===p[0])});
+  const anyOpen=TB_PER.some(p=>p[2]&&per[p[0]].length);
+  const mk='tb:'+b,all=!!PF.more[mk];let shown=0,hidden=0,h='',tail='';
+  /* zwinięte grupy okresów pod przyciskiem „Pokaż wszystkie” (dotyczy tylko rozwiniętych) */
+  TB_PER.forEach(([k,lab,d])=>{const X=per[k];if(!X.length)return;const key=b+':'+k,open=op(key,d||!anyOpen);
+    if(!open&&!d){tail+=tbGrpHead(key,lab,X.length,false,'');return}
+    h+=tbGrpHead(key,lab,X.length,open,k==='late'?'late':'');
+    if(!open)return;
+    X.forEach(t=>{if(all||shown<TB_CUT){h+=card(t,showProj);shown++}else hidden++})});
+  if(hidden||all&&shown>TB_CUT)h+=dsMoreBtn('data-more="'+esc(mk)+'"','more:'+mk,all,shown+hidden,'tb-col-todo');
+  h+=tail;
+  [['wait','Czekają na inne zadania',wait],['ag','Agenci',ag]].forEach(([k,lab,X])=>{if(!X.length)return;const key=b+':'+k,open=op(key,false);
+    h+=tbGrpHead(key,lab,X.length,open,'sub');if(open)h+=X.map(t=>card(t,showProj)).join('')});
+  return h;
+}
+/* do 1100 px widać jedną kolumnę (przełącznik nad tablicą); w „Zrobione” 10 najnowszych, starsze po „Pokaż starsze” (stan w A.tbAll).
+   Domyślna kolumna: „Do odbioru”, gdy coś czeka na odbiór, a właściciel nie wybrał kolumny sam (PF.colU) */
 function board(list,showProj,bk){
   const b=bk||'p',cs=COLS.map(([k,n])=>[k,n,tbSort(list.filter(t=>k==='wip'?(t.col==='wip'||t.col==='blocked'):t.col===k),k)]);
-  const on=COLS.some(c=>c[0]===PF.col)?PF.col:'todo',all=!!(A.tbAll&&A.tbAll[b]);
+  const revN=(cs.find(c=>c[0]==='rev')||[0,0,[]])[2].length;
+  const on=PF.colU&&COLS.some(c=>c[0]===PF.col)?PF.col:revN?'rev':'todo',all=!!(A.tbAll&&A.tbAll[b]);
   const nb=L=>L.filter(t=>t.state==='blocked').length,su=n=>pl(n,'zadanie','zadania','zadań');
   return '<div class="colsw" role="group" aria-label="Kolumna tablicy">'+cs.map(([k,n,L])=>{const bl=k==='wip'?nb(L):0;
-    return '<button class="seg" data-colsw="'+k+'" data-k="colsw:'+k+'" aria-pressed="'+(k===on)+'" aria-controls="tb-col-'+k+'"'+(k==='wip'?' title="'+esc('W tym zablokowane: '+bl)+'"':'')+'><span class="tb-sn">'+n+'</span> <span class="num">'+L.length+'<span class="sr-only"> '+su(L.length)+'</span></span></button>'}).join('')+'</div>'+
+    return '<button class="seg'+(k==='rev'&&L.length?' tb-segrev':'')+'" data-colsw="'+k+'" data-k="colsw:'+k+'" aria-pressed="'+(k===on)+'" aria-controls="tb-col-'+k+'"'+(k==='wip'?' title="'+esc('W tym zablokowane: '+bl)+'"':'')+'><span class="tb-sn">'+n+'</span> <span class="num">'+L.length+'<span class="sr-only"> '+su(L.length)+'</span></span></button>'}).join('')+'</div>'+
     '<div class="board">'+cs.map(([k,n,L])=>{const cut=k==='done'&&L.length>10,bl=k==='wip'?nb(L):0;
+    const body=!L.length?'<p class="tb-empty">'+TB_EMPTY[k]+(PF.mine?' (filtr: tylko moje)':'')+'</p>':k==='todo'?tbTodo(L,showProj,b):L.map((t,i)=>card(t,showProj,cut&&!all&&i>=10)).join('');
     return '<div class="col '+k+(k===on?' on':'')+'" id="tb-col-'+k+'" role="region" aria-labelledby="tb-h-'+k+'"><h3 id="tb-h-'+k+'"><span>'+n+'</span><span class="tb-cn"><span class="num">'+L.length+'</span><span class="tb-sr"> '+su(L.length)+'</span></span></h3>'+
-      (bl?'<p class="tb-bc">w tym zablokowane: '+bl+'</p>':'')+(cut&&!all?'<p class="more">Ostatnie 10 z '+L.length+'</p>':'')+
-      (L.map((t,i)=>card(t,showProj,cut&&!all&&i>=10)).join('')||'<p class="tb-empty">'+TB_EMPTY[k]+(PF.mine?' (filtr: tylko moje)':'')+'</p>')+
+      (bl?'<p class="tb-bc">w tym zablokowane: '+bl+'</p>':'')+(cut&&!all?'<p class="more">Ostatnie 10 z '+L.length+'</p>':'')+body+
       (cut?'<p class="tb-more"><button class="btn sec sm" data-tbmore="'+esc(b)+'" data-k="tbmore" data-first="'+esc(L[10].id)+'" aria-expanded="'+all+'" aria-controls="tb-col-done">'+(all?'Zwiń starsze':'Pokaż starsze ('+(L.length-10)+')')+'</button></p>':'')+'</div>'}).join('')+'</div>';
 }
 
@@ -3100,8 +3175,8 @@ const TM_CUT=8;
 const tmNarrow=()=>!!(window.matchMedia&&matchMedia('(max-width:760px)').matches);
 /* details w Terminach: stan z bieżącej sesji (zdarzenie toggle), inaczej domyślny */
 const tmDet=(k,def)=>{const o=A.tmDet&&A.tmDet[k];return o!=null?o:def};
-/* grupa: wybór użytkownika (PF.tmSec), domyślnie na desktopie otwarte; na telefonie otwarte Dziś i Jutro do 15 pozycji */
-const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return !narrow||((id==='today'||id==='tom')&&n<=15)};
+/* grupa: wybór użytkownika (PF.tmSec), domyślnie na desktopie otwarte; na telefonie otwarte tylko Dziś (pierwsze 8 pozycji) */
+const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return !narrow||id==='today'};
 /* pozycje po filtrach; licznik rodzaju liczony przed filtrem rodzaju; przy jednym projekcie bez wydarzeń z kalendarza */
 function tmGroups(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -3111,8 +3186,9 @@ function tmGroups(){
   const cnt={};TM_K.forEach(k=>{cnt[k[0]]=base.filter(x=>x.kind===k[0]).length});
   const L=base.filter(x=>hid.indexOf(x.kind)<0);
   const T=D.todayKey,tom=addK(T,1),endW=addK(T,(7-fromKey(T).getDay())%7),endN=addK(endW,7);
-  const G=[{id:'late',s:'Po terminie',n:'Po terminie',f:x=>x.d<T,date:1,empty:'Nic po terminie.'},
-    {id:'today',s:'Dziś',n:'Dziś · '+ddl(T),f:x=>x.d===T,empty:'Nic na dziś.'},
+  const nar=tmNarrow();
+  const G=[{id:'late',s:'Po terminie',n:'Po terminie',f:x=>x.d<T,date:1,cut:1,cutN:5,empty:'Nic po terminie.'},
+    {id:'today',s:'Dziś',n:'Dziś · '+ddl(T),f:x=>x.d===T,cut:nar?1:0,empty:'Nic na dziś.'},
     {id:'tom',s:'Jutro',n:'Jutro · '+ddl(tom),f:x=>x.d===tom,empty:'Nic na jutro.'},
     {id:'week',s:'Do końca tygodnia',n:'Do końca tygodnia',f:x=>x.d>tom&&x.d<=endW,days:1,cut:1,empty:'Brak terminów do końca tygodnia.',skip:endW<=tom},
     {id:'next',s:'Następny tydzień',n:'Następny tydzień',f:x=>x.d>tom&&x.d>endW&&x.d<=endN,days:1,cut:1,empty:'Brak terminów w następnym tygodniu.'},
@@ -3122,18 +3198,23 @@ function tmGroups(){
 }
 function tmTools(X,narrow){
   const cals=D.cal.calendars,on=cals.filter(x=>!hiddenCals.has(x.id)).length,hid=PF.tk||[],calP=PF.bp!=='all';
-  const kt=TM_K.map(([k,n])=>'<button class="tm-tg" data-tmk="'+k+'" data-k="tmk:'+k+'" aria-pressed="'+(hid.indexOf(k)<0)+'"'+
+  /* bez kalendarzy: bez przełącznika „Kalendarz 0” i bez wyboru kalendarzy (nic do wybrania) */
+  const noCal=!cals.length&&!X.cnt.kalendarz;
+  const kt=TM_K.filter(([k])=>!(k==='kalendarz'&&noCal)).map(([k,n])=>'<button class="tm-tg" data-tmk="'+k+'" data-k="tmk:'+k+'" aria-pressed="'+(hid.indexOf(k)<0)+'"'+
     (k==='kalendarz'&&calP?' title="Przy filtrze projektu wydarzenia z kalendarza są ukryte: nie należą do projektu."':'')+'>'+n+' <span class="num">'+X.cnt[k]+'</span>'+
     (k==='kalendarz'&&calP?'<span class="sr-only"> (ukryte przy filtrze projektu)</span>':'')+'</button>').join('');
   const chips=cals.map(x=>'<button class="chip" data-cal="'+esc(x.id)+'" data-k="cal:'+esc(x.id)+'" aria-pressed="'+(!hiddenCals.has(x.id))+'"><i class="dot cal" aria-hidden="true" style="background:'+esc(x.color||'')+'"></i>'+esc(x.title)+'</button>').join('');
   const n=X.L.length;
+  const kinds='<span class="tm-kinds" role="group" aria-label="Rodzaje terminów">'+kt+'</span>'+
+    (cals.length?'<details class="tm-cals" data-tmdet="cals"'+(tmDet('cals',!narrow)?' open':'')+'><summary>Kalendarze <span class="num">'+on+' z '+cals.length+'</span></summary><div class="tm-calp">'+
+      '<span class="muted">Pokazuj w terminach i wolnych oknach:</span><button class="linkbtn" data-tmcals="all" data-k="tmc:all">Wszystkie</button><button class="linkbtn" data-tmcals="none" data-k="tmc:none">Żadne</button>'+
+      '<div class="chips" role="group" aria-label="Kalendarze pokazywane w Terminach">'+chips+'</div></div></details>':'');
+  /* telefon: rodzaje i kalendarze zwinięte w „Filtry” (liczba wyłączonych rodzajów przy nazwie) */
+  const off=hid.filter(k=>!(k==='kalendarz'&&noCal)).length;
+  const flt=narrow?'<details class="tm-flt" data-tmdet="flt"'+(tmDet('flt',false)?' open':'')+'><summary>Filtry'+(off?' <span class="num">('+off+' wył.)</span>':'')+'</summary><div class="tm-fltb">'+kinds+'</div></details>':kinds;
   return '<div class="toolbar tm-bar"><label class="tm-pl" for="bp">Projekt</label><select id="bp"><option value="all">Wszystkie projekty</option>'+D.projects.map(p=>'<option value="'+esc(p.id)+'"'+(PF.bp===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>'+
     '<button class="tm-tg" id="bm" aria-pressed="'+PF.mine+'" title="Twoje zadania i publikacje oraz zgody i odbiory zadań agentów; etapy i wydarzenia zostają">Tylko moje</button>'+
-    '<span class="tm-kinds" role="group" aria-label="Rodzaje terminów">'+kt+'</span>'+
-    '<details class="tm-cals" data-tmdet="cals"'+(tmDet('cals',!narrow)?' open':'')+'><summary>Kalendarze <span class="num">'+on+' z '+cals.length+'</span></summary><div class="tm-calp">'+
-      (cals.length?'<span class="muted">Pokazuj w terminach i wolnych oknach:</span><button class="linkbtn" data-tmcals="all" data-k="tmc:all">Wszystkie</button><button class="linkbtn" data-tmcals="none" data-k="tmc:none">Żadne</button>'+
-      '<div class="chips" role="group" aria-label="Kalendarze pokazywane w Terminach">'+chips+'</div>':'<span class="muted">Brak kalendarzy do wyboru.</span>')+'</div></details>'+
-    '<span class="muted num tm-cnt" role="status" aria-live="polite">'+n+' '+pl(n,'pozycja','pozycje','pozycji')+'</span></div>';
+    flt+'<span class="muted num tm-cnt" role="status" aria-live="polite">'+n+' '+pl(n,'pozycja','pozycje','pozycji')+'</span></div>';
 }
 /* skróty do sekcji: przyciski (hash steruje widokami), przewinięcie i fokus sekcji */
 function tmJumps(G){
@@ -3159,8 +3240,20 @@ function tmSecHead(g,open,can){
   if(!can)return '<h2 id="'+hid+'"><span class="tm-ht">'+g.n+'</span><small>'+cnt+'</small></h2>';
   return '<h2 id="'+hid+'"'+(g.id==='today'?' class="tm-now"':'')+'><button class="nw-tog" data-tmsec="'+g.id+'" data-k="tms:'+g.id+'" aria-expanded="'+open+'"'+(open?' aria-controls="tm-'+g.id+'-b"':'')+'><span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>'+g.n+'</button><small>'+cnt+'</small></h2>';
 }
+/* poprawki UI: wiersze grupy. Ten sam tytuł w kilku projektach (np. „Porządki spraw…”) jednym wierszem z rozwinięciem;
+   nazwa projektu tylko przy zmianie projektu (kolejne wiersze: sam znak projektu) */
+function tmRows(L,o){
+  const by={};L.forEach(x=>{if(x.task)(by[x.kind+'|'+x.t]=by[x.kind+'|'+x.t]||[]).push(x)});
+  const done={};let prev='';
+  return L.map(x=>{const k=x.kind+'|'+x.t,D2=x.task?by[k]:null;
+    if(D2&&D2.length>1){if(done[k])return '';done[k]=1;prev='';const n=D2.length;
+      return '<li class="tm-dup"><details data-tmdet="dup:'+esc(k)+'"'+(tmDet('dup:'+k,false)?' open':'')+'><summary><span class="tm-ic" aria-hidden="true">'+(TM_IC[x.kind]||TM_IC.zadanie)+'</span><span class="t">'+esc(x.t)+' <span class="muted">· '+n+' '+pl(n,'projekt','projekty','projektów')+'</span></span></summary>'+
+        '<ul class="rows">'+D2.map(y=>dlRow(y,o)).join('')+'</ul></details></li>'}
+    const r=dlRow(x,Object.assign({},o,{repP:!!x.p&&x.p===prev}));prev=x.p||'';return r}).join('');
+}
+const tmAgentRow=x=>!!x.task&&!needsMe(x.task);
 function tmGroup(g,narrow,showP){
-  const n=g.L.length,id='tm-'+g.id,o={date:!!g.date,proj:showP};
+  const n=g.L.length,id='tm-'+g.id,o={date:!!g.date,proj:showP,lateShort:g.id==='late',noTy:true};
   const sec=b=>'<section class="panel tm-grp" id="'+id+'" tabindex="-1" aria-labelledby="'+id+'-h">'+b+'</section>';
   if(g.id==='later'&&!n&&!g.raw)return sec(tmSecHead(g,false,false));
   const open=g.id==='late'||tmSecOpen(g.id,n,narrow);
@@ -3168,18 +3261,22 @@ function tmGroup(g,narrow,showP){
   if(!open)return sec(head);
   if(!n)return sec(head+'<div id="'+id+'-b">'+dsEmpty(g.raw?'Brak pozycji dla wybranych filtrów.':g.empty)+'</div>');
   /* „Później”: domyślnie bez wydarzeń z kalendarza */
-  const evN=g.id==='later'?g.L.filter(x=>x.kind==='kalendarz').length:0,V=g.id==='later'&&!PF.tmLaterEv?g.L.filter(x=>x.kind!=='kalendarz'):g.L;
-  /* długie grupy: pierwsze 8 wierszy (w grupach z dniami cięcie na granicy dnia) */
-  const more=!!(A.tmMore&&A.tmMore[g.id]);let C=V;
-  if(g.cut&&V.length>TM_CUT){
-    if(g.days){C=[];let i=0;while(i<V.length){const d=V[i].d,day=V.filter(x=>x.d===d);if(C.length&&C.length+day.length>TM_CUT)break;C=C.concat(day);i+=day.length}}
-    else C=V.slice(0,TM_CUT)}
+  const evN=g.id==='later'?g.L.filter(x=>x.kind==='kalendarz').length:0,V0=g.id==='later'&&!PF.tmLaterEv?g.L.filter(x=>x.kind!=='kalendarz'):g.L;
+  /* grupy bez podziału na dni (Po terminie, Dziś, Jutro): najpierw Twoje, zadania agentów niżej w „Agenci” (na telefonie zwinięte) */
+  const splitA=!g.days&&g.id!=='later',AG=splitA?V0.filter(tmAgentRow):[],V=splitA?V0.filter(x=>!tmAgentRow(x)):V0;
+  /* długie grupy: pierwsze 8 wierszy (Po terminie: 5; w grupach z dniami cięcie na granicy dnia) */
+  const cutN=g.cutN||TM_CUT,more=!!(A.tmMore&&A.tmMore[g.id]);let C=V;
+  if(g.cut&&V.length>cutN){
+    if(g.days){C=[];let i=0;while(i<V.length){const d=V[i].d,day=V.filter(x=>x.d===d);if(C.length&&C.length+day.length>cutN)break;C=C.concat(day);i+=day.length}}
+    else C=V.slice(0,cutN)}
   const S=more?V:C;
   let b;
   if(g.days){const ds=[];S.forEach(x=>{if(ds.indexOf(x.d)<0)ds.push(x.d)});
-    b=ds.map(d=>'<h3 class="tm-dh">'+ddl(d)+' <span class="num">('+V.filter(x=>x.d===d).length+')</span></h3><ul class="rows">'+S.filter(x=>x.d===d).map(x=>dlRow(x,o)).join('')+'</ul>').join('')}
-  else b=S.length?'<ul class="rows">'+S.map(x=>dlRow(x,o)).join('')+'</ul>':'';
+    b=ds.map(d=>'<h3 class="tm-dh">'+ddl(d)+' <span class="num">('+V.filter(x=>x.d===d).length+')</span></h3><ul class="rows">'+tmRows(S.filter(x=>x.d===d),o)+'</ul>').join('')}
+  else b=S.length?'<ul class="rows">'+tmRows(S,o)+'</ul>':'';
   if(C.length<V.length)b+=dsMoreBtn('data-tmmore="'+g.id+'"','tmm:'+g.id,more,V.length,id+'-b');
+  if(AG.length){const ao=tmDet('ag:'+g.id,!narrow);
+    b+='<details class="tm-agd" data-tmdet="ag:'+g.id+'"'+(ao?' open':'')+'><summary>Agenci <span class="num">'+AG.length+'</span></summary><ul class="rows">'+tmRows(AG,o)+'</ul></details>'}
   if(evN)b+='<p class="nw-more"><button class="linkbtn" data-tmlaterev="1" data-k="tmlev" aria-expanded="'+!!PF.tmLaterEv+'">'+(PF.tmLaterEv?'Ukryj wydarzenia z kalendarza':'Pokaż też '+evN+' '+pl(evN,'wydarzenie','wydarzenia','wydarzeń')+' z kalendarza')+'</button></p>';
   return sec(head+'<div id="'+id+'-b">'+b+'</div>');
 }
@@ -3193,14 +3290,16 @@ function tmSet(c,top){
     '<details class="tm-ics"><summary>Jak dodać subskrypcję</summary><ol><li><b>Mac:</b> Kalendarz → Plik → Nowa subskrypcja kalendarza.</li><li><b>iPhone:</b> Ustawienia → Aplikacje → Kalendarz → Konta kalendarzy → Dodaj konto → Inne → Dodaj subskrybowany kalendarz.</li><li><b>iPhone</b> musi widzieć serwer panelu: adres Tailscale zamiast <code>localhost</code>.</li></ol></details></div>';
   const body='<div class="pad"><p><i class="dot '+c.dot+'" aria-hidden="true"></i> <b>'+esc(c.t)+'.</b> '+esc(c.s)+'</p>'+(c.btn?'<div>'+c.btn+'</div>':'')+ics+'</div>';
   if(top)return '<section class="panel tm-conn" aria-labelledby="tm-conn-h"><h2 id="tm-conn-h">Połączenie z kalendarzem</h2>'+body+'</section>';
-  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',c.dot!=='ok')?' open':'')+'><summary><i class="dot '+c.dot+'" aria-hidden="true"></i><b>Kalendarz i subskrypcja</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:c.short)+'</span></summary>'+body+'</details>';
+  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',false)?' open':'')+'><summary><i class="dot '+c.dot+'" aria-hidden="true"></i><b>Kalendarz i subskrypcja</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:c.short)+'</span></summary>'+body+'</details>';
 }
 function vTerminy(){
   const c=calStatus(),X=tmGroups(),narrow=tmNarrow(),top=c.dot!=='ok'&&!!c.btn;
   let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.terminy)+'">Terminy</h1></div></div>';
   if(top)h+=tmSet(c,true);
-  h+=tmTools(X,narrow)+tmJumps(X.G)+tmBar(c,narrow);
-  h+=X.G.map(g=>tmGroup(g,narrow,PF.bp==='all')).join('');
+  h+=tmTools(X,narrow)+tmJumps(X.G);
+  /* „Dziś i jutro w kalendarzu” tylko z połączonym kalendarzem (bez niego wolne okna byłyby nieprawdziwe), pod „Po terminie” */
+  const bar=c.dot==='ok'?tmBar(c,narrow):'';
+  h+=X.G.map(g=>tmGroup(g,narrow,PF.bp==='all')+(g.id==='late'?bar:'')).join('');
   if(!top)h+=tmSet(c,false);
   return h;
 }
@@ -3393,11 +3492,10 @@ function bkMapSec(m,roots){
     return '<button class="bkm-n'+(mine?' me':' ag')+(bl?' bl':'')+(col[n.id]===0?' root':'')+'" data-task="'+esc(t.id)+'" style="left:'+p.x+'px;top:'+p.y+'px;width:'+W+'px;height:'+H+'px" title="'+esc(t.title)+'">'+
       '<b>'+esc(shortT(t.title,58))+'</b><span>'+esc(who(n))+(isDay(t.date)?' · '+esc(dd(t.date)):'')+(bl?' · zablokowane':'')+(dn?' · → '+dn:'')+'</span></button>'};
   const more=order.length>L.length?'<p class="note">Pokazano '+L.length+' z '+order.length+' zadań. Wybierz projekt, żeby zobaczyć resztę.</p>':'';
-  return '<section class="panel bkm" aria-label="Mapa blokad"><h2>Mapa <small>od lewej: zrób najpierw → co to odblokowuje</small></h2>'+
-    '<div class="bkm-leg"><span class="bkm-k me"></span>Twoje <span class="bkm-k ag"></span>agent <span class="bkm-k bl"></span>zablokowane</div>'+
+  return '<p class="bk-mapd">Od lewej: zrób najpierw → co to odblokowuje.</p><div class="bkm-leg"><span class="bkm-k me"></span>Twoje <span class="bkm-k ag"></span>agent <span class="bkm-k bl"></span>zablokowane</div>'+
     '<div class="bkm-scroll"><div class="bkm-c" style="width:'+CW+'px;height:'+CH+'px">'+
     '<svg class="bkm-l" width="'+CW+'" height="'+CH+'" aria-hidden="true"><defs><marker id="bkm-ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z"/></marker></defs>'+lines+'</svg>'+
-    L.map(box).join('')+'</div></div>'+more+'</section>';
+    L.map(box).join('')+'</div></div>'+more;
 }
 const bkYou=()=>bkYouN().n;
 /* jeden wiersz w Dziś i w Dla Ciebie: link do Blokad */
@@ -3410,7 +3508,7 @@ function bkLine(cls){
 /* „odblokowuje N”: jak w Dziś i w raporcie PM liczba bezpośrednich; „razem M”, gdy dalej czeka więcej (także pośrednio).
    Podpowiedź mówi osobno, ile ruszy od razu (reszta czeka jeszcze na coś innego) */
 const bkCntT=i=>'Czeka bezpośrednio: '+i.direct+'; od razu po nim ruszy: '+i.ready+(i.ready<i.direct?' (pozostałe czekają też na inne zadania)':'')+(i.count>i.direct?'; w łańcuchu (z dalszymi) czeka '+i.count:'');
-const bkPill=(i,cls,more)=>i.count?'<span class="bk-n '+cls+'" title="'+esc(bkCntT(i)+(more||''))+'">odblokowuje <b class="num">'+i.direct+'</b>'+(i.count>i.direct?' <span class="bk-all">· w łańcuchu '+i.count+'</span>':'')+'</span>':'';
+const bkPill=(i,cls,more)=>i.count?'<span class="bk-n '+cls+'" title="'+esc(bkCntT(i)+(more||''))+'">odblokowuje <b class="num">'+i.direct+'</b></span>':'';
 /* jedna nazwa liczby z menu i z h1 Blokad (bkYouN().n): ile zadań czeka na Twoje zadania */
 const bkYouCntT=n=>n+' '+pl(n,'zadanie czeka','zadania czekają','zadań czeka')+' na Twoje zadania';
 /* zgoda i odbiór w Blokadach mówią, czyje są: u korzenia „czeka na Twoją zgodę”, niżej „potem Twoja zgoda” */
@@ -3526,14 +3624,15 @@ function bkNode(m,n,depth,ctx,parent){
   if(depth===0){
     const tg=m.tight(n),w=m.slack(n).worst,g=m.grp(n),pd=bkPanelDoes(t);
     if(g==='late'){const own=isDay(t.date)&&t.date<D.todayKey;
-      ex.push('<span class="lz red">po terminie</span><span class="dl late">'+(own?'termin minął '+dd(t.date)+(i.late?'; dalej po terminie: '+i.late:''):i.late+' '+pl(i.late,'zadanie','zadania','zadań')+' dalej po terminie')+'</span>')}
+      /* data z „po terminie N dni” jest w metadanych, grupa w śródtytule: tu tylko spóźnienia dalej w łańcuchu */
+      if(!own||i.late)ex.push('<span class="dl late">'+(own?'dalej po terminie: '+i.late:i.late+' '+pl(i.late,'zadanie','zadania','zadań')+' dalej po terminie')+'</span>')}
     else if(tg&&!pd){const guess=tg.unk>0;
       ex.push('<span class="lz '+(guess?'yellow':'red')+'" title="Dni do terminu „'+esc(tg.title)+'” (z dzisiejszym) mniej dni pracy przed nim i nad nim, według szacowanego czasu; bez niego: Twoje 1 dzień, agenta pół dnia; publikacja 0">'+(guess?'może być ciasno':'ciasno')+'</span><span class="bk-tg'+(guess?' bk-guess':'')+'">'+bkDays(tg.steps)+' pracy do '+dd(tg.date)+', '+pl(tg.days,'został','zostały','zostało')+' '+bkDays(tg.days)+esc(bkEst(tg))+'</span>')}
     /* ten sam dzień co termin w wierszu: sam zapas; inny dzień: „potem termin DD.MM”, odległość tylko w title */
-    else if(w){const same=w.id===t.id||w.date===t.date;
+    else if(w&&g!=='today'){const same=w.id===t.id||w.date===t.date;
       ex.push('<span title="Zapas do terminu „'+esc(w.title)+'” ('+dd(w.date)+', '+esc(rel(w.date))+'): dni do terminu mniej dni pracy przed nim'+esc(bkEst(w))+'">'+(same?'':'potem termin '+dd(w.date)+' · ')+'zapas '+bkDays(Math.max(0,w.slack),1)+'</span>')}
     /* zależne i tak stoją z innego powodu: pilność tego zadania jest mniejsza, niż wynika z zapasu */
-    if(i.direct&&!i.ready&&i.other.length)ex.push('<span class="bk-stuck" title="Zadania, które czekają na to zadanie, czekają też na inne">następne zadanie czeka też na: '+esc(shortT(i.other.map(x=>x==='[!]'?'zablokowane zadanie':'„'+x+'”').join(', '),80))+'</span>');
+    if(i.direct&&!i.ready&&i.other.length)ex.push('<span class="bk-stuck" title="'+esc('Następne zadanie czeka też na: '+i.other.map(x=>x==='[!]'?'zablokowane zadanie':'„'+x+'”').join(', '))+'">następne czeka też na inne</span>');
   }
   if(crit)ex.push('<span class="bk-sr">na najpilniejszej ścieżce</span>');
   const er=m.early(n);if(er.length)ex.push('<span class="lz yellow" title="Termin tego zadania jest wcześniejszy niż termin zadania, na które czeka">termin przed: „'+esc(shortT(er[0].title,40))+'” ('+dd(er[0].date)+')</span>');
@@ -3604,11 +3703,11 @@ const bkWhyFix=(x,soon)=>'<div class="bk-why">'+(soon?bkDueLz(x.t.t):'')+esc(x.w
   x.why.filter(w=>w.kind==='missing').map(w=>bkFixAct(x.t.t,w.text)).join('');
 /* sekcje zwijane, stan w A.bkSec; domyślnie: urgent i roots rozwinięte, blocked i fix rozwinięte na szerokim ekranie
    (na telefonie zwinięte: strona Blokad jest długa), youw zwinięta */
-const BK_SECS=['urgent','roots','blocked','fix','youw'];
-const BK_SECD={urgent:()=>true,roots:()=>true,blocked:()=>!nwNarrow(),fix:()=>!nwNarrow(),youw:()=>false};
+const BK_SECS=['urgent','roots','map','blocked','fix','youw'];
+const BK_SECD={urgent:()=>true,roots:()=>true,map:()=>!nwNarrow(),blocked:()=>!nwNarrow(),fix:()=>!nwNarrow(),youw:()=>false};
 const bkSecOpen=(id,dflt)=>{const o=A.bkSec&&A.bkSec[id];return o!=null?o:dflt!=null?!!dflt:BK_SECD[id]?BK_SECD[id]():!nwNarrow()};
-const bkSecHead=(id,title,n,extra)=>{const open=bkSecOpen(id);
-  return '<h2 id="bk-'+id+'-h"><button class="nw-tog bk-stog" data-bksec="'+id+'" data-k="bks:'+id+'" aria-expanded="'+open+'"'+(open?' aria-controls="bks-'+id+'"':'')+'><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span>'+title+'</button><span class="bk-hr">'+(extra||'')+'<small class="num"><span class="bk-sr">, liczba:</span> '+n+'</small></span></h2>'};
+const bkSecHead=(id,title,n,extra,tip)=>{const open=bkSecOpen(id);
+  return '<h2 id="bk-'+id+'-h"'+(tip?' title="'+esc(tip)+'"':'')+'><button class="nw-tog bk-stog" data-bksec="'+id+'" data-k="bks:'+id+'" aria-expanded="'+open+'"'+(open?' aria-controls="bks-'+id+'"':'')+'><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span>'+title+'</button><span class="bk-hr">'+(extra||'')+'<small class="num"><span class="bk-sr">, liczba:</span> '+n+'</small></span></h2>'};
 /* nagłówki grup korzeni (pilność raz na grupę zamiast znacznika w każdym wierszu) */
 const BK_GRP={late:['Po terminie','termin zadania albo zadania, które na nie czeka, już minął'],tight:['Ciasno','pracy jest więcej niż dni do terminu'],
   today:['Zacznij dziś','zapas mniejszy niż 1 dzień'],soon:['Z terminem','zapas co najmniej 1 dzień'],none:['Bez terminu','żadne zadanie w łańcuchu nie ma terminu']};
@@ -3651,7 +3750,7 @@ function vBlokady(){
   if(un)sum.push(go('bk-urgent','bad',un+' '+pl(un,'nie ruszy','nie ruszą','nie ruszy')+' na czas (termin do jutra)','bk-gou',un+' pilne'));
   if(you.length){const yv=pl(yc.n,'czeka 1 inne zadanie','czekają '+yc.n+' inne','czeka '+yc.n+' innych');
     sum.push(go(yRoot?'bk-'+bkDom(yRoot.id)+'-'+bkDom(yRoot.id):'bk-youw','you','','bk-go1','',{sec:yRoot?'roots':'youw',title:bkYouTxt(yc),
-      html:'<span class="bk-nw">Na Twoje zadania '+yv+'</span><span class="bk-nn">Na Ciebie czeka '+yc.n+'</span><span class="bk-sr">: '+esc(bkYouTxt(yc))+'</span>'}))}
+      html:'<span class="bk-nw">Na Twoje zadania '+yv+'</span><span class="bk-nn">'+yc.n+' '+pl(yc.n,'czeka','czekają','czeka')+' na Twoje</span><span class="bk-sr">: '+esc(bkYouTxt(yc))+'</span>'}))}
   else zero.push('nic nie czeka na Twoje zadania');
   if(roots.length)sum.push(go('bk-roots','run',roots.length+' do zrobienia najpierw','',roots.length+' najpierw'));else zero.push('0 do zrobienia najpierw');
   if(blocked.length)sum.push(go('bk-blocked','bad',blocked.length+' '+pl(blocked.length,'zablokowane','zablokowane','zablokowanych'),'',blocked.length+' zablok.'));else zero.push('0 zablokowanych');
@@ -3665,7 +3764,7 @@ function vBlokady(){
   const yN=bkSafe().n,yT=bkYouCntT(yN);
   /* nagłówek: tytuł, jedno zdanie, zasada kolejności w zwijanym „Jak liczona jest kolejność”; obok wybór projektu
      i „Rozwiń wszystko”; skróty pod spodem na całą szerokość */
-  let h='<div class="pagehead bk-head"><div class="bk-hl"><h1 title="'+esc(VDESC.blokady)+'">Blokady'+(yN?'<span class="hcnt num" title="'+esc(yT)+'"><span class="sr-only">, </span><span aria-hidden="true">'+yN+'</span><span class="sr-only">'+esc(yT)+'</span></span>':'')+'</h1>'+
+  let h='<div class="pagehead bk-head"><div class="bk-hl"><h1 title="'+esc(VDESC.blokady+(yN?'. '+yT:''))+'">Blokady</h1>'+
     '<p>Zadania, które wstrzymują inne. Zrób najpierw te z góry.</p>'+
     '<details class="ds-det bk-how"'+(A.bkHow?' open':'')+'><summary>Jak liczona jest kolejność</summary><p>Od góry: najpierw to, co jest po terminie, potem to, co ma najmniej zapasu do najbliższego terminu (zapas widać w wierszu). Przy równym zapasie decyduje bliższy termin, potem liczba odblokowanych zadań, a na końcu priorytet projektu. Strzałka przy zadaniu pokazuje, co ruszy po nim.</p></details></div>'+
     '<div class="toolbar"><label class="muted bk-pl" for="bkp">Projekt</label><select id="bkp"><option value="">Aktywne projekty</option>'+opts.map(p=>'<option value="'+esc(p.id)+'" title="'+esc(p.name)+'"'+(PF.bk===p.id?' selected':'')+'>'+esc(bkPShort(p))+(act(p)?'':' ('+(PST_N[p.state]||p.state)+')')+'</option>').join('')+'</select>'+
@@ -3675,33 +3774,35 @@ function vBlokady(){
     '<ul class="bk-tree">'+bkTree(m,fo,null)+'</ul></section>';
   const mixed=L=>L.some(n=>m.mine(n))&&L.some(n=>!m.mine(n));
   /* sekcja: nagłówek przez bkSecHead (zwijanie, id h2 dla aria-labelledby), treść tylko rozwinięta */
-  const sec=(id,title,n,extra,body)=>'<section class="panel'+(id==='urgent'?' bk-urg':'')+'" id="bk-'+id+'" tabindex="-1" aria-labelledby="bk-'+id+'-h">'+bkSecHead(id,title,n,extra)+
+  const sec=(id,title,n,extra,body,tip)=>'<section class="panel'+(id==='urgent'?' bk-urg':id==='map'?' bkm':'')+'" id="bk-'+id+'" tabindex="-1" aria-labelledby="bk-'+id+'-h">'+bkSecHead(id,title,n,extra,tip)+
     (bkSecOpen(id)?'<div id="bks-'+id+'">'+body()+'</div>':'')+'</section>';
-  if(un)h+=sec('urgent','Nie ruszą na czas',un,'<span class="lz red">termin do jutra</span>',()=>
-    '<p class="bk-intro">Termin dziś, jutro albo już minął, a zadanie stoi. Popraw zależność albo otwórz zadanie.</p><ul class="bk-tree">'+
-    urgent.map(u=>bkFlat(m,u.n,!PF.bk,u.x?bkWhyFix(u.x,true):'<div class="bk-why">'+bkDueLz(u.n.t)+'zablokowane'+(u.n.t.blocked?': '+esc(u.n.t.blocked):' bez podanego powodu')+'</div>',mixed(urgent.map(u=>u.n)))).join('')+'</ul>');
+  if(un)h+=sec('urgent','Nie ruszą na czas',un,'',()=>
+    '<ul class="bk-tree">'+
+    urgent.map(u=>bkFlat(m,u.n,!PF.bk,u.x?bkWhyFix(u.x,true):'<div class="bk-why">'+bkDueLz(u.n.t)+(u.n.t.blocked?'powód: '+esc(u.n.t.blocked):'bez podanego powodu')+'</div>',mixed(urgent.map(u=>u.n)))).join('')+'</ul>','Termin dziś, jutro albo już minął, a zadanie stoi. Popraw zależność albo otwórz zadanie.');
   /* Do zrobienia najpierw: filtr „Moje” (Twoje korzenie bez zadań, które robi panel); kolejność z modelu bez zmian */
-  const drawn={},mine=!!A.bkMine,rs=mine?roots.filter(n=>m.mine(n)&&!bkPanelDoes(n.t)):roots;
+  const drawn={},mine=!!PF.mine,rs=mine?roots.filter(n=>m.mine(n)&&!bkPanelDoes(n.t)):roots;
   /* wspólna pojemność dnia: zapas jest liczony osobno dla każdej ścieżki, więc kilka Twoich pilnych korzeni naraz go zawyża */
   const dm=D.dayMinutes||120,hot=roots.filter(n=>m.mine(n)&&!bkPanelDoes(n.t)&&m.urg(n)<=0),hotMin=hot.reduce((a,n)=>a+(+n.t.minutes>0?+n.t.minutes:0),0),hotUnk=hot.filter(n=>!(+n.t.minutes>0)).length;
   const capN=hot.length>1&&(hotMin>dm||hotMin+hotUnk*dm>dm)?'<p>Twoje zadania do zaczęcia dziś: '+hot.length+(hotMin?', razem '+dur(hotMin)+(hotUnk?' i '+hotUnk+' bez szacowanego czasu':''):', bez szacowanego czasu')+'; pojemność dnia '+dur(dm)+'. Zapas każdej ścieżki liczony jest osobno, więc razem jest go mniej.</p>':'';
   const warn=bkLoginNote(roots)+capN;
-  const mineT=roots.length?'<span class="bk-mine" role="group" aria-label="Pokaż zadania"><button class="seg" data-bkmine="0" data-k="bkmine:0" aria-pressed="'+!mine+'">Wszystkie</button><button class="seg" data-bkmine="1" data-k="bkmine:1" aria-pressed="'+mine+'">Moje</button></span>':'';
-  h+=bkMapSec(m,roots.concat(blocked));
+  const mineT=roots.length?'<button class="tm-tg bk-minet" id="bm" aria-pressed="'+mine+'" title="Twoje zadania (bez tych, które robi za Ciebie panel)">Tylko moje</button>':'';
   h+=sec('roots','Do zrobienia najpierw',mine?rs.length+' z '+roots.length:roots.length,mineT,()=>{
     let gPrev='';const LG='\u0001';
     /* nagłówek grupy: śródtytuł h3, pilność znacznikiem .lz przy liczbie; legenda ścieżki po prawej przy pierwszym */
-    const rootsH=rs.map((n,i)=>{const g=m.grp(n),gl=g!==gPrev?(gPrev=g,BK_GRP[g]):null,cnt=gl?rs.filter(x=>m.grp(x)===g).length:0,lz=g==='late'||g==='tight'?'red':g==='today'?'yellow':'';
+    /* telefon: pierwsze 5 korzeni, reszta po „Pokaż wszystkie” (PF.more) */
+    const cutR=nwNarrow()?dsCut('bk-roots',rs,5,'bks-roots'):{L:rs,more:''};
+    const rootsH=cutR.L.map((n,i)=>{const gAll=rs.filter(x=>m.grp(x)===m.grp(n)).length;const g=m.grp(n),gl=g!==gPrev?(gPrev=g,BK_GRP[g]):null,cnt=gl?gAll:0,lz=g==='late'||g==='tight'?'red':g==='today'?'yellow':'';
       return (gl?'<li class="bk-grp" role="presentation"><h3 class="bk-grph" title="'+esc(gl[1])+'"><span>'+gl[0]+'</span> '+(lz?'<span class="lz '+lz+' num">'+cnt+'</span>':'<span class="num bk-gn">'+cnt+'</span>')+
         '<span class="bk-gd"> · '+esc(gl[1])+'</span></h3>'+(i===0?LG:'')+'</li>':'')+bkTree(m,n,drawn,{first:i===0})}).join('');
     const crit=rootsH.indexOf(' bk-crit"')>=0;
     const lg=crit?'<span class="bk-lg" title="Najpilniejsza ścieżka: droga do zadania z najmniejszym zapasem do terminu"><i class="bk-cdot" aria-hidden="true"></i>najpilniejsza ścieżka<span class="bk-sr">: droga do zadania z najmniejszym zapasem do terminu</span></span>':'';
     return (warn?'<div class="over bk-cap" role="note">'+warn+'</div>':'')+
-      (rs.length?'<ul class="bk-tree" data-bktree="1">'+rootsH.split(LG).join(lg)+'</ul>'+(A.bkAll&&anyKids?'<div class="bk-all2">'+bkAllBtn('bkall2')+'</div>':''):
+      (rs.length?'<ul class="bk-tree" data-bktree="1">'+rootsH.split(LG).join(lg)+'</ul>'+cutR.more+(A.bkAll&&anyKids?'<div class="bk-all2">'+bkAllBtn('bkall2')+'</div>':''):
       roots.length?'<p class="empty">Brak Twoich zadań w tej sekcji. <button class="linkbtn" data-bkmine="0" data-k="bkmine:e">Pokaż wszystkie</button></p>':
       '<p class="empty">Żadne zadanie nie wstrzymuje innych. <a class="navlk" href="#ty">Twoje zadania na dziś: Dla Ciebie →</a></p>')});
+  {const mp=bkMapSec(m,roots.concat(blocked));if(mp){const mn=(mp.match(/class="bkm-n/g)||[]).length;h+=sec('map','Mapa',mn,'',()=>mp)}}
   if(blocked.length)h+=sec('blocked','Zablokowane',blocked.length,'',()=>
-    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+'</div>'+
+    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+'</div>'+
       (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+n.miss.map(x=>bkFixAct(n.t,x)).join(''):'')+bkWaitL(n.t)})).join('')+'</ul>');
   if(fix.length){const fm=mixed(fix.map(x=>x.t));
     /* zadanie pokazane już w „Nie ruszą na czas”: jeden wiersz z „Pokaż” (przyczyna i naprawa są tam) */
@@ -6490,7 +6591,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-bkx]')){const k=el.dataset.bkx,o=A.bkOpen||(A.bkOpen={});o[k]=el.getAttribute('aria-expanded')!=='true';render(true);focusK('bkx:'+k);return}
   if(el=qq('[data-bkall]')){A.bkAll=!A.bkAll;A.bkOpen={};render(true);focusK('bkall');return}
   if(el=qq('[data-bkjump]')){bkJump(el.dataset.bkjump,(el.dataset.bkpath||'').split('\n').filter(Boolean),el.dataset.bkin||'');return}
-  if(el=qq('[data-bkmine]')){A.bkMine=el.dataset.bkmine==='1';render(true);focusK('bkmine:'+(A.bkMine?1:0));return}
+  if(el=qq('[data-bkmine]')){PF.mine=el.dataset.bkmine==='1';savePF();render(true);return}
   if(el=qq('[data-bksec]')){const id=el.dataset.bksec,o=A.bkSec||(A.bkSec={});o[id]=el.getAttribute('aria-expanded')!=='true';render(true);focusK('bks:'+id);return}
   if(el=qq('[data-bkdrop]')){const t=D.tasks.find(x=>x.id===el.dataset.bkdrop),fr=String(el.dataset.frag||'').trim().toLowerCase();if(!t)return;
     const L=(t.after||[]).filter(x=>String(x).trim().toLowerCase()!==fr);if(L.length===(t.after||[]).length)return;
@@ -6509,7 +6610,8 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-rd]')){toggleRead(el.dataset.rd);return}
   if(el=qq('[data-matclose]')){if(DR){const k=DR.mat;DR.mat='';renderDrawer(true);const t=findTask(DR.ref,true);
     if(t&&t.detail&&k){const loc=k[0],i=matList(t,loc).findIndex(r=>loc+'|'+matKey(t,r)===k);if(i>=0)focusK('mat:'+loc+':'+i)}}return}
-  if(el=qq('[data-colsw]')){PF.col=el.dataset.colsw;savePF();render(true);focusK('colsw:'+PF.col);return}
+  if(el=qq('[data-tbg]')){const k=el.dataset.tbg,o=A.tbGrp||(A.tbGrp={});o[k]=el.getAttribute('aria-expanded')!=='true';render(true);focusK('tbg:'+k);return}
+  if(el=qq('[data-colsw]')){PF.col=el.dataset.colsw;PF.colU=true;savePF();render(true);focusK('colsw:'+PF.col);return}
   /* Tablica, „Zrobione”: starsze karty; po rozwinięciu fokus na pierwszą odsłoniętą kartę */
   if(el=qq('[data-tbmore]')){const b=el.dataset.tbmore,f=el.dataset.first;A.tbAll=A.tbAll||{};A.tbAll[b]=!A.tbAll[b];render(true);focusK(A.tbAll[b]&&f?'card:'+f:'tbmore');return}
   if(el=qq('[data-qans]')){const k=el.dataset.qans;openDrawer('q',k);focusK('qa:'+k);return}
