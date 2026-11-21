@@ -17,11 +17,13 @@ Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj
 ## Zasady dla agenta w kopii roboczej
 
 - Pracujesz tylko na gałęzi `rozwoj` w `/home/agent/rozwoj/IntegrateSystems`. Nie masz dostępu do GitHuba, sekretów
-  (`/etc/integrate`) ani produkcji (port 4801 zablokowany); tak ma zostać.
+  (`/etc/integrate`), sudo ani produkcji (port 4801 zablokowany); tak ma zostać. Klucze SSH konta `agent` są w pliku
+  roota `/etc/ssh/klucze-agenta`; nie dopisujesz kluczy.
 - Przed pracą: `git fetch origin && git merge origin/main` (origin to repozytorium produkcji; trafiają tam też
   zmiany kart z serwera).
 - Po zmianie: testy `cd dashboard/testy && python3 -m unittest discover -q`, potem
-  `sudo systemctl restart panel-testowy.service` i sprawdzenie na https://test.2-29-181-133.sslip.io (albo
+  restart panelu testowego `pkill -u agent -f '^/usr/bin/python3 dashboard/server.py'` (systemd uruchamia go
+  ponownie po 3 s) i sprawdzenie na https://test.2-29-181-133.sslip.io (albo
   `curl -s http://127.0.0.1:4802/`). Hasło panelu testowego widzi właściciel w panelu.
 - Gotową zmianę zapisujesz commitem na `rozwoj` (opis po polsku, co i po co). Nie wdrażasz sam: właściciel klika
   „Wdróż”.

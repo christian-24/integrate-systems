@@ -10,14 +10,22 @@ HOST_TEST=${HOST_TEST:-test.2-29-181-133.sslip.io}
 SRC=$(cd "$(dirname "$0")" && pwd)
 [ "$(id -u)" = 0 ] || { echo "uruchom jako root (sudo)"; exit 1; }
 
-echo "1. Logowanie SSH jako agent (klucz właściciela z konta panel, bez hasła)"
+echo "1. Logowanie SSH jako agent: tylko klucz właściciela z pliku roota /etc/ssh/klucze-agenta"
+# Zamiast DenyUsers agent (zainstaluj-uzytkownika-agenta.sh): klucze w pliku roota, ~/.ssh agenta nie działa,
+# więc agent nie dopisze sobie klucza. Klucz właściciela: z konta panel.
 CONF=/etc/ssh/sshd_config.d/90-zabezpieczenia.conf
 if ! grep -qE '^AllowUsers .*\bagent\b' "$CONF"; then
   sed -i -E 's/^(AllowUsers .*)$/\1 agent/' "$CONF"
 fi
-install -d -m 700 -o agent -g agent /home/agent/.ssh
-install -m 600 -o agent -g agent /home/panel/.ssh/authorized_keys /home/agent/.ssh/authorized_keys
-sshd -t && systemctl reload ssh
+install -m 644 -o root -g root /home/panel/.ssh/authorized_keys /etc/ssh/klucze-agenta
+cp -p /etc/ssh/sshd_config.d/90-agent.conf /etc/ssh/90-agent.conf.przed-rozwojem 2>/dev/null || true
+printf '%s\n' '# Rozwój panelu (zainstaluj-rozwoj.sh): agent loguje się tylko kluczem z pliku roota.' \
+  'Match User agent' '    AuthorizedKeysFile /etc/ssh/klucze-agenta' '    PasswordAuthentication no' \
+  '    KbdInteractiveAuthentication no' > /etc/ssh/sshd_config.d/90-agent.conf
+rm -rf /home/agent/.ssh
+if sshd -t; then systemctl reload ssh; else
+  cp -p /etc/ssh/90-agent.conf.przed-rozwojem /etc/ssh/sshd_config.d/90-agent.conf; echo "sshd -t nieudane, wycofano"; exit 1
+fi
 
 echo "2. Kopia robocza $DEV (gałąź rozwoj)"
 install -d -m 2750 -o agent -g projekty "$ROZ"
@@ -50,7 +58,6 @@ install -m 644 "$SRC/wdroz-panel.service" /etc/systemd/system/wdroz-panel.servic
 cat > /tmp/90-rozwoj <<'EOF'
 # Rozwój panelu (ROZWOJ.md). Plik instaluje uruchom/serwer/zainstaluj-rozwoj.sh; zmiany tylko tam.
 panel ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block wdroz-panel.service
-agent ALL=(root) NOPASSWD: /usr/bin/systemctl restart panel-testowy.service
 EOF
 visudo -cf /tmp/90-rozwoj >/dev/null && install -m 440 /tmp/90-rozwoj /etc/sudoers.d/90-rozwoj && rm -f /tmp/90-rozwoj
 install -d -m 750 -o panel -g panel /home/panel/dane/wdrozenie
