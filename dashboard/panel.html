@@ -402,7 +402,7 @@ img.tl-media{aspect-ratio:1/1;object-fit:cover}
 .tl-body>.lz{justify-self:start;white-space:normal}
 .mk-ttl{display:block;overflow-wrap:anywhere}
 .mk-pre{font-size:12px;margin-right:2px}
-.mk-proj{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;min-width:0;font-size:13px}
+.mk-proj{display:grid;gap:2px;min-width:0;font-size:13px}
 .mk-pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;max-width:calc(100% - 26px)}
 .mk-ch{color:var(--ink-2);min-width:0}
 .mk-why{margin:0 12px 8px;font-size:13px;color:var(--l-red);overflow-wrap:anywhere}
@@ -582,13 +582,13 @@ p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
 .bkm-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:0 16px 8px;font-size:12.5px;color:var(--ink-3)}
 .bkm-k{display:inline-block;width:10px;height:10px;border-radius:3px}
 .bkm-k.me{background:var(--l-purple)} .bkm-k.ag{background:var(--l-blue)} .bkm-k.bl{background:var(--l-red)}
-.md-bar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding:12px 16px 4px}
+.md-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px 4px}
 .md-p{min-width:200px}
 .md-up{cursor:pointer;margin-left:auto}
 .md-up.md-off{opacity:.55;cursor:not-allowed}
 .md-hint,.md-cnt{margin:4px 16px}
 @media (max-width:620px){.md-p{flex:1 1 100%;min-width:0}.md-p select{width:100%}.md-up{margin-left:0;flex:1 1 100%;justify-content:center;text-align:center}}
-.md-grid{list-style:none;margin:0;padding:8px 16px 16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr))}
+.md-grid{list-style:none;margin:0;padding:8px 16px 16px;display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
 .md-c{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);display:grid;min-width:0}
 .md-m{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--sunk)}
 video.md-m{background:var(--ink);object-fit:contain}
@@ -1558,6 +1558,65 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   .bk-sum{flex-wrap:wrap;overflow:visible}
   .bk-row .bk-next{display:none}
   .bk-allb{display:none}
+}
+/* poprawki UI: Marketing */
+.mk-cnt .lk.mk-bad{color:var(--l-red)}
+.mk-media{position:relative}
+.mk-media video{pointer-events:none}
+.tl-card.mk-nomedia,.tl-one .tl-card.mk-nomedia{grid-template-columns:minmax(0,1fr)}
+.mk-pj{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.mk-pn{max-width:none}
+.mk-ch{color:var(--ink-2)}
+.stu-rows .lz{white-space:normal}
+details.mk-past{border-bottom:1px solid var(--line);padding:0}
+details.mk-past>summary{cursor:pointer;padding:10px 16px;font-size:13.5px;color:var(--ink-2);font-weight:600}
+details.mk-past>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+details.mk-past>.mtl{padding-top:0}
+details.mk-stu{padding:0}
+details.mk-stu>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:12px 16px;min-height:40px;color:var(--ink)}
+details.mk-stu>summary::-webkit-details-marker{display:none}
+details.mk-stu>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
+details.mk-stu[open]>summary::before{content:"▾"}
+details.mk-stu>summary h2{margin:0;font-size:var(--fs-lg);font-weight:650;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+details.mk-stu>summary h2 small{font-size:var(--fs-xs);font-weight:500;color:var(--ink-3)}
+details.mk-stu>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+details.mk-stu>.stu-rows,details.mk-stu>.stu-box{margin:0 16px}
+details.mk-stu>.stu-box{padding-bottom:14px}
+@media (max-width:640px){details.mk-stu>summary{padding:10px 12px}details.mk-stu>.stu-rows,details.mk-stu>.stu-box{margin:0 12px}details.mk-past>summary{padding:10px 12px}}
+@media (max-width:640px){.mk-sub{display:none}}
+/* poprawki UI: Media */
+.md-sel{min-width:0;max-width:260px}
+.md-k .seg{min-height:var(--ctl-h-sm)}
+.md-grp{padding:4px 0 8px;border-top:1px solid var(--line)}
+.md-grp:first-of-type{border-top:0}
+.md-gh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 16px 0;font-size:14px}
+.md-gn{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.md-gn>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.md-gh .md-up{margin-left:0;flex:none;width:auto}
+.md-more{color:var(--accent);font-weight:600}
+.md-more{margin:0 16px 4px}
+.md-c{position:relative}
+.md-t{display:block;position:relative;padding:0;border:0;background:var(--media-bg);cursor:zoom-in;width:100%}
+.md-t:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.md-t video{pointer-events:none}
+video.md-m{background:var(--media-bg);object-fit:cover}
+.md-play{position:absolute;left:8px;bottom:8px;width:28px;height:28px;border-radius:50%;background:var(--media-bg);opacity:.8;color:var(--on-color);display:grid;place-items:center;font-size:12px;line-height:1}
+.md-i b{font-size:12.5px}
+.md-dlg{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:12px;width:min(920px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-sizing:border-box}
+.md-dlg::backdrop{background:black;opacity:.7}
+.md-dlg img,.md-dlg video{display:block;width:100%;max-height:70vh;object-fit:contain;background:var(--media-bg);border-radius:8px}
+.md-dh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.md-dh b{overflow-wrap:anywhere}
+.md-dlg p{margin:8px 0;font-size:13px}
+@media (max-width:620px){
+  .md-sub{display:none}
+  .md-bar{padding:10px 12px 4px}
+  .md-sel{flex:1 1 40%;max-width:none}
+  .md-k{flex:1 1 100%}.md-k .seg{flex:1}
+  .md-gh{margin:8px 12px 0}.md-more{margin:0 12px 4px}
+  .md-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px 12px 8px}
+  .md-c{border-radius:6px;border:0}
+  .md-c .md-i{display:none}
 }
 </style>
 
@@ -3854,7 +3913,7 @@ function stuGo(pid){
 function mkDay(day){
   if(!isDay(day)){location.hash='marketing';return}
   const d=fromKey(day);d.setDate(d.getDate()-(d.getDay()+6)%7);
-  A.mweek=Math.round((d-weekStart(0))/6048e5);
+  A.mweek=Math.round((d-weekStart(0))/6048e5);if(day<D.todayKey)A.mkPast=true;
   if(location.hash==='#marketing')render(true);else{A.mkGo=day;location.hash='marketing'}
   let n=0;const find=()=>{const el=document.querySelector('.tl-day[data-day="'+day+'"]');
     if(el){el.setAttribute('tabindex','-1');el.scrollIntoView({block:'start'});el.focus({preventScroll:true});el.classList.add('mk-hit');setTimeout(()=>el.classList.remove('mk-hit'),1600)}
@@ -5133,8 +5192,8 @@ function filmState(d,t,day){
   if(r.state==='error')return ['red',d.film?'nowa wersja nie nagrała się':'błąd nagrania'];
   if(d.scenario&&!d.film)return ['yellow',(kind==='objasnienie'?F.explainer:F.available&&F.account)?'film nagra się sam':
     !(kind==='objasnienie'?F.explainer:F.available)?'film nagra serwer':'film do nagrania'];
-  if(d.film&&d.filmOld)return ['yellow',old?'film starszy niż scenariusz':'film nagra się od nowa'];
-  if(d.film&&d.filmStale)return ['yellow',old?'film starszy niż studio':'film nagra się od nowa'];
+  if(d.film&&d.filmOld)return ['yellow',old?'film do odświeżenia':'film nagra się od nowa'];
+  if(d.film&&d.filmStale)return ['yellow',old?'film do odświeżenia':'film nagra się od nowa'];
   return d.film?['green','film gotowy']:['grey','bez filmu'];
 }
 /* zadanie „Nagraj film …” (w kampanii ma rodzaj publikacji, ale nie ma kanału): film nagrywa panel */
@@ -5385,7 +5444,9 @@ function studioHead(days){
       (nw?'w tym tygodniu: '+nw+' '+pl(nw,'film','filmy','filmów')+' ('+week.map(x=>esc(stuTpl(x[0]))+(x[1]>1?' ×'+x[1]:'')).join(', ')+')':'<span class="muted">w tym tygodniu bez filmów</span>')+'</div></div>'+
       (N.length?'<div class="r">'+(miss.length?'<span class="lz yellow">'+esc(miss.join(', '))+'</span>':'')+
         '<button type="button" class="lk" data-stugo="'+esc(id)+'">'+N.length+' '+pl(N.length,'sprawa','sprawy','spraw')+' do uzupełnienia</button></div>':'')+'</li>'}).join('');
-  let h='<section class="panel" id="studio" aria-labelledby="stu-h"><h2 id="stu-h">Studio filmów <small>'+n+' '+pl(n,'szablon','szablony','szablonów')+'</small></h2>'+
+  const nAll=ids.reduce((a,id)=>{const s=S[id],b=s.brand&&typeof s.brand==='object'?s.brand:null;return a+stuNeeds(id,s,b).length},0);
+  let h='<section class="panel" id="studio" aria-labelledby="stu-h"><details class="mk-stu" id="stuall"'+(A.stuOpen||A.stuAsk||A.stuAll?' open':'')+'><summary><h2 id="stu-h">Studio filmów <small>'+
+    (nAll?nAll+' '+pl(nAll,'sprawa','sprawy','spraw')+' do uzupełnienia · ':'')+n+' '+pl(n,'szablon','szablony','szablonów')+'</small></h2></summary>'+
     '<ul class="rows stu-rows" aria-label="Filmy projektów w tym tygodniu">'+rows+'</ul>'+
     '<details class="stu-box" id="stubox"'+(A.stuOpen||A.stuAsk?' open':'')+'><summary>Szablony, wygląd, podkłady i logo</summary>'+
     '<details class="ds-det stu-how"><summary>Jak to działa</summary><p class="note">Szablony filmów i wygląd marki każdego projektu. Agent robi film z szablonu. Treść jednego filmu zmieniasz w poście (przycisk „Zmień”); plansze i wygląd marki zmienia agent na Twoją prośbę. Nic nie publikuje się samo: panel publikuje tylko posty, które zaplanujesz.</p></details><div class="stu-grid">';
@@ -5442,7 +5503,7 @@ function studioHead(days){
     }).join('')+'</ul>':'<p class="note">Brak szablonów.</p>';
     h+='</div></details>';
   });
-  return h+'</div></details></section>';
+  return h+'</div></details></details></section>';
 }
 /* podkłady marki: odsłuch, licencja, usunięcie z listy (plik zostaje w studio/) */
 function stuSongs(id,b){
@@ -5651,50 +5712,95 @@ async function loadMedia(force){
 const mUrl=(i,dl)=>'/api/media/plik?project='+encodeURIComponent(i.project)+'&path='+encodeURIComponent(i.path)+(dl?'&pobierz=1':'')+'&v='+i.at;
 const MSRC={posty:'post',media:'wgrane',studio:'studio'};
 const mSize=n=>n>=1048576?(n/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(n/1024))+' kB';
+/* data pliku: z nazwy (RRRR-MM-DD-…), inaczej dzień posta; data zapisu pliku myli (kopie mają dzisiejszą) */
+const mDay=i=>{const m=/^(\d{4}-\d\d-\d\d)/.exec(i.name||'');return m?m[1]:isDay(i.day)?i.day:''};
+const mPub=i=>{if(!i.day)return null;const L=D.tasks.filter(t=>t.kind==='publikacja'&&t.project===i.project&&String(t.date).slice(0,10)===i.day);return L.find(t=>t.channel)||L[0]||null};
+/* nazwa do pokazania: plik z posta = „Post 21.11: tytuł”, inaczej nazwa pliku */
+function mLabel(i){const pub=mPub(i);if(i.source==='posty'&&pub)return 'Post '+dd(i.day)+': '+cap(pub.title.replace(/^Opublikuj\s+/,'').replace(/^(?:film|post)(?:\s+[A-Z0-9]{1,3})?\s+(?=„)/i,''));
+  return i.name}
+const MDN=6;           // ile miniatur w zwiniętej grupie projektu
+function mdTile(i,n){
+  const lab=mLabel(i),src=mUrl(i);
+  const m=i.kind==='video'?'<video class="md-m" muted playsinline preload="metadata" src="'+src+'#t=1" aria-hidden="true" tabindex="-1"></video><span class="md-play" aria-hidden="true">▶</span>'
+    :'<img class="md-m" loading="lazy" src="'+src+'" alt="">';
+  return '<li class="md-c"><button type="button" class="md-t" data-mview="'+n+'" aria-label="'+esc((i.kind==='video'?'Film: ':'Zdjęcie: ')+lab)+'">'+m+'</button>'+
+    '<div class="md-i"><b title="'+esc(i.path)+'">'+esc(lab)+'</b><span class="muted">'+(mDay(i)?esc(dd(mDay(i)))+' · ':'')+mSize(i.size)+'</span></div></li>'}
+function upBtn(pid,big){
+  return '<label class="btn '+(big?'':'sec ')+'sm md-up">'+(MDS.up&&MDS.upP===pid?MDS.up:big?'Wgraj zdjęcia lub filmy':'Wgraj')+'<input type="file" multiple accept="image/*,video/mp4,video/quicktime" data-mup data-pid="'+esc(pid)+'" hidden></label>'}
 function vMedia(){
   const F=A.mf||(A.mf={p:'',k:'',s:''});
-  let h='<div class="pagehead"><div><h1>Media</h1><p>Zdjęcia i filmy ze wszystkich projektów: posty, studio i Twoje wgrane pliki.</p></div></div>';
-  if(!LIVE)return h+'<section class="panel"><p class="empty">Media są widoczne w panelu na serwerze.</p></section>';
-  if(!MDS.items){loadMedia();return h+'<section class="panel"><p class="empty">Wczytuję zdjęcia i filmy…</p></section>'}
+  const head=n=>'<div class="pagehead"><div><h1>Media'+(n!=null?' <small class="muted num">'+n+'</small>':'')+'</h1><p class="md-sub">Zdjęcia i filmy projektów: z postów, ze studia i wgrane przez Ciebie.</p></div></div>';
+  if(!LIVE)return head()+'<section class="panel"><p class="empty">Media są widoczne w panelu na serwerze.</p></section>';
+  if(!MDS.items){loadMedia();return head()+'<section class="panel"><p class="empty">Wczytuję zdjęcia i filmy…</p></section>'}
   const L=MDS.items.filter(i=>(!F.p||i.project===F.p)&&(!F.k||i.kind===F.k)&&(!F.s||i.source===F.s));
+  MDS.list=L;
   const seg=(k,v,n)=>'<button class="seg" data-mf="'+k+'" data-v="'+v+'" aria-pressed="'+(F[k]===v)+'">'+n+'</button>';
-  h+='<section class="panel"><div class="md-bar">'+
-    '<label class="fl md-p"><span>Projekt</span><select class="fi" data-mfp>'+opt([['','Wszystkie projekty']].concat(D.projects.map(p=>[p.id,p.name])),F.p)+'</select></label>'+
-    '<div class="row" role="group" aria-label="Rodzaj">'+seg('k','','Wszystko')+seg('k','image','Zdjęcia')+seg('k','video','Filmy')+'</div>'+
-    '<div class="row" role="group" aria-label="Skąd">'+seg('s','','Wszystkie')+seg('s','posty','Z postów')+seg('s','media','Wgrane')+seg('s','studio','Studio')+'</div>'+
-    '<label class="btn sm md-up'+(F.p?'':' md-off')+'"'+(F.p?'':' title="Najpierw wybierz projekt"')+'>'+(MDS.up||'Wgraj zdjęcia lub filmy')+'<input type="file" multiple accept="image/*,video/mp4,video/quicktime" data-mup hidden'+(F.p?'':' disabled')+'></label>'+
-    '</div>'+(F.p?'':'<p class="note md-hint">Żeby wgrać pliki, wybierz projekt. Trafią do folderu media/ jego karty.</p>')+
-    (MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
-    '<p class="note md-cnt">'+L.length+' '+pl(L.length,'plik','pliki','plików')+(L.length<MDS.items.length?' z '+MDS.items.length:'')+'</p>';
+  const pids=[...new Set(MDS.items.map(i=>i.project))];
+  let h=head(L.length+(L.length<MDS.items.length?' z '+MDS.items.length:''))+'<section class="panel"><div class="md-bar">'+
+    '<select class="fi md-sel" data-mfp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===F.p).map(p=>[p.id,pShort(p)])),F.p)+'</select>'+
+    '<select class="fi md-sel" data-mfs aria-label="Skąd">'+opt([['','Wszystkie źródła'],['posty','Z postów'],['media','Wgrane'],['studio','Studio']],F.s)+'</select>'+
+    '<div class="row md-k" role="group" aria-label="Rodzaj">'+seg('k','','Wszystko')+seg('k','image','Zdjęcia')+seg('k','video','Filmy')+'</div>'+
+    (F.p?upBtn(F.p,true):'')+'</div>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'');
   if(!L.length)return h+'<p class="empty">Brak plików'+(F.p||F.k||F.s?' dla wybranych filtrów':'')+'.</p></section>';
-  h+='<ul class="md-grid">'+L.slice(0,300).map(i=>{
-    const pub=i.day?D.tasks.find(t=>t.kind==='publikacja'&&t.project===i.project&&String(t.date).slice(0,10)===i.day):null;
-    const media=i.kind==='video'?'<video class="md-m" controls playsinline preload="metadata" src="'+mUrl(i)+'"></video>':'<a href="'+mUrl(i)+'" target="_blank" rel="noopener"><img class="md-m" loading="lazy" src="'+mUrl(i)+'" alt="'+esc(i.name)+'"></a>';
-    return '<li class="md-c">'+media+'<div class="md-i"><b title="'+esc(i.path)+'">'+esc(i.name)+'</b><span class="muted">'+esc(projName(i.project))+' · '+esc(dd(new Date(i.at*1000).toISOString().slice(0,10)))+' · '+mSize(i.size)+'</span>'+
-      '<span class="row"><span class="lz grey">'+MSRC[i.source]+'</span>'+(i.kind==='video'?'<span class="lz blue">film</span>':'')+'</span>'+
-      '<span class="row"><a class="btn sec sm" href="'+mUrl(i,1)+'" download>Pobierz</a>'+(pub?'<button class="btn sec sm" data-task="'+esc(pub.id)+'">Post</button>':'')+'</span></div></li>'}).join('')+'</ul>';
-  if(L.length>300)h+='<p class="note">Pokazano 300 najnowszych. Zawęź filtrem projektu albo rodzaju.</p>';
+  const idx=new Map(L.map((i,n)=>[i,n])),all=A.mdAll||(A.mdAll={});
+  if(F.p){h+='<ul class="md-grid">'+L.slice(0,300).map(i=>mdTile(i,idx.get(i))).join('')+'</ul>';
+    if(L.length>300)h+='<p class="note">Pokazano 300 najnowszych. Zawęź filtrem rodzaju.</p>';return h+'</section>'}
+  /* wszystkie projekty: grupa na projekt, pierwsze miniatury, reszta po „Pokaż wszystkie” */
+  pids.filter(pid=>L.some(i=>i.project===pid)).forEach(pid=>{
+    const G=L.filter(i=>i.project===pid),p=P(pid),open=all[pid],S=open?G.slice(0,300):G.slice(0,MDN);
+    h+='<div class="md-grp"><h2 class="md-gh"><span class="md-gn" title="'+esc(projName(pid))+'">'+av(p,'sm')+'<span>'+esc(p?pShort(p):pid)+'</span> <small class="muted num">'+G.length+'</small></span>'+upBtn(pid,false)+'</h2>'+
+      '<ul class="md-grid">'+S.map(i=>mdTile(i,idx.get(i))).join('')+'</ul>'+
+      (G.length>MDN?'<button type="button" class="lk md-more" data-mdall="'+esc(pid)+'">'+(open?'Zwiń':'Pokaż wszystkie ('+G.length+')')+'</button>':'')+'</div>'});
   return h+'</section>';
 }
+/* podgląd pliku: duży obraz albo film, nazwa, projekt, Pobierz i Post */
+function mdView(n){
+  const i=(MDS.list||[])[n];if(!i)return;
+  let dl=document.getElementById('mdview');if(dl)dl.remove();
+  dl=document.createElement('dialog');dl.id='mdview';dl.className='md-dlg';
+  const pub=mPub(i),src=mUrl(i);
+  dl.innerHTML='<div class="md-dh"><b>'+esc(mLabel(i))+'</b><button type="button" class="btn sec sm" data-mdclose aria-label="Zamknij">✕</button></div>'+
+    (i.kind==='video'?'<video controls playsinline autoplay src="'+src+'"></video>':'<img src="'+src+'" alt="'+esc(i.name)+'">')+
+    '<p class="muted">'+esc(projName(i.project))+(mDay(i)?' · '+esc(dd(mDay(i))):'')+' · '+mSize(i.size)+(mLabel(i)!==i.name?' · '+esc(i.name):'')+'</p>'+
+    '<div class="row"><a class="btn sec sm" href="'+mUrl(i,1)+'" download>Pobierz</a>'+(pub?'<button class="btn sec sm" data-mdpost="'+esc(pub.id)+'">Otwórz post</button>':'')+'</div>';
+  document.body.appendChild(dl);
+  dl.addEventListener('click',ev=>{if(ev.target===dl||ev.target.closest('[data-mdclose]'))dl.close();
+    const b=ev.target.closest('[data-mdpost]');if(b){dl.close();openDrawer('task',b.dataset.mdpost)}});
+  dl.addEventListener('close',()=>{const v=dl.querySelector('video');if(v)v.pause();dl.remove()});
+  dl.showModal();
+}
 async function uploadMedia(el){
-  const F=A.mf||{},files=[...(el.files||[])];if(!files.length||!F.p)return;
+  const pid=el.dataset.pid||(A.mf||{}).p,files=[...(el.files||[])];if(!files.length||!pid)return;
   let ok=0,err='';
   for(let n=0;n<files.length;n++){const f=files[n];
     if(f.size>300*1048576){err=f.name+': ponad 300 MB';continue}
-    MDS.up='Wysyłam '+(n+1)+'/'+files.length+'…';render(true);
-    try{const r=await fetch('/api/media/wgraj?project='+encodeURIComponent(F.p)+'&name='+encodeURIComponent(f.name),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:f});
+    MDS.up='Wysyłam '+(n+1)+'/'+files.length+'…';MDS.upP=pid;render(true);
+    try{const r=await fetch('/api/media/wgraj?project='+encodeURIComponent(pid)+'&name='+encodeURIComponent(f.name),{method:'POST',headers:{'Content-Type':f.type||'application/octet-stream'},body:f});
       if(r.status===401){location.assign('/wejscie');return}
       const j=await r.json().catch(()=>({}));if(r.ok&&j.ok!==false)ok++;else err=f.name+': '+(j.error||'błąd')}catch(e){err=f.name+': brak połączenia'}}
-  MDS.up='';say('Wgrano '+ok+' z '+files.length+'.'+(err?' '+err:''));loadMedia(true);
+  MDS.up='';MDS.upP='';say('Wgrano '+ok+' z '+files.length+'.'+(err?' '+err:''));loadMedia(true);
+}
+/* dni tygodnia na osi: kolejne dni bez postów w jednym wierszu („pon.–czw. brak postów”) */
+function mkDays(keys,items){
+  let h='',run=[];
+  const flush=()=>{if(!run.length)return;const a=run[0],b=run[run.length-1],wa=fromKey(a).getDay(),wb=fromKey(b).getDay(),now=run.includes(D.todayKey);
+    h+='<li class="tl-day nil'+(now?' tl-now':'')+'" data-day="'+a+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wa])+'">'+esc(DN[wa])+'</abbr></b>'+
+      (run.length>1?'–<b><abbr title="'+esc(DNI[wb])+'">'+esc(DN[wb])+'</abbr></b> '+esc(dd(a))+'–'+esc(dd(b)):' '+esc(dd(a)))+(now?' <span class="lz blue">dziś</span>':'')+'</div><p class="tl-empty">brak postów</p></li>';run=[]};
+  keys.forEach(k=>{
+    const L=items.filter(t=>t.date.slice(0,10)===k);if(!L.length){run.push(k);return}flush();
+    const wd=fromKey(k).getDay(),now=k===D.todayKey;
+    h+='<li class="tl-day'+(now?' tl-now':'')+'" data-day="'+k+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wd])+'">'+esc(DN[wd])+'</abbr></b> '+esc(dd(k))+(now?' <span class="lz blue">dziś</span>':'')+'</div>'+
+      '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k)).join('')+'</div></li>'});
+  flush();return h;
 }
 function vMarketing(){
   const off=A.mweek||0,m=weekStart(off),days=[...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return keyOf(x)});
   const items=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)&&t.date>=days[0]&&t.date<=days[6]);
-  /* nagłówek strony: tylko h1 i jedno zdanie; pod nim licznik stanów, oś tygodnia, Studio filmów */
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p>Obejrzyj post i zatwierdź albo kliknij „Do poprawy”. Panel publikuje tylko to, co zaplanujesz.</p></div></div>'+mkTodo(items);
+  /* nagłówek strony: h1 i krótkie zdanie (na telefonie bez zdania); pod nim co do zrobienia, oś tygodnia, Studio filmów (zwinięte) */
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Obejrzyj post i zatwierdź albo daj do poprawy.</p></div></div>'+mkTodo(items);
   h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">Tydzień <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b></span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzedni tydzień">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następny tydzień">→</button>'+
-    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Ten tydzień</button>':'<span class="muted">ten tydzień</span>')+'</small></h2>';
+    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Ten tydzień</button>':'')+'</small></h2>';
   if(!items.length){
     /* pusty tydzień: bez siedmiu pustych wierszy; przycisk do najbliższego tygodnia z postami */
     const w0=weekStart(0),offs=[...new Set(D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)).map(t=>{const d=fromKey(t.date.slice(0,10));d.setDate(d.getDate()-(d.getDay()+6)%7);return Math.round((d-w0)/6048e5)}))];
@@ -5704,18 +5810,20 @@ function vMarketing(){
       go='<div class="row mk-next"><button type="button" class="btn sec sm" data-mwset="'+nx+'" data-k="mwnext">'+(nx>off?'Następny':'Poprzedni')+' tydzień z postami: '+esc(dd(keyOf(s)))+' – '+esc(dd(keyOf(e)))+'</button></div>'}
     return h+'<p class="empty">Brak postów w tym tygodniu. Posty dodaje agent z kampanii projektu (Projekt → Marketing).</p>'+go+'</section>'+studioHead(days);
   }
-  h+='<ol class="mtl">';
-  days.forEach(k=>{
-    const L=items.filter(t=>t.date.slice(0,10)===k),wd=fromKey(k).getDay(),now=k===D.todayKey;
-    h+='<li class="tl-day'+(now?' tl-now':'')+(L.length?'':' nil')+'" data-day="'+k+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wd])+'">'+esc(DN[wd])+'</abbr></b> '+esc(dd(k))+(now?' <span class="lz blue">dziś</span>':'')+'</div>'+
-      (L.length?'<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k)).join('')+'</div>':'<p class="tl-empty">brak postów</p>')+'</li>';
-  });
-  return h+'</ol></section>'+studioHead(days);
+  /* bieżący tydzień: minione dni zwinięte (w podsumowaniu liczba postów i nieopublikowanych), oś od dziś */
+  const past=off===0?days.filter(k=>k<D.todayKey):[],rest=days.filter(k=>!past.includes(k));
+  if(past.length){
+    const pi=items.filter(t=>past.includes(t.date.slice(0,10))),late=pi.filter(t=>mkState(t,t.date.slice(0,10))[2]==='late').length;
+    h+='<details class="mk-past" id="mkpast"'+(A.mkPast?' open':'')+'><summary>Wcześniej w tym tygodniu: '+(pi.length?pi.length+' '+pl(pi.length,'post','posty','postów'):'brak postów')+
+      (late?' <span class="lz red">nie opublikowano: '+late+'</span>':'')+'</summary><ol class="mtl">'+mkDays(past,items)+'</ol></details>';
+  }
+  return h+'<ol class="mtl">'+mkDays(rest,items)+'</ol></section>'+studioHead(days);
 }
 /* stan posta na osi tygodnia: [kolor, stan, grupa]; ten sam w karcie (mCard) i w liczniku nad osią (mkTodo).
-   grupa: review (do obejrzenia), err (błąd), prep (agent przygotowuje), done (opublikowany), '' (reszta) */
+   grupa: late (dzień minął, nieopublikowany), review (do obejrzenia), err (błąd), prep (agent przygotowuje), done (opublikowany), '' (reszta) */
 function mkState(t,day,fs){
   const d=PD[t.project+'|'+day];
+  if(t.state!=='done'&&isDay(day)&&day<D.todayKey)return ['red','nie opublikowano','late'];
   if(LIVE&&d&&d.ok){
     if(t.state==='done')return ['green','opublikowany','done'];
     const f=fs||filmState(d,t,day);
@@ -5725,40 +5833,52 @@ function mkState(t,day,fs){
   if(LIVE&&d&&!d.ok&&D.tasks.some(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done'))return ['blue','agent przygotowuje','prep'];
   return ['grey','czeka na przygotowanie',''];
 }
-/* wiersz nad osią: ile postów tygodnia do obejrzenia, z błędem, u agenta, opublikowanych; stan połączeń publikacji */
+/* wiersz nad osią: tylko niezerowe stany tygodnia (nieopublikowane, do obejrzenia, z błędem, u agenta, opublikowane); błąd publikacji automatycznej */
 function mkTodo(items){
-  const G={review:[],err:[],prep:[],done:[]};
+  const G={late:[],review:[],err:[],prep:[],done:[]};
   items.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).forEach(t=>{const g=mkState(t,t.date.slice(0,10))[2];if(G[g])G[g].push(t.date.slice(0,10))});
-  const part=(k,n)=>{const L=G[k];return L.length?'<button type="button" class="lk" data-mkday="'+esc(L[0])+'" data-k="mk:'+k+'">'+n+': <b class="num">'+L.length+'</b></button>':'<span class="muted">'+n+': <span class="num">0</span></span>'};
-  let h='<div class="mk-todo"><p class="mk-cnt">'+[part('review','Do obejrzenia'),part('err','Z błędem'),part('prep','Agent przygotowuje'),part('done','Opublikowane')].join('<span class="muted" aria-hidden="true"> · </span>')+'</p>';
+  const N={late:'Nie opublikowano',review:'Do obejrzenia',err:'Z błędem',prep:'Agent przygotowuje',done:'Opublikowane'};
+  const parts=Object.keys(N).filter(k=>G[k].length).map(k=>'<button type="button" class="lk'+(k==='late'||k==='err'?' mk-bad':'')+'" data-mkday="'+esc(G[k][0])+'" data-k="mk:'+k+'">'+N[k]+': <b class="num">'+G[k].length+'</b></button>');
+  const todo=G.late.length+G.review.length+G.err.length;
+  let h='<div class="mk-todo"><p class="mk-cnt">'+(parts.length?parts.join('<span class="muted" aria-hidden="true"> · </span>'):'')+(todo?'':(parts.length?'<span class="muted" aria-hidden="true"> · </span>':'')+'<span class="muted">Nic do obejrzenia w tym tygodniu</span>')+'</p>';
   const P=D.publish;
-  if(LIVE&&P)h+='<p class="mk-pub"><span>Publikacja: '+PUBN.facebook+' '+(P.fb.connected?'połączony':'ręcznie')+' · '+PUBN.linkedin+' '+(P.li.connected?'połączony':'ręcznie')+'</span> <a class="navlk" href="#agenci" data-nwchan>Agenci → Publikacja</a></p>';
+  if(LIVE&&P){const bad=items.filter(t=>{const st=P.state[t.project+'|'+t.file+'|'+t.title];return st&&Object.keys(st).some(c=>st[c]&&!st[c].ok&&PUBN[c])}).length;
+    if(bad)h+='<p class="warn mk-pub">Publikacja automatyczna nie powiodła się: '+bad+' '+pl(bad,'post','posty','postów')+'. <a class="navlk" href="#agenci" data-nwchan>Agenci → Publikacja</a></p>'}
   return h+'</div>';
+}
+/* kanały posta; „ręcznie” przy kanałach, których panel nie publikuje sam (LinkedIn, TikTok, YouTube, niepołączony Facebook) */
+function mkChan(t){
+  const L=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>c.toLowerCase());
+  const man=c=>!!(LIVE&&D.publish)&&!(['facebook','reels','instagram'].includes(c)&&chanOk(t,c));
+  const nm=c=>PUBN[c]||cap(c),allMan=L.length&&L.every(man);
+  return L.map(c=>esc(nm(c))+(!allMan&&man(c)?' <span class="muted">(ręcznie)</span>':'')).join(' · ')+(allMan?' <span class="lz out">ręcznie</span>':'');
 }
 function mCard(t,day){
   const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day),fi=d&&d.ok&&d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null;
   if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
   const raw=t.title.replace(/^Opublikuj\s+/,''),pm=/^((?:film|post)(?:\s+[A-Z0-9]{1,3})?)\s+(?=„)/i.exec(raw),title=cap(pm?raw.slice(pm[0].length):raw);
-  const id=String(t.id).replace(/[^\w-]/g,'_'),fs=d&&d.ok?filmState(d,t,day):null,st=mkState(t,day,fs),r=d&&d.rec||{};
-  const open='<button type="button" class="mk-media" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'" aria-label="'+esc('Otwórz post: '+title)+'">';
-  let media=open+'<span class="tl-ph">Wczytuję…</span></button>',why='';
+  const id=String(t.id).replace(/[^\w-]/g,'_'),fs=d&&d.ok?filmState(d,t,day):null,st=mkState(t,day,fs),r=d&&d.rec||{},ed=esc(t.project+'|'+day+'|'+t.id);
+  const open='<button type="button" class="mk-media" data-medit="'+ed+'" aria-label="'+esc('Otwórz post: '+title)+'">';
+  let media=open+'<span class="tl-ph">Wczytuję…</span></button>',why='',prep='';
   if(!LIVE)media=open+'<span class="tl-ph">Podgląd na serwerze</span></button>';
   else if(d&&d.ok){
-    media=d.film?'<video class="tl-media" controls playsinline preload="metadata" aria-label="'+esc('Film posta: '+title)+'" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'"></video>'
+    /* film: miniatura z ▶ (odtwarzacz w szufladzie posta) */
+    media=d.film?open+'<video class="tl-media" muted playsinline preload="metadata" aria-hidden="true" tabindex="-1" src="/api/post/film?'+q+'&v='+(d.film.at||0)+'#t=1"></video><span class="md-play" aria-hidden="true">▶</span></button>'
       :d.image?open+'<img class="tl-media" loading="lazy" src="/api/post/grafika?'+q+'" alt=""></button>':open+'<span class="tl-ph">Tekst bez grafiki</span></button>';
     /* błąd filmu: krótka przyczyna pod stanem (pełny opis i szczegóły techniczne w szufladzie) */
     if(st[2]==='err'||(fi&&fi.error))why=fi&&fi.error?(fi.errorHint||'Błąd w scenariuszu filmu.'):r.state==='error'?(recHint(r.hint,false)||'Nagranie filmu się nie powiodło.'):'Film czeka na nagranie dłużej niż zwykle.';
   }else if(d&&!d.ok){const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
-    media=open+'<span class="tl-ph">Agent jeszcze nie przygotował posta'+(pr&&isDay(pr.date)?' (termin: '+esc(ddl(pr.date))+')':'')+'</span></button>'}
-  const p=P(t.project),ch=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(' · ');
-  const mc=fi?[fi.template?stuTpl(fi):'',fi.seconds&&!fi.error?stuLen(fi):'',fi.kindHelp||''].filter(Boolean).join(' · '):'';
-  const act=st[2]==='review'?'<button type="button" class="btn sm" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'">Obejrzyj</button>':why?'<button type="button" class="btn sec sm" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'">Otwórz i daj do poprawy</button>':'';
-  return '<article class="tl-card'+(why?' mk-err':'')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
+    /* posta jeszcze nie ma: karta bez pola obrazu, tylko termin przygotowania */
+    media='';prep=pr&&isDay(pr.date)?'przygotowanie do '+ddl(pr.date):''}
+  const p=P(t.project);
+  /* jedna akcja: do obejrzenia → Obejrzyj; dzień minął → Opublikuj (w szufladzie: tekst, Udostępnij, „Opublikowałem ręcznie”); błąd → poprawa; inny stan wymagający uwagi → Otwórz */
+  const act=st[2]==='late'?'<button type="button" class="btn sm" data-medit="'+ed+'">Opublikuj</button>':st[2]==='review'?'<button type="button" class="btn sm" data-medit="'+ed+'">Obejrzyj</button>':
+    why?'<button type="button" class="btn sec sm" data-medit="'+ed+'">Otwórz i daj do poprawy</button>':d&&d.ok&&!['grey','green','blue'].includes(st[0])?'<button type="button" class="btn sec sm" data-medit="'+ed+'">Otwórz</button>':'';
+  return '<article class="tl-card'+(why||st[2]==='late'?' mk-err':'')+(media?'':' mk-nomedia')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+ed+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
     '<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>'+
-    '<span class="mk-ttl">'+(pm?'<span class="muted mk-pre">'+esc(pm[1])+'</span> ':'')+'<b id="mkt-'+id+'">'+esc(title)+'</b></span>'+
-    '<span class="mk-proj" id="mkp-'+id+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(projName(t.project))+'</span><span class="mk-ch">· '+esc(ch)+'</span></span>'+
-    (fi?'<span class="lz out"'+(fi.kindHelp?' title="'+esc(fi.kindHelp)+'"':'')+'>'+esc(stuKind(fi))+'</span>':'')+
-    (mc?'<span class="muted stu-mc">'+esc(mc)+'</span>':'')+'</button>'+
+    '<span class="mk-ttl"><b id="mkt-'+id+'">'+esc(title)+'</b></span>'+
+    '<span class="mk-proj" id="mkp-'+id+'"><span class="mk-pj" title="'+esc(projName(t.project))+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(p?pShort(p):projName(t.project))+'</span></span><span class="mk-ch">'+mkChan(t)+'</span></span>'+
+    (prep?'<span class="muted">'+esc(prep)+'</span>':'')+'</button>'+
     (why?'<p class="mk-why">'+esc(why)+'</p>':'')+(act?'<div class="row mk-act">'+act+'</div>':'')+'</div></article>';
 }
 /* ---------- publikacja automatyczna (publikacja.py): połączenia w Agenci, plan w poście ---------- */
@@ -6551,6 +6671,8 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-agpub]')){const v=el.getAttribute('aria-expanded')!=='true';try{localStorage.setItem(PUB_OPEN_KEY,v?'1':'0')}catch(e){}render(true);focusK('agpub');return}
   /* przycisk wysyłający formularz Publikacji: akcję wykona zdarzenie submit (także Enter w polu) */
   if(el=qq('[data-pub]')){if(el.type==='submit'&&el.form&&el.form.dataset.pubf)return;pubAct(el);return}
+  if(el=qq('[data-mview]')){mdView(+el.dataset.mview);return}
+  if(el=qq('[data-mdall]')){const m=A.mdAll||(A.mdAll={});m[el.dataset.mdall]=!m[el.dataset.mdall];render(true);return}
   if(el=qq('[data-mf]')){const F=A.mf||(A.mf={p:'',k:'',s:''});F[el.dataset.mf]=el.dataset.v;render(true);return}
   if(el=qq('[data-medit]')){openEditor(el.dataset.medit);return}
   if(el=qq('[data-edclose]')){closeEditor();return}
@@ -6658,6 +6780,7 @@ document.addEventListener('change',ev=>{
   if(el.dataset.film){uploadFilm(el);return}
   if(el.dataset.mup!=null){uploadMedia(el);return}
   if(el.dataset.mfp!=null){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.value;render(true);return}
+  if(el.dataset.mfs!=null){(A.mf||(A.mf={p:'',k:'',s:''})).s=el.value;render(true);return}
   if(el.dataset.fixtpl!=null){if(el.value)fixFill(el,el.value);fixTplPrev(el);return}
   if(el.dataset.postimg){uploadPostImage(el);return}
   if(el.dataset.filmmus!=null){setFilmMusic(el);return}
@@ -6772,7 +6895,7 @@ document.addEventListener('keydown',ev=>{
   if(gWait&&Date.now()-gWait<1500){gWait=0;const m={p:'przeglad',w:'wskazniki',t:'tablica',d:'terminy',a:'agenci',b:'blokady'}[k];if(m){ev.preventDefault();location.hash=m}return}
   if(k==='g'){gWait=Date.now();return}
 });
-document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dataset.prxdet){(A.prxDet||(A.prxDet={}))[el.dataset.prxdet]=el.open;return}if(el.dataset&&el.dataset.agdet){(A.agDet||(A.agDet={}))[el.dataset.agdet]=el.open;return}if(el.dataset&&el.dataset.tmdet){(A.tmDet||(A.tmDet={}))[el.dataset.tmdet]=el.open;return}if(el.classList&&el.classList.contains('bk-how')){A.bkHow=el.open;return}if(el.id==='stubox'){A.stuOpen=el.open;return}
+document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dataset.prxdet){(A.prxDet||(A.prxDet={}))[el.dataset.prxdet]=el.open;return}if(el.dataset&&el.dataset.agdet){(A.agDet||(A.agDet={}))[el.dataset.agdet]=el.open;return}if(el.dataset&&el.dataset.tmdet){(A.tmDet||(A.tmDet={}))[el.dataset.tmdet]=el.open;return}if(el.classList&&el.classList.contains('bk-how')){A.bkHow=el.open;return}if(el.id==='stubox'){A.stuOpen=el.open;return}if(el.id==='stuall'){A.stuAll=el.open;return}if(el.id==='mkpast'){A.mkPast=el.open;return}
   /* Przegląd: „Proponuję” w notatce PM, wstrzymane i backlog na telefonie; stan w PF.more (pamiętany na urządzeniu) */
   if(el.dataset&&el.dataset.pvdet){if(!!PF.more[el.dataset.pvdet]!==el.open){PF.more[el.dataset.pvdet]=el.open;savePF()}return}if(el.dataset&&el.dataset.stuproj!=null){(A.stuProj||(A.stuProj={}))[el.dataset.stuproj]=el.open;return}if(el.dataset&&el.dataset.stutpl!=null){(A.stuTpl||(A.stuTpl={}))[el.dataset.stutpl]=el.open;return}if(el.dataset&&el.dataset.stud!=null){A.stuDet=el.open;return}if(!DR)return;if(el.id==='dmore')DR.more=el.open;else if(el.id==='dchat')DR.chat=el.open},true);
 /* obrót telefonu albo zmiana szerokości okna: głębokość drzewa Blokad, zwinięcie Teraz i limity od razu, nie przy następnym odczycie */
