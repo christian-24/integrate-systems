@@ -4165,20 +4165,20 @@ function devPanel(){
   if(L&&!(L.state==='queued'||L.state==='running'))A.busy.wd=false;
   let h='<section class="panel" id="rozwoj"><h2>Rozwój panelu <small><span>gałąź '+esc(d.branch||'rozwoj')+'</span></small></h2><div class="pad dv">';
   if(d.error)h+='<p class="warn">'+esc(d.error)+'</p>';
-  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana czeka','zmiany czekają','zmian czeka')+' na wdrożenie'+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak nowych zmian na gałęzi rozwoj.')+
+  else h+='<p>'+(d.auto?'Wdrażanie automatyczne: każdy commit na gałęzi rozwoj trafia na produkcję po zielonych testach. ':'')+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana jeszcze nie wdrożona','zmiany jeszcze nie wdrożone','zmian jeszcze nie wdrożonych')+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak nowych zmian na gałęzi rozwoj.')+
     (d.behind?' <span class="lz yellow" title="Na produkcji są zmiany kodu, których gałąź rozwoj jeszcze nie ma; wdrożenie je połączy">na produkcji '+d.behind+' '+pl(d.behind,'nowsza zmiana','nowsze zmiany','nowszych zmian')+'</span>':'')+'</p>';
   if(cm.length)h+='<ul class="dv-c">'+cm.slice(0,10).map(c=>'<li><code>'+esc(c.sha)+'</code><span>'+esc(c.subject)+'</span><span class="muted">'+esc(whenT(c.at))+'</span></li>').join('')+(cm.length>10?'<li class="muted">i '+(cm.length-10)+' więcej</li>':'')+'</ul>';
   const b=[];
   if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(L&&L.text?': '+esc(L.text):'')+'</span>');
   else if(A.wdConf)b.push('<span>Testy, scalenie, restart panelu (chwila przerwy), kontrola; przy błędzie powrót do obecnej wersji.</span><button class="btn sm" data-ag="wd-yes" data-k="wd-yes">Wdróż teraz</button><button class="btn sec sm" data-ag="wd-no" data-k="wd-no">Anuluj</button>');
-  else b.push('<button class="btn sm" data-ag="wd" data-k="wd"'+(d.ahead&&!d.error?'':' aria-disabled="true" title="Brak nowych zmian"')+'>Wdróż</button>');
+  else b.push('<button class="'+(d.auto?'btn sec sm':'btn sm')+'" data-ag="wd" data-k="wd"'+(d.ahead&&!d.error?'':' aria-disabled="true" title="Brak nowych zmian"')+'>'+(L&&(L.state==='error'||L.state==='rolledback')?'Wdróż ponownie':d.auto?'Wdróż teraz':'Wdróż')+'</button>');
   h+='<div class="row dv-b">'+b.join('')+'</div>';
   if(L&&!on){const w=WDS[L.state]||['out',L.state];
     h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>';
     if(d.log)h+='<details class="ds-det"><summary>Dziennik wdrożenia</summary><pre class="res">'+esc(d.log)+'</pre></details>'}
   h+='<p class="dv-l">Panel testowy (kod z gałęzi rozwoj, dane przykładowe): <a href="'+esc(d.testUrl)+'" target="_blank" rel="noopener">'+esc(String(d.testUrl).replace(/^https?:\/\//,''))+'</a>'+
     (d.testPassword?' · hasło: <code>'+(A.wdPw?esc(d.testPassword):'••••••••')+'</code> <button class="lk" data-ag="wd-pw" data-k="wd-pw">'+(A.wdPw?'Ukryj':'Pokaż')+'</button> <button class="lk" data-ag="wd-copy" data-k="wd-copy">Kopiuj</button>':'')+'</p>';
-  h+='<details class="ds-det"><summary>Jak rozwijać panel na serwerze</summary><p>W aplikacji Claude (zakładka Code) dodaj połączenie SSH: użytkownik <code>agent</code>, serwer <code>2.29.181.133</code>, folder <code>'+esc(d.repo||'')+'</code>. Agent pracuje na gałęzi rozwoj, sprawdza zmiany w panelu testowym, a Ty wdrażasz je tutaj. Zasady w ROZWOJ.md.</p></details>';
+  h+='<details class="ds-det"><summary>Jak rozwijać panel na serwerze</summary><p>W aplikacji Claude (zakładka Code) dodaj połączenie SSH: użytkownik <code>agent</code>, serwer <code>2.29.181.133</code>, folder <code>'+esc(d.repo||'')+'</code>. Agent pracuje na gałęzi rozwoj i sprawdza zmiany w panelu testowym; commit na rozwoj wdraża się sam, a przy błędzie panel wraca do poprzedniej wersji. Zasady w ROZWOJ.md.</p></details>';
   return h+'</div></section>';
 }
 function vKoszty(){

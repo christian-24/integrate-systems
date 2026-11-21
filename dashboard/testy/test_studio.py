@@ -494,7 +494,8 @@ class Studio(unittest.TestCase):
         self.assertEqual(st["state"], "error")
         self.assertIn("brak szablonu", st["error"])
 
-    @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "brak ffmpeg (renderowanie na serwerze)")
+    @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe") and not os.environ.get("PANEL_TESTY_BEZ_RENDERU"),
+                         "brak ffmpeg albo PANEL_TESTY_BEZ_RENDERU (renderowanie na serwerze)")
     def test_render_objasnienia(self):
         self.write("studio/marka.json", BRAND)
         self.scenario({"szablon": "obj-a", "parametry": {"rozwiazanie": "Rozwiązanie: 100% gotowe", "czas": 1.5}})

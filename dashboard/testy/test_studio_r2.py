@@ -420,7 +420,8 @@ class StudioSerwer(Baza):
 
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-HAS_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+# PANEL_TESTY_BEZ_RENDERU=1 (testy przed wdrożeniem): bez renderowania ffmpeg, które na serwerze trwa minuty
+HAS_FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe")) and not os.environ.get("PANEL_TESTY_BEZ_RENDERU")
 
 
 @unittest.skipUnless(HAS_FFMPEG, "brak ffmpeg (renderowanie na serwerze: testy/render_na_serwerze.sh)")

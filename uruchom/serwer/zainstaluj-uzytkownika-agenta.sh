@@ -231,7 +231,11 @@ instaluj() {
   chmod 711 "$AGENT_DOM"     # panel sprawdza istnienie $AGENT_CLAUDE; listy plików agenta nie widzi
 
   # SSH: agent nie loguje się (nie ma też hasła ani kluczy; to zabezpieczenie na wypadek, gdyby dopisał sobie klucz).
-  if [ -d /etc/ssh/sshd_config.d ] && ! grep -qs "^DenyUsers.*[[:space:]]$AGENT\([[:space:]]\|\$\)" "$SSHD_DROP"; then
+  # Wyjątek: rozwój panelu (zainstaluj-rozwoj.sh, ROZWOJ.md) wpuszcza agenta tylko z kluczami z pliku roota
+  # /etc/ssh/klucze-agenta (AuthorizedKeysFile w bloku Match); ~/.ssh agenta nie działa, więc sam klucza nie dopisze.
+  if grep -qs "AuthorizedKeysFile /etc/ssh/klucze-agenta" "$SSHD_DROP"; then
+    log "SSH agenta: tylko klucze z /etc/ssh/klucze-agenta (rozwój panelu)."
+  elif [ -d /etc/ssh/sshd_config.d ] && ! grep -qs "^DenyUsers.*[[:space:]]$AGENT\([[:space:]]\|\$\)" "$SSHD_DROP"; then
     printf '# Zakaz logowania SSH dla użytkownika agentów panelu (zainstaluj-uzytkownika-agenta.sh).\nDenyUsers %s\n' \
       "$AGENT" > "$SSHD_DROP"
     chmod 644 "$SSHD_DROP"
@@ -484,8 +488,9 @@ raport() {
   nie "$AGENT bez grup sudo/admin/wheel" sh -c "id -nG $AGENT | tr ' ' '\n' | grep -qxE 'sudo|admin|wheel'"
   spr "$AGENT bez prawa do sudo" sh -c "LC_ALL=C sudo -l -U $AGENT 2>&1 | grep -q 'not allowed'"
   spr "hasło $AGENT zablokowane" sh -c "[ \"\$(passwd -S $AGENT | awk '{print \$2}')\" = L ]"
-  spr "SSH: DenyUsers $AGENT" sh -c \
-    "grep -hiE '^[[:space:]]*DenyUsers' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | grep -qw $AGENT"
+  spr "SSH: DenyUsers $AGENT albo klucze tylko z pliku roota" sh -c \
+    "grep -hiE '^[[:space:]]*DenyUsers' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null | grep -qw $AGENT ||
+     { grep -qs 'AuthorizedKeysFile /etc/ssh/klucze-agenta' $SSHD_DROP && [ \"\$(stat -c %U /etc/ssh/klucze-agenta)\" = root ]; }"
   spr "grupa $GRUPA: $AGENT" w_grupie "$AGENT" "$GRUPA"
   spr "grupa $GRUPA: $PANEL" w_grupie "$PANEL" "$GRUPA"
 
