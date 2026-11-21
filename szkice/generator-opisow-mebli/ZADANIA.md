@@ -63,7 +63,7 @@ termin: 2026-11-25
   gałąź: agent/2026-11-19-sec2-sec4-poprawki
   W szczegółach zadania: „Pokaż zmiany” (12 plików, +427 −4), potem „Scal”. Scalenie zamyka zadanie.
   wynik: scalił Claude 19.11 na Twoje polecenie: commit 4f68382 w master na serwerze, 12 plików, bez push
-- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
+- [!] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4 | blokada: agent nie ma uprawnienia do `git push origin master` (ani do `gh` i `curl`)
   cel: poprawki SEC-2 i limit body na Caddy działają na opisarnia.pl
   gotowe gdy: master z poprawkami na GitHubie, CI i auto-deploy zielone, `caddy validate` na serwerze Opisarni zielone, opisarnia.pl odpowiada
   Przekazane agentowi przy porządkach 2026-11-21 (DECYZJE.md): od właściciela potrzebna tylko zgoda na wdrożenie, kroki wykonuje agent.
@@ -73,6 +73,8 @@ termin: 2026-11-25
   - [ ] serwer Opisarni: `docker compose -f docker-compose.prod.yml exec caddy caddy validate --config /etc/caddy/Caddyfile`, potem `caddy reload` tym samym poleceniem
   - [ ] `curl -sI https://opisarnia.pl` zwraca 200 i nagłówki Content-Security-Policy oraz Strict-Transport-Security
   Nazwa usługi Caddy i ścieżka Caddyfile według docker-compose.prod.yml; push uruchamia auto-deploy (#70).
+  wynik: nic nie wdrożono, produkcja bez zmian. Sprawdzone lokalnie 22.11: master (64f999b) zawiera poprawki SEC-2 i SEC-4 i czeka na wysłanie (5 commitów, 16 plików, +893 −31, w tym Caddyfile i docker-compose.prod.yml); usługa `caddy` i ścieżka `/etc/caddy/Caddyfile` z kroków zgadzają się z docker-compose.prod.yml. Żaden plik nie powstał.
+  zostało: wszystkie 4 kroki. Środowisko agenta odrzuciło: `git -C /home/panel/projekty/generator-opisow-mebli push origin master`, `git ls-remote origin master`, `gh run list` (podgląd CI i auto-deploy) oraz `curl -sI https://opisarnia.pl`; dostępu do serwera Opisarni (`caddy validate`, `caddy reload`) nie próbowano, bo bez push nie ma czego tam sprawdzać, a adresu serwera nie ma w zadaniu. Nie sprawdzono więc stanu GitHuba, CI, Caddy na serwerze ani tego, czy opisarnia.pl odpowiada. Po dopuszczeniu tych poleceń w panelu zadanie można uruchomić ponownie bez zmian.
 
 ## Etap: Testy
 
