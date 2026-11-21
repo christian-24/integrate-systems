@@ -79,7 +79,7 @@ termin: 2026-11-25
 ## Etap: Produkcja
 termin: 2026-11-17
 
-- [~] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
+- [x] Unieważnij testowy klucz API Mistral wklejony do rozmowy 26.10 | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: klucz Mistral z historii rozmowy przestaje działać
   gotowe gdy: klucz ma w konsoli Mistral stan unieważniony, a zapasowy silnik Opisarni działa na innym kluczu
   - [x] console.mistral.ai → API Keys: sprawdź, czy klucz z 26.10 (ostatnie znaki jak w rozmowie) jest kluczem produkcji
@@ -87,7 +87,7 @@ termin: 2026-11-17
   - [ ] console.mistral.ai → API Keys: przy kluczu z 26.10 „Revoke” albo „Delete”
   - [ ] po zmianie: jedna generacja na opisarnia.pl działa (Haiku); zapasowy Mistral nie zgłasza błędu 401 w logach backendu
   Klucz leży jawnie w historii Claude Code z PC (archiwum rozmów na Macu, ksiega/MIGRACJA.md).
-  wynik: Ale po co ci w konopi mistral ? \
+  wynik: Usuniete
 - [x] Serwer Hetzner, Caddy z HTTPS, docker-compose.prod (ADR 0004, 0034)
 - [x] Auto-deploy przez GitHub Actions (#70)
 - [x] Ręczny deploy do #125 (2026-11-03)
@@ -148,7 +148,7 @@ termin: 2026-11-30
   - [ ] panel, Agenci: uruchomienie „Załóż rejestr kontaktów…”, diff przejrzany, scalone do master
   Plik leży w indeksie gałęzi bez commita (zostało: zadania „Załóż rejestr kontaktów…”), dlatego scalenie w panelu wymaga najpierw commita.
   wynik: marketing/kontakty.md jest na master od commita d90f5fc (19.11); sprawdził Claude, zamknięte bez Twojej pracy
-- [~] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
+- [x] Przygotuj szkice wiadomości 1 dla 24 firm z partii 1–3 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
   cel: przy każdej firmie z partii 1–3 gotowa wiadomość 1 ze zdaniem o tej firmie, do skopiowania bez poprawek
   gotowe gdy: plik wiadomosci/wiadomosc-1-partie-1-3.md w folderze karty ma 24 sekcje (firma, partia, wiadomość 1 ze szkicu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu firmy); bez nazwisk i adresów; nic nie wysłane
   materiał: marketing/plan-10-kont.md#5
@@ -247,7 +247,7 @@ termin: 2026-11-30
   z pytania 9, 2026-11-19
 - [ ] Dodaj parametr UTM i pole źródła przy rejestracji | kto: claude | gdzie: chmura | kiedy: 2026-12-01
   z pytania 12, 2026-11-19
-- [~] Zaproponuj formy marketingu Opisarni na grudzień (poza Reels) | kto: claude | gdzie: chmura | kiedy: 2026-11-19 | wymaga: odbiór
+- [x] Zaproponuj formy marketingu Opisarni na grudzień (poza Reels) | kto: claude | gdzie: chmura | kiedy: 2026-11-19
   cel: 3–5 form marketingu dopasowanych do grupy docelowej, każda z przykładem i rytmem, gotowe do wpisania na oś czasu
   gotowe gdy: plik marketing/formy-grudzien.md w folderze karty: dla każdej formy kanał, dla kogo, przykład tematu, częstotliwość, nakład pracy i czy film robi studio (pokaz albo objaśnienie); rekomendacja 3 form na start
   materiał: KARTA.md
@@ -260,3 +260,5 @@ termin: 2026-11-30
   z pytania 14, 2026-11-21
 - [ ] Przygotuj teksty 3 maili aktywacyjnych z oceną RODO | kto: claude | gdzie: chmura | kiedy: 2026-12-02
   z pytania 14, 2026-11-21
+- [ ] Dokończ: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak upra | kto: claude
+  cel: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak uprawnienia do wyszukiwania); szacunki kont to założenia, nie pomiary; plik leży w folderze karty, więc w repozytorium nie ma commita

@@ -98,7 +98,7 @@ termin: 2026-12-13
   - [ ] grupy żeglarskie i kluby: osoby, które odpowiedzą na post ze szkicu zaproszenia
   - [ ] przy każdej osobie adres konta Google (potrzebny przy liście e-mail w Play Console)
   Listę osób znasz tylko Ty. Trzymaj ją w menedżerze haseł albo w notatce na Macu, nie w repozytorium.
-- [~] Wskaż zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-20 | wymaga: odbiór
+- [x] Wskaż zadania T48 niezbędne do v1.0.0 | kto: claude | gdzie: chmura | kiedy: 2026-11-20
   cel: wiadomo, które z zadań T48 muszą wejść przed podpisanym buildem 24.11
   gotowe gdy: w wynik: każda pozycja z kroków oznaczona „przed v1.0.0” albo „po” z uzasadnieniem
   materiał: docs/backlog/STATUS.md
@@ -216,6 +216,7 @@ termin: 2026-12-13
   cel: dostęp do produkcji w Google Play po zamkniętym teście
   gotowe gdy: wniosek wysłany w Play Console po 14 dniach testu z co najmniej 12 testerami
   materiał: KARTA.md#Definicja ukończenia
+- [ ] Przejrzyj zadania T48 pod nowy prototyp (zamknij nieaktualne, przepisz resztę) | kto: claude | kiedy: 2026-12-15
 
 ## Do rozplanowania
 
