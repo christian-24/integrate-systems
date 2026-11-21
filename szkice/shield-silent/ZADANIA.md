@@ -28,7 +28,7 @@ termin: 2026-11-22
 - [ ] Konto TikTok i kanał YouTube | kto: ty | kiedy: 2026-11-22
 - [ ] Wizytówka: logo, zdjęcie w tle, 8+ zdjęć prac, prośba o opinię do dotychczasowych klientów | kto: ty | kiedy: 2026-11-22
 - [ ] Zapisać, ilu klientów było przed startem reklam (punkt odniesienia) | kto: ty | kiedy: 2026-11-22
-- [ ] Nagraj i opublikuj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-22 | czas: 90
+- [ ] Nagraj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-22 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -43,7 +43,7 @@ termin: 2026-11-29
 - [ ] Usunąć adres z kodu strony (stopka, mapa, opis Kontaktu, dane dla Google) | kto: ty | kiedy: 2026-11-29
 - [ ] Mini-kontrola | kto: ty | kiedy: 2026-11-29
   cel: Nd 29 lis, mini-kontrola: czy są pierwsze zapytania (cel: 4+ w 10 dni)? Jeśli 0, sprawdzamy, czy reklamy w ogóle się wyświetlają
-- [ ] Nagraj i opublikuj filmy tygodnia 23 lis – 29 lis | kto: ty | kiedy: 2026-11-29 | czas: 90
+- [ ] Nagraj filmy tygodnia 23 lis – 29 lis | kto: ty | kiedy: 2026-11-29 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -54,7 +54,7 @@ termin: 2026-12-06
   cel: 30 lis: Meta: podmienić film w reklamie na puk-puk Cupry: lewe vs prawe tylne drzwi (nd 22 lis)
 - [ ] KONTROLA 1: co najmniej 12 zapytań z reklam (od 19 lis) i koszt zapytania do 60 zł? Jeśli nie, zmieniamy… | kto: ty | kiedy: 2026-12-06
   cel: 6 gru, KONTROLA 1: co najmniej 12 zapytań z reklam (od 19 lis) i koszt zapytania do 60 zł? Jeśli nie, zmieniamy film na Meta i słowa kluczowe
-- [ ] Nagraj i opublikuj filmy tygodnia 30 lis – 6 gru | kto: ty | kiedy: 2026-12-06 | czas: 90
+- [ ] Nagraj filmy tygodnia 30 lis – 6 gru | kto: ty | kiedy: 2026-12-06 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -64,7 +64,7 @@ termin: 2026-12-13
 - [ ] W Google Ads znowu „Wyszukiwane hasła” | kto: ty | kiedy: 2026-12-07
   cel: 7 gru: w Google Ads znowu „Wyszukiwane hasła”: wykluczyć to, co nie pasuje, a frazy, które dały telefon, dodać jako słowa kluczowe
 - [ ] Wprowadzić zmiany ustalone na kontroli 1 | kto: ty | kiedy: 2026-12-13
-- [ ] Nagraj i opublikuj filmy tygodnia 7 gru – 13 gru | kto: ty | kiedy: 2026-12-13 | czas: 90
+- [ ] Nagraj filmy tygodnia 7 gru – 13 gru | kto: ty | kiedy: 2026-12-13 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -74,7 +74,7 @@ termin: 2026-12-20
 - [ ] W reklamie Meta podmienić film na ten, który ma najwięcej wyświetleń organicznie | kto: ty | kiedy: 2026-12-14
   cel: 14 gru: w reklamie Meta podmienić film na ten, który ma najwięcej wyświetleń organicznie
 - [ ] Bony: ostatnie zamówienia do 21 gru | kto: ty | kiedy: 2026-12-20
-- [ ] Nagraj i opublikuj filmy tygodnia 14 gru – 20 gru | kto: ty | kiedy: 2026-12-20 | czas: 90
+- [ ] Nagraj filmy tygodnia 14 gru – 20 gru | kto: ty | kiedy: 2026-12-20 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -85,7 +85,7 @@ termin: 2026-12-27
   cel: 21 gru: wyłączyć reklamy bonów
 - [ ] Wstrzymać wszystkie reklamy | kto: ty | kiedy: 2026-12-24
   cel: 24–26 gru: wstrzymać wszystkie reklamy
-- [ ] Nagraj i opublikuj filmy tygodnia 21 gru – 27 gru | kto: ty | kiedy: 2026-12-27 | czas: 90
+- [ ] Nagraj filmy tygodnia 21 gru – 27 gru | kto: ty | kiedy: 2026-12-27 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -96,7 +96,7 @@ termin: 2027-01-03
   cel: 27 gru: włączyć z powrotem Google i Meta
 - [ ] KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z… | kto: ty | kiedy: 2027-01-03
   cel: 3 sty, KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z kanału, który nie działa
-- [ ] Nagraj i opublikuj filmy tygodnia 28 gru – 3 sty | kto: ty | kiedy: 2027-01-03 | czas: 90
+- [ ] Nagraj filmy tygodnia 28 gru – 3 sty | kto: ty | kiedy: 2027-01-03 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -107,14 +107,14 @@ termin: 2027-01-10
   cel: 4 sty, Google: Wygłuszanie zostaje na 18 zł. Detailing schodzi do 5 zł. Nowe kampanie Ceramika 5 zł i PPF 5 zł, promień 30 km od studia
 - [ ] Meta: nowy film (najlepszy z grudnia) | kto: ty | kiedy: 2027-01-04
   cel: 4 sty, Meta: nowy film (najlepszy z grudnia)
-- [ ] Nagraj i opublikuj filmy tygodnia 4 sty – 10 sty | kto: ty | kiedy: 2027-01-10 | czas: 90
+- [ ] Nagraj filmy tygodnia 4 sty – 10 sty | kto: ty | kiedy: 2027-01-10 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
 ## Etap: Tydzień 11 sty – 17 sty
 termin: 2027-01-17
 
-- [ ] Nagraj i opublikuj filmy tygodnia 11 sty – 17 sty | kto: ty | kiedy: 2027-01-17 | czas: 90
+- [ ] Nagraj filmy tygodnia 11 sty – 17 sty | kto: ty | kiedy: 2027-01-17 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -123,7 +123,7 @@ termin: 2027-01-24
 
 - [ ] Podmienić film w reklamie Meta na najlepszy ze stycznia | kto: ty | kiedy: 2027-01-18
   cel: 18 sty: podmienić film w reklamie Meta na najlepszy ze stycznia
-- [ ] Nagraj i opublikuj filmy tygodnia 18 sty – 24 sty | kto: ty | kiedy: 2027-01-24 | czas: 90
+- [ ] Nagraj filmy tygodnia 18 sty – 24 sty | kto: ty | kiedy: 2027-01-24 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 
@@ -138,7 +138,7 @@ termin: 2027-01-28
   - [ ] ile kosztował jeden klient z reklam (cel: do 150 zł),
   - [ ] decyzja: jeśli klient kosztuje do 150 zł, podnosimy budżet do ok. 2 300 zł/mies., żeby dojść do 15 klientów
   - [ ] zgoda właściciela z 18 lis: budżet przesuwamy między Google i Meta według kosztu klienta, a całość możemy podnieść, jeśli wyniki są dobre
-- [ ] Nagraj i opublikuj filmy tygodnia 25 sty – 28 sty | kto: ty | kiedy: 2027-01-28 | czas: 90
+- [ ] Nagraj filmy tygodnia 25 sty – 28 sty | kto: ty | kiedy: 2027-01-28 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i opublikowane (18:00–20:00), CTA „Napisz model auta”
   materiał: Plan-filmow-do-28-stycznia.md
 

@@ -254,3 +254,9 @@ termin: 2026-11-30
   wynik: powstał marketing/formy-grudzien.md (folder karty): 5 form (darmowy przegląd opisu, karuzela „przed i po”, grupy sprzedawców na Facebooku, maile aktywacyjne, poradnik z filmem), każda z kanałem, odbiorcą, przykładem tematu, częstotliwością, nakładem pracy i filmem ze studia (pokaz albo objaśnienie); rekomendacja na start: przegląd opisu, grupy na Facebooku, maile aktywacyjne; 4 warianty z kosztem i oś czasu 30.11–23.12; pytanie 14 w KARTA.md
   decyzja: wybór form na grudzień (pytanie 14 w KARTA.md; propozycja: wariant 2, 0 zł, ok. 2 h tygodniowo ponad stały rytm)
   zostało: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak uprawnienia do wyszukiwania); szacunki kont to założenia, nie pomiary; plik leży w folderze karty, więc w repozytorium nie ma commita
+- [ ] Przygotuj ogłoszenie, przypomnienie i szablony darmowego przeglądu opisu | kto: claude | gdzie: chmura | kiedy: 2026-11-30
+  z pytania 14, 2026-11-21
+- [ ] Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy | kto: ty | kiedy: 2026-12-01 | czas: 30
+  z pytania 14, 2026-11-21
+- [ ] Przygotuj teksty 3 maili aktywacyjnych z oceną RODO | kto: claude | gdzie: chmura | kiedy: 2026-12-02
+  z pytania 14, 2026-11-21
