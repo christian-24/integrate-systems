@@ -1,0 +1,11 @@
+# Nowy commit na gałęzi rozwoj kopii roboczej agenta: automatyczne wdrożenie (ROZWOJ.md).
+[Unit]
+Description=Nowy commit na gałęzi rozwoj
+
+[Path]
+PathChanged=/home/agent/rozwoj/IntegrateSystems/.git/refs/heads/rozwoj
+PathChanged=/home/agent/rozwoj/IntegrateSystems/.git/packed-refs
+Unit=wdroz-panel-auto.service
+
+[Install]
+WantedBy=multi-user.target

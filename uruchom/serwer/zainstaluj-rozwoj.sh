@@ -52,9 +52,12 @@ printf '%s {\n\tencode gzip\n\treverse_proxy 127.0.0.1:4802\n}\n' "$HOST_TEST" >
 grep -q 'panel-testowy.caddy' /etc/caddy/Caddyfile || echo 'import /etc/caddy/panel-testowy.caddy' >> /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null && systemctl reload caddy
 
-echo "4. Wdrożenie: /usr/local/bin/wdroz-panel, wdroz-panel.service, uprawnienia sudo"
+echo "4. Wdrożenie: /usr/local/bin/wdroz-panel, automat po commicie na rozwoj, przycisk w panelu, uprawnienia sudo"
 install -m 755 "$SRC/wdroz-panel.sh" /usr/local/bin/wdroz-panel
 install -m 644 "$SRC/wdroz-panel.service" /etc/systemd/system/wdroz-panel.service
+for u in wdroz-panel-auto.service wdroz-panel-auto.path wdroz-panel-auto.timer; do
+  install -m 644 "$SRC/$u" "/etc/systemd/system/$u"
+done
 cat > /tmp/90-rozwoj <<'EOF'
 # Rozwój panelu (ROZWOJ.md). Plik instaluje uruchom/serwer/zainstaluj-rozwoj.sh; zmiany tylko tam.
 panel ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block wdroz-panel.service
@@ -64,5 +67,6 @@ install -d -m 750 -o panel -g panel /home/panel/dane/wdrozenie
 
 systemctl daemon-reload
 systemctl enable --now panel-testowy.service >/dev/null
+systemctl enable --now wdroz-panel-auto.path wdroz-panel-auto.timer >/dev/null   # automat: commit na rozwoj = wdrożenie
 systemctl restart panel-testowy.service
 echo "Gotowe. Panel testowy: https://$HOST_TEST (hasło w panelu: Serwer → Rozwój panelu)."

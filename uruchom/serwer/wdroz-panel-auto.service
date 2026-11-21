@@ -1,0 +1,9 @@
+# Automatyczne wdrożenie panelu po nowym commicie na gałęzi rozwoj (ROZWOJ.md). Uruchamiają je
+# wdroz-panel-auto.path i wdroz-panel-auto.timer. Instaluje uruchom/serwer/zainstaluj-rozwoj.sh.
+[Unit]
+Description=Automatyczne wdrożenie panelu z gałęzi rozwoj
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wdroz-panel --auto
+TimeoutStartSec=1800

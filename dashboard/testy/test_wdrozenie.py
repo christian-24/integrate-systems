@@ -53,6 +53,7 @@ class Wdrozenie(unittest.TestCase):
     def test_stan_i_wdrozenie(self):
         st = self.state()
         self.assertEqual((st["ahead"], st["behind"], st["testPassword"], st["last"]), (0, 0, "abc123", None))
+        self.assertEqual(st["auto"], os.path.exists(server.AUTO_UNIT))
         self.assertEqual(server.start_deploy({})[0], 400)                      # nic do wdrożenia
         self.commit(self.dev, "b.py", "2", "Nowy widok")
         self.commit(self.prod, "szkice/k.md", "x", "Panel: zmiany z serwera")  # karty nie liczą się do „nowsze”

@@ -10,7 +10,7 @@ Panel (IntegrateSystems) rozwija agent na serwerze, nie na Macu. Właściciel ro
 | Produkcja | `/home/panel/IntegrateSystems`, port 4801, https://2-29-181-133.sslip.io | użytkownik `panel`; agent jej nie zmienia |
 | Kopia robocza | `/home/agent/rozwoj/IntegrateSystems`, gałąź `rozwoj` | użytkownik `agent` (sesje SSH i Claude) |
 | Panel testowy | port 4802, https://test.2-29-181-133.sslip.io, dane przykładowe, bez agentów | `panel-testowy.service` jako `agent` |
-| Wdrożenie | `/usr/local/bin/wdroz-panel` (`wdroz-panel.service`) | przycisk „Wdróż” w panelu: Serwer → Rozwój panelu |
+| Wdrożenie | `/usr/local/bin/wdroz-panel` | samo po commicie na `rozwoj` (`wdroz-panel-auto.path`, zapasowo co 5 min); ręcznie przycisk w panelu: Serwer → Rozwój panelu |
 
 Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj.sh` (w repozytorium produkcji).
 
@@ -25,13 +25,15 @@ Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj
   restart panelu testowego `pkill -u agent -f '^/usr/bin/python3 dashboard/server.py'` (systemd uruchamia go
   ponownie po 3 s) i sprawdzenie na https://test.2-29-181-133.sslip.io (albo
   `curl -s http://127.0.0.1:4802/`). Hasło panelu testowego widzi właściciel w panelu.
-- Gotową zmianę zapisujesz commitem na `rozwoj` (opis po polsku, co i po co). Nie wdrażasz sam: właściciel klika
-  „Wdróż”.
+- **Commit na `rozwoj` = wdrożenie na produkcję** (po ok. 20 s, gdy testy przejdą). Commitujesz tylko gotową,
+  sprawdzoną zmianę (testy zielone, panel testowy obejrzany), opis po polsku: co i po co. Prace w toku trzymasz
+  bez commita albo na innej gałęzi.
 - Nie usuwasz funkcji panelu bez zgody właściciela. Zmiany w `uruchom/serwer/` (usługi, sudo, zapora) wymagają
   ponownej instalacji przez `ops` i decyzji właściciela.
 
-## Co robi „Wdróż”
+## Co robi wdrożenie (automat i przycisk)
 
+0. Automat pomija commit, którego wdrożenie już się nie udało; następny commit na `rozwoj` próbuje ponownie.
 1. Testy na zatwierdzonym commicie gałęzi `rozwoj` (jako `agent`, w osobnej kopii).
 2. `git pull` produkcji, scalenie `rozwoj` do `main`.
 3. Restart panelu, kontrola: `/api/data` odpowiada, strona pokazuje widok bez błędu JavaScript (Playwright).

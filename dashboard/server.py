@@ -2139,6 +2139,7 @@ TEST_ENV = os.environ.get("PANEL_TEST_ENV", "").strip() or "/etc/integrate/panel
 TEST_URL = os.environ.get("PANEL_TEST_URL", "").strip() or "https://test.2-29-181-133.sslip.io"
 DEPLOY_CMD = ["sudo", "-n", "/usr/bin/systemctl", "start", "--no-block", "wdroz-panel.service"]
 DEPLOY_TTL = 30
+AUTO_UNIT = "/etc/systemd/system/multi-user.target.wants/wdroz-panel-auto.path"
 PROD_REPO = os.path.dirname(HERE)
 _deploy = {"at": 0.0, "value": None, "lock": threading.Lock()}
 
@@ -2198,7 +2199,8 @@ def deploy_state():
     if out["last"] and out["last"].get("state") in ("error", "rolledback"):
         text = projekt.read(os.path.join(DEPLOY_DIR, "ostatnie.log")) or ""
         out["log"] = "\n".join(text.splitlines()[-40:])
-    out.update(branch=DEV_BRANCH, repo=DEV_REPO, testUrl=TEST_URL, testPassword=_test_password())
+    out.update(branch=DEV_BRANCH, repo=DEV_REPO, testUrl=TEST_URL, testPassword=_test_password(),
+               auto=os.path.exists(AUTO_UNIT))
     return out
 
 

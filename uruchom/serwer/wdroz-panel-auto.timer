@@ -1,0 +1,11 @@
+# Zapas dla wdroz-panel-auto.path: co 5 minut sprawdza, czy na gałęzi rozwoj jest coś niewdrożonego.
+[Unit]
+Description=Sprawdzenie gałęzi rozwoj co 5 minut
+
+[Timer]
+OnBootSec=5min
+OnUnitInactiveSec=5min
+Unit=wdroz-panel-auto.service
+
+[Install]
+WantedBy=timers.target

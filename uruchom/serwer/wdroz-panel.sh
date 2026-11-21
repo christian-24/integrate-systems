@@ -1,6 +1,8 @@
 #!/bin/bash
-# Wdrożenie panelu z gałęzi rozwoj (kopia robocza agenta) na produkcję. Uruchamia go wdroz-panel.service (root),
-# a usługę przycisk „Wdróż” w panelu (sudo systemctl start --no-block wdroz-panel.service).
+# Wdrożenie panelu z gałęzi rozwoj (kopia robocza agenta) na produkcję, jako root.
+# Automat: wdroz-panel-auto.path (nowy commit na rozwoj) i wdroz-panel-auto.timer (co 5 min) uruchamiają
+# „wdroz-panel --auto”: bez nowych commitów albo przy commicie, którego wdrożenie już się nie udało, kończy bez śladu.
+# Ręcznie: przycisk w panelu (sudo systemctl start --no-block wdroz-panel.service), także ponowienie nieudanego.
 # Kolejność: testy jako agent na sprawdzanym commicie → pull produkcji → scalenie → restart → kontrola strony
 # → push do GitHuba. Błąd po scaleniu: produkcja wraca do poprzedniego commita (git reset --keep, zmiany kart
 # na dysku zostają) i panel startuje ponownie. Stan dla panelu: $STAN (JSON), dziennik: $LOG.
@@ -17,12 +19,33 @@ ENVF=/etc/integrate/panel.env
 VENV_PY=/home/panel/narzedzia/film/bin/python
 SPRAWDZ="$PROD/uruchom/serwer/sprawdz-panel.py"
 
-mkdir -p "$DIR" && chown panel:panel "$DIR" && chmod 750 "$DIR"
-: > "$LOG" && chown panel:panel "$LOG"
-exec >>"$LOG" 2>&1
-
+AUTO=""; [ "${1:-}" = "--auto" ] && AUTO=1
 as_panel() { runuser -u panel -- "$@"; }
 as_agent() { runuser -u agent -- "$@"; }
+
+# jedno wdrożenie naraz (automat i przycisk)
+exec 9>/run/wdroz-panel.lock
+flock -n 9 || { echo "wdrożenie już trwa"; exit 0; }
+mkdir -p "$DIR" && chown panel:panel "$DIR" && chmod 750 "$DIR"
+
+if [ -n "$AUTO" ]; then
+  sleep "${WDROZ_ZWLOKA:-20}"     # agent kończy serię commitów
+  SHA=$(as_agent git -C "$DEV" rev-parse --verify -q "$GAL^{commit}") || exit 0
+  as_panel git -C "$PROD" fetch -q --no-tags "$DEV" "+$GAL:refs/rozwoj/kandydat" || exit 0
+  as_panel git -C "$PROD" merge-base --is-ancestor "$SHA" HEAD && exit 0          # nic nowego
+  if python3 - "$STAN" "$SHA" <<'PY'
+import json, sys
+try:
+    st = json.load(open(sys.argv[1]))
+except (OSError, ValueError):
+    sys.exit(1)
+sys.exit(0 if st.get("sha") == sys.argv[2] and st.get("state") in ("error", "rolledback") else 1)
+PY
+  then exit 0; fi                                                                   # ten commit już się nie udał
+fi
+
+: > "$LOG" && chown panel:panel "$LOG"
+exec >>"$LOG" 2>&1
 log() { echo "$(date '+%H:%M:%S') $*"; }
 env_val() { sed -n "s/^$1=//p" "$ENVF" 2>/dev/null | tail -n1 | sed "s/^[\"']//; s/[\"']\$//"; }
 
@@ -68,7 +91,7 @@ cofnij() { # błąd po scaleniu: powrót do $PREV
 }
 
 stan running "Sprawdzam gałąź $GAL"
-log "Gałąź $GAL w $DEV"
+log "Gałąź $GAL w $DEV${AUTO:+ (automat)}"
 SHA=$(as_agent git -C "$DEV" rev-parse --verify -q "$GAL^{commit}") || blad "brak gałęzi $GAL w kopii roboczej"
 
 stan running "Testy"
