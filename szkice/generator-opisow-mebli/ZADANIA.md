@@ -63,10 +63,12 @@ termin: 2026-11-25
   gałąź: agent/2026-11-19-sec2-sec4-poprawki
   W szczegółach zadania: „Pokaż zmiany” (12 plików, +427 −4), potem „Scal”. Scalenie zamyka zadanie.
   wynik: scalił Claude 19.11 na Twoje polecenie: commit 4f68382 w master na serwerze, 12 plików, bez push
-- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: ty | kiedy: 2026-11-22 | czas: 20 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
+- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | wymaga: zgoda | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
   cel: poprawki SEC-2 i limit body na Caddy działają na opisarnia.pl
   gotowe gdy: master z poprawkami na GitHubie, CI i auto-deploy zielone, `caddy validate` na serwerze Opisarni zielone, opisarnia.pl odpowiada
-  - [ ] `ssh ops@2.29.181.133`, `sudo -u panel git -C /home/panel/projekty/generator-opisow-mebli push origin master`
+  Przekazane agentowi przy porządkach 2026-11-21 (DECYZJE.md): od właściciela potrzebna tylko zgoda na wdrożenie, kroki wykonuje agent.
+  Gdy agent nie ma uprawnienia do push albo dostępu do serwera Opisarni: [!] z blokadą i nazwą brakującego uprawnienia.
+  - [ ] `git -C /home/panel/projekty/generator-opisow-mebli push origin master` (bez --force)
   - [ ] GitHub, zakładka Actions repozytorium Opisarni: CI i auto-deploy zielone
   - [ ] serwer Opisarni: `docker compose -f docker-compose.prod.yml exec caddy caddy validate --config /etc/caddy/Caddyfile`, potem `caddy reload` tym samym poleceniem
   - [ ] `curl -sI https://opisarnia.pl` zwraca 200 i nagłówki Content-Security-Policy oraz Strict-Transport-Security
@@ -116,7 +118,7 @@ termin: 2026-12-23
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [x] Metryki: metryki.md w repozytorium, pomiar startowy 2026-11-18: 0 kont, 0 aktywnych, 0 płacących
 - [x] Plan pierwszych 10 kont do 30.11: marketing/plan-10-kont.md, przyjęty wariant B (2026-11-18)
-- [ ] Zdecyduj go/no-go dla Opisarni | kto: ty | kiedy: 2026-12-23
+- [ ] Zdecyduj go/no-go dla Opisarni | kto: ty | kiedy: 2026-12-23 | czas: 15
   cel: decyzja go, zamrożenie albo pivot zapisana w DECYZJE.md
   gotowe gdy: w DECYZJE.md wpis z 2026-12-23 z liczbami z metryki.md (punkt 3) i wybraną drogą
   materiał: metryki.md#1
@@ -156,7 +158,7 @@ termin: 2026-11-30
   materiał: STYL.md
   Firma bez draftu w marketing/outreach/drafts/: zdanie z punktu 5 planu (kolumna „Dlaczego te”) i dopisek „bez draftu” w sekcji.
   wynik: wiadomosci/wiadomosc-1-partie-1-3.md (folder karty): 24 sekcje (firma, partia, draft, wiadomość 1 według szablonu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu); wszystkie 24 firmy miały draft; bez nazwisk, adresów i linków; nic nie wysłane
-  decyzja: 14 sekcji ma wiersz „uwaga”. STIPA i Ramaro mają już strony po niemiecku (plan każe takie pomijać): wysłać czy pominąć? Przy Alan Meble, Meble North, Miloni i VERYSIMPL draft nie potwierdza sprzedaży za granicę, więc pytanie o opisy po niemiecku może nie trafić: zostawić szablon czy pominąć te firmy? Fakty pochodzą z researchu z czerwca i lipca, nie sprawdzałem ich ponownie.
+  Rozstrzygnięte przy porządkach 2026-11-21 (agent, DECYZJE.md): STIPA pominięta (ma niemiecką wersję sklepu, reguła z punktu 5 planu); Ramaro dostaje zaproszenie, a wiadomość 1 tylko wtedy, gdy opisy produktów nie są po niemiecku; Alan Meble, Meble North, Miloni i VERYSIMPL zostają z szablonem. Fakty pochodzą z researchu z czerwca i lipca, bez ponownego sprawdzenia.
 - [ ] Wyślij zaproszenia LinkedIn do 24 firm z partii 1–3 | kto: ty | kiedy: 2026-11-21 | czas: 45 | licznik: zaproszenia
   cel: 24 zaproszenia do osób decyzyjnych w firmach z partii 1–3, bez oferty
   gotowe gdy: przy każdej firmie krok zaznaczony: zaproszenie wysłane albo pominięta (nie działa, ma już opisy po niemiecku)
@@ -186,6 +188,7 @@ termin: 2026-11-30
   - [ ] Comforteo
   - [ ] MGK Meble
   Możesz rozłożyć na 3 dni po 8. W większych firmach (od Meble Emilia) szukaj osoby od e-commerce lub marketingu.
+  Porządki 2026-11-21 (DECYZJE.md): STIPA zaznacz jako pominiętą (ma niemiecką wersję sklepu); Ramaro i pozostałe firmy dostają zaproszenie.
 - [ ] Wyślij wiadomość do 10–15 znajomych z branży (wariant B) | kto: ty | kiedy: 2026-11-20 | czas: 30 | licznik: linki
   cel: osoby z branży, które znasz osobiście, dostają link do darmowego konta
   gotowe gdy: 10–15 osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
@@ -222,13 +225,11 @@ termin: 2026-11-30
 - [ ] Zapisz PoC widoku „Pokaz” w commicie na gałęzi feat/pokaz-opisarnia | kto: claude | gdzie: chmura
   cel: 778 niezacommitowanych zmian PoC zapisanych na gałęzi, bez merge do master
   gotowe gdy: `git status` na gałęzi feat/pokaz-opisarnia jest czysty, a ostatni commit opisuje PoC „Pokaz”
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
   Jeśli tych zmian nie ma w repozytorium na serwerze (mogą być tylko w kopii PC), oznacz [!] z blokadą.
 - [ ] Dopracuj UI widoku „Pokaz” | kto: claude | gdzie: chmura
   cel: widok „Pokaz” z poprawionym UI, gotowy do oceny przez właściciela
   gotowe gdy: zmiany zacommitowane na gałęzi feat/pokaz-opisarnia; w wynik: opis zmian i zrzuty ekranu przed i po
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
   Właściciel (2026-11-14, pytanie 5): UI widoku mu się nie podoba i wymaga poprawy. Gdy brak wskazówek, co zmienić, zapytaj w KARTA.md.
 - [ ] Spłać dług a11y w nawigacji i drawerze | kto: claude
@@ -247,6 +248,12 @@ termin: 2026-11-30
   wynik: teksty pod film A przyjęte 19.11 (Claude za właściciela); publikacja po nagraniu filmu
 - [ ] Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
   z pytania 9, 2026-11-19
+- [ ] Podaj identyfikatory kont własnych i testowych do pomiaru | kto: ty | kiedy: 2026-11-23 | czas: 5
+  cel: pomiar kont nie liczy kont właściciela ani testowych
+  gotowe gdy: identyfikatory podane przy zamknięciu zadania (pole notatki), np. „1, 2”, albo „brak”
+  materiał: metryki.md#6
+  Z pytania 11 w KARTA.md (odpowiedź przyjęła sposób, ale bez liczb); dopisane przy porządkach 2026-11-21. Panel admina → lista użytkowników → kolumna ID przy Twoich kontach (także konto z testu rejestracji na telefonie 18.11).
+  Wpisanie liczb do `ARRAY[...]` w metryki.md zrobi agent.
 - [ ] Dodaj parametr UTM i pole źródła przy rejestracji | kto: claude | gdzie: chmura | kiedy: 2026-12-01
   z pytania 12, 2026-11-19
 - [x] Zaproponuj formy marketingu Opisarni na grudzień (poza Reels) | kto: claude | gdzie: chmura | kiedy: 2026-11-19
@@ -258,18 +265,28 @@ termin: 2026-11-30
   zostało: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak uprawnienia do wyszukiwania); szacunki kont to założenia, nie pomiary; plik leży w folderze karty, więc w repozytorium nie ma commita
 - [ ] Przygotuj ogłoszenie, przypomnienie i szablony darmowego przeglądu opisu | kto: claude | gdzie: chmura | kiedy: 2026-11-30
   z pytania 14, 2026-11-21
-- [ ] Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy | kto: ty | kiedy: 2026-12-01 | czas: 30
+- [ ] Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy | kto: claude | gdzie: chmura | kiedy: 2026-12-01
   z pytania 14, 2026-11-21
+  cel: lista 3–5 grup sprzedawców (meble, Allegro, eksport do DE) z zasadami o promocji, gotowa do dołączenia przez właściciela
+  gotowe gdy: plik marketing/grupy-facebook.md w folderze karty: dla każdej grupy nazwa, link, liczba członków, zasada o promocji i linkach (cytat albo „regulamin widoczny dopiero po dołączeniu”), data sprawdzenia
+  materiał: marketing/formy-grudzien.md
+  Przekazane agentowi przy porządkach 2026-11-21 (DECYZJE.md); połączone z zadaniem „Dokończ: nazw i regulaminów grup…”. Dołączenie do grup i pisanie w nich zostaje u właściciela (wiersze grudniowe).
+  Gdy brak uprawnienia do wyszukiwania w sieci: [!] z blokadą „brak wyszukiwania w sieci”.
 - [ ] Przygotuj teksty 3 maili aktywacyjnych z oceną RODO | kto: claude | gdzie: chmura | kiedy: 2026-12-02
   z pytania 14, 2026-11-21
-- [ ] Dokończ: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak upra | kto: claude
+  Porządki 2026-11-21: ocena RODO obejmuje sprawdzenie w sieci aktualnych przepisów o mailach marketingowych (zgoda na komunikację handlową), przeniesione z zadania „Dokończ: nazw i regulaminów grup…”.
+- [x] Dokończ: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak upra | kto: claude
   cel: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak uprawnienia do wyszukiwania); szacunki kont to założenia, nie pomiary; plik leży w folderze karty, więc w repozytorium nie ma commita
-- [ ] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
+  wynik: zamknięte przy porządkach 2026-11-21 (dubel: grupy i regulaminy są w „Wybierz 3–5 grup sprzedawców na Facebooku…”, przepisy o mailach w „Przygotuj teksty 3 maili aktywacyjnych z oceną RODO”)
+- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
-  - [ ] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
-  - [ ] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
-  - [ ] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
-  - [ ] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
+  - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
+  - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
+  - [x] Odbiory prac wewnętrznych bez `decyzja:` i bez kodu do scalenia zamknij `[x]`
+  - [x] Zostaw najwyżej jedno pytanie bez odpowiedzi; pozostałe sprawy właściciela muszą być zadaniami kto: ty z czasem w minutach
   gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
-  - [ ] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
+  - [x] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
+  wynik: pytania w KARTA.md: 0 rozstrzygniętych przez agenta, bo wszystkie 14 miało już odpowiedź (0 bez odpowiedzi, 0 powtórzonych, karta bez zmian); rozstrzygnięty 1 otwarty wybór z zadania „Przygotuj szkice wiadomości 1…” (STIPA pominięta, Ramaro i 4 firmy zostają). Zadania przekazane agentom: 2 („Wdróż poprawki SEC-2 i SEC-4 na produkcję” z `wymaga: zgoda`, „Wybierz 3–5 grup sprzedawców na Facebooku…”). Zamknięte: 1 („Dokończ: nazw i regulaminów grup…”, dubel). Odbiory do zamknięcia: 0 (nie było żadnego otwartego). Dopisane: 1 zadanie właściciela „Podaj identyfikatory kont własnych i testowych do pomiaru” (5 min) i czas 15 min przy „Zdecyduj go/no-go”; usunięte 2 omyłkowe kroki tego zadania spod zadań o widoku „Pokaz”. 4 wpisy w DECYZJE.md z 2026-11-21. Zostało właścicielowi w ZADANIA.md 7 zadań, razem 155 min: zaproszenia LinkedIn (45), wiadomość do znajomych (30), wiadomość 1 (30), przypomnienia (15), identyfikatory kont (5), liczba kont i kanały 30.11 (15), go/no-go 23.12 (15); do tego zgoda na wdrożenie SEC-2 i SEC-4 oraz 6 wierszy publikacji w kampanie/staly-rytm.md (80 min, bez zmian)
+  decyzja: przyjęcie porządków: wdrożenie SEC-2 i SEC-4 robi agent za Twoją zgodą; grupy na Facebooku wyszukuje agent; STIPA pominięta w zaproszeniach (23 zamiast 24); identyfikatory kont własnych podajesz w nowym zadaniu
+  zostało: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie przy zadaniu wdrożenia); wierszy w kampanie/staly-rytm.md nie zmieniałem; odpowiedź „z 4” w pytaniu 8 (liczba kontaktów na LinkedIn) jest niejednoznaczna, zostawiłem ją bez zmian

@@ -3,6 +3,30 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-21: Porządki: wdrożenie SEC-2 i SEC-4 wykonuje agent za zgodą
+- Kontekst: zadanie „Wdróż poprawki SEC-2 i SEC-4 na produkcję” było u właściciela (20 min) i składało się z poleceń w terminalu (push, sprawdzenie CI, `caddy validate`, `curl`).
+- Decyzja: zadanie przechodzi na agenta z polem `wymaga: zgoda`; właściciel tylko zgadza się na wdrożenie.
+- Skutki: gdy agent nie ma uprawnienia do push albo dostępu do serwera Opisarni, zadanie kończy się blokadą z nazwą brakującego uprawnienia. Odwracalne: wystarczy przywrócić `kto: ty`.
+- Kto: agent
+
+## 2026-11-21: Porządki: grupy na Facebooku wyszukuje agent, dubel zamknięty
+- Kontekst: „Wybierz 3–5 grup sprzedawców na Facebooku i przeczytaj regulaminy” było u właściciela (30 min); obok wisiało zadanie „Dokończ: nazw i regulaminów grup…” z tym samym zakresem i dopiskiem o przepisach o mailach marketingowych.
+- Decyzja: listę grup z zasadami o promocji przygotuje agent (marketing/grupy-facebook.md w folderze karty); „Dokończ…” zamknięte jako dubel, a sprawdzenie przepisów o mailach przeniesione do „Przygotuj teksty 3 maili aktywacyjnych z oceną RODO”.
+- Skutki: u właściciela zostaje dołączenie do grup i pisanie w nich. Regulamin grupy prywatnej może być widoczny dopiero po dołączeniu; agent zaznaczy to przy grupie.
+- Kto: agent
+
+## 2026-11-21: Porządki: firmy z uwagami w wiadomości 1 (STIPA, Ramaro i cztery bez potwierdzonego eksportu)
+- Kontekst: zadanie „Przygotuj szkice wiadomości 1…” zostawiło otwarty wybór: STIPA i Ramaro mają strony po niemiecku, a przy Alan Meble, Meble North, Miloni i VERYSIMPL draft nie potwierdza sprzedaży za granicę. Plan (marketing/plan-10-kont.md, punkt 5) każe pomijać firmy, które mają już opisy po niemiecku.
+- Decyzja: STIPA pominięta (ma niemiecką wersję sklepu). Ramaro dostaje zaproszenie; wiadomość 1 tylko wtedy, gdy opisy produktów nie są po niemiecku. Cztery firmy bez potwierdzonego eksportu zostają z szablonem: odpowiedź „nie mamy opisów po niemiecku” też otwiera rozmowę.
+- Skutki: 23 zaproszenia zamiast 24. Fakty pochodzą z researchu z czerwca i lipca; właściciel sprawdza firmę 2 minuty przed kontaktem i może zdecydować inaczej.
+- Kto: agent
+
+## 2026-11-21: Porządki: identyfikatory kont własnych jako zadanie właściciela
+- Kontekst: pytanie 11 w KARTA.md ma odpowiedź przyjmującą sposób (podać identyfikatory raz), ale samych liczb nie ma; zna je tylko właściciel. Bez nich pomiar 23.11 liczy konto z testu rejestracji z 18.11 jako konto Free.
+- Decyzja: nowe zadanie „Podaj identyfikatory kont własnych i testowych do pomiaru” (właściciel, 5 min, 2026-11-23) zamiast kolejnego pytania w karcie; wpisanie do metryki.md zrobi agent. Zadanie „Zdecyduj go/no-go” dostało czas 15 min.
+- Skutki: w KARTA.md nie ma pytania bez odpowiedzi. Zadania „Przejrzyj stare filmy przed nagraniem filmu C” (skutek pytania 6) nie zakładam: filmy nagrywa teraz panel ze scenariusza, a filmu C nie ma w harmonogramie do 30.11.
+- Kto: agent
+
 ## 2026-11-18: Maile weryfikacyjne przywrócone
 - Kontekst: przy rejestracji nie przychodził mail weryfikacyjny; Brevo wyłączył nieużywany klucz SMTP 14.10, więc nikt nie mógł dokończyć rejestracji (0 kont).
 - Decyzja: nowy klucz SMTP Brevo w .env produkcji (/home/deploy/generator-opisow-mebli, nie /opt jak w docs/deploy-hetzner.md), restart backendu i workera.
