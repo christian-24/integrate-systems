@@ -154,7 +154,8 @@ Agent dostaje prompt: jedno zadanie (plik, wiersz, tytuł, etap) i jego szczegó
 kroki, notatki, wynik i „zostało” z poprzedniej pracy; format w `standard/STANDARD.md`), zakaz zmiany innych zadań
 i terminów, zakaz zmiany tytułu zadania i dopisywania do niego raportu, zakaz działań nieodwracalnych i wychodzących
 na zewnątrz. Na koniec agent odhacza wykonane kroki, dopisuje pod swoim wierszem wcięte wiersze `wynik:`, `decyzja:`
-(gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało), może dopisać jeden wiersz
+(gdy coś do zatwierdzenia) i `zostało:` (gdy coś zostało; tylko sprawy ważne dla właściciela, bez technicznych:
+miejsca pliku, commita, gałęzi), może dopisać jeden wiersz
 `następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` (propozycja; nowych zadań nie zakłada), pytania do właściciela dopisuje
 do sekcji „Pytania do właściciela” w `KARTA.md`, z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
 nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyjęcie zmienia zadania, zawsze z wierszami

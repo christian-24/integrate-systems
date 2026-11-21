@@ -704,7 +704,8 @@ class Manager:
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to uwagi właściciela po odbiorze: popraw pracę według nich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
             "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
-            "`  zostało: …`, gdy coś nie zostało zrobione.",
+            "`  zostało: …`, gdy coś nie zostało zrobione (tylko to, co ważne dla właściciela, np. czego nie sprawdzono; "
+            "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
         ] + git_rules + film_rules(title) + [

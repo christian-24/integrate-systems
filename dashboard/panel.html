@@ -4738,7 +4738,7 @@ function readItem(t,r,i){
     else if(!ok)body='<p class="mdx">'+esc(m.error)+'</p>';
     else body='<div class="mdx rdx">'+(md(m.text)||'<p class="muted">Plik jest pusty.</p>')+'</div>';
   }
-  return '<div class="mh"><b title="'+esc(r.path+(r.anchor?'#'+r.anchor:''))+'">'+esc(ok&&m.title?m.title:refLabel(r))+(ok&&m.title?' <span class="muted">· '+esc(refLabel(r))+'</span>':'')+'</b><span>'+
+  return '<div class="mh"><b title="'+esc(r.path+(r.anchor?'#'+r.anchor:''))+'">'+esc(ok&&m.title?m.title:refLabel(r))+'</b><span>'+
     (open&&ok?'<button type="button" class="btn sec sm" data-rdcopy="'+i+'" data-k="rdcopy:'+i+'">Kopiuj</button>':'')+
     '<button type="button" class="btn sec sm" data-rd="'+i+'" data-k="rd:'+i+'" aria-expanded="'+open+'">'+(open?'Zwiń':'Pokaż')+'</button></span></div>'+body;
 }
