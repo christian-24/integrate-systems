@@ -165,6 +165,8 @@ termin: 2026-12-13
   materiał: docs/compliance/
   Pliki z 18.11 leżą niezacommitowane w głównym katalogu repozytorium (/home/panel/projekty/naulikapp/docs/compliance/ i ekran polityki).
   Przenieś je stamtąd; gdy nie masz dostępu, oznacz [!] z blokadą „brak dostępu do niezacommitowanych plików polityki”.
+  - [ ] pola poza formularzem wydawcy (porządki 2026-11-21, DECYZJE.md): adres polityki `https://christian-24.github.io/naulikapp-polityka/`, okres przechowywania korespondencji 12 miesięcy, dostawca poczty z domeny podanego adresu e-mail
+  - [ ] `docs/compliance/index.html`: kopia polityki gotowa do wgrania na GitHub Pages
 - [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: zgoda | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
   cel: master na GitHubie i na Macu ma PR #124, zmiany T48 i politykę prywatności
   gotowe gdy: origin/master na GitHubie ma ten sam commit co master na serwerze (z PR #124 i polityką prywatności)
@@ -173,15 +175,16 @@ termin: 2026-12-13
   cel: Google Play i ekran w aplikacji wskazują ten sam publiczny adres polityki
   gotowe gdy: polityka otwiera się pod publicznym URL bez logowania, a URL wpisany w Play Console
   materiał: docs/compliance/
-  - [ ] plik HTML z docs/compliance/ na stronie bez logowania, np. GitHub Pages z osobnego publicznego repozytorium (Settings → Pages → Deploy from branch)
-  - [ ] Play Console → aplikacja → Zasady i programy → Treści w aplikacji → Polityka prywatności: wpisany URL
-  - [ ] adres w aplikacji (ekran polityki) taki sam jak w Play Console
+  - [ ] GitHub → nowe publiczne repozytorium `naulikapp-polityka` → wgraj `docs/compliance/index.html` (Add file → Upload files) → Settings → Pages → Deploy from branch: main
+  - [ ] `https://christian-24.github.io/naulikapp-polityka/` otwiera się w oknie prywatnym przeglądarki
+  - [ ] Play Console → aplikacja → Zasady i programy → Treści w aplikacji → Polityka prywatności: wklejony ten adres
+  Adres ustalił agent przy porządkach 2026-11-21 i wpisuje go do polityki w zadaniu „Zapisz politykę prywatności…”; nazwa repozytorium musi być dokładnie `naulikapp-polityka`.
 - [ ] Zbuduj podpisany AAB 1.0.0 z master | kto: ty | gdzie: mac | kiedy: 2026-11-24 | czas: 30 | po: Wygeneruj keystore, Wypchnij master NaulikApp na GitHub
   cel: podpisany build wydania gotowy do testu akceptacyjnego i Play Console
   gotowe gdy: plik AAB podpisany keystore z 21.11, zbudowany z master po merge PR #124, zmian T48 i polityki prywatności
   - [ ] na Macu: `git pull`, `flutter clean && flutter build appbundle --release`
   - [ ] plik build/app/outputs/bundle/release/app-release.aab; podpis: `keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab` pokazuje alias upload
-  - [ ] wersja 1.0.0 i versionCode wyższy niż w RC1 (pubspec.yaml)
+  - [x] wersja 1.0.0 i versionCode wyższy niż w RC1: agent ustawił 1.0.0+3 w pubspec.yaml (porządki 2026-11-21)
 - [ ] Wgraj AAB do ścieżki zamkniętego testu | kto: ty | kiedy: 2026-11-24 | czas: 30 | po: Zbuduj podpisany AAB, Opublikuj politykę prywatności
   cel: wersja 1.0.0 w ścieżce zamkniętego testu wysłana do sprawdzenia przez Google z zapasem przed startem testu
   gotowe gdy: w Play Console wersja w ścieżce zamkniętego testu ma stan „W trakcie sprawdzania” albo „Dostępna”; lista testerów przypisana do ścieżki
@@ -201,18 +204,17 @@ termin: 2026-12-13
   cel: potwierdzenie, że podpisany build nadaje się do zamkniętego testu
   gotowe gdy: wszystkie scenariusze TC-01..TC-20 przechodzą albo błędy zapisane jako nowe zadania
   materiał: docs/testing/plan-testow-mvp.md
-  docs/testing/plan-testow-mvp.md: plik powstanie w zadaniu „Odtwórz plan testów MVP…” (po:).
+  docs/testing/plan-testow-mvp.md: plan odtworzony 21.11 (opisuje aplikację z maja 2026, nazwy ekranów mogą się różnić).
   - [ ] instalacja z Play (jesteś testerem własnej ścieżki) albo `bundletool build-apks --bundle=app-release.aab --output=naulik.apks --ks=$HOME/klucze/naulikapp-upload.jks --ks-key-alias=upload` i `bundletool install-apks --apks=naulik.apks`
   - [ ] TC-01..TC-20 przeprowadzone, wynik wpisany w kolumnie wyniku planu
   Błąd blokujący: poprawka, nowy AAB z wyższym versionCode i ponowne wgranie przed 27.11.
 - [x] Konto Google Play założone (potwierdził właściciel 2026-11-14)
 - [ ] Uruchom zamknięty test w Google Play (12+ testerów × 14 dni) | kto: ty | kiedy: 2026-11-27 | czas: 30 | po: Przeprowadź test akceptacyjny RC1, Wyślij zaproszenia do testu kandydatom, Wgraj AAB do ścieżki
-  - [ ] co najmniej 12 osób dołączyło (Play Console → Testy zamknięte → Testerzy); przy mniej przypomnienie ze szkicu
   cel: zamknięty test trwa od 27.11 do 11.12
   gotowe gdy: wersja w ścieżce zamkniętego testu ma stan „Dostępna”, a co najmniej 12 testerów dołączyło
-  - [ ] URL polityki prywatności w Play Console
-  - [ ] lista testerów przypisana do ścieżki
   - [ ] wersja sprawdzona przez Google i dostępna dla testerów
+  - [ ] co najmniej 12 osób dołączyło (Play Console → Testy zamknięte → Testerzy); przy mniej przypomnienie ze szkicu
+  URL polityki i lista testerów przypisana do ścieżki są w zadaniach „Opublikuj politykę…” i „Wgraj AAB…” (zdublowane kroki usunięte przy porządkach 2026-11-21).
   Test trwa 14 dni od dnia, w którym 12 testerów jest zapisanych; start najpóźniej 27.11.
 - [ ] Złóż wniosek o produkcję w Google Play | kto: ty | kiedy: 2026-12-11 | czas: 20 | po: Uruchom zamknięty test w Google Play
   cel: dostęp do produkcji w Google Play po zamkniętym teście
@@ -236,6 +238,6 @@ termin: 2026-12-13
   gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
   - [x] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
-  wynik: Pytania: w karcie 6 pytań, wszystkie miały już odpowiedź właściciela, bez odpowiedzi zostaje 0; agent rozstrzygnął 2 wątki otwarte w tych odpowiedziach (pyt. 2: materiały marketingowe zostają w repozytorium w docs/marketing; pyt. 4: żadne zadanie T48 nie wchodzi przed v1.0.0); powtórzonych pytań nie było. Zadania przekazane agentom: 2 („Zmerguj PR #124…” na kto: claude; „Wypchnij master…” na kto: claude z wymaga: zgoda). Zamknięte: 1 („Zrealizuj zadania T48 niezbędne do v1.0.0”, lista pusta). Odbiory prac wewnętrznych do zamknięcia: 0 (żadne zadanie nie czekało na odbiór). W „Wygeneruj keystore…” odhaczone 2 kroki sprawdzone w repozytorium (.gitignore, build.gradle.kts); spod „Zmerguj PR #124…” usunięty zabłąkany krok z tego zadania. Właścicielowi zostaje 10 zadań kto: ty, razem 257 minut: lista 15 testerów (20), keystore na Macu (20), dane wydawcy (2), publikacja polityki pod URL (15), podpisany AAB na Macu (30), wgranie AAB do Play Console (30), wysyłka zaproszeń (30), test akceptacyjny (60), start zamkniętego testu (30), wniosek o produkcję (20); do tego jedna zgoda w panelu na wypchnięcie master. Trzy decyzje agenta w DECYZJE.md (2026-11-21). Plików w repozytorium nie zmieniono.
-  decyzja: przyjęcie porządków: 2 zadania przekazane agentom (merge PR #124, wypchnięcie master za Twoją zgodą), 1 zamknięte (realizacja T48, lista pusta), materiały marketingowe zostają w repozytorium, żadne zadanie T48 przed v1.0.0
-  zostało: „Zmerguj PR #124…” czeka na zablokowane „Uruchom pełną suitę testów na PR #124” (na serwerze nie ma Flutter SDK, agent nie ma odczytu GitHub Actions), więc termin 22.11 jest zagrożony. Wiersze karty „Do uzupełnienia” (czy plan TC-01..TC-20 jest warunkiem wydania; budżet, backend) leżą poza sekcją pytań i zostały bez zmian.
+  wynik: Pytania: w karcie 6 pytań, wszystkie miały już odpowiedź właściciela, bez odpowiedzi zostaje 0; agent rozstrzygnął 2 wątki otwarte w tych odpowiedziach (pyt. 2: materiały marketingowe zostają w repozytorium w docs/marketing; pyt. 4: żadne zadanie T48 nie wchodzi przed v1.0.0); powtórzonych pytań nie było. Zadania przekazane agentom: 2 („Zmerguj PR #124…” na kto: claude; „Wypchnij master…” na kto: claude z wymaga: zgoda); do tego 3 sprawy zdjęte z zadań właściciela: wybór adresu polityki i zgodność adresu w aplikacji (agent ustalił https://christian-24.github.io/naulikapp-polityka/ i wpisze go w „Zapisz politykę prywatności…”), numer buildu (naulikapp/pubspec.yaml: 1.0.0+3), 2 zdublowane kroki w „Uruchom zamknięty test…”. Zamknięte: 1 („Zrealizuj zadania T48 niezbędne do v1.0.0”, lista pusta). Odbiory prac wewnętrznych do zamknięcia: 0 (żadne zadanie nie czekało na odbiór). W „Wygeneruj keystore…” odhaczone 2 kroki sprawdzone w repozytorium (.gitignore, build.gradle.kts); spod „Zmerguj PR #124…” usunięty zabłąkany krok z tego zadania. Właścicielowi zostaje 10 zadań kto: ty, razem 257 minut: lista 15 testerów (20), keystore na Macu (20), dane wydawcy (2), publikacja polityki pod URL (15), podpisany AAB na Macu (30), wgranie AAB do Play Console (30), wysyłka zaproszeń (30), test akceptacyjny (60), start zamkniętego testu (30), wniosek o produkcję (20); do tego jedna zgoda w panelu na wypchnięcie master. Sześć decyzji agenta w DECYZJE.md (2026-11-21), w tym: plan TC-01..TC-20 jest warunkiem startu zamkniętego testu, okres przechowywania korespondencji w polityce 12 miesięcy. Zmieniony plik w repozytorium: naulikapp/pubspec.yaml.
+  decyzja: przyjęcie porządków: 2 zadania przekazane agentom (merge PR #124, wypchnięcie master za Twoją zgodą), 1 zamknięte (realizacja T48, lista pusta), materiały marketingowe zostają w repozytorium, żadne zadanie T48 przed v1.0.0, adres polityki https://christian-24.github.io/naulikapp-polityka/, numer buildu 1.0.0+3
+  zostało: „Zmerguj PR #124…” czeka na zablokowane „Uruchom pełną suitę testów na PR #124” (na serwerze nie ma Flutter SDK, agent nie ma odczytu GitHub Actions), więc termin 22.11 jest zagrożony. Po zmianie numeru buildu testów nie uruchomiono (ten sam powód). Budżet i backend w karcie („Do uzupełnienia”) nadal puste: nie blokują wydania, więc pytania nie dopisano.

@@ -3,6 +3,24 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-21: Adres polityki prywatności i pozostałe pola polityki ustala agent
+- Kontekst: porządki spraw właściciela (drugie przejście). W treści polityki poza danymi wydawcy zostały trzy puste pola: publiczny adres URL, okres przechowywania korespondencji i dostawca poczty. Zadanie „Opublikuj politykę…” zostawiało właścicielowi wybór adresu i dopilnowanie, żeby adres w aplikacji był taki sam.
+- Decyzja: adres polityki to `https://christian-24.github.io/naulikapp-polityka/` (GitHub Pages, osobne publiczne repozytorium `naulikapp-polityka` na koncie właściciela, plik `index.html`). Okres przechowywania korespondencji: 12 miesięcy od zakończenia sprawy. Dostawcę poczty agent ustala z domeny adresu e-mail podanego przez właściciela. Agent wpisuje te wartości i przygotowuje `docs/compliance/index.html` w zadaniu „Zapisz politykę prywatności na gałęzi uruchomienia”.
+- Skutki: właściciel tylko zakłada repozytorium o tej nazwie, wgrywa gotowy plik, włącza Pages i wkleja adres w Play Console; nie wybiera adresu i nie poprawia aplikacji. Odwracalne do chwili publikacji: inny adres to zmiana jednego wiersza w polityce.
+- Kto: agent
+
+## 2026-11-21: Numer buildu 1.0.0+3 ustawia agent
+- Kontekst: krok „wersja 1.0.0 i versionCode wyższy niż w RC1” leżał w zadaniu właściciela „Zbuduj podpisany AAB…”, a to zmiana w `naulikapp/pubspec.yaml`. RC1 miał 1.0.0+2.
+- Decyzja: agent ustawił `version: 1.0.0+3` na gałęzi tego zadania; właściciel na Macu tylko pobiera master i buduje.
+- Skutki: jeden krok mniej po stronie właściciela. Zmiana jednego wiersza, testów nie uruchomiono (brak Flutter SDK na serwerze). Odwracalne.
+- Kto: agent
+
+## 2026-11-21: Plan TC-01..TC-20 jest warunkiem startu zamkniętego testu
+- Kontekst: karta ma w „Definicji ukończenia” wiersz „Do uzupełnienia: czy manualny plan testów TC-01..TC-20 jest warunkiem wydania”. W ZADANIA.md test akceptacyjny 26.11 już poprzedza start testu 27.11.
+- Decyzja: tak, w brzmieniu z zadania „Przeprowadź test akceptacyjny RC1…”: przed startem zamkniętego testu przechodzą wszystkie scenariusze albo błędy są zapisane jako zadania; start wstrzymuje tylko błąd blokujący (utrata danych, awaria przy zapisie rejsu, zamknięciu dziennika albo eksporcie PDF).
+- Skutki: bez zmian w zadaniach i terminach; wiersz w karcie zostaje do uzupełnienia przez właściciela (agent dopisuje w karcie tylko odpowiedzi na pytania). Odwracalne.
+- Kto: agent
+
 ## 2026-11-21: Merge PR #124 i wypchnięcie master robi agent
 - Kontekst: porządki spraw właściciela; zadania „Zmerguj PR #124…” i „Wypchnij master NaulikApp…” były przypisane właścicielowi, choć to kroki techniczne (git). Zgodę na merge właściciel dał 2026-11-14.
 - Decyzja: oba zadania przechodzą na agenta. Merge: agent scala commity 534c8f0 i 5577d64 na gałęzi uruchomienia, panel scala ją do master. Wypchnięcie na GitHub: agent, z polem `wymaga: zgoda`, bo wychodzi na zewnątrz. Pobranie na Macu zostaje pierwszym krokiem zadania „Zbuduj podpisany AAB…”.

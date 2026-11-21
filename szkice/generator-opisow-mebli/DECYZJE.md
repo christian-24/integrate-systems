@@ -3,6 +3,12 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-21: Porządki: odpowiedź „z 4” w pytaniu 8 bez dopytywania
+- Kontekst: na pytanie 8 w KARTA.md (ilu kontaktów na LinkedIn, w tym z branży meblowej) właściciel odpowiedział „z 4”. Odpowiedź jest niejednoznaczna, a od liczby zależał tylko szacunek 2–4 kont z postów i moment uruchomienia rezerwy.
+- Decyzja: czytam ją jako około 4 kontakty z branży meblowej i nie zadaję pytania ponownie. Postów nie liczę jako źródła kont w prognozie na 30.11; rezerwa (partia 4) rusza według punktu 7 planu, czyli przy mniej niż 4 kontach Free 25.11, bez przyspieszania.
+- Skutki: żadne zadanie ani termin się nie zmienia; główne źródła kont to 23 zaproszenia i wiadomości do znajomych. Gdy liczba kontaktów jest inna, wystarczy poprawić odpowiedź w karcie; prawdziwy wynik pokaże pomiar 25.11.
+- Kto: agent
+
 ## 2026-11-21: Porządki: wdrożenie SEC-2 i SEC-4 wykonuje agent za zgodą
 - Kontekst: zadanie „Wdróż poprawki SEC-2 i SEC-4 na produkcję” było u właściciela (20 min) i składało się z poleceń w terminalu (push, sprawdzenie CI, `caddy validate`, `curl`).
 - Decyzja: zadanie przechodzi na agenta z polem `wymaga: zgoda`; właściciel tylko zgadza się na wdrożenie.

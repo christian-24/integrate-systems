@@ -198,7 +198,7 @@ termin: 2026-11-30
   cel: każda osoba, która przyjęła zaproszenie, dostaje pytanie bez linku
   gotowe gdy: każda osoba z partii 1–3, która przyjęła zaproszenie, dostała wiadomość 1
   materiał: wiadomosci/wiadomosc-1-partie-1-3.md
-  Gotowe teksty przy każdej firmie przygotuje agent. Licznik: liczba osób, które przyjęły zaproszenie. Link dopiero po odpowiedzi „tak”.
+  Gotowe teksty przy każdej firmie są w pliku z materiału (23 firmy, STIPA pominięta). Licznik: liczba osób, które przyjęły zaproszenie. Link dopiero po odpowiedzi „tak”.
 - [ ] Wyślij przypomnienia tam, gdzie była rozmowa | kto: ty | kiedy: 2026-11-27 | czas: 15 | po: Wyślij wiadomość 1 do osób, które przyjęły | licznik: rozmowy
   cel: jedno przypomnienie do osób, które rozmawiały, a nie założyły konta
   gotowe gdy: każda rozmowa bez konta ma jedno przypomnienie; brak odpowiedzi kończy kontakt
@@ -213,7 +213,7 @@ termin: 2026-11-30
 
 ## Do rozplanowania
 
-- [ ] Popraw stan ZDJ-1 w plikach zadań repozytorium | kto: claude | gdzie: chmura
+- [~] Popraw stan ZDJ-1 w plikach zadań repozytorium | kto: claude | gdzie: chmura
   cel: pliki zadań w repozytorium opisują ZDJ-1 jako zmergowane za flagą (#126–#134), nie jako bez merge
   gotowe gdy: żaden plik w tasks/ nie opisuje ZDJ-1 jako niezmergowanego; zmiana w jednym commicie
   materiał: tasks/README.md
@@ -287,6 +287,6 @@ termin: 2026-11-30
   gotowe gdy: w KARTA.md najwyżej jedno pytanie bez odpowiedzi, każda decyzja agenta ma wpis w DECYZJE.md, a w wyniku jest lista zmian: ile pytań rozstrzygnięto, ile zadań przekazano agentom, ile zamknięto, co zostało właścicielowi
   - [x] Na koniec stan `[~]`, `wymaga: odbiór` i `decyzja: przyjęcie porządków` z listą zmian w `wynik:`
   materiał: KARTA.md#Pytania do właściciela
-  wynik: pytania w KARTA.md: 0 rozstrzygniętych przez agenta, bo wszystkie 14 miało już odpowiedź (0 bez odpowiedzi, 0 powtórzonych, karta bez zmian); rozstrzygnięty 1 otwarty wybór z zadania „Przygotuj szkice wiadomości 1…” (STIPA pominięta, Ramaro i 4 firmy zostają). Zadania przekazane agentom: 2 („Wdróż poprawki SEC-2 i SEC-4 na produkcję” z `wymaga: zgoda`, „Wybierz 3–5 grup sprzedawców na Facebooku…”). Zamknięte: 1 („Dokończ: nazw i regulaminów grup…”, dubel). Odbiory do zamknięcia: 0 (nie było żadnego otwartego). Dopisane: 1 zadanie właściciela „Podaj identyfikatory kont własnych i testowych do pomiaru” (5 min) i czas 15 min przy „Zdecyduj go/no-go”; usunięte 2 omyłkowe kroki tego zadania spod zadań o widoku „Pokaz”. 4 wpisy w DECYZJE.md z 2026-11-21. Zostało właścicielowi w ZADANIA.md 7 zadań, razem 155 min: zaproszenia LinkedIn (45), wiadomość do znajomych (30), wiadomość 1 (30), przypomnienia (15), identyfikatory kont (5), liczba kont i kanały 30.11 (15), go/no-go 23.12 (15); do tego zgoda na wdrożenie SEC-2 i SEC-4 oraz 6 wierszy publikacji w kampanie/staly-rytm.md (80 min, bez zmian)
-  decyzja: przyjęcie porządków: wdrożenie SEC-2 i SEC-4 robi agent za Twoją zgodą; grupy na Facebooku wyszukuje agent; STIPA pominięta w zaproszeniach (23 zamiast 24); identyfikatory kont własnych podajesz w nowym zadaniu
-  zostało: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie przy zadaniu wdrożenia); wierszy w kampanie/staly-rytm.md nie zmieniałem; odpowiedź „z 4” w pytaniu 8 (liczba kontaktów na LinkedIn) jest niejednoznaczna, zostawiłem ją bez zmian
+  wynik: pytania w KARTA.md: 0 rozstrzygniętych przez agenta, bo wszystkie 14 miało już odpowiedź (0 bez odpowiedzi, 0 powtórzonych, karta bez zmian); rozstrzygnięty 1 otwarty wybór z zadania „Przygotuj szkice wiadomości 1…” (STIPA pominięta, Ramaro i 4 firmy zostają). Zadania przekazane agentom: 2 („Wdróż poprawki SEC-2 i SEC-4 na produkcję” z `wymaga: zgoda`, „Wybierz 3–5 grup sprzedawców na Facebooku…”). Zamknięte: 1 („Dokończ: nazw i regulaminów grup…”, dubel). Odbiory do zamknięcia: 0 (nie było żadnego otwartego). Dopisane: 1 zadanie właściciela „Podaj identyfikatory kont własnych i testowych do pomiaru” (5 min) i czas 15 min przy „Zdecyduj go/no-go”; usunięte 2 omyłkowe kroki tego zadania spod zadań o widoku „Pokaz”. Przy ponownym przejściu 21.11 stan sprawdzony (14 pytań z odpowiedzią, 7 zadań właściciela z czasem, 6 wierszy publikacji) i dopisana 1 decyzja: odpowiedź „z 4” w pytaniu 8 czytana jako około 4 kontakty z branży, rezerwa według punktu 7 planu, bez nowego pytania; poprawiona notatka przy „Wyślij wiadomość 1…” (teksty są gotowe). 5 wpisów w DECYZJE.md z 2026-11-21. Zostało właścicielowi w ZADANIA.md 7 zadań, razem 155 min: zaproszenia LinkedIn (45), wiadomość do znajomych (30), wiadomość 1 (30), przypomnienia (15), identyfikatory kont (5), liczba kont i kanały 30.11 (15), go/no-go 23.12 (15); do tego zgoda na wdrożenie SEC-2 i SEC-4 oraz 6 wierszy publikacji w kampanie/staly-rytm.md (80 min, bez zmian)
+  decyzja: przyjęcie porządków: wdrożenie SEC-2 i SEC-4 robi agent za Twoją zgodą; grupy na Facebooku wyszukuje agent; STIPA pominięta w zaproszeniach (23 zamiast 24); identyfikatory kont własnych podajesz w nowym zadaniu; odpowiedź „z 4” (pytanie 8) czytana jako około 4 kontakty z branży
+  zostało: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie przy zadaniu wdrożenia); wierszy w kampanie/staly-rytm.md nie zmieniałem; zadanie agenta „Popraw stan ZDJ-1 w plikach zadań repozytorium” wisi w stanie „w toku” bez wyniku, nie ruszałem go
