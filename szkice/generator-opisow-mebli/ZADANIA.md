@@ -63,7 +63,7 @@ termin: 2026-11-25
   gałąź: agent/2026-11-19-sec2-sec4-poprawki
   W szczegółach zadania: „Pokaż zmiany” (12 plików, +427 −4), potem „Scal”. Scalenie zamyka zadanie.
   wynik: scalił Claude 19.11 na Twoje polecenie: commit 4f68382 w master na serwerze, 12 plików, bez push
-- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | wymaga: zgoda | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
+- [ ] Wdróż poprawki SEC-2 i SEC-4 na produkcję | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | po: Przejrzyj zmiany agenta SEC-2 i SEC-4
   cel: poprawki SEC-2 i limit body na Caddy działają na opisarnia.pl
   gotowe gdy: master z poprawkami na GitHubie, CI i auto-deploy zielone, `caddy validate` na serwerze Opisarni zielone, opisarnia.pl odpowiada
   Przekazane agentowi przy porządkach 2026-11-21 (DECYZJE.md): od właściciela potrzebna tylko zgoda na wdrożenie, kroki wykonuje agent.
