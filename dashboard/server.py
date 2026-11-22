@@ -1114,6 +1114,103 @@ def post_add_image(pid, day, param, ctype, data):
     return 200, "", dict(extra, name=name)
 
 
+POST_SECTIONS = ("Instagram", "Facebook", "LinkedIn", "TikTok", "Reels", "Alt")
+POST_TEXT_MAX = 5000
+
+
+def _section_span(lines, name):
+    """(początek, koniec) treści sekcji „## name” w wierszach post.md albo None, gdy jej nie ma."""
+    head = next((i for i, x in enumerate(lines) if x.startswith("## ") and x[3:].strip() == name), None)
+    if head is None:
+        return None
+    end = next((j for j in range(head + 1, len(lines)) if lines[j].startswith("## ")), len(lines))
+    return head + 1, end
+
+
+def post_set_text(body):
+    """POST /api/post/tekst {project, date, section, text, old}: opis jednej platformy w post.md (sekcja „## Nazwa”,
+    ten sam podział, który czytają post_info, publikacja.py i udostepnij.caption). Brakującą sekcję dopisuje na końcu.
+    old: tekst sekcji, od którego właściciel zaczął edycję; gdy plik zmienił się w międzyczasie (np. poprawił go
+    agent), nic nie zapisuje i zwraca 409. (kod, błąd)."""
+    folder = post_folder(str(body.get("project") or ""), str(body.get("date") or ""))
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    name = str(body.get("section") or "")
+    text = str(body.get("text") or "").replace("\r\n", "\n").strip()
+    if name not in POST_SECTIONS:
+        return 400, "Nieznana sekcja posta."
+    if len(text) > POST_TEXT_MAX:
+        return 400, "Opis: najwyżej %d znaków." % POST_TEXT_MAX
+    if re.search(r"^## ", text, re.M):          # wiersz „## …” rozbiłby post.md na nowe sekcje
+        return 400, "Wiersz opisu nie może zaczynać się od „## ”."
+    path = os.path.join(folder, "post.md")
+    with _write_lock:
+        try:
+            with open(path, encoding="utf-8") as f:
+                lines = f.read().replace("\r\n", "\n").split("\n")
+        except FileNotFoundError:
+            lines = []
+        except OSError:
+            return 400, "Nie udało się odczytać post.md."
+        span = _section_span(lines, name)
+        cur = "\n".join(lines[span[0]:span[1]]).strip() if span else ""
+        if "old" in body and cur != str(body.get("old") or "").replace("\r\n", "\n").strip():
+            return 409, "Opis zmienił się w międzyczasie. Wczytuję nową wersję."
+        new = text.split("\n") if text else []
+        if span:
+            lines[span[0]:span[1]] = new + [""]
+        else:
+            while lines and not lines[-1].strip():
+                lines.pop()
+            lines += ([""] if lines else []) + ["## " + name] + new + [""]
+        try:
+            projekt.write_atomic(path, "\n".join(lines))
+        except OSError:
+            return 400, "Nie udało się zapisać post.md."
+    return 200, ""
+
+
+def post_set_image(pid, day, ctype, data):
+    """POST /api/post/grafika?project=&date=: nowa grafika posta (PNG albo JPG) jako grafika.png. Poprzednia zostaje
+    w ukrytym .grafika-poprzednia.png. grafika.svg zostaje, ale jest starsza, więc post_image jej nie nadpisze.
+    JPG zamienia na PNG ffmpeg (jest na serwerze z nagrywarką). (kod, błąd)."""
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    ext = STUDIO_TYPES["logo"].get(ctype)
+    if not ext:
+        return 400, "Grafika: plik PNG albo JPG."
+    tmp = os.path.join(folder, ".grafika-wysylka." + ext)
+    with open(tmp, "wb") as f:
+        f.write(data)
+    bad = film.media_error(tmp, "image")
+    if bad:
+        os.remove(tmp)
+        return 400, "Plik odrzucony: %s." % bad
+    out = tmp
+    if ext != "png":
+        out = os.path.join(folder, ".grafika-wysylka-png.png")
+        ff = shutil.which("ffmpeg")
+        try:
+            if not ff:
+                raise OSError("brak ffmpeg")
+            subprocess.run([ff, "-y", "-loglevel", "error", "-i", tmp, "-frames:v", "1", out], check=True, timeout=60,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (OSError, subprocess.SubprocessError):
+            with contextlib.suppress(OSError):
+                os.remove(out)
+            return 400, "Nie udało się zamienić JPG na PNG. Wgraj grafikę PNG."
+        finally:
+            with contextlib.suppress(OSError):
+                os.remove(tmp)
+    png = os.path.join(folder, "grafika.png")
+    with _write_lock:
+        if os.path.isfile(png) and not os.path.islink(png):
+            os.replace(png, os.path.join(folder, ".grafika-poprzednia.png"))
+        os.replace(out, png)
+    return 200, ""
+
+
 def _drop_old_image(folder, param, old, new):
     """Poprzedni zrzut tego pola wgrany w panelu (<pole>-RRRRMMDD-HHMMSS[-n].png|jpg w folderze posta) znika po
     wgraniu nowego, jeśli scenariusz już go nie używa w innym polu (folder posta nie rośnie przy każdej poprawce)."""
@@ -1495,6 +1592,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/film/nagraj": record_film,
           "/api/film/konto": film_account,
           "/api/post/popraw": fix_post,
+          "/api/post/tekst": post_set_text,
           "/api/film/zmien": film_change,
           "/api/studio/popros": studio_request,
           "/api/studio/ustaw": studio_settings,
@@ -2736,6 +2834,9 @@ def post_info(folder):
             out["sections"][name] += line + "\n"
     out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
     out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
+    # imageAt: wersja grafiki (najnowszy z grafika.png i grafika.svg) do odświeżenia podglądu po zmianie
+    out["imageAt"] = max([int(os.path.getmtime(os.path.join(folder, n))) for n in ("grafika.png", "grafika.svg")
+                          if os.path.exists(os.path.join(folder, n))] or [0])
     fpath = publikacja.Publisher.film(folder)
     # at: zmiana pliku (ctime) do odświeżenia odtwarzacza; czas modyfikacji filmu to wersja scenariusza (Recorder)
     out["film"] = {"name": os.path.basename(fpath), "size": os.path.getsize(fpath),
@@ -3099,10 +3200,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._studio_upload(urlparse(self.path).query)
         if path == "/api/post/obraz":
             return self._post_image_upload(urlparse(self.path).query)
+        if path == "/api/post/grafika":
+            return self._post_graphic_upload(urlparse(self.path).query)
         if path == "/api/asystent/glos":
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty", "/api/film/zmien") else 4096)
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
+                                                         "/api/film/zmien", "/api/post/tekst") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
@@ -3188,6 +3292,18 @@ class Handler(BaseHTTPRequestHandler):
                                           (q.get("param") or [""])[0], ctype, data)
         data_invalidate()
         return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                          "application/json; charset=utf-8")
+
+    def _post_graphic_upload(self, query):
+        """POST /api/post/grafika?project=&date=: nowa grafika posta (post_set_image)."""
+        q = parse_qs(query)
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        data, err = self._raw_body(film.IMAGE_MAX)
+        if data is None:
+            return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        code, err = post_set_image((q.get("project") or [""])[0], (q.get("date") or [""])[0], ctype, data)
+        return self._send(code, json.dumps({"ok": code == 200, "error": err}, ensure_ascii=False),
                           "application/json; charset=utf-8")
 
     def _cors(self):

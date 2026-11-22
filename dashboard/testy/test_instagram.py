@@ -201,8 +201,8 @@ class PodgladyWChrome(unittest.TestCase):
 
     def test_zakladki_uciecie_i_uklad(self):
         html = read(PANEL).decode("utf-8")
-        code = panel_parts(html, ["esc", "AVINK", "av", "IG_MORE", "pvPlats", "spCap", "pvCut", "spMedia", "SPI", "spIco",
-                                  "spVid", "spSlides", "spWho", "pvIg", "pvFb", "pvTt"])
+        code = panel_parts(html, ["esc", "AVINK", "av", "IG_MORE", "CHAL", "chList", "SPN", "pvPlats", "SPCHAIN", "spCap", "pvCut", "spMedia", "SPI", "spIco",
+                                  "spVid", "spSlides", "spWho", "pvIg", "spOne", "pvFb", "pvTt"])
         long_text = "A" * 130 + " koniec"
         page = """<!doctype html><meta charset="utf-8"><body><pre id="w"></pre><script>
 const ED={more:false,slide:0},D={publish:null};
@@ -238,8 +238,8 @@ document.getElementById('w').textContent=JSON.stringify(r);
         m = re.search(r'<pre id="w">(.*?)</pre>', out.stdout, re.S)
         self.assertTrue(m and m.group(1), out.stderr[-500:])
         r = json.loads(H.unescape(m.group(1)))
-        self.assertEqual(r["plImg"], ["sp-ig"])                       # TikTok bez filmu nie, LinkedIn bez podglądu
-        self.assertEqual(r["plVid"], ["sp-fb", "sp-ig", "sp-tt"])
+        self.assertEqual(r["plImg"], ["sp-ig", "sp-li"])              # TikTok bez filmu nie
+        self.assertEqual(r["plVid"], ["sp-ig", "sp-fb", "sp-tt"])     # stała kolejność platform
         self.assertEqual(r["plTxt"], ["sp-fb"])                       # Instagram bez zdjęcia i filmu nie
         self.assertTrue(r["cutLong"].startswith("A" * 125 + "… "), r["cutLong"])
         self.assertIn("data-spmore", r["cutLong"])

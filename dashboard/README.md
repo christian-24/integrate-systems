@@ -100,6 +100,10 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
 Widok Marketing (`#marketing`): oś czasu tygodnia z postami kampanii (grafika albo film, stan, kanały). Post
 otwiera szufladę z podglądem, filmem, „Co poprawić” (`POST /api/post/popraw`: zadanie agenta „Popraw post na …”)
 i czatem. Nic nie publikuje się samo, dopóki nie klikniesz „Zaplanuj”.
+Edytor posta: zakładki platform (Instagram, Facebook, LinkedIn, TikTok według kanałów i formy posta), pod zakładką
+podgląd i edycja opisu (`POST /api/post/tekst`: sekcja post.md) oraz grafiki (`POST /api/post/grafika`). Jedna akcja
+„Udostępnij na …”: publikacja przez API (z potwierdzeniem), Instagram przez rozszerzenie, inaczej strona tworzenia
+posta, opis w schowku i pobrane pliki. „Oznacz jako opublikowane” i odwrotnie w menu „⋯” (z „Cofnij”).
 Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: prawdziwa przeglądarka (Playwright,
 `~/narzedzia/film`), kursor i podświetlenie kliknięć, napisy, MP4 1080×1920 (ffmpeg). Nagranie startuje samo, gdy
 film jest starszy niż scenariusz albo obrazy posta, albo przyciskiem „Nagraj film”. Zmiana samego studia (szablon,
