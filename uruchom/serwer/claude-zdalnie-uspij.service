@@ -1,0 +1,6 @@
+[Unit]
+Description=Usypia bezczynną rozmowę Remote Control (claude-zdalnie)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/claude-zdalnie-uspij

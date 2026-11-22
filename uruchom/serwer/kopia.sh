@@ -21,7 +21,7 @@ set -u
 umask 077
 BAZA="${KOPIA_BAZA:-/home/panel}"
 KOPIE="$BAZA/kopie"
-ZOSTAW=14
+ZOSTAW=2
 DZIS="$(date +%F)"
 log() { echo "kopia: $*"; }
 

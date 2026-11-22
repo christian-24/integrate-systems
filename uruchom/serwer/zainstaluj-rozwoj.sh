@@ -73,6 +73,9 @@ echo "5. Stała sesja Claude (Remote Control) w kopii roboczej: aplikacja Claude
 install -m 644 "$SRC/claude-zdalnie.service" /etc/systemd/system/claude-zdalnie.service
 [ -f /etc/claude-zdalnie.json ] || printf "%s\n" "{\"model\": \"claude-opus-5-5\", \"effortLevel\": \"max\", \"autoCompactEnabled\": true}" > /etc/claude-zdalnie.json
 chmod 644 /etc/claude-zdalnie.json
+# bezczynna rozmowa (60 min) usypiana co 15 min: zwalnia ~0,4 GB RAM, kolejna wiadomość z aplikacji ją wznawia
+install -m 755 "$SRC/claude-zdalnie-uspij.sh" /usr/local/bin/claude-zdalnie-uspij
+install -m 644 "$SRC/claude-zdalnie-uspij.service" "$SRC/claude-zdalnie-uspij.timer" /etc/systemd/system/
 # zaufanie folderu dla Claude agenta (bez terminala nikt by o nie nie zapytał)
 runuser -u agent -- python3 - "$DEV" <<'PY'
 import json, os, sys
@@ -90,6 +93,7 @@ os.replace(tmp, p)
 PY
 systemctl daemon-reload
 systemctl enable --now claude-zdalnie.service >/dev/null
+systemctl enable --now claude-zdalnie-uspij.timer >/dev/null
 echo "   Jeśli „Rozwój panelu” nie pojawia się w aplikacji: journalctl -u claude-zdalnie. Pierwsza zgoda na Remote"
 echo "   Control wymaga jednorazowej odpowiedzi „y”: sudo -u agent -H script -qc '/home/agent/.local/bin/claude remote-control --spawn=same-dir' /dev/null"
 systemctl restart panel-testowy.service
