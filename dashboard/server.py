@@ -23,6 +23,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
   POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
   GET  /api/project/chat      historia rozmowy o projekcie (?project=)
+  POST /api/asystent          wiadomość do asystenta (wszystkie projekty, może przełączyć widok: „Pokaż: #adres”)
+  GET  /api/asystent          historia rozmowy z asystentem; POST /api/asystent/nowa czyści rozmowę
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
@@ -1399,6 +1401,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/drive/anuluj": lambda b: get_drive().cancel(b.get("project", "")),
           "/api/drive/odlacz": lambda b: get_drive().disconnect(b.get("project", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
+          "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", "")),
+          "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
@@ -2888,6 +2892,10 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_drive().status((parse_qs(url.query).get("project") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/asystent":
+            code, err, extra = get_agents().assistant_get()
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/api/project/chat":
             code, err, extra = get_agents().project_chat_get((parse_qs(url.query).get("project") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
@@ -2986,7 +2994,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/post/obraz":
             return self._post_image_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/film/zmien") else 4096)
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/film/zmien") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")

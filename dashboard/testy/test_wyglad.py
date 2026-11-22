@@ -95,8 +95,8 @@ class Wyglad(unittest.TestCase):
         self.assertNotIn("Wymaga Ciebie", self.html)
         self.assertIn("ty:'Dla Ciebie'", self.html)
 
-    def test_okruszek_prowadzi_do_przegladu(self):
-        self.assertIn("""<a href="#przeglad">Przegląd</a>""", self.html)
+    def test_okruszek_prowadzi_do_startu(self):
+        self.assertIn("""<a href="#start">Start</a>""", self.html)
 
     def test_przejdz_do_tresci(self):
         self.assertIn('class="sk-skip"', self.html)
