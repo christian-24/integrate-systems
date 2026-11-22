@@ -1969,6 +1969,11 @@ details.mk-done{padding:0}
 @media (max-width:820px){.st-k{gap:8px}.st-k a{padding:10px 12px}.st-k b{font-size:24px}.st-p a{grid-template-columns:minmax(0,1fr) 64px 40px;padding:12px}
   .as-fab{bottom:calc(72px + env(safe-area-inset-bottom,0px));right:12px}.as-box{left:8px;right:8px;width:auto;bottom:calc(68px + env(safe-area-inset-bottom,0px));max-height:calc(100vh - 140px)}}
 @media print{.as-fab,.as-box{display:none}}
+.pt-more{position:relative;align-self:center}.pt-more summary{cursor:pointer;padding:6px 10px;color:var(--ink-3);list-style:none}.pt-more summary::-webkit-details-marker{display:none}.pt-more[open]>a{display:block;padding:6px 10px}.pt-more[open]{background:var(--surface)}
+/* wiersz sprawy: tytuł, projekt, termin i akcja; dopiski (następny krok, priorytet) w szczegółach zadania */
+.rows .gw,.rows .ty-prio,.pp .muted.num{display:none!important}
+.nav-more summary{cursor:pointer;padding:8px 10px;color:var(--ink-3);font-size:13px;list-style:none}.nav-more summary::-webkit-details-marker{display:none}.nav-more summary::before{content:'▸ '}.nav-more[open] summary::before{content:'▾ '}
+.bnav{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 </style>
 
 <div class="app">
@@ -2059,8 +2064,11 @@ const VDESC={start:'Start: postęp projektów i asystent',przeglad:'Przegląd: c
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica: zadania ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
   agenci:'Agenci: kto pracuje i historia uruchomień',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (pozostałe widoki z licznikami i lista projektów) */
-const BNAV=['start','ty','marketing','tablica'];
-const PTABS=[['plan','Plan'],['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy'],['ksiega','Księga'],['marketing','Marketing']];
+const BNAV=['start','ty','marketing'];
+/* menu boczne: główne widoki; reszta w zwiniętym „Więcej” */
+const MAINV=['start','ty','marketing'];
+const PTABS=[['plan','Plan'],['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga']];
+const PTMAIN=3;
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
 
@@ -3633,8 +3641,8 @@ function tyFold(L,o,keyOf,min,sumOf){
 function vTy(){
   const ys=youState(),n=youTotal(ys),su=x=>pl(x,'sprawa','sprawy','spraw');tyIdN=0;
   const head='<div class="pagehead"><div class="ph-main"><h1>'+VNAME.ty+'<span class="hcnt num" title="'+n+' '+su(n)+': decyzje, dziś i najbliższe 7 dni"><span class="sr-only">, </span>'+n+'<span class="sr-only"> '+su(n)+'</span></span></h1>'+
-    '<p>Decyzje i Twoje zadania na dziś i najbliższe 7 dni.</p></div></div>';
-  if(!n&&!ys.youLater.length&&!ys.checked.length)return head+bkLine('ty-bk')+'<section class="panel"><p class="empty">Nic nie czeka na Ciebie. '+dsNav('#przeglad','Przegląd')+' '+dsNav('#tablica','Tablica')+'</p></section>';
+    '</div></div>';
+  if(!n&&!ys.youLater.length&&!ys.checked.length)return head+'<section class="panel"><p class="empty">Nic nie czeka na Ciebie. '+dsNav('#start','Start')+'</p></section>';
   const all=ys.youToday.concat(ys.youWeek,ys.youLater),near=ys.youToday.concat(ys.youWeek),F=tyFlt();
   if(F.p!=='all'&&!P(F.p))F.p='all';
   const on=F.k!=='all'||F.p!=='all',okP=pid=>F.p==='all'||pid===F.p;
@@ -3666,7 +3674,7 @@ function vTy(){
     /* licznik = sprawy widoczne w tej grupie; decyzje są tylko w Decyzjach */
     const own=L.filter(x=>!tyIsDec(x)),vis=own.filter(fx),late=vis.filter(x=>x.late).length;
     const ready=vis.filter(x=>!tyWaits(x)),wait=vis.filter(tyWaits),o=Object.assign({grp:k},ctx);
-    const ex=(late?'<span class="lz red">'+late+' po terminie</span>':'')+(k==='dzis'?'<span class="num" title="Szacowany czas Twojej pracy na dziś wobec pojemności dnia">Twój czas: '+op.m+' z '+op.cap+' min</span>':'');
+    const ex=late?'<span class="lz red">'+late+' po terminie</span>':'';
     const tip=vis.length?'':on&&own.length?'Filtr ukrywa sprawy z tego okresu.':e;
     const c=dsCut('ty-'+k,ready,k==='pozniej'?5:12,'ty-l-'+k),wo=!!tyWOpen()[k];
     const sub=wait.length?'<h3 class="ty-sub"><button class="linkbtn" data-tyw="'+k+'" data-k="tyw:'+k+'" aria-expanded="'+wo+'"'+(wo?' aria-controls="ty-wl-'+k+'"':'')+'>Czekają na inne zadania ('+wait.length+')</button></h3>'+
@@ -3674,12 +3682,12 @@ function vTy(){
     const rows=k==='tydzien'?tyFold(c.L,o,x=>x.t?x.t.project:'',3,pSum):c.L.map(x=>todayRow(x,o)).join('');
     /* pusta grupa: ukryta (przy filtrze zostaje nagłówek z „0 z N”, żeby było widać, co filtr schował) */
     if(!vis.length&&!(on&&own.length))return '';
-    const h2=hd('ty-g-'+k,t,vis.length,own.length,ex,tip),body=(k==='dzis'?overBlock(ys):'')+(ready.length?'<ul class="rows" id="ty-l-'+k+'">'+rows+'</ul>'+c.more:'')+sub;
+    const h2=hd('ty-g-'+k,t,vis.length,own.length,ex,tip),body=(ready.length?'<ul class="rows" id="ty-l-'+k+'">'+rows+'</ul>'+c.more:'')+sub;
     /* Później zwinięte: plan na tygodnie naprzód nie jest dzisiejszym obciążeniem */
     if(k==='pozniej')return '<details class="panel ty-grp ty-later'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" data-pvdet="ty-later"'+(PF.more['ty-later']?' open':'')+' aria-labelledby="ty-g-'+k+'"><summary>'+h2+'</summary>'+body+'</details>';
     return '<section class="panel ty-grp'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" tabindex="-1" aria-labelledby="ty-g-'+k+'">'+h2+body+'</section>'}).join('');
   /* bez kafli dziś/7 dni/później: te same liczby są w nagłówkach grup niżej */
-  return head+flt+decS+chkS+grp;
+  return head+(on?flt:'')+decS+grp+(chkS?'<details class="pj-fold" data-pvdet="ty-chk"'+(PF.more['ty-chk']?' open':'')+'><summary>Do zamknięcia ('+chA.length+')</summary>'+chkS+'</details>':'');
 }
 function vTablica(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -4396,7 +4404,7 @@ function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+projChatBox(p)+driveBox(p);
+  if(tab==='plan')body=planView(p)+driveBox(p);
   else if(tab==='tablica')body=projBoard(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
@@ -4416,9 +4424,9 @@ function vProjekt(p,tab){
   const open=PF.more['pj-ov']===true;
   const line=tab==='plan'?'<details class="pj-ov" data-pvdet="pj-ov"'+(open?' open':'')+'><summary class="pj-sum">'+sum+'</summary><div class="pj-ovb">'+ov+'</div></details>':'<p class="pj-sum">'+sum+'</p>';
   return '<div class="phead"><div class="ptitle">'+av(p)+'<h1>'+esc(p.name)+'</h1>'+(p.alias?'<span class="muted">'+esc(p.alias)+'</span>':'')+lz(p.pst)+'</div>'+
-    (p.description&&tab==='plan'?'<p class="desc">'+esc(p.description)+'</p>':'')+line+'</div>'+
-    '<nav class="tabs ptabs" aria-label="Widoki projektu">'+PTABS.map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+
-    (PTD[tab]?'<p class="pj-tabd">'+PTD[tab]+'</p>':'')+body;
+    line+'</div>'+
+    '<nav class="tabs ptabs" aria-label="Widoki projektu">'+PTABS.filter((x,i)=>i<PTMAIN||x[0]===tab).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+
+    '<details class="pt-more"><summary>Więcej</summary>'+PTABS.slice(PTMAIN).filter(x=>x[0]!==tab).map(([k,n])=>'<a href="'+phref(p,k)+'">'+n+'</a>').join('')+'</details></nav>'+body;
 }
 /* ---------- Plan projektu: najbliższe 7 dni i rozmowa o projekcie ----------
    Dzień: Twoje zadania (po terminie trafiają na dziś), filmy do nagrania (dzień przed publikacją, najwcześniej dziś),
@@ -4469,7 +4477,7 @@ function planView(p){
   const ks=Object.keys(day).sort();
   let h='';
   if(dec.length)h+='<section class="panel" id="pdec"><h2>Decyzje <small class="num">'+dec.length+'</small></h2><ul class="rows">'+dec.map(x=>todayRow(x,{prio:false})).join('')+'</ul></section>';
-  if(rk.length)h+='<section class="panel" id="prisk"><h2>Ryzyka <small class="num">'+rk.length+'</small></h2><ul class="rows">'+rk.map(s=>'<li><div><a class="lk t" href="'+phref(p,'etapy')+'">'+esc(s.title)+'</a><div class="s">'+lz(s.st)+
+  if(false&&rk.length)h+='<section class="panel" id="prisk"><h2>Ryzyka <small class="num">'+rk.length+'</small></h2><ul class="rows">'+rk.map(s=>'<li><div><a class="lk t" href="'+phref(p,'etapy')+'">'+esc(s.title)+'</a><div class="s">'+lz(s.st)+
       '<span class="num">'+(isDay(s.date)?'termin '+ddl(s.date)+' · ':'')+'otwarte: '+s.open+' z '+s.total+'</span></div></div>'+
       '<div class="r"><a class="btn sec sm" href="'+phref(p,'etapy')+'" aria-label="'+esc((s.st==='late'?'Zmień termin etapu: ':'Sprawdź etap: ')+s.title)+'">'+(s.st==='late'?'Zmień termin':'Sprawdź etap')+'</a></div></li>').join('')+'</ul></section>';
   h+='<section class="panel" id="pplan"><h2>Najbliższe 7 dni</h2>';
@@ -6636,10 +6644,10 @@ function vMarketing(){
   const pubAll=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
   const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
   const late=mine.filter(t=>t.state!=='done'&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Publikacje z kampanii: obejrzyj, zatwierdź, opublikuj.</p></div></div>'+
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
   if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
-  h+=mkCamps(fp)+recPanel(fp);
+  h+=recPanel(fp);
   const wk=items.filter(t=>!(t.state!=='done'&&t.date.slice(0,10)<D.todayKey));
   h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b>'+(wk.length?' <small class="num">'+wk.length+'</small>':'')+'</span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzednie 7 dni">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następne 7 dni">→</button>'+
@@ -6651,7 +6659,7 @@ function vMarketing(){
     if(nx){const k=nx.date.slice(0,10);go='<div class="row mk-next"><button type="button" class="btn sec sm" data-mwset="'+Math.floor(diff(k,D.todayKey)/7)+'" data-k="mwnext">Następna publikacja: '+esc(ddl(k))+'</button></div>'}
     h+='<p class="empty">Brak publikacji w tych dniach. Publikacje dodaje agent z kampanii projektu (Projekt → Marketing).</p>'+go+'</section>';
   }else h+='<ol class="mtl">'+mkDays(days,wk)+'</ol></section>';
-  return h+pubPanel()+studioHead(days);
+  return h+'<details class="pj-fold mk-more" data-pvdet="mk-more"'+(PF.more['mk-more']?' open':'')+'><summary>Kampanie, kanały i studio</summary>'+mkCamps(fp)+pubPanel()+studioHead(days)+'</details>';
 }
 /* Kampanie w toku (wynik kampanii, przeniesiony ze Wskaźników): wiersz na kampanię — nazwa, projekt, wynik X z Y z paskiem;
    nazwa prowadzi do zakładki Marketing projektu (tam „Wpisz wynik”) */
@@ -7151,7 +7159,8 @@ const NAVU={ty:'spraw',terminy:'po terminie',blokady:'zadań czeka na Twoje zada
 function renderSide(r){
   const you=youTotal(youState()),ag=runs().filter(isAct).length,byc=bkSafe(),tl=tmLateN(),C={ty:[you],terminy:[tl,'red'],blokady:[byc.n,'plain'],agenci:[ag,'blue']};
   const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],h==='blokady'?bkYouCntT(C[h][0]):''):'';
-  setHtml($('#nav'),VIEWS.map(h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+cnt(h)+'</a>').join(''));
+  const nvA=h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+(MAINV.indexOf(h)>=0?cnt(h):'')+'</a>',rest=VIEWS.filter(h=>MAINV.indexOf(h)<0);
+  setHtml($('#nav'),MAINV.map(nvA).join('')+'<details class="nav-more" data-pvdet="nav-more"'+(PF.more['nav-more']||rest.indexOf(r.v)>=0?' open':'')+'><summary>Więcej</summary>'+rest.map(nvA).join('')+'</details>');
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
   /* dolny pasek (telefon i wąskie okno): 4 widoki z tym samym licznikiem co menu + „Więcej” z pozostałymi (zaznaczone, gdy otwarty widok jest poza paskiem) */
   const inBar=BNAV.indexOf(r.v)>=0,shortN={tablica:'Tablica'};
