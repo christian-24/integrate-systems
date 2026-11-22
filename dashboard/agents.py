@@ -32,6 +32,7 @@ import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
 import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela)
+import strona  # noqa: E402  (podgląd strony WWW projektu)
 ROOT = os.path.dirname(HERE)
 WINDOWS = os.name == "nt"
 # Windows: serwer działa pod pythonw (bez konsoli), więc żaden proces potomny nie może otwierać okna.
@@ -316,6 +317,7 @@ class Manager:
         self.cards = karty.Library((get("PANEL_ASYSTENT_KARTY") or "").strip() or
                                    os.path.join(self.runs_dir, "czat", "asystent-karty.json"))
         self.voice = glos.Recognizer(self.env, idle=_int(get("PANEL_GLOS_BEZCZYNNOSC"), glos.GLOS_IDLE))
+        self.site = strona.Site(self)         # podgląd strony WWW projektów z polem karty strona:
         self._load()
         self._chat_restore()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
@@ -713,8 +715,9 @@ class Manager:
                 out.append("%s: %s" % (label, d[key]))
         return out
 
-    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None):
-        """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia."""
+    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=()):
+        """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia.
+        site_rules: zasady zadania strony WWW (strona.Site.rules)."""
         rules = "AGENTS.md" if tool == "codex" else "CLAUDE.md"
         head = ["Pracujesz w projekcie „%s” według %s i KARTA.md." % (name, rules),
                 "Wykonaj jedno zadanie z pliku %s, wiersz %d: „%s”." % (git["file"] if git else file, line, title)]
@@ -757,7 +760,7 @@ class Manager:
             "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + film_rules(title) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES + [
+        ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
@@ -831,7 +834,8 @@ class Manager:
                     "label": project.get("alias") or project.get("name") or task["project"],
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
                              "line": task["line"], "title": title, "stage": stage,
-                             "detail": with_answers(task, data["tasks"])}}
+                             "detail": with_answers(task, data["tasks"]),
+                             "site": self.site.task_site(project, title) if tool == "claude" else None}}
             self._task_command(priv)
             self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
@@ -848,13 +852,15 @@ class Manager:
                     "cards": os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))}
         else:
             cwd, extra, info = folder, _card_dirs(folder), None
+        site = t.get("site")
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
-                                  git=info)
+                                  git=info, site_rules=self.site.rules(site, cwd) if site else ())
         if t["tool"] == "codex":
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-C", cwd] + (extra if git else []) + ["-"]
         else:
-            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", TASK_TOOLS])
+            tools = ",".join([TASK_TOOLS] + (self.site.tools(site) if site else []))
+            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", tools])
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
     # ---------- rozmowa o zadaniu ----------
@@ -1603,8 +1609,9 @@ class Manager:
         return name
 
     @staticmethod
-    def _exclude_agent_dir(top):
-        """/.agent/ w .git/info/exclude: katalogi robocze nie brudzą stanu repozytorium (lokalnie, bez commita)."""
+    def _exclude_agent_dir(top, extra=()):
+        """/.agent/ (i extra: zrzuty, zależności i wynik budowania strony) w .git/info/exclude: katalogi robocze
+        nie brudzą stanu repozytorium (lokalnie, bez commita)."""
         code, out, _ = git_run(top, ["rev-parse", "--git-common-dir"], timeout=15)
         if code != 0:
             return
@@ -1615,10 +1622,11 @@ class Manager:
             if os.path.exists(path):
                 with open(path, encoding="utf-8", errors="replace") as f:
                     text = f.read()
-            if "/%s/" % AGENT_DIR not in text.split("\n"):
+            want = [x for x in ("/%s/" % AGENT_DIR,) + tuple(extra) if x not in text.split("\n")]
+            if want:
                 os.makedirs(os.path.dirname(path), exist_ok=True)
                 with open(path, "a", encoding="utf-8") as f:
-                    f.write(("" if not text or text.endswith("\n") else "\n") + "/%s/\n" % AGENT_DIR)
+                    f.write(("" if not text or text.endswith("\n") else "\n") + "\n".join(want) + "\n")
         except OSError:
             pass
 
@@ -1843,6 +1851,10 @@ class Manager:
             if live is not None:
                 live.update(merged=now_iso(), mergeCommit=sha)
                 self._save(live)
+        try:
+            self.site.after_merge(rec)
+        except Exception as e:
+            log("Podgląd strony po scaleniu: %s" % e)
         return 200, "", {"commit": sha}
 
     # ---------- materiał z wyniku dla następników (po:) ----------
@@ -2977,6 +2989,10 @@ class Manager:
             self._save(rec)
         if state != "stopped" and rec["kind"] != "check":
             self._notify(rec, priv)
+        try:
+            self.site.after_run(dict(rec))
+        except Exception as e:
+            log("Podgląd strony po uruchomieniu: %s" % e)
         self._login_alert()
         self.refresh_tools(force=True)
         self._pump()

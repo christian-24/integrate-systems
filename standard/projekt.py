@@ -89,6 +89,11 @@ INSTAGRAM = re.compile(r"^[A-Za-z0-9._]{1,30}$")      # nazwa profilu Instagram 
 TIKTOK = re.compile(r"^[A-Za-z0-9._]{2,24}$")         # nazwa profilu TikTok (pole karty tiktok:)
 PAGE_NAME = re.compile(r"^[^|<>`\n]{1,100}$")         # strona Facebook, strona albo profil LinkedIn (nazwa jak na ekranie)
 META = re.compile(r"^\s*-\s*([^:|\[\]`]{1,30}?)\s*:\s*(.*?)\s*$")
+# Strona WWW projektu (pola karty strona:, strona build:, strona wynik:; dashboard/AGENCI.md, „Podgląd strony”).
+SITE_PATH = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._-]*(?:/[A-Za-z0-9_][A-Za-z0-9._-]*)*$")
+SITE_BUILD = "npm ci && npm run build -- --base=./"     # Vite: względne ścieżki, podgląd działa pod /podglad/…
+SITE_OUT = "dist"
+SITE_BUILD_MAX = 300
 
 
 def slug(text):
@@ -731,7 +736,7 @@ def read_project(path, pid=None, decision=None):
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
                "priority": fields["priority"], "instagram": fields["instagram"], "facebook": fields["facebook"],
                "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"],
-               "questions": questions}
+               "site": fields["site"], "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
     if fields["phase"]:
@@ -847,9 +852,38 @@ def card_fields(meta, decision=None):
     film_owner = raw in ("ty", "właściciel", "wlasciciel")
     if raw and not film_owner and raw not in ("panel", "agent"):
         errors.append("nagrywa: %s (dozwolone: ty, panel)" % meta["nagrywa"])
+    site = site_fields(meta, errors)
     return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
             "priority": priority, "instagram": instagram.lower(), "facebook": pages["facebook"],
-            "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "errors": errors}
+            "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "site": site, "errors": errors}
+
+
+def site_path_ok(value):
+    """Folder względem folderu projektu: „.” albo ścieżka bez „..”, bez / na początku i bez spacji."""
+    return value == "." or bool(SITE_PATH.match(value) and ".." not in value.split("/"))
+
+
+def site_fields(meta, errors):
+    """Pola strony WWW: {"dir", "build", "out", "customBuild"} albo None (karta bez „- strona:”). Błędy do errors."""
+    raw = meta.get("strona", "").strip().strip("`")
+    raw = raw.rstrip("/") or raw
+    if not raw:
+        for key in ("strona build", "strona wynik"):
+            if meta.get(key, "").strip():
+                errors.append("%s: bez pola strona: (folder strony w repozytorium)" % key)
+        return None
+    if not site_path_ok(raw):
+        errors.append("strona: %s (folder strony względem folderu projektu, np. site)" % raw)
+        return None
+    build = meta.get("strona build", "").strip().strip("`")
+    if len(build) > SITE_BUILD_MAX:
+        errors.append("strona build: najwyżej %d znaków" % SITE_BUILD_MAX)
+        build = ""
+    out = meta.get("strona wynik", "").strip().strip("`").rstrip("/")
+    if out and (out == "." or not site_path_ok(out)):
+        errors.append("strona wynik: %s (folder wyniku budowania względem folderu strony, np. dist)" % out)
+        out = ""
+    return {"dir": raw, "build": build or SITE_BUILD, "out": out or SITE_OUT, "customBuild": bool(build)}
 
 
 def stage_done(stage, tasks):

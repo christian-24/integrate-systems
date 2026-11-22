@@ -1820,6 +1820,7 @@ def get_agents():
     with _agents_lock:
         if _agents is None:
             _agents = agents.Manager(load_projects, _write_lock, projekt)
+            _agents.site.secret = _derive("panel-podglad").encode("ascii")   # adresy podglądu trwają po restarcie
         return _agents
 
 
@@ -1834,6 +1835,9 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
           "/api/project/meta": lambda b: update_meta(b),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
+          "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
+          "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
+          "/api/strona/koncepcja": lambda b: get_agents().site.concept(b),
           "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
           "/api/drive/start": lambda b: get_drive().start(b.get("project", ""), b.get("link", "")),
           "/api/drive/finish": lambda b: get_drive().finish(b.get("project", ""), b.get("url", "")),
@@ -3354,6 +3358,11 @@ class Handler(BaseHTTPRequestHandler):
             return True
         if self.command == "GET" and path.startswith("/media/"):     # plik dla Instagrama: jednorazowy token w ścieżce
             return True
+        if path.startswith("/podglad/"):        # podgląd strony w ramce bez ciasteczka: klucz projektu w ścieżce
+            if self.command == "GET" and get_agents().site.key_ok(path):
+                return True
+            self._send(401, "Wymagane hasło.", "text/plain; charset=utf-8")
+            return False
         if self.command in ("GET", "OPTIONS") and path.startswith("/udostepnij/"):   # pakiet: token w ścieżce
             return True
         if path == "/terminy.ics":
@@ -3433,6 +3442,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, fh.read(), ctype, [("Cache-Control", "no-store")])
         if path.startswith("/udostepnij/"):
             return self._share_get(path, parse_qs(url.query))
+        if path.startswith("/podglad/"):
+            code, body, ctype, headers = get_agents().site.serve(path)
+            return self._send(code, body, ctype, headers)
+        if path == "/api/strona":
+            code, err, extra = get_agents().site.info((parse_qs(url.query).get("project") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path in ("/api/udostepnij", "/api/instagram/udostepnij"):       # czy rozszerzenie pobrało pakiet
             st = SHARES.status((parse_qs(url.query).get("t") or [""])[0])
             return self._send(200 if st else 404, json.dumps(dict(st or {}, ok=bool(st)), ensure_ascii=False),
@@ -3584,7 +3600,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
-                                                         "/api/film/zmien", "/api/post/tekst",
+                                                         "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
                                                          "/api/scenariusz/tekst") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),

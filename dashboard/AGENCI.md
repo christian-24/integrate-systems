@@ -326,6 +326,9 @@ Odpowiedzi z formularza `pyta:` poprzedników (`po:`) trafiają do polecenia jak
 `GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
 błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.
 | `/api/agent/automat` | `{"enabled": bool}` | włącza i wyłącza Automat |
+| `/api/strona/zbuduj` | `{"project"}` | budowanie podglądu strony w tle (gdy trwa: jeszcze raz po nim); 409 bez pola `strona:` |
+| `/api/strona/uwaga` | `{"project", "text", "view": "telefon"\|"komputer", "page", "selector", "elementText"}` | zadanie agenta z uwagi i uruchomienie; odpowiedź `note`, `runId`; 400 bez tekstu |
+| `/api/strona/koncepcja` | `{"project", "path", "text"?}` | zadanie „według koncepcji”; 400, gdy ścieżki nie ma w projekcie |
 | `/api/project/add` | `{"path": folder, "name"?: nazwa, "files": bool}` | dopisuje istniejący folder do rejestru; `files: true` zakłada brakujące pliki standardu (niczego nie nadpisuje) |
 | `/api/project/remove` | `{"id": projekt}` | usuwa z rejestru; pliki zostają |
 
@@ -376,6 +379,52 @@ gdy rozpoznawanie nie jest zainstalowane; 422, gdy nic nie rozpoznano. `POST /ap
 w tle (przy naciśnięciu „Mów”). Pracownik działa jako użytkownik panelu, startuje przy pierwszym nagraniu i kończy się
 po `PANEL_GLOS_BEZCZYNNOSC`. W panelu: przycisk „Mów” (klik: start, klik: stop; myszką także przytrzymanie) albo
 spacja, gdy fokus nie jest w polu ani na przycisku (przytrzymaj albo naciśnij dwa razy); Esc przerywa nagranie.
+
+### Podgląd strony (zakładka „Strona”)
+
+Projekt z polem karty `- strona: folder` (opcjonalnie `strona build:`, `strona wynik:`; `standard/STANDARD.md`) ma
+w panelu zakładkę „Strona”. Kod: `dashboard/strona.py` (`Manager.site`).
+
+1. **Budowanie podglądu.** Panel uruchamia polecenie budowania w folderze strony w folderze projektu (domyślnie
+   `npm ci && npm run build -- --base=./`). Przy `PANEL_AGENT_USER` jako agent: `sudo -n -u agent --
+   /usr/local/lib/integrate/podglad-buduj.sh <folder strony> <polecenie>` (skrypt i reguła sudoers z
+   `uruchom/serwer/zainstaluj-podglad.sh`; skrypt przyjmuje tylko foldery w `/home/panel/projekty`), bez tego
+   `/bin/sh -c`. Czas najwyżej 15 min. Wynik (`dist`) panel kopiuje bez dowiązań (najwyżej 5000 plików, 300 MB) do
+   `<PANEL_RUNS_DIR>/strona/<projekt>/wynik`; nieudane budowanie zostawia poprzedni podgląd. Stan i uwagi:
+   `<PANEL_RUNS_DIR>/strona/<projekt>/stan.json`, dziennik ostatniego budowania obok.
+2. **Serwowanie.** `GET /podglad/<projekt>/<klucz>/<ścieżka>`: klucz to HMAC z hasła panelu i id projektu (adres z
+   `/api/strona`). Z innego urządzenia wystarcza ważny klucz albo sesja; bez nich 401. Odpowiedzi mają nagłówek
+   `Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups` (strona nie ma dostępu do ciasteczek
+   i API panelu, także otwarta w nowej karcie), `Referrer-Policy: no-referrer` i `Access-Control-Allow-Origin: *`
+   (moduły JS i czcionki z dokumentu w piaskownicy). Ścieżki z `..` albo `\`, dowiązania i pliki poza wynikiem: 404.
+   Do HTML panel dopisuje w `<head>` skrypt trybu „Wskaż” (postMessage do panelu; panel przyjmuje wiadomości tylko
+   z ramki zakładki).
+3. **Uwaga.** „Wyślij agentowi” (`/api/strona/uwaga`) dopisuje do „Do rozplanowania” zadanie
+   `Strona: <początek uwagi> | kto: claude | kiedy: dziś` z `cel:` (uwaga, podstrona, widok telefon 390 px albo
+   komputer 1440 px, selektor CSS i tekst wskazanego elementu) i `gotowe gdy:`, i od razu je uruchamia jak
+   `/api/agent/run` (gdy uruchomienie jest zablokowane, zadanie czeka w Zadaniach, a uwaga pokazuje powód).
+   „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`) zakłada tak samo zadanie
+   `Strona według koncepcji: <ścieżka>` z `materiał:` (plik albo folder w projekcie; podpowiedzi: pliki `.md`
+   i foldery z nimi do 3 poziomów).
+4. **Polecenie agenta** (zadania `Strona: …` i `Strona według koncepcji: …`, tylko Claude): zwykłe zasady zadania
+   oraz: kod w folderze strony; budowanie (`npm ci --prefix …`, `npm run build --prefix … -- --base=./` albo
+   polecenie z karty); zrzuty ekranu `zrzut-strony.py <wynik> 390|1440 <katalog roboczy>/.zrzuty/….png`, obejrzane
+   narzędziem Read i porównane z celem (najwyżej 3 rundy); bez publikacji, wdrożenia i push; koniec `[x]` bez
+   `wymaga: odbiór` (ocena w podglądzie) albo `[!]`. `--allowedTools` dostaje dodatkowo `Bash(npm ci:*)`,
+   `Bash(npm install:*)`, `Bash(npm run build:*)` i `Bash(<polecenie zrzutu>:*)`. Polecenie zrzutu: `PANEL_ZRZUT`
+   albo przy `PANEL_AGENT_USER` `/home/agent/narzedzia/pw/bin/python /usr/local/lib/integrate/zrzut-strony.py`
+   (Python agenta z Playwright), bez niego `uruchom/serwer/zrzut-strony.py` (Python filmu albo `python3`).
+   `.git/info/exclude` repozytorium dostaje `.zrzuty/`, `node_modules/` i `/<folder strony>/<wynik>/`, więc te
+   pliki nie trafiają do commita gałęzi.
+5. **Po uruchomieniu** (`Manager._finish` → `Site.after_run`): błąd agenta albo `[!]` → uwaga „nie wyszło” z powodem.
+   Sukces na gałęzi uruchomienia: gałąź bez zmian w folderze strony → „nie wyszło”; inaczej panel scala ją
+   (`/api/agent/merge`, lokalnie, bez push), buduje podgląd i zamyka zadanie (`[x]`). Bez gałęzi: samo budowanie.
+   Uwaga „zrobione” dopiero po udanym budowaniu. Scalenie innej gałęzi, która zmieniła pliki strony, też przebudowuje
+   podgląd.
+
+Stany uwagi: `czeka` (w kolejce albo nieuruchomione), `pracuje` (agent albo scalenie i budowanie), `zrobione`,
+`nie wyszło` (z jednym zdaniem powodu). Zrzuty przez MCP Playwright: nie, bo wymagają pakietów npm i osobnego procesu
+w uruchomieniu; skrypt Pythona korzysta z Playwright, który jest już na serwerze, i daje agentowi plik PNG do Read.
 
 ### Grafiki (Codex)
 
@@ -432,3 +481,7 @@ jest w menu ⋯. Kolejne polecenie poprawia ostatnią wersję. Ścieżek serwera
 Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i klucz lokalny: `testy/test_runda3_agenci.py`
 (tymczasowe repozytorium git). Skutki pytań, licznik, kontrola serwera przy zadaniu, prompt (`skutek:`, `gotowe gdy`)
 i odmowa scalenia z plikami sekretów: `testy/test_runda5_serwer.py` (atrapa w trybie `sekret`).
+Podgląd strony (pola karty, budowanie atrapą bez Node.js, `/podglad/`, uwaga → zadanie → scalenie i podgląd,
+koncepcja, zrzut-strony.py pomijany bez Playwright): `testy/test_strona.py` (atrapa w trybach `strona`,
+`strona-bez-zmian`). `GET /api/strona?project=`: `site`, `build` (`state` ok|building|error, `at`, `error`, `log`,
+`version`), `url` (pusty bez podglądu), `notes`, `docs`, `widths`.

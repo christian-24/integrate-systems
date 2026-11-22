@@ -16,6 +16,8 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   commit   jak plik, a zmiany zatwierdza sam (git commit w katalogu roboczym)
   sekret   jak plik, a w katalogu roboczym tworzy też .env.local i certyfikat/serwer.pem (atrapy sekretów)
   scenariusz  jak ok, a pisze plik posty/<folder>/scenariusz.md z promptu (SCRIPT); przy poprawce dopisuje ujęcie
+  strona   jak ok, a w folderze strony z promptu („Folder strony: …”) dopisuje akapit do index.html
+  strona-bez-zmian  jak ok, plików strony nie zmienia
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
   (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”. Tryby: czat-wolno (odpowiedź
   po 1,5 s), login (błąd 401), smieci (tekst zamiast JSON), wolno (bez odpowiedzi do limitu czasu).
@@ -326,6 +328,13 @@ def main(argv):
         tool("Edit", {"file_path": os.path.join(os.getcwd(), edited)})
     if how == "scenariusz":
         write_script(prompt)
+    if how in ("strona", "strona-bez-zmian") and edited:
+        site = re.search(r"Folder strony: (\S+?)\. ", prompt)
+        if site and how == "strona":
+            page = os.path.join(site.group(1), "index.html")
+            with open(page, "a", encoding="utf-8") as f:
+                f.write("<p>Zmiana agenta</p>\n")
+            tool("Edit", {"file_path": page})
     if how in ("plik", "commit", "sekret") and edited:
         if how == "sekret":
             os.makedirs("certyfikat", exist_ok=True)

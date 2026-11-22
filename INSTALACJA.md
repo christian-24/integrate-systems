@@ -60,6 +60,17 @@ Szczegóły: `dashboard/AGENCI.md`, sekcja „Grafiki (Codex)”.
 Sprawdzenie: widok Agenci → „Test połączenia”. Panel usuwa klucze API ze środowiska agentów,
 więc praca idzie na limit subskrypcji. Koszt w panelu to równowartość, nie opłata.
 
+### Podgląd stron WWW
+
+Zakładka „Strona” (projekty z polem karty `- strona: site`) buduje stronę na serwerze (Node.js) i daje agentowi
+zrzuty ekranu (Playwright agenta w `/home/agent/narzedzia/pw`). Instalacja i próba jednym poleceniem:
+
+```bash
+sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-podglad.sh
+```
+
+Szczegóły: `dashboard/AGENCI.md`, sekcja „Podgląd strony”.
+
 ## PC z Windows
 
 1. Zainstaluj Python 3 z python.org (zaznacz „Add python.exe to PATH”) i Git for Windows.

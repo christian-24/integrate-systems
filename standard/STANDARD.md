@@ -27,6 +27,12 @@ bez @), `- facebook: Nazwa strony` i `- linkedin: Nazwa strony albo profilu` (na
 Rozszerzenie Chrome sprawdza je przy „Udostępnij na …” (`facebook`, `linkedin`, `tiktok` w danych projektu).
 `- nagrywa: ty`: filmy projektu nagrywa właściciel według scenariusza nagrania (sekcja „Scenariusz nagrania”);
 `panel` albo brak pola: film robi panel ze scenariusza filmu (`filmOwner` w danych projektu).
+`- strona: site`: projekt ma stronę WWW w tym folderze (względem folderu projektu, `.` to sam folder). Panel pokazuje
+wtedy zakładkę „Strona”: podgląd, uwagi do agenta i zlecenie według koncepcji (`site` w danych projektu; opis
+w `dashboard/AGENCI.md`, „Podgląd strony”). Opcjonalnie `- strona build: polecenie` (domyślnie
+`npm ci && npm run build -- --base=./`, Vite ze ścieżkami względnymi) i `- strona wynik: folder` (względem folderu
+strony, domyślnie `dist`). Ścieżka z `..`, z `/` na początku albo ze spacją jest brakiem karty. Bez pola `strona:`
+projekt nie ma podglądu.
 
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
