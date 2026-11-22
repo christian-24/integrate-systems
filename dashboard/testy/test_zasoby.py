@@ -60,6 +60,21 @@ class Zasoby(unittest.TestCase):
         self.assertGreater(st["disk"]["total"], 0)
         self.assertEqual(st["cpus"], os.cpu_count() or 1)
 
+    def test_bez_zamontowanych_dyskow(self):
+        """Katalog na innym systemie plików (Google Drive w media/drive) nie jest liczony."""
+        self.put("karta/media/wgrane.jpg", 3000)
+        drive = os.path.dirname(self.put("karta/media/drive/film.mp4", 500000))
+        self.put("karta/media/drive/zdjecia/a.jpg", 400000)
+        real = zasoby._dev
+        zasoby._dev = lambda p: 999 if os.path.realpath(p) == os.path.realpath(drive) else real(p)
+        try:
+            size, _, files = zasoby.tree_size(os.path.join(self.tmp, "karta"))
+        finally:
+            zasoby._dev = real
+        self.assertEqual(files, 1)
+        self.assertLess(size, 100000)
+        self.assertEqual(zasoby.tree_size(os.path.join(self.tmp, "karta"))[2], 3)   # bez montowania: wszystko
+
     def test_pamiec_podreczna(self):
         now = [1000.0]
         calls = []

@@ -99,7 +99,8 @@ while IFS= read -r -d '' p; do
   printf '%s\0' "${p#./}" >> "$LISTA"
   n_dane=$((n_dane + 1))
 done < <(cd "$BAZA" && {
-  find ./IntegrateSystems/szkice -type f \( -path '*/posty/*' \( -iname '*.mp4' -o -iname '*.mov' \) -o -path '*/media/*' \) -print0 2>/dev/null
+  # -xdev: bez zamontowanych dysków (Google Drive w szkice/shield-silent/media/drive, zainstaluj-drive.sh)
+  find ./IntegrateSystems/szkice -xdev -type f \( -path '*/posty/*' \( -iname '*.mp4' -o -iname '*.mov' \) -o -path '*/media/*' \) -print0 2>/dev/null
   find ./projekty -mindepth 2 -maxdepth 2 -type d -name rozmowy -print0 2>/dev/null | xargs -0 -r -I{} find {} -type f -print0
 })
 

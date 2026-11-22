@@ -50,10 +50,21 @@ def uptime(path="/proc/uptime"):
         return None
 
 
+def _dev(path):
+    """Urządzenie (st_dev) ścieżki bez podążania za dowiązaniem albo None."""
+    try:
+        return os.lstat(path).st_dev
+    except OSError:
+        return None
+
+
 def tree_size(root):
-    """(bajty bez .git, bajty .git, pliki) bez podążania za dowiązaniami; nieczytelne pomija."""
+    """(bajty bez .git, bajty .git, pliki) bez podążania za dowiązaniami; nieczytelne pomija. Katalogi na innym
+    systemie plików niż root (zamontowany Google Drive w szkice/<karta>/media/drive) pomija."""
     size = git = files = 0
+    top = _dev(root)
     for dirpath, dirnames, filenames in os.walk(root, onerror=lambda e: None):
+        dirnames[:] = [d for d in dirnames if _dev(os.path.join(dirpath, d)) == top]
         in_git = ".git" in os.path.relpath(dirpath, root).split(os.sep)
         for name in filenames:
             try:
