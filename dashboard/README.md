@@ -73,7 +73,7 @@ Panel publikuje posty sam (`publikacja.py`): Facebook (strona projektu: zdjęcie
 firmowe połączone ze stroną; grafika jako JPEG albo film jako Reels). LinkedIn nie: regulamin API LinkedIn zabrania
 automatycznego publikowania, więc w poście jest „Udostępnij” (telefon: systemowe menu z grafiką albo filmem
 i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpisanym tekstem); plan ustawiasz w LinkedIn.
-- Połączenie: Agenci → Publikacja. Facebook: App ID, App Secret i token z Graph API Explorer; panel zapisuje tokeny
+- Połączenie: Marketing → Kanały publikacji. Facebook: App ID, App Secret i token z Graph API Explorer; panel zapisuje tokeny
   stron (nie wygasają) i przypisuje stronę do projektu. LinkedIn: token z OAuth Token Tools (60 dni).
   Tokeny w `PANEL_PUBLIKACJA_DIR` (domyślnie `~/dane/publikacja`, pliki 0600), nigdy w `/api/data`.
 - Plan: w publikacji z kampanii „Zaplanuj” (kanały, dzień, godzina) albo „Opublikuj teraz”; wiersz
@@ -94,7 +94,7 @@ Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: praw
 film jest starszy niż scenariusz albo obrazy posta, albo przyciskiem „Nagraj film”. Zmiana samego studia (szablon,
 marka, muzyka, logo) nagrywa od nowa tylko posty z dniem od dziś, nieopublikowane i bez filmu wgranego ręcznie
 (znacznik `.film-wgrany` przy wgraniu); starsze dostają w poście „Film jest starszy niż szablon albo marka”.
-Logowanie kontem demo z `~/dane/film/konto.json` (wpisujesz w Agenci → Publikacja), tylko na hoście z `strony` w marce
+Logowanie kontem demo z `~/dane/film/konto.json` (wpisujesz w Marketing → Kanały publikacji), tylko na hoście z `strony` w marce
 i tym samym co `url`; host sprawdzany także po przekierowaniu, nawigacja głównej ramki poza strony marki jest
 blokowana. Bez `strony` w marce pokaz otwiera tylko publiczne nazwy domen (bez adresów IP i sieci lokalnej).
 Przy błędzie zrzut `.film-blad.png` w folderze posta. Czekanie dłuższe niż 1,5 s (`czekaj_na`) jest wycięte z filmu.
