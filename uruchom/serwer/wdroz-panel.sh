@@ -115,7 +115,8 @@ as_panel git -C "$PROD" fetch -q --no-tags --no-write-fetch-head "$DEV" "+$GAL:r
 [ "$(as_panel git -C "$PROD" rev-parse refs/rozwoj/kandydat)" = "$SHA" ] || blad "gałąź $GAL zmieniła się w trakcie testów; wdróż ponownie"
 N=$(as_panel git -C "$PROD" rev-list --count "HEAD..$SHA")
 [ "$N" -gt 0 ] || { stan ok "Nic nowego do wdrożenia"; log "Brak nowych commitów"; exit 0; }
-if ! as_panel git -C "$PROD" merge -q --no-edit -m "Wdrożenie z gałęzi $GAL (${SHA:0:7})" "$SHA"; then
+# tożsamość jak w zapis-kart.sh: bez niej scalenie z commitem scalającym kończy się błędem (panel nie ma user.email)
+if ! as_panel git -C "$PROD" -c user.name="Serwer integrate" -c user.email="serwer@integrate.local" merge -q --no-edit -m "Wdrożenie z gałęzi $GAL (${SHA:0:7})" "$SHA"; then
   as_panel git -C "$PROD" merge --abort
   blad "konflikt przy scalaniu; połącz main z $GAL w kopii roboczej"
 fi
