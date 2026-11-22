@@ -2449,7 +2449,7 @@ LOGIN_PAGE = """<!doctype html><html lang="pl"><head><meta charset="utf-8">
 @media (prefers-color-scheme:dark){:root{--bg:#15171c;--surface:#1d2027;--line:#30353f;--ink:#e7e9ee;--ink-3:#8d95a3;--accent:#6b9ef0;--accent-ink:#0f1420;--ctl-line:#6b7382;--bad:#ffaaa0}}
 html,body{height:100%%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);display:flex;align-items:center;justify-content:center}
-form{width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:grid;gap:12px}
+form{width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .brand{display:flex;align-items:center;gap:10px}
 .mark{width:32px;height:32px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
 h1{margin:0;font-size:18px;line-height:1.2}
@@ -2457,8 +2457,9 @@ h1{margin:0;font-size:18px;line-height:1.2}
 label{font-weight:600;font-size:14px}
 .pw{display:flex;gap:8px}
 input,button{box-sizing:border-box;font:inherit;border-radius:6px;min-height:44px}
-input{flex:1;min-width:0;padding:8px 12px;background:var(--surface);color:var(--ink);border:1px solid var(--ctl-line)}
-input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input{flex:1 1 0;width:0;min-width:0;padding:8px 12px;background:var(--surface);color:var(--ink);border:1px solid var(--ctl-line)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 button{padding:8px 14px;font-weight:600;cursor:pointer}
 .pokaz{background:var(--surface);color:var(--ink);border:1px solid var(--ctl-line)}
 .wejdz{width:100%%;background:var(--accent);color:var(--accent-ink);border:0}
