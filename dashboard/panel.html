@@ -4446,7 +4446,7 @@ function stagesView(p){
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
     return '<li><div class="nm"><b>'+esc(s.title)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?'otwarte: '+s.open+' z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" lang="pl" data-stage=""'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
+      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" lang="pl" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
     '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś.</p></section>';
 }
 /* braki dokumentów z projekt.py (język standardu) → zdanie dla właściciela; przykłady w rozwinięciu */

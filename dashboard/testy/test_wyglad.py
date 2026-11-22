@@ -44,6 +44,11 @@ class Wyglad(unittest.TestCase):
             cls.html = f.read()
         cls.css = css_of(cls.html)
 
+    def test_atrybut_bez_podwojnego_cudzyslowu(self):
+        """data-x=""'+wartość: pusty atrybut, wartość ląduje poza nim (tak zgubił się termin etapu)."""
+        import re
+        self.assertEqual(re.findall(r'[\w-]+=""\'\+esc\(', self.html), [])
+
     def test_zasady_na_poczatku_css(self):
         self.assertIn("SYSTEM WYGLĄDU", self.css[:12000])
 
