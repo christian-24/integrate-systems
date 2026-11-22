@@ -39,6 +39,17 @@ def load():
             return data.split(b"|", 1)[1].decode("utf-8", "replace").strip() if b"|" in data else ""
         return fake_run
     from faster_whisper import WhisperModel   # noqa: E402  (ImportError: czytelny błąd dla panelu)
+    try:            # PyAV 15+ nie zna argumentu metadata_errors, którego używa faster-whisper 1.2 przy dekodowaniu
+        import av
+        _av_open = av.open
+
+        def _open(*args, **kw):
+            kw.pop("metadata_errors", None)
+            return _av_open(*args, **kw)
+        if int(av.__version__.split(".")[0]) >= 15:
+            av.open = _open
+    except (ImportError, ValueError):
+        pass
     name = os.environ.get("PANEL_GLOS_MODEL") or "small"
     root = os.environ.get("PANEL_GLOS_MODELE") or None
     threads = int(os.environ.get("PANEL_GLOS_WATKI") or 2)

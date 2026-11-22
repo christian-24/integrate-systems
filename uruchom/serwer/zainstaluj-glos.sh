@@ -39,12 +39,13 @@ id "$PANEL" >/dev/null 2>&1 || przerwij "brak użytkownika $PANEL."
 proba() {
   local wav
   wav="$(mktemp --suffix=.wav)"
-  chown "$PANEL" "$wav"
+  # najpierw zapis (root), potem właściciel: w /tmp root nie otworzy do zapisu cudzego pliku (protected_regular)
   python3 - "$wav" <<'P'   # systemowy python: root nie uruchamia plików z venv panelu
 import sys, wave
 with wave.open(sys.argv[1], "wb") as w:
     w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(b"\0\0" * 16000)
 P
+  chown "$PANEL" "$wav"
   local wynik
   wynik="$(printf '{"id": 1, "plik": "%s", "podpowiedz": "Panel projektów."}\n' "$wav" \
     | jako_panel env PANEL_GLOS_MODELE="$MODELE" PANEL_GLOS_MODEL="$MODEL" timeout 300 "$VENV/bin/python" "$PRACOWNIK" 2>/dev/null)"
