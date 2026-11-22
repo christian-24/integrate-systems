@@ -5203,7 +5203,7 @@ function vProjekty(){
     (!reg&&nP?'<p class="note prx-smp">To projekty przykładowe.</p>':'')+
     (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li class="prx-row"><div><a class="t" href=""'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
+      let r='<li class="prx-row"><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
         '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span></div>'+
         '</div>';
       /* cały wiersz prowadzi do strony projektu; folder i usuwanie w menu „⋯” (otwartym przy potwierdzaniu usunięcia) */
