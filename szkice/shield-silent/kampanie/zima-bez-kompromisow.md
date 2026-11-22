@@ -20,7 +20,7 @@ Kierowcy z Wrocławia i okolic (do 40 km), 25–60 lat, którym przeszkadza hał
 To samo auto, dwa dźwięki: drzwi wygłuszone i fabryczne. Jawne ceny (drzwi przód 1 590 zł, drzwi i nadkola przód 2 790 zł). Wezwanie: „Napisz model auta”.
 
 ## Harmonogram
-- [ ] Opublikuj post „Tak wygląda wygłuszenie od środka” | kto: ty | kanał: instagram, facebook | kiedy: 2026-11-22 | czas: 10 | po: Przygotuj post „Tak wygląda wygłuszenie od środka”
+- [x] Opublikuj post „Tak wygląda wygłuszenie od środka” | kto: ty | kanał: instagram, facebook | kiedy: 2026-11-22 | czas: 10 | po: Przygotuj post „Tak wygląda wygłuszenie od środka”
   Post ze zdjęć wygłuszenia od środka (zdjęcia właściciela z 22.11).
 - [ ] Opublikuj film Wygłuszanie: „To samo auto. Lewe drzwi: fabryka. Prawe: wygłuszone.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-11-22 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
