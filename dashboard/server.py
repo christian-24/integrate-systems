@@ -110,6 +110,7 @@ import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENC
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
+import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela: scenariusz.md w folderze posta)
 import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
@@ -814,6 +815,240 @@ def fix_post(body):
     except Exception:  # noqa: BLE001
         pass
     return 200, "", {"title": title, "started": started}
+
+
+# ---------- scenariusz nagrania (scenariusz.py; STANDARD.md „Scenariusz nagrania”) ----------
+def _script_ctx(body):
+    """(dane, folder projektu, projekt, publikacja, dzień) albo (kod, komunikat). Publikacja: id z body, inaczej
+    pierwsza z filmem tego dnia, inaczej pierwsza tego dnia."""
+    pid, day, tid = str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("id") or "")
+    if not POST_DAY.match(day):
+        return 400, "Podaj dzień publikacji (RRRR-MM-DD)."
+    data, index = load_projects()
+    proj = next((p for p in data["projects"] if p["id"] == pid), None)
+    if not proj or pid not in index:
+        return 404, "Nie ma takiego projektu."
+    pubs = [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"
+            and str(t.get("date") or "")[:10] == day]
+    pub = next((t for t in pubs if t["id"] == tid), None) or next((t for t in pubs if scenariusz.is_film(t)), None) \
+        or (pubs[0] if pubs else None)
+    if not pub:
+        return 404, "Nie ma publikacji na ten dzień."
+    return data, index[pid], proj, pub, day
+
+
+def _script_tasks(data, pid, day, prefix):
+    return [t for t in data["tasks"] if t["project"] == pid and t["title"].startswith(prefix + day)]
+
+
+def script_info(pid, day):
+    """GET /api/scenariusz?project=&date=: tekst i odczyt scenariusz.md posta, kto nagrywa, dzień nagrania."""
+    ctx = _script_ctx({"project": pid, "date": day})
+    if len(ctx) == 2:
+        return ctx[0], ctx[1], {}
+    _, _, proj, pub, day = ctx
+    folder = post_folder(pid, day)
+    text = scenariusz.read(folder) if folder else None
+    return 200, "", {"exists": text is not None, "text": text or "", "version": scenariusz.version(text) if text else "",
+                     "script": scenariusz.parse(text) if text is not None else None,
+                     "post": os.path.basename(folder) if folder else "",
+                     "postReady": bool(folder) and os.path.isfile(os.path.join(folder, "post.md")),
+                     "filmOwner": bool(proj.get("filmOwner")), "title": scenariusz.pub_title(pub),
+                     "task": pub["id"], "recDay": scenariusz.rec_day(day)}
+
+
+def _script_run(title, pid):
+    """Uruchamia agenta dla zadania o tym tytule od razu (gdy nie może, zrobi to Automat). True, gdy ruszył."""
+    try:
+        data, _ = load_projects()
+        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] != "done"), None)
+        return bool(t) and get_agents().run_task(t["id"], t["title"])[0] == 200
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def script_prepare(body):
+    """POST /api/scenariusz/przygotuj {project, date, id?, od_nowa?}: zadanie agenta „Przygotuj scenariusz nagrania
+    na <dzień>: <tytuł>” i od razu uruchomienie. Bez folderu posta agent zakłada posty/<dzień>-<nazwa>/ (ścieżka
+    w zadaniu). Istniejący scenariusz tylko
+    z od_nowa (wtedy zadanie otwiera się ponownie z poprawką „napisz od nowa”)."""
+    ctx = _script_ctx(body)
+    if len(ctx) == 2:
+        return ctx
+    data, folder, proj, pub, day = ctx
+    again = body.get("od_nowa") is True
+    if any(t["state"] != "done" for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK)):
+        return 409, "Agent już przygotowuje ten scenariusz."
+    post = post_folder(proj["id"], day)
+    if post and os.path.isfile(os.path.join(post, scenariusz.FILE)) and not again:
+        return 409, "Scenariusz już jest. Nowy przygotujesz w menu ⋯ (Przygotuj od nowa)."
+    cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+    title = projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day, scenariusz.pub_title(pub)), 120)
+    try:
+        with _write_lock:
+            post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(pub))
+            detail = get_agents().script_detail(folder, pub, "posty/" + os.path.basename(post),
+                                                scenariusz.rec_day(day))
+            old = next((t for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK) if t["title"] == title),
+                       None)
+            if old:                     # od nowa: to samo zadanie jeszcze raz, z poprawką
+                if not projekt.set_state(folder, old["file"], old["line"], title, "todo"):
+                    raise ValueError("wiersz zadania zmienił się w tym czasie")
+                projekt.set_detail(folder, old["file"], old["line"], title, "wynik", "")
+                projekt.set_detail(folder, old["file"], old["line"], title, "poprawka",
+                                   "napisz scenariusz od nowa (poprzednia wersja do zastąpienia)" if again else "")
+            else:
+                get_agents()._add_task(folder, proj["id"], title, {"executor": "claude", "machine": "cloud",
+                                                                   "date": datetime.date.today().isoformat()}, detail)
+    except (ValueError, OSError, StopIteration) as e:
+        return 409, "Nie dodano zadania: %s" % e
+    return 200, "", {"title": title, "started": _script_run(title, proj["id"])}
+
+
+def script_fix(body):
+    """POST /api/scenariusz/popraw {project, date, uwaga}: zadanie agenta „Popraw scenariusz nagrania na <dzień>:
+    <uwaga>” (rozmowa o scenariuszu w panelu) i od razu uruchomienie."""
+    ctx = _script_ctx(body)
+    if len(ctx) == 2:
+        return ctx
+    data, folder, proj, pub, day = ctx
+    note = str(body.get("uwaga") or "").strip()
+    if not 3 <= len(note) <= 1000:
+        return 400, "Napisz, co zmienić (do 1000 znaków)."
+    post = post_folder(proj["id"], day)
+    if not post or not os.path.isfile(os.path.join(post, scenariusz.FILE)):
+        return 404, "Scenariusza jeszcze nie ma. Najpierw go przygotuj."
+    title = projekt._clean("%s%s: %s" % (scenariusz.FIX_TASK, day, note), 120)
+    if any(t["title"] == title and t["state"] != "done" for t in data["tasks"] if t["project"] == proj["id"]):
+        return 409, "Ta uwaga już czeka na agenta."
+    rel = "posty/%s/%s" % (os.path.basename(post), scenariusz.FILE)
+    detail = {"cel": "scenariusz nagrania %s poprawiony według uwagi właściciela" % rel,
+              "gotowe gdy": "w %s uwzględniona uwaga z wiersza poprawka:; układ sekcji i wiersz - stan: bez zmian; "
+                            "post.md bez zmian" % rel,
+              "poprawka": note, "materiał": [rel] + ([pub["file"]] if pub.get("file") else [])}
+    try:
+        with _write_lock:
+            get_agents()._add_task(folder, proj["id"], title, {"executor": "claude", "machine": "cloud",
+                                                               "date": datetime.date.today().isoformat()}, detail)
+    except (ValueError, OSError, StopIteration) as e:
+        return 409, "Nie dodano zadania: %s" % e
+    return 200, "", {"title": title, "started": _script_run(title, proj["id"])}
+
+
+def _script_file(body):
+    """(kontekst, ścieżka scenariusz.md, tekst) albo (kod, komunikat)."""
+    ctx = _script_ctx(body)
+    if len(ctx) == 2:
+        return ctx
+    post = post_folder(ctx[2]["id"], ctx[4])
+    text = scenariusz.read(post) if post else None
+    if text is None:
+        return 404, "Scenariusza jeszcze nie ma. Najpierw go przygotuj."
+    if str(body.get("old") or "") != scenariusz.version(text):
+        return 409, "Scenariusz zmienił się w tym czasie (np. poprawił go agent). Odśwież i zmień jeszcze raz."
+    return ctx, os.path.join(post, scenariusz.FILE), text
+
+
+def script_text(body):
+    """POST /api/scenariusz/tekst {project, date, text, old}: tekst scenariusza wprost z panelu. Stan zostaje ten sam
+    (zmieniają go przyciski); old: wersja (scenariusz.version) z odczytu, inna wersja na dysku to 409."""
+    got = _script_file(body)
+    if len(got) == 2:
+        return got
+    _, path, text = got
+    new = str(body.get("text") or "").replace("\r\n", "\n").strip()
+    if not 20 <= len(new) <= scenariusz.MAX_TEXT:
+        return 400, "Scenariusz: od 20 do %d znaków." % scenariusz.MAX_TEXT
+    state = scenariusz.parse(text)["state"]
+    new = scenariusz.set_state(new, state if state in scenariusz.STATES else "propozycja") + "\n"
+    with _write_lock:
+        projekt.write_atomic(path, new)
+    return 200, "", {"version": scenariusz.version(new), "errors": scenariusz.parse(new)["errors"]}
+
+
+def script_state(body):
+    """POST /api/scenariusz/stan {project, date, stan, old}: propozycja → do realizacji (zadanie nagrania dla
+    właściciela na dzień nagrania z materiałem scenariusza; film bez nagrania właściciela: zadanie agenta),
+    do realizacji → nagrane (zamyka zadanie nagrania), do realizacji|nagrane → propozycja (cofnięcie)."""
+    got = _script_file(body)
+    if len(got) == 2:
+        return got
+    (data, folder, proj, pub, day), path, text = got
+    want, now = str(body.get("stan") or ""), scenariusz.parse(text)["state"]
+    now = now if now in scenariusz.STATES else "propozycja"
+    if want not in scenariusz.STATES:
+        return 400, "Stan: %s." % ", ".join(scenariusz.STATES)
+    if (now, want) not in SCRIPT_MOVES:
+        return 409, ("Scenariusz już ma stan „%s”." % want if now == want else
+                     "Najpierw wyślij scenariusz do realizacji." if want == "nagrane" else
+                     "Ze stanu „%s” nie można przejść do „%s”." % (now, want))
+    rel = "posty/%s/%s" % (os.path.basename(os.path.dirname(path)), scenariusz.FILE)
+    rec, title, owner = scenariusz.rec_day(day), scenariusz.pub_title(pub), bool(proj.get("filmOwner"))
+    task_title = ""
+    try:
+        with _write_lock:
+            if want == "do realizacji" and owner:
+                task_title = projekt._clean("%s%s: %s" % (scenariusz.REC_TASK, day, title), 120)
+                old = next((t for t in _script_tasks(data, proj["id"], day, scenariusz.REC_TASK)
+                            if t["title"] == task_title), None)
+                if old:                 # już jest: nowy dzień nagrania i znowu otwarte
+                    projekt.update_task(folder, old["file"], old["line"], task_title, {"date": rec, "state": "todo"})
+                else:
+                    get_agents()._add_task(folder, proj["id"], task_title,
+                                           {"executor": "ty", "date": rec, "minutes": scenariusz.REC_MINUTES},
+                                           {"cel": "nagranie filmu do publikacji „%s” z %s według scenariusza"
+                                                   % (title, day),
+                                            "gotowe gdy": "ujęcia z sekcji Co nagrać nagrane; w panelu scenariusz "
+                                                          "ma stan nagrane",
+                                            "materiał": [rel]})
+            elif want == "do realizacji":
+                task_title = projekt._clean("%s%s: %s" % (scenariusz.AGENT_TASK, day, title), 120)
+                if not any(t["title"] == task_title and t["state"] != "done" for t in data["tasks"]
+                           if t["project"] == proj["id"]):
+                    get_agents()._add_task(folder, proj["id"], task_title,
+                                           {"executor": "claude", "machine": "cloud",
+                                            "date": datetime.date.today().isoformat()},
+                                           {"cel": "film do publikacji „%s” z %s według scenariusza nagrania %s"
+                                                   % (title, day, rel),
+                                            "gotowe gdy": "w folderze posta jest scenariusz.json filmu zgodny ze "
+                                                          "scenariuszem nagrania (film nagra panel)",
+                                            "materiał": [rel]})
+            elif want == "nagrane":
+                for t in _script_tasks(data, proj["id"], day, scenariusz.REC_TASK):
+                    if t["state"] != "done":
+                        projekt.set_state(folder, t["file"], t["line"], t["title"], "done")
+            projekt.write_atomic(path, scenariusz.set_state(text, want))
+    except (ValueError, OSError, StopIteration) as e:
+        return 409, "Nie zapisano: %s" % e
+    started = _script_run(task_title, proj["id"]) if want == "do realizacji" and not owner else False
+    return 200, "", {"state": want, "task": task_title, "started": started}
+
+
+SCRIPT_MOVES = {("propozycja", "do realizacji"), ("do realizacji", "nagrane"), ("do realizacji", "propozycja"),
+                ("nagrane", "propozycja")}
+
+
+def script_links(tasks, projects, index):
+    """Publikacje z filmem w projektach z `nagrywa: ty` (i każda publikacja z plikiem scenariusz.md):
+    t["script"] = {"state": "" | propozycja | do realizacji | nagrane, "shots", "seconds", "errors", "owner"}."""
+    owners = {p["id"] for p in projects if p.get("filmOwner")}
+    film_days = {(t["project"], str(t.get("date") or "")[:10]) for t in tasks
+                 if t.get("kind") == "publikacja" and scenariusz.is_film(t)}
+    cards = {}
+    for t in tasks:
+        day = str(t.get("date") or "")[:10]
+        if t.get("kind") != "publikacja" or not POST_DAY.match(day) or t["project"] not in index:
+            continue
+        pid = t["project"]
+        if pid not in cards:
+            cards[pid] = os.path.dirname(os.path.realpath(os.path.join(index[pid], "KARTA.md")))
+        if not scenariusz.is_film(t) and (pid, day) in film_days:
+            continue                    # folder posta jest jeden na dzień: scenariusz należy do filmu tego dnia
+        post = scenariusz.post_dir(cards[pid], day)
+        info = scenariusz.summary(post) if post else None
+        if info is None and not (pid in owners and scenariusz.is_film(t)):
+            continue
+        t["script"] = dict(info or {"state": "", "shots": 0, "seconds": 0, "errors": 0}, owner=pid in owners)
 
 
 def film_change(body):
@@ -1592,6 +1827,10 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/film/nagraj": record_film,
           "/api/film/konto": film_account,
           "/api/post/popraw": fix_post,
+          "/api/scenariusz/przygotuj": script_prepare,
+          "/api/scenariusz/popraw": script_fix,
+          "/api/scenariusz/tekst": script_text,
+          "/api/scenariusz/stan": script_state,
           "/api/post/tekst": post_set_text,
           "/api/film/zmien": film_change,
           "/api/studio/popros": studio_request,
@@ -2284,6 +2523,7 @@ def build_data():
     out["studio"] = part("studio", lambda: studio_summary(index), {}) if out["projectsSource"] == "registry" else {}
     if out["projectsSource"] == "registry":
         part("filmy zadań", lambda: film_links(out["tasks"], index) or True, False)
+        part("scenariusze nagrań", lambda: script_links(out["tasks"], out["projects"], index) or True, False)
     out["activity"] = part("aktywność", lambda: activity(out, index, manager),
                            {"films": [], "chats": [], "chatsDone": [], "closed": [], "runs": [], "recorder": False})
     if part("kontrole zadań", lambda: add_checks(out["tasks"], index, out["server"]) or True, False) is False:
@@ -3127,6 +3367,11 @@ class Handler(BaseHTTPRequestHandler):
             if not fpath:
                 return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
             return self._send_file(fpath, MEDIA_TYPES[os.path.splitext(fpath)[1].lower()], bool((q.get("pobierz") or [""])[0]))
+        if path == "/api/scenariusz":
+            q = parse_qs(url.query)
+            code, err, extra = script_info((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path == "/api/post/warianty":
             q = parse_qs(url.query)
             code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
@@ -3135,6 +3380,8 @@ class Handler(BaseHTTPRequestHandler):
         if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            if folder and not agents.has_post(folder):     # sam scenariusz nagrania: posta jeszcze nie ma
+                folder = None
             if not folder:
                 return self._send(404, json.dumps({"ok": False, "error": "Nie ma posta na ten dzień."}, ensure_ascii=False),
                                   "application/json; charset=utf-8")
@@ -3206,7 +3453,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
-                                                         "/api/film/zmien", "/api/post/tekst") else 4096)
+                                                         "/api/film/zmien", "/api/post/tekst",
+                                                         "/api/scenariusz/tekst") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")

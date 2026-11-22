@@ -23,6 +23,8 @@ Pod tytułem karty stoją pola (`- stan:`, `- faza:`, `- klient:`, `- próg:`, o
 kolejność spraw w raporcie PM i to, które zadania przesunąć, gdy dzień jest pełny (`priority` w danych projektu).
 `- instagram: @profil` to profil Instagram projektu: panel sprawdza go przy „Udostępnij na Instagramie” i pokazuje
 w podglądzie posta (`instagram` w danych projektu, bez @).
+`- nagrywa: ty`: filmy projektu nagrywa właściciel według scenariusza nagrania (sekcja „Scenariusz nagrania”);
+`panel` albo brak pola: film robi panel ze scenariusza filmu (`filmOwner` w danych projektu).
 
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
@@ -191,6 +193,50 @@ licznika (`resultManual`: sam ręczny wynik, `counterMetric`: nazwa licznika alb
 - 2026-11-19 · zaproszenia 8 · Wyślij zaproszenia LinkedIn do 8 firm z partii 1
 - 2026-11-21 · przyjęte 3 · Sprawdź przyjęte zaproszenia z partii 1
 ```
+
+## Scenariusz nagrania
+
+Film, który nagrywa właściciel (karta z `- nagrywa: ty`), ma scenariusz w pliku `scenariusz.md` w folderze posta
+`posty/<dzień publikacji>-<nazwa>/` obok `KARTA.md`. Filmem jest publikacja ze słowem „film” (wideo, reel)
+w tytule albo z kanałem Reels, TikTok, YouTube. Dzień nagrania: dzień przed publikacją, najwcześniej dziś.
+
+```
+# Scenariusz nagrania: Miernik w akcji
+
+- stan: propozycja
+- publikacja: 2026-11-25
+- nagranie: 2026-11-24
+
+## Po co
+Cel filmu i dla kogo.
+
+## Co nagrać
+- [ ] Zbliżenie na uszczelkę | 6 s
+- [ ] Miernik przy obudowie, wynik na ekranie | 8 s
+
+## Jak
+- Miejsce, światło, kadr (telefon pionowo albo poziomo), rekwizyty
+
+## Co powiedzieć
+Tekst albo punkty.
+
+## Na koniec
+Wezwanie do działania.
+
+## Gotowe gdy
+Sprawdzalny warunek.
+```
+
+Stan: `propozycja` (pisze agent) → `do realizacji` (właściciel wysłał) → `nagrane`; cofnięcie do `propozycja`
+z obu późniejszych. Stan zmienia panel. Ujęcie to wiersz `- [ ] opis | 5 s` (czas na końcu po `|`).
+Zadania wokół scenariusza (w „Do rozplanowania”, tytuł z dniem publikacji):
+
+| Zadanie | Kto | Kiedy powstaje |
+|---|---|---|
+| `Przygotuj scenariusz nagrania na <dzień>: <tytuł>` | claude | Automat dla filmów z publikacją w ciągu 7 dni bez pliku (raz); „Przygotuj scenariusz” w panelu |
+| `Popraw scenariusz nagrania na <dzień>: <uwaga>` | claude | uwaga w rozmowie o scenariuszu (`poprawka:` z uwagą) |
+| `Nagraj według scenariusza na <dzień>: <tytuł>` | ty, `kiedy:` dzień nagrania | „Wyślij do realizacji”; „Nagrane” zamyka je `[x]` |
+| `Zrób film według scenariusza na <dzień>: <tytuł>` | claude | „Wyślij do realizacji” w projekcie bez `nagrywa: ty` |
 
 ## Raport PM
 

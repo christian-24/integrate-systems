@@ -727,7 +727,7 @@ def read_project(path, pid=None, decision=None):
                "docs": docs, "docsOk": docs_ok, "docsTotal": len(docs),
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
-               "priority": fields["priority"], "instagram": fields["instagram"],
+               "priority": fields["priority"], "instagram": fields["instagram"], "filmOwner": fields["filmOwner"],
                "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
@@ -785,7 +785,8 @@ def first_paragraph(body, limit=DESCRIPTION_MAX):
 
 
 def card_fields(meta, decision=None):
-    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3), instagram (profil, bez @). Karta wygrywa z decyzją zbieracza.
+    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3), instagram (profil, bez @), nagrywa (ty:
+    filmy nagrywa właściciel według scenariusza nagrania; panel albo brak: film robi panel). Karta wygrywa z decyzją zbieracza.
 
     decision: ostatnia decyzja zbieracza dla tego folderu ({"stan", "klient", "alias"}) albo None.
     Zwraca też listę błędów w wartościach pól (trafiają do braków karty).
@@ -826,8 +827,12 @@ def card_fields(meta, decision=None):
     if instagram and not INSTAGRAM.match(instagram):
         errors.append("instagram: %s (nazwa profilu, np. @nazwa_profilu)" % raw)
         instagram = ""
+    raw = meta.get("nagrywa", "").strip().lower()       # kto nagrywa filmy projektu: ty (scenariusz nagrania) albo panel
+    film_owner = raw in ("ty", "właściciel", "wlasciciel")
+    if raw and not film_owner and raw not in ("panel", "agent"):
+        errors.append("nagrywa: %s (dozwolone: ty, panel)" % meta["nagrywa"])
     return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
-            "priority": priority, "instagram": instagram.lower(), "errors": errors}
+            "priority": priority, "instagram": instagram.lower(), "filmOwner": film_owner, "errors": errors}
 
 
 def stage_done(stage, tasks):

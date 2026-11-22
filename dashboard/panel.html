@@ -673,7 +673,7 @@ body.ed-open{overflow:hidden}
 .cx-acts{display:flex;flex-wrap:wrap;gap:6px}
 .cx-code{font-family:var(--mono);font-size:18px;letter-spacing:.08em}
 .cx-lg{display:grid;gap:6px}
-@media (max-width:820px){.ed-b{grid-template-columns:1fr;grid-auto-rows:max-content;overflow:auto}.ed-l{overflow:visible;grid-template-rows:auto auto;min-height:auto;padding:12px}.ed-r{min-height:auto;overflow:visible;border-left:0;border-top:1px solid var(--line)}.ed-tabs{padding:6px 12px}.sp-tt{height:auto;width:100%;max-height:70vh}}
+@media (max-width:820px){.ed-b{grid-template-columns:1fr;grid-auto-rows:max-content;overflow:auto}.ed-l{overflow:visible;grid-template-rows:auto auto;min-height:auto;padding:12px}.ed-r{min-height:auto;overflow:visible;border-left:0;border-top:1px solid var(--line)}.sc-l{overflow:visible;min-height:auto}.ed-tabs{padding:6px 12px}.sp-tt{height:auto;width:100%;max-height:70vh}}
 .dttl{font-size:18px;line-height:1.35;margin:4px 0 12px}
 .move-box{border:1px solid var(--line);border-radius:var(--r-lg);padding:12px;margin:0 0 12px;background:var(--sunk)}
 .move-box b{display:block;margin-bottom:4px}
@@ -1873,6 +1873,28 @@ p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
 .ed-pl>summary{cursor:pointer;font-size:13.5px;color:var(--ink-2);padding:4px 0}
 .ed-pl[open]>summary{margin-bottom:6px}
 body.ed-open .app,body.ed-open .bnav{visibility:hidden}
+/* okno scenariusza nagrania: nad edytorem posta; scenariusz czytelny przy nagrywaniu (większe litery, ujęcia do odhaczenia) */
+.sc{z-index:62;grid-template-rows:auto minmax(0,1fr)}
+.sc-l{min-height:0;overflow:auto;background:var(--sunk);padding:20px 16px 32px}
+.sc-doc{max-width:720px;margin:0 auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;font-size:16px;line-height:1.6}
+.sc-h{margin:0 0 6px;font-size:20px;line-height:1.3}
+.sc-warn{margin:0 0 10px;font-size:13.5px;color:var(--l-yellow)}
+.sc-sec{padding:12px 0;border-top:1px solid var(--line)}
+.sc-sec:first-of-type{border-top:0}
+.sc-sec h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+.sc-sec p{margin:0 0 6px}.sc-sec ul{margin:0;padding-left:20px}.sc-sec li{margin:2px 0}
+.sc-shots{list-style:none;margin:0;padding:0;display:grid;gap:6px;counter-reset:shot}
+.sc-shots li{counter-increment:shot}
+.sc-shots label{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;background:var(--surface)}
+.sc-shots input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent)}
+.sc-shots .sc-st::before{content:counter(shot) ". ";color:var(--ink-3)}
+.sc-shots input:checked~.sc-st{text-decoration:line-through;color:var(--ink-3)}
+.sc-shots .num{white-space:nowrap;font-size:14px}
+.sc-sum{margin:6px 0 0;font-size:13.5px}
+.sc-empty h2{margin:0 0 8px;font-size:18px}.sc-empty p{margin:0;color:var(--ink-2)}
+.sc-ed{display:grid;gap:10px}
+.sc-ta{width:100%;min-height:60vh;font-family:var(--mono);font-size:14px;line-height:1.5;resize:vertical}
+.mk-rl .lz{margin-left:2px}
 .mk-res{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
 .mk-res .meter{flex:1 1 280px;min-width:0}
 .mk-res .pv-mtog{margin:0}
@@ -1891,6 +1913,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .ed-acts>.btn{flex:1}
   .ed-mn>summary{min-height:40px;min-width:44px}
   .ed-tabs .seg{min-height:40px}
+  .sc-l{padding:10px 8px 20px}
+  .sc-doc{padding:14px 14px;font-size:17px;border-radius:var(--r)}
   .mk-cdet>summary{min-height:40px;display:flex;align-items:center}
   .mk-prow .r{display:flex;flex-wrap:wrap;justify-content:flex-start;text-align:left;white-space:normal;gap:6px 8px}
   .mk-prow .r .btn{min-height:40px;margin-left:auto}
@@ -4584,14 +4608,16 @@ function planView(p){
     if(t.kind==='publikacja'){
       if(d<T){put(T,'late',t);return}
       if(d<=end)put(d,'pub',t);
-      if(mkIsFilm(t)){const fd=PD[t.project+'|'+d],r=addK(d,-1)<T?T:addK(d,-1);if(!(fd&&fd.ok&&fd.film)&&r<=end)put(r,'rec',t)}
+      const r=addK(d,-1)<T?T:addK(d,-1);
+      if(scOwn(t)){if(t.script.state!=='nagrane'&&r<=end&&!scTasks(t.project,d,'rec').some(x=>x.state!=='done'))put(r,'rec',t)}
+      else if(mkIsFilm(t)){const fd=PD[t.project+'|'+d];if(!(fd&&fd.ok&&fd.film)&&r<=end)put(r,'rec',t)}
       return}
     if(d>end)return;
     put(d<T?T:d,isAg(t)?'agent':d<T?'late':'you',t);
   });
   const chan=t=>esc(String(t.channel||'').split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(' · '));
   const meta=x=>{const t=x.t,d=t.date.slice(0,10);
-    if(x.kind==='rec')return 'publikacja '+(d===T?'dziś':ddl(d));
+    if(x.kind==='rec')return 'publikacja '+(d===T?'dziś':ddl(d))+(scOwn(t)?' · scenariusz: '+(SCST[t.script.state||'']||SCST[''])[1]:'');
     if(x.kind==='pub')return chan(t);
     if(x.kind==='late')return (t.kind==='publikacja'?'publikacja ':'termin ')+ddl(d);
     if(x.kind==='agent')return t.state==='doing'?'w toku':t.state==='blocked'?'zablokowane':WHO[t.executor]?WHO[t.executor].n:'';
@@ -4602,7 +4628,8 @@ function planView(p){
     const k=t.project+'|'+d;if(PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,d)}
     const st=mkState(t,d);return {st:st,act:mkAct(t,d,st,'')}};
   /* publikacja z kanałem i datą: wiersz otwiera edytor posta z podglądem; reszta: szczegóły zadania */
-  const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
+  const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind==='rec'&&scOwn(t)&&d)return 'data-scopen="'+esc(t.project+'|'+d+'|'+t.id)+'"';
+    const sk=scRecKey(t);if(sk)return 'data-scopen="'+esc(sk)+'"';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
   /* minuty Twoich zadań w dniu; ponad limit dnia (dayMinutes) na czerwono */
   /* suma przy dniu tylko, gdy minuty ma więcej niż jedno zadanie albo dzień jest ponad limit (inaczej ta sama liczba dwa razy) */
   const cap0=D.dayMinutes||120,mine=k=>day[k].filter(x=>(x.kind==='you'||(x.kind==='late'&&x.t.executor==='ty'))&&+x.t.minutes>0);
@@ -6784,17 +6811,20 @@ function mkDays(keys,items,inLate){
 const mkIsFilm=t=>{const d=PD[t.project+'|'+String(t.date).slice(0,10)];return !!(d&&d.ok&&(d.scenario||d.film))||/film/i.test(t.title)||/reels|tiktok|youtube/i.test(t.channel||'')};
 function recPanel(fp){
   const T=D.todayKey,end=addK(T,14);
-  const L=D.tasks.filter(t=>t.kind==='publikacja'&&t.state!=='done'&&isDay(t.date)&&t.date.slice(0,10)>=T&&t.date.slice(0,10)<=end&&mkIsFilm(t)&&(!fp||t.project===fp))
-    .filter(t=>{const d=PD[t.project+'|'+t.date.slice(0,10)];return !(d&&d.ok&&d.film&&filmState(d,t,t.date.slice(0,10))[0]==='green')})
+  const L=D.tasks.filter(t=>t.kind==='publikacja'&&t.state!=='done'&&isDay(t.date)&&t.date.slice(0,10)>=T&&t.date.slice(0,10)<=end&&(scOwn(t)||mkIsFilm(t))&&(!fp||t.project===fp))
+    .filter(t=>{if(scOwn(t))return t.script.state!=='nagrane';const d=PD[t.project+'|'+t.date.slice(0,10)];return !(d&&d.ok&&d.film&&filmState(d,t,t.date.slice(0,10))[0]==='green')})
     .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   if(!L.length)return '';
   const rec=t=>{const r=addK(t.date.slice(0,10),-1);return r<T?T:r},G={};
   L.forEach(t=>{const r=rec(t);(G[r]||(G[r]=[])).push(t)});
   const dl=k=>k===T?'Dziś':k===addK(T,1)?'Jutro':cap(ddl(k));
   const row=t=>{const p=t.date.slice(0,10),d=PD[t.project+'|'+p],fs=d&&d.ok?filmState(d,t,p):['grey','czeka na nagranie'];
+    /* film, który nagrywasz sam: wiersz otwiera scenariusz nagrania */
+    if(scOwn(t))return '<li><button type="button" class="lk" data-scopen="'+esc(t.project+'|'+p+'|'+t.id)+'" data-k="rec:'+esc(t.id)+'">'+esc(mkTitle(t))+'</button> '+
+      '<span class="muted">· scenariusz</span> '+scLz(t.script.state)+'<span class="muted"> · publikacja '+esc(p===T?'dziś':ddl(p))+(fp?'':' · '+esc(projName(t.project)))+'</span></li>';
     return '<li><button type="button" class="lk" data-medit="'+esc(t.project+'|'+p+'|'+t.id)+'" data-k="rec:'+esc(t.id)+'">'+esc(mkTitle(t))+'</button>'+
       '<span class="muted"> · '+esc(fs[1])+' · publikacja '+esc(p===T?'dziś':ddl(p))+(fp?'':' · '+esc(projName(t.project)))+'</span></li>'};
-  return '<section class="panel" id="mk-rec"><h2>Do nagrania <small><span>'+L.length+' '+pl(L.length,'film','filmy','filmów')+' w 14 dni</span></small></h2><p class="ahint">Panel nagrywa film dzień przed publikacją; Ty go oglądasz.</p><div class="pad mk-rec">'+
+  return '<section class="panel" id="mk-rec"><h2>Do nagrania <small><span>'+L.length+' '+pl(L.length,'film','filmy','filmów')+' w 14 dni</span></small></h2><p class="ahint">'+(L.some(scOwn)?'Filmy ze scenariuszem nagrywasz Ty, dzień przed publikacją. Otwórz film, żeby przeczytać i poprawić scenariusz.'+(L.some(t=>!scOwn(t))?' Pozostałe nagrywa panel.':''):'Panel nagrywa film dzień przed publikacją; Ty go oglądasz.')+'</p><div class="pad mk-rec">'+
     Object.keys(G).sort().map(k=>'<h3 class="mk-rh">'+esc(dl(k))+' <span class="num muted">('+G[k].length+')</span></h3><ul class="mk-rl">'+G[k].map(row).join('')+'</ul>').join('')+'</div></section>';
 }
 /* Marketing: po terminie (na wierzchu, z akcją), do nagrania, 7 dni od dziś (strzałki: kolejne 7 dni), kanały publikacji, Studio filmów */
@@ -7247,7 +7277,8 @@ function edActs(){
   put(m,esc(projName(c.pid))+' · '+esc(ddl(c.day))+(sc?', '+esc(sc.time):'')+(t.channel?' · '+mkChan(t):'')+' <span class="lz '+st[0]+'">'+esc(st[1])+'</span>');
   const pr=edPrimary(t,d,ED.tab);
   if(pr&&canShare()&&d&&d.ok)shareFile(c.pid,c.day,d);          /* telefon: plik gotowy przed kliknięciem */
-  put(a,(pr?'<button type="button" class="btn sm" '+pr.attr+'>'+esc(pr.n)+'</button>':'')+edMenu(t,d));
+  const scl=t.script?'<button type="button" class="btn sec sm" data-scopen="'+esc(c.pid+'|'+c.day+'|'+t.id)+'">Scenariusz nagrania</button>':'';
+  put(a,scl+(pr?'<button type="button" class="btn sm" '+pr.attr+'>'+esc(pr.n)+'</button>':'')+edMenu(t,d));
   const nx=t.state==='done'?'':sc?'Panel opublikuje post '+ddl(sc.day)+', '+sc.time+'.':
     t.needsYou==='zgoda'?'Obejrzyj post i zatwierdź. Potem go udostępnisz.':d&&d.ok?'Po publikacji oznacz post w menu ⋯.':'';
   put(document.getElementById('ed-next'),nx?esc(nx):'');
@@ -7421,6 +7452,154 @@ async function edSend(f){
   if(x.ok){ta.value='';ED.at=null;edAt();say(x.data&&x.data.started?'Agent poprawia. Nowa wersja pojawi się tutaj.':'Przyjęte. Agent zajmie się tym za chwilę.');await load(true);edChat()}
   else say(failMsg(x,'Nie wysłano.'));
 }
+/* ---------- scenariusz nagrania (pełny ekran): plik scenariusz.md w folderze posta (STANDARD.md „Scenariusz nagrania”).
+   Po lewej scenariusz do czytania (ujęcia do odhaczenia przy nagrywaniu), po prawej rozmowa z agentem; jedna akcja
+   w nagłówku zależna od stanu: Przygotuj scenariusz → Wyślij do realizacji → Nagrane. Reszta w „⋯”.
+   Otwiera go: Marketing („Do nagrania”), Plan projektu (wiersz „Nagranie”) i edytor posta (data-scopen). ---------- */
+const SC={cur:null,d:null,edit:false,sig:'',busy:false};
+const SCST={'':['grey','bez scenariusza'],propozycja:['yellow','propozycja'],'do realizacji':['blue','do realizacji'],nagrane:['green','nagrane']};
+const SCPRE={prep:'Przygotuj scenariusz nagrania na ',fix:'Popraw scenariusz nagrania na ',rec:'Nagraj według scenariusza na '};
+const scOwn=t=>!!(t&&t.kind==='publikacja'&&t.script&&t.script.owner);
+const scLz=st=>{const x=SCST[st||'']||SCST[''];return '<span class="lz '+x[0]+'">'+esc(x[1])+'</span>'};
+/* zadania agenta i właściciela wokół scenariusza tego dnia (przygotowanie, poprawki, nagranie) */
+const scTasks=(pid,day,kind)=>D.tasks.filter(t=>t.project===pid&&t.title.indexOf(SCPRE[kind]+day)===0);
+function scBusy(pid,day){const L=scTasks(pid,day,'prep').concat(scTasks(pid,day,'fix'));
+  return L.some(t=>t.state!=='done'&&t.state!=='blocked')?(scTasks(pid,day,'prep').some(t=>t.state!=='done'&&t.state!=='blocked')?'prep':'fix'):''}
+/* zadanie „Nagraj według scenariusza na <dzień>: …”: klucz okna scenariusza (projekt|dzień publikacji|publikacja) albo '' */
+function scRecKey(t){if(!t||t.title.indexOf(SCPRE.rec)!==0)return '';const day=t.title.slice(SCPRE.rec.length,SCPRE.rec.length+10);
+  const p=D.tasks.find(x=>x.project===t.project&&scOwn(x)&&String(x.date).slice(0,10)===day);return p?t.project+'|'+day+'|'+p.id:''}
+function scHost(){let h=document.getElementById('scHost');if(!h){h=document.createElement('div');h.id='scHost';document.body.appendChild(h)}return h}
+function openScript(key){
+  const p=key.split('|');SC.cur={pid:p[0],day:p[1],tid:p.slice(2).join('|')};SC.d=null;SC.edit=false;SC.sig=scSig();
+  const t=D.tasks.find(x=>x.id===SC.cur.tid)||{title:'Film'};
+  scHost().innerHTML='<div class="ed sc" id="sc" role="dialog" aria-modal="true" aria-labelledby="sc-t">'+
+    '<header class="ed-h"><button type="button" class="btn sec sm" data-scclose>← Wróć</button><div class="ed-tt"><b id="sc-t">Scenariusz: '+esc(mkTitle(t))+'</b><span class="muted" id="sc-meta"></span></div>'+
+    '<div class="ed-acts" id="sc-acts"></div><p class="ed-next" id="sc-next" aria-live="polite"></p></header>'+
+    '<div class="ed-b"><section class="sc-l" aria-label="Scenariusz"><div class="sc-doc" id="sc-doc"><p class="muted">Wczytuję scenariusz…</p></div></section>'+
+    '<aside class="ed-r" aria-label="Rozmowa o scenariuszu"><section class="ed-blk"><h3>Co zmienić?</h3><div class="ed-chat" id="sc-chat" aria-live="polite"></div>'+
+    '<form class="ed-f" data-scfix><textarea class="fi" rows="3" maxlength="1000" data-scq aria-label="Co zmienić w scenariuszu" placeholder="Np. skróć do 30 s; dodaj ujęcie miernika z bliska; mów prościej"></textarea>'+
+    '<div class="row"><button class="btn sec sm">Wyślij agentowi</button></div></form></section></aside></div></div>';
+  document.body.classList.add('ed-open');scLoad();
+  const b=document.querySelector('#sc [data-scclose]');if(b)b.focus();
+}
+function closeScript(){SC.cur=null;SC.d=null;scHost().innerHTML='';if(ED.cur)edActs();else{document.body.classList.remove('ed-open');render(true)}}
+async function scLoad(){
+  const c=SC.cur;if(!c)return;let d={ok:false,error:''};
+  try{const r=await fetch('/api/scenariusz?project='+encodeURIComponent(c.pid)+'&date='+encodeURIComponent(c.day),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){d={ok:false,error:'Brak połączenia z panelem.'}}
+  if(SC.cur!==c)return;SC.d=d;scFill();
+}
+/* zmiana zadań scenariusza (agent skończył, nowe zadanie nagrania): wczytaj plik od nowa */
+function scSig(){const c=SC.cur;if(!c||!D)return '';return ['prep','fix','rec'].map(k=>scTasks(c.pid,c.day,k).map(t=>t.id+':'+t.state+':'+(t.runId||'')).join(',')).join('|')}
+function scRefresh(){if(!SC.cur)return;const s=scSig();if(s!==SC.sig){SC.sig=s;if(!SC.edit)scLoad();else scChat()}}
+/* jedna akcja w nagłówku zależna od stanu */
+function scPrimary(d,busy){
+  if(!d||!d.ok||SC.edit)return null;
+  if(SC.busy)return {n:'Wysyłam…',attr:'disabled'};
+  if(busy==='prep')return {n:'Agent pisze scenariusz…',attr:'disabled'};
+  if(!d.exists)return {n:'Przygotuj scenariusz',attr:'data-scgo="prep"'};
+  const st=d.script&&d.script.state;
+  if(st==='do realizacji')return {n:'Nagrane',attr:'data-scgo="nagrane"'};
+  if(st==='nagrane')return null;
+  return {n:'Wyślij do realizacji',attr:'data-scgo="do realizacji"'};
+}
+function scMenu(d,busy){
+  const c=SC.cur,b=(attr,n)=>'<button type="button" class="linkbtn" '+attr+'>'+n+'</button>',L=[],st=d&&d.script?d.script.state:'';
+  if(d&&d.exists&&!SC.edit)L.push(b('data-scedit','Edytuj tekst'));
+  if(d&&d.exists&&!busy)L.push(b('data-scgo="again"','Przygotuj od nowa'));
+  if(st==='do realizacji'||st==='nagrane')L.push(b('data-scgo="propozycja"','Cofnij do propozycji'));
+  const rec=scTasks(c.pid,c.day,'rec')[0];if(rec)L.push(b('data-task="'+esc(rec.id)+'" data-scclose2','Zadanie nagrania'));
+  if(d&&d.postReady&&!ED.cur)L.push(b('data-medit="'+esc(c.pid+'|'+c.day+'|'+c.tid)+'" data-scclose2','Otwórz post'));
+  return L.length?'<details class="ed-mn"><summary aria-label="Więcej działań" title="Więcej działań"><span aria-hidden="true">⋯</span></summary><div class="ed-mnl">'+L.join('')+'</div></details>':'';
+}
+function scNext(d,busy){
+  if(!d||!d.ok)return '';
+  if(busy==='prep')return 'Agent czyta plan kampanii i pisze scenariusz. Pojawi się tutaj za kilka minut.';
+  if(busy)return 'Agent poprawia scenariusz według Twojej uwagi.';
+  if(!d.exists)return d.filmOwner?'Ten film nagrywasz sam. Agent przygotuje scenariusz: co nagrać, jak i po co.':'Agent przygotuje scenariusz filmu.';
+  const st=d.script.state,rd=ddl(d.recDay);
+  if(st==='do realizacji')return d.filmOwner?'Nagranie '+rd+'. Odhaczaj ujęcia przy nagrywaniu, potem kliknij Nagrane.':'Film robi agent według scenariusza.';
+  if(st==='nagrane')return d.postReady?'Nagrane. Dodaj film w edytorze posta (menu ⋯, Otwórz post).':'Nagrane. Film dodasz w edytorze posta, gdy agent przygotuje post.';
+  return 'Przeczytaj. Napisz po prawej, co zmienić, albo wyślij scenariusz do realizacji.';
+}
+/* tekst sekcji: wiersze „- …” jako lista, reszta jako akapity */
+function scMd(text){
+  let h='',ul=false;
+  String(text||'').split('\n').forEach(l=>{const m=/^\s*[-*]\s+(.*)$/.exec(l);
+    if(m){if(!ul){h+='<ul>';ul=true}h+='<li>'+esc(m[1])+'</li>';return}
+    if(ul){h+='</ul>';ul=false}if(l.trim())h+='<p>'+esc(l.trim())+'</p>'});
+  return h+(ul?'</ul>':'');
+}
+const scKey=()=>'scshot:'+SC.cur.pid+'|'+SC.cur.day;
+function scDone(){try{return JSON.parse(localStorage.getItem(scKey())||'{}')||{}}catch(e){return {}}}
+function scDoc(d){
+  if(!d.ok)return '<p class="warn">'+esc(d.error||'Nie wczytano scenariusza.')+'</p>';
+  if(SC.edit)return '<form class="sc-ed" data-scsave><label class="fl"><span>Tekst scenariusza. Nagłówki ## zostaw bez zmian; ujęcie to wiersz „- [ ] opis | 5 s”.</span>'+
+    '<textarea class="fi sc-ta" rows="24" maxlength="12000" data-sctext spellcheck="true">'+esc(d.text)+'</textarea></label>'+
+    '<div class="row"><button class="btn sm">Zapisz</button><button type="button" class="btn sec sm" data-scedit="0">Anuluj</button></div></form>';
+  if(!d.exists)return '<div class="sc-empty"><h2>Scenariusza jeszcze nie ma</h2><p>Scenariusz mówi, co nagrać (lista ujęć z czasem), jak (miejsce, światło, kadr), co powiedzieć i po co. Przygotowuje go agent z planu kampanii; potem go poprawiasz i wysyłasz do realizacji.</p></div>';
+  const s=d.script,S=s.sections||{},done=scDone();
+  const sec=(n,body)=>'<section class="sc-sec"><h3>'+esc(n)+'</h3>'+body+'</section>';
+  const shots=s.shots.length?'<ol class="sc-shots">'+s.shots.map((x,i)=>{const on=done[i]!=null?!!done[i]:!!x.done;
+      return '<li><label><input type="checkbox" data-scshot="'+i+'"'+(on?' checked':'')+'><span class="sc-st">'+esc(x.text)+'</span>'+(x.seconds?'<span class="num muted">'+x.seconds+' s</span>':'')+'</label></li>'}).join('')+'</ol>'+
+      (s.seconds?'<p class="muted sc-sum">Razem około '+s.seconds+' s · '+s.shots.length+' '+pl(s.shots.length,'ujęcie','ujęcia','ujęć')+'</p>':'')
+    :scMd(S['Co nagrać']);
+  let h='<h2 class="sc-h">'+esc(s.title||d.title)+'</h2>';
+  if(s.errors.length)h+='<p class="sc-warn">Do uzupełnienia: '+esc(s.errors.join('; '))+'.</p>';
+  h+=sec('Po co',scMd(S['Po co']))+sec('Co nagrać',shots)+sec('Jak',scMd(S['Jak']))+sec('Co powiedzieć',scMd(S['Co powiedzieć']))+
+    sec('Na koniec',scMd(S['Na koniec']))+sec('Gotowe gdy',scMd(S['Gotowe gdy']));
+  Object.keys(S).filter(n=>['Po co','Co nagrać','Jak','Co powiedzieć','Na koniec','Gotowe gdy'].indexOf(n)<0&&S[n]).forEach(n=>{h+=sec(n,scMd(S[n]))});
+  return h;
+}
+function scChat(){
+  const el=document.getElementById('sc-chat'),c=SC.cur;if(!el||!c)return;
+  const stT=t=>t.state==='done'?'Zrobione'+(t.detail&&t.detail.result?': '+t.detail.result:'.'):t.state==='blocked'?'Nie udało się'+(t.detail&&t.detail.left?': '+t.detail.left:'.'):
+    t.state==='doing'||(t.runId&&t.state!=='done')?'Piszę…':'Czekam na agenta.';
+  const L=scTasks(c.pid,c.day,'prep').concat(scTasks(c.pid,c.day,'fix'));
+  const me=t=>t.title.indexOf(SCPRE.prep)===0?(t.detail&&t.detail.fix?'Przygotuj scenariusz od nowa.':'Przygotuj scenariusz.'):(t.detail&&t.detail.fix)||t.title.replace(/^Popraw scenariusz nagrania na \S+: /,'');
+  el.innerHTML=L.length?L.map(t=>'<div class="cm me"><b>Ty</b><div>'+esc(me(t))+'</div></div><div class="cm ai"><b>Agent</b><div>'+esc(stT(t))+'</div></div>').join(''):
+    '<p class="muted">'+(SC.d&&SC.d.exists?'Napisz, co zmienić: długość, ujęcia, tekst, miejsce. Agent poprawi plik.':'Rozmowa zacznie się, gdy agent przygotuje scenariusz.')+'</p>';
+  const f=document.querySelector('#sc [data-scfix]');if(f){const on=!!(SC.d&&SC.d.exists);f.querySelectorAll('textarea,button').forEach(x=>{x.disabled=!on})}
+}
+function scFill(){
+  const c=SC.cur,d=SC.d;if(!c||!d)return;const busy=scBusy(c.pid,c.day),put=(id,x)=>{const el=document.getElementById(id);if(el&&el.dataset.h!==x){el.innerHTML=x;el.dataset.h=x}};
+  const st=d.ok&&d.exists?d.script.state:'';
+  put('sc-meta',esc(projName(c.pid))+(d.ok?' · nagranie '+esc(ddl(d.recDay))+' · publikacja '+esc(ddl(c.day)):'')+' '+scLz(st));
+  const pr=scPrimary(d,busy);
+  put('sc-acts',(pr?'<button type="button" class="btn sm" '+pr.attr+'>'+esc(pr.n)+'</button>':'')+scMenu(d,busy));
+  put('sc-next',esc(scNext(d,busy)));
+  const doc=document.getElementById('sc-doc');if(doc&&!(SC.edit&&doc.querySelector('[data-sctext]')))doc.innerHTML=scDoc(d);
+  scChat();
+}
+async function scGo(what){
+  const c=SC.cur,d=SC.d;if(!c||!d)return;if(!LIVE){say(PRV);return}if(SC.busy)return;SC.busy=true;scFill();
+  let x;
+  try{
+    if(what==='prep'||what==='again')x=await post('/api/scenariusz/przygotuj',{project:c.pid,date:c.day,id:c.tid,od_nowa:what==='again'});
+    else x=await post('/api/scenariusz/stan',{project:c.pid,date:c.day,id:c.tid,stan:what,old:d.version});
+  }finally{SC.busy=false}
+  if(!x.ok){say(failMsg(x,'Nie zapisano.'));await scLoad();return}
+  const r=x.data||{};
+  say(what==='prep'||what==='again'?(r.started?'Agent pisze scenariusz.':'Przyjęte. Agent zajmie się tym za chwilę.'):
+    what==='do realizacji'?(d.filmOwner?'Wysłane. Zadanie nagrania jest w Twoich sprawach na '+ddl(d.recDay)+'.':'Wysłane. Film zrobi agent.'):
+    what==='nagrane'?'Oznaczono jako nagrane.':'Scenariusz wrócił do propozycji.');
+  if(what==='nagrane')try{localStorage.removeItem(scKey())}catch(e){}
+  await load(true);SC.sig=scSig();await scLoad();
+}
+async function scSend(f){
+  const c=SC.cur,ta=f.querySelector('[data-scq]'),text=(ta.value||'').trim();if(!c)return;
+  if(text.length<3){say('Napisz, co zmienić.');ta.focus();return}
+  if(!LIVE){say(PRV);return}
+  const x=await post('/api/scenariusz/popraw',{project:c.pid,date:c.day,id:c.tid,uwaga:text});
+  if(x.ok){ta.value='';say(x.data&&x.data.started?'Agent poprawia scenariusz.':'Przyjęte. Agent zajmie się tym za chwilę.');await load(true);SC.sig=scSig();scFill()}
+  else say(failMsg(x,'Nie wysłano.'));
+}
+async function scSave(f){
+  const c=SC.cur,d=SC.d,ta=f.querySelector('[data-sctext]');if(!c||!d||!ta)return;if(!LIVE){say(PRV);return}
+  const x=await post('/api/scenariusz/tekst',{project:c.pid,date:c.day,id:c.tid,text:ta.value,old:d.version});
+  if(x.ok){SC.edit=false;const e=(x.data&&x.data.errors)||[];say(e.length?'Zapisano. Do uzupełnienia: '+e.join('; ')+'.':'Zapisano scenariusz.');await scLoad();await load(true)}
+  else say(failMsg(x,'Nie zapisano.'));
+}
+function scShot(i,on){const m=scDone();m[i]=on?1:0;try{localStorage.setItem(scKey(),JSON.stringify(m))}catch(e){}}
 /* ---------- edytor posta: grafika przez Codex (AGENCI.md „Grafiki (Codex)”); jedno wywołanie: cxFill() w edFill ----------
    Zlecenie idzie jako uruchomienie Codexa (widać je w Agentach); warianty wariant-<n>.png leżą w folderze posta. */
 const CX={key:'',d:null,sel:{},timer:0,login:null,del:''};
@@ -8467,6 +8646,7 @@ async function load(force){
     idle();offline=false;srvErr=0;
     if(D&&(hold||(force!==true&&sig===A.sig&&Date.now()-A.fullAt<60000))){applyAgents(raw);if(was)renderTop()}
     else{D=normalize(raw);D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;A.sig=sig;A.fullAt=Date.now();render(force===true)}
+    scRefresh();
     if(ED.cur){edChat();const c=ED.cur,k=c.pid+'|'+c.day,pd=PD[k];
       if(pd&&pd.rec&&(pd.rec.state==='running'||pd.rec.state==='queued'||D.tasks.some(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0&&t.state!=='done'))){delete PD[k];loadPost(c.pid,c.day)}}
   }catch(e){console.error(e)}
@@ -8491,7 +8671,7 @@ document.addEventListener('click',async ev=>{
   if(!D)return;
   const qq=s=>ev.target.closest(s);let el;
   /* menu „⋯” edytora posta: klik poza menu albo w pozycję menu je zamyka */
-  document.querySelectorAll('#ed .ed-mn[open]').forEach(m=>{if(!m.contains(ev.target)||ev.target.closest('.ed-mnl button'))m.open=false});
+  document.querySelectorAll('#ed .ed-mn[open],#sc .ed-mn[open]').forEach(m=>{if(!m.contains(ev.target)||ev.target.closest('.ed-mnl button'))m.open=false});
   /* rozwinięcie Studia: stan od razu przy kliknięciu (wczytany post może przerysować widok przed zdarzeniem toggle) */
   /* przycisk w summary (post z błędem w Studio): otwiera post, nie zwija sekcji */
   if(el=qq('summary [data-task]')){ev.preventDefault();openDrawer('task',el.dataset.task);return}
@@ -8519,6 +8699,11 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-mview]')){mdView(+el.dataset.mview);return}
   if(el=qq('[data-mdall]')){const m=A.mdAll||(A.mdAll={});m[el.dataset.mdall]=!m[el.dataset.mdall];render(true);return}
   if(el=qq('[data-mf]')){const F=A.mf||(A.mf={p:'',k:'',s:''});F[el.dataset.mf]=el.dataset.v;render(true);return}
+  if(el=qq('[data-scclose2]')){const tid=el.dataset.task,ed=el.dataset.medit;closeScript();if(tid)openDrawer('task',tid);else if(ed)openEditor(ed);return}
+  if(el=qq('[data-scopen]')){openScript(el.dataset.scopen);return}
+  if(el=qq('[data-scclose]')){closeScript();return}
+  if(el=qq('[data-scgo]')){scGo(el.dataset.scgo);return}
+  if(el=qq('[data-scedit]')){SC.edit=el.dataset.scedit!=='0';const doc=document.getElementById('sc-doc');if(doc)doc.innerHTML='';scFill();const ta=document.querySelector('#sc [data-sctext]');if(ta)ta.focus();return}
   if(el=qq('[data-medit]')){openEditor(el.dataset.medit);return}
   if(el=qq('[data-edclose]')){closeEditor();return}
   if(el=qq('[data-edclose2]')){const id=el.dataset.task;closeEditor();openDrawer('task',id);return}
@@ -8645,6 +8830,7 @@ document.addEventListener('change',ev=>{
   if(el.classList&&el.classList.contains('dpk-i')){const b=el.parentElement.querySelector('.dpk-b');if(b){b.textContent=dpkT(el.value);b.setAttribute('aria-label',(el.getAttribute('aria-label')||'Termin')+': '+dpkT(el.value)+', zmień')}}
   if(el.id==='mnav'){location.hash=el.value;return}
   if(el.dataset.step!=null){toggleStep(+el.dataset.step,el.checked);return}
+  if(el.dataset.scshot!=null){scShot(+el.dataset.scshot,el.checked);return}
   if(el.dataset.film){uploadFilm(el);return}
   if(el.dataset.edimg){edImgUp(el);return}
   if(el.dataset.mup!=null){uploadMedia(el);return}
@@ -8675,6 +8861,8 @@ document.addEventListener('change',ev=>{
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
   if(f.dataset.edfix!=null){ev.preventDefault();edSend(f);return}
+  if(f.dataset.scfix!=null){scSend(f);return}
+  if(f.dataset.scsave!=null){scSave(f);return}
   if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.pchat!=null){ev.preventDefault();sendPChat(f);return}
   if(f.dataset.drvstart!=null){const v=(f.elements.link.value||'').trim();if(v)driveAct(f.dataset.drvstart,'/api/drive/start',{link:v});return}
@@ -8727,7 +8915,7 @@ document.addEventListener('keydown',ev=>{const svg=ev.target.closest&&ev.target.
   if(ev.key==='ArrowLeft'||ev.key==='ArrowRight'){ev.preventDefault();wkChartAt(svg,on&&svg.dataset.i!=null?+svg.dataset.i+(ev.key==='ArrowLeft'?-1:1):c.n-1)}
   else if(ev.key==='Escape'&&on){ev.preventDefault();ev.stopPropagation();wkChartOff()}},true);
 document.addEventListener('keydown',ev=>{
-  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-chat] textarea, form[data-pchat] textarea, form[data-edfix] textarea');
+  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-chat] textarea, form[data-pchat] textarea, form[data-edfix] textarea, form[data-scfix] textarea');
   if(qt&&ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=qt.form;if(f.requestSubmit)f.requestSubmit();else f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return}
   if(!D||ev.metaKey||ev.ctrlKey||ev.altKey)return;
   const a=document.activeElement,tg=a&&a.tagName,k=ev.key,inField=tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT';
@@ -8741,6 +8929,7 @@ document.addEventListener('keydown',ev=>{
     if(k==='Enter'&&!ev.shiftKey&&tg==='TEXTAREA'&&a.closest('#drawerHost')){ev.preventDefault();a.blur()}
     return;
   }
+  if(k==='Escape'&&SC.cur){ev.preventDefault();const m=document.querySelector('#sc .ed-mn[open]');if(m){m.open=false;m.querySelector('summary').focus();return}closeScript();return}
   if(k==='Escape'&&ED.cur){ev.preventDefault();const m=document.querySelector('#ed .ed-mn[open]');if(m){m.open=false;m.querySelector('summary').focus();return}closeEditor();return}
   if(k==='Escape'){if(DR){ev.preventDefault();closeDrawer();return}
     if(A.bnMore){ev.preventDefault();A.bnMore=false;renderSide(route());focusK('bnmore');return}

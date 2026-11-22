@@ -31,6 +31,7 @@ import asystent  # noqa: E402  (stała sesja asystenta)
 import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
 import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
+import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela)
 ROOT = os.path.dirname(HERE)
 WINDOWS = os.name == "nt"
 # Windows: serwer działa pod pythonw (bez konsoli), więc żaden proces potomny nie może otwierać okna.
@@ -2026,6 +2027,81 @@ class Manager:
                 "gotowe gdy": "pod publikacją są wiersze wyświetlenia:, kliknięcia: i konta: (albo wynik:)",
                 "materiał": [RYTM_FILE] + refs}
 
+    # ---------- scenariusz nagrania (scenariusz.py, STANDARD.md „Scenariusz nagrania”) ----------
+    def script_detail(self, folder, pub, rel, rec_day):
+        """Szczegóły zadania „Przygotuj scenariusz nagrania na …”: cel, gotowe gdy (układ pliku), materiał.
+        pub: publikacja z kampanii, rel: posty/<folder posta> względem karty, rec_day: dzień nagrania."""
+        day = str(pub.get("date") or "")[:10]
+        title = scenariusz.pub_title(pub)
+        channel = pub.get("channel") or ""
+        refs = [pub["file"]] if pub.get("file") else []
+        refs += [r for r in self.marketing_refs(folder) + self.film_plan_refs(folder) if r not in refs]
+        return {"cel": "scenariusz nagrania filmu do publikacji „%s” z %s%s: co nagrać, jak i po co; właściciel "
+                       "nagrywa sam telefonem %s, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan "
+                       "filmów i dokumenty projektu)" % (title, day, " (%s)" % channel if channel else "", rec_day),
+                "gotowe gdy": "obok KARTA.md jest plik %s/%s w układzie: „# Scenariusz nagrania: <tytuł>”, pola "
+                              "„- stan: propozycja”, „- publikacja: %s”, „- nagranie: %s”, sekcje ## Po co (cel, dla "
+                              "kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia | 5 s”), ## Jak (miejsce, światło, "
+                              "kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), "
+                              "## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md "
+                              "i zadania nagrania bez zmian" % (rel, scenariusz.FILE, day, rec_day),
+                "materiał": refs}
+
+    @staticmethod
+    def film_plan_refs(folder):
+        """Dokumenty z planem filmów projektu (nazwa z „film”, folder projektu albo docs/, marketing/), najwyżej 3."""
+        out = []
+        for sub in ("", "docs", "marketing", "kampanie"):
+            base = os.path.join(folder, sub) if sub else folder
+            try:
+                names = sorted(os.listdir(base))
+            except OSError:
+                continue
+            for n in names:
+                if n.lower().endswith(".md") and "film" in n.lower() and os.path.isfile(os.path.join(base, n)):
+                    out.append((sub + "/" if sub else "") + n)
+        return out[:3]
+
+    def _plan_scripts(self, data, index, today):
+        """Filmy właściciela (karta `nagrywa: ty`) z publikacją w ciągu SCRIPT_AHEAD dni bez scenariusz.md: zadanie
+        agenta „Przygotuj scenariusz nagrania na <dzień>: <tytuł>” (raz; bez folderu posta agent go zakłada).
+        True, gdy coś dodano."""
+        added = False
+        horizon = (today + datetime.timedelta(days=SCRIPT_AHEAD)).isoformat()
+        owners = {p["id"] for p in data["projects"]
+                  if p.get("filmOwner") and p.get("state") not in self.projekt.QUIET_STATES}
+        for pid in sorted(owners):
+            folder = index.get(pid)
+            if not folder:
+                continue
+            tasks = [t for t in data["tasks"] if t["project"] == pid]
+            titles = {t["title"] for t in tasks}
+            cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+            for t in tasks:
+                day = str(t.get("date") or "")[:10]
+                if t.get("kind") != "publikacja" or t["state"] == "done" or not scenariusz.is_film(t) \
+                        or not (today.isoformat() <= day <= horizon):
+                    continue
+                if any(x.startswith(scenariusz.PREP_TASK + day) for x in titles):
+                    continue                    # zadanie już jest (także zrobione: agent nie zostawił pliku)
+                post = scenariusz.post_dir(cards, day)
+                if post and os.path.isfile(os.path.join(post, scenariusz.FILE)):
+                    continue
+                try:
+                    with self.write_lock:
+                        post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(t))
+                        title = self.projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day,
+                                                                   scenariusz.pub_title(t)), 120)
+                        self._add_task(folder, pid, title,
+                                       {"executor": "claude", "machine": self.machine, "date": today.isoformat()},
+                                       self.script_detail(folder, t, "posty/" + os.path.basename(post),
+                                                          scenariusz.rec_day(day, today)))
+                    titles.add(title)
+                    added = True
+                except (ValueError, OSError, StopIteration) as e:
+                    log("Scenariusz nagrania (%s): %s" % (pid, e))
+        return added
+
     def _add_task(self, folder, pid, title, changes, detail=None):
         """Nowe zadanie w „Do rozplanowania” z polami; wywołujący trzyma write_lock."""
         self.projekt.add_task(folder, title)
@@ -2067,7 +2143,8 @@ class Manager:
                 # nagranie to nie publikacja; opis pod film dopiero po nagraniu
                 film = t["title"].startswith(FILM_TASK) or any(w.startswith(FILM_TASK) for w in self.projekt.waiting_titles(t))
                 if t["state"] != "done" and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
-                        and not any(n == day or n.startswith(day + "-") for n in folders):
+                        and not any((n == day or n.startswith(day + "-")) and has_post(os.path.join(posts, n))
+                                    for n in folders):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
                     if title not in titles:
                         new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
@@ -3013,6 +3090,7 @@ class Manager:
             return started
         added = self._plan_posts(data, index, now.date())
         added = self._plan_rhythm(data, index, now.date()) or added
+        added = self._plan_scripts(data, index, now.date()) or added
         if added:
             data, index = self.load_projects()
         night = now.hour >= 22 or now.hour < 6
@@ -3110,6 +3188,7 @@ def film_rules(title):
     return []
 
 
+SCRIPT_AHEAD = 7            # dni: scenariusz nagrania dla filmów właściciela z publikacją w tym czasie
 RYTM_SUFFIX = " (stały rytm)"
 RYTM_FILE = "kampanie/staly-rytm.md"
 RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny post
@@ -3129,6 +3208,14 @@ def secret_file(path):
     """Plik, którego panel nie scala: nazwa .env* albo rozszerzenie .key, .pem (bez wielkości liter)."""
     name = os.path.basename(str(path).replace("\\", "/").rstrip("/")).lower()
     return name.startswith(".env") or name.endswith((".key", ".pem"))
+
+
+def has_post(folder):
+    """Folder posty/<dzień>-… to post, chyba że leży w nim tylko scenariusz nagrania (to jeszcze nie post)."""
+    try:
+        return os.listdir(folder) != [scenariusz.FILE]
+    except OSError:
+        return True
 
 
 def has_result(detail):

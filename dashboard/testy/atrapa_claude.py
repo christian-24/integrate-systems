@@ -15,6 +15,7 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   plik     jak ok, a w katalogu roboczym tworzy notatki/analiza.md i dopisuje pod zadaniem wynik: z tą ścieżką
   commit   jak plik, a zmiany zatwierdza sam (git commit w katalogu roboczym)
   sekret   jak plik, a w katalogu roboczym tworzy też .env.local i certyfikat/serwer.pem (atrapy sekretów)
+  scenariusz  jak ok, a pisze plik posty/<folder>/scenariusz.md z promptu (SCRIPT); przy poprawce dopisuje ujęcie
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
   (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”. Tryby: czat-wolno (odpowiedź
   po 1,5 s), login (błąd 401), smieci (tekst zamiast JSON), wolno (bez odpowiedzi do limitu czasu).
@@ -72,6 +73,59 @@ def edit_row(prompt, mark):
                 f.write("\n".join(lines))
             return m.group(1)
     return ""
+
+
+SCRIPT = """# Scenariusz nagrania: %s
+
+- stan: propozycja
+- publikacja: %s
+- nagranie: %s
+
+## Po co
+Pokazać instalatorom, jak w 30 sekund sprawdzić szczelność obudowy miernikiem.
+
+## Co nagrać
+- [ ] Obudowa na stole, ręka wchodzi w kadr | 4 s
+- [ ] Zbliżenie na uszczelkę przy zawiasie | 6 s
+- [ ] Miernik przy obudowie, wynik na ekranie | 8 s
+- [ ] Twarz do kamery: jedno zdanie podsumowania | 7 s
+
+## Jak
+- Miejsce: warsztat, czysty blat, jasne tło
+- Światło: dzienne z boku, bez lampy z góry
+- Kadr: telefon pionowo, na statywie, obiektyw na wysokości blatu
+- Rekwizyty: obudowa, miernik, ściereczka
+
+## Co powiedzieć
+Ta uszczelka decyduje o tym, czy do środka dostanie się woda. Sprawdzam ją miernikiem: wynik poniżej progu oznacza, że obudowa jest szczelna.
+
+## Na koniec
+Napisz w komentarzu, jak sprawdzasz szczelność u siebie.
+
+## Gotowe gdy
+Cztery ujęcia, razem około 25 s, dźwięk bez szumu, wynik miernika czytelny.
+"""
+
+
+def write_script(prompt):
+    """Tryb scenariusz: nowy plik scenariusz.md albo (poprawka) dopisane ujęcie z treścią poprawki."""
+    m = re.search(r"(posty/[^\s/]+)/scenariusz\.md", prompt)
+    if not m:
+        return
+    os.makedirs(m.group(1), exist_ok=True)
+    path = os.path.join(m.group(1), "scenariusz.md")
+    fix = re.search(r"Poprawka od właściciela \(wiersz poprawka:\): (.+)", prompt)
+    if fix and os.path.exists(path) and "od nowa" not in fix.group(1):
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+        text = text.replace("\n\n## Jak", "\n- [ ] %s | 5 s\n\n## Jak" % fix.group(1).strip(), 1)
+    else:
+        days = re.findall(r"„- (?:publikacja|nagranie): (\d{4}-\d\d-\d\d)”", prompt) or ["2026-01-01", "2026-01-01"]
+        title = re.search(r"publikacji „(.+?)” z ", prompt)
+        text = SCRIPT % (title.group(1) if title else "Film", days[0], days[-1])
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    tool("Write", {"file_path": os.path.join(os.getcwd(), path)})
 
 
 def add_result(path, title, text):
@@ -270,6 +324,8 @@ def main(argv):
     edited = "" if how == "zostaw" else edit_row(prompt, "x")
     if edited:
         tool("Edit", {"file_path": os.path.join(os.getcwd(), edited)})
+    if how == "scenariusz":
+        write_script(prompt)
     if how in ("plik", "commit", "sekret") and edited:
         if how == "sekret":
             os.makedirs("certyfikat", exist_ok=True)
