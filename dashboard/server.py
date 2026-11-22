@@ -21,6 +21,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/stop        zatrzymuje uruchomienie albo zdejmuje je z kolejki
   POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików)
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
+  POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
+  GET  /api/project/chat      historia rozmowy o projekcie (?project=)
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
@@ -1388,6 +1390,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/project/meta": lambda b: update_meta(b),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
+          "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
@@ -2851,6 +2854,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, text, "text/plain; charset=utf-8")
             return self._send(code, json.dumps({"ok": False, "error": text}, ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/project/chat":
+            code, err, extra = get_agents().project_chat_get((parse_qs(url.query).get("project") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/api/task/chat":
             code, err, extra = get_agents().chat_get((parse_qs(url.query).get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
@@ -2945,7 +2952,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/post/obraz":
             return self._post_image_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/film/zmien") else 4096)
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/film/zmien") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")

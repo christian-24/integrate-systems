@@ -192,6 +192,31 @@ class Czat(Baza):
         status, _ = self.request("POST", "/api/agent/stop", {"id": "x" * 5000})
         self.assertEqual(status, 400)                       # pozostałe żądania: nadal najwyżej 4 KB
 
+    def test_rozmowa_o_projekcie(self):
+        pid = self.task("Zadanie A")["project"]
+        self.assertEqual(self.manager.project_chat_send(pid, "Co mam zrobić jutro?"), (202, "", {"pending": True}))
+        self.assertEqual(self.manager.project_chat_send(pid, "Druga"), (409, "Czekam jeszcze na odpowiedź.", {}))
+        self.wait_for(lambda: not self.manager.project_chat_get(pid)[2]["pending"])
+        c = self.manager.project_chat_get(pid)[2]
+        self.assertEqual(([m["role"] for m in c["messages"]], c["error"]), (["ty", "claude"], ""))
+        argv = self.chat_calls()[-1]["argv"]
+        allowed = argv[argv.index("--allowedTools") + 1].split(",")
+        cards = os.path.dirname(os.path.realpath(os.path.join(self.folder, "KARTA.md"))).rstrip("/")
+        self.assertIn("Edit(/%s/ZADANIA.md)" % cards, allowed)                 # zmiany tylko w zadaniach,
+        self.assertIn("Edit(/%s/kampanie/**)" % cards, allowed)                # kampaniach i decyzjach
+        self.assertEqual([a for a in allowed if not a.startswith(("Edit(", "Read", "Grep", "Glob", "LS"))], [])
+        self.assertNotIn("Edit", allowed)                                     # bez edycji dowolnych plików
+        denied = argv[argv.index("--disallowedTools") + 1].split(",")
+        for name in ("Bash", "Write", "MultiEdit", "WebFetch"):
+            self.assertIn(name, denied)
+        self.assertEqual(argv[argv.index("--permission-mode") + 1], "default")
+        self.assertEqual(self.manager.project_chat_get("obcy")[0], 404)
+        self.assertEqual(self.manager.project_chat_send(pid, " ")[0], 400)
+        status, body = self.request("GET", "/api/project/chat?project=" + quote(pid))
+        self.assertEqual((status, len(body["messages"])), (200, 2))
+        status, body = self.request("POST", "/api/project/chat", {"project": pid, "message": "Anuluj zadanie B"})
+        self.assertEqual((status, body["pending"]), (202, True))
+
 
 if __name__ == "__main__":
     import unittest

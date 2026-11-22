@@ -44,6 +44,7 @@ CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
 # Rozmowa o zadaniu (AGENCI.md, „Rozmowa o zadaniu”): tylko odczyt plików, bez powłoki, zapisu i sieci.
 CHAT_TOOLS = "Read,Grep,Glob,LS"
 CHAT_DENY = "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+PL_DAYS = ("poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela")
 CHAT_MAX = 2000             # znaków w jednej wiadomości właściciela
 CHAT_KEEP = 100             # tyle wiadomości zostaje w historii zadania
 CHAT_ANSWER = 8000          # najwyżej tyle znaków odpowiedzi
@@ -1003,6 +1004,119 @@ class Manager:
                 args += ["--resume", session]
             args += _card_dirs(folder) + ["--allowedTools", CHAT_TOOLS, "--disallowedTools", CHAT_DENY,
                                           "--strict-mcp-config"]
+            threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session)),
+                             daemon=True).start()
+        except Exception:
+            self._chat_end(file, "", "", "Nie udało się uruchomić rozmowy.")
+            return 500, "Nie udało się uruchomić rozmowy.", {}
+        return 202, "", {"pending": True}
+
+    # ---------- rozmowa o projekcie: postęp, zadania, anulowanie ----------
+    def _project_chat_file(self, pid):
+        return os.path.join(self.runs_dir, "czat", "projekt-" + hashlib.sha1(str(pid).encode("utf-8")).hexdigest() + ".json")
+
+    def project_chat_get(self, pid):
+        """Historia rozmowy o projekcie: (kod, błąd, {"messages", "pending", "error"})."""
+        _, index = self.load_projects(resolve=False)
+        if str(pid) not in index:
+            return 404, "Nie ma tego projektu.", {}
+        path = self._project_chat_file(pid)
+        with self._chat_lock:
+            chat = self._chat_read(path)
+            live = path in self._chat_live
+        if chat["pending"] and not live:
+            chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij wiadomość jeszcze raz."
+        return 200, "", {"messages": chat["messages"], "pending": live, "error": chat["error"]}
+
+    @staticmethod
+    def project_chat_tools(folder):
+        """Narzędzia rozmowy o projekcie: odczyt oraz edycja tylko ZADANIA.md, DECYZJE.md i kampanie/ (karta
+        i dowiązania w folderze projektu). Reszta zabroniona wprost; tryb default bez pytań w -p odrzuca inne zmiany."""
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        allow = ["Read", "Grep", "Glob", "LS"]
+        for base in dict.fromkeys([cards, folder]):
+            b = base.rstrip("/")                    # ścieżka bezwzględna: reguła Edit(//…)
+            allow += ["Edit(/%s/ZADANIA.md)" % b, "Edit(/%s/DECYZJE.md)" % b, "Edit(/%s/kampanie/**)" % b]
+        return ",".join(allow), "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task", cards
+
+    def project_chat_prompt(self, project, folder, cards, text):
+        name = project.get("name") or project.get("id")
+        today = datetime.date.today()
+        lines = ["Rozmawiasz z właścicielem o projekcie „%s” (id %s). Dziś jest %s (%s)." % (
+                     name, project.get("id"), today.isoformat(), PL_DAYS[today.weekday()]),
+                 "", "Pliki projektu (czytaj je przed odpowiedzią):",
+                 "- karta: %s" % os.path.join(cards, "KARTA.md"),
+                 "- zadania: %s" % os.path.join(cards, "ZADANIA.md"),
+                 "- kampanie: %s (pliki .md, sekcja Harmonogram)" % os.path.join(cards, "kampanie"),
+                 "- decyzje: %s" % os.path.join(cards, "DECYZJE.md"),
+                 "- format wierszy: %s" % os.path.normpath(os.path.join(cards, "..", "..", "standard", "STANDARD.md")),
+                 "- dokumenty projektu: %s" % folder,
+                 "", "Zasady:",
+                 "- Rozmawiacie o zadaniach, postępie, terminach i o tym, co właściciel ma zrobić w najbliższych dniach "
+                 "(zadania z „kto: ty”, filmy do nagrania dzień przed publikacją, publikacje). Krótko, prostym językiem po polsku.",
+                 "- Pliki zmieniasz tylko na wyraźną prośbę właściciela (np. zamknij, anuluj, przesuń, zmień termin, dodaj "
+                 "zadanie) i tylko ZADANIA.md, DECYZJE.md oraz pliki w kampanie/, w formacie ze STANDARD.md. "
+                 "Gdy prośba jest niejasna, dopytaj zamiast zgadywać.",
+                 "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
+                 "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
+                 "- Po każdej zmianie napisz na końcu wiersz zaczynający się od „Zmieniono:” z plikiem i zadaniem.",
+                 "- Nie zmieniasz KARTA.md, kodu ani innych plików i nie uruchamiasz poleceń.",
+                 "- Nigdy nie proś o hasła, klucze ani tokeny.",
+                 "", "Wiadomość właściciela:", text]
+        return "\n".join(lines) + "\n"
+
+    def project_chat_send(self, pid, message):
+        """Wiadomość właściciela w rozmowie o projekcie; odpowiedź w tle (project_chat_get). (kod, błąd, dodatki)."""
+        text = str(message or "").strip()
+        if not text:
+            return 400, "Napisz wiadomość.", {}
+        if len(text) > CHAT_MAX:
+            return 400, "Najwyżej %d znaków." % CHAT_MAX, {}
+        data, index = self.load_projects()
+        pid = str(pid)
+        if pid not in index:
+            return 404, "Nie ma tego projektu.", {}
+        if data["projectsSource"] != "registry":
+            return 409, "Projekty przykładowe", {}
+        path = self.tool_path("claude")
+        if not path:
+            return 409, "Brak polecenia claude", {}
+        with self._lock:
+            login = self._state["needsLogin"]
+        if login:
+            return 409, "Wymaga logowania: %s" % self.login_cmd("claude", path), {}
+        limit = self.limit_until()
+        if limit:
+            return 409, "Limit subskrypcji. Odnowienie o %s." % limit[11:16], {}
+        folder = index[pid]
+        project = next((p for p in data["projects"] if p["id"] == pid), {"id": pid})
+        file = self._project_chat_file(pid)
+        with self._chat_lock:
+            if file in self._chat_live:
+                return 409, "Czekam jeszcze na odpowiedź.", {}
+            if len(self._chat_live) >= CHAT_PARALLEL:
+                return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
+            chat = self._chat_read(file)
+            session = chat["session"] if re.fullmatch(r"[\w-]{1,100}", chat["session"]) else ""
+            chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
+            chat.update(pending=True, error="")
+            try:
+                self._chat_write(file, chat)
+            except OSError:
+                return 500, "Nie udało się zapisać rozmowy.", {}
+            self._chat_live.add(file)
+            self._chat_meta[file] = {"taskId": "", "project": pid, "file": "", "since": now_iso(),
+                                     "title": "Rozmowa o projekcie %s" % (project.get("name") or pid)}
+            self._chat_save()
+        try:
+            allow, deny, cards = self.project_chat_tools(folder)
+            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text)
+            args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
+            if self.model:
+                args += ["--model", self.model]
+            if session:
+                args += ["--resume", session]
+            args += _card_dirs(folder) + ["--allowedTools", allow, "--disallowedTools", deny, "--strict-mcp-config"]
             threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session)),
                              daemon=True).start()
         except Exception:
