@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-23: Film „Zdjąłem boczek z drzwi Cupry” – lektor, plansza końcowa i uczciwość porównania
+- Kontekst: plan filmów (pkt 6, Pn 30) podaje cztery kroki na 10 s, bez planszy końcowej. Haczyk ma 9 słów (zasada: max 7 na raz). Puk po lewej jest w gołą blachę, a po prawej w założony boczek, więc to nie jest równe porównanie. Nie wiadomo, co fabryka dała pod boczkiem tej Cupry.
+- Decyzja: haczyk podzielony na dwa napisy i dwa zdania lektora (przed zdjęciem boczka i na odsłoniętych drzwiach). Dodana plansza „Napisz model auta” (11–13 s), jak w PUK #1 i #2. Boczek jest przygotowany przed nagraniem (śruby, większość klipsów, wtyczki), żeby przed kamerą odszedł jednym ruchem. Scenariusz każe pokazać to, co naprawdę jest w drzwiach, i zakazuje zdań „fabryka nie dała nic”; na zarzut o nierównym puku jest gotowa odpowiedź z odesłaniem do przypiętego puk-puk. Dodane zapasowe ujęcia gołych drzwi na 14 gru.
+- Skutki: film ma 12–13 s zamiast 10 s; nagranie ok. 35 min razem ze zdjęciem i założeniem boczka. Plan przewidywał nagranie we wtorek 24 lis, zadanie podaje 29 lis; scenariusz działa w oba dni.
+- Kto: agent
+
 ## 2026-11-22: Film „Serial odc. 2” – dźwięk, dodatkowe ujęcia i wezwanie
 - Kontekst: plan filmów (pkt 6, Pt 27) podaje cztery kroki z dymkami i mówi, że serial idzie na stałym dźwięku, bez lektora. Odcinek opiera się jednak na różnicy w dźwięku puku, a muzyka by ją zagłuszyła. Plan nie mówi, od jakiego kadru zacząć ani na czym pokazać planszę końcową. Imienia Cupry nie ma w plikach projektu.
 - Decyzja: w 2–8 s zostaje oryginalny dźwięk puku, a stały dźwięk serialu jest ściszony prawie do zera. Do planu dodane: początek na „twarzy” Cupry (jak w odc. 1), opcjonalne mrugnięcie świateł z pilota jako reakcja po „puszce”, tło pod planszę końcową i zapasowy puk w prawe tylne drzwi do odc. 3. Wezwanie w filmie to TAK/NIE w komentarzu (jak w planie); „Napisz model auta” i ceny tylko w przypiętym komentarzu. Odpowiedzi na komentarze nie obiecują wygłuszenia reszty drzwi. Imię zostaje polem [Imię] do wpisania.

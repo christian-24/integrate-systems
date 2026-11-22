@@ -250,8 +250,9 @@ termin: 2026-11-30
 - [x] Przygotować post na 2026-11-20: Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: claude | gdzie: chmura | kiedy: 2026-11-19
   materiał: kampanie/staly-rytm.md
   wynik: teksty pod film A przyjęte 19.11 (Claude za właściciela); publikacja po nagraniu filmu
-- [ ] Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
+- [x] Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
   z pytania 9, 2026-11-19
+  wynik: w metryki.md definicja „konta aktywnego” (co najmniej 1 udana generacja w ostatnich 14 dniach) ma status „przyjęta 2026-11-19”; zaktualizowane punkty 2 i 7, zapytanie pomiarowe bez zmian (już tak liczyło)
 - [ ] Podaj identyfikatory kont własnych i testowych do pomiaru | kto: ty | kiedy: 2026-11-23 | czas: 5
   cel: pomiar kont nie liczy kont właściciela ani testowych
   gotowe gdy: identyfikatory podane przy zamknięciu zadania (pole notatki), np. „1, 2”, albo „brak”
