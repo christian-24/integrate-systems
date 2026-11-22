@@ -29,7 +29,7 @@ ENV_PLIK=/etc/integrate/panel.env
 INSTALATOR_URL=https://chatgpt.com/codex/install.sh
 
 przerwij() { echo "Przerwano: $*" >&2; exit 1; }
-jako_agent() { runuser -u "$AGENT" -- env HOME="$AGENT_DOM" "$@"; }
+jako_agent() { (cd / && runuser -u "$AGENT" -- env HOME="$AGENT_DOM" "$@"); }   # z / : agent nie wejdzie do folderu wywołującego
 
 SPRAWDZ=0
 case "${1:-}" in
@@ -55,10 +55,10 @@ proba() {
   runuser -u "$PANEL" -- sudo -n -u "$AGENT" -- "$AGENT_CODEX" --version >/dev/null 2>&1 \
     || { echo "Panel nie może uruchomić Codexa jako $AGENT (sudoers)." >&2; return 1; }
   runuser -u "$PANEL" -- test -f "$AGENT_CODEX" || { echo "Panel nie widzi $AGENT_CODEX." >&2; return 1; }
-  if jako_agent "$AGENT_CODEX" sandbox linux --full-auto -- true >/dev/null 2>&1; then
+  if jako_agent "$AGENT_CODEX" sandbox -- /bin/true >/dev/null 2>&1; then
     echo "Piaskownica Codex działa."
   else
-    echo "UWAGA: próba piaskownicy Codex nieudana (codex sandbox linux). Zadania mogą kończyć się błędem uprawnień;" \
+    echo "UWAGA: próba piaskownicy Codex nieudana (codex sandbox -- /bin/true). Zadania mogą kończyć się błędem uprawnień;" \
          "sprawdź bubblewrap i ograniczenia przestrzeni nazw (AppArmor)." >&2
   fi
   stan="$(jako_agent "$AGENT_CODEX" login status 2>&1 || true)"
