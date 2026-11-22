@@ -1758,27 +1758,34 @@ def graphic_state(pid, day):
            "photos": udostepnij.photos(folder), "max": grafiki.INPUTS_MAX}
     m = get_agents()
     m.refresh_tools()
-    out.update(tool=m.graphic_tool(), runs=m.graphic_runs(pid, day))
+    try:
+        grafiki.chat_settle(folder, m.graphic_live)
+    except OSError as e:
+        print("rozmowa o grafice: %s" % e, file=sys.stderr)
+    out.update(tool=m.graphic_tool(), runs=m.graphic_runs(pid, day), chat=grafiki.chat_public(folder))
     return 200, "", out
 
 
 def graphic_order(body):
-    """POST /api/post/grafika-codex {project, date, polecenie, zdjecia: [nazwy plików posta]}: zlecenie dla Codexa."""
+    """POST /api/post/grafika-codex {project, date, polecenie, tryb: zachowaj | nowa, zrodlo: grafika.png | zdjęcie}:
+    polecenie w rozmowie o grafice. Przy oczekującej wersji Codex poprawia ją (zrodlo bez znaczenia)."""
     pid, day = str(body.get("project") or ""), str(body.get("date") or "")
     folder = post_folder(pid, day)
     if not folder:
         return 404, "Nie ma posta na ten dzień."
-    return get_agents().run_graphic(pid, day, folder, body.get("polecenie", ""), body.get("zdjecia") or [],
-                                    _post_project_name(pid))
+    post_image(folder)                       # grafika.svg → grafika.png, żeby było co poprawiać
+    return get_agents().run_graphic(pid, day, folder, body.get("polecenie", ""), str(body.get("tryb") or "zachowaj"),
+                                    str(body.get("zrodlo") or ""), _post_project_name(pid))
 
 
 def graphic_variant(body):
-    """POST /api/post/wariant {project, date, name, akcja: grafika | karuzela | usun}."""
+    """POST /api/post/wariant {project, date, name, akcja}: oczekująca wersja z rozmowy: akceptuj | odrzuc | karuzela;
+    dowolny wariant: grafika | usun."""
     folder = post_folder(str(body.get("project") or ""), str(body.get("date") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
-    do = {"grafika": grafiki.use_as_graphic, "karuzela": grafiki.add_to_carousel, "usun": grafiki.remove}.get(
-        str(body.get("akcja") or ""))
+    do = {"akceptuj": grafiki.accept, "odrzuc": grafiki.reject, "karuzela": grafiki.to_carousel,
+          "grafika": grafiki.use_as_graphic, "usun": grafiki.remove}.get(str(body.get("akcja") or ""))
     if not do:
         return 400, "Nieznana akcja."
     with _write_lock:

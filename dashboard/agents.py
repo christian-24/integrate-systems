@@ -2357,19 +2357,20 @@ class Manager:
             return [{k: r.get(k) for k in ("id", "state", "error", "result", "ask", "variants", "queuedAt", "endedAt",
                                            "activity")} for r in runs[:5]]
 
-    def run_graphic(self, pid, day, folder, text, names, project_name=""):
-        """Zlecenie grafiki: `codex exec` w folderze posta z obrazami wejściowymi (--image). (kod, błąd, dane)."""
+    def run_graphic(self, pid, day, folder, text, mode="zachowaj", wanted="", project_name=""):
+        """Polecenie w rozmowie o grafice posta: `codex exec` w folderze posta z obrazem wejściowym (--image).
+        mode: „zachowaj” (obróbka zdjęcia Pillow, bez generowania) albo „nowa” ($imagegen). Obraz wejściowy: oczekująca
+        wersja z rozmowy (iteracja), inaczej wanted (grafika.png albo zdjęcie karuzeli). (kod, błąd, dane)."""
         text = re.sub(r"\s+", " ", str(text or "")).strip()
         if len(text) < grafiki.TEXT_MIN:
             return 400, "Napisz, co zrobić z grafiką.", {}
         if len(text) > grafiki.TEXT_MAX:
             return 400, "Najwyżej %d znaków." % grafiki.TEXT_MAX, {}
-        if not isinstance(names, list) or len(names) > grafiki.INPUTS_MAX:
-            return 400, "Wybierz najwyżej %d zdjęć." % grafiki.INPUTS_MAX, {}
-        allowed = grafiki.inputs(folder)
-        names = [str(n) for n in names]
-        if any(n not in allowed for n in names) or len(set(names)) != len(names):
-            return 409, "Zdjęcia posta zmieniły się. Odświeżam.", {}
+        if mode not in grafiki.TRYBY:
+            return 400, "Nieznany tryb.", {}
+        name, source = grafiki.chat_base(folder, str(wanted or ""))
+        if mode == "zachowaj" and not name:
+            return 409, "Post nie ma zdjęcia do poprawy. Wyłącz „Zachowaj zdjęcie”, aby zrobić nową grafikę.", {}
         tool = self.graphic_tool()
         if tool["need"] == "off":
             return 409, "Grafiki przez Codex są wyłączone w ustawieniach panelu (PANEL_GRAFIKA).", {"need": "off"}
@@ -2385,34 +2386,50 @@ class Manager:
             start = grafiki.next_number(folder)
             rec = self._new("grafika", "codex", "Grafika do posta %s" % day, project=pid,
                             project_name=project_name or pid)
-            rec.update(post=day, ask=_short(text, 300), inputs=names, variants=[])
+            rec.update(post=day, ask=_short(text, 300), inputs=[name] if name else [], variants=[], mode=mode)
             args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                      "-C", folder]
-            if names:       # jeden argument z „=”: --image przyjmuje kilka wartości i nie może połknąć „-”
-                args.append("--image=" + ",".join(os.path.join(folder, n) for n in names))
+            if name:        # jeden argument z „=”: --image przyjmuje kilka wartości i nie może połknąć „-”
+                args.append("--image=" + os.path.join(folder, name))
             args.append("-")
-            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": grafiki.prompt(text, names, start, folder),
-                                "limit": grafiki.timeout(self.env),
-                                "graphic": {"folder": folder, "start": start, "since": time.time()}})
+            prompt = grafiki.prompt_keep(text, name, start, folder) if mode == "zachowaj" else \
+                grafiki.prompt(text, [name] if name else [], start, folder)
+            try:
+                grafiki.chat_start(folder, rec["id"], text, mode, name, source)
+            except OSError as e:
+                return 500, "Nie zapisano rozmowy o grafice: %s." % (e.strerror or e), {}
+            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": prompt, "limit": grafiki.timeout(self.env),
+                                "graphic": {"folder": folder, "start": start, "since": time.time(), "mode": mode}})
         return 200, "", {"id": rec["id"]}
 
-    def _graphic_done(self, rec, priv, state, error):
-        """Po zleceniu grafiki: warianty w folderze posta (z katalogu sesji Codex, gdy sam ich nie skopiował)."""
+    def graphic_live(self, run_id):
+        """True, gdy uruchomienie grafiki o tym id czeka albo trwa."""
+        with self._lock:
+            r = self._runs.get(run_id)
+            return bool(r) and r["state"] in LIVE
+
+    def _graphic_done(self, rec, priv, state, error, result):
+        """Po poleceniu grafiki: wynik z folderu posta (w trybie „nowa” także z katalogu sesji Codex, gdy sam go nie
+        skopiował), sprawdzenie i wpis w rozmowie (grafiki.chat_finish). (stan, błąd, wynik)."""
         g = priv.get("graphic") or {}
         if not g.get("folder"):
-            return state, error
+            return state, error, result
         home = grafiki.codex_home(self.env, self.agent_user)
         session = os.path.join(home, "generated_images", priv["thread"]) if home and priv.get("thread") else ""
+        keep = g.get("mode") == "zachowaj"
+        out = ""
         try:
-            made = grafiki.collect(g["folder"], g["start"], g["since"], session)
+            made = grafiki.collect(g["folder"], g["start"], g["since"], "" if keep else session) \
+                if state != "stopped" else []
+            state, error, result, out = grafiki.chat_finish(g["folder"], rec["id"], made, state, error, result,
+                                                            session if keep else "", g["since"])
         except Exception as e:      # błąd zbierania nie może zatrzymać zamknięcia uruchomienia
             log("Grafika %s: %s" % (rec["id"], e))
-            made = []
+            if state == "done":
+                state, error = "error", "Nie udało się zapisać wyniku."
         with self._lock:
-            rec["variants"] = made
-        if state == "done" and not made:
-            return "error", "Codex skończył, ale nie zapisał żadnego obrazu. Spróbuj jeszcze raz albo zmień polecenie."
-        return state, error
+            rec["variants"] = [out] if out else []
+        return state, error, result
 
     def _codex_device_login(self, args):
         """`codex login --device-auth` w tle: adres strony i jednorazowy kod dla właściciela. Proces sam kończy się
@@ -2933,8 +2950,8 @@ class Manager:
             priv["finishing"] = True
         if rec["kind"] == "task":                      # wiersz zadania przed ogłoszeniem stanu końcowego
             self._close_task(rec, state, priv.get("git"))
-        if rec["kind"] == "grafika" and state not in ("stopped",):
-            state, error = self._graphic_done(rec, priv, state, error)
+        if rec["kind"] == "grafika":
+            state, error, result = self._graphic_done(rec, priv, state, error, result)
         if rec["kind"] == "plan" and state == "done":
             body, plan = self.parse_plan(result, (self._priv.get(rec["id"]) or {}).get("cands") or {})
             result = body[:4000]

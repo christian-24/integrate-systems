@@ -384,19 +384,38 @@ Podział pracy: grafiki (generowanie i poprawianie zdjęć do postów) robi Code
 Ustawienie: `PANEL_GRAFIKA` (`codex` domyślnie, `wylaczone`). Wybór wykonawcy zadań (`kto:`) się nie zmienia.
 Generowanie zużywa limit planu ChatGPT 3–5 razy szybciej niż zwykła tura; plan Free go nie ma.
 
-- `GET /api/post/warianty?project=&date=`: `variants` i `inputs` (`[{name, at}]`: grafika.png, zdjęcia karuzeli,
-  warianty, `grafika-poprzednia-*.png`), `folder`, `max` (najwyżej 6 obrazów wejściowych), `runs` (ostatnie 5 zleceń
-  tego posta: `id`, `state`, `error`, `result`, `ask`, `variants`), `tool`: `need` (`""` gotowy, `off`, `install`,
-  `login`), `loginCmd`, `loginWeb`, `agentUser`, `login` (`active`, `url`, `code` logowania kodem urządzenia).
-- `POST /api/post/grafika-codex {project, date, polecenie, zdjecia: [nazwy]}`: zlecenie (rodzaj uruchomienia
-  `grafika`, widać je w Agentach, limit `PANEL_GRAFIKA_TIMEOUT`). Polecenie: `codex exec --json --sandbox
-  workspace-write --skip-git-repo-check -C <folder posta> --image=<a>,<b> -` (jako `PANEL_AGENT_USER`). Codex zapisuje
-  wyniki jako `wariant-<n>.png` od pierwszego wolnego numeru i niczego nie nadpisuje. Po zakończeniu panel bierze nowe
-  warianty; gdy Codex zostawił obraz tylko w `<CODEX_HOME>/generated_images/<wątek>/`, panel kopiuje go jako wariant.
-  Brak obrazu przy udanym przebiegu to stan `error`. 409 z `need`, gdy Codexa nie ma, nie jest zalogowany albo grafiki
-  są wyłączone; jedno zlecenie naraz na post.
-- `POST /api/post/wariant {project, date, name, akcja}`: `grafika` (wariant staje się `grafika.png`; poprzednia grafika
-  i `grafika.svg` zostają jako `grafika-poprzednia-<czas>`), `karuzela` (wariant jako kolejne `zdjecie-<n>`), `usun`.
+W edytorze posta jedna sekcja „Grafika”: rozmowa z Codexem (polecenia właściciela i krótkie odpowiedzi), gotowe
+polecenia do wstawienia w pole, przełącznik „Zachowaj zdjęcie” (domyślnie włączony) i „Wgraj plik”. Wynik to nowa wersja
+w podglądzie platformy po lewej (pasek „Nowa wersja”: Przed/Po, Zaakceptuj, Odrzuć); „Dodaj nową wersję do karuzeli”
+jest w menu ⋯. Kolejne polecenie poprawia ostatnią wersję. Ścieżek serwera panel nie pokazuje.
+
+- Tryby: `zachowaj` (domyślny) — klasyczna obróbka zdjęcia skryptem Pythona z Pillow (wyostrzenie, szum, kontrast,
+  ekspozycja, balans bieli; kadr tylko na prośbę), bez `$imagegen` i bez dodawania czy usuwania obiektów; `nowa` —
+  `$imagegen` jak dotąd. W trybie `zachowaj` panel odrzuca wynik, gdy w `<CODEX_HOME>/generated_images/<wątek>/`
+  pojawił się nowy obraz (generowanie mimo zakazu) albo gdy wynik ma inne proporcje niż źródło (tolerancja 1,5%),
+  a polecenie nie prosiło o kadr, format, obrót ani prostowanie.
+- Rozmowa: `.grafika-rozmowa.json` w folderze posta: `items` (`id` uruchomienia, `at`, `text`, `mode`, `input`,
+  `state` `run|ok|error`, `reply`, `version`; albo `action` `akceptuj|odrzuc|karuzela`), `pending` (wersja czekająca na
+  decyzję, `wariant-<n>.png`), `source` (obraz, który wersja zastąpi: `grafika.png` albo `zdjecie-<n>`). Wejście
+  kolejnego polecenia: `pending`, inaczej `zrodlo` z żądania (obraz widoczny w podglądzie), inaczej grafika albo
+  pierwsze zdjęcie. Nowa wersja usuwa poprzednią oczekującą. Wpis `run` bez żywego uruchomienia (np. po restarcie
+  panelu) staje się błędem „Przerwane”.
+- `GET /api/post/warianty?project=&date=`: `chat` (`items` bez `id` i `input`, `pending` `{name, at, w, h}` albo
+  `null`, `source`), `variants` i `inputs` (`[{name, at}]`), `folder`, `max`, `runs` (ostatnie 5 zleceń tego posta:
+  `id`, `state`, `error`, `result`, `ask`, `variants`), `tool`: `need` (`""` gotowy, `off`, `install`, `login`),
+  `loginCmd`, `loginWeb`, `agentUser`, `login` (`active`, `url`, `code` logowania kodem urządzenia).
+- `POST /api/post/grafika-codex {project, date, polecenie, tryb: zachowaj|nowa, zrodlo}`: polecenie w rozmowie
+  (rodzaj uruchomienia `grafika`, widać je w Agentach, limit `PANEL_GRAFIKA_TIMEOUT`). Polecenie: `codex exec --json
+  --sandbox workspace-write --skip-git-repo-check -C <folder posta> --image=<wejście> -` (jako `PANEL_AGENT_USER`).
+  Codex zapisuje wynik jako `wariant-<n>.png` od pierwszego wolnego numeru i niczego nie nadpisuje; w trybie `nowa`
+  panel bierze też obraz z katalogu sesji, gdy Codex go nie skopiował. Brak obrazu przy udanym przebiegu to `error`.
+  Wynik uruchomienia (Agenci) to krótka odpowiedź bez ścieżek. 409: `zachowaj` przy poście bez obrazu, brak Codexa,
+  brak logowania, grafiki wyłączone (`need`); jedno zlecenie naraz na post.
+- `POST /api/post/wariant {project, date, name, akcja}`: dla oczekującej wersji (`name` = `pending`, inaczej 409)
+  `akceptuj` (zastępuje `source`: grafika przez `grafika.png`, poprzednia i `grafika.svg` zostają jako
+  `grafika-poprzednia-<czas>`; zdjęcie karuzeli jako `zdjecie-<n>.png`, poprzednie jako
+  `grafika-poprzednia-<czas>-zdjecie-<n>`), `odrzuc` (usuwa wersję), `karuzela` (wersja jako kolejne `zdjecie-<n>`);
+  dla dowolnego wariantu `grafika` i `usun`.
 - Logowanie Codex z panelu: na Macu i PC `POST /api/agent/login {"tool": "codex"}` otwiera Terminal z `codex login`;
   na serwerze (`PANEL_LOGIN_WEB`) panel uruchamia `codex login --device-auth` jako agent i zwraca `{url, code}`:
   właściciel otwiera stronę OpenAI i wpisuje kod (wymaga włączonego logowania kodem urządzenia w ustawieniach

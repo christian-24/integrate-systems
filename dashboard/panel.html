@@ -600,7 +600,7 @@ body.ed-open{overflow:hidden}
 .ed-h{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
 .ed-tt{display:grid;min-width:0}.ed-tt b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ed-tt span{font-size:12.5px}
 .ed-b{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
-.ed-l{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:8px;padding:16px;min-height:0;overflow:auto;background:var(--sunk)}
+.ed-l{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:8px;padding:16px;min-height:0;overflow:auto;background:var(--sunk)}
 .ed-tabs{display:flex;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line);background:var(--surface);overflow-x:auto}
 .ed-tabs[hidden]{display:none}
 .ed-tabs .seg{font-size:14px;padding:4px 14px;min-height:34px}
@@ -654,23 +654,24 @@ body.ed-open{overflow:hidden}
 .ed-chat .cm{padding:8px 10px;border-radius:8px;font-size:13.5px;line-height:1.45}.ed-chat .cm.me{background:var(--accent-soft)}.ed-chat .cm.ai{background:var(--sunk)}
 .ed-chat .cm b{display:block;font-size:11.5px;color:var(--ink-3)}
 .ed-f{display:grid;gap:8px}.ed-at:empty{display:none}.ed-more{margin:0}
-/* edytor posta: grafika przez Codex (cxFill) */
-.cx{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px;max-height:52vh;overflow:auto;align-content:start}
+/* edytor posta: sekcja „Grafika” (cxFill): rozmowa z Codexem i gotowe polecenia po prawej; nad podglądem pasek
+   nowej wersji (Przed/Po, Zaakceptuj, Odrzuć) */
+.cx{display:grid;gap:10px;align-content:start}
 .cx h3{margin:0;font-size:15px}.cx p{margin:0;font-size:13px}
+.ed-slot[hidden]{display:none}
 .cx-f{display:grid;gap:8px}.cx-f[hidden]{display:none}
 .cx-warn{color:var(--l-red)}
-.cx-in{border:0;margin:0;padding:0;display:grid;gap:6px;min-width:0}.cx-in legend{font-size:12.5px;color:var(--ink-3);padding:0;margin-bottom:4px}
-.cx-grid{display:flex;flex-wrap:wrap;gap:6px}
-.cx-th{position:relative;display:grid;gap:2px;width:72px;font-size:11px;color:var(--ink-3);cursor:pointer}
-.cx-th img{width:72px;height:72px;object-fit:cover;border-radius:var(--r-sm);border:2px solid var(--line);background:var(--sunk)}
-.cx-th input{position:absolute;top:4px;left:4px;margin:0}
-.cx-th input:checked+img{border-color:var(--accent)}
-.cx-th input:focus-visible+img{outline:2px solid var(--accent)}
-.cx-h{margin:0;font-size:13px}
-.cx-vars{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.cx-v{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start}
-.cx-v img{width:96px;height:96px;object-fit:cover;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--sunk);display:block}
-.cx-acts{display:flex;flex-wrap:wrap;gap:6px}
+.cx-chat .cx-ev{font-size:12.5px;color:var(--ink-3);text-align:center}
+.cx-chat .cm.err{background:var(--l-red-bg);color:var(--l-red)}
+.cx-tpl{display:flex;flex-wrap:wrap;gap:6px}.cx-tpl .chip{font-size:12.5px;min-height:28px}
+.cx-tpl .chip:hover{background:var(--sunk)}.cx-tpl .chip:focus-visible{outline:2px solid var(--accent)}
+.cx-keep{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer}
+.cx-keep input{width:16px;height:16px;margin:0}
+.cx-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;width:100%;max-width:560px;justify-self:center;padding:8px 12px;border:1px solid var(--accent);border-radius:var(--r-lg);background:var(--accent-soft);font-size:13.5px}
+.cx-bar:empty{padding:0;border:0;background:none}
+.cx-bar .cx-bt{color:var(--ink)}
+.cx-cmp{display:inline-flex}.cx-cmp .seg:first-child{border-radius:var(--r) 0 0 var(--r)}.cx-cmp .seg:last-child{border-radius:0 var(--r) var(--r) 0;margin-left:-1px}
+.cx-ba{display:flex;gap:6px;margin-left:auto}
 .cx-code{font-family:var(--mono);font-size:18px;letter-spacing:.08em}
 .cx-lg{display:grid;gap:6px}
 @media (max-width:820px){.ed-b{grid-template-columns:1fr;grid-auto-rows:max-content;overflow:auto}.ed-l{overflow:visible;grid-template-rows:auto auto;min-height:auto;padding:12px}.ed-r{min-height:auto;overflow:visible;border-left:0;border-top:1px solid var(--line)}.sc-l{overflow:visible;min-height:auto}.ed-tabs{padding:6px 12px}.sp-tt{height:auto;width:100%;max-height:70vh}}
@@ -7174,8 +7175,8 @@ function spMedia(c,d){
   const q=postQ(c.pid,c.day);
   if(d.film)return [{v:1,src:'/api/post/film?'+q+'&v='+(d.film.at||0)}];
   const L=d.image?[{src:'/api/post/grafika?'+q+'&v='+(d.imageAt||0)}]:[];
-  (d.photos||[]).forEach(n=>L.push({src:'/api/media/plik?project='+encodeURIComponent(c.pid)+'&path='+encodeURIComponent('posty/'+d.folder+'/'+n)}));
-  return L;
+  (d.photos||[]).forEach(n=>L.push({src:'/api/media/plik?project='+encodeURIComponent(c.pid)+'&path='+encodeURIComponent('posty/'+d.folder+'/'+n)+(CX.bust?'&v='+CX.bust:'')}));
+  return cxSwap(c,d,L);      /* nowa wersja grafiki z rozmowy z Codexem (widok „Po”) */
 }
 const SPI={heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',talk:'<path d="M20 12a8 8 0 1 1-3.2-6.4A8 8 0 0 1 20 12zM20 20l-2.3-3.6"/>',
   send:'<path d="M21 3 3 10l7 3 3 7z"/><path d="m10 13 11-10"/>',mark:'<path d="M6 3h12v18l-6-5-6 5z"/>'};
@@ -7275,6 +7276,7 @@ function edMenu(t,d){
   L.push(t.state==='done'?b('data-edpub="todo"','Oznacz jako nieopublikowane'):b('data-edpub="done"','Oznacz jako opublikowane'));
   if(ok&&src&&(d.sections||{})[src])L.push(b('data-copy="'+esc(c.pid+'|'+c.day+'|'+src)+'"','Kopiuj opis'));
   if(ok&&(d.film||d.image||(d.photos||[]).length))L.push(b('data-edget','Pobierz pliki'));
+  if(ok&&cxPend())L.push(b('data-cxcar','Dodaj nową wersję do karuzeli'));
   if(t.needsYou==='zgoda'&&t.state!=='done')L.push(b('data-act="hold" data-id="'+esc(t.id)+'"','Wstrzymaj'));
   L.push(b('data-task="'+esc(t.id)+'" data-edclose2','Szczegóły zadania'));
   return '<details class="ed-mn"><summary aria-label="Więcej działań" title="Więcej działań"><span aria-hidden="true">⋯</span></summary><div class="ed-mnl">'+L.join('')+'</div></details>';
@@ -7332,8 +7334,7 @@ function edMedia(d){
   if(d.film||d.scenario)return '<h3>Film</h3><p class="note">'+(d.film?esc(d.film.name)+' · '+(d.film.size/1048576).toFixed(1).replace('.',',')+' MB':'Filmu jeszcze nie ma.')+'</p>'+
     '<ol class="ed-sc" id="ed-sc" aria-label="Sceny filmu"></ol><p class="note" id="ed-hint" hidden>Kliknij scenę, a potem napisz w „Co poprawić?”, co w niej zmienić.</p>'+
     '<div class="row"><label class="btn sec sm fup">'+(A.film===c.tid?'Wysyłam…':d.film?'Zmień film':'Dodaj film')+'<input type="file" accept="video/mp4,video/quicktime" data-film="'+esc(k)+'" data-id="'+esc(c.tid)+'" hidden></label></div>';
-  return '<h3>Grafika</h3>'+(d.image?'':'<p class="note">Post nie ma grafiki.</p>')+
-    '<div class="row"><label class="btn sec sm fup">'+(A.gfx?'Wysyłam…':d.image?'Zmień grafikę':'Dodaj grafikę')+'<input type="file" accept="image/png,image/jpeg" data-edimg="'+esc(k)+'" hidden></label></div>';
+  return '';      /* grafika: sekcja „Grafika” (cxFill) z rozmową z Codexem i wgraniem pliku */
 }
 function edSide(d){
   const tx=document.getElementById('ed-txt'),md=document.getElementById('ed-med');if(!tx||!md)return;
@@ -7611,106 +7612,143 @@ async function scSave(f){
   else say(failMsg(x,'Nie zapisano.'));
 }
 function scShot(i,on){const m=scDone();m[i]=on?1:0;try{localStorage.setItem(scKey(),JSON.stringify(m))}catch(e){}}
-/* ---------- edytor posta: grafika przez Codex (AGENCI.md „Grafiki (Codex)”); jedno wywołanie: cxFill() w edFill ----------
-   Zlecenie idzie jako uruchomienie Codexa (widać je w Agentach); warianty wariant-<n>.png leżą w folderze posta. */
-const CX={key:'',d:null,sel:{},timer:0,login:null,del:''};
-const CXRUN={queued:'czeka w kolejce',running:'w toku',error:'nie wyszło',login:'Codex wymaga logowania',limit:'limit subskrypcji ChatGPT',timeout:'przekroczony czas',stopped:'zatrzymane',unknown:'przerwane'};
+/* ---------- edytor posta: sekcja „Grafika” (AGENCI.md „Grafiki (Codex)”); jedno wywołanie: cxFill() w edFill ----------
+   Rozmowa o grafice z Codexem: polecenie w trybie „Zachowaj zdjęcie” (obróbka bez generowania) albo nowa grafika. Wynik
+   pokazuje podgląd platformy po lewej jako nową wersję (pasek: Przed/Po, Zaakceptuj, Odrzuć); kolejne polecenie poprawia
+   ostatnią wersję. Zlecenie widać też w Agentach. */
+const CX={key:'',d:null,timer:0,view:'po',keep:true,pend:'',bust:0};   /* bust: odświeżenie zdjęć karuzeli po akceptacji */
+const CXTPL=[['Wyostrz i popraw jakość','Wyostrz i popraw jakość, żeby zdjęcie wyglądało jak z dobrego aparatu. Nic nie dodawaj i nic nie zmieniaj.',1],
+  ['Popraw światło i kolory','Popraw ekspozycję, kontrast i balans bieli. Kolory naturalne, nic nie dodawaj.',1],
+  ['Usuń szum','Zmniejsz szum i ziarno, zachowaj szczegóły. Nic nie zmieniaj.',1],
+  ['Wyprostuj','Wyprostuj horyzont i pionowe linie. Przytnij tylko tyle, ile trzeba.',1],
+  ['Przytnij do 4:5','Przytnij do formatu 4:5 (pion na Instagram). Główny obiekt na środku, nic nie dodawaj.',1],
+  ['Przytnij do 1:1','Przytnij do kwadratu 1:1. Główny obiekt na środku, nic nie dodawaj.',1],
+  ['Nowa grafika','Wygeneruj nową grafikę: ',0]];
+const CXACT={akceptuj:'Nową wersję zaakceptowano: jest teraz w poście.',odrzuc:'Nową wersję odrzucono.',karuzela:'Nową wersję dodano do karuzeli.'};
+/* obrazy posta w kolejności podglądu: grafika, potem zdjęcia karuzeli (film: brak) */
+const cxMedia=d=>d&&d.ok&&!d.film&&!d.scenario?(d.image?['grafika.png']:[]).concat(d.photos||[]):[];
+const cxLive=()=>{const r=CX.d&&CX.d.ok&&(CX.d.runs||[])[0];return !!r&&(r.state==='queued'||r.state==='running')};
+function cxPend(){const c=ED.cur,x=CX.d;return c&&CX.key===c.pid+'|'+c.day&&x&&x.ok&&x.chat&&x.chat.pending||null}
+/* miejsce wersji w podglądzie: obraz, który zastąpi po akceptacji; -1: grafiki jeszcze nie ma */
+function cxIdx(d){
+  const s=CX.d&&CX.d.chat&&CX.d.chat.source;if(!d||!d.ok)return -1;
+  if(!s||s==='grafika.png')return d.image?0:-1;
+  const k=(d.photos||[]).indexOf(s);return k<0?-1:(d.image?1:0)+k;
+}
+/* podgląd platformy (spMedia): w widoku „Po” oczekująca wersja w miejscu obrazu, który zastąpi */
+function cxSwap(c,d,L){
+  const p=cxPend();if(!p||CX.view==='przed'||d.film)return L;
+  const i=cxIdx(d),m={src:'/api/media/plik?project='+encodeURIComponent(c.pid)+'&path='+encodeURIComponent('posty/'+CX.d.folder+'/'+p.name)+'&v='+p.at};
+  if(i<0||i>=L.length)L.unshift(m);else L[i]=m;
+  return L;
+}
 function cxFill(){
-  const c=ED.cur,r=document.querySelector('#ed .ed-r');if(!c||!r)return;
+  const c=ED.cur,r=document.querySelector('#ed .ed-r'),l=document.querySelector('#ed .ed-l');if(!c||!r||!l)return;
   let h=document.getElementById('cx');
   if(!h){h=document.createElement('section');h.id='cx';h.className='cx';h.setAttribute('aria-labelledby','cx-t');
-    h.innerHTML='<h3 id="cx-t">Grafika (Codex)</h3><div id="cx-st" aria-live="polite"></div><div id="cx-in"></div>'+
-      '<form class="cx-f" id="cx-f" hidden><textarea class="fi" rows="2" maxlength="1000" id="cx-q" aria-label="Polecenie dla Codexa" placeholder="Np. rozjaśnij, wyprostuj, tło w warsztacie, format 4:5"></textarea>'+
-      '<div class="row"><button class="btn sec sm" id="cx-go">Zleć Codexowi</button></div></form><div id="cx-var"></div>';
-    const slot=document.getElementById('ed-gfx-codex');if(slot)slot.appendChild(h);else r.insertBefore(h,r.querySelector('.ed-more'));
+    h.innerHTML='<h3 id="cx-t">Grafika</h3><div id="cx-st"></div><div class="ed-chat cx-chat" id="cx-chat" aria-live="polite"></div>'+
+      '<form class="cx-f" id="cx-f" hidden><div class="cx-tpl" role="group" aria-label="Gotowe polecenia">'+
+      CXTPL.map((x,i)=>'<button type="button" class="chip" data-cxtpl="'+i+'">'+esc(x[0])+'</button>').join('')+'</div>'+
+      '<textarea class="fi" rows="3" maxlength="1000" id="cx-q" aria-label="Polecenie do grafiki" placeholder="Np. wyostrz i popraw światło, nic nie zmieniaj"></textarea>'+
+      '<label class="cx-keep"><input type="checkbox" id="cx-keep" checked aria-describedby="cx-kn">Zachowaj zdjęcie</label><p class="note" id="cx-kn"></p>'+
+      '<div class="row"><button class="btn sm" id="cx-go">Wyślij</button><span class="note" id="cx-src"></span></div></form><div class="row" id="cx-up"></div>';
+    const slot=document.getElementById('ed-gfx-codex');if(slot)slot.appendChild(h);else r.appendChild(h);
     h.addEventListener('submit',ev=>{ev.preventDefault();ev.stopPropagation();cxOrder()});
     h.addEventListener('click',cxClick);
-    h.addEventListener('change',ev=>{const n=ev.target.dataset&&ev.target.dataset.cxin;if(n!=null)CX.sel[n]=ev.target.checked});
+    h.addEventListener('change',ev=>{if(ev.target.id==='cx-keep'){CX.keep=ev.target.checked;cxRender()}});
+    h.addEventListener('keydown',ev=>{if(ev.target.id==='cx-q'&&ev.key==='Enter'&&(ev.metaKey||ev.ctrlKey)){ev.preventDefault();cxOrder()}});
   }
-  const k=c.pid+'|'+c.day;if(CX.key!==k){CX.key=k;CX.d=null;CX.sel={};CX.login=null;CX.del='';cxLoad()}
+  if(!document.getElementById('cx-bar')){const b=document.createElement('div');b.id='cx-bar';b.className='cx-bar';b.setAttribute('aria-live','polite');l.insertBefore(b,l.firstChild);b.addEventListener('click',cxClick)}
+  const k=c.pid+'|'+c.day;if(CX.key!==k){clearTimeout(CX.timer);CX.key=k;CX.d=null;CX.view='po';CX.keep=true;CX.pend='';cxLoad()}
   cxRender();
 }
 async function cxLoad(){
   const c=ED.cur;if(!c)return;const k=c.pid+'|'+c.day;
   if(!LIVE){CX.d={ok:false,error:PRV};cxRender();return}
-  let d={ok:false,error:'Nie udało się wczytać grafik.'};
+  let d={ok:false,error:'Nie udało się wczytać grafiki.'};
   try{const r=await fetch('/api/post/warianty?'+postQ(c.pid,c.day),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){}
   if(CX.key!==k||!ED.cur)return;
-  const lv=x=>!!x&&(x.runs||[]).some(y=>y.state==='queued'||y.state==='running'),was=lv(CX.d),live=lv(d);
-  CX.d=d;if(d.tool&&!d.tool.need)CX.login=null;
-  if(was&&!live){delete PD[k];loadPost(c.pid,c.day)}else cxRender();
+  CX.d=d;
+  const p=d.ok&&d.chat&&d.chat.pending,pn=p?p.name+'@'+p.at:'',fresh=pn!==CX.pend;
+  if(fresh){CX.pend=pn;if(p){CX.view='po';ED.slide=Math.max(0,cxIdx(PD[k]))}}
   clearTimeout(CX.timer);
-  if(live||CX.login||(d.tool&&d.tool.login&&d.tool.login.active))CX.timer=setTimeout(()=>{if(ED.cur&&ED.cur.pid+'|'+ED.cur.day===k)cxLoad()},5000);
+  if(cxLive()||(d.tool&&d.tool.login&&d.tool.login.active))CX.timer=setTimeout(()=>{if(ED.cur&&ED.cur.pid+'|'+ED.cur.day===k)cxLoad()},4000);
+  edFill();
+  if(fresh&&p){const b=document.getElementById('cx-bar');if(b&&b.scrollIntoView)b.scrollIntoView({block:'nearest'})}
 }
-const cxName=n=>n==='grafika.png'?'Grafika':/^wariant-/.test(n)?'Wariant '+n.replace(/^wariant-(\d+).*/,'$1'):/^grafika-poprzednia/.test(n)?'Poprzednia':'Zdjęcie '+(n.match(/(\d+)\./)||['',''])[1];
 function cxLoginBox(t){
   return '<div class="cx-lg"><p class="cx-warn">Codex nie jest zalogowany.</p><div class="row"><a class="btn sec sm" href="#agenci">Zaloguj w Agentach</a></div></div>';
 }
+function cxItem(x){
+  if(x.action)return '<p class="cx-ev">'+esc(CXACT[x.action]||'')+'</p>';
+  const ai=x.state==='run'?'Pracuję… (zwykle 1–3 min)':x.reply||'';
+  return '<div class="cm me"><b>Ty · '+(x.mode==='nowa'?'nowa grafika':'zachowaj zdjęcie')+'</b><div>'+esc(x.text||'')+'</div></div>'+
+    '<div class="cm ai'+(x.state==='error'?' err':'')+'"><b>Codex</b><div>'+esc(ai)+'</div></div>';
+}
 function cxRender(){
-  const c=ED.cur,d=CX.d;if(!c||!document.getElementById('cx'))return;
-  const put=(id,x)=>{const el=document.getElementById(id);if(el&&el.dataset.h!==x){el.innerHTML=x;el.dataset.h=x}},f=document.getElementById('cx-f');
-  if(!d||!d.ok){put('cx-st','<p class="muted">'+esc(d?d.error||'Brak danych.':'Wczytuję…')+'</p>');put('cx-in','');put('cx-var','');if(f)f.hidden=true;return}
-  const t=d.tool||{},run=(d.runs||[])[0],live=!!run&&(run.state==='queued'||run.state==='running');
+  const c=ED.cur,h=document.getElementById('cx'),bar=document.getElementById('cx-bar');if(!c||!h)return;
+  const put=(el,x)=>{if(typeof el==='string')el=document.getElementById(el);if(!el||el.dataset.h===x)return false;el.innerHTML=x;el.dataset.h=x;return true};
+  const k=c.pid+'|'+c.day,pd=PD[k],d=CX.d,f=document.getElementById('cx-f'),slot=document.getElementById('ed-gfx-codex');
+  const off=!pd||!pd.ok||!!(pd.film||pd.scenario);
+  if(slot)slot.hidden=off;
+  if(off){put(bar,'');return}
+  const M=cxMedia(pd);
+  put('cx-up','<label class="btn sec sm fup">'+(A.gfx?'Wysyłam…':pd.image?'Wgraj inny plik':'Wgraj plik')+'<input type="file" accept="image/png,image/jpeg" data-edimg="'+esc(k)+'" hidden></label>');
+  if(!d||!d.ok){put('cx-st','<p class="muted">'+esc(d?d.error||'Brak danych.':'Wczytuję…')+'</p>');put('cx-chat','');put(bar,'');if(f)f.hidden=true;return}
+  const t=d.tool||{},run=(d.runs||[])[0],live=cxLive(),ch=d.chat||{},I=ch.items||[],p=ch.pending;
   let st='';
-  if(t.need==='off')st='<p class="muted">Grafiki przez Codex są wyłączone w ustawieniach panelu.</p>';
+  if(t.need==='off')st='<p class="muted">Poprawianie grafik przez Codex jest wyłączone w ustawieniach panelu. Możesz wgrać plik.</p>';
   else if(t.need==='install')st='<p class="cx-warn">Codex nie jest zainstalowany na '+(t.loginWeb?'serwerze':'tym komputerze')+'. Instalacja: INSTALACJA.md, sekcja „Codex do grafik”.</p>';
   else if(t.need==='login')st=cxLoginBox(t);
-  else if(live)st='<p>'+(run.state==='queued'?'Zlecenie czeka w kolejce.':'Codex pracuje nad grafiką (zwykle 1–3 min).')+(run.activity?' <span class="muted">'+esc(shortT(run.activity,60))+'</span>':'')+'</p>';
-  else if(run&&run.state!=='done')st='<p class="cx-warn">Ostatnie zlecenie: '+esc(CXRUN[run.state]||run.state)+(run.error?'. '+esc(shortT(run.error,200)):'')+'</p>';
-  else if(run&&run.result)st='<p class="muted">'+esc(shortT(run.result,220))+'</p>';
+  else if(!M.length&&!p)st='<p class="muted">Post nie ma jeszcze grafiki.</p>';
   put('cx-st',st);
-  if(f){f.hidden=!!t.need;const b=document.getElementById('cx-go');if(b){b.disabled=live;b.textContent=live?'Codex pracuje…':'Zleć Codexowi'}}
-  const src=x=>'/api/media/plik?project='+encodeURIComponent(c.pid)+'&path='+encodeURIComponent('posty/'+d.folder+'/'+x.name)+'&v='+x.at;
-  const ins=d.inputs||[];
-  put('cx-in',t.need?'':ins.length?'<fieldset class="cx-in"><legend>Zdjęcia do poprawy (zaznacz; bez zaznaczenia Codex zrobi nową grafikę)</legend><div class="cx-grid">'+
-    ins.map(x=>'<label class="cx-th"><input type="checkbox" data-cxin="'+esc(x.name)+'"'+(CX.sel[x.name]?' checked':'')+'><img src="'+esc(src(x))+'" alt="" loading="lazy"><span>'+esc(cxName(x.name))+'</span></label>').join('')+'</div></fieldset>':
-    '<p class="muted">Post nie ma jeszcze zdjęć: Codex przygotuje nową grafikę.</p>');
-  const V=d.variants||[];
-  put('cx-var',V.length?'<h4 class="cx-h">Warianty</h4><ul class="cx-vars">'+V.map(x=>'<li class="cx-v"><a href="'+esc(src(x))+'" target="_blank" rel="noopener"><img src="'+esc(src(x))+'" alt="'+esc(cxName(x.name))+'" loading="lazy"></a><div class="cx-acts">'+
-    '<button type="button" class="btn sm" data-cxv="grafika" data-n="'+esc(x.name)+'" aria-label="'+esc('Użyj jako grafika: '+cxName(x.name))+'">Użyj jako grafika</button>'+
-    '<button type="button" class="btn sec sm" data-cxv="karuzela" data-n="'+esc(x.name)+'" aria-label="'+esc('Dodaj do karuzeli: '+cxName(x.name))+'">Dodaj do karuzeli</button>'+
-    '<button type="button" class="btn sec sm" data-cxv="usun" data-n="'+esc(x.name)+'" aria-label="'+esc('Usuń wariant: '+cxName(x.name))+'">'+(CX.del===x.name?'Na pewno usunąć?':'Usuń wariant')+'</button></div></li>').join('')+'</ul>':'');
+  const cl=document.getElementById('cx-chat');
+  if(put(cl,I.length?I.map(cxItem).join(''):t.need?'':'<p class="muted">Napisz, co zmienić, albo wybierz gotowe polecenie. Wynik zobaczysz w podglądzie.</p>'))cl.scrollTop=cl.scrollHeight;
+  if(f){f.hidden=!!t.need;
+    const has=M.length>0||!!p,keep=has&&CX.keep,kb=document.getElementById('cx-keep');
+    if(kb){kb.checked=keep;kb.disabled=!has}
+    put('cx-kn',!has?'Post nie ma zdjęcia: Codex przygotuje nową grafikę.':keep?'Te same obiekty i kadr. Codex poprawia tylko ostrość, światło i kolory.':'Codex narysuje nową grafikę i może zmienić to, co widać.');
+    const i=Math.min(ED.slide,M.length-1);
+    put('cx-src',p?'Poprawiasz nową wersję.':M.length>1?'Zmieniasz obraz '+(i+1)+' z '+M.length+' (widoczny w podglądzie).':'');
+    const g=document.getElementById('cx-go');if(g){g.disabled=live;g.textContent=live?'Codex pracuje…':'Wyślij'}}
+  let bx='';
+  if(live)bx='<span class="cx-bt">'+(run.state==='queued'?'Polecenie czeka w kolejce.':'Codex przygotowuje nową wersję (zwykle 1–3 min).')+'</span>';
+  else if(p)bx='<b class="cx-bt">Nowa wersja'+(M.length>1&&cxIdx(pd)>=0?' <span class="muted">(obraz '+(cxIdx(pd)+1)+' z '+M.length+')</span>':'')+'</b><span class="cx-cmp" role="group" aria-label="Porównanie z obecną grafiką">'+
+    '<button type="button" class="seg" data-cxview="przed" aria-pressed="'+(CX.view==='przed')+'">Przed</button><button type="button" class="seg" data-cxview="po" aria-pressed="'+(CX.view!=='przed')+'">Po</button></span>'+
+    '<span class="cx-ba"><button type="button" class="btn sec sm" data-cxv="odrzuc" title="Usuń nową wersję; post zostaje z obecną grafiką">Odrzuć</button>'+
+    '<button type="button" class="btn sm" data-cxv="akceptuj" title="Nowa wersja zastąpi grafikę posta na wszystkich platformach; obecna zostaje jako kopia">Zaakceptuj</button></span>';
+  put(bar,bx);
 }
 function cxClick(ev){
-  const b=ev.target.closest&&ev.target.closest('[data-cxv],[data-cxlogin],[data-cxcheck],[data-cxcopy]');if(!b)return;
+  const b=ev.target.closest&&ev.target.closest('[data-cxv],[data-cxtpl],[data-cxview]');if(!b)return;
   ev.preventDefault();ev.stopPropagation();
-  if(b.dataset.cxv)cxVariant(b.dataset.cxv,b.dataset.n);
-  else if(b.dataset.cxlogin!=null)cxLogin();
-  else if(b.dataset.cxcheck!=null)cxRecheck();
-  else copyText(b.dataset.cxcopy).then(ok=>say(ok?'Skopiowano polecenie.':'Skopiuj ręcznie: '+b.dataset.cxcopy));
+  if(b.dataset.cxv)cxVariant(b.dataset.cxv);
+  else if(b.dataset.cxview){CX.view=b.dataset.cxview;const c=ED.cur,i=c?cxIdx(PD[c.pid+'|'+c.day]):-1;if(i>=0)ED.slide=i;edFill()}   /* pokaż obraz, którego dotyczy wersja */
+  else{const x=CXTPL[+b.dataset.cxtpl],q=document.getElementById('cx-q');if(!x||!q)return;
+    q.value=x[1];CX.keep=!!x[2];cxRender();q.focus();q.setSelectionRange(q.value.length,q.value.length)}
 }
 async function cxOrder(){
   const c=ED.cur,q=document.getElementById('cx-q');if(!c||!q)return;const text=(q.value||'').trim();
   if(text.length<3){say('Napisz, co zrobić z grafiką.');q.focus();return}
   if(!LIVE){say(PRV);return}
-  const names=((CX.d&&CX.d.inputs)||[]).map(x=>x.name).filter(n=>CX.sel[n]),max=(CX.d&&CX.d.max)||6;
-  if(names.length>max){say('Zaznacz najwyżej '+max+' zdjęć.');return}
-  const b=document.getElementById('cx-go');if(b)b.disabled=true;
-  const x=await post('/api/post/grafika-codex',{project:c.pid,date:c.day,polecenie:text,zdjecia:names});
-  if(x.ok){q.value='';CX.sel={};say('Zlecone. Warianty pojawią się w edytorze, zlecenie widać w Agentach.')}
-  else if(x.status!==401)say(x.error||'Nie zlecono.');
+  if(cxLive())return;
+  const M=cxMedia(PD[c.pid+'|'+c.day]),has=M.length>0||!!cxPend();
+  const body={project:c.pid,date:c.day,polecenie:text,tryb:has&&CX.keep?'zachowaj':'nowa'};
+  if(M.length)body.zrodlo=M[Math.min(ED.slide,M.length-1)];
+  const g=document.getElementById('cx-go');if(g)g.disabled=true;
+  const x=await post('/api/post/grafika-codex',body);
+  if(x.ok)q.value='';
+  else if(x.status!==401)say(x.error||'Nie wysłano.');
   cxLoad();
 }
-async function cxVariant(act,n){
-  const c=ED.cur;if(!c)return;if(!LIVE){say(PRV);return}
-  if(act==='usun'&&CX.del!==n){CX.del=n;cxRender();return}
-  CX.del='';
-  const x=await post('/api/post/wariant',{project:c.pid,date:c.day,name:n,akcja:act}),r=x.data||{};
-  if(x.ok)say(act==='grafika'?'Ustawione jako grafika posta.'+(r.previous?' Poprzednia grafika zostaje jako kopia.':''):act==='karuzela'?'Dodane do karuzeli.'+(r.note?' '+r.note:''):'Wariant usunięty.');
+/* oczekująca wersja: akceptuj (zastępuje grafikę albo zdjęcie), odrzuc (usuwa), karuzela (menu ⋯: kolejne zdjęcie) */
+async function cxVariant(act){
+  const c=ED.cur,p=cxPend();if(!c||!p)return;if(!LIVE){say(PRV);return}
+  const x=await post('/api/post/wariant',{project:c.pid,date:c.day,name:p.name,akcja:act}),r=x.data||{};
+  if(x.ok){CX.view='po';CX.bust=Date.now();say(act==='akceptuj'?'Nowa wersja jest w poście.'+(r.previous?' Poprzednia zostaje jako kopia w folderze posta.':''):
+    act==='karuzela'?'Dodane do karuzeli.'+(r.note?' '+r.note:''):'Nowa wersja odrzucona.')}
   else if(x.status!==401)say(x.error||'Nie zapisano.');
-  delete PD[c.pid+'|'+c.day];loadPost(c.pid,c.day);cxLoad();
-}
-async function cxLogin(){
-  if(!LIVE){say(PRV);return}
-  const x=await post('/api/agent/login',{tool:'codex'}),r=x.data||{};
-  if(x.ok&&r.url&&r.code){CX.login={url:r.url,code:r.code};cxRender();cxLoad()}
-  else if(x.ok)say('Otworzyłem Terminal. Zaloguj się w przeglądarce, potem kliknij „Sprawdź ponownie”.');
-  else if(x.status!==401)say(x.error||'Nie otworzono logowania.');
-}
-async function cxRecheck(){
-  if(!LIVE){say(PRV);return}
-  const x=await post('/api/agent/recheck',{}),ok=!!(x.data&&x.data.loggedIn&&x.data.loggedIn.codex);
-  say(ok?'Codex zalogowany.':'Codex nadal niezalogowany.');cxLoad();
+  delete PD[c.pid+'|'+c.day];await loadPost(c.pid,c.day);cxLoad();
 }
 async function loadPost(pid,day){
   const k=pid+'|'+day;let d={ok:false};
@@ -8721,6 +8759,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-edtab]')){ED.tab=el.dataset.edtab;ED.more=false;ED.slide=0;edFill();return}
   if(el=qq('[data-edgo]')){edGo(el.dataset.edgo);return}
   if(el=qq('[data-edpub]')){if(ED.cur)edMark(ED.cur.tid,el.dataset.edpub);return}
+  if(el=qq('[data-cxcar]')){cxVariant('karuzela');return}
   if(el=qq('[data-edget]')){const c=ED.cur,d=c&&PD[c.pid+'|'+c.day];if(d&&d.ok){const n=edGet(c,d);say('Pobieram pliki: '+n+'.')}return}
   if(el=qq('[data-edsave]')){edSaveText();return}
   if(el=qq('[data-spmore]')){ED.more=true;edFill();return}
