@@ -16,11 +16,15 @@
    "text": "trochę mocniej aby było to jak realistyczne zdj ale każdy aleemnt musi być 1 : 1 w tym samym meijsuc",
    "mode": "zachowaj",
    "input": "wariant-1.png",
-   "state": "run",
-   "reply": "",
-   "version": ""
+   "state": "ok",
+   "reply": "Gotowe: nowa wersja w podglądzie. Rozjaśniłem półtony, lekko wzmocniłem kolory, kontrast i ostrość, zachowując oryginalny kadr i położenie wszystkich elementów.",
+   "version": "wariant-2.png"
+  },
+  {
+   "at": "2026-11-22T22:44:35+01:00",
+   "action": "akceptuj"
   }
  ],
- "pending": "wariant-1.png",
+ "pending": "",
  "source": "grafika.png"
 }
