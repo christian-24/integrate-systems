@@ -1,0 +1,26 @@
+{
+ "items": [
+  {
+   "id": "20261122-224252-7867",
+   "at": "2026-11-22T22:42:52+01:00",
+   "text": "Wyostrz i popraw jakość, żeby zdjęcie wyglądało jak z dobrego aparatu. Nic nie dodawaj i nic nie zmieniaj.",
+   "mode": "zachowaj",
+   "input": "grafika.png",
+   "state": "ok",
+   "reply": "Gotowe: nowa wersja w podglądzie. Delikatnie wyostrzyłem zdjęcie i rozjaśniłem cienie, zachowując oryginalny kadr.",
+   "version": "wariant-1.png"
+  },
+  {
+   "id": "20261122-224400-3f16",
+   "at": "2026-11-22T22:44:00+01:00",
+   "text": "trochę mocniej aby było to jak realistyczne zdj ale każdy aleemnt musi być 1 : 1 w tym samym meijsuc",
+   "mode": "zachowaj",
+   "input": "wariant-1.png",
+   "state": "run",
+   "reply": "",
+   "version": ""
+  }
+ ],
+ "pending": "wariant-1.png",
+ "source": "grafika.png"
+}
