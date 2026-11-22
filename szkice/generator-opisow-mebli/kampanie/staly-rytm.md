@@ -28,6 +28,7 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
   gotowe gdy: post opublikowany w kanałach z wiersza, link do opisarnia.pl w pierwszym komentarzu
   materiał: posty/2026-11-21-generator-dziala/post.md
   materiał: marketing/plan-10-kont.md#4
+  zaplanowane: 2026-11-22 22:13; facebook
   Post 1 z planu. Link do opisarnia.pl w pierwszym komentarzu, w treści adres słownie.
   Post kieruje do rejestracji: publikacja po „Potwierdź DPA…” w ZADANIA.md (pytanie 13 w KARTA.md).
 - [ ] Obejrzyj film A nagrany przez panel: opis mebla PL i DE w 10 s | kto: ty | kiedy: 2026-11-20 | czas: 5

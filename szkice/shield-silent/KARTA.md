@@ -3,6 +3,7 @@
 - stan: aktywny
 - priorytet: 2
 - maszyna: chmura
+- nagrywa: ty
 - repozytorium: /home/panel/projekty/shield-silent (lokalne, bez GitHuba)
 - założono: 2026-11-20
 

@@ -179,3 +179,29 @@ termin: 2027-01-28
   zostało: zadania z terminem 19 lis (start Google i Meta, zapisywanie pytających, sesja na Cuprze) są nadal otwarte; nie wiem, czy reklamy wystartowały, odhacz je, jeśli tak
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude
   cel: Uzupełnić według standard/STANDARD.md: Zadania (2 braki), README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.
+- [ ] Przygotuj scenariusz nagrania na 2026-11-22: Film Wygłuszanie: „To samo auto. Lewe drzwi: fabryka. Prawe: wygłuszone.” | kto: claude | gdzie: chmura | kiedy: 2026-11-22
+  cel: scenariusz nagrania filmu do publikacji „Film Wygłuszanie: „To samo auto. Lewe drzwi: fabryka. Prawe: wygłuszone.”” z 2026-11-22 (reels, tiktok, youtube): co nagrać, jak i po co; właściciel nagrywa sam telefonem 2026-11-22, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan filmów i dokumenty projektu)
+  gotowe gdy: obok KARTA.md jest plik posty/2026-11-22-wygluszenie-od-srodka/scenariusz.md w układzie: „# Scenariusz nagrania: <tytuł>”, pola „- stan: propozycja”, „- publikacja: 2026-11-22”, „- nagranie: 2026-11-22”, sekcje ## Po co (cel, dla kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia / 5 s”), ## Jak (miejsce, światło, kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md i zadania nagrania bez zmian
+  materiał: kampanie/zima-bez-kompromisow.md
+  materiał: Plan-filmow-do-28-stycznia.md
+  materiał: Plan-filmow-iteracje.md
+- [x] Przygotuj scenariusz nagrania na 2026-11-23: Film Wygłuszanie: „Ten sam puk. Miernik nie kłamie.” | kto: claude | gdzie: chmura | kiedy: 2026-11-22
+  cel: scenariusz nagrania filmu do publikacji „Film Wygłuszanie: „Ten sam puk. Miernik nie kłamie.”” z 2026-11-23 (reels, tiktok, youtube): co nagrać, jak i po co; właściciel nagrywa sam telefonem 2026-11-22, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan filmów i dokumenty projektu)
+  gotowe gdy: obok KARTA.md jest plik posty/2026-11-23-film-wygluszanie-ten-sam-puk-miernik-nie/scenariusz.md w układzie: „# Scenariusz nagrania: <tytuł>”, pola „- stan: propozycja”, „- publikacja: 2026-11-23”, „- nagranie: 2026-11-22”, sekcje ## Po co (cel, dla kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia / 5 s”), ## Jak (miejsce, światło, kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md i zadania nagrania bez zmian
+  materiał: kampanie/zima-bez-kompromisow.md
+  materiał: Plan-filmow-do-28-stycznia.md
+  materiał: Plan-filmow-iteracje.md
+  wynik: scenariusz w posty/2026-11-23-film-wygluszanie-ten-sam-puk-miernik-nie/scenariusz.md: najpierw pomiar na kartkę (5 puknięć na stronę, średnia), potem 9 ujęć z miernikiem w kadrze, układ filmu 10–11 s, napisy i 2 zdania lektora, opis, tytuł Shorts, przypięty komentarz, wariant przy małej różnicy dB, lista kontrolna. Sposób liczenia dB zapisany w DECYZJE.md
+  zostało: liczby dB w napisach i opisie są puste ([__]), wpisujesz je po pomiarze; nie wiem, czy puk z miernikiem był już nagrany 19 lis (wtedy scenariusz służy jako lista kontrolna)
+- [ ] Przygotuj scenariusz nagrania na 2026-11-25: Film Auto klienta (archiwum 1) | kto: claude | gdzie: chmura | kiedy: 2026-11-22
+  cel: scenariusz nagrania filmu do publikacji „Film Auto klienta (archiwum 1)” z 2026-11-25 (reels, tiktok, youtube): co nagrać, jak i po co; właściciel nagrywa sam telefonem 2026-11-24, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan filmów i dokumenty projektu)
+  gotowe gdy: obok KARTA.md jest plik posty/2026-11-25-film-auto-klienta-archiwum-1/scenariusz.md w układzie: „# Scenariusz nagrania: <tytuł>”, pola „- stan: propozycja”, „- publikacja: 2026-11-25”, „- nagranie: 2026-11-24”, sekcje ## Po co (cel, dla kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia / 5 s”), ## Jak (miejsce, światło, kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md i zadania nagrania bez zmian
+  materiał: kampanie/zima-bez-kompromisow.md
+  materiał: Plan-filmow-do-28-stycznia.md
+  materiał: Plan-filmow-iteracje.md
+- [ ] Przygotuj scenariusz nagrania na 2026-11-27: Film Serial odc. 2: „[Imię] odkrywa, że ma jedne ciche drzwi” | kto: claude | gdzie: chmura | kiedy: 2026-11-22
+  cel: scenariusz nagrania filmu do publikacji „Film Serial odc. 2: „[Imię] odkrywa, że ma jedne ciche drzwi”” z 2026-11-27 (reels, tiktok, youtube): co nagrać, jak i po co; właściciel nagrywa sam telefonem 2026-11-26, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan filmów i dokumenty projektu)
+  gotowe gdy: obok KARTA.md jest plik posty/2026-11-27-film-serial-odc-2-imie-odkrywa-ze-ma-jed/scenariusz.md w układzie: „# Scenariusz nagrania: <tytuł>”, pola „- stan: propozycja”, „- publikacja: 2026-11-27”, „- nagranie: 2026-11-26”, sekcje ## Po co (cel, dla kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia / 5 s”), ## Jak (miejsce, światło, kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md i zadania nagrania bez zmian
+  materiał: kampanie/zima-bez-kompromisow.md
+  materiał: Plan-filmow-do-28-stycznia.md
+  materiał: Plan-filmow-iteracje.md

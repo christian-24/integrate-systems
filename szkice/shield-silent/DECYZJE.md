@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-22: Film „Ten sam puk. Miernik nie kłamie.” – jak liczyć i pokazać dB
+- Kontekst: plan filmów (pkt 6, Pn 23) mówi tylko „puk, na ekranie wynik dB” i „liczby tylko prawdziwe”. Jedno puknięcie ręką nie jest powtarzalne, a te same liczby mają wracać w odpowiedziach na wiadomości i kolejnych filmach.
+- Decyzja: w scenariuszu liczba do filmu to średnia wartości MAX z 5 puknięć na każdą stronę, zaokrąglona do pełnych dB; miernik (drugi telefon) stoi w kadrze ekranem do kamery, z zapasem w postaci zbliżenia ekranu i nagrania ekranu. Do planu dodana plansza końcowa „Napisz model auta” (9–11 s), jak w PUK #1. Próg „małej różnicy” przyjęty jako 3 dB albo mniej.
+- Skutki: pomiar trwa ok. 5 min dłużej, film 10–11 s zamiast 9 s. Właściciel może uprościć pomiar do jednego puku, ale wtedy liczba jest mniej pewna.
+- Kto: agent
+
 ## 2026-11-22: Post „Tak wygląda wygłuszenie od środka” – kolejność zdjęć i układ grafiki
 - Kontekst: 5 zdjęć właściciela z dwóch aut; trzy (czerwona mata) pokazują prawie to samo, zdjęcie 5 jest najciemniejsze. Na matach widać nadruk producenta, a tekst ma być bez nazw producentów. Agent nie miał w tej sesji uprawnień do ffmpeg ani innego programu do obrazów.
 - Decyzja: karuzela w kolejności 3, 2, 1, 4, 5 (najostrzejsze na okładkę, zdjęcie 5 można pominąć). Grafika do zrobienia: kolaż dwóch zdjęć obok siebie (1 po lewej, 3 po prawej, po jednym z każdego auta), pionowo 4:5, 1080 × 1350; tak opisuje ją już sekcja Alt w post.md. W tekście maty nazwane tylko rodzajem („mata tłumiąca drgania”), bez modeli aut, bo nie są podane. Ceny z „Ustalonych faktów” w Plan-filmow-do-28-stycznia.md.
