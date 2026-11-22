@@ -126,7 +126,7 @@ code{font:12.5px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--
 .plist .ph{font-size:11px;color:var(--ink-3);white-space:nowrap}
 .sidefoot{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;padding:0 6px}
 .av{width:28px;height:28px;border-radius:var(--r);display:grid;place-items:center;font-weight:700;color:var(--on-color);font-size:11px;flex:none;letter-spacing:.02em}
-.av.sm{width:18px;height:18px;font-size:9px;border-radius:var(--r-sm)}
+.av.sm{width:18px;height:18px;font-size:10px;border-radius:var(--r-sm)}
 
 /* obszar główny */
 .main{min-width:0;display:flex;flex-direction:column}
@@ -173,7 +173,7 @@ code{font:12.5px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--
 .btn.dec{border-color:var(--l-purple)}
 .btn.danger,.btn.sec.danger{background:var(--l-red-bg);color:var(--l-red);border-color:var(--l-red)}
 .btn.danger:hover{filter:brightness(.97)}
-.btn[disabled],.btn[aria-disabled="true"]{opacity:.55;cursor:default;filter:none}
+.btn[disabled],.btn[aria-disabled="true"]{background:var(--sunk);color:var(--ink-3);border-color:var(--line-2);cursor:default;filter:none}
 .lk{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left;overflow-wrap:anywhere}
 .lk:hover{color:var(--accent);text-decoration:underline}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;justify-self:start}
@@ -414,7 +414,7 @@ img.tl-media{aspect-ratio:1/1;object-fit:cover}
 .mk-cnt .lk:hover,.mk-cnt .lk:focus-visible{text-decoration:underline}
 .mk-cnt .muted{color:var(--ink-3)}
 .mk-pub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
-.mk-wnav .btn{min-width:40px;min-height:40px;justify-content:center;border-color:transparent;background:transparent;font-size:16px}
+.mk-wnav .btn{min-width:40px;min-height:40px;justify-content:center;font-size:16px}
 .mk-next{padding:0 16px 16px}
 .wk{font-size:14px;padding:0 6px}
 .pvid{width:100%;max-height:520px;border-radius:var(--r-lg);background:var(--media-bg)}
@@ -629,7 +629,7 @@ body.ed-open{overflow:hidden}
 .pp{display:grid;gap:4px}
 .pp-d{font-size:13px;margin:8px 0 2px}
 .pp-l{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13.5px}
-.pp-l li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.pp-l li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:baseline}
 .pp-l .lz{min-width:74px;text-align:center}
 .chat .cm{padding:8px 10px;border-radius:8px;font-size:14px;line-height:1.5}
 .chat .cm.me{background:var(--accent-soft)} .chat .cm.ai{background:var(--sunk)}
@@ -714,7 +714,7 @@ body.ed-open{overflow:hidden}
 .padd>.prx-chk{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer}
 /* Projekty i standard (#projekty): klasy .prx- tylko w tym widoku */
 .prx-acts{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:flex-end}
-.prx-s>span:not(.av)+span::before{content:"· ";color:var(--ink-3)}
+.prx-s{column-gap:12px}
 .prx-files{text-decoration:none;white-space:nowrap}
 .prx-files:hover,.prx-files:focus-visible{text-decoration:underline}
 .plx .pf code{overflow-wrap:break-word;display:block;margin-top:4px}
@@ -774,7 +774,7 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
   .plx li{grid-template-columns:minmax(0,1fr)}
   .plx .r{justify-content:flex-start}
   .prx-coln{display:block;flex:1 1 100%;margin:0}
-  .prx-tw{display:none}
+  .prx-tw,.prx-tdet{display:none}
   .prx-cards{display:grid}
   .prx-stdt{display:none}
   .prx-std-doc{display:block}
@@ -784,7 +784,7 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
   .padd{margin:0 12px}
 }
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.dot[style]{box-shadow:0 0 0 1px var(--line-2)}
+.dot[style]{box-shadow:0 0 0 1px var(--ctl-line)}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ctl-line);background:var(--surface);border-radius:var(--r-pill);padding:2px 10px;cursor:pointer;font-size:13px}
 .chip[aria-pressed="false"]{color:var(--ink-3);text-decoration:line-through}
 .chip[aria-pressed="false"] .dot{opacity:.3}
@@ -1244,8 +1244,8 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .board .card.tb-blk,.board .card.tb-late{border-left:3px solid var(--l-red)}
 .card .meta .av{flex:none}
 .tb-pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;max-width:100%;min-width:0}
-.tb-st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 3 auto;min-width:0}
-.tb-pn+.tb-st::before{content:"·";content:"·" / "";margin-right:6px}
+.tb-stg{font-size:12px;color:var(--ink-3);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tb-stg.late b{color:var(--l-red);font-weight:600}
 .tb-wt{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block}
 .colsw{position:sticky;top:0;background:var(--bg);z-index:3;padding:4px 0}
 .colsw .seg{font-size:13px;min-height:48px;line-height:1.25;padding:4px 6px}
@@ -1356,7 +1356,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .rows.tm-ev .t{display:flex;align-items:center;gap:8px;font-weight:400}
 .tm-set>summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:14px 16px;cursor:pointer}
 .tm-set>summary b{font-size:var(--fs-lg);font-weight:650}
-.tm-set>summary .muted{font-size:var(--fs-sm)}
+.tm-set>summary .muted{font-size:var(--fs-sm);font-weight:400}
 .tm-icsb{display:grid;gap:8px}
 .tm-icsb p{margin:0}
 .tm-url{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
@@ -1557,7 +1557,7 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
 .bk-mapd{margin:0;padding:0 16px 6px;font-size:var(--fs-sm);color:var(--ink-3)}
 .bk-tree>.bk-you>.bk-row{background:transparent}
 @media (max-width:620px){
-  .card .tb-st{display:none}
+  .card .tb-stg:not(.late){display:none}
   .tb-pn{max-width:none}
   .tb-head .tb-cnt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .tb-act{min-height:40px}
@@ -1565,7 +1565,7 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   .card.tb-hasact .foot{min-height:40px}
   .tm-cnt,.tm-pl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .bk-sum{flex-wrap:wrap;overflow:visible}
-  .bk-row .bk-next{display:none}
+  .bk-row .bk-next{display:block;white-space:normal;flex:1 1 100%}
   .bk-allb{display:none}
 }
 /* poprawki UI: Marketing */
@@ -1624,13 +1624,13 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 /* poprawki UI: elementy wspólne, Agenci, Serwer, Projekty i standard (wykonawca D) */
 .bn-dot{position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--l-purple)}
 .bn-dot.red{background:var(--l-red)}
-.bs-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 10px 2px;border-top:1px solid var(--line);margin-top:4px}
+.bs-h{font-size:var(--fs-sm);font-weight:600;color:var(--ink-3);padding:10px 10px 2px;border-top:1px solid var(--line);margin-top:4px}
 .bn-sheet .bs-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bn-sheet .count{font-size:12px;font-weight:700;background:var(--l-purple-bg);color:var(--l-purple);border-radius:9px;padding:0 6px;line-height:18px}
 .bn-sheet .count.red{background:var(--l-red-bg);color:var(--l-red)}
 .bn-sheet .count.blue{background:var(--l-blue-bg);color:var(--l-blue)}
 .bn-sheet .count.plain{background:var(--surface);color:var(--ink-3);border:1px solid var(--line)}
-.ag-sum{margin:0;padding:14px 16px 0;font-size:var(--fs-md);color:var(--ink)}
+.ag-sum{margin:0;padding:14px 16px 0;font-size:var(--fs-lg);font-weight:600;color:var(--ink)}
 #abar .ahint{padding-top:8px}
 .ag-tools .ag-st{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .ag-tools>summary small,.prx-stdall>summary small,.rs-det>summary small,.prx-cdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
@@ -1638,7 +1638,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pub-sum{padding:4px 16px 14px}
 .rs-det{border-top:1px solid var(--line);padding-top:12px!important}
 .rs-det .tw{margin:0 -16px}
-.pn-s{display:none}
 .prx-more{grid-column:2;grid-row:1;justify-self:end;font-size:13px}
 .prx-more>summary{font-weight:500;font-size:12px;color:var(--ink-3)}
 .prx-more[open]{grid-column:1/-1;grid-row:auto;justify-self:stretch}
@@ -1664,9 +1663,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 @media (max-width:620px){
   .kbd-h{display:none}
   .rs-path{display:none}
-  .pn-f{display:none}
-  .pn-s{display:inline}
-  .plx .prx-s .av{display:none}
   .plx li{grid-template-columns:minmax(0,1fr) auto}
   .prx-more>summary{display:inline-flex;min-height:40px;align-items:center;padding-left:8px}
   .prx-cdet{display:block}
@@ -1734,9 +1730,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .ty-acts .ty-tmr{flex:0 0 auto}
   .wk-cards{padding:0 12px 8px}
 }
-/* poprawki UI runda 1: A */
-.pv-dnote{margin:0;padding:0 16px 2px;font-size:var(--fs-sm);color:var(--ink-2)}
-.pv-bk{margin:0;padding:8px 16px 12px;font-size:var(--fs-xs)}
+/* poprawki UI runda 1 i 2: A (Przegląd, Dla Ciebie, Wskaźniki) */
 .pv-more>h2{padding-bottom:6px}
 .panel.pv-more>details.pv-fold{border-top:1px solid var(--line);padding:0}
 .panel.pv-more>details.pv-fold[open]>summary{margin-bottom:0}
@@ -1745,21 +1739,35 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pv-more>.pv-fold>summary{border-radius:0}
 .pv-more>.pv-fold:last-child>summary{border-radius:0 0 var(--r-lg) var(--r-lg)}
 .pv-pmb{margin:0;padding:0 16px 8px}
-.pv-cap .track{border-color:var(--ctl-line)}
+.pv-capt{font-weight:500;color:var(--ink-2);white-space:nowrap}
+.pv-line{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:0;padding:12px 16px;border-top:1px solid var(--line)}
+.pv-line b{font-size:var(--fs-md);font-weight:650}
+.bk-line.pv-bkl{margin:4px 16px 14px}
+.ty-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.wk-mch{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px;padding:10px 16px;border-top:1px solid var(--line)}
+.wk-more>h2+.wk-mch{border-top:0}
+.wk-mch>h3{margin:0;font-size:var(--fs-md);font-weight:650}
+.wk-mch>h3 .muted{font-weight:400;font-size:var(--fs-sm)}
+.wk-mch>.chartbox{flex:1 1 100%;padding:0}
 @media (min-width:1101px){.kgrid:has(>:nth-child(6)){grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:1101px){.kgrid:has(>:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr))}}
 /* tabela projektów na średnim ekranie: bez kolumn Faza i Księga (są na stronie projektu), nic się nie ucina */
 @media (min-width:621px) and (max-width:1279px){
-  .ptable th:nth-child(2),.ptable td:nth-child(2),.ptable th:nth-child(7),.ptable td:nth-child(7),.pv-bk{display:none}
   .ptable th{white-space:normal}
   .ptable .proj{min-width:150px}
   .ptable .proj p{display:none}
   .ptable td{padding:12px 8px}
 }
 @media (max-width:620px){
-  .pv-bk{display:none}
-  .pv-dnote{padding:0 12px 2px}
-  .pv-dec .rows .r>.btn,.pv-dec .rows .r>.pv-acts{margin-left:auto}
-  .pv-dec .rows .r>.btn{min-width:120px;justify-content:center}
+  .ty-flt>select{flex:1 1 100%;max-width:none}
+  .ty-chips{flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:2px}
+  .ty-chips .chip{flex:none}
+  .pv-line{padding:12px}
+  .bk-line.pv-bkl{margin:4px 12px 12px}
+  .wk-mch{padding:10px 12px}
+  .wk-mch .linkbtn{min-height:40px}
+  .pv-rows .r>.btn,.pv-rows .r>.pv-acts{margin-left:auto}
+  .pv-rows .r>.btn{min-width:120px;justify-content:center}
   .ty-see{min-height:40px;display:inline-flex;align-items:center}
 }
 /* poprawki UI runda 1: B (strona projektu) */
@@ -1767,16 +1775,16 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pj-sum b{color:var(--ink);font-weight:600}
 .pj-sum>span{min-width:0;overflow-wrap:anywhere}
 .pj-late{color:var(--l-red);font-weight:600}
-.pj-ov>summary{list-style:none;cursor:pointer;align-items:center;min-height:32px;padding:4px 0;border-radius:var(--r-sm)}
+.pj-ov>summary{list-style:none;cursor:pointer;align-items:center;min-height:40px;padding:4px 0;border-radius:var(--r-sm)}
 .pj-ov>summary::-webkit-details-marker,.pj-fold>summary::-webkit-details-marker,.pj-add>summary::-webkit-details-marker,.pj-gap>summary::-webkit-details-marker{display:none}
-.pj-ov>summary::after{content:"Szczegóły ▸";color:var(--ink-3);font-size:13px;margin-left:auto}
+.pj-ov>summary::after{content:"Szczegóły ▸";color:var(--accent);font-size:13px;font-weight:600;margin-left:auto;padding:8px 0 8px 12px}
 .pj-ov[open]>summary::after{content:"Zwiń ▾"}
 .pj-ov>summary:focus-visible,.pj-fold>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pj-ovb{display:grid;gap:12px;padding-top:10px}
 .pj-ovb .note{margin:-4px 0 0}
 .ptabs{margin-top:4px}
 .pj-tabd{margin:-4px 0 0;font-size:14px;color:var(--ink-2)}
-.pp-k{display:inline-block;min-width:84px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-3)}
+.pp-k{font-size:var(--fs-xs);font-weight:600;color:var(--ink-3)}
 .pp-over{color:var(--l-red);font-weight:600}
 #pdec .pv-pr{display:none}
 .pj-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
@@ -1797,9 +1805,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 p.kv2{margin:0;display:block}
 p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
 @media (max-width:620px){
-  .ptabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-right:28px;-webkit-mask-image:linear-gradient(to right,black calc(100% - 28px),transparent);mask-image:linear-gradient(to right,black calc(100% - 28px),transparent)}
-  .ptabs::-webkit-scrollbar{display:none}
-  .ptabs a{padding:8px 10px;white-space:nowrap;flex:none}
+  .ptabs a{padding:8px 10px;white-space:nowrap}
   .pj-ov>summary{min-height:40px}
   .pj-ov>summary::before,.pj-add>summary::before,.pj-gap>summary::before{content:none}
   .pj-gap>summary{display:inline;min-height:0}
@@ -1838,8 +1844,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .ed-h .btn,.ed-acts .btn{min-height:40px}
   .mk-cdet>summary{min-height:40px;display:flex;align-items:center}
   .mk-prow .r{display:flex;flex-wrap:wrap;justify-content:flex-start;text-align:left;white-space:normal;gap:6px 8px}
-  .mk-prow .r .btn{min-height:40px}
-  .md-ups .md-up{flex:1 1 auto;min-height:40px}
+  .mk-prow .r .btn{min-height:40px;margin-left:auto}
+  .md-ups .md-up{flex:1 1 100%;min-height:40px;justify-content:center}
 }
 /* poprawki UI runda 1: D */
 @media (min-width:821px){.app{background:linear-gradient(to right,var(--surface) calc(var(--side) - 1px),var(--line) calc(var(--side) - 1px),var(--line) var(--side),transparent var(--side))}}
@@ -1849,7 +1855,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .dmeta{margin:-6px 0 12px;font-size:var(--fs-sm);color:var(--ink-3)}
 .dmeta .late{color:var(--l-red);font-weight:600}
 .dbox.dr-chat{border:0;padding:0}
-.dr-foot{display:none}
 .run-tech{margin-top:12px}
 .run-tech>summary{cursor:pointer;font-weight:600;padding:6px 0}
 .bn-scrim{display:none}
@@ -1870,9 +1875,49 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .card .meta,.card .bd{font-size:13px}
   .lz.caps{font-size:13px}
   .plist .ph{font-size:12px}
-  .dr-foot{display:flex;position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));margin:16px -14px -20px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
-  .dr-foot .btn{flex:1;min-height:44px}
   .bs-foot .btn{min-height:44px}
+}
+/* poprawki UI runda 2: B (strona projektu) */
+.pp-t{min-width:0;overflow-wrap:anywhere}
+.pp-t .lk{text-align:left}
+.stg-d{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.pj-bk{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:0 16px 14px}
+.pj-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600;color:var(--ink-2)}
+.pj-more>summary::-webkit-details-marker{display:none}
+.pj-more>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
+.pj-more[open]>summary::before{content:"▾"}
+.pj-more>summary small{color:var(--ink-3);font-weight:500}
+.pj-more>.cgrid{margin-top:8px}
+.kgrid.pj-k3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:620px){
+  .pp-l li{grid-template-columns:minmax(0,1fr);gap:0;padding:4px 0}
+  .pp-c{line-height:1.2}
+  .pj-bk .lk{min-height:40px;display:inline-flex;align-items:center}
+  #pdec .rows .r,#prisk .rows .r{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 10px}
+  .kgrid.pj-k3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pj-more>summary::before{content:"▸"}
+  .pj-more[open]>summary::before{content:"▾"}
+}
+/* poprawki UI runda 2: C (Marketing, edytor posta, Media, Marketing projektu) */
+.mk-act{justify-content:flex-end}
+.ed-next{flex:1 1 100%;margin:0;font-size:13px;color:var(--ink-2)}
+.ed-next:empty{display:none}
+.pub-sep{margin:18px 0 10px;font-size:var(--fs-md)}
+/* poprawki UI runda 2: D */
+.ag-wait{margin:0;padding:6px 16px 0;font-size:var(--fs-md);color:var(--ink-2)}
+.tm-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-sm);color:var(--ink-3);margin:-8px 0 0}
+.tm-leg>span{display:inline-flex;align-items:center;gap:6px}
+.tm-leg .tm-ic svg{width:14px;height:14px}
+.bk-why:has(.bk-unb){display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bk-unb{margin-left:auto}
+.ag-ses>summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 16px;flex-wrap:wrap}
+.ag-ses>summary .muted{font-size:var(--fs-sm)}
+.prx-tdet>summary{cursor:pointer;font-weight:600;padding:8px 16px}
+.prx-tdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
+.prx-nm{overflow-wrap:anywhere}
+@media (max-width:620px){
+  .av.sm{width:22px;height:22px;font-size:11px}
+  .tm-leg{font-size:13px}
 }
 </style>
 
@@ -1957,11 +2002,11 @@ const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 const VIEWS=['przeglad','wskazniki','ty','marketing','media','tablica','terminy','blokady','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty i standard'};
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica: zadania ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
-  agenci:'Agenci: kto pracuje i historia uruchomień',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty i standard: rejestr i zgodność plików'};
+  agenci:'Agenci: kto pracuje i historia uruchomień',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (pozostałe widoki z licznikami i lista projektów) */
 const BNAV=['przeglad','ty','tablica','marketing'];
 const PTABS=[['plan','Plan'],['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy'],['ksiega','Księga'],['marketing','Marketing']];
@@ -2460,7 +2505,8 @@ function youState(){
   return f.ys={youToday:youToday,youWeek:youWeek,youLater:youLater,checked:checked};
 }
 /* licznik spraw właściciela (h1 Dla Ciebie, menu, dolny pasek): dziś + tydzień, z decyzjami; „Później” nie wchodzi do sumy */
-const youTotal=ys=>ys.youToday.length+ys.youWeek.length;
+/* odznaka i h1 Dla Ciebie: wszystkie Decyzje (także późniejsze) + pozostałe sprawy na dziś i najbliższe 7 dni; każda raz */
+const youTotal=ys=>ys.youToday.concat(ys.youWeek,ys.youLater).filter(x=>tyIsDec(x)||ys.youLater.indexOf(x)<0).length;
 /* „Wygląda na zrobione (kopia ok, 09:10)” z przyciskiem Zamknij (POST /api/task/close-checked) */
 const chkTxt=t=>{const c=t.check,a=atShort(c.at);return 'Wygląda na zrobione ('+c.key+' ok'+(a?', '+a:'')+')'};
 function chkRow(t,o){const p=P(t.project),id=esc(t.id),ty=!!o&&typeof o==='object'&&o.ctx==='ty';
@@ -2487,7 +2533,8 @@ function doneTxt(x){
 }
 /* nieokreślony warunek to porządki dla agenta: w wierszach i szczegółach właściciela nic nie pokazujemy */
 function doneLine(x){
-  const o=doneTxt(x);if(o.none)return '';
+  /* pytanie i zgoda/odbiór bez własnego warunku: przycisk w wierszu mówi wszystko */
+  const o=doneTxt(x);if(o.none||x.q||(x.need&&!(x.t.detail&&x.t.detail.doneWhen)))return '';
   return '<div class="gw'+(o.none?' none':'')+'" title="gotowe, gdy '+esc(o.v)+'">gotowe, gdy '+mdInl(o.v)+'</div>';
 }
 const prioLz=(p,on)=>on!==false&&p&&p.prioritySet&&p.priority===1?'<span class="muted ty-prio" title="Priorytet projektu z karty (1 najważniejszy)">priorytet '+p.priority+'</span>':'';
@@ -2520,7 +2567,6 @@ const helpL=(x,ns)=>(ns?'<div class="gw" title="'+esc(ns)+'">następny krok: '+m
 /* nazwa projektu w wierszu: część przed nawiasem, pełna nazwa w title (awatar zostaje) */
 const pShort=p=>{const n=String(p&&p.name||''),i=n.indexOf('(');return i>0?n.slice(0,i).trim():n};
 const pvPrS=p=>p?'<span class="pv-pr" title="'+esc(p.name)+'">'+av(p,'sm')+'<span class="pv-nm">'+esc(pShort(p))+'</span></span>':'';
-const QNOTE='Odpowiedź zapisuje się w karcie projektu, pod pytaniem.';
 /* Dla Ciebie: „czeka na N” i pierwszy tytuł w jednej linii (wielokropek), pełna lista w title i w szczegółach */
 const tyWait=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="ty-wait ty-one" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span></span>':'';
 /* Dla Ciebie: kolumna .r: data (<time>), względny termin, minuty; w Dziś zadanie na dziś tylko „dziś”; po terminie na czerwono.
@@ -2548,7 +2594,7 @@ function todayRow(x,o){
         (ne?'<details class="ty-eff"><summary>Po przyjęciu: '+ne+' '+pl(ne,'zmiana','zmiany','zmian')+'</summary>'+effList(x.q.effects).replace('<div class="effh">Po przyjęciu propozycji</div>','').replace('<ul class="eff','<ul id="'+eid+'" class="eff')+'</details>':''):'';
       const desc=' aria-describedby="'+pid+(ne?' '+eid:'')+'"',pl2=esc('Przyjmij propozycję: '+x.q.text);
       return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t ty-q"'+idA+' data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'" title="'+esc(x.q.text)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+late+'<span class="lz purple">pytanie</span>'+prioLz(p,pv)+'</div>'+prop+'</div>'+
-        tyDate(x,o.grp)+'<div class="ty-acts"><button class="btn sec sm" data-qans="'+esc(k)+'" data-k="qa2:'+esc(k)+'" title="'+esc(QNOTE)+'" aria-label="'+esc('Odpowiedz: '+x.q.text)+'">Odpowiedz</button>'+
+        tyDate(x,o.grp)+'<div class="ty-acts"><button class="btn sec sm" data-qans="'+esc(k)+'" data-k="qa2:'+esc(k)+'" aria-label="'+esc('Odpowiedz: '+x.q.text)+'">Odpowiedz</button>'+
         (pr?(ne&&cf?'<button class="btn sec sm dec ty-dec" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+'>Potwierdź: przyjmij z '+ne+' '+pl(ne,'skutkiem','skutkami','skutkami')+'</button>'+
             '<button class="btn sec sm" data-ag="qprop-no" data-id="'+esc(k)+'" data-k="qpn:'+esc(k)+'">Anuluj</button>':
           '<button class="btn sec sm dec ty-dec" data-ag="'+(ne?'qprop-ask':'qprop')+'" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+(ne?' title="'+ne+' '+pl(ne,'skutek','skutki','skutków')+': potwierdzisz drugim kliknięciem"':'')+'>Przyjmij propozycję</button>'):'')+'</div></div></li>'}
@@ -2563,10 +2609,15 @@ function todayRow(x,o){
   /* kolorowe znaczniki tylko dla stanów wymagających uwagi (trwa, potrzeba, po terminie); rodzaj i „nagrywa panel” jako tekst.
      Bez znacznika „Twoje”: cała sekcja to sprawy właściciela */
   const run=ar&&isAct(ar)?'<span class="lz blue">'+(ar.state==='running'?'trwa':'w kolejce')+'<span class="sr-only"> (szczegóły w sekcji Teraz)</span></span>':'';
-  const kind=isFilmTask(t)?'<span class="muted">film od panelu</span>':t.kind==='publikacja'?'<span class="muted">publikacja</span>':'';
+  /* krótki, ogólny tytuł (np. „Publikacja”): w opisie wiersza nazwa etapu, żeby było wiadomo, czego dotyczy */
+  const gen=t.title.length<=14&&t.group&&t.group!==t.title?'<span class="muted">etap: '+esc(t.group)+'</span>':'';
+  const kind=(isFilmTask(t)?'<span class="muted">film od panelu</span>':t.kind==='publikacja'?'<span class="muted">publikacja'+(t.channel?' · '+esc(t.channel):'')+'</span>':'')+gen;
   const need=x.need?'<span class="lz purple">'+esc(x.need)+'</span>':filmPending(t)?'<span class="muted" title="Film nagrywa panel ze scenariusza posta; potem tylko go obejrzysz">nagrywa panel</span>':'';
   const open=tt=>'<button class="btn sec sm" data-task="'+id+'" data-k="to:'+id+'" aria-label="'+esc('Otwórz: '+t.title)+'"'+(tt?' title="'+tt+'"':'')+'>Otwórz</button>';
-  const btn=filmPending(t)&&!x.need?open('Film nagrywa panel; zamkniesz zadanie po obejrzeniu filmu'):wt?open(''):
+  /* zgoda na publikację: „Zatwierdź” otwiera edytor posta (podgląd i Zatwierdź nad nim), nie zatwierdza w ciemno */
+  const pubEd=x.need==='zgoda'&&t.kind==='publikacja'&&isDay(String(t.date).slice(0,10));
+  const btn=pubEd?'<button class="btn sec sm dec'+(ty?' ty-dec':'')+'" data-medit="'+esc(t.project+'|'+String(t.date).slice(0,10)+'|'+t.id)+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc('Obejrzyj i zatwierdź: '+t.title)+'" title="Otwiera podgląd posta z przyciskiem Zatwierdź">Zatwierdź</button>':
+    filmPending(t)&&!x.need?open('Film nagrywa panel; zamkniesz zadanie po obejrzeniu filmu'):wt?open(''):
     '<button class="btn sec sm'+(x.need?' dec'+(ty?' ty-dec':''):'')+'" data-act="'+a[0]+'" data-id="'+id+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button>';
   /* „Jutro”: Twoje zadanie na dziś albo po terminie przesuwa się o jeden dzień (Przegląd i Dla Ciebie → Dziś) */
   const tmr=!x.need&&t.executor==='ty'&&t.state!=='doing'&&!!x.d&&x.d<=D.todayKey&&(!ty||o.grp==='dzis')?
@@ -2595,12 +2646,6 @@ function overPlan(ys){
   [cand.filter(x=>!x.late),cand.filter(x=>x.late)].forEach(G=>G.forEach(x=>{if(got<over){pick.push(x);got+=x.min}}));
   return {m:m,cap:cap,over:over,move:pick,got:got};
 }
-/* kafle liczników „N na dziś · N w tym tygodniu · N później” (Przegląd → Dziś i Dla Ciebie): te same liczby (z decyzjami);
-   każdy prowadzi do swojej grupy w Dla Ciebie (data-tysec → sekcja data-sec, fokus na sekcji) */
-function ycntBar(ys){
-  const tile=(k,cls,v,lab,full)=>'<a'+(cls?' class="'+cls+'"':'')+' href="#ty" data-tysec="'+k+'" title="'+full+'" aria-label="'+v+' '+full+'"><b class="num">'+v+'</b><span>'+lab+'</span></a>';
-  return '<div class="ycnt">'+tile('dzis','now',ys.youToday.length,'dziś','na dziś')+tile('tydzien','',ys.youWeek.length,'w 7 dni','w najbliższych 7 dniach')+tile('pozniej','later',ys.youLater.length,'później','później (poza sumą)')+'</div>';
-}
 /* „Ponad plan o N min” z listą do przesunięcia i przyciskiem „Przesuń na jutro” (Przegląd → Dziś, Dla Ciebie → Dziś) */
 function overBlock(ys){
   const op=overPlan(ys);if(op.over<=0)return '';
@@ -2613,21 +2658,15 @@ function overBlock(ys){
       (op.got<op.over?'<span>Zostaje ponad plan '+(op.over-op.got)+' min (zgody, odbiory, zadania w toku).</span>':'')+'</details>'
     :'<span>Na dziś zostały zgody, odbiory i zadania w toku. Przesuń termin w szczegółach albo zmniejsz czas.</span>')+'</div>';
 }
-/* Przegląd → Dziś: L = sprawy na dziś bez pokazanych w Decyzjach; najwyżej PV_TODAY wierszy, reszta w Dla Ciebie */
+/* Przegląd → Dziś: L = sprawy na dziś poza Decyzjami; najwyżej PV_TODAY wierszy, reszta w Dla Ciebie.
+   Licznik = liczba spraw w sekcji; bez spraw (i bez zadań do zamknięcia, bez „Ponad plan”) sekcji nie ma */
 function todayPanel(ys,L){
-  L=L||ys.youToday;
-  const top=L.slice(0,PV_TODAY),n=L.length,op=overPlan(ys);
-  const cnt=ycntBar(ys),ov=overBlock(ys);
+  const top=L.slice(0,PV_TODAY),n=L.length,op=overPlan(ys),ov=overBlock(ys);
+  if(!n&&!ov&&!ys.checked.length)return '';
   const ctx={prio:prioVar(top)};
-  /* pojemność dnia: ten sam pasek co w Kampaniach; ponad plan tor w kolorze ostrzeżenia */
-  const pct=op.cap?Math.min(100,Math.round(100*op.m/op.cap)):0;
-  const cap='<span class="meter pv-cap" title="Szacowany czas Twojej pracy na dziś wobec pojemności dnia"><span class="track" role="img" aria-label="'+op.m+' z '+op.cap+' min Twojej pracy na dziś"><i style="width:'+pct+'%;background:var('+(op.over>0?'--bar-warn':'--bar-done')+')"></i></span><span class="num" aria-hidden="true">'+op.m+' / '+op.cap+' min</span></span>';
-  /* pusto na dziś: najbliższa sprawa z tygodnia */
-  const nx=ys.youWeek[0],near=nx?' Najbliższa: '+(nx.q?'<button class="lk" data-q="'+esc(qKey(nx.q))+'" data-k="tn:q">'+esc(nx.q.text)+'</button>':'<button class="lk" data-task="'+esc(nx.t.id)+'" data-k="tn:t">'+esc(nx.t.title)+'</button>')+(nx.d?' · '+rel(nx.d):'')+'.':'';
-  return '<section class="panel today" aria-labelledby="h-dzis"><h2 id="h-dzis"><span>Dziś</span><small>'+cap+dsNav('#ty',VNAME.ty)+'</small></h2>'+cnt+ov+chkBlock(ys.checked)+
-    (n?'<ul class="rows pv-rows">'+top.map(x=>todayRow(x,ctx)).join('')+'</ul>'+(n>PV_TODAY?'<p class="empty">Jeszcze '+(n-PV_TODAY)+' na dziś w widoku <a href="#ty" data-tysec="dzis">'+VNAME.ty+'</a>.</p>':''):'')+
-    /* sprawy na dziś pokazane w Decyzjach: nie piszemy „nic nie czeka” (licznik „dziś” je liczy) */
-    (n?'':'<p class="empty">'+(ys.youToday.length?'Na dziś zostały tylko decyzje wyżej.':ys.checked.length?'Poza zadaniami do zamknięcia na dziś nic nie czeka.':'Na dziś nic nie czeka.')+(ys.youToday.length?'':near)+'</p>')+bkLine()+'</section>'}
+  const cap='<span class="pv-capt num" title="Szacowany czas Twojej pracy na dziś wobec pojemności dnia">Twój czas: '+op.m+' z '+op.cap+' min</span>';
+  return '<section class="panel today" aria-labelledby="h-dzis"><h2 id="h-dzis"><span>Dziś <small class="num ty-n">'+(n+ys.checked.length)+'</small></span><small>'+cap+dsNav('#ty',VNAME.ty)+'</small></h2>'+ov+chkBlock(ys.checked)+
+    (n?'<ul class="rows pv-rows">'+top.map(x=>todayRow(x,ctx)).join('')+'</ul>'+(n>PV_TODAY?'<p class="empty">Jeszcze '+(n-PV_TODAY)+' na dziś w widoku <a href="#ty" data-tysec="dzis">'+VNAME.ty+'</a>.</p>':''):'')+'</section>'}
 function deferToday(){
   if(A.busy.defer)return;
   const op=overPlan(youState()),tom=addK(D.todayKey,1);
@@ -2640,7 +2679,7 @@ function deferToday(){
 function campGoals(){
   const L=D.campaigns.filter(c=>c.state==='active'&&+c.target>0&&P(c.project)&&P(c.project).state==='active');
   if(!L.length)return '';
-  return pvFold('pv-camp','Kampanie w toku',dsCnt(L.length,pl(L.length,'kampania','kampanie','kampanii')),'<ul class="rows pv-rows">'+L.map(c=>{
+  return pvFold('pv-camp','Kampanie w toku','','<ul class="rows pv-rows">'+L.map(c=>{
     const p=P(c.project),tg=+c.target,rs=+c.result||0,pct=Math.min(100,Math.round(100*rs/tg));
     return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s">'+pvPr(p)+(isDay(c.end)?'<span>do '+dd(c.end)+'</span><span>'+rel(c.end)+'</span>':'')+'</div>'+
       '<div class="meter mk-meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span>'+
@@ -2706,7 +2745,7 @@ function nextCell(p,shown){
   /* zadanie, nad którym agent pracuje teraz: pełny opis jest w Teraz, tu krótki znacznik */
   const ar=t?runOf(t):null;
   if(ar&&isAct(ar))return '<div class="nx">'+'<button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button><span><span class="lz blue" title="Szczegóły w sekcji Teraz">'+(ar.state==='running'?'trwa':'w kolejce')+'</span></span></div>';
-  if(t&&shown&&shown[t.id])return '<div class="nx"><button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button><span class="muted">pokazane wyżej</span></div>';
+  if(t&&shown&&shown[t.id])return '<div class="nx"><button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button><span class="muted">w '+esc(shown[t.id]===1?'Dziś':shown[t.id])+'</span></div>';
   return '<div class="nx">'+(t?'<button class="lk" data-task="'+esc(t.id)+'" title="'+esc(n.title)+'">'+esc(s)+'</button>':'<b title="'+esc(n.title)+'">'+esc(s)+'</b>')+
     '<span'+(late?' class="late"':'')+'>'+esc(w.n)+(isDay(n.date)?' · '+ddl(n.date)+' · '+rel(n.date):'')+'</span></div>'}
 /* termin projektu w jednej linii (karta na telefonie): data · etap · ile dni albo „bez terminu · etap” */
@@ -2791,7 +2830,8 @@ function dlRow(x,o){
   const rl=o.lateShort&&d<0?(-d)+' '+pl(-d,'dzień','dni','dni'):relN(d);
   if(showD)S.push('<span class="tm-dm'+(d<0?' late':'')+'"><time datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'">'+ddl(x.d)+'</time>, '+rl+'</span>');
   const a=t&&needsMe(t)&&!(t.kind==='publikacja'&&!t.needsYou&&d>0)?ACTB(t):null;
-  const act=a?'<button class="btn sec sm tm-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tma:'+esc(t.id)+'">'+a[1]+'</button>':'';
+  const ed=a&&t.kind==='publikacja'&&t.channel&&isDay(t.date)&&a[0]==='ok'?t.project+'|'+t.date.slice(0,10)+'|'+t.id:'';
+  const act=a?'<button class="btn sec sm tm-act" '+(ed?'data-medit="'+esc(ed)+'"':'data-act="'+a[0]+'" data-id="'+esc(t.id)+'"')+' data-k="tma:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+x.t)+'">'+a[1]+'</button>':'';
   const dt=showD?'<time class="tm-due'+(d<0?' late':'')+'" datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'"><b aria-hidden="true">'+ddl(x.d)+'</b><span class="sr-only">'+esc(dLong(x.d))+'</span><span class="tm-sep">, </span><span class="tm-rel">'+rl+'</span></time>':
     (x.tm?'<span class="num tm-tm">'+esc(x.tm)+'</span>':'');
   return '<li class="tm-row'+(x.ev?' tm-evr':'')+'"><div class="tm-m"><div class="tm-tl">'+ic+title+'</div>'+(S.length?'<div class="s">'+S.join('')+'</div>':'')+'</div>'+
@@ -2808,10 +2848,14 @@ function tbDate(t){
 /* karta tablicy; plakietki: zablokowane, etap po terminie (data po terminie widać na czerwono), zgoda/odbiór, agent, czeka na.
    Wykonawca tylko, gdy to nie Ty. Akcja właściciela (Zrobione, Zatwierdź, Odbierz) jako osobny przycisk obok karty
    (karta sama jest przyciskiem, przycisk w przycisku jest niepoprawny) */
+/* etap na karcie: pełna nazwa (najwyżej 2 wiersze); termin etapu, który minął, tekstem w tym samym wierszu (bez osobnej pigułki) */
+function tbStage(t,lt){
+  const sg=stageOf(t.stage),late=lt&&!isLate(t)&&!!sg&&isDay(sg.date);
+  return '<span class="tb-stg'+(late?' late':'')+'">'+esc(t.group||INBOX)+(late?' · <b>etap po terminie ('+esc(dd(sg.date))+')</b>':'')+'</span>';
+}
 function card(t,showProj,old){
   const p=P(t.project),w=WHO[t.executor]||WHO[''],ar=D.agents?runOf(t):null,b=[],lt=lateT(t);
   if(t.state==='blocked')b.push('<span class="lz red">zablokowane</span>'+(t.blocked?'<span>'+esc(t.blocked)+'</span>':''));
-  if(lt&&!isLate(t)){const sg=stageOf(t.stage);b.push('<span class="lz red">'+(sg&&isDay(sg.date)&&isDay(t.date)&&t.date>sg.date?'po terminie etapu':'etap po terminie')+'</span>')}
   (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(BK_NEED[x]?BK_NEED[x][0]:x)+'</span>'));
   if(ar)b.push('<span class="lz blue">'+(ar.state==='running'?'agent pracuje':'agent w kolejce')+'</span>');
   else if(A.starting[t.id])b.push('<span class="lz grey">uruchamianie</span>');
@@ -2819,7 +2863,7 @@ function card(t,showProj,old){
   const who=t.state==='done'||t.executor==='ty'||!t.executor?'':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
   const a=needsMe(t)&&!t.waits.length&&t.state!=='blocked'?ACTB(t):null;
   const cl=(old?' old':'')+(t.state==='blocked'?' tb-blk':'')+(lt?' tb-late':'')+(a?' tb-hasact'+(who?' tb-actwho':''):'');
-  const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span><span class="meta">'+(showProj&&p?av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span>':'')+'<span class="tb-st">'+esc(t.group||INBOX)+'</span></span>'+
+  const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span>'+(showProj&&p?'<span class="meta">'+av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span></span>':'')+tbStage(t,lt)+
     (b.length?'<span class="bd">'+b.join('')+'</span>':'')+
     (who||dl||a?'<span class="foot">'+(who||'<span></span>')+dl+'</span>':'')+'</button>';
   return a?'<div class="tb-cw'+(old?' old':'')+'">'+c+'<button class="btn sec sm tb-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tba:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button></div>':c;
@@ -2837,7 +2881,7 @@ const TB_EMPTY={todo:'Brak zadań do zrobienia.',wip:'Nic w toku.',rev:'Nic do o
    rozwinięte, Później i Bez terminu zwinięte; dalej zwinięte „Czekają na inne” i „Agenci”. Rozwinięte grupy razem
    pokazują 15 kart, reszta po „Pokaż wszystkie”. Stan zwinięcia w A.tbGrp (sesja), „Pokaż wszystkie” w PF.more */
 const TB_CUT=15;
-const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Do 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
+const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Najbliższe 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
 const tbMine=t=>t.executor==='ty'||!t.executor||needsMe(t);
 const tbPer=t=>{if(isLate(t))return 'late';if(!isDay(t.date))return 'none';const d=dTo(t.date);return d<=0?'today':d<=7?'week':'later'};
 function tbGrpHead(key,label,n,open,cls){
@@ -2885,9 +2929,10 @@ function planBox(){
   const dis=no||live||A.busy.plan||lg;
   /* przycisk, który nie może zadziałać, jest ukryty; zamiast niego jedno zdanie z powodem */
   const why=no?'Plan dnia niedostępny: na tym komputerze nie ma Claude.':lg?'Plan dnia ruszy po zalogowaniu Claude (sekcja Teraz).':'';
-  let h='<div class="plan">'+
+  /* bez Claude: zamiast wyłączonego pola samo zdanie z powodem */
+  let h='<div class="plan">'+(no?'':
     '<form id="plan"><textarea class="fi" name="t" rows="2" maxlength="1500" data-qd="plan" data-k="plan" aria-label="Co dziś robimy"'+(no?' disabled':'')+' placeholder="Np. Opisarnia marketing i 10 firm dla Oprogramowani">'+esc(QD.plan||'')+'</textarea>'+
-    (why?'':'<button class="btn"'+(dis?' disabled':'')+'>'+(live||A.busy.plan?'Układam…':'Ułóż plan')+'</button>')+'</form>'+(why?'<p class="pmt muted">'+esc(why)+'</p>':'');
+    (why?'':'<button class="btn"'+(dis?' disabled':'')+'>'+(live||A.busy.plan?'Układam…':'Ułóż plan')+'</button>')+'</form>')+(why?'<p class="pmt muted">'+esc(why)+'</p>':'');
   if(r&&(today||live)){
     if(r.ask)h+='<p class="ask">Ty: „'+esc(r.ask)+'”</p>';
     if(live)h+='<p class="pmt muted">PM układa plan'+(r.activity?': '+nwStep(r.activity):'…')+'</p>';
@@ -2904,11 +2949,11 @@ function planBox(){
           (free.length?'<div class="row"><button class="btn" data-ag="plan-go" data-id="'+esc(r.id)+'" data-k="plan-go"'+(n&&!A.busy.go?'':' disabled')+'>'+(A.busy.go?'Uruchamiam…':'Uruchom zaznaczone ('+n+')')+'</button><span class="muted pp-sm">Agenci pracują '+(MACHL[a.machine]||'na komputerze panelu')+'; wdrożenia i wysyłki czekają na Twoją zgodę.</span></div>':'');
       }else h+='<p class="pmt muted">Brak zadań dla agentów w tym planie.</p>';
       if(p.you.length)h+='<h3>Dla Ciebie</h3><ul>'+p.you.map(x=>'<li><span><button class="lk" data-task="'+esc(x.id)+'">'+esc(x.title)+'</button><br><span class="pp">'+esc(x.project)+(x.needsYou?' · wymaga: '+esc(x.needsYou):'')+'</span></span></li>').join('')+'</ul>';
-      if(p.note)h+='<p class="pp pp-note">Uwagi PM: '+esc(p.note)+'</p>';
+      if(p.note)h+='<p class="pp pp-note">Uwagi: '+esc(p.note)+'</p>';
     }
   }
   /* zwinięty w Przeglądzie; otwarty, gdy dzisiejszy plan jest w toku albo gotowy */
-  return pvFold('pv-plan','Plan dnia','PM proponuje, Ty zaznaczasz',h+'</div>','PM układa plan z zadań w kartach; uruchamiasz to, co zaznaczysz',!!live);
+  return pvFold('pv-plan','Plan dnia',no?'niedostępny':'do zatwierdzenia',h+'</div>','Plan układany z Twoich zadań; uruchamiasz to, co zaznaczysz',!!live);
 }
 function askPlan(text){
   text=String(text||'').replace(/\s+/g,' ').trim();
@@ -2977,13 +3022,7 @@ function pvWeek(week){
 const PV_TODAY=5,PV_DEC=3;
 /* zwijana sekcja Przeglądu: <details class="panel"> ze stanem w PF.more (data-pvdet) */
 const pvFold=(k,title,small,body,tip,open)=>'<details class="pv-fold" data-pvdet="'+k+'"'+(open||PF.more[k]?' open':'')+'><summary'+(tip?' title="'+esc(tip)+'"':'')+'><span class="pv-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
-/* jedno zdanie nad listą Decyzji zamiast powtarzania skutku w każdym wierszu */
-function decNote(L){
-  const zg=L.some(x=>x.need==='zgoda'&&x.t.kind!=='publikacja'),pb=L.some(x=>x.need==='zgoda'&&x.t.kind==='publikacja'),od=L.some(x=>x.need==='odbiór');
-  const t=[zg?'Zgoda uruchamia agenta':'',pb?'publikację zatwierdź po jej obejrzeniu':'',od?'przed odbiorem zobacz wynik pracy':''].filter(Boolean).join('; ');
-  return t?'<p class="pv-dnote">'+esc(cap(t))+'.</p>':'';
-}
-/* decyzje: zgody, odbiory zadań innych wykonawców i pytania; kolejność jak w raporcie PM (termin, odblokowane, priorytet) */
+/* decyzje (tyIsDec): zgody, odbiory i pytania; kolejność jak w raporcie PM (termin, odblokowane, priorytet) */
 function pvDecs(ys){
   const L=ys.youToday.concat(ys.youWeek,ys.youLater).filter(tyIsDec),prO=x=>{const p=x.q?x.q.p:P(x.t.project);return p?p.priority:3};
   return L.sort((a,b)=>(a.d||'9999').localeCompare(b.d||'9999')||(b.uc-a.uc)||prO(a)-prO(b));
@@ -2995,11 +3034,12 @@ function vPrzeglad(){
   const dKey=x=>x.t&&x.need?x.need+'|'+x.t.title:'',decA=pvDecs(ys),pick={};let pn=0;
   decA.forEach(x=>{const k=dKey(x)||(x.q?'q|'+qKey(x.q):'t|'+x.t.id);if(!pick[k]&&pn<PV_DEC){pick[k]=1;pn++}});
   const dec=decA.filter(x=>pick[dKey(x)||(x.q?'q|'+qKey(x.q):'t|'+x.t.id)]),shownT={},shownQ={};
-  const mark=x=>{if(x.q)shownQ[qKey(x.q)]=1;else shownT[x.t.id]=1};
-  dec.forEach(mark);
-  const todL=ys.youToday.filter(x=>x.q?!shownQ[qKey(x.q)]:!shownT[x.t.id]);
-  todL.slice(0,PV_TODAY).forEach(mark);
-  ys.checked.forEach(t=>{shownT[t.id]=1});
+  /* shownT: gdzie zadanie stoi wyżej (Następny krok w tabeli projektów pisze „w Decyzjach” albo „w Dziś”) */
+  const mark=w=>x=>{if(x.q)shownQ[qKey(x.q)]=1;else shownT[x.t.id]=w};
+  dec.forEach(mark('Decyzjach'));
+  const todL=ys.youToday.filter(x=>!tyIsDec(x));
+  todL.slice(0,PV_TODAY).forEach(mark('Dziś'));
+  ys.checked.forEach(t=>{shownT[t.id]='Dziś'});
   const tom=addK(D.todayKey,1),qs=f.qs.filter(q=>q.p.state==='active'&&q.date&&q.date<=tom&&!shownQ[qKey(q)]);
   const week=deadlines().filter(x=>dTo(x.d)>=0&&dTo(x.d)<=6&&!(x.task&&shownT[x.task.id]));
   const risks=riskRows(shownT);
@@ -3013,31 +3053,32 @@ function vPrzeglad(){
   let h='<div class="pagehead"><div class="ph-main pv-head"><h1>Przegląd</h1><p>'+esc(cap(dLong(D.todayKey)))+'</p><p class="pv-desc">Co czeka na Twoją decyzję, co na dziś i jak idą projekty.</p>'+pvSys()+srvBar()+costLine()+statusLine(warn)+'</div></div>';
   if(warn.length)h+='<div class="banner bad pvwarn"><i class="dot bad"></i>'+esc(warn.join(' · '))+' · '+dsNav('#agenci','Agenci')+'</div>';
   /* awaryjnie (błąd w Teraz): logowanie przyciskiem nwLogin, a przy logowaniu przez stronę instrukcja loginHint('copy') */
-  let nw;try{nw=nwPanel()}catch(e){console.error(e);const lw=!!(a&&a.needsLogin&&a.loginWeb);
+  let nw;try{nw=nwIdle()?'':nwPanel()}catch(e){console.error(e);const lw=!!(a&&a.needsLogin&&a.loginWeb);
     nw='<section class="panel nw-panel"><h2>Teraz</h2><p class="nw-note nw-bad">Nie udało się pokazać sekcji Teraz ('+esc(String(e&&e.message||e))+'). Reszta Przeglądu działa.'+(a&&a.needsLogin?' Claude wymaga logowania.'+(lw?'':' '+nwLogin):'')+'</p>'+(lw?'<div class="nw-lgw">'+lgBan('copy')+'</div>':'')+'</section>'}
-  if(dec.length)h+='<section class="panel pv-dec" aria-labelledby="h-dec"><h2 id="h-dec"><span>Decyzje</span><small><a class="navlk" href="#ty" data-tysec="dec">Pokaż wszystkie ('+decA.length+') <span aria-hidden="true">→</span></a></small></h2>'+decNote(dec)+'<ul class="rows pv-rows">'+
+  if(dec.length)h+='<section class="panel pv-dec" aria-labelledby="h-dec"><h2 id="h-dec"><span>Decyzje</span><small><a class="navlk" href="#ty" data-tysec="dec">Pokaż wszystkie ('+decA.length+') <span aria-hidden="true">→</span></a></small></h2><ul class="rows pv-rows">'+
     tyFold(dec,{prio:false,grp:'pvdec'},dKey,2,G=>{const x=G[0];return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'})+'</ul></section>';
   h+=todayPanel(ys,todL);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
   /* bez wiersza podsumowania nad listą: powtarzał liczby z wierszy poniżej */
   const rc=dsCut('pv-risk',risks,3,'pv-risk');
-  if(risks.length)h+='<section class="panel"><h2>Ryzyka <small><span>'+dsCnt(risks.length,'')+' '+pl(risks.length,'ryzyko','ryzyka','ryzyk')+'</span>'+dsNav('#blokady','Blokady')+'</small></h2><ul class="rows pv-rows" id="pv-risk">'+rc.L.join('')+'</ul>'+rc.more+'</section>';
-  else h+='<section class="panel pv-norisk"><h2>Ryzyka <small><span>brak</span>'+dsNav('#blokady','Blokady')+'</small></h2></section>';
+  /* „Twoje zadanie wstrzymuje N innych” (Blokady) to też ryzyko: wiersz pod listą ryzyk */
+  const bl=bkLine('pv-bkl');
+  if(risks.length)h+='<section class="panel"><h2>Ryzyka <small><span>'+dsCnt(risks.length,'')+' '+pl(risks.length,'ryzyko','ryzyka','ryzyk')+'</span>'+dsNav('#terminy','Terminy')+'</small></h2><ul class="rows pv-rows" id="pv-risk">'+rc.L.join('')+'</ul>'+rc.more+bl+'</section>';
+  else h+='<section class="panel pv-norisk"><h2>Ryzyka <small><span>brak</span>'+dsNav('#terminy','Terminy')+'</small></h2>'+bl+'</section>';
   /* projekty: aktywne, potem wstrzymane, potem backlog; nieaktywne przygaszone; na telefonie nieaktywne zwinięte */
   const ORD={active:0,paused:1,backlog:2},PS=D.projects.slice().sort((x,y)=>(ORD[x.state]!=null?ORD[x.state]:3)-(ORD[y.state]!=null?ORD[y.state]:3));
   const pA=PS.filter(p=>p.state==='active'),pR=PS.filter(p=>p.state!=='active');
-  h+='<section class="panel"><h2 title="Wiersz otwiera stronę projektu">Projekty <small>'+[act.length+' w toku',paused?paused+' '+pl(paused,'wstrzymany','wstrzymane','wstrzymanych'):'',back?back+' w backlogu':''].filter(Boolean).join(' · ')+'</small></h2>'+(D.projects.length?'<div class="tw ptable"><table><thead><tr><th>Projekt</th><th>Faza</th><th>Stan</th><th>Postęp</th><th>Najbliższy termin</th><th>Następny krok</th><th>Księga</th></tr></thead><tbody>'+
-    PS.map(p=>'<tr data-go="'+phref(p)+'" tabindex="0" title="Otwórz projekt"'+(p.state!=='active'?' class="pv-dim"':'')+'><td><div class="proj">'+av(p)+'<div><b><a class="enlk" href="'+phref(p)+'">'+esc(p.name)+'</a>'+(p.alias?' <span class="muted rmeta">· '+esc(p.alias)+'</span>':'')+'</b><p class="clamp2" title="'+esc(p.description)+'">'+esc(p.description)+'</p></div></div></td><td>'+phaseCell(p)+'</td><td>'+lz(p.pst)+'</td><td>'+progCell(p)+'</td><td>'+dueCell(p)+'</td><td>'+nextCell(p,shownT)+'</td><td>'+bookLz(p)+'</td></tr>').join('')+
+  h+='<section class="panel"><h2 title="Wiersz otwiera stronę projektu">Projekty <small>'+[act.length+' w toku',paused?paused+' '+pl(paused,'wstrzymany','wstrzymane','wstrzymanych'):'',back?back+' w backlogu':''].filter(Boolean).join(' · ')+'</small></h2>'+(D.projects.length?'<div class="tw ptable"><table><thead><tr><th>Projekt</th><th>Stan</th><th>Postęp</th><th>Najbliższy termin</th><th>Następny krok</th></tr></thead><tbody>'+
+    PS.map(p=>'<tr data-go="'+phref(p)+'" tabindex="0" title="Otwórz projekt"'+(p.state!=='active'?' class="pv-dim"':'')+'><td><div class="proj">'+av(p)+'<div><b><a class="enlk" href="'+phref(p)+'">'+esc(p.name)+'</a>'+(p.alias?' <span class="muted rmeta">· '+esc(p.alias)+'</span>':'')+'</b><p class="clamp2" title="'+esc(p.description)+'">'+esc(p.description)+'</p></div></div></td><td>'+lz(p.pst)+'</td><td>'+progCell(p)+'</td><td>'+dueCell(p)+'</td><td>'+nextCell(p,shownT)+'</td></tr>').join('')+
     '</tbody></table></div><ul class="pcards">'+pA.map(p=>projCard(p,shownT)).join('')+'</ul>'+
     (pR.length?'<details class="pv-rest" data-pvdet="pv-rest"'+(PF.more['pv-rest']?' open':'')+'><summary>Wstrzymane i backlog <span class="num">('+pR.length+')</span></summary><ul class="pcards">'+pR.map(p=>projCard(p,shownT)).join('')+'</ul></details>':''):
-    '<p class="empty">Brak projektów. Dodaj pierwszy w widoku <a href="#projekty">Projekty i standard</a>.</p>')+
-    (D.projects.length?'<p class="pv-bk muted">Księga: dokumenty, które ma mieć każdy projekt; 4/7 to 4 z 7.</p>':'')+'</section>';
+    '<p class="empty">Brak projektów. Dodaj pierwszy w widoku <a href="#projekty">Projekty</a>.</p>')+'</section>';
   h+=nw;
-  /* reszta Przeglądu zwinięta w jednej sekcji „Więcej”: podsumowanie PM (tylko przy prawdziwych projektach),
-     terminy w 7 dni, kampanie, plan dnia */
-  const more=pmPanel()+pvFold('pv-week-f','Terminy w 7 dni',dsCnt(week.length,pl(week.length,'termin','terminy','terminów')),'<p class="pv-fnav">'+dsNav('#terminy','Wszystkie terminy')+'</p>'+pvWeek(week),'Bez spraw pokazanych wyżej. Ikona przy pozycji to rodzaj: etap, zadanie, publikacja, wydarzenie z kalendarza.')+
+  /* reszta Przeglądu zwinięta w jednej sekcji „Pozostałe” (bez liczb: pełne listy są w swoich widokach): agenci, gdy nic
+     nie trwa; podsumowanie PM (tylko przy prawdziwych projektach), terminy na najbliższe 7 dni, kampanie, plan dnia */
+  const more=(nw?'':nwLine())+pmPanel()+pvFold('pv-week-f','Terminy: najbliższe 7 dni','','<p class="pv-fnav">'+dsNav('#terminy','Wszystkie terminy')+'</p>'+pvWeek(week),'Bez spraw pokazanych wyżej. Ikona przy pozycji to rodzaj: etap, zadanie, publikacja, wydarzenie z kalendarza.')+
     campGoals()+(LIVE||a?planBox():'');
-  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">Więcej</h2>'+more+'</section>';
+  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">Pozostałe</h2>'+more+'</section>';
   return h;
 }
 /* ---------- Teraz: jedna sekcja nad Dziś. Trwa (uruchomienia, filmy, rozmowy, publikacje w tej chwili),
@@ -3127,7 +3168,7 @@ function nwAuto(){
   if(!a.automat)return {txt:'Samodzielne uruchamianie wyłączone',short:'samodzielne uruchamianie wyłączone',lz:'grey',dot:'off',off:1};
   const lim=limitT();
   if(lim)return {txt:'Samodzielne uruchamianie wstrzymane do '+hhmm(lim)+' (limit subskrypcji)',short:'wstrzymane do '+hhmm(lim),lz:'yellow',dot:'warn'};
-  return {txt:'Samodzielne uruchamianie włączone',short:'samodzielne uruchamianie',lz:'green',dot:'ok'};
+  return {txt:'Samodzielne uruchamianie włączone',short:'samodzielne uruchamianie włączone',lz:'green',dot:'ok'};
 }
 /* zaplanowane publikacje wszystkich projektów (publikator wysyła je bez względu na stan projektu; wiersz zaplanowane:
    w kampaniach). now: termin minął najwyżej NW_LATE temu, jeszcze bez wyniku, kanał połączony i nic nie wstrzymuje
@@ -3355,6 +3396,10 @@ const nwHead=open=>'<button class="nw-tog nw-htog" data-nwopen="1" data-k="nwope
 const nwDot=dot=>'<i class="dot '+dot+' nw-hdot" aria-hidden="true"></i>';
 /* jedna sekcja Teraz w każdym stanie (stały nagłówek): liczby w toku i w kolejce, Automat jako osobny znacznik;
    link do Agentów na dole sekcji. Komunikaty dla czytnika ekranu daje #tstat */
+/* Przegląd: gdy nic nie trwa (bez logowania, kolejki, publikacji w tej chwili i błędów odczytu), Teraz jest jedną linią w Pozostałe */
+const nwIdle=()=>{const a=D.agents;return !nwNow().length&&!lgNeed()&&!nwAct().error&&!nwPubs().now.length&&!(a&&limitT())&&!nwDone().some(x=>x.err)};
+function nwLine(){const au=nwAuto();
+  return '<p class="pv-line"><span><b>Agenci</b> <span class="muted">teraz nie pracują · '+esc(au.short)+'</span></span>'+dsNav('#agenci','Agenci')+'</p>'}
 function nwPanel(){
   const now=nwNow(),au=nwAuto(),nq=now.filter(x=>x.q).length,nr=now.length-nq,nar=nwNarrow(),max=nar?NW_NOW_M:NW_NOW;
   /* sama kolejka to nie praca w toku: kropka neutralna, ostrzegawcza przy utkniętej pozycji */
@@ -3377,7 +3422,7 @@ function nwPanel(){
     (au.login?' Claude wymaga logowania (instrukcja wyżej).':au.dot==='warn'?' <a href="#agenci">Sprawdź w Agentach</a>':'')+'</p>';
   /* stopka zawsze: link do Agentów stale osiągalny; bez zakończonych w 24 h jedna linia zamiast osobnego wiersza */
   const none=!nwDone().length;
-  return h+nwPlanPanel(now.length>0)+(none?'':nwDonePanel())+'<p class="nw-foot">'+(none?'<span class="muted">Ostatnie 24 h: nic</span><span aria-hidden="true"> · </span>':'')+dsNav('#agenci','Agenci')+'</p></div></section>';
+  return h+nwPlanPanel(now.length>0)+(none?'':nwDonePanel())+'<p class="nw-foot">'+(none?'<span class="muted">Ostatnie 24 h: brak uruchomień</span><span aria-hidden="true"> · </span>':'')+dsNav('#agenci','Agenci')+'</p></div></section>';
 }
 /* Teraz: baner logowania Claude (jedyne miejsce z akcją na Przeglądzie; przy logowaniu przez stronę także pole na kod) */
 const lgNeed=()=>{const a=D.agents;return !!a&&(a.needsLogin||(a.tools.claude.found&&!a.tools.claude.loggedIn))};
@@ -3491,7 +3536,8 @@ const tyStore=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const tyLoad=k=>{try{const v=JSON.parse(localStorage.getItem(k)||'null');return v&&typeof v==='object'?v:null}catch(e){return null}};
 const tyWOpen=()=>A.tyW||(A.tyW=tyLoad(TY_W_KEY)||{});
 const tyFlt=()=>A.tyF||(A.tyF=Object.assign({k:'all',p:'all'},tyLoad(TY_F_KEY)||{}));
-const tyIsDec=x=>!!x.q||(!!x.need&&x.t.executor!=='ty');
+/* decyzje: pytania, zgody i odbiory zadań agentów oraz każdy odbiór (także kto: ty); zgoda przy kto: ty to zwykłe zadanie */
+const tyIsDec=x=>!!x.q||(!!x.need&&(x.t.executor!=='ty'||x.need==='odbiór'));
 const tyWaits=x=>!!x.t&&!!x.t.waits&&x.t.waits.length>0&&x.t.state!=='done';
 const tyKind=x=>x.q?'q':x.need==='zgoda'?'zg':x.need==='odbiór'?'od':'z';
 const tyPid=x=>x.q?x.q.p.id:x.t.project;
@@ -3507,8 +3553,8 @@ function tyFold(L,o,keyOf,min,sumOf){
 }
 function vTy(){
   const ys=youState(),n=youTotal(ys),su=x=>pl(x,'sprawa','sprawy','spraw');tyIdN=0;
-  const head='<div class="pagehead"><div class="ph-main"><h1>'+VNAME.ty+'<span class="hcnt num" title="'+n+' '+su(n)+' na dziś i 7 dni"><span class="sr-only">, </span>'+n+'<span class="sr-only"> '+su(n)+' na dziś i 7 dni</span></span></h1>'+
-    '<p>Decyzje i Twoje zadania. Liczba przy tytule: sprawy na dziś i najbliższe 7 dni.</p></div></div>';
+  const head='<div class="pagehead"><div class="ph-main"><h1>'+VNAME.ty+'<span class="hcnt num" title="'+n+' '+su(n)+': decyzje, dziś i najbliższe 7 dni"><span class="sr-only">, </span>'+n+'<span class="sr-only"> '+su(n)+'</span></span></h1>'+
+    '<p>Decyzje i Twoje zadania na dziś i najbliższe 7 dni.</p></div></div>';
   if(!n&&!ys.youLater.length&&!ys.checked.length)return head+bkLine('ty-bk')+'<section class="panel"><p class="empty">Nic nie czeka na Ciebie. '+dsNav('#przeglad','Przegląd')+' '+dsNav('#tablica','Tablica')+'</p></section>';
   const all=ys.youToday.concat(ys.youWeek,ys.youLater),near=ys.youToday.concat(ys.youWeek),F=tyFlt();
   if(F.p!=='all'&&!P(F.p))F.p='all';
@@ -3518,8 +3564,8 @@ function vTy(){
   const inP=near.filter(x=>okP(tyPid(x))),lP=ys.youLater.filter(x=>okP(tyPid(x))),cK=k=>inP.filter(x=>tyKind(x)===k).length,cL=k=>lP.filter(x=>tyKind(x)===k).length;
   const chips=[['all','Wszystko',-1,0],['q','Pytania',cK('q'),cL('q')],['zg','Zgody',cK('zg'),cL('zg')],['od','Odbiory',cK('od'),cL('od')],['z','Zadania',cK('z'),cL('z')]];
   const prs=D.projects.filter(p=>all.some(x=>tyPid(x)===p.id)||ys.checked.some(t=>t.project===p.id));
-  const flt='<div class="ty-flt" role="group" aria-label="Filtr spraw">'+chips.filter(c=>c[2]<0||c[2]+c[3]>0||F.k===c[0]).map(c=>'<button class="chip" data-tyf="'+c[0]+'" data-k="tyf:'+c[0]+'" aria-pressed="'+(F.k===c[0])+'"'+(c[3]?' title="'+c[2]+' na dziś i 7 dni, '+c[3]+' później"':'')+'>'+c[1]+(c[2]>=0?' <span class="num">'+(c[2]+c[3])+'</span>':'')+'</button>').join('')+
-    (prs.length>1||F.p!=='all'?'<label class="sr-only" for="tyfp">Projekt</label><select id="tyfp" data-k="tyfp"><option value="all">Wszystkie projekty</option>'+prs.map(p=>'<option value="'+esc(p.id)+'"'+(F.p===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>':'')+'</div>';
+  const sel=prs.length>1||F.p!=='all'?'<label class="sr-only" for="tyfp">Projekt</label><select id="tyfp" data-k="tyfp"><option value="all">Wszystkie projekty</option>'+prs.map(p=>'<option value="'+esc(p.id)+'"'+(F.p===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>':'';
+  const flt='<div class="ty-flt" role="group" aria-label="Filtr spraw">'+sel+'<span class="ty-chips">'+chips.filter(c=>c[2]<0||c[2]+c[3]>0||F.k===c[0]).map(c=>'<button class="chip" data-tyf="'+c[0]+'" data-k="tyf:'+c[0]+'" aria-pressed="'+(F.k===c[0])+'"'+(c[3]?' title="'+c[2]+' na dziś i 7 dni, '+c[3]+' później"':'')+'>'+c[1]+(c[2]>=0?' <span class="num">'+(c[2]+c[3])+'</span>':'')+'</button>').join('')+'</span></div>';
   const ctx={prio:prioVar(all),ctx:'ty'};
   /* nagłówek grupy: nazwa, liczba (przy filtrze „N z M”), dopiski; pusta grupa: sama linia nagłówka z opisem w title */
   const hd=(id,t,a,b,extra,tip)=>'<h2 id="'+id+'" tabindex="-1" data-k="'+id+'"'+(tip?' title="'+esc(tip)+'" aria-description="'+esc(tip)+'"':'')+'><span>'+t+' <small class="num ty-n">'+(on?a+' z '+b:a)+'</small></span>'+(extra?'<small>'+extra+'</small>':'')+'</h2>';
@@ -3530,7 +3576,7 @@ function vTy(){
   const decRows=tyFold(dec,Object.assign({grp:'dec'},ctx),x=>x.t&&x.need?x.need+'|'+x.t.title:'',2,G=>{const x=G[0];
     return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'});
   const decS=decA.length?'<section class="panel ty-grp" id="ty-dec" data-sec="dec" tabindex="-1" aria-labelledby="ty-g-dec">'+hd('ty-g-dec','Decyzje',dec.length,decA.length,decL?'<span>w tym '+decL+' później</span>':'',dec.length?'':'Filtr ukrywa decyzje.')+
-    (dec.length?decNote(dec)+'<ul class="rows" id="ty-l-dec">'+decRows+'</ul>':'')+'</section>':'';
+    (dec.length?'<ul class="rows" id="ty-l-dec">'+decRows+'</ul>':'')+'</section>':'';
   const chA=ys.checked,ch=chA.filter(fc);
   const chkS=chA.length?'<section class="panel ty-grp ty-chk" id="ty-chk" aria-labelledby="ty-g-chk">'+hd('ty-g-chk','Do zamknięcia',ch.length,chA.length,'serwer potwierdził wykonanie',ch.length?'':'Filtr ukrywa zadania do zamknięcia.')+
     chkBlock(ch,{noHead:true,lab:'ty-g-chk',ctx:'ty'})+'</section>':'';
@@ -3539,19 +3585,18 @@ function vTy(){
   /* grupa projektu w Najbliższe 7 dni: nazwa, liczba spraw i suma minut */
   const pSum=G=>{const p=P(G[0].t.project),m=G.reduce((a,y)=>a+y.min,0);return '<span class="ty-pgt">'+pvPrS(p)+'</span><span class="ty-pgm">'+G.length+' '+pl(G.length,'sprawa','sprawy','spraw')+(m?' · '+m+' min':'')+'</span>'};
   const grp=G.map(([k,id,t,L,e])=>{
-    /* liczba w nagłówku jak w kaflu (z decyzjami); wiersze bez decyzji (są wyżej) */
-    const own=L.filter(x=>!tyIsDec(x)),K=L.filter(x=>tyIsDec(x)&&fx(x)).length,vis=own.filter(fx),late=vis.filter(x=>x.late).length;
+    /* licznik = sprawy widoczne w tej grupie; decyzje są tylko w Decyzjach */
+    const own=L.filter(x=>!tyIsDec(x)),vis=own.filter(fx),late=vis.filter(x=>x.late).length;
     const ready=vis.filter(x=>!tyWaits(x)),wait=vis.filter(tyWaits),o=Object.assign({grp:k},ctx);
-    const ex=(late?'<span class="lz red">'+late+' po terminie</span>':'')+(k==='dzis'?'<span class="num" title="Szacowany czas Twojej pracy na dziś wobec pojemności dnia">ok. '+op.m+' z '+op.cap+' min</span>':'')+(K?'<span>'+K+' w Decyzjach</span>':'');
+    const ex=(late?'<span class="lz red">'+late+' po terminie</span>':'')+(k==='dzis'?'<span class="num" title="Szacowany czas Twojej pracy na dziś wobec pojemności dnia">Twój czas: '+op.m+' z '+op.cap+' min</span>':'');
     const tip=vis.length?'':on&&own.length?'Filtr ukrywa sprawy z tego okresu.':e;
     const c=dsCut('ty-'+k,ready,k==='pozniej'?5:12,'ty-l-'+k),wo=!!tyWOpen()[k];
     const sub=wait.length?'<h3 class="ty-sub"><button class="linkbtn" data-tyw="'+k+'" data-k="tyw:'+k+'" aria-expanded="'+wo+'"'+(wo?' aria-controls="ty-wl-'+k+'"':'')+'>Czekają na inne zadania ('+wait.length+')</button></h3>'+
       (wo?'<ul class="rows" id="ty-wl-'+k+'">'+wait.map(x=>todayRow(x,o)).join('')+'</ul>':''):'';
     const rows=k==='tydzien'?tyFold(c.L,o,x=>x.t?x.t.project:'',3,pSum):c.L.map(x=>todayRow(x,o)).join('');
-    /* pusta grupa: ukryta; Dziś ze sprawami tylko w Decyzjach: jedno zdanie zamiast pustej listy */
-    if(!vis.length&&!K&&!(on&&own.length))return '';
-    const h2=hd('ty-g-'+k,t,vis.length+K,L.length,ex,tip),body=(k==='dzis'?overBlock(ys):'')+(ready.length?'<ul class="rows" id="ty-l-'+k+'">'+rows+'</ul>'+c.more:'')+sub+
-      (!vis.length&&K&&!wait.length?'<p class="empty">'+(k==='dzis'?'Na dziś zostały tylko decyzje wyżej.':'Wszystkie są w Decyzjach wyżej.')+'</p>':'');
+    /* pusta grupa: ukryta (przy filtrze zostaje nagłówek z „0 z N”, żeby było widać, co filtr schował) */
+    if(!vis.length&&!(on&&own.length))return '';
+    const h2=hd('ty-g-'+k,t,vis.length,own.length,ex,tip),body=(k==='dzis'?overBlock(ys):'')+(ready.length?'<ul class="rows" id="ty-l-'+k+'">'+rows+'</ul>'+c.more:'')+sub;
     /* Później zwinięte: plan na tygodnie naprzód nie jest dzisiejszym obciążeniem */
     if(k==='pozniej')return '<details class="panel ty-grp ty-later'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" data-pvdet="ty-later"'+(PF.more['ty-later']?' open':'')+' aria-labelledby="ty-g-'+k+'"><summary>'+h2+'</summary>'+body+'</details>';
     return '<section class="panel ty-grp'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" tabindex="-1" aria-labelledby="ty-g-'+k+'">'+h2+body+'</section>'}).join('');
@@ -3575,7 +3620,7 @@ const tmNarrow=()=>!!(window.matchMedia&&matchMedia('(max-width:760px)').matches
 /* details w Terminach: stan z bieżącej sesji (zdarzenie toggle), inaczej domyślny */
 const tmDet=(k,def)=>{const o=A.tmDet&&A.tmDet[k];return o!=null?o:def};
 /* grupa: wybór użytkownika (PF.tmSec), domyślnie na desktopie otwarte; na telefonie otwarte tylko Dziś (pierwsze 8 pozycji) */
-const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return !narrow||id==='today'};
+const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return id==='today'};
 /* pozycje po filtrach; licznik rodzaju liczony przed filtrem rodzaju; przy jednym projekcie bez wydarzeń z kalendarza */
 function tmGroups(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -3590,7 +3635,7 @@ function tmGroups(){
   const G=[{id:'late',s:'Po terminie',n:anyRisk?'Po terminie i zagrożone':'Po terminie',f:x=>x.d<T||risk(x),date:1,cut:1,cutN:5,empty:'Nic po terminie.'},
     {id:'today',s:'Dziś',n:'Dziś · '+ddl(T),f:x=>x.d===T&&!risk(x),cut:nar?1:0,empty:'Nic na dziś.'},
     {id:'tom',s:'Jutro',n:'Jutro · '+ddl(tom),f:x=>x.d===tom&&!risk(x),empty:'Nic na jutro.'},
-    {id:'week',s:'W tym tygodniu',n:'W tym tygodniu',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
+    {id:'week',s:'Najbliższe 7 dni',n:'Najbliższe 7 dni',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
     {id:'later',s:'Później',n:'Później',f:x=>x.d>endW&&!risk(x),date:1,cut:1,empty:'Brak późniejszych terminów.'}];
   G.forEach(g=>{g.L=L.filter(g.f);g.raw=all.filter(g.f).length});
   return {cnt:cnt,L:L,G:G};
@@ -3610,7 +3655,7 @@ function tmTools(X,narrow){
       '<div class="chips" role="group" aria-label="Kalendarze pokazywane w Terminach">'+chips+'</div></div></details>':'');
   const off=hid.filter(k=>!(k==='kalendarz'&&noCal)).length;
   /* rodzaje i kalendarze zawsze zwinięte w „Filtry” (liczba wyłączonych rodzajów przy nazwie) */
-  const flt='<details class="tm-flt" data-tmdet="flt"'+(tmDet('flt',false)?' open':'')+'><summary>Filtry'+(off?' <span class="muted">· ukryte: '+esc(TM_K.filter(([k])=>hid.indexOf(k)>=0&&!(k==='kalendarz'&&noCal)).map(x=>x[1].toLowerCase()).join(', '))+'</span>':'')+'</summary><div class="tm-fltb">'+kinds+'</div></details>';
+  const flt='<details class="tm-flt" data-tmdet="flt"'+(tmDet('flt',false)?' open':'')+'><summary>Filtry'+'</summary><div class="tm-fltb">'+kinds+'</div></details>';
   return '<div class="toolbar tm-bar"><label class="tm-pl" for="bp">Projekt</label><select id="bp"><option value="all">Wszystkie projekty</option>'+D.projects.map(p=>'<option value="'+esc(p.id)+'"'+(PF.bp===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>'+
     '<button class="tm-tg" id="bm" aria-pressed="'+PF.mine+'" title="Twoje zadania i publikacje oraz zgody i odbiory zadań agentów; etapy i wydarzenia zostają">Tylko moje</button>'+
     flt+'<span class="muted num tm-cnt" role="status" aria-live="polite">'+n+' '+pl(n,'pozycja','pozycje','pozycji')+'</span></div>';
@@ -3662,7 +3707,7 @@ function tmGroup(g,narrow,showP){
   /* „Później”: domyślnie bez wydarzeń z kalendarza */
   const evN=g.id==='later'?g.L.filter(x=>x.kind==='kalendarz').length:0,V0=g.id==='later'&&!PF.tmLaterEv?g.L.filter(x=>x.kind!=='kalendarz'):g.L;
   /* grupy bez podziału na dni (Po terminie, Dziś, Jutro): najpierw Twoje, zadania agentów niżej w „Agenci” (na telefonie zwinięte) */
-  const splitA=!g.days&&g.id!=='later',AG=splitA?V0.filter(tmAgentRow):[],V=splitA?V0.filter(x=>!tmAgentRow(x)):V0;
+  const splitA=!g.days&&g.id!=='later',AG=[],V=splitA?V0.filter(x=>!tmAgentRow(x)).concat(V0.filter(tmAgentRow)):V0;
   /* długie grupy: pierwsze 8 wierszy (Po terminie: 5; w grupach z dniami cięcie na granicy dnia) */
   const cutN=g.cutN||TM_CUT,more=!!(A.tmMore&&A.tmMore[g.id]);let C=V;
   if(g.cut&&V.length>cutN){
@@ -3689,13 +3734,14 @@ function tmSet(c,top){
     '<details class="tm-ics"><summary>Jak dodać subskrypcję</summary><ol><li><b>Mac:</b> Kalendarz → Plik → Nowa subskrypcja kalendarza.</li><li><b>iPhone:</b> Ustawienia → Aplikacje → Kalendarz → Konta kalendarzy → Dodaj konto → Inne → Dodaj subskrybowany kalendarz.</li><li><b>iPhone</b> musi widzieć serwer panelu: adres Tailscale zamiast <code>localhost</code>.</li></ol></details></div>';
   const body='<div class="pad"><p><i class="dot '+c.dot+'" aria-hidden="true"></i> <b>'+esc(c.t)+'.</b> '+esc(c.s)+'</p>'+(c.btn?'<div>'+c.btn+'</div>':'')+ics+'</div>';
   if(top)return '<section class="panel tm-conn" aria-labelledby="tm-conn-h"><h2 id="tm-conn-h">Połączenie z kalendarzem</h2>'+body+'</section>';
-  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',false)?' open':'')+'><summary><i class="dot '+c.dot+'" aria-hidden="true"></i><b>Terminy w Twoim kalendarzu</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:c.short)+'</span></summary>'+body+'</details>';
+  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',false)?' open':'')+'><summary>'+(c.dot==='ok'?'<i class="dot ok" aria-hidden="true"></i>':'')+'<b>Dodaj terminy do kalendarza</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:'subskrypcja w kalendarzu na komputerze albo telefonie')+'</span></summary>'+body+'</details>';
 }
 function vTerminy(){
   const c=calStatus(),X=tmGroups(),narrow=tmNarrow(),top=c.dot!=='ok'&&!!c.btn;
-  let h='<div class="pagehead"><div class="ph-main"><h1>Terminy</h1><p>Terminy etapów, zadań i publikacji, od najpilniejszych. Kalendarz włączysz w Filtrach.</p></div></div>';
+  let h='<div class="pagehead"><div class="ph-main"><h1>Terminy</h1><p>Terminy etapów, zadań i publikacji, od najpilniejszych.</p></div></div>';
   if(top)h+=tmSet(c,true);
-  h+=tmTools(X,narrow);
+  h+=tmTools(X,narrow)+'<p class="tm-leg"><span><span class="tm-ic" aria-hidden="true">'+TM_IC.etap+'</span>koniec etapu</span><span><span class="tm-ic" aria-hidden="true">'+TM_IC.publikacja+'</span>publikacja</span><span><span class="tm-ic" aria-hidden="true">'+TM_IC.zadanie+'</span>zadanie</span>'+
+    ((PF.tk||[]).indexOf('kalendarz')<0&&D.cal.calendars.length?'<span><i class="dot cal" aria-hidden="true"></i>wydarzenie z kalendarza</span>':'')+'</p>';
   /* „Dziś i jutro w kalendarzu” tylko z połączonym kalendarzem (bez niego wolne okna byłyby nieprawdziwe), pod „Po terminie” */
   const bar=c.dot==='ok'?tmBar(c,narrow):'';
   h+=X.G.map(g=>tmGroup(g,narrow,PF.bp==='all')+(g.id==='late'?bar:'')).join('');
@@ -3911,7 +3957,7 @@ const bkPill=(i,cls,more)=>i.count?'<span class="bk-n '+cls+'" title="'+esc(bkCn
 /* jedna nazwa liczby z menu i z h1 Blokad (bkYouN().n): ile zadań czeka na Twoje zadania */
 const bkYouCntT=n=>n+' '+pl(n,'zadanie czeka','zadania czekają','zadań czeka')+' na Twoje zadania';
 /* zgoda i odbiór w Blokadach mówią, czyje są: u korzenia „czeka na Twoją zgodę”, niżej „potem Twoja zgoda” */
-const BK_NEED={zgoda:['czeka na Twoją zgodę','potem Twoja zgoda'],'odbiór':['czeka na Twój odbiór','potem Twój odbiór']};
+const BK_NEED={zgoda:['czeka na zgodę','potem Twoja zgoda'],'odbiór':['czeka na odbiór','potem Twój odbiór']};
 /* kto teraz pracuje nad zadaniem (jak w Teraz): uruchomienie agenta, rozmowa z Claude, film posta, publikacja w tej
    chwili. Film trafia też do zadania „nagraj film” tylko przy jawnym powiązaniu: to zadanie jest poprzednikiem posta
    (po:) i ma materiał: w folderze posta (posty/<post>/…); sam tytuł nie wystarcza (dawniej /film|nagra/ przypisywało
@@ -4029,7 +4075,7 @@ function bkNode(m,n,depth,ctx,parent){
       ex.push('<span class="lz '+(guess?'yellow':'red')+'" title="Dni do terminu „'+esc(tg.title)+'” (z dzisiejszym) mniej dni pracy przed nim i nad nim, według szacowanego czasu; bez niego: Twoje 1 dzień, agenta pół dnia; publikacja 0">'+(guess?'może być ciasno':'ciasno')+'</span><span class="bk-tg'+(guess?' bk-guess':'')+'">'+bkDays(tg.steps)+' pracy do '+dd(tg.date)+', '+pl(tg.days,'został','zostały','zostało')+' '+bkDays(tg.days)+esc(bkEst(tg))+'</span>')}
     /* ten sam dzień co termin w wierszu: sam zapas; inny dzień: „potem termin DD.MM”, odległość tylko w title */
     else if(w&&g!=='today'){const same=w.id===t.id||w.date===t.date;
-      ex.push('<span title="Zapas do terminu „'+esc(w.title)+'” ('+dd(w.date)+', '+esc(rel(w.date))+'): dni do terminu mniej dni pracy przed nim'+esc(bkEst(w))+'">'+(same?'':'potem termin '+dd(w.date)+' · ')+'zapas '+bkDays(Math.max(0,w.slack),1)+'</span>')}
+      if(!same)ex.push('<span title="Zapas do terminu „'+esc(w.title)+'”: '+bkDays(Math.max(0,w.slack),1)+esc(bkEst(w))+'">potem termin '+dd(w.date)+'</span>')}
     /* zależne i tak stoją z innego powodu: pilność tego zadania jest mniejsza, niż wynika z zapasu */
     if(i.direct&&!i.ready&&i.other.length)ex.push('<span class="bk-stuck" title="'+esc('Następne zadanie czeka też na: '+i.other.map(x=>x==='[!]'?'zablokowane zadanie':'„'+x+'”').join(', '))+'">następne czeka też na inne</span>');
   }
@@ -4041,24 +4087,23 @@ function bkNode(m,n,depth,ctx,parent){
   if(missP.length)ex.push('<span class="bk-miss">czeka też na „'+esc(shortT(missP.join('”, „'),60))+'”: takiego zadania nie ma w projekcie</span>'+
     (bkSoon(t)?'<span class="lz red">'+bkDue(t)+': nie ruszy</span>':'')+
     '<button class="linkbtn bk-jump" data-bkjump="'+(bkSoon(t)?'bk-urgent':'bk-fix')+'" data-k="bkm:'+esc(ctx.root+'>'+n.id)+'" aria-label="'+esc('Popraw: '+t.title)+'">Popraw</button>');
-  if(i.count)ex.push(bkPill(i,'bk-nn',more));
   const k=ctx.root+'>'+n.id,sub='bks-'+bkDom(k),deep=depth+1>=bkD();
   const o=A.bkOpen&&A.bkOpen[k],dflt=!nwNarrow()&&depth===0&&!!ctx.first;
   const open=kids.length&&!deep&&(o!=null?o:(A.bkAll||dflt));
   /* aria-controls tylko przy rozwiniętym (zwinięta lista nie jest w DOM) */
   const tog=kids.length&&!deep?'<button class="bk-tog" data-bkx="'+esc(k)+'" data-k="bkx:'+esc(k)+'" aria-expanded="'+!!open+'"'+(open?' aria-controls="'+esc(sub)+'"':'')+' aria-label="Zadania, które ruszą po: '+esc(t.title)+'"><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span></button>':'<span class="bk-tg0" aria-hidden="true"></span>';
   /* zwinięty korzeń: w wierszu, co odblokowuje (pierwsze w kolejności zależne), bez rozwijania */
-  if(depth===0&&kids.length&&!open)ex.push('<span class="bk-next" title="'+esc(kids.map(x=>x.t.title).join('; '))+'">→ „'+esc(shortT(kids[0].t.title,48))+'”'+(kids.length>1?' i '+(kids.length-1)+' '+pl(kids.length-1,'inne','inne','innych'):'')+'</span>');
+  if(depth===0&&kids.length&&!open)ex.push('<span class="bk-next" title="'+esc(kids.map(x=>x.t.title).join('; '))+'">po tym ruszy: „'+esc(shortT(kids[0].t.title,48))+'”'+(kids.length>1?' i '+(kids.length-1)+' '+pl(kids.length-1,'inne','inne','innych'):'')+'</span>');
   const hot=depth===0&&you&&!ctx.flat&&m.urg(n)<=0&&!bkPanelDoes(t);
   const cls=hot?' bk-you':depth===0&&you&&!bkPanelDoes(t)?' bk-youl':'';
   /* jedno miejsce akcji: .bk-do po prawej (za „odblokowuje”), także naprawa pracy w toku (bkDoW), nie w metadanych */
   const act=(depth===0&&!ctx.flat?bkAct(n):'')||bkDoW(t);
   let h='<li class="bk-node'+cls+(crit?' bk-crit':'')+'" id="'+esc(domId)+'"><div class="bk-row">'+tog+'<div class="bk-main">'+btn+bkMeta(n,ctx.proj&&depth===0,ex,depth>0)+(depth===0&&ctx.why?ctx.why:'')+'</div>'+
-    bkPill(i,'bk-nw',more)+(act?'<span class="bk-do">'+act+'</span>':'')+'</div>';
+    (act?'<span class="bk-do">'+act+'</span>':'')+'</div>';
   if(kids.length&&deep){
     const rest=m.reachL([n]).filter(x=>!ctx.home[x.id]).length||i.count;
     h+='<button class="linkbtn bk-cut" data-bkfocus="'+esc(t.id)+'" data-k="bkf:'+esc(k)+'">+'+rest+' niżej · pokaż<span class="bk-sr">: '+rest+' '+pl(rest,'zadanie','zadania','zadań')+' niżej, pokaż od tego zadania</span></button>';
-  }else if(open)h+=(depth===0?'<div class="bk-then" aria-hidden="true">Potem ruszy:</div>':'')+'<ul class="bk-sub" id="'+esc(sub)+'" aria-label="Ruszą po: '+esc(t.title)+'">'+kids.map(x=>bkNode(m,x,depth+1,ctx,n)).join('')+'</ul>';
+  }else if(open)h+=(depth===0?'<div class="bk-then" aria-hidden="true">Po tym ruszy:</div>':'')+'<ul class="bk-sub" id="'+esc(sub)+'" aria-label="Ruszą po: '+esc(t.title)+'">'+kids.map(x=>bkNode(m,x,depth+1,ctx,n)).join('')+'</ul>';
   return h+'</li>';
 }
 /* drzewo od korzenia (Do zrobienia najpierw, Zablokowane, widok od jednego zadania) */
@@ -4103,7 +4148,7 @@ const bkWhyFix=(x,soon)=>'<div class="bk-why">'+(soon?bkDueLz(x.t.t):'')+esc(x.w
 /* sekcje zwijane, stan w A.bkSec; domyślnie: urgent i roots rozwinięte, blocked i fix rozwinięte na szerokim ekranie
    (na telefonie zwinięte: strona Blokad jest długa), youw zwinięta */
 const BK_SECS=['urgent','roots','map','blocked','fix','youw'];
-const BK_SECD={urgent:()=>true,roots:()=>true,map:()=>false,blocked:()=>!nwNarrow(),fix:()=>!nwNarrow(),youw:()=>false};
+const BK_SECD={urgent:()=>true,roots:()=>true,map:()=>false,blocked:()=>false,fix:()=>!nwNarrow(),youw:()=>false};
 const bkSecOpen=(id,dflt)=>{const o=A.bkSec&&A.bkSec[id];return o!=null?o:dflt!=null?!!dflt:BK_SECD[id]?BK_SECD[id]():!nwNarrow()};
 const bkSecHead=(id,title,n,extra,tip)=>{const open=bkSecOpen(id);
   return '<h2 id="bk-'+id+'-h"'+(tip?' title="'+esc(tip)+'"':'')+'><button class="nw-tog bk-stog" data-bksec="'+id+'" data-k="bks:'+id+'" aria-expanded="'+open+'"'+(open?' aria-controls="bks-'+id+'"':'')+'><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span>'+title+'</button><span class="bk-hr">'+(extra||'')+'<small class="num"><span class="bk-sr">, liczba:</span> '+n+'</small></span></h2>'};
@@ -4168,7 +4213,7 @@ function vBlokady(){
     '<details class="ds-det bk-how"'+(A.bkHow?' open':'')+'><summary>Jak liczona jest kolejność</summary><p>Od góry: najpierw to, co jest po terminie, potem to, co ma najmniej zapasu do najbliższego terminu (zapas widać w wierszu). Przy równym zapasie decyduje bliższy termin, potem liczba odblokowanych zadań, a na końcu priorytet projektu. Strzałka przy zadaniu pokazuje, co ruszy po nim.</p></details></div>'+
     '<div class="toolbar"><label class="muted bk-pl" for="bkp">Projekt</label><select id="bkp"><option value="">Aktywne projekty</option>'+opts.map(p=>'<option value="'+esc(p.id)+'" title="'+esc(p.name)+'"'+(PF.bk===p.id?' selected':'')+'>'+esc(bkPShort(p))+(act(p)?'':' ('+(PST_N[p.state]||p.state)+')')+'</option>').join('')+'</select>'+
     (roots.length?'<button class="tm-tg bk-minet" id="bm" aria-pressed="'+!!PF.mine+'" title="Twoje zadania (bez tych, które robi za Ciebie panel)">Tylko moje</button>':'')+
-    (anyKids?bkAllBtn('bkall'):'')+'</div>'+sumH+'</div>';
+    '</div>'+sumH+'</div>';
   if(fo)return h+'<div class="bk-back"><button class="btn sec sm" data-bkfocus="" data-k="bkf:back">← Wszystkie blokady</button></div>'+
     '<section class="panel" id="bk-focus" tabindex="-1" aria-labelledby="bk-focus-h"><h2 id="bk-focus-h">Od zadania: '+esc(shortT(fo.t.title,70))+'</h2>'+
     '<ul class="bk-tree">'+bkTree(m,fo,null)+'</ul></section>';
@@ -4192,7 +4237,7 @@ function vBlokady(){
     const cutR=nwNarrow()?dsCut('bk-roots',rs,5,'bks-roots'):{L:rs,more:''};
     const rootsH=cutR.L.map((n,i)=>{const gAll=rs.filter(x=>m.grp(x)===m.grp(n)).length;const g=m.grp(n),gl=g!==gPrev?(gPrev=g,BK_GRP[g]):null,cnt=gl?gAll:0,lz=g==='late'||g==='tight'?'red':g==='today'?'yellow':'';
       return (gl?'<li class="bk-grp" role="presentation"><h3 class="bk-grph" title="'+esc(gl[1])+'"><span>'+gl[0]+'</span> '+(lz?'<span class="lz '+lz+' num">'+cnt+'</span>':'<span class="num bk-gn">'+cnt+'</span>')+
-        '<span class="bk-gd"> · '+esc(gl[1])+'</span></h3>'+(i===0?LG:'')+'</li>':'')+bkTree(m,n,drawn,{first:i===0})}).join('');
+        '</h3>'+(i===0?LG:'')+'</li>':'')+bkTree(m,n,drawn,{first:i===0})}).join('');
     const crit=rootsH.indexOf(' bk-crit"')>=0;
     const lg=crit?'<span class="bk-lg" title="Najpilniejsza ścieżka: droga do zadania z najmniejszym zapasem do terminu"><i class="bk-cdot" aria-hidden="true"></i>najpilniejsza ścieżka<span class="bk-sr">: droga do zadania z najmniejszym zapasem do terminu</span></span>':'';
     return (warn?'<div class="over bk-cap" role="note">'+warn+'</div>':'')+
@@ -4201,7 +4246,7 @@ function vBlokady(){
       '<p class="empty">Żadne zadanie nie wstrzymuje innych. <a class="navlk" href="#ty">Twoje zadania na dziś: Dla Ciebie →</a></p>')});
   {const mp=bkMapSec(m,roots.concat(blocked));if(mp){const mn=(mp.match(/class="bkm-n/g)||[]).length;h+=sec('map','Mapa zależności',mn,'',()=>mp)}}
   if(blocked.length)h+=sec('blocked','Zablokowane',blocked.length,'',()=>
-    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+'</div>'+
+    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+' <button class="btn sec sm bk-unb" data-task="'+esc(n.t.id)+'" data-k="bkunb:'+esc(n.id)+'" aria-label="'+esc('Usuń przeszkodę: '+n.t.title)+'">Usuń przeszkodę</button></div>'+
       (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+n.miss.map(x=>bkFixAct(n.t,x)).join(''):'')+bkWaitL(n.t)})).join('')+'</ul>');
   if(fix.length){const fm=mixed(fix.map(x=>x.t));
     /* zadanie pokazane już w „Nie ruszą na czas”: jeden wiersz z „Pokaż” (przyczyna i naprawa są tam) */
@@ -4263,11 +4308,11 @@ function mkDay(day){
 
 /* ---------- strona projektu ----------
    Nagłówek zwarty na każdej zakładce: nazwa, stan i jedna linia (faza · postęp · bieżący etap). Na zakładce Plan ta linia
-   rozwija pasek faz i kafle (na komputerze otwarte, na telefonie zwinięte; stan w PF.more['pj-ov']).
-   Pod zakładkami jedno zdanie, co jest na zakładce (PTD). */
+   rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
+   Pod zakładkami jedno zdanie, co jest na zakładce (PTD); Marketing ma własne zdanie w mktView. */
 const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
   wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu. Kliknij datę, aby zmienić termin etapu.',
-  ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.',marketing:'Kampanie projektu i ich publikacje.'};
+  ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.'};
 function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
@@ -4289,12 +4334,12 @@ function vProjekt(p,tab){
     '<div class="fact"><span class="l">Bieżący etap</span><span class="v">'+(s?esc(s.title):'—')+'</span><span class="d">'+(s?(isDay(s.date)?ddl(s.date)+' · '+rel(s.date):'bez terminu'):'brak etapów')+'</span></div>'+
     '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+
     '<div class="fact" title="Księga: dokumenty, które każdy projekt powinien mieć"><span class="l">Księga</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+'</span></div></div>';
-  const open='pj-ov' in PF.more?PF.more['pj-ov']:!nwNarrow();
+  const open=PF.more['pj-ov']===true;
   const line=tab==='plan'?'<details class="pj-ov" data-pvdet="pj-ov"'+(open?' open':'')+'><summary class="pj-sum">'+sum+'</summary><div class="pj-ovb">'+ov+'</div></details>':'<p class="pj-sum">'+sum+'</p>';
   return '<div class="phead"><div class="ptitle">'+av(p)+'<h1>'+esc(p.name)+'</h1>'+(p.alias?'<span class="muted">'+esc(p.alias)+'</span>':'')+lz(p.pst)+'</div>'+
     (p.description&&tab==='plan'?'<p class="desc">'+esc(p.description)+'</p>':'')+line+'</div>'+
     '<nav class="tabs ptabs" aria-label="Widoki projektu">'+PTABS.map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+
-    '<p class="pj-tabd">'+PTD[tab]+'</p>'+body;
+    (PTD[tab]?'<p class="pj-tabd">'+PTD[tab]+'</p>':'')+body;
 }
 /* ---------- Plan projektu: najbliższe 7 dni i rozmowa o projekcie ----------
    Dzień: Twoje zadania (po terminie trafiają na dziś), filmy do nagrania (dzień przed publikacją, najwcześniej dziś),
@@ -4302,7 +4347,7 @@ function vProjekt(p,tab){
 /* rodzaj sprawy szarym tekstem; kolorowy znacznik tylko dla stanu „po terminie” */
 const PPK={late:['red','Po terminie'],you:['','Ty'],rec:['','Nagranie'],pub:['','Publikacja'],agent:['','Agent']};
 const PPO={late:0,you:1,rec:2,pub:3,agent:4};
-/* „Czeka na Ciebie”: decyzje projektu (zgody, odbiory, pytania) z tym samym wierszem i przyciskiem co w Przeglądzie */
+/* „Decyzje”: decyzje projektu (zgody, odbiory, pytania) z tym samym wierszem i przyciskiem co w Przeglądzie */
 function planDec(p){
   const ys=youState(),of=x=>(x.q?x.q.p.id:x.t.project)===p.id&&(x.q||x.need);
   return ys.youToday.concat(ys.youWeek,ys.youLater).filter(of);
@@ -4331,17 +4376,24 @@ function planView(p){
     return t.minutes?t.minutes+' min':''};
   const name=x=>x.kind==='rec'||x.kind==='pub'?cap(x.t.title.replace(/^Opublikuj\s+/,'')):x.t.title;
   /* minuty Twoich zadań w dniu; ponad limit dnia (dayMinutes) na czerwono */
-  const cap0=D.dayMinutes||120,mins=k=>day[k].filter(x=>x.kind==='you'||(x.kind==='late'&&x.t.executor==='ty')).reduce((m,x)=>m+(+x.t.minutes||0),0);
+  /* suma przy dniu tylko, gdy minuty ma więcej niż jedno zadanie albo dzień jest ponad limit (inaczej ta sama liczba dwa razy) */
+  const cap0=D.dayMinutes||120,mine=k=>day[k].filter(x=>(x.kind==='you'||(x.kind==='late'&&x.t.executor==='ty'))&&+x.t.minutes>0);
+  const mins=k=>{const L=mine(k),m=L.reduce((s,x)=>s+(+x.t.minutes),0);return L.length>1||m>cap0?m:0};
+  /* ryzyka projektu: etapy po terminie i zagrożone, z przejściem do zmiany terminu */
+  const rk=p.stagesL.filter(s=>!s.done&&(s.st==='late'||s.st==='risk'));
   const ks=Object.keys(day).sort();
   let h='';
-  if(dec.length)h+='<section class="panel" id="pdec"><h2>Czeka na Ciebie <small class="num">'+dec.length+'</small></h2><ul class="rows">'+dec.map(x=>todayRow(x,{prio:false})).join('')+'</ul></section>';
-  h+='<section class="panel" id="pplan"><h2>Najbliższe dni</h2>';
+  if(dec.length)h+='<section class="panel" id="pdec"><h2>Decyzje <small class="num">'+dec.length+'</small></h2><ul class="rows">'+dec.map(x=>todayRow(x,{prio:false})).join('')+'</ul></section>';
+  if(rk.length)h+='<section class="panel" id="prisk"><h2>Ryzyka <small class="num">'+rk.length+'</small></h2><ul class="rows">'+rk.map(s=>'<li><div><a class="lk t" href="'+phref(p,'etapy')+'">'+esc(s.title)+'</a><div class="s">'+lz(s.st)+
+      '<span class="num">'+(isDay(s.date)?'termin '+ddl(s.date)+' · ':'')+'otwarte: '+s.open+' z '+s.total+'</span></div></div>'+
+      '<div class="r"><a class="btn sec sm" href="'+phref(p,'etapy')+'" aria-label="'+esc('Zmień termin etapu: '+s.title)+'">Zmień termin</a></div></li>').join('')+'</ul></section>';
+  h+='<section class="panel" id="pplan"><h2>Najbliższe 7 dni</h2>';
   if(!ks.length)h+='<p class="empty">'+(dec.length?'Poza sprawami wyżej na 7 dni nic nie zaplanowano.':'Na najbliższe 7 dni nic nie zaplanowano.')+'</p>';
   else h+='<div class="pad pp">'+ks.map(k=>{const m=mins(k);
     return '<h3 class="pp-d">'+(k===T?'Dziś <span class="num muted">'+esc(dd(k))+'</span>':k===addK(T,1)?'Jutro <span class="num muted">'+esc(dd(k))+'</span>':esc(ddl(k)))+
       (m?' <span class="num '+(m>cap0?'pp-over':'muted')+'"'+(m>cap0?' title="Ponad limit dnia: '+cap0+' min"':'')+'>· '+m+' min'+(m>cap0?' (limit '+cap0+')':'')+'</span>':'')+'</h3><ul class="pp-l">'+
-    day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li>'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'<button type="button" class="lk" data-task="'+esc(x.t.id)+'" data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+
-      (meta(x)?'<span class="muted">'+meta(x)+'</span>':'')+'</li>').join('')+'</ul>'}).join('')+'</div>';
+    day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li><span class="pp-c">'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'</span>'+
+      '<span class="pp-t"><button type="button" class="lk" data-task="'+esc(x.t.id)+'" data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+'</span></li>').join('')+'</ul>'}).join('')+'</div>';
   const nd=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">Twoje zadania bez terminu: '+nd+' · <a href="'+phref(p,'tablica')+'">Tablica</a></p>';
   return h+'</section>';
@@ -4446,7 +4498,7 @@ function stagesView(p){
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
     return '<li><div class="nm"><b>'+esc(s.title)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?'otwarte: '+s.open+' z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" lang="pl" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
+      '<div class="stg-ed">'+lz(s.st)+'<label class="stg-d"><span>'+(isDay(s.date)?'Termin: '+esc(ddl(s.date)):'Bez terminu')+'</span><input class="fi" type="date" lang="pl" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></label></div></li>'}).join('')+
     '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś.</p></section>';
 }
 /* braki dokumentów z projekt.py (język standardu) → zdanie dla właściciela; przykłady w rozwinięciu */
@@ -4478,30 +4530,33 @@ function bookView(p){
   const meta=cm?'<div class="kv2"><label>Wymagania <select class="fi" data-meta="threshold" data-pid="'+esc(p.id)+'"><option value="lekka"'+(p.threshold==='lekka'?' selected':'')+'>podstawowe</option><option value="pelna"'+(p.threshold==='pelna'?' selected':'')+'>pełne</option></select></label>'+
     '<label>Rodzaj <select class="fi" data-meta="client" data-pid="'+esc(p.id)+'"><option value="tak"'+(p.client?' selected':'')+'>dla klienta</option><option value="nie"'+(p.client?'':' selected')+'>własny</option></select></label></div>':
     '<p class="kv2">Wymagania: <b>'+thr+'</b> · Rodzaj: <b>'+kind+'</b><span class="muted">W projektach przykładowych tego się nie zmienia.</span></p>';
-  return (qa.length?'<section class="panel"><h2>Pytania <small>'+(nq?nq+' bez odpowiedzi':'wszystkie z odpowiedzią')+'</small></h2><ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul></section>':'')+
-    '<section class="panel"><h2>Księga <small class="num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+' bez braków</small></h2>'+meta+
-    (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div title="'+esc(x.file)+'">'+esc(x.label)+(x.status==='ok'?'<span class="sr-only">: jest</span>':'')+'</div>'+(x.gaps.length&&x.status==='gaps'?'<ul>'+x.gaps.map(gapLi).join('')+'</ul>':'')+'</div><div>'+(x.status==='ok'?'':BOOKLZ[x.status])+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
-    '<p class="note">'+(full?'Księga kompletna.':pre?'Uzupełnij księgę przed rozpoczęciem budowy.':'Uzupełnij braki w księdze.')+'</p></section>';
+  /* pytania są też w Planie (Decyzje); tu zwinięte pod Księgą */
+  const tg=p.book.some(x=>x.key==='zadania'&&x.status==='gaps'),lab=x=>x.label==='Karta'?'Opis projektu':x.label;
+  const act=full?'<p class="note">Księga kompletna.</p>':'<div class="pj-bk"><span class="note">'+(pre?'Uzupełnij księgę przed rozpoczęciem budowy.':'Braki uzupełni Claude, gdy o to poprosisz.')+'</span>'+
+    '<a class="btn sec sm" href="'+phref(p,'plan')+'" data-pjgo="pchat">Poproś w rozmowie o projekcie</a>'+(tg?'<a class="lk" href="'+phref(p,'tablica')+'">Zadania na Tablicy</a>':'')+'</div>';
+  return '<section class="panel"><h2>Księga <small class="num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+' bez braków</small></h2>'+meta+
+    (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div title="'+esc(x.file)+'">'+esc(lab(x))+(x.status==='ok'?'<span class="sr-only">: jest</span>':'')+'</div>'+(x.gaps.length&&x.status==='gaps'?'<ul>'+x.gaps.map(gapLi).join('')+'</ul>':'')+'</div><div>'+(x.status==='ok'?'':BOOKLZ[x.status])+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
+    act+'</section>'+(qa.length?pjFold('pj-q','pkq','Pytania',nq?nq+' bez odpowiedzi':'wszystkie z odpowiedzią','<ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul>'):'');
 }
 /* zakładka Marketing projektu: kampania (cel i wynik na wierzchu, reszta w „Szczegóły kampanii”) i jej publikacje
    z tym samym stanem i akcją co karta w widoku Marketing (mkState, mkAct); wiersz otwiera edytor posta */
 function mktView(p){
   const cs=D.campaigns.filter(c=>c.project===p.id);
-  if(!cs.length)return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
+  if(!cs.length)return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
   const row=t=>{
     const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
     if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
     const st=post?mkState(t,day):t.state==='done'?['green','opublikowane']:isLate(t)?['red','po terminie']:t.needsYou==='zgoda'?['purple','czeka na zgodę']:['grey','zaplanowane'];
-    const act=post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&t.state!=='done'?'<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'';
+    const act=post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&t.state!=='done'?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'';
     const open=post?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
     return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post?mkTitle(t):t.title)+'</button><div class="s">'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
       (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+'</div></div>'+
       '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+act+'</div></li>'};
-  return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: zatwierdź, obejrzyj i opublikuj.</p>'+cs.map(c=>{
+  return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p>'+cs.map(c=>{
     const ps=D.tasks.filter(t=>t.campaign===c.id).sort((x,y)=>(x.date||'9999').localeCompare(y.date||'9999'));
     const dn=ps.filter(t=>t.state==='done').length,tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0,st=CST[c.state]||CST.plan;
     const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id);
-    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'publikacje '+dn+'/'+ps.length+'</small></h2><div class="pad mk-camp">'+
+    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+ps.length+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
       '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b><span class="muted">'+esc(c.metric||'wynik')+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
@@ -4528,7 +4583,8 @@ const wkThr=L=>histReady()&&!!sumHist(L)[3];
 function wkStep(max){const r=Math.max(1,max/5),e=Math.pow(10,Math.floor(Math.log10(r))),f=r/e;return Math.max(1,(f<=1?1:f<=2?2:f<=5?5:10)*e)}
 const wkAx=(i,last)=>(last-i)%2?' class="wk-ax2"':'';
 const wkOpen=id=>!!(A.tgl&&A.tgl[id]);
-function wkTog(id,show,hide){const o=wkOpen(id);return '<button class="linkbtn" data-toggle="'+id+'" data-show="'+show+'" data-hide="'+hide+'" aria-expanded="'+o+'" aria-controls="'+id+'">'+(o?hide:show)+'</button>'}
+/* by: id nagłówka, który nazywa przełączany wykres (aria-describedby; „Pokaż” z nazwą dla czytnika) */
+function wkTog(id,show,hide,by){const o=wkOpen(id);return '<button class="linkbtn" data-toggle="'+id+'" data-show="'+show+'" data-hide="'+hide+'" aria-expanded="'+o+'" aria-controls="'+id+'"'+(by?' aria-describedby="'+by+'"':'')+'>'+(o?hide:show)+'</button>'}
 function wkTable(id,head,rows){const k='t-'+id;
   return wkTog(k,'Pokaż liczby w tabeli','Ukryj tabelę')+'<div class="tw" id="'+k+'"'+(wkOpen(k)?'':' hidden')+'><table class="dt"><thead><tr>'+head.map((h,j)=>'<th'+(j?' class="num"':'')+'>'+h+'</th>').join('')+'</tr></thead><tbody>'+
     rows.map(r=>'<tr>'+r.map((v,j)=>'<td'+(j?' class="num"':'')+'>'+v+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
@@ -4562,16 +4618,23 @@ function kpis(L,one){
   const pct=n.total?100*n.done/n.total:0,dp=o&&o.total?Math.round(pct-100*o.done/o.total):null;
   const thrOk=ready&&o,avgThr=thrOk?(n.done-o.done)/4:0;
   const late=lateOf(L),ids=L.map(p=>p.id);
-  const stDone=D.stages.filter(s=>ids.indexOf(s.project)>=0&&s.done).length,stLate=D.stages.filter(s=>ids.indexOf(s.project)>=0&&s.st==='late').length;
+  const SL=D.stages.filter(s=>ids.indexOf(s.project)>=0),stDone=SL.filter(s=>s.done).length,stLate=SL.filter(s=>s.st==='late').length,stRisk=SL.filter(s=>s.st==='risk').length;
+  /* kampania w toku z celem liczbowym (najbliższy koniec): wynik wobec celu */
+  const cp=D.campaigns.filter(c=>c.state==='active'&&+c.target>0&&ids.indexOf(c.project)>=0).sort((a,b)=>String(a.end||'9999').localeCompare(String(b.end||'9999')))[0];
   const hT=one?phref(one,'etapy'):'#terminy',hB=one?phref(one,'tablica'):'#tablica';
   const nil='<span class="v num wk-nil" aria-label="brak danych">—</span>',ld=wkLoad(ids);
   /* odbiory czekają na właściciela: kafel prowadzi do Dla Ciebie z filtrem Odbiory */
   const wipA=n.rev?' href="#ty" data-tyfgo="od" title="Do odbioru: otwiera Dla Ciebie z filtrem Odbiory"':' href="'+hB+'"';
+  const lateT='<a class="stat'+(late?' red':'')+'" href="'+hT+'"><span class="l">Po terminie</span><span class="v num">'+late+'</span><span class="d">zadania i etapy</span></a>';
+  const thrT=thrOk?'<div class="stat"><span class="l">Tempo</span><span class="v num">'+fmt1(avgThr)+'</span><span class="d">'+(Number.isInteger(avgThr)?pl(avgThr,'zadanie','zadania','zadań'):'zadania')+' tygodniowo, średnio z 4 tygodni</span></div>':'';
+  /* strona projektu: tylko 3 kafle (postęp i etap są w nagłówku projektu) */
+  if(one)return '<div class="kgrid pj-k3">'+lateT+ld+thrT+'</div>';
   return '<div class="kgrid">'+
    '<a class="stat'+(late?' red':'')+'" href="'+hT+'"><span class="l">Po terminie</span><span class="v num">'+late+'</span><span class="d">zadania i etapy</span></a>'+
    ld+
-   '<a class="stat"'+wipA+'><span class="l">Praca w toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">w toku '+n.wip+(n.rev?' · '+n.rev+' do odbioru':'')+'</span></a>'+
-   '<a class="stat" href="'+hT+'" title="zrobione ÷ (zrobione + po terminie)"><span class="l">Etapy w terminie</span>'+(stDone+stLate?'<span class="v num">'+Math.round(100*stDone/(stDone+stLate))+'%</span>':nil)+'<span class="d num">'+stDone+' '+pl(stDone,'zrobiony','zrobione','zrobionych')+', '+stLate+' po terminie</span></a>'+
+   '<a class="stat"'+wipA+'><span class="l">W toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">'+(n.rev?n.wip+' w pracy · '+n.rev+' do odbioru':'zadania w pracy')+'</span></a>'+
+   '<a class="stat" href="'+hT+'"><span class="l">Etapy</span>'+(SL.length?'<span class="v num">'+stDone+' <small class="wk-u">z '+SL.length+' zrobionych</small></span>':nil)+'<span class="d num">'+(stLate||stRisk?[stLate?stLate+' po terminie':'',stRisk?stRisk+' '+pl(stRisk,'zagrożony','zagrożone','zagrożonych'):''].filter(Boolean).join(' · '):'bez opóźnień')+'</span></a>'+
+   (cp?'<a class="stat" href="'+phref(P(cp.project),'marketing')+'" title="'+esc(cp.name)+'"><span class="l">Kampania</span><span class="v num">'+fmtN(+cp.result||0)+' <small class="wk-u">z '+fmtN(+cp.target)+'</small></span><span class="d">'+esc(shortT(cp.metric||cp.name,40))+'</span></a>':'')+
    '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · '+(dp>=0?'+':'')+dp+' '+pl(Math.abs(dp),'punkt procentowy','punkty procentowe','punktów procentowych')+' w 4 tygodnie':'')+'</span></div>'+
    /* tempo dopiero z danymi z 4 tygodni; wcześniej wiersz „tempo od …” pod kaflami */
    (thrOk?'<div class="stat"><span class="l">Tempo</span><span class="v num">'+fmt1(avgThr)+'</span><span class="d">'+(Number.isInteger(avgThr)?pl(avgThr,'zadanie','zadania','zadań'):'zadania')+' tygodniowo, średnio z 4 tygodni</span></div>':'')+'</div>';
@@ -4680,10 +4743,10 @@ function burnChart(p){
   const verd=fut?'':left<0?'po terminie':ok?'zdąży':'nie zdąży';
   const al='Etap '+t+': zostało '+rest+', termin '+dd(s.date)+(verd?', '+verd:', zaczyna się '+dd(s.start));
   const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
-  const zad=v=>fmt1(v)+' '+(v===1?'zadanie':'zadania');
+  const zad=v=>fmt1(v)+' '+(Math.round(v*10)===10?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
     '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
-    '<p class="cap">Etap '+t+'. Tempo: '+zad(pace)+' dziennie'+(left<0?'.':', potrzeba '+zad(need)+'.')+'</p>';
+    '<p class="cap">Etap '+t+'. Tempo: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
@@ -4706,7 +4769,7 @@ function compareTable(L){
   const thr=p=>{const h=hist(p);return h[3]?'<span class="num">'+fmt1((h[7].done-h[3].done)/4)+'</span>':'<span title="od '+from+'">—</span>'};
   const sp=p=>{const v=hist(p).map(h=>h?h.done:null).filter(x=>x!=null);return spark(p)+'<span class="sr-only">zrobione: z '+v[0]+' do '+v[v.length-1]+'</span>'};
   const wip=p=>p.c.wip+p.c.blocked+p.c.rev;
-  return '<div class="tw wk-ctable"><table><thead><tr><th>Projekt</th><th class="num">Po terminie</th><th>Postęp</th>'+(ready?'<th>Zrobione, 8 tygodni</th><th class="num">Tempo na tydzień</th>':'')+'<th class="num" title="w toku, zablokowane i do odbioru">Praca w toku</th><th>Księga</th><th class="wk-go"></th></tr></thead><tbody>'+
+  return '<div class="tw wk-ctable"><table><thead><tr><th>Projekt</th><th class="num">Po terminie</th><th>Postęp</th>'+(ready?'<th>Zrobione, 8 tygodni</th><th class="num">Tempo na tydzień</th>':'')+'<th class="num" title="w pracy, zablokowane i do odbioru">W toku</th><th>Księga</th><th class="wk-go"></th></tr></thead><tbody>'+
     R.map(({p,late})=>{const href=phref(p,'wskazniki');
       return '<tr data-go="'+href+'" tabindex="0" title="Otwiera wskaźniki projektu"><td><div class="proj wk-proj">'+av(p)+'<b><a class="enlk" href="'+href+'" title="'+esc(p.name)+'">'+wkNmH(p)+'</a></b></div></td><td class="num'+(late?' wk-late':'')+'">'+late+'</td><td>'+progCell(p)+'</td>'+
         (ready?'<td>'+sp(p)+'</td><td class="num">'+thr(p)+'</td>':'')+'<td class="num">'+wip(p)+'</td><td>'+bookLz(p)+'</td><td class="wk-go" aria-hidden="true">›</td></tr>'}).join('')+'</tbody></table></div>'+
@@ -4722,11 +4785,13 @@ function wkRows(R,wip,more){
     (B.length?'<details class="wk-rest" data-pvdet="wk-rest"'+(PF.more['wk-rest']||!A.length?' open':'')+'><summary>Bez spraw po terminie <span class="num">('+B.length+')</span></summary><ul class="wk-rows">'+B.map(row).join('')+'</ul></details>':'')+'</div>';
 }
 function metrics(L,one){
-  const back='<a href="#wskazniki?p=all">Cały portfel</a>';
+  const back='<a href="#wskazniki?p=all">Wszystkie projekty</a>';
   if(one&&!one.c.all)return '<div class="hint">Projekt nie ma jeszcze zadań, więc nie ma czego mierzyć. Wskaźniki pojawią się, gdy projekt dostanie zadania.</div><p class="wk-cap">'+back+'</p>';
   if(!L.length)return '<div class="hint">Brak projektów w toku.</div>';
   const ready=histReady(),from=D.history.length?D.history[0].date:D.todayKey;
   const sec=(cls,h2,body)=>'<section class="panel'+(cls?' '+cls:'')+'">'+h2+'<div class="chartbox">'+body+'</div></section>';
+  /* strona projektu: wykres etapu na górze, 3 kafle, pozostałe wykresy zwinięte pod „Więcej wykresów” */
+  if(one)return metricsOne(one,ready,from,sec,back);
   let h=kpis(L,one);
   /* jeden wiersz o historii zamiast ramki: od kiedy wykresy (14 dni) i tempo (28 dni) */
   if(!wkThr(L))h+='<p class="wk-cap">Historia od '+dd(from)+'. '+(ready?'Tempo od '+dd(wkFrom(28))+'.':'Wykresy od '+dd(wkFrom(14))+', tempo od '+dd(wkFrom(28))+'.')+'</p>';
@@ -4736,10 +4801,25 @@ function metrics(L,one){
   if(ready){
     S.push(sec('','<h2>Postęp w czasie <small>% zadań zrobionych</small></h2>',lineChart('m-line',L)));
     S.push(sec('','<h2>Zakończone zadania <small>na tydzień</small></h2>',barChart('m-bar',L)));
-    S.push('<section class="panel wk-full"><h2 title="Zadania w każdym stanie">Przepływ pracy <small>'+wkTog('wk-cfd','Pokaż','Ukryj')+'</small></h2><div class="chartbox" id="wk-cfd"'+(wkOpen('wk-cfd')?'':' hidden')+'><p class="cap">Rosnące pasmo „Zrobione” to postęp. Szerokie „W toku” znaczy, że naraz rozpoczęto za dużo.</p>'+cfdChart('m-cfd',L)+'</div></section>');
   }
-  S.push('<section class="panel wk-full"><h2 title="Otwarte zadania według wykonawcy">Kto wykonuje <small>'+wkTog('wk-who','Pokaż','Ukryj')+'</small></h2><div class="chartbox" id="wk-who"'+(wkOpen('wk-who')?'':' hidden')+'>'+whoBars(L)+'</div></section>');
+  /* dwa rzadziej potrzebne wykresy w jednej sekcji, każdy z półzdaniem opisu i przełącznikiem */
+  const sub=(id,t,d,body)=>'<div class="wk-mch"><h3 id="'+id+'-h">'+t+' <span class="muted">'+d+'</span></h3>'+wkTog(id,'Pokaż','Ukryj',id+'-h')+'<div class="chartbox" id="'+id+'"'+(wkOpen(id)?'':' hidden')+'>'+body+'</div></div>';
+  S.push('<section class="panel wk-full wk-more"><h2>Więcej wykresów</h2>'+
+    (ready?sub('wk-cfd','Przepływ pracy','ile zadań było w każdym stanie','<p class="cap">Rosnące pasmo „Zrobione” to postęp. Szerokie „W toku” znaczy, że naraz rozpoczęto za dużo.</p>'+cfdChart('m-cfd',L)):'')+
+    sub('wk-who','Kto wykonuje','otwarte i zrobione zadania według wykonawcy',whoBars(L))+'</section>');
   return h+'<div class="cgrid">'+S.join('')+'</div>';
+}
+function metricsOne(p,ready,from,sec,back){
+  const L=[p],M=[];
+  if(ready){
+    M.push(sec('','<h2>Postęp w czasie <small>% zadań zrobionych</small></h2>',lineChart('m-line',L)));
+    M.push(sec('','<h2>Zakończone zadania <small>na tydzień</small></h2>',barChart('m-bar',L)));
+    M.push(sec('wk-full','<h2>Przepływ pracy <small>ile zadań było w każdym stanie</small></h2>','<p class="cap">Rosnące pasmo „Zrobione” to postęp. Szerokie „W toku” znaczy, że naraz rozpoczęto za dużo.</p>'+cfdChart('m-cfd',L)));
+  }
+  M.push(sec('wk-full','<h2>Kto wykonuje <small>otwarte i zrobione zadania</small></h2>',whoBars(L)));
+  return '<div class="cgrid">'+sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(p))+'</div>'+kpis(L,p)+
+    (!wkThr(L)?'<p class="wk-cap">Historia od '+dd(from)+'. '+(ready?'Tempo od '+dd(wkFrom(28))+'.':'Wykresy od '+dd(wkFrom(14))+', tempo od '+dd(wkFrom(28))+'.')+'</p>':'')+
+    '<details class="pj-more" data-pvdet="pj-wk"'+(PF.more['pj-wk']?' open':'')+'><summary>Więcej wykresów <small>'+M.length+'</small></summary><div class="cgrid">'+M.join('')+'</div></details>';
 }
 function vWskazniki(){
   if(PF.ms!=='all'&&!P(PF.ms))PF.ms='all';
@@ -4759,22 +4839,23 @@ function agBarHtml(){
   const ck=A.busy.check||runs().some(r=>r.kind==='check'&&isAct(r)),no=!a.tools.claude.found,lg=lgNeed();
   const act=runs().filter(isAct).length,ys=youState(),wait=ys.youToday.concat(ys.youWeek).filter(x=>x.t&&(x.t.executor==='claude'||x.t.executor==='codex')).length;
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
-  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Teraz żaden agent nie pracuje')+
-    (wait?' · '+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Ciebie <a href="#ty">Dla Ciebie →</a>':'')+'.</p>';
-  if(no)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze.</p>';
+  /* hierarchia: stan (ciemny, większy) z samodzielnym uruchamianiem w jednym wierszu; pod nim jedno zdanie, co dalej */
+  const swOn=a.canRunTasks&&!no,auS='samodzielne uruchamianie '+(a.automat?'włączone':'wyłączone');
+  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Agenci teraz nie pracują')+(swOn?'':' · '+auS)+'.</p>';
+  if(wait)h+='<p class="ag-wait">'+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Twoją decyzję w najbliższych 7 dniach. <a class="navlk" href="#ty">Dla Ciebie →</a></p>';
+  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują, to normalne. Agenci ruszą w Twoim pierwszym projekcie. <a class="navlk" href="#projekty">Projekty →</a></p>';
+  else if(no)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
-  /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan tekstem (powód jest zdaniem obok) */
-  const swOn=a.canRunTasks&&!no;
-  h+='<div class="abar"><div class="ag-ac">'+(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':
-    '<span class="muted">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</span>')+
+  /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
+  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+
     (no?'':pmBtn('pm'))+
-    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>')+'</div></div>';
+    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
+  if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   if(limitT())h+='<p class="ahint">'+limitHint()+(a.automat?' · samodzielne uruchamianie czeka':'')+'</p>';
-  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <a href="#projekty">Dodaj projekt</a></p>';
   const tc=toolState('claude'),tx=toolState('codex'),to=!!(A.agDet&&A.agDet.tools);
   const TSH={ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'},tsh=(n,x)=>n+': '+(TSH[x.dot]||x.dot);
-  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia <small>· '+(tc.dot==='off'&&tx.dot==='off'?'nie zainstalowane':esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx)))+'</small></summary>'+
+  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia'+(tc.dot==='off'&&tx.dot==='off'?'':' <small>· '+esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx))+'</small>')+'</summary>'+
     '<div class="ag-st">'+pill(tc)+pill(tx)+'<span class="pill">Działa na: <b>'+esc(MACH[a.machine]||a.machine||'brak')+'</b></span></div></details>';
   return h;
 }
@@ -4837,7 +4918,9 @@ function srvPanel(o){
     :'<div class="row"><button class="btn sec sm" data-ag="lo" data-k="lo"'+(A.busy.lo?' aria-disabled="true"':'')+'>'+(A.busy.lo?'Wylogowuję…':'Wyloguj wszystkie urządzenia')+'</button></div>';
   const v=D.server?srvItems():null,LV=SRV_LV;
   /* widok Serwer: stan (kontrola zdrowia i kopie) na górze, sesje urządzeń (wylogowanie) zwinięte na końcu */
-  if(o==='ses')return '<section class="panel" id="ag-ses"><h2>Sesje urządzeń</h2><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></section>';
+  /* sesje urządzeń: zwinięte (otwarte przy potwierdzaniu wylogowania) */
+  if(o==='ses'){const so=!!(A.lo||A.busy.lo||(A.agDet&&A.agDet.ses));
+    return '<details class="panel ag-ses" id="ag-ses" data-agdet="ses"'+(so?' open':'')+'><summary><b>Sesje urządzeń</b><span class="muted">wylogowanie wszystkich urządzeń</span></summary><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></details>'}
   if(!v)return '';
   return '<section class="panel" id="ag-srv"><h2><span class="ag-h">Stan serwera <span class="lz '+LV[v.lvl][0]+'">'+LV[v.lvl][1]+'</span></span><small>'+(v.at?'<span>stan z '+esc(whenT(D.server.at))+'</span>':'')+'</small></h2>'+
     '<div class="pad">'+srvBar(true)+'</div></section>';
@@ -4907,8 +4990,8 @@ function devPanel(){
   /* jedno zdanie stanu; przycisk tylko, gdy jest co wdrożyć; reszta (panel testowy, dziennik, instrukcja) zwinięta */
   let h='<section class="panel" id="rozwoj"><h2>Rozwój panelu</h2><div class="pad dv">';
   if(d.error)h+='<p class="warn">'+esc(d.error)+'</p>';
-  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana jeszcze nie wdrożona','zmiany jeszcze nie wdrożone','zmian jeszcze nie wdrożonych')+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak zmian do wdrożenia.')+
-    (d.behind?' <span class="lz yellow" title="W działającym panelu są zmiany, których wersja rozwojowa jeszcze nie ma; wdrożenie je połączy">w działającym panelu '+d.behind+' '+pl(d.behind,'nowsza zmiana','nowsze zmiany','nowszych zmian')+'</span>':'')+'</p>';
+  /* jedno zdanie: czy jest co wdrożyć; zmiany, których wersja rozwojowa nie ma, tylko w szczegółach (właściciel nic z nimi nie robi) */
+  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana czeka','zmiany czekają','zmian czeka')+' na wdrożenie'+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':'')+'.':'Nic nie czeka na wdrożenie. Nie musisz nic robić.')+'</p>';
   if(cm.length)h+='<details class="ds-det"><summary>Lista zmian <small>· '+cm.length+'</small></summary><ul class="dv-c">'+cm.slice(0,10).map(c=>'<li><code>'+esc(c.sha)+'</code><span>'+esc(c.subject)+'</span><span class="muted">'+esc(whenT(c.at))+'</span></li>').join('')+(cm.length>10?'<li class="muted">i '+(cm.length-10)+' więcej</li>':'')+'</ul></details>';
   const b=[];
   if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(L&&L.text?': '+esc(L.text):'')+'</span>');
@@ -4918,6 +5001,7 @@ function devPanel(){
   if(bad){const w=WDS[L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
   const op=bad||!!(A.agDet&&A.agDet.dvdet);
   h+='<details class="ds-det" data-agdet="dvdet"'+(op?' open':'')+'><summary>Panel testowy i wdrożenia</summary>';
+  if(d.behind)h+='<p class="dv-l">Działający panel ma '+d.behind+' '+pl(d.behind,'zmianę','zmiany','zmian')+', których wersja rozwojowa jeszcze nie ma; następne wdrożenie je połączy.</p>';
   if(d.auto)h+='<p class="dv-l">Wdrażanie samodzielne: każda zmiana trafia do działającego panelu po udanych testach.</p>';
   if(L&&!on&&!bad){const w=WDS[L.state]||['out',L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
   if(L&&!on&&d.log)h+='<details class="ds-det"><summary>Dziennik wdrożenia</summary><pre class="res">'+esc(d.log)+'</pre></details>';
@@ -4949,10 +5033,10 @@ function vKoszty(){
 function costPanel(){
   const k=D.costs;if(!k)return '';
   let h='<section class="panel" id="kpoz"><h2>'+(k.configured&&!k.loading?'Pozycje <small>szacunek z cennika · stan z '+esc(whenT(k.at))+'</small>':'Koszty serwera')+'</h2>';
-  if(!k.configured)return h+'<p class="empty">Koszty nie są podłączone.</p><details class="ds-det ds-pad"><summary>Jak podłączyć</summary><p>Na serwerze (ssh jako ops): <code>sudo ustaw-token-hetznera</code>. Token tylko do odczytu, jeden na projekt w Hetzner Console.</p></details></section>';
+  if(!k.configured)return h+'<p class="empty">Koszty nie są podłączone.</p><details class="ds-det ds-pad"><summary>Jak podłączyć</summary><p>Koszty podłącza administrator serwera: wpisuje na serwerze token tylko do odczytu z konsoli dostawcy (Hetzner), jeden na projekt. Opis jest w instrukcji instalacji panelu.</p></details></section>';
   if(k.loading)return h+'<p class="empty" role="status">Pobieram koszty…</p></section>';
   h+='<div class="pad"><div class="kpis"><div><b class="num">'+eur(k.month)+'</b>'+pln(k.month)+'<span>w tym miesiącu</span></div><div><b class="num">'+eur(k.total)+'</b>'+pln(k.total)+'<span>łącznie od założenia</span></div><div><b class="num">'+eur(k.monthly)+'</b>'+pln(k.monthly)+'<span>pełny miesiąc</span></div></div></div>';
-  h+='<div class="tw"><table><thead><tr><th>Projekt Hetzner</th><th>Pozycja</th><th>Rodzaj</th><th>Od</th><th class="num">Miesięcznie</th><th class="num">Ten miesiąc</th><th class="num">Łącznie</th></tr></thead><tbody>';
+  h+='<div class="tw"><table><thead><tr><th>Projekt</th><th>Pozycja</th><th>Rodzaj</th><th>Od</th><th class="num">Miesięcznie</th><th class="num">Ten miesiąc</th><th class="num">Łącznie</th></tr></thead><tbody>';
   k.projects.forEach(p=>{
     if(p.error){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="warn">'+esc(p.error)+'</td></tr>';return}
     if(!p.items.length){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="muted">brak płatnych zasobów</td></tr>';return}
@@ -5000,7 +5084,6 @@ function runHtml(r){
   if(r.costUsd)tx.push(['Równowartość w cenniku API',fmtUsd(r.costUsd)]);
   if(r.file)tx.push(['Plik','<code>'+esc(r.file)+'</code>']);
   h+='<details class="ds-det run-tech"><summary>Szczegóły techniczne</summary><dl>'+tx.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl></details>';
-  h+='<div class="dr-foot"><button class="btn sec" data-close="1" data-k="close2">Zamknij</button></div>';
   return h;
 }
 
@@ -5072,7 +5155,7 @@ function vProjekty(){
   const gN=grp.reduce((s,g)=>s+g.n,0);
   /* nagłówek: opis, stan w pigułkach, skok do formularza */
   /* nagłówek: liczby raz, jednym zdaniem; „Dodaj projekt” rozwija formularz pod listą */
-  let h='<div class="pagehead"><div class="ph-main"><h1>Projekty i standard</h1><p>Twoje projekty i ich Księga, czyli pliki, które każdy projekt powinien mieć.</p></div>'+
+  let h='<div class="pagehead"><div class="ph-main"><h1>Projekty</h1><p>Twoje projekty i ich Księga: dokumenty, które każdy projekt powinien mieć.</p></div>'+
     (canAdd?'<div class="prx-acts"><button type="button" class="btn" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button></div>':'')+'</div>';
   /* lista projektów */
   /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
@@ -5081,7 +5164,7 @@ function vProjekty(){
     (!reg&&nP?'<p class="note">'+(canAdd?'To projekty przykładowe. Własny dodasz przyciskiem „Dodaj projekt” u góry.':'To projekty przykładowe.')+'</p>':'')+
     (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="pn-f">'+esc(x.name)+'</span><span class="pn-s">'+esc(pShort(x))+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
+      let r='<li><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
         '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span></div>'+
         '</div>';
       /* folder, ścieżka i usuwanie zwinięte w „Więcej” (otwarte przy potwierdzaniu usunięcia) */
@@ -5123,7 +5206,7 @@ function vProjekty(){
     /* jedno zdanie i akcja (zleć agentowi w kartach i w Brakach); na telefonie karty projektów zwinięte, na komputerze tabela */
     h+='<section class="panel"><h2>Księga projektów <small>'+(okN===nP?'wszystkie komplet':'brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy'))+'</small></h2>'+
       ((allMiss.length||(nC&&reg&&canAdd))?'<p class="note prx-sum">'+(allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>':'')+
-      '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
+      '<details class="prx-tdet" data-prxdet="tab"'+(prxOpen('tab',false)?' open':'')+'><summary>Dokumenty w każdym projekcie <small>· tabela</small></summary><div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div></details>'+
       (nC?'<details class="prx-cdet" data-prxdet="cards"'+(prxOpen('cards',false)?' open':'')+'><summary>Projekty z brakami <small>· '+nC+'</small></summary><ul class="prx-cards">'+cards+'</ul></details>':'')+
       (gN?'<details class="ds-gap prx-gaps" data-prxdet="gaps"'+(prxOpen('gaps',false)?' open':'')+'><summary>Braki <small>· '+gN+'</small></summary>'+gl+'</details>':'<p class="empty">Wszystkie projekty mają komplet plików.</p>')+'</section>';
   }
@@ -5190,8 +5273,7 @@ function taskHtml(t){
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
   else if(needsResult(t)||needsCount(t)||dForm(t,'done'))mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p></div>'+finBox(t);
   else if(!mine){const dw=doWhat(t),sm=D.agents&&!D.agents.canRunTasks;
-    mv='<div class="move-box"><b>Robi to agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.</b>'+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+
-      (sm?'<p class="muted">W projektach przykładowych agenci nie pracują, więc tego zadania nie uruchomisz.</p>':'')+'</div>'}
+    mv='<div class="move-box"><b>'+(sm?'Zadanie dla agenta ('+esc(WHO[t.executor].n)+'). W projektach przykładowych agenci nie pracują.':'Robi to agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.')+'</b>'+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+'</div>'}
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
@@ -5234,8 +5316,6 @@ function taskHtml(t){
   if(t.check)h+='<dt>Sprawdza</dt><dd>'+esc(t.check.key)+' <span class="muted">· '+(t.check.ok===true?'ok':t.check.ok===false?'nie spełnione':'brak danych')+(atShort(t.check.at)?', '+esc(atShort(t.check.at)):'')+'</span></dd>';
   h+='<dt>Plik</dt><dd>'+(t.line?'<code>'+esc(t.file+':'+t.line)+'</code>':'<span class="muted">niezapisane</span>')+'</dd></dl>';
   h+='<p class="note">Zmiany zapisują się po wyjściu z pola. Esc zamyka, r uruchamia agenta.</p></details>';
-  /* telefon: drugi „Zamknij” na dole szuflady, w zasięgu kciuka */
-  h+='<div class="dr-foot"><button class="btn sec" data-close="1" data-k="close2">Zamknij</button></div>';
   return h;
 }
 /* jedno zdanie „co zrobić”: pierwszy niezrobiony krok, cel albo tytuł */
@@ -5578,7 +5658,7 @@ const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
   const rf=!prepDay(t)&&resFiles(t).length;
   const ym=yourMove(t);
-  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf&&d.result?'<p class="move">'+esc(d.result)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
+  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf?(d.result?'<p class="move">'+esc(d.result)+'</p>':!lastGitRun(t)?'<p class="move muted">Agent nie opisał wyniku.</p>':''):'')+(d.doneWhen?'<p class="move">Sprawdź: '+esc(d.doneWhen)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
   dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
@@ -6361,7 +6441,7 @@ function upBtn(pid,big,lab){
   return '<label class="btn '+(big?'':'sec ')+'sm md-up">'+(MDS.up&&MDS.upP===pid?MDS.up:lab||(big?'Wgraj zdjęcia lub filmy':'Wgraj'))+'<input type="file" multiple accept="image/*,video/mp4,video/quicktime" data-mup data-pid="'+esc(pid)+'" aria-label="'+esc('Wgraj zdjęcia lub filmy do projektu '+projName(pid))+'" hidden></label>'}
 function vMedia(){
   const F=A.mf||(A.mf={p:'',k:'',s:''});
-  const head=n=>'<div class="pagehead"><div><h1>Media'+(n!=null?' <small class="muted num">'+n+'</small>':'')+'</h1><p class="md-sub">Zdjęcia i filmy projektów: z postów, ze studia filmów i wgrane przez Ciebie.</p></div></div>';
+  const head=n=>'<div class="pagehead"><div><h1>Media'+(n!=null?' <small class="muted num">'+n+'</small>':'')+'</h1><p class="md-sub">Zdjęcia i filmy z publikacji, nagrań i wgrane przez Ciebie.</p></div></div>';
   if(!LIVE)return head()+'<section class="panel"><p class="empty">Media są widoczne w panelu na serwerze.</p></section>';
   if(!MDS.items){loadMedia();return head()+'<section class="panel"><p class="empty">Wczytuję zdjęcia i filmy…</p></section>'}
   const L=MDS.items.filter(i=>(!F.p||i.project===F.p)&&(!F.k||i.kind===F.k)&&(!F.s||i.source===F.s));
@@ -6370,11 +6450,11 @@ function vMedia(){
   const pids=[...new Set(MDS.items.map(i=>i.project))];
   /* nic jeszcze nie ma: bez filtrów, jedno zdanie i wgrywanie do projektu */
   if(!MDS.items.length){const Pj=D.projects;
-    return head()+'<section class="panel"><p class="empty">Nie ma jeszcze plików. Grafiki i filmy z postów pojawią się tu same; własne zdjęcia i filmy możesz wgrać.</p>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
+    return head()+'<section class="panel"><p class="empty">Nie ma jeszcze plików. Wgraj własne albo poczekaj na publikacje.</p>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
       (Pj.length===1?'<div class="md-bar">'+upBtn(Pj[0].id,true)+'</div>':Pj.length?'<div class="md-bar md-ups"><span class="muted">Wgraj do projektu:</span>'+Pj.map(x=>upBtn(x.id,false,pShort(x))).join('')+'</div>':'')+'</section>'}
   let h=head(L.length+(L.length<MDS.items.length?' z '+MDS.items.length:''))+'<section class="panel"><div class="md-bar">'+
     '<select class="fi md-sel" data-mfp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===F.p).map(p=>[p.id,pShort(p)])),F.p)+'</select>'+
-    '<select class="fi md-sel" data-mfs aria-label="Skąd">'+opt([['','Skąd: wszystkie'],['posty','Z postów'],['media','Wgrane'],['studio','Ze studia filmów']],F.s)+'</select>'+
+    '<select class="fi md-sel" data-mfs aria-label="Skąd">'+opt([['','Skąd: wszystkie'],['posty','Z publikacji'],['media','Wgrane'],['studio','Do filmów (logo, plansze)']],F.s)+'</select>'+
     '<div class="row md-k" role="group" aria-label="Rodzaj">'+seg('k','','Wszystko')+seg('k','image','Zdjęcia')+seg('k','video','Filmy')+'</div>'+
     (F.p?upBtn(F.p,true):'')+'</div>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'');
   if(!L.length)return h+'<p class="empty">Brak plików'+(F.p||F.k||F.s?' dla wybranych filtrów':'')+'.</p></section>';
@@ -6417,7 +6497,7 @@ async function uploadMedia(el){
   MDS.up='';MDS.upP='';say('Wgrano '+ok+' z '+files.length+'.'+(err?' '+err:''));loadMedia(true);
 }
 /* dni na osi: kolejne dni bez publikacji w jednym wierszu („pon.–czw. brak publikacji”) */
-function mkDays(keys,items){
+function mkDays(keys,items,inLate){
   let h='',run=[];
   const flush=()=>{if(!run.length)return;const a=run[0],b=run[run.length-1],wa=fromKey(a).getDay(),wb=fromKey(b).getDay(),now=run.includes(D.todayKey);
     h+='<li class="tl-day nil'+(now?' tl-now':'')+'" data-day="'+a+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wa])+'">'+esc(DN[wa])+'</abbr></b>'+
@@ -6426,7 +6506,7 @@ function mkDays(keys,items){
     const L=items.filter(t=>t.date.slice(0,10)===k);if(!L.length){run.push(k);return}flush();
     const wd=fromKey(k).getDay(),now=k===D.todayKey;
     h+='<li class="tl-day'+(now?' tl-now':'')+'" data-day="'+k+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wd])+'">'+esc(DN[wd])+'</abbr></b> '+esc(dd(k))+(now?' <span class="mk-now">dziś</span>':'')+'</div>'+
-      '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k)).join('')+'</div></li>'});
+      '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k,inLate)).join('')+'</div></li>'});
   flush();return h;
 }
 /* Do nagrania: filmy z kampanii na 14 dni, jeszcze nienagrane i nieopublikowane. Nagrywa panel dzień przed publikacją
@@ -6454,14 +6534,14 @@ function vMarketing(){
   const pubAll=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
   const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
   const late=mine.filter(t=>t.state!=='done'&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Publikacje z kampanii: obejrzyj, zatwierdź i opublikuj.</p></div></div>'+
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Publikacje z kampanii: obejrzyj, zatwierdź, opublikuj.</p></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
-  if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late)+'</ol></section>';
+  if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
   h+=recPanel(fp);
   const wk=items.filter(t=>!(t.state!=='done'&&t.date.slice(0,10)<D.todayKey));
-  h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b></span>'+
+  h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b>'+(wk.length?' <small class="num">'+wk.length+'</small>':'')+'</span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzednie 7 dni">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następne 7 dni">→</button>'+
-    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk);
+    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk.concat(late));
   if(!wk.length){
     /* pusty zakres: jedno zdanie i przycisk do najbliższej publikacji poza nim */
     const after=mine.filter(t=>t.date.slice(0,10)>days[6]).sort((a,b)=>a.date<b.date?-1:1)[0],before=mine.filter(t=>t.date.slice(0,10)<days[0]&&t.date.slice(0,10)>=D.todayKey).sort((a,b)=>a.date>b.date?-1:1)[0];
@@ -6483,42 +6563,40 @@ function mkState(t,day,fs){
     if((d.scenario||d.film)&&f[0]!=='green')return [f[0],f[1],f[0]==='red'?'err':''];
     return ['purple','do obejrzenia','review'];
   }
-  if(LIVE&&d&&!d.ok&&D.tasks.some(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done'))return ['blue','agent przygotowuje','prep'];
-  return ['grey','czeka na przygotowanie',''];
+  const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
+  if(pr)return ['blue','agent przygotuje'+(isDay(pr.date)?' do '+ddl(pr.date):''),'prep'];
+  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n,'prep'];
+  return ['grey','post do przygotowania',''];
 }
-/* wiersz nad osią: tylko niezerowe stany (bez „po terminie”: te są w osobnej sekcji wyżej); błąd publikacji automatycznej */
+/* nad osią: tylko błąd publikacji automatycznej (liczba pozycji stoi w nagłówku każdej sekcji) */
 function mkTodo(items){
-  const G={ok:[],review:[],err:[],prep:[],done:[]};
-  items.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).forEach(t=>{const g=mkState(t,t.date.slice(0,10))[2];if(G[g])G[g].push(t.date.slice(0,10))});
-  const N={ok:'Do zatwierdzenia',review:'Do obejrzenia',err:'Z błędem',prep:'Agent przygotowuje',done:'Opublikowane'};
-  const parts=Object.keys(N).filter(k=>G[k].length).map(k=>'<button type="button" class="lk'+(k==='err'?' mk-bad':'')+'" data-mkday="'+esc(G[k][0])+'" data-k="mk:'+k+'">'+N[k]+': <b class="num">'+G[k].length+'</b></button>');
-  let h=parts.length?'<p class="mk-cnt">'+parts.join('<span class="muted" aria-hidden="true"> · </span>')+'</p>':'';
+  let h='';
   const P=D.publish;
   if(LIVE&&P){const bad=items.filter(t=>{const st=P.state[t.project+'|'+t.file+'|'+t.title];return st&&Object.keys(st).some(c=>st[c]&&!st[c].ok&&PUBN[c])}).length;
     if(bad)h+='<p class="warn mk-pub">Publikacja automatyczna nie powiodła się: '+bad+' '+pl(bad,'post','posty','postów')+'. <a class="navlk" href="#marketing" data-nwchan>Kanały publikacji</a></p>'}
   return h?'<div class="mk-todo">'+h+'</div>':'';
 }
-/* kanały posta; „ręcznie” przy kanałach, których panel nie publikuje sam (LinkedIn, TikTok, YouTube, niepołączony Facebook) */
+/* kanały posta; „publikujesz Ty” przy kanałach, których panel nie publikuje sam (LinkedIn, TikTok, YouTube, niepołączony Facebook) */
 function mkChan(t){
   const L=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>c.toLowerCase());
   const man=c=>!!(LIVE&&D.publish)&&!(['facebook','reels','instagram'].includes(c)&&chanOk(t,c));
   const nm=c=>PUBN[c]||cap(c),allMan=L.length&&L.every(man);
-  return L.map(c=>esc(nm(c))+(!allMan&&man(c)?' (ręcznie)':'')).join(' · ')+(allMan?' · ręcznie':'');
+  return L.map(c=>esc(nm(c))+(!allMan&&man(c)?' (publikujesz Ty)':'')).join(' · ')+(allMan?' · publikujesz Ty':'');
 }
 /* tytuł posta bez „Opublikuj” i znacznika „film A” */
 function mkTitle(t){const raw=t.title.replace(/^Opublikuj\s+/,''),pm=/^((?:film|post)(?:\s+[A-Z0-9]{1,3})?)\s+(?=„)/i.exec(raw);return cap(pm?raw.slice(pm[0].length):raw)}
-/* jedna akcja posta (karta w Marketingu, wiersz w kampanii projektu): zgoda → Zatwierdź; po terminie → Opublikuj (edytor);
+/* jedna akcja posta, obrysowana (karta w Marketingu, wiersz w kampanii projektu): zgoda → Zatwierdź (edytor z podglądem); po terminie → Opublikuj (edytor);
    do obejrzenia → Obejrzyj; błąd → Otwórz i daj do poprawy; inny stan wymagający uwagi → Otwórz */
 function mkAct(t,day,st,why){
   const d=PD[t.project+'|'+day],ed=esc(t.project+'|'+day+'|'+t.id),nm=mkTitle(t),b=(cls,attr,n)=>'<button type="button" class="btn '+cls+'sm" '+attr+' aria-label="'+esc(n+': '+nm)+'">'+n+'</button>';
-  if(t.needsYou==='zgoda'&&t.state!=='done')return b('','data-act="ok" data-id="'+esc(t.id)+'"','Zatwierdź');
-  if(st[2]==='late')return b('','data-medit="'+ed+'"','Opublikuj');
-  if(st[2]==='review')return b('','data-medit="'+ed+'"','Obejrzyj');
+  if(t.needsYou==='zgoda'&&t.state!=='done')return b('sec ','data-medit="'+ed+'"','Zatwierdź');
+  if(st[2]==='late')return b('sec ','data-medit="'+ed+'"','Opublikuj');
+  if(st[2]==='review')return b('sec ','data-medit="'+ed+'"','Obejrzyj');
   if(why)return b('sec ','data-medit="'+ed+'"','Otwórz i daj do poprawy');
   if(d&&d.ok&&!['grey','green','blue'].includes(st[0]))return b('sec ','data-medit="'+ed+'"','Otwórz');
   return '';
 }
-function mCard(t,day){
+function mCard(t,day,inLate){
   const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day),fi=d&&d.ok&&d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null;
   if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
   const title=mkTitle(t);
@@ -6534,10 +6612,11 @@ function mCard(t,day){
     if(st[2]==='err'||(fi&&fi.error))why=fi&&fi.error?(fi.errorHint||'Błąd w scenariuszu filmu.'):r.state==='error'?(recHint(r.hint,false)||'Nagranie filmu się nie powiodło.'):'Film czeka na nagranie dłużej niż zwykle.';
   }else if(d&&!d.ok){const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
     /* posta jeszcze nie ma: karta bez pola obrazu, tylko termin przygotowania */
-    media='';prep=pr&&isDay(pr.date)?'przygotowanie do '+ddl(pr.date):''}
+    media=''}
   const p=P(t.project),act=mkAct(t,day,st,why);
-  return '<article class="tl-card'+(why||st[2]==='late'?' mk-err':'')+(media?'':' mk-nomedia')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+ed+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
-    '<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>'+
+  const pill=!(inLate&&st[2]==='late');
+  return '<article class="tl-card'+(why||(st[2]==='late'&&!inLate)?' mk-err':'')+(media?'':' mk-nomedia')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+ed+'" aria-labelledby="mkt-'+id+'" aria-describedby="'+(pill?'mks-'+id+' ':'')+'mkp-'+id+'">'+
+    (pill?'<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>':'')+
     '<span class="mk-ttl"><b id="mkt-'+id+'">'+esc(title)+'</b></span>'+
     '<span class="mk-proj" id="mkp-'+id+'"><span class="mk-pj" title="'+esc(projName(t.project))+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(p?pShort(p):projName(t.project))+'</span></span><span class="mk-ch">'+mkChan(t)+'</span></span>'+
     (prep?'<span class="muted">'+esc(prep)+'</span>':'')+'</button>'+
@@ -6568,7 +6647,7 @@ function pubPlanBox(t,day,d){
     const f=PL[t.id]||(PL[t.id]={ch:{},day:isDay(day)&&day>=D.todayKey?day:D.todayKey,time:'09:00'});
     h+='<div class="row">'+avail.map(([c,n])=>{const on=f.ch[c]!=null?f.ch[c]:!(c==='reels'&&!film);return '<label class="chk"><input type="checkbox" data-pch="'+c+'"'+(on?' checked':'')+'> '+n+'</label>'}).join('')+'</div>'+
       '<div class="row"><input class="fi" type="date" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji"><input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
-      '<button class="btn sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
+      '<button class="btn sec sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
     const miss=list.filter(([c])=>!chanOk(t,c));
     if(miss.length)h+='<p class="note">Niepołączone: '+esc(miss.map(x=>x[1]).join(', '))+' (Marketing → Kanały publikacji).</p>';
   }
@@ -6628,11 +6707,10 @@ function pubPanel(){
   const F=D.film||{},fb=!!P.fb.connected,acc=!!F.account,open=pubOpen(false);
   /* sekcja zwijana (stan właściciela w localStorage, domyślnie zwinięta); w small skrót stanu */
   let h='<section class="panel" id="publikacja"><h2><button class="nw-tog" data-agpub="1" data-k="agpub" aria-expanded="'+open+'"'+(open?' aria-controls="pub-b"':'')+'><span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>Kanały publikacji</button>'+
-    (open?'<small>Facebook: '+(fb?'połączony':'niepołączony')+' · Konto do nagrywania filmów: '+(acc?'ustawione':'brak')+' · LinkedIn: ręcznie</small>':'')+'</h2>';
+    (open?'<small>Facebook: '+(fb?'połączony':'niepołączony')+' · LinkedIn: publikujesz Ty</small>':'')+'</h2>';
   /* zwinięte (domyślnie): jedno zdanie stanu i jedna akcja, która rozwija sekcję */
-  if(!open){const miss=[fb?'':'Facebook',acc?'':'konto do nagrywania filmów'].filter(Boolean);
-    return h+'<p class="ahint pub-sum">'+(miss.length?'Nie połączono: '+esc(miss.join(' i '))+'. Posty publikujesz ręcznie.':'Facebook i konto do nagrywania filmów połączone.')+
-      (miss.length?' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto':'Połącz Facebook')+'</button>':'')+'</p></section>'}
+  if(!open)return h+'<p class="ahint pub-sum">'+(fb?'Facebook połączony: panel może publikować sam.':'Facebook niepołączony: publikujesz ręcznie.')+(acc?'':' Brak konta do nagrań demonstracji.')+
+      (fb&&acc?'':' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto':'Połącz Facebook')+'</button>')+'</p></section>';
   h+='<div class="pad" id="pub-b"><p class="note">Panel publikuje sam tylko posty, które po odbiorze zaplanujesz (Facebook, Instagram). Bez planu nic nie publikuje się samo.</p><div class="pubc">';
   h+='<div><h3>Facebook '+(fb?'<span class="lz green">połączony</span>':'<span class="lz yellow">niepołączony</span>')+'</h3>';
   if(fb)h+='<table><tbody>'+P.fb.pages.map(g=>'<tr><td>'+esc(g.name)+(g.instagram?' <span class="muted">· Instagram '+(g.instagram==='tak'?'':'@'+esc(g.instagram))+'</span>':'')+'</td><td><select class="fi" data-fbmap="'+esc(g.id)+'" aria-label="Projekt strony '+esc(g.name)+'">'+opt([['','– bez projektu']].concat(proj),g.project)+'</select></td></tr>').join('')+'</tbody></table>';
@@ -6642,12 +6720,13 @@ function pubPanel(){
     '<div class="row"><button type="submit" class="btn sm" data-pub="fb">Połącz Facebook</button>'+(fb?'<button type="button" class="btn sec sm danger" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form>';
   h+=(fb?'<details class="ds-det" data-agdet="fbre"'+(pubDet('fbre')?' open':'')+'><summary>Połącz ponownie</summary>'+how+fbForm+'</details>':how+fbForm)+'</div>';
   const fForm='<form class="dform" data-pubf="film"><label class="fl"><span>E-mail</span><input class="fi" type="email" data-fk="email" autocomplete="username" placeholder="zwykłe konto, np. ty+demo@…"></label><label class="fl"><span>Hasło</span><input class="fi" type="password" data-fk="haslo" autocomplete="new-password"></label>'+
-    '<div class="row"><button type="submit" class="btn sm" data-pub="film">Zapisz</button></div></form>';
-  h+='<div><h3>Konto do nagrywania filmów '+(acc?'<span class="lz green">ustawione</span>':'<span class="lz grey">brak</span>')+'</h3><p class="note">Konto na opisarnia.pl, którym panel loguje się do nagrań. Hasło zostaje na serwerze.</p>'+
+    '<div class="row"><button type="submit" class="btn sec sm" data-pub="film">Zapisz</button></div></form>';
+  const fBox='<div><h3>Konto do nagrań demonstracji '+(acc?'<span class="lz green">ustawione</span>':'<span class="lz grey">brak</span>')+'</h3><p class="note">Potrzebne, żeby panel nagrywał filmy z demonstracją strony (logowanie na opisarnia.pl). Hasło zostaje na serwerze.</p>'+
     (acc?'<p>'+esc(F.account)+'</p><details class="ds-det" data-agdet="filmre"'+(pubDet('filmre')?' open':'')+'><summary>Zmień konto</summary>'+fForm+'</details>':fForm)+'</div>';
-  h+='<div><h3>LinkedIn <span class="lz out">ręcznie</span></h3><p class="note">LinkedIn publikujesz ręcznie z posta: Udostępnij albo Kopiuj i otwórz LinkedIn.</p>'+
+  h+='<div><h3>LinkedIn <span class="muted">publikujesz Ty</span></h3><p class="note">LinkedIn publikujesz ręcznie z posta: Udostępnij albo Kopiuj i otwórz LinkedIn.</p>'+
     '<details class="ds-det" data-agdet="lihow"'+(pubDet('lihow')?' open':'')+'><summary>Dlaczego?</summary><p class="note">Regulamin API LinkedIn zabrania automatycznego publikowania. W poście: „Udostępnij” (telefon: aplikacja LinkedIn z grafiką i tekstem) albo „Kopiuj i otwórz LinkedIn” (Mac: edytor z wpisanym tekstem); godzinę ustawiasz w LinkedIn (ikona zegara).</p></details></div>';
-  return h+'</div></div></section>';
+  /* konto do nagrań to inna sprawa niż kanały: osobny blok pod kanałami */
+  return h+'</div><h3 class="pub-sep">Nagrania filmów</h3><div class="pubc">'+fBox+'</div></div></section>';
 }
 /* Kanały publikacji w Marketingu: zwinięcie całej sekcji (wybór właściciela na urządzeniu) i rozwinięte details (na czas sesji) */
 const PUB_OPEN_KEY='ag-pub-open';
@@ -6704,7 +6783,7 @@ function closeEditor(){ED.cur=null;edHost().innerHTML='';document.body.classList
 function edShell(){
   const c=ED.cur,t=D.tasks.find(x=>x.id===c.tid)||{title:'Post',channel:''};
   return '<div class="ed" id="ed" role="dialog" aria-modal="true" aria-labelledby="ed-t">'+
-    '<header class="ed-h"><button type="button" class="btn sec sm" data-edclose>← Wróć</button><div class="ed-tt"><b id="ed-t">'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b><span class="muted" id="ed-meta"></span></div><div class="ed-acts" id="ed-acts"></div></header>'+
+    '<header class="ed-h"><button type="button" class="btn sec sm" data-edclose>← Wróć</button><div class="ed-tt"><b id="ed-t">'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b><span class="muted" id="ed-meta"></span></div><div class="ed-acts" id="ed-acts"></div><p class="ed-next" id="ed-next" aria-live="polite"></p></header>'+
     '<div class="ed-b"><section class="ed-l" aria-label="Podgląd"><div class="ed-tabs" role="tablist" id="ed-tabs"></div><div id="ed-view" class="ed-view"><p class="muted">Wczytuję post…</p></div><ol class="ed-sc" id="ed-sc" aria-label="Sceny filmu"></ol></section>'+
     '<aside class="ed-r" aria-label="Poprawki"><h3>Co poprawić?</h3><div class="ed-chat" id="ed-chat" aria-live="polite"></div>'+
     '<form class="ed-f" data-edfix><div class="ed-at" id="ed-at"></div><textarea class="fi" rows="3" maxlength="1000" data-edq aria-label="Co poprawić" placeholder="Np. w tym miejscu wolniej i większy napis; w opisie na LinkedIn krócej; zamiast komody pokaż sofę"></textarea>'+
@@ -6721,17 +6800,23 @@ function edActs(){
   const put=(el,x)=>{if(el&&el.dataset.h!==x){el.innerHTML=x;el.dataset.h=x}};   /* bez przebudowy, gdy bez zmian (fokus, rozwinięcie) */
   if(!t){put(m,esc(projName(c.pid)+' · '+ddl(c.day)));put(a,'');return}
   const d=PD[c.pid+'|'+c.day],st=mkState(t,c.day),sc=parseSched(t.detail&&t.detail.scheduled),k=c.pid+'|'+c.day;
-  const who=t.state==='done'?'':sc?'publikuje panel ('+sc.ch.map(x=>PUBN[x]).join(', ')+')':'publikujesz Ty';
+  const who=t.state!=='done'&&sc?'publikuje panel ('+sc.ch.map(x=>PUBN[x]).join(', ')+')':'';
   put(m,esc(projName(c.pid))+' · '+esc(ddl(c.day))+(sc?', '+esc(sc.time):'')+(t.channel?' · '+mkChan(t):'')+(who?' · '+esc(who):'')+' <span class="lz '+st[0]+'">'+esc(st[1])+'</span>');
   let h='';const S=d&&d.ok&&d.sections||{},n=edMainSec(t,S),ck=esc(k+'|'+n);
   if(t.state!=='done'){
-    if(t.needsYou==='zgoda')h+='<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">Zatwierdź</button>';
+    if(t.needsYou==='zgoda')h+='<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">Zatwierdź</button><button type="button" class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button>';
     else if(c.day<=D.todayKey)h+='<button type="button" class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button>';
     if(n){if(canShare()){shareFile(c.pid,c.day,d);h+='<button type="button" class="btn sec sm" data-share="'+ck+'">Udostępnij</button>'}
       h+='<button type="button" class="btn sec sm" data-copy="'+ck+'">Kopiuj tekst</button>';
       const li=PCH.find(x=>x[0]==='LinkedIn');if(n==='LinkedIn'&&li&&/linkedin/i.test(t.channel||''))h+='<button type="button" class="btn sec sm" data-copyopen="'+ck+'" data-url="'+esc(li[1])+'">Otwórz LinkedIn z tekstem</button>'}
   }
   put(a,h);
+  /* co dalej: jedno zdanie pod paskiem (kto publikuje i kiedy pojawi się „Opublikowane”) */
+  const when=c.day===D.todayKey?'dziś':c.day<D.todayKey?'jak najszybciej':ddl(c.day);
+  const nx=t.state==='done'?'':sc?'Panel opublikuje post '+ddl(sc.day)+', '+sc.time+'.':
+    t.needsYou==='zgoda'?'Obejrzyj post i zatwierdź. Potem opublikujesz go '+when+' i klikniesz „Opublikowane”.':
+    c.day>D.todayKey?'Opublikujesz '+when+'; wtedy kliknij „Opublikowane”.':'';
+  put(document.getElementById('ed-next'),nx?esc(nx):'');
   const pl=document.getElementById('ed-plan');
   if(pl){const want=String(t.channel||'').toLowerCase().split(/[,\s]+/);
     put(pl,t.state!=='done'&&d&&d.ok&&LIVE&&D.publish&&PUBCH.some(([x])=>want.includes(x))?'<details class="ed-pl"'+(A.edPl?' open':'')+'><summary>Publikacja automatyczna</summary>'+pubPlanBox(t,c.day,d)+'</details>':'')}
@@ -6902,12 +6987,14 @@ function renderTop(){
   let h='',vis=!LIVE;
   if(!LIVE)h+='<span class="lz yellow" title="Zmiany działają do odświeżenia strony i nie są zapisywane.">Podgląd · dane przykładowe</span>';
   else{
-    if(D.projectsSource!=='registry')h+='<span class="lz yellow" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Projekty i standard.">Projekty przykładowe</span>';
+    /* telefon: pasek „Projekty przykładowe” tylko na Przeglądzie (na innych stronach nie zajmuje pierwszego rzędu) */
+    const smp=D.projectsSource!=='registry'&&(route().v==='przeglad'||!(window.matchMedia&&matchMedia('(max-width:820px)').matches));
+    if(smp)h+='<span class="lz yellow" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Projekty.">Projekty przykładowe</span>';
     /* kalendarz w ramie tylko przy problemie; przy „połączony” kropka z odsyłaczem do Terminów (pełny stan dla czytnika) */
     /* problem z kalendarzem na Przeglądzie pokazuje pigułka w nagłówku (.sys): tu zostaje tylko dla czytnika i przycisk */
     /* pigułka tylko przy prawdziwym problemie albo z akcją; „tylko na Macu” (serwer) to stan stały: nic nie pokazujemy */
     const c=calStatus(),prob=calProb(),pv=prob&&route().v==='przeglad';
-    if(D.projectsSource!=='registry')vis=true;
+    if(smp)vis=true;
     if(c.dot==='ok')h+='<a class="tst-ok" href="#terminy" title="'+esc(c.t+': '+c.s)+'"><i class="dot ok" aria-hidden="true"></i><span class="sr-only">Kalendarz: '+esc(c.short)+'</span></a>';
     else if(prob||c.btn){h+=(pv?'<span class="sr-only">Kalendarz: '+esc(c.short)+'</span>':pill({dot:c.dot,label:'Kalendarz: '+c.short,title:c.s}))+c.btn;if(!pv||c.btn)vis=true}
   }
@@ -6942,15 +7029,16 @@ function render(force){
     /* błąd w jednym widoku nie zatrzymuje odświeżania i nie udaje braku połączenia */
     try{vh=viewHtml(r)}catch(e){console.error(e);vh='<div class="banner bad" role="alert">Nie udało się pokazać tego widoku ('+esc(String(e&&e.message||e))+'). Dane z serwera są aktualne; przejdź do innego widoku albo odśwież stronę.</div>'}
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
-  if(r.v==='projekt')ptabsShow();
+  if(r.v==='projekt')pjGo();
   else if(r.v==='agenci')setHtml($('#abar'),agBarHtml());
   renderDrawer(force);
   if(ED.cur)edActs();
   deepLink();
 }
 /* zakładki projektu na telefonie w jednym przewijanym wierszu: bieżąca zawsze widoczna */
-function ptabsShow(){const a=document.querySelector('.ptabs [aria-current]');if(!a)return;const n=a.parentNode;if(n.scrollWidth<=n.clientWidth)return;
-  const l=a.offsetLeft-n.offsetLeft;if(l<n.scrollLeft||l+a.offsetWidth>n.scrollLeft+n.clientWidth)n.scrollLeft=Math.max(0,l-16)}
+/* po przejściu z Księgi do rozmowy o projekcie: przewiń do rozmowy i ustaw kursor w polu */
+function pjGo(){const id=A.pjGo;if(!id)return;A.pjGo='';const n=document.getElementById(id);if(!n)return;
+  n.scrollIntoView({block:'start'});const t=n.querySelector('textarea');if(t)t.focus({preventScroll:true})}
 /* link z powiadomienia: #widok?z=<id zadania> otwiera zadanie, #widok?u=<id uruchomienia> uruchomienie;
    parametr znika z adresu (replaceState, bez hashchange), żeby odświeżenie nie otwierało szuflady ponownie */
 function deepLink(){
@@ -7354,6 +7442,9 @@ async function load(force){
 }
 
 /* ---------- zdarzenia ---------- */
+/* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
+document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
+  PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
 document.addEventListener('click',async ev=>{
   if(ev.target&&ev.target.id==='toast'){clearTimeout(noticeT);notice='';setToast('');return}
   if(!D)return;
@@ -7457,6 +7548,9 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-act]')){if(el.dataset.id){const id=el.dataset.id,k=el.dataset.act,t=D.tasks.find(x=>x.id===id);
+    /* „Zatwierdź” publikacji z datą w dowolnej liście: najpierw edytor posta z podglądem (tam „Zatwierdź” zatwierdza);
+       w edytorze i w szufladzie (podgląd posta jest nad przyciskiem) zatwierdza od razu */
+    if(k==='ok'&&t&&t.kind==='publikacja'&&isDay(t.date)&&!el.closest('#ed,#drawer')){closeDrawer();openEditor(t.project+'|'+t.date.slice(0,10)+'|'+t.id);return}
     /* edytor posta: akcja z formularzem (wynik, liczba) otwiera szufladę, więc najpierw zamknij edytor */
     if(ED.cur&&el.closest('#ed')&&t&&k==='done'&&(needsResult(t)||needsCount(t)))closeEditor();
     rowAct(el,()=>actTask(id,k))}return}
