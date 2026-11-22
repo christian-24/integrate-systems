@@ -643,6 +643,10 @@ body.ed-open{overflow:hidden}
 .meter{display:flex;align-items:center;gap:10px}
 .meter .track{flex:1;height:10px}
 .rs{display:grid;gap:10px}
+.mk-bar{margin:0 0 12px}
+.mk-rec{display:grid;gap:4px}
+.mk-rh{font-size:13px;margin:6px 0 2px}
+.mk-rl{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}
 .dv{display:grid;gap:10px}
 .dv p{margin:0}
 .dv-c{list-style:none;margin:0;padding:0;display:grid;gap:4px}
@@ -6054,17 +6058,39 @@ function mkDays(keys,items){
       '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k)).join('')+'</div></li>'});
   flush();return h;
 }
+/* Do nagrania: filmy z kampanii na 14 dni, jeszcze nienagrane i nieopublikowane. Dzień nagrania: dzień przed
+   publikacją, najwcześniej dziś (filmu nie nagrywa się w dniu publikacji, chyba że już nie ma wyjścia). */
+const mkIsFilm=t=>/film/i.test(t.title)||/reels|tiktok|youtube/i.test(t.channel||'');
+function recPanel(fp){
+  const T=D.todayKey,end=addK(T,14);
+  const L=D.tasks.filter(t=>t.kind==='publikacja'&&t.state!=='done'&&isDay(t.date)&&t.date.slice(0,10)>=T&&t.date.slice(0,10)<=end&&mkIsFilm(t)&&(!fp||t.project===fp))
+    .filter(t=>{const d=PD[t.project+'|'+t.date.slice(0,10)];return !(d&&d.ok&&d.film)})
+    .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  if(!L.length)return '';
+  const rec=t=>{const r=addK(t.date.slice(0,10),-1);return r<T?T:r},G={};
+  L.forEach(t=>{const r=rec(t);(G[r]||(G[r]=[])).push(t)});
+  const dl=k=>k===T?'Dziś':k===addK(T,1)?'Jutro':cap(ddl(k));
+  const row=t=>{const p=t.date.slice(0,10),late=p===T;
+    return '<li><button type="button" class="lk" data-task="'+esc(t.id)+'" data-k="rec:'+esc(t.id)+'">'+esc(cap(t.title.replace(/^Opublikuj\s+/,'')))+'</button>'+
+      '<span class="muted"> · publikacja '+(late?'<span class="lz red">dziś</span>':esc(ddl(p)))+(fp?'':' · '+esc(projName(t.project)))+'</span></li>'};
+  return '<section class="panel" id="mk-rec"><h2>Do nagrania <small><span>'+L.length+' '+pl(L.length,'film','filmy','filmów')+' w 14 dni · nagrywasz dzień przed publikacją</span></small></h2><div class="pad mk-rec">'+
+    Object.keys(G).sort().map(k=>'<h3 class="mk-rh">'+esc(dl(k))+' <span class="num muted">('+G[k].length+')</span></h3><ul class="mk-rl">'+G[k].map(row).join('')+'</ul>').join('')+'</div></section>';
+}
 function vMarketing(){
   const off=A.mweek||0,m=weekStart(off),days=[...Array(7)].map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return keyOf(x)});
-  const items=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)&&t.date>=days[0]&&t.date<=days[6]);
-  /* nagłówek strony: h1 i krótkie zdanie (na telefonie bez zdania); pod nim co do zrobienia, oś tygodnia, Studio filmów (zwinięte) */
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Obejrzyj post i zatwierdź albo daj do poprawy.</p></div></div>'+mkTodo(items);
+  const fp=PF.mkp&&D.projects.some(p=>p.id===PF.mkp)?PF.mkp:'';
+  const pubAll=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
+  const items=pubAll.filter(t=>t.date>=days[0]&&t.date<=days[6]&&(!fp||t.project===fp));
+  /* nagłówek strony: h1 i krótkie zdanie (na telefonie bez zdania); filtr projektu; Do nagrania; co do zrobienia, oś tygodnia, Studio filmów (zwinięte) */
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Obejrzyj post i zatwierdź albo daj do poprawy.</p></div></div>'+
+    (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'')+
+    recPanel(fp)+mkTodo(items);
   h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">Tydzień <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b></span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzedni tydzień">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następny tydzień">→</button>'+
     (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Ten tydzień</button>':'')+'</small></h2>';
   if(!items.length){
     /* pusty tydzień: bez siedmiu pustych wierszy; przycisk do najbliższego tygodnia z postami */
-    const w0=weekStart(0),offs=[...new Set(D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)).map(t=>{const d=fromKey(t.date.slice(0,10));d.setDate(d.getDate()-(d.getDay()+6)%7);return Math.round((d-w0)/6048e5)}))];
+    const w0=weekStart(0),offs=[...new Set(pubAll.filter(t=>!fp||t.project===fp).map(t=>{const d=fromKey(t.date.slice(0,10));d.setDate(d.getDate()-(d.getDay()+6)%7);return Math.round((d-w0)/6048e5)}))];
     const nx=offs.sort((a,b)=>Math.abs(a-off)-Math.abs(b-off)||b-a)[0];
     let go='';
     if(nx!=null){const s=weekStart(nx),e=new Date(s);e.setDate(s.getDate()+6);
@@ -7052,6 +7078,7 @@ document.addEventListener('change',ev=>{
   if(el.dataset.film){uploadFilm(el);return}
   if(el.dataset.mup!=null){uploadMedia(el);return}
   if(el.dataset.mfp!=null){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.value;render(true);return}
+  if(el.dataset.mkp!=null){PF.mkp=el.value;savePF();render(true);return}
   if(el.dataset.mfs!=null){(A.mf||(A.mf={p:'',k:'',s:''})).s=el.value;render(true);return}
   if(el.dataset.fixtpl!=null){if(el.value)fixFill(el,el.value);fixTplPrev(el);return}
   if(el.dataset.postimg){uploadPostImage(el);return}
