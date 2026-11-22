@@ -1697,7 +1697,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .ty-eff{font-size:var(--fs-xs);color:var(--ink-3)}
 .ty-eff .eff{margin:2px 0 4px}
 .ty-eff1{color:var(--ink-2)}
-.ty-see{font-size:inherit;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.ty-see{font-size:inherit;color:var(--accent);font-weight:600}
 .rows li.ty-pg{display:block;padding:0}
 .ty-pg summary{padding:10px 0;flex-wrap:nowrap;align-items:flex-start}
 .ty-pg summary>span{padding-top:1px}
@@ -1725,8 +1725,12 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 /* poprawki UI runda 1, 2 i 3: A (Przegląd, Dla Ciebie, Wskaźniki) */
 .pv-today{margin:6px 0 0;font-size:var(--fs-md);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline}
 .pv-today b{color:var(--ink);font-weight:650}
-.pv-today a{color:var(--accent);text-decoration:none}
-.pv-today a:hover{text-decoration:underline}
+.pv-today a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.ty-kind{color:var(--ink-2);font-weight:600}
+.wk-camp{margin:12px 0 0;font-size:var(--fs-md);color:var(--ink-2)}
+.wk-camp a{color:var(--accent);display:inline-block}
+.wk-camp b{color:var(--ink);font-weight:650;white-space:nowrap}
+.pj-more.wk-mr>summary{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:12px 16px;margin-top:16px}
 .pv-today .pv-over{color:var(--l-red);font-weight:600}
 .panel>.pcards>.pcard,.pv-rest>.pcards>.pcard{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0}
 .panel>.pcards>.pcard:first-child,.pv-rest>.pcards>.pcard:first-child{border-top:0}
@@ -1755,7 +1759,8 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .ty-flt{flex-wrap:wrap;overflow:visible}
   .ty-chips{flex:1 1 100%;flex-wrap:wrap}
   .pv-today{font-size:var(--fs-sm)}
-  .pv-today a{min-height:0}
+  .pv-today a{min-height:40px;display:inline-flex;align-items:center}
+  .pv-today{row-gap:0}
   .pv-rows .r>.btn,.pv-rows .r>.pv-acts{margin-left:auto}
   .pv-rows .r>.btn{min-width:112px;justify-content:center}
   .ty-see{min-height:40px;display:inline-flex;align-items:center}
@@ -2615,12 +2620,12 @@ function todayRow(x,o){
       const prop=x.q.proposal?'<div class="prop ty-clamp" id="'+pid+'" title="'+esc(x.q.proposal)+'">propozycja: '+esc(x.q.proposal)+'</div>'+
         (ne?'<details class="ty-eff"><summary>Po przyjęciu: '+ne+' '+pl(ne,'zmiana','zmiany','zmian')+'</summary>'+effList(x.q.effects).replace('<div class="effh">Po przyjęciu propozycji</div>','').replace('<ul class="eff','<ul id="'+eid+'" class="eff')+'</details>':''):'';
       const desc=' aria-describedby="'+pid+(ne?' '+eid:'')+'"',pl2=esc('Przyjmij propozycję: '+x.q.text);
-      return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t ty-q"'+idA+' data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'" title="'+esc(x.q.text)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+late+'<span class="lz purple">pytanie</span>'+prioLz(p,pv)+'</div>'+prop+'</div>'+
+      return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t ty-q"'+idA+' data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'" title="'+esc(x.q.text)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+late+'<span class="ty-kind">pytanie</span>'+prioLz(p,pv)+'</div>'+prop+'</div>'+
         tyDate(x,o.grp)+'<div class="ty-acts"><button class="btn sec sm" data-qans="'+esc(k)+'" data-k="qa2:'+esc(k)+'" aria-label="'+esc('Odpowiedz: '+x.q.text)+'">Odpowiedz</button>'+
         (pr?(ne&&cf?'<button class="btn sec sm dec ty-dec" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+'>Potwierdź: przyjmij z '+ne+' '+pl(ne,'skutkiem','skutkami','skutkami')+'</button>'+
             '<button class="btn sec sm" data-ag="qprop-no" data-id="'+esc(k)+'" data-k="qpn:'+esc(k)+'">Anuluj</button>':
           '<button class="btn sec sm dec ty-dec" data-ag="'+(ne?'qprop-ask':'qprop')+'" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+(ne?' title="'+ne+' '+pl(ne,'skutek','skutki','skutków')+': potwierdzisz drugim kliknięciem"':'')+'>Przyjmij propozycję</button>'):'')+'</div></div></li>'}
-    return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t" data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+prioLz(p,pv)+'<span class="lz purple">pytanie</span>'+late+'</div>'+
+    return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t" data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+prioLz(p,pv)+'<span class="ty-kind">pytanie</span>'+late+'</div>'+
       helpL(x,'')+(x.q.proposal?'<div class="prop">propozycja: '+esc(x.q.proposal)+'</div>'+effList(x.q.effects):'')+'</div>'+
       (x.d?dateR(x.d):'<div class="r"><span class="muted">bez terminu</span>')+
       (pr?'<button class="btn sec sm dec" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'">Przyjmij propozycję</button>':'')+
@@ -2634,7 +2639,7 @@ function todayRow(x,o){
   /* krótki, ogólny tytuł (np. „Publikacja”): w opisie wiersza nazwa etapu, żeby było wiadomo, czego dotyczy */
   const gen=t.title.length<=14&&t.group&&t.group!==t.title?'<span class="muted">etap: '+esc(t.group)+'</span>':'';
   const kind=(isFilmTask(t)?'<span class="muted">film od panelu</span>':t.kind==='publikacja'?'<span class="muted">publikacja'+(t.channel?' · '+esc(t.channel):'')+'</span>':'')+gen;
-  const need=x.need?'<span class="lz purple">'+esc(x.need)+'</span>':filmPending(t)?'<span class="muted" title="Film nagrywa panel ze scenariusza posta; potem tylko go obejrzysz">nagrywa panel</span>':'';
+  const need=x.need?'<span class="ty-kind">'+esc(x.need)+'</span>':filmPending(t)?'<span class="muted" title="Film nagrywa panel ze scenariusza posta; potem tylko go obejrzysz">nagrywa panel</span>':'';
   const open=tt=>'<button class="btn sec sm" data-task="'+id+'" data-k="to:'+id+'" aria-label="'+esc('Otwórz: '+t.title)+'"'+(tt?' title="'+tt+'"':'')+'>Otwórz</button>';
   /* zgoda na publikację: „Zatwierdź” otwiera edytor posta (podgląd i Zatwierdź nad nim), nie zatwierdza w ciemno */
   const pubEd=x.need==='zgoda'&&t.kind==='publikacja'&&isDay(String(t.date).slice(0,10));
@@ -2648,7 +2653,9 @@ function todayRow(x,o){
   const wn=t.waits&&t.waits.length&&t.state!=='done'?t.waits.length:0;
   /* zdanie o skutku zgody jest raz nad listą Decyzji; w wierszu tylko to, na co zgoda jeszcze czeka */
   const eff=x.need==='zgoda'&&wn?'Ruszy po Twojej zgodzie i po '+wn+' '+pl(wn,'zadaniu','zadaniach','zadaniach')+', na które czeka.':'';
-  const see=x.need==='odbiór'?'<button class="lk ty-see" data-task="'+id+'" data-k="see:'+id+'" aria-label="'+esc('Zobacz wynik: '+t.title)+'">Zobacz wynik</button>':'';
+  /* odbiór: „Zobacz wynik” tylko, gdy agent go opisał (albo jest uruchomienie); inaczej nie obiecujemy wyniku */
+  const hasRes=!!(t.detail&&t.detail.result)||!!t.runId,seeT=hasRes?'Zobacz wynik':'Szczegóły zadania';
+  const see=x.need==='odbiór'?'<button class="lk ty-see" data-task="'+id+'" data-k="see:'+id+'" aria-label="'+esc(seeT+': '+t.title)+'">'+seeT+'</button>':'';
   const nsT=ns.replace(/`[^`]*`/g,'').replace(/[\s:;,.()–-]/g,'').length<4?'':ns.replace(/`[^`]*`/g,'(polecenie w szczegółach)');
   if(ty){
     return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t"'+idA+' data-task="'+id+'" data-k="tt:'+id+'">'+esc(t.title)+'</button><div class="s">'+pvPrS(p)+late+(x.need?need:'')+kind+(x.need?'':need)+unlLz(t)+run+
@@ -2779,7 +2786,8 @@ function dueLine(p){const s=p.cur;
 function projCard(p,shown){
   const due=p.cur&&isDay(p.cur.date);
   return '<li class="pcard pv-cc'+(p.state!=='active'?' pv-dim':'')+'" data-go="'+phref(p)+'" title="'+esc(p.name)+'"><div class="ph1">'+av(p)+'<a href="'+phref(p)+'">'+esc(pShort(p))+'</a>'+lz(p.pst)+'</div>'+
-    '<div class="kv">'+(due?'<span>Termin</span>'+dueLine(p):'')+'<span>Dalej</span>'+nextCell(p,shown)+'</div></li>'}
+    /* karta na telefonie: nazwa, stan i najbliższy termin; następny krok jest na stronie projektu */
+    (due?dueLine(p):'')+'</li>'}
 const QD={};
 function qForm(p,x){const k=p.id+':'+x.n,cm=canMeta(p),pr=x.proposal&&!x.answer;
   return (pr?'<div class="prop"><b>Propozycja agenta:</b> '+esc(x.proposal)+'</div>'+effList(x.effects)+
@@ -3082,12 +3090,12 @@ function vPrzeglad(){
   let nw;try{nw=nwIdle()?'':nwPanel()}catch(e){console.error(e);const lw=!!(a&&a.needsLogin&&a.loginWeb);
     nw='<section class="panel nw-panel"><h2>Teraz</h2><p class="nw-note nw-bad">Nie udało się pokazać sekcji Teraz ('+esc(String(e&&e.message||e))+'). Reszta Przeglądu działa.'+(a&&a.needsLogin?' Claude wymaga logowania.'+(lw?'':' '+nwLogin):'')+'</p>'+(lw?'<div class="nw-lgw">'+lgBan('copy')+'</div>':'')+'</section>'}
   if(dec.length)h+='<section class="panel pv-dec" aria-labelledby="h-dec"><h2 id="h-dec"><span>Decyzje</span><small><a class="navlk" href="#ty" data-tysec="dec">Pokaż wszystkie ('+decA.length+') <span aria-hidden="true">→</span></a></small></h2><ul class="rows pv-rows">'+
-    tyFold(dec,{prio:false,grp:'pvdec'},dKey,2,G=>{const x=G[0];return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'})+'</ul></section>';
+    tyFold(dec,{prio:false,grp:'pvdec'},dKey,2,G=>{const x=G[0];return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="ty-kind">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'})+'</ul></section>';
   h+=todayPanel(ys,todL);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
   /* bez wiersza podsumowania nad listą: powtarzał liczby z wierszy poniżej */
   /* „Twoje zadanie wstrzymuje N innych” (Blokady) jest zwykłym wierszem ryzyka z jedną akcją */
-  const bc=bkYouN();if(bc.tasks)risks.push('<li><div><a class="t" href="#blokady">'+esc(bkYouTxt(bc))+'</a><div class="s"><span>inne zadania ruszą, gdy je zrobisz</span></div></div><div class="r"><a class="btn sec sm" href="#blokady">Zobacz blokady</a></div></li>');
+  const bc=bkYouN();if(bc.tasks)risks.push('<li><div><a class="t" href="#blokady">'+esc(bkYouTxt(bc))+'</a><div class="s"><span>'+bc.n+' '+pl(bc.n,'zadanie ruszy','zadania ruszą','zadań ruszy')+' po '+(bc.tasks===1?'Twoim zadaniu':'Twoich zadaniach')+'</span></div></div><div class="r"><a class="btn sec sm" href="#blokady">Zobacz blokady</a></div></li>');
   const rc=dsCut('pv-risk',risks,4,'pv-risk');
   if(risks.length)h+='<section class="panel"><h2>Ryzyka <small><span>'+dsCnt(risks.length,'')+' '+pl(risks.length,'ryzyko','ryzyka','ryzyk')+'</span>'+dsNav('#terminy','Terminy')+'</small></h2><ul class="rows pv-rows" id="pv-risk">'+rc.L.join('')+'</ul>'+rc.more+'</section>';
   else h+='<section class="panel pv-norisk"><h2>Ryzyka <small><span>brak</span>'+dsNav('#terminy','Terminy')+'</small></h2></section>';
@@ -3104,7 +3112,9 @@ function vPrzeglad(){
      nie trwa; podsumowanie PM (tylko przy prawdziwych projektach), terminy na najbliższe 7 dni, kampanie, plan dnia */
   const more=pmPanel()+pvFold('pv-week-f','Terminy: najbliższe 7 dni','','<p class="pv-fnav">'+dsNav('#terminy','Wszystkie terminy')+'</p>'+pvWeek(week),'Bez spraw pokazanych wyżej. Ikona przy pozycji to rodzaj: etap, zadanie, publikacja, wydarzenie z kalendarza.')+
     campGoals()+(LIVE||a?planBox():'');
-  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">Pozostałe</h2>'+more+'</section>';
+  /* nazwa mówi, co jest w środku: zwykle terminy i kampanie; z planem dnia albo podsumowaniem PM — „Pozostałe” */
+  const mT=/data-pvdet="pv-(pm|plan)"/.test(more)?'Pozostałe':'Terminy i kampanie';
+  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">'+mT+'</h2>'+more+'</section>';
   return h;
 }
 /* ---------- Teraz: jedna sekcja nad Dziś. Trwa (uruchomienia, filmy, rozmowy, publikacje w tej chwili),
@@ -3425,7 +3435,8 @@ const nwDot=dot=>'<i class="dot '+dot+' nw-hdot" aria-hidden="true"></i>';
 /* linia „Dziś” na górze Przeglądu (decyzja 21): decyzje na dziś, Twoje zadania na dziś, agenci, Twój czas */
 function pvToday(ys){
   const dN=ys.youToday.filter(tyIsDec).length,tN=ys.youToday.filter(x=>!tyIsDec(x)).length,op=overPlan(ys),a=D.agents;
-  const ag=D.tasks.filter(t=>(t.executor==='claude'||t.executor==='codex')&&t.state!=='done'&&t.date&&String(t.date).slice(0,10)<=D.todayKey).length;
+  /* agenci: ich zadania bez Twojej decyzji (zgoda, odbiór), z terminem dziś albo w toku — tak jak „Dziś” w Terminach */
+  const ag=D.tasks.filter(t=>(t.executor==='claude'||t.executor==='codex')&&t.state!=='done'&&!t.needsYou&&(t.state==='doing'||String(t.date||'').slice(0,10)===D.todayKey)).length;
   let run=0;try{run=nwNow().filter(x=>!x.q).length}catch(e){}
   const agT=!a?'agenci niedostępni':'agenci: '+(run?run+' '+pl(run,'pracuje','pracują','pracuje')+' teraz':ag?ag+' '+pl(ag,'zadanie','zadania','zadań')+' na dziś':'nic na dziś');
   /* zero bez odnośnika: nie ma dokąd prowadzić */
@@ -3610,7 +3621,7 @@ function vTy(){
   const decA=all.filter(tyIsDec).sort((a,b)=>prO(a)-prO(b)||(a.d||'9999').localeCompare(b.d||'9999')),dec=decA.filter(fx);
   /* ta sama sprawa w kilku projektach (np. odbiór porządków): jeden wiersz „w N projektach” */
   const decRows=tyFold(dec,Object.assign({grp:'dec'},ctx),x=>x.t&&x.need?x.need+'|'+x.t.title:'',2,G=>{const x=G[0];
-    return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'});
+    return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="ty-kind">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'});
   const decS=decA.length?'<section class="panel ty-grp" id="ty-dec" data-sec="dec" tabindex="-1" aria-labelledby="ty-g-dec">'+hd('ty-g-dec','Decyzje',dec.length,decA.length,'',dec.length?'':'Filtr ukrywa decyzje.')+
     (dec.length?'<ul class="rows" id="ty-l-dec">'+decRows+'</ul>':'')+'</section>':'';
   const chA=ys.checked,ch=chA.filter(fc);
@@ -3637,7 +3648,7 @@ function vTy(){
     if(k==='pozniej')return '<details class="panel ty-grp ty-later'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" data-pvdet="ty-later"'+(PF.more['ty-later']?' open':'')+' aria-labelledby="ty-g-'+k+'"><summary>'+h2+'</summary>'+body+'</details>';
     return '<section class="panel ty-grp'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" tabindex="-1" aria-labelledby="ty-g-'+k+'">'+h2+body+'</section>'}).join('');
   /* bez kafli dziś/7 dni/później: te same liczby są w nagłówkach grup niżej */
-  return head+flt+decS+chkS+grp+bkLine('ty-bk');
+  return head+flt+decS+chkS+grp;
 }
 function vTablica(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -4666,8 +4677,8 @@ function kpis(L,one){
   const wipA=n.rev?' href="#ty" data-tyfgo="od" title="Do odbioru: otwiera Dla Ciebie z filtrem Odbiory"':' href="'+hB+'"';
   return '<div class="kgrid">'+
    '<a class="stat'+(late?' red':'')+'" href="'+hT+'"><span class="l">Po terminie</span><span class="v num">'+late+'</span><span class="d">zadania i etapy</span></a>'+
-   '<a class="stat"'+wipA+'><span class="l">W toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">'+(n.rev?n.wip+' w pracy · '+n.rev+' do odbioru':'zadania w pracy')+'</span></a>'+
-   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · <span title="punkty procentowe">'+(dp>=0?'+':'−')+Math.abs(dp)+' pp.</span> w 4 tygodnie':'')+'</span></div>'+
+   '<a class="stat"'+wipA+'><span class="l">W toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">'+(n.rev?n.wip+' w pracy · '+n.rev+' do odbioru':pl(n.wip,'zadanie','zadania','zadań')+' w pracy')+'</span></a>'+
+   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · '+(dp>=0?'+':'−')+Math.abs(dp)+' '+pl(Math.abs(dp),'punkt procentowy','punkty procentowe','punktów procentowych')+' w 4 tygodnie':'')+'</span></div>'+
    wkLoad(ids)+'</div>';
 }
 /* obciążenie właściciela: minuty Twoich spraw na 7 kolejnych dni wobec pojemności dnia (dayMinutes); dziś z zaległymi,
@@ -4775,7 +4786,7 @@ function burnChart(p){
   const t='„'+esc(s.title)+'”',rest=open+' z '+n;
   const verd=fut?'':left<0?'po terminie':ok?'zdąży':'nie zdąży';
   const al='Etap '+t+': zostało '+rest+', termin '+dd(s.date)+(verd?', '+verd:', zaczyna się '+dd(s.start));
-  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
+  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań (start i dziś, bez historii dziennej)</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
   const zad=v=>fmt1(v)+' '+(Math.round(v*10)===10?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
     '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
@@ -4825,10 +4836,16 @@ function metrics(L,one){
   const sec=(cls,h2,body)=>'<section class="panel'+(cls?' '+cls:'')+'">'+h2+'<div class="chartbox">'+body+'</div></section>';
   /* strona projektu: wykres etapu na górze, kafle, pozostałe wykresy zwinięte pod „Więcej wykresów” */
   if(one)return metricsOne(one,ready,from,sec,back);
-  return kpis(L,null)+histCap(L,ready,from)+
+  return kpis(L,null)+campLine(L,null)+histCap(L,ready,from)+
     '<div class="cgrid"><section class="panel wk-full"><h2 title="Wiersz otwiera wskaźniki projektu">Porównanie projektów <small>'+dsCnt(L.length,pl(L.length,'projekt','projekty','projektów'))+'</small></h2>'+compareTable(L)+'</section></div>'+
     wkMore(L,null,ready,sec);
 }
+/* wynik kampanii w toku z celem liczbowym: jedna linia pod kaflami (dla marketingu główna liczba); szczegóły w Marketingu */
+function campLine(L,one){
+  const ids=L.map(p=>p.id),C=D.campaigns.filter(c=>c.state==='active'&&+c.target>0&&ids.indexOf(c.project)>=0);
+  if(!C.length)return '';
+  return '<p class="wk-camp">'+(C.length>1?'Kampanie w toku: ':'Kampania w toku: ')+C.map(c=>{const pr=P(c.project);
+    return '<a href="'+phref(pr,'marketing')+'">'+esc(c.name)+'</a>'+(one?'':' <span class="muted">('+esc(pShort(pr))+')</span>')+' <b class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</b> '+esc(c.metric||'')}).join('<span aria-hidden="true"> · </span>')+'</p>'}
 /* jeden wiersz o historii zamiast ramki: od kiedy wykresy (14 dni) i tempo (28 dni) */
 const histCap=(L,ready,from)=>wkThr(L)?'':'<p class="wk-cap">Historia od '+dd(from)+'. '+(ready?'Tempo od '+dd(wkFrom(28))+'.':'Wykresy od '+dd(wkFrom(14))+', tempo od '+dd(wkFrom(28))+'.')+'</p>';
 /* „Więcej wykresów” (portfel i projekt, zwinięte): etapy i tempo z zakresem, kampanie, wykresy postępu, przepływ, wykonawcy */
@@ -4853,10 +4870,10 @@ function wkMore(L,one,ready,sec){
   }
   M.push(sec('wk-full','<h2>Kto wykonuje <small>otwarte i zrobione zadania</small></h2>',whoBars(L)));
   const k=one?'pj-wk':'wk-more';
-  return '<details class="pj-more" data-pvdet="'+k+'"'+(PF.more[k]?' open':'')+'><summary>Więcej wykresów <small>etapy, tempo, kampanie, postęp w czasie</small></summary><div class="cgrid">'+M.join('')+'</div></details>';
+  return '<details class="pj-more wk-mr" data-pvdet="'+k+'"'+(PF.more[k]?' open':'')+'><summary>Więcej wykresów <small>etapy, tempo, kampanie, postęp w czasie</small></summary><div class="cgrid">'+M.join('')+'</div></details>';
 }
 function metricsOne(p,ready,from,sec,back){
-  return '<div class="cgrid">'+sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(p))+'</div>'+kpis([p],p)+
+  return '<div class="cgrid">'+sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(p))+'</div>'+kpis([p],p)+campLine([p],p)+
     histCap([p],ready,from)+wkMore([p],p,ready,sec);
 }
 function vWskazniki(){
