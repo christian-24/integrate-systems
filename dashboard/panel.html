@@ -1830,7 +1830,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .mk-cdb{display:grid;gap:8px;padding:6px 0 4px}
 .mk-cdb .fl select{width:100%;max-width:320px}
 .mk-cdb code{overflow-wrap:anywhere}
-.mk-prow .r{align-items:center}
+.mk-prow .r{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px 10px}
 .md-ups{gap:8px;padding-bottom:14px}
 .md-ups .md-up{margin-left:0}
 @media (max-width:640px){
@@ -1935,7 +1935,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 /* poprawki UI runda 3: C (Marketing, edytor posta, Media, Marketing projektu) */
 .tl-items>.tl-card+.tl-card{border-top:1px solid var(--line);border-radius:0;padding-top:12px}
 .tl-card .mk-media{border-radius:8px;overflow:hidden}
-.mk-done>summary{cursor:pointer;padding:10px 16px;font-size:13.5px;color:var(--ink-2);min-height:40px;box-sizing:border-box;display:list-item}
+.mk-done>summary{cursor:pointer;padding:10px 16px;font-size:13.5px;color:var(--ink-2);min-height:40px;box-sizing:border-box}
 .mk-crow .s{display:flex;flex-wrap:wrap;gap:4px 10px}
 details.mk-done{padding:0}
 .mk-done>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -1952,6 +1952,12 @@ details.mk-done{padding:0}
   .pp-l li:has(.pp-a) .pp-c{grid-column:1}
   .pp-l li:has(.pp-a) .pp-t{grid-column:1}
   .pp-l li:has(.pp-a) .pp-a{grid-column:2;grid-row:1/span 2;align-self:center}
+}
+/* poprawki UI runda 5: C (Marketing, Marketing projektu) */
+@media (min-width:641px){
+  .mk-main{grid-template-columns:minmax(0,1fr) auto}
+  .mk-main>.mk-act{grid-column:2;grid-row:1;align-self:start;padding:10px 0 0 12px}
+  .mk-main>.mk-why{grid-column:1/-1}
 }
 </style>
 
@@ -2721,17 +2727,20 @@ function campGoals(){
     const p=P(c.project),tg=+c.target,rs=+c.result||0,pct=Math.min(100,Math.round(100*rs/tg));
     return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s">'+pvPr(p)+(isDay(c.end)?'<span>do '+dd(c.end)+'</span><span>'+rel(c.end)+'</span>':'')+'</div>'+
       '<div class="meter mk-meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span>'+
-      '<span class="pv-res"><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b> <span class="muted">'+esc(shortT(c.metric||'wynik',28))+' · <span class="num">'+pct+'%</span></span></span></div>'+
+      '<span class="pv-res"><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(shortT(mGen(c.metric),28))+' · <span class="num">'+pct+'%</span></span></span></div>'+
       (cntTxt(c)?'<div class="pv-cnt">'+cntLine(c)+'</div>':'')+measureForm(c)+'</div></li>'}).join('')+'</ul>','Wynik wobec celu liczbowego');
 }
 /* liczniki kampanii (suma wierszy „- data · nazwa n · zadanie” w Wynikach i wnioskach) */
 const cntTxt=c=>Object.keys(c.counters||{}).map(k=>k+' '+fmtN(c.counters[k])).join(' · ');
 const cntLine=c=>{const s=cntTxt(c);return s?'<span class="muted num cnl" title="Liczniki z zamkniętych zadań">'+esc(s)+'</span>':''};
+/* miara kampanii po liczbie „X z Y”: pierwsze słowo w dopełniaczu liczby mnogiej („64 z 200 zapisów na listę”) */
+const MGEN={zapisy:'zapisów',wyświetlenia:'wyświetleń',kliknięcia:'kliknięć',osoby:'osób',konta:'kont',rejestracje:'rejestracji',pobrania:'pobrań',zgłoszenia:'zgłoszeń',instalacje:'instalacji',zamówienia:'zamówień',wizyty:'wizyt',subskrypcje:'subskrypcji'};
+const mGen=m=>{m=String(m||'wynik');const w=m.split(' ')[0],g=MGEN[w.toLowerCase()];return g?g+m.slice(w.length):m};
 /* „Wpisz wynik”: nowy wynik kampanii (POST /api/campaign/update, pole wynik). Domyślnie sam przycisk; formularz po kliknięciu
    albo gdy pole ma wpisaną wartość (odświeżenie jej nie gubi) */
 function measureForm(c){
   const k='cm:'+c.id,id=esc(c.id),open=!!(A.pvCm&&A.pvCm[c.id])||(QD[k]!=null&&String(QD[k])!=='');
-  if(!open)return '<div class="pv-mtog"><button type="button" class="btn sec sm" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="false" aria-controls="pvcm-'+id+'">Wpisz wynik</button></div>';
+  if(!open)return '<div class="pv-mtog"><button type="button" class="btn sec sm" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="false" aria-controls="pvcm-'+id+'">'+(/zapis/i.test(c.metric||'')?'Wpisz liczbę zapisów':'Wpisz wynik')+'</button></div>';
   return '<form class="mform" id="pvcm-'+id+'" data-campm="'+id+'"><label class="fl"><span>Pomiar</span>'+
     '<input class="fi num" type="number" inputmode="decimal" min="0" step="any" name="m" data-k="'+esc(k)+'" data-qd="'+esc(k)+'" value="'+esc(QD[k]!=null?QD[k]:'')+'" placeholder="teraz '+esc(fmtN(c.result))+'" aria-label="Pomiar kampanii '+esc(c.name)+(c.metric?' ('+esc(c.metric)+')':'')+'"></label>'+
     '<button class="btn sec">Zapisz pomiar</button><button type="button" class="linkbtn" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="true" aria-controls="pvcm-'+id+'">Anuluj</button></form>';
@@ -4624,7 +4633,7 @@ function mktView(p){
     const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id),open=ps.filter(t=>t.state!=='done'),done=ps.filter(t=>t.state==='done');
     return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+ps.length+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
-      '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b><span class="muted">'+esc(c.metric||'wynik')+' · '+pct+'%</span></div>'
+      '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b><span class="muted">'+esc(mGen(c.metric))+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
       (cntTxt(c)?'<p class="note">Liczniki z zadań: <span class="num">'+esc(cntTxt(c))+'</span></p>':'')+
       '<details class="mk-cdet"><summary>Szczegóły kampanii</summary><div class="mk-cdb">'+
@@ -4883,7 +4892,7 @@ function wkMore(L,one,ready,sec){
   const C=D.campaigns.filter(c=>c.state==='active'&&ids.indexOf(c.project)>=0);
   const camp=C.map(c=>{const T=D.tasks.filter(t=>t.kind==='publikacja'&&t.campaign===c.id),dn=T.filter(t=>t.state==='done').length,pr=P(c.project);
     return '<li><a href="'+phref(pr,'marketing')+'">'+esc(c.name)+'</a>'+(one?'':' <span class="muted">· '+esc(pShort(pr))+'</span>')+': '+
-      (+c.target>0?'<span class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</span> '+esc(c.metric||'')+' · ':'')+
+      (+c.target>0?'<span class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</span> '+esc(c.metric?mGen(c.metric):'')+' · ':'')+
       dn+' '+pl(dn,'publikacja opublikowana','publikacje opublikowane','publikacji opublikowanych')+', '+(T.length-dn)+' '+pl(T.length-dn,'zaplanowana','zaplanowane','zaplanowanych')+'</li>'}).join('');
   if(fl||camp)M.push('<section class="panel wk-full"><h2>Etapy, tempo i kampanie</h2><ul class="wk-facts">'+fl+camp+'</ul></section>');
   if(ready){
@@ -5798,7 +5807,7 @@ function afterBlock(t){
     part.push('<div class="sub">Etap</div><p>'+esc(s.title)+' · <span class="num">'+dn+'/'+s.total+'</span>, po zamknięciu <span class="num">'+af+'/'+s.total+'</span>'+(isDay(s.date)?' · termin '+ddl(s.date)+' · '+rel(s.date):'')+'</p>'+
       '<div class="meter"><span class="track" role="img" aria-label="'+pct+'% etapu, po zamknięciu '+pa+'%"><i style="width:'+pct+'%;background:var(--bar-done)"></i><i style="width:'+(pa-pct)+'%;background:var(--bar-rev)"></i></span></div>')}
   if(c){const tg=+c.target||0,rs=+c.result||0,cv=t.counter?(c.counters[t.counter]||0):null;
-    part.push('<div class="sub">Kampania</div><p>'+esc(c.name)+(tg?' · <span class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</span> '+esc(c.metric||'wynik')+' ('+Math.min(100,Math.round(100*rs/tg))+'%)':' · bez celu liczbowego')+
+    part.push('<div class="sub">Kampania</div><p>'+esc(c.name)+(tg?' · <span class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</span> '+esc(mGen(c.metric))+' ('+Math.min(100,Math.round(100*rs/tg))+'%)':' · bez celu liczbowego')+
       (cv!=null?' · '+esc(t.counter)+' dotąd <span class="num">'+fmtN(cv)+'</span>':'')+'</p>'+(cntTxt(c)?'<p class="dcap">Liczniki: '+esc(cntTxt(c))+'</p>':''))}
   if(!part.length)return '';
   return '<div class="dbox"><h3><span>Po zrobieniu</span>'+(t.unlockCount?'<small>odblokowuje '+t.unlockCount+'</small>':'')+'</h3>'+part.join('')+'</div>';
@@ -6634,7 +6643,7 @@ function mkCamps(fp){
   return '<section class="panel" id="mk-camp"><h2>Kampanie w toku <small class="num">'+L.length+'</small></h2><ul class="rows mk-crow">'+L.map(c=>{
     const p=P(c.project),tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0;
     return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s"><span>'+esc(pShort(p))+'</span>'+(isDay(c.end)?'<span>do '+esc(dd(c.end))+'</span>':'')+'</div></div>'+
-      '<div class="r">'+(tg?'<span class="meter mk-cm"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(c.metric||'wynik')+'</span></span></span>'
+      '<div class="r">'+(tg?'<span class="meter mk-cm"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(mGen(c.metric))+'</span></span></span>'
         :'<span><b class="num">'+fmtN(rs)+'</b> <span class="muted">'+esc(c.metric||'wynik')+'</span></span>')+'</div></li>'}).join('')+'</ul></section>';
 }
 /* stan posta: [kolor, stan, grupa]; ten sam w karcie (mCard), w liczniku (mkTodo) i na stronie projektu (mktView).
@@ -6651,8 +6660,11 @@ function mkState(t,day,fs){
   }
   const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
   if(pr)return ['blue','agent przygotuje'+(isDay(pr.date)?' do '+ddl(pr.date):''),'prep'];
-  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n,'prep'];
-  return ['grey','do przygotowania',''];
+  /* bez zadania przygotowania: wykonawca publikacji przygotowuje post przed dniem publikacji */
+  const by=isDay(day)?' do '+ddl(addK(day,-1)):'';
+  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n+by,'prep'];
+  if(t.executor==='ty')return ['grey','przygotowujesz Ty'+by,''];
+  return ['grey','nikt nie przygotowuje',''];
 }
 /* nad osią: tylko błąd publikacji automatycznej (liczba pozycji stoi w nagłówku każdej sekcji) */
 function mkTodo(items){
