@@ -100,3 +100,24 @@
   - [ ] usuń klucze SSH tego PC z GitHuba
   - [ ] zresetuj Windows opcją „Usuń wszystko” z czyszczeniem dysków C: i E:
   Dopiero po dniu próbnym bez PC.
+
+## Etap: Konektory agentów
+termin: 2026-12-05
+
+- [ ] Sprawdź konektory konta Claude w agentach na serwerze | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
+  cel: wiadomo, czy konektory z claude.ai (Google Drive, Notion) działają w uruchomieniach agentów na serwerze i w sesji „Rozwój panelu”, czy potrzebna jest własna konfiguracja (MCP, rclone)
+  gotowe gdy: w szczegółach zadania: co działa, jak ograniczyć konektor do jednego projektu, czy da się wymusić tylko odczyt
+- [ ] Zaproponuj konektory dla każdego projektu | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
+  cel: lista projekt → konektor → do czego → odczyt albo zapis, na podstawie kart, zadań i rozmów
+  gotowe gdy: lista w szczegółach zadania, gotowa do zatwierdzenia przez właściciela
+- [ ] Zatwierdź konektory projektów | kto: ty | kiedy: 2026-11-26 | czas: 10 | po: Zaproponuj konektory dla każdego projektu
+  cel: decyzja właściciela, które projekty i jacy agenci dostają który konektor
+  pyta: Lista zatwierdzona (tak albo co zmienić); Link do folderu Shield & Silent na Google Drive
+- [ ] Dodaj pole konektorów do karty i panelu | kto: claude | gdzie: chmura | kiedy: 2026-11-28 | po: Sprawdź konektory konta Claude w agentach na serwerze, Zatwierdź konektory projektów
+  cel: agent dostaje tylko konektory wpisane w karcie projektu; panel pokazuje je przy projekcie
+  gotowe gdy: STANDARD.md opisuje pole; panel pokazuje konektory projektu; test: agent w projekcie bez wpisu nie ma dostępu do konektora
+- [ ] Zaloguj Google dla Drive Shield & Silent | kto: ty | kiedy: 2026-11-30 | czas: 5 | po: Dodaj pole konektorów do karty i panelu
+  cel: dostęp tylko do odczytu do folderu Shield & Silent; link do logowania przygotowuje Claude, logujesz się sam na stronie Google
+- [ ] Podłącz Drive Shield & Silent tylko do odczytu | kto: claude | gdzie: chmura | kiedy: 2026-12-01 | po: Zaloguj Google dla Drive Shield & Silent
+  cel: zdjęcia i filmy z Drive dostępne w panelu i dla agentów Shield & Silent bez pełnej kopii na serwerze
+  gotowe gdy: pliki z Drive widoczne w Media projektu; agent projektu je czyta; pamięć podręczna do 1 GB; kopia nocna i Zasoby nie liczą plików z Drive
