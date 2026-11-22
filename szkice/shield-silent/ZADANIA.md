@@ -42,6 +42,14 @@ termin: 2026-11-22
 - [ ] Nagraj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-22 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
+- [x] Przygotuj post „Tak wygląda wygłuszenie od środka” | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | czas: 30
+  cel: post na Instagram i Facebook z 5 zdjęć właściciela: drzwi od środka z matą wygłuszającą (dwa auta), pokazuje, co dostaje klient za ceną
+  gotowe gdy: /home/panel/IntegrateSystems/szkice/shield-silent/posty/2026-11-22-wygluszenie-od-srodka/ ma post.md (# tytuł, sekcje ## Instagram, ## Facebook, ## Alt) i grafika.png; tekst według KARTA.md: ceny jawne, wezwanie „Napisz model auta”, bez rabatów i gratisów, bez nazw producentów mat
+  Zdjęcia: /home/panel/IntegrateSystems/szkice/shield-silent/media/2026-11-22-wygluszenie-od-srodka-1.jpg … -5.jpg. Grafika: kolaż 2–4 najlepszych zdjęć (ffmpeg, filtr xstack) albo jedno najlepsze zdjęcie jako PNG; pionowo 4:5. Film z tych zdjęć tylko jako dodatek: projekt nie ma jeszcze studia filmów (studio/), więc nie przez silnik scenariuszy.
+  wynik: tekst posta gotowy w posty/2026-11-22-wygluszenie-od-srodka/post.md (Instagram, Facebook, opisy Alt, kolejność 5 zdjęć w karuzeli); ceny 1 590 zł i 2 790 zł, odbiór 99 zł, wezwanie „Napisz model auta”, bez rabatów, gratisów i nazw producentów mat. Grafiki grafika.png nie ma
+  decyzja: na zdjęciach widać nadruk producenta na matach (na czarnej czytelna nazwa, na czerwonej fragmenty); tekst nazw nie zawiera. Zdecyduj, czy publikujesz zdjęcia tak, jak są, czy tylko te z czerwoną matą (1, 4, 5), gdzie nazwy nie da się odczytać
+  zostało: kolaż grafika.png nie powstał, bo agent nie mógł uruchomić programu do obrazów (ffmpeg, Python, ImageMagick zablokowane); post można opublikować bez niego jako karuzelę z 5 zdjęć w kolejności z post.md. Modeli aut nie podałem, bo ich nie znam; dopisz je, jeśli chcesz. Filmu-dodatku nie robiłem
+  grafika: kolaż zdjęć 1 i 3, 1080×1350 (4:5), zrobiony przez Claude z sesji na Macu 2026-11-22 (ffmpeg); post gotowy do publikacji
 
 ## Etap: Tydzień 23 lis – 29 lis: pierwszy tydzień reklam i seria dB
 termin: 2026-11-29

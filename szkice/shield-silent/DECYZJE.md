@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-22: Post „Tak wygląda wygłuszenie od środka” – kolejność zdjęć i układ grafiki
+- Kontekst: 5 zdjęć właściciela z dwóch aut; trzy (czerwona mata) pokazują prawie to samo, zdjęcie 5 jest najciemniejsze. Na matach widać nadruk producenta, a tekst ma być bez nazw producentów. Agent nie miał w tej sesji uprawnień do ffmpeg ani innego programu do obrazów.
+- Decyzja: karuzela w kolejności 3, 2, 1, 4, 5 (najostrzejsze na okładkę, zdjęcie 5 można pominąć). Grafika do zrobienia: kolaż dwóch zdjęć obok siebie (1 po lewej, 3 po prawej, po jednym z każdego auta), pionowo 4:5, 1080 × 1350; tak opisuje ją już sekcja Alt w post.md. W tekście maty nazwane tylko rodzajem („mata tłumiąca drgania”), bez modeli aut, bo nie są podane. Ceny z „Ustalonych faktów” w Plan-filmow-do-28-stycznia.md.
+- Skutki: grafika.png jeszcze nie istnieje; post można opublikować jako karuzelę z samych zdjęć. Nadruk producenta zostaje widoczny na zdjęciach; czy to przeszkadza, rozstrzyga właściciel.
+- Kto: agent
+
 ## 2026-11-21: Porządki – zadania reklamowe, filmowe i kontrole zostają u właściciela
 - Kontekst: przy porządkach sprawdzono 45 zadań kto: ty. Wszystkie wymagają kont studia (Google Ads, Meta, Instagram, TikTok, YouTube, wizytówka, strona), wydawania budżetu, nagrań w studiu albo liczb znanych tylko właścicielowi. Agent nie ma dostępu do tych kont, a strony nie ma w repozytorium.
 - Decyzja: żadnego zadania nie przepisano na kto: claude. Każde otwarte zadanie właściciela dostało czas w minutach (30 zadań uzupełnionych; 11 zadań filmowych miało już 90 min).
