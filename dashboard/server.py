@@ -2449,6 +2449,7 @@ LOGIN_PAGE = """<!doctype html><html lang="pl"><head><meta charset="utf-8">
 @media (prefers-color-scheme:dark){:root{--bg:#15171c;--surface:#1d2027;--line:#30353f;--ink:#e7e9ee;--ink-3:#8d95a3;--accent:#6b9ef0;--accent-ink:#0f1420;--ctl-line:#6b7382;--bad:#ffaaa0}}
 html,body{height:100%%;margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);display:flex;align-items:center;justify-content:center}
+@media (max-width:620px){body{align-items:flex-start;padding-top:12vh;box-sizing:border-box}}
 form{width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .brand{display:flex;align-items:center;gap:10px}
 .mark{width:32px;height:32px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
