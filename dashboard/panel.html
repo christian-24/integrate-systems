@@ -1990,7 +1990,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .plx .prx-row a.t::after{content:"";position:absolute;inset:0}
 .plx .prx-row a.t:focus-visible{outline:none}
 .plx .prx-row:focus-within{outline:2px solid var(--accent);outline-offset:-2px;border-radius:var(--r)}
-.plx .prx-row .prx-files{position:relative;z-index:1}
+.plx .prx-row .prx-files,.plx .prx-row .pj-git a{position:relative;z-index:1}
+.pj-git a{color:var(--accent)}
 .plx .prx-row:hover{background:var(--hover)}
 .bnav:has(button[aria-expanded="true"]) a[aria-current="page"]{background:none;color:var(--ink-2)}
 #drawer .dr-chat+.dmore{margin-top:-8px}
@@ -4559,6 +4560,16 @@ function mkDay(day){
 const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
   wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu i ich terminy.',
   ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.'};
+/* GitHub projektu (p.git z serwera): link w nowej karcie albo „Brak GitHuba”, plus niewypchnięte commity */
+function gitTag(p){
+  const g=p.git;if(!g)return '';
+  const u=/^https:\/\//.test(g.url||'')?g.url:'',n=g.unpushed|0;
+  let h=g.remote==='github'&&u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">GitHub</a>'
+    :g.remote==='inny'?(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(g.host||'Repozytorium')+'</a>':'<span title="Repozytorium poza GitHubem">'+esc(g.host||'Repozytorium lokalne')+'</span>')
+    :'<span class="muted" title="'+(g.repo?'Repozytorium git bez zdalnego origin':'Folder nie jest repozytorium git')+'">Brak GitHuba</span>';
+  if(n>0)h+=' · <span title="Commity na gałęziach lokalnych, których nie ma w żadnej gałęzi zdalnej">'+n+' '+pl(n,'niewypchnięty','niewypchnięte','niewypchniętych')+'</span>';
+  return '<span class="pj-git">'+h+'</span>';
+}
 function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
@@ -4571,7 +4582,7 @@ function vProjekt(p,tab){
   else body=mktView(p);
   const sLate=s&&isDay(s.date)&&s.date<D.todayKey&&!s.done;
   const sum='<span>Faza: <b>'+PHASES[pi][1]+'</b></span><span>Postęp: <b class="num">'+(c.all?pct+'%':'—')+'</b></span>'+
-    (s?'<span>Etap: <b>'+esc(s.title)+'</b>'+(isDay(s.date)?', '+(sLate?'<span class="pj-late">po terminie ('+ddl(s.date)+')</span>':'do '+ddl(s.date)):'')+'</span>':'');
+    (s?'<span>Etap: <b>'+esc(s.title)+'</b>'+(isDay(s.date)?', '+(sLate?'<span class="pj-late">po terminie ('+ddl(s.date)+')</span>':'do '+ddl(s.date)):'')+'</span>':'')+gitTag(p);
   const det=[c.done+' z '+c.all+' zadań'].concat(c.wip+c.blocked?['w toku '+(c.wip+c.blocked)]:[],c.rev?['czeka na odbiór '+c.rev]:[]).join(' · ');
   const ov='<div class="stepper" role="group" aria-label="Faza projektu">'+PHASES.map((x,i)=>'<button data-phase="'+x[0]+'" data-pid="'+esc(p.id)+'" class="'+(i<pi?'done':i===pi?'cur':'')+'"'+(cm?'':' disabled')+' aria-pressed="'+(i===pi)+'" title="'+(cm?'Ustaw fazę: '+x[1]:'Projekty przykładowe: bez zmiany fazy')+'"><b>'+x[1]+'</b><span class="sr-only">, </span>'+(i<pi?'zakończona':i===pi?'teraz':'')+'</button>').join('')+'</div>'+
     (cm?'<p class="note">Kliknij fazę, aby ją zmienić.</p>':'')+
@@ -5458,7 +5469,7 @@ function vProjekty(){
     (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
       let r='<li class="prx-row"><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
-        '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span></div>'+
+        '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span>'+gitTag(x)+'</div>'+
         '</div>';
       /* cały wiersz prowadzi do strony projektu; folder i usuwanie w menu „⋯” (otwartym przy potwierdzaniu usunięcia) */
       const mo=cf||prxOpen('m:'+x.id,false);

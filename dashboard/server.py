@@ -2466,10 +2466,114 @@ def data_invalidate():
         _data_cache.update(at=0.0, body=None, gen=_data_cache.get("gen", 0) + 1)
 
 
+def git_link(raw):
+    """Adres zdalnego repozytorium → (rodzaj, link, host). Rodzaj: "github", "inny" albo "" (brak adresu).
+    Link https bez danych logowania (user:token@) i bez .git; dla ssh poza GitHubem tylko host, bez linku."""
+    raw = (raw or "").strip()
+    if not raw:
+        return "", "", ""
+    if "://" in raw:
+        u = urlparse(raw)
+        host, path, scheme = (u.hostname or "").lower(), u.path, u.scheme.lower()
+        port = ":%d" % u.port if u.port and scheme in ("http", "https") else ""
+    elif re.match(r"^(?:[^@/\s]+@)?[^:/\s]+:", raw) and not re.match(r"^[A-Za-z]:[\\/]", raw):
+        host, _, path = raw.partition(":")
+        host, scheme, port = host.rpartition("@")[2].lower(), "ssh", ""
+    else:                                              # ścieżka lokalna
+        return "inny", "", ""
+    path = "/" + path.strip("/")
+    if path.endswith(".git"):
+        path = path[:-4]
+    if host in ("github.com", "www.github.com", "ssh.github.com"):
+        parts = [x for x in path.split("/") if x][:2]
+        return "github", ("https://github.com/" + "/".join(parts)) if len(parts) == 2 else "", "github.com"
+    if not host:
+        return "inny", "", ""
+    if scheme in ("http", "https"):
+        return "inny", "https://%s%s%s" % (host, port, path if path != "/" else ""), host
+    return "inny", "", host
+
+
+def _origin_url(folder):
+    """remote.origin.url z .git/config bez wołania gita (działa też przy innym właścicielu folderu)."""
+    gitdir = os.path.join(folder, ".git")
+    if os.path.isfile(gitdir):                         # worktree albo submoduł: "gitdir: …"
+        line = (projekt.read(gitdir) or "").strip()
+        if not line.startswith("gitdir:"):
+            return ""
+        gitdir = os.path.normpath(os.path.join(folder, line[7:].strip()))
+        common = (projekt.read(os.path.join(gitdir, "commondir")) or "").strip()
+        if common:
+            gitdir = os.path.normpath(os.path.join(gitdir, common))
+    section = False
+    for line in (projekt.read(os.path.join(gitdir, "config")) or "").splitlines():
+        s = line.strip()
+        if s.startswith("["):
+            section = re.match(r'^\[\s*remote\s+"origin"\s*\]$', s) is not None
+        elif section:
+            k, sep, v = s.partition("=")
+            if sep and k.strip().lower() == "url":
+                return v.strip().strip('"')
+    return ""
+
+
+def project_git(folder):
+    """{repo, remote, url, host, unpushed}: folder projektu jako repozytorium git (własne .git, nie folder
+    nadrzędny). unpushed: commity gałęzi lokalnych, których nie ma w żadnej gałęzi zdalnej (bez git fetch)."""
+    if not os.path.exists(os.path.join(folder, ".git")):
+        return {"repo": False, "remote": "", "url": "", "host": "", "unpushed": 0}
+    remote, url, host = git_link(_origin_url(folder))
+    unpushed = 0
+    if remote:
+        code, n = _git_out(folder, "rev-list", "--count", "--branches", "--not", "--remotes", timeout=3)
+        unpushed = int(n) if code == 0 and n.isdigit() else 0
+    return {"repo": True, "remote": remote, "url": url, "host": host, "unpushed": unpushed}
+
+
+GIT_TTL = 120                         # s: stan git projektów odświeżany w tle, /api/data bierze ostatni wynik
+_git_state = {"value": {}, "at": {}, "busy": False, "lock": threading.Lock()}
+
+
+def git_states(folders):
+    """{folder: project_git} z pamięci. Nowy folder liczony od razu (kilka ms), przeterminowane w tle;
+    po odświeżeniu ze zmianą /api/data jest unieważniane."""
+    st, now = _git_state, time.time()
+    with st["lock"]:
+        missing = [f for f in folders if f not in st["value"]]
+        stale = [f for f in folders if f in st["value"] and now - st["at"].get(f, 0) >= GIT_TTL]
+    for f in missing:
+        v = project_git(f)
+        with st["lock"]:
+            st["value"][f], st["at"][f] = v, time.time()
+    if stale:
+        with st["lock"]:
+            start, st["busy"] = not st["busy"], True
+        if start:
+            def work():
+                changed = False
+                try:
+                    for f in stale:
+                        v = project_git(f)
+                        with st["lock"]:
+                            changed = changed or st["value"].get(f) != v
+                            st["value"][f], st["at"][f] = v, time.time()
+                finally:
+                    with st["lock"]:
+                        st["busy"] = False
+                if changed:
+                    data_invalidate()
+            threading.Thread(target=work, daemon=True).start()
+    with st["lock"]:
+        return {f: dict(st["value"][f]) for f in folders if f in st["value"]}
+
+
 def build_data():
     out, index = load_projects()
     for p in out["projects"]:
         p["folder"] = short_path(index[p["id"]])
+    gits = git_states(sorted(set(index.values())))
+    for p in out["projects"]:
+        p["git"] = gits.get(index[p["id"]])
     out["standard"] = projekt.describe()
     out["pmNote"] = pm_note(False) or (pm_note(True) if out["projectsSource"] == "sample" else None)
     if out["pmNote"]:
