@@ -414,7 +414,7 @@ img.tl-media{aspect-ratio:1/1;object-fit:cover}
 .mk-cnt .lk:hover,.mk-cnt .lk:focus-visible{text-decoration:underline}
 .mk-cnt .muted{color:var(--ink-3)}
 .mk-pub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
-.mk-wnav .btn{min-width:40px;min-height:40px;justify-content:center;border-color:transparent;background:transparent;font-size:16px}
+.mk-wnav .btn{min-width:40px;min-height:40px;justify-content:center;font-size:16px}
 .mk-next{padding:0 16px 16px}
 .wk{font-size:14px;padding:0 6px}
 .pvid{width:100%;max-height:520px;border-radius:var(--r-lg);background:var(--media-bg)}
@@ -1838,8 +1838,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .ed-h .btn,.ed-acts .btn{min-height:40px}
   .mk-cdet>summary{min-height:40px;display:flex;align-items:center}
   .mk-prow .r{display:flex;flex-wrap:wrap;justify-content:flex-start;text-align:left;white-space:normal;gap:6px 8px}
-  .mk-prow .r .btn{min-height:40px}
-  .md-ups .md-up{flex:1 1 auto;min-height:40px}
+  .mk-prow .r .btn{min-height:40px;margin-left:auto}
+  .md-ups .md-up{flex:1 1 100%;min-height:40px;justify-content:center}
 }
 /* poprawki UI runda 1: D */
 @media (min-width:821px){.app{background:linear-gradient(to right,var(--surface) calc(var(--side) - 1px),var(--line) calc(var(--side) - 1px),var(--line) var(--side),transparent var(--side))}}
@@ -1874,6 +1874,11 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .dr-foot .btn{flex:1;min-height:44px}
   .bs-foot .btn{min-height:44px}
 }
+/* poprawki UI runda 2: C (Marketing, edytor posta, Media, Marketing projektu) */
+.mk-act{justify-content:flex-end}
+.ed-next{flex:1 1 100%;margin:0;font-size:13px;color:var(--ink-2)}
+.ed-next:empty{display:none}
+.pub-sep{margin:18px 0 10px;font-size:var(--fs-md)}
 </style>
 
 <div class="app">
@@ -4487,21 +4492,21 @@ function bookView(p){
    z tym samym stanem i akcją co karta w widoku Marketing (mkState, mkAct); wiersz otwiera edytor posta */
 function mktView(p){
   const cs=D.campaigns.filter(c=>c.project===p.id);
-  if(!cs.length)return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
+  if(!cs.length)return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
   const row=t=>{
     const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
     if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
     const st=post?mkState(t,day):t.state==='done'?['green','opublikowane']:isLate(t)?['red','po terminie']:t.needsYou==='zgoda'?['purple','czeka na zgodę']:['grey','zaplanowane'];
-    const act=post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&t.state!=='done'?'<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'';
+    const act=post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&t.state!=='done'?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'';
     const open=post?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
     return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post?mkTitle(t):t.title)+'</button><div class="s">'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
       (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+'</div></div>'+
       '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+act+'</div></li>'};
-  return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: zatwierdź, obejrzyj i opublikuj.</p>'+cs.map(c=>{
+  return '<p class="mk-sub mk-tsub">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p>'+cs.map(c=>{
     const ps=D.tasks.filter(t=>t.campaign===c.id).sort((x,y)=>(x.date||'9999').localeCompare(y.date||'9999'));
     const dn=ps.filter(t=>t.state==='done').length,tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0,st=CST[c.state]||CST.plan;
     const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id);
-    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'publikacje '+dn+'/'+ps.length+'</small></h2><div class="pad mk-camp">'+
+    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+ps.length+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
       '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b><span class="muted">'+esc(c.metric||'wynik')+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
@@ -6361,7 +6366,7 @@ function upBtn(pid,big,lab){
   return '<label class="btn '+(big?'':'sec ')+'sm md-up">'+(MDS.up&&MDS.upP===pid?MDS.up:lab||(big?'Wgraj zdjęcia lub filmy':'Wgraj'))+'<input type="file" multiple accept="image/*,video/mp4,video/quicktime" data-mup data-pid="'+esc(pid)+'" aria-label="'+esc('Wgraj zdjęcia lub filmy do projektu '+projName(pid))+'" hidden></label>'}
 function vMedia(){
   const F=A.mf||(A.mf={p:'',k:'',s:''});
-  const head=n=>'<div class="pagehead"><div><h1>Media'+(n!=null?' <small class="muted num">'+n+'</small>':'')+'</h1><p class="md-sub">Zdjęcia i filmy projektów: z postów, ze studia filmów i wgrane przez Ciebie.</p></div></div>';
+  const head=n=>'<div class="pagehead"><div><h1>Media'+(n!=null?' <small class="muted num">'+n+'</small>':'')+'</h1><p class="md-sub">Zdjęcia i filmy z publikacji, nagrań i wgrane przez Ciebie.</p></div></div>';
   if(!LIVE)return head()+'<section class="panel"><p class="empty">Media są widoczne w panelu na serwerze.</p></section>';
   if(!MDS.items){loadMedia();return head()+'<section class="panel"><p class="empty">Wczytuję zdjęcia i filmy…</p></section>'}
   const L=MDS.items.filter(i=>(!F.p||i.project===F.p)&&(!F.k||i.kind===F.k)&&(!F.s||i.source===F.s));
@@ -6370,11 +6375,11 @@ function vMedia(){
   const pids=[...new Set(MDS.items.map(i=>i.project))];
   /* nic jeszcze nie ma: bez filtrów, jedno zdanie i wgrywanie do projektu */
   if(!MDS.items.length){const Pj=D.projects;
-    return head()+'<section class="panel"><p class="empty">Nie ma jeszcze plików. Grafiki i filmy z postów pojawią się tu same; własne zdjęcia i filmy możesz wgrać.</p>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
+    return head()+'<section class="panel"><p class="empty">Nie ma jeszcze plików. Wgraj własne albo poczekaj na publikacje.</p>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'')+
       (Pj.length===1?'<div class="md-bar">'+upBtn(Pj[0].id,true)+'</div>':Pj.length?'<div class="md-bar md-ups"><span class="muted">Wgraj do projektu:</span>'+Pj.map(x=>upBtn(x.id,false,pShort(x))).join('')+'</div>':'')+'</section>'}
   let h=head(L.length+(L.length<MDS.items.length?' z '+MDS.items.length:''))+'<section class="panel"><div class="md-bar">'+
     '<select class="fi md-sel" data-mfp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===F.p).map(p=>[p.id,pShort(p)])),F.p)+'</select>'+
-    '<select class="fi md-sel" data-mfs aria-label="Skąd">'+opt([['','Skąd: wszystkie'],['posty','Z postów'],['media','Wgrane'],['studio','Ze studia filmów']],F.s)+'</select>'+
+    '<select class="fi md-sel" data-mfs aria-label="Skąd">'+opt([['','Skąd: wszystkie'],['posty','Z publikacji'],['media','Wgrane'],['studio','Do filmów (logo, plansze)']],F.s)+'</select>'+
     '<div class="row md-k" role="group" aria-label="Rodzaj">'+seg('k','','Wszystko')+seg('k','image','Zdjęcia')+seg('k','video','Filmy')+'</div>'+
     (F.p?upBtn(F.p,true):'')+'</div>'+(MDS.err?'<p class="warn">'+esc(MDS.err)+'</p>':'');
   if(!L.length)return h+'<p class="empty">Brak plików'+(F.p||F.k||F.s?' dla wybranych filtrów':'')+'.</p></section>';
@@ -6417,7 +6422,7 @@ async function uploadMedia(el){
   MDS.up='';MDS.upP='';say('Wgrano '+ok+' z '+files.length+'.'+(err?' '+err:''));loadMedia(true);
 }
 /* dni na osi: kolejne dni bez publikacji w jednym wierszu („pon.–czw. brak publikacji”) */
-function mkDays(keys,items){
+function mkDays(keys,items,inLate){
   let h='',run=[];
   const flush=()=>{if(!run.length)return;const a=run[0],b=run[run.length-1],wa=fromKey(a).getDay(),wb=fromKey(b).getDay(),now=run.includes(D.todayKey);
     h+='<li class="tl-day nil'+(now?' tl-now':'')+'" data-day="'+a+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wa])+'">'+esc(DN[wa])+'</abbr></b>'+
@@ -6426,7 +6431,7 @@ function mkDays(keys,items){
     const L=items.filter(t=>t.date.slice(0,10)===k);if(!L.length){run.push(k);return}flush();
     const wd=fromKey(k).getDay(),now=k===D.todayKey;
     h+='<li class="tl-day'+(now?' tl-now':'')+'" data-day="'+k+'"'+(now?' aria-current="date"':'')+'><div class="tl-date"><b><abbr title="'+esc(DNI[wd])+'">'+esc(DN[wd])+'</abbr></b> '+esc(dd(k))+(now?' <span class="mk-now">dziś</span>':'')+'</div>'+
-      '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k)).join('')+'</div></li>'});
+      '<div class="tl-items'+(L.length===1?' tl-one':'')+'">'+L.map(t=>mCard(t,k,inLate)).join('')+'</div></li>'});
   flush();return h;
 }
 /* Do nagrania: filmy z kampanii na 14 dni, jeszcze nienagrane i nieopublikowane. Nagrywa panel dzień przed publikacją
@@ -6454,14 +6459,14 @@ function vMarketing(){
   const pubAll=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
   const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
   const late=mine.filter(t=>t.state!=='done'&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
-  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Publikacje z kampanii: obejrzyj, zatwierdź i opublikuj.</p></div></div>'+
+  let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1><p class="mk-sub">Publikacje z kampanii: obejrzyj, zatwierdź, opublikuj.</p></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.projects.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
-  if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late)+'</ol></section>';
+  if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
   h+=recPanel(fp);
   const wk=items.filter(t=>!(t.state!=='done'&&t.date.slice(0,10)<D.todayKey));
-  h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b></span>'+
+  h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b>'+(wk.length?' <small class="num">'+wk.length+'</small>':'')+'</span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzednie 7 dni">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następne 7 dni">→</button>'+
-    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk);
+    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk.concat(late));
   if(!wk.length){
     /* pusty zakres: jedno zdanie i przycisk do najbliższej publikacji poza nim */
     const after=mine.filter(t=>t.date.slice(0,10)>days[6]).sort((a,b)=>a.date<b.date?-1:1)[0],before=mine.filter(t=>t.date.slice(0,10)<days[0]&&t.date.slice(0,10)>=D.todayKey).sort((a,b)=>a.date>b.date?-1:1)[0];
@@ -6483,42 +6488,40 @@ function mkState(t,day,fs){
     if((d.scenario||d.film)&&f[0]!=='green')return [f[0],f[1],f[0]==='red'?'err':''];
     return ['purple','do obejrzenia','review'];
   }
-  if(LIVE&&d&&!d.ok&&D.tasks.some(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done'))return ['blue','agent przygotowuje','prep'];
-  return ['grey','czeka na przygotowanie',''];
+  const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
+  if(pr)return ['blue','agent przygotuje'+(isDay(pr.date)?' do '+ddl(pr.date):''),'prep'];
+  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n,'prep'];
+  return ['grey','post do przygotowania',''];
 }
-/* wiersz nad osią: tylko niezerowe stany (bez „po terminie”: te są w osobnej sekcji wyżej); błąd publikacji automatycznej */
+/* nad osią: tylko błąd publikacji automatycznej (liczba pozycji stoi w nagłówku każdej sekcji) */
 function mkTodo(items){
-  const G={ok:[],review:[],err:[],prep:[],done:[]};
-  items.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).forEach(t=>{const g=mkState(t,t.date.slice(0,10))[2];if(G[g])G[g].push(t.date.slice(0,10))});
-  const N={ok:'Do zatwierdzenia',review:'Do obejrzenia',err:'Z błędem',prep:'Agent przygotowuje',done:'Opublikowane'};
-  const parts=Object.keys(N).filter(k=>G[k].length).map(k=>'<button type="button" class="lk'+(k==='err'?' mk-bad':'')+'" data-mkday="'+esc(G[k][0])+'" data-k="mk:'+k+'">'+N[k]+': <b class="num">'+G[k].length+'</b></button>');
-  let h=parts.length?'<p class="mk-cnt">'+parts.join('<span class="muted" aria-hidden="true"> · </span>')+'</p>':'';
+  let h='';
   const P=D.publish;
   if(LIVE&&P){const bad=items.filter(t=>{const st=P.state[t.project+'|'+t.file+'|'+t.title];return st&&Object.keys(st).some(c=>st[c]&&!st[c].ok&&PUBN[c])}).length;
     if(bad)h+='<p class="warn mk-pub">Publikacja automatyczna nie powiodła się: '+bad+' '+pl(bad,'post','posty','postów')+'. <a class="navlk" href="#marketing" data-nwchan>Kanały publikacji</a></p>'}
   return h?'<div class="mk-todo">'+h+'</div>':'';
 }
-/* kanały posta; „ręcznie” przy kanałach, których panel nie publikuje sam (LinkedIn, TikTok, YouTube, niepołączony Facebook) */
+/* kanały posta; „publikujesz Ty” przy kanałach, których panel nie publikuje sam (LinkedIn, TikTok, YouTube, niepołączony Facebook) */
 function mkChan(t){
   const L=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>c.toLowerCase());
   const man=c=>!!(LIVE&&D.publish)&&!(['facebook','reels','instagram'].includes(c)&&chanOk(t,c));
   const nm=c=>PUBN[c]||cap(c),allMan=L.length&&L.every(man);
-  return L.map(c=>esc(nm(c))+(!allMan&&man(c)?' (ręcznie)':'')).join(' · ')+(allMan?' · ręcznie':'');
+  return L.map(c=>esc(nm(c))+(!allMan&&man(c)?' (publikujesz Ty)':'')).join(' · ')+(allMan?' · publikujesz Ty':'');
 }
 /* tytuł posta bez „Opublikuj” i znacznika „film A” */
 function mkTitle(t){const raw=t.title.replace(/^Opublikuj\s+/,''),pm=/^((?:film|post)(?:\s+[A-Z0-9]{1,3})?)\s+(?=„)/i.exec(raw);return cap(pm?raw.slice(pm[0].length):raw)}
-/* jedna akcja posta (karta w Marketingu, wiersz w kampanii projektu): zgoda → Zatwierdź; po terminie → Opublikuj (edytor);
+/* jedna akcja posta, obrysowana (karta w Marketingu, wiersz w kampanii projektu): zgoda → Zatwierdź (edytor z podglądem); po terminie → Opublikuj (edytor);
    do obejrzenia → Obejrzyj; błąd → Otwórz i daj do poprawy; inny stan wymagający uwagi → Otwórz */
 function mkAct(t,day,st,why){
   const d=PD[t.project+'|'+day],ed=esc(t.project+'|'+day+'|'+t.id),nm=mkTitle(t),b=(cls,attr,n)=>'<button type="button" class="btn '+cls+'sm" '+attr+' aria-label="'+esc(n+': '+nm)+'">'+n+'</button>';
-  if(t.needsYou==='zgoda'&&t.state!=='done')return b('','data-act="ok" data-id="'+esc(t.id)+'"','Zatwierdź');
-  if(st[2]==='late')return b('','data-medit="'+ed+'"','Opublikuj');
-  if(st[2]==='review')return b('','data-medit="'+ed+'"','Obejrzyj');
+  if(t.needsYou==='zgoda'&&t.state!=='done')return b('sec ','data-medit="'+ed+'"','Zatwierdź');
+  if(st[2]==='late')return b('sec ','data-medit="'+ed+'"','Opublikuj');
+  if(st[2]==='review')return b('sec ','data-medit="'+ed+'"','Obejrzyj');
   if(why)return b('sec ','data-medit="'+ed+'"','Otwórz i daj do poprawy');
   if(d&&d.ok&&!['grey','green','blue'].includes(st[0]))return b('sec ','data-medit="'+ed+'"','Otwórz');
   return '';
 }
-function mCard(t,day){
+function mCard(t,day,inLate){
   const k=t.project+'|'+day,d=PD[k],q=postQ(t.project,day),fi=d&&d.ok&&d.filmInfo&&typeof d.filmInfo==='object'?d.filmInfo:null;
   if(d===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
   const title=mkTitle(t);
@@ -6534,10 +6537,11 @@ function mCard(t,day){
     if(st[2]==='err'||(fi&&fi.error))why=fi&&fi.error?(fi.errorHint||'Błąd w scenariuszu filmu.'):r.state==='error'?(recHint(r.hint,false)||'Nagranie filmu się nie powiodło.'):'Film czeka na nagranie dłużej niż zwykle.';
   }else if(d&&!d.ok){const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
     /* posta jeszcze nie ma: karta bez pola obrazu, tylko termin przygotowania */
-    media='';prep=pr&&isDay(pr.date)?'przygotowanie do '+ddl(pr.date):''}
+    media=''}
   const p=P(t.project),act=mkAct(t,day,st,why);
-  return '<article class="tl-card'+(why||st[2]==='late'?' mk-err':'')+(media?'':' mk-nomedia')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+ed+'" aria-labelledby="mkt-'+id+'" aria-describedby="mks-'+id+' mkp-'+id+'">'+
-    '<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>'+
+  const pill=!(inLate&&st[2]==='late');
+  return '<article class="tl-card'+(why||(st[2]==='late'&&!inLate)?' mk-err':'')+(media?'':' mk-nomedia')+'">'+media+'<div class="mk-main"><button type="button" class="tl-body" data-medit="'+ed+'" aria-labelledby="mkt-'+id+'" aria-describedby="'+(pill?'mks-'+id+' ':'')+'mkp-'+id+'">'+
+    (pill?'<span class="lz '+st[0]+'" id="mks-'+id+'">'+esc(st[1])+'</span>':'')+
     '<span class="mk-ttl"><b id="mkt-'+id+'">'+esc(title)+'</b></span>'+
     '<span class="mk-proj" id="mkp-'+id+'"><span class="mk-pj" title="'+esc(projName(t.project))+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(p?pShort(p):projName(t.project))+'</span></span><span class="mk-ch">'+mkChan(t)+'</span></span>'+
     (prep?'<span class="muted">'+esc(prep)+'</span>':'')+'</button>'+
@@ -6568,7 +6572,7 @@ function pubPlanBox(t,day,d){
     const f=PL[t.id]||(PL[t.id]={ch:{},day:isDay(day)&&day>=D.todayKey?day:D.todayKey,time:'09:00'});
     h+='<div class="row">'+avail.map(([c,n])=>{const on=f.ch[c]!=null?f.ch[c]:!(c==='reels'&&!film);return '<label class="chk"><input type="checkbox" data-pch="'+c+'"'+(on?' checked':'')+'> '+n+'</label>'}).join('')+'</div>'+
       '<div class="row"><input class="fi" type="date" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji"><input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
-      '<button class="btn sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
+      '<button class="btn sec sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
     const miss=list.filter(([c])=>!chanOk(t,c));
     if(miss.length)h+='<p class="note">Niepołączone: '+esc(miss.map(x=>x[1]).join(', '))+' (Marketing → Kanały publikacji).</p>';
   }
@@ -6628,11 +6632,10 @@ function pubPanel(){
   const F=D.film||{},fb=!!P.fb.connected,acc=!!F.account,open=pubOpen(false);
   /* sekcja zwijana (stan właściciela w localStorage, domyślnie zwinięta); w small skrót stanu */
   let h='<section class="panel" id="publikacja"><h2><button class="nw-tog" data-agpub="1" data-k="agpub" aria-expanded="'+open+'"'+(open?' aria-controls="pub-b"':'')+'><span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>Kanały publikacji</button>'+
-    (open?'<small>Facebook: '+(fb?'połączony':'niepołączony')+' · Konto do nagrywania filmów: '+(acc?'ustawione':'brak')+' · LinkedIn: ręcznie</small>':'')+'</h2>';
+    (open?'<small>Facebook: '+(fb?'połączony':'niepołączony')+' · LinkedIn: publikujesz Ty</small>':'')+'</h2>';
   /* zwinięte (domyślnie): jedno zdanie stanu i jedna akcja, która rozwija sekcję */
-  if(!open){const miss=[fb?'':'Facebook',acc?'':'konto do nagrywania filmów'].filter(Boolean);
-    return h+'<p class="ahint pub-sum">'+(miss.length?'Nie połączono: '+esc(miss.join(' i '))+'. Posty publikujesz ręcznie.':'Facebook i konto do nagrywania filmów połączone.')+
-      (miss.length?' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto':'Połącz Facebook')+'</button>':'')+'</p></section>'}
+  if(!open)return h+'<p class="ahint pub-sum">'+(fb?'Facebook połączony: panel może publikować sam.':'Facebook niepołączony: publikujesz ręcznie.')+(acc?'':' Brak konta do nagrań demonstracji.')+
+      (fb&&acc?'':' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto':'Połącz Facebook')+'</button>')+'</p></section>';
   h+='<div class="pad" id="pub-b"><p class="note">Panel publikuje sam tylko posty, które po odbiorze zaplanujesz (Facebook, Instagram). Bez planu nic nie publikuje się samo.</p><div class="pubc">';
   h+='<div><h3>Facebook '+(fb?'<span class="lz green">połączony</span>':'<span class="lz yellow">niepołączony</span>')+'</h3>';
   if(fb)h+='<table><tbody>'+P.fb.pages.map(g=>'<tr><td>'+esc(g.name)+(g.instagram?' <span class="muted">· Instagram '+(g.instagram==='tak'?'':'@'+esc(g.instagram))+'</span>':'')+'</td><td><select class="fi" data-fbmap="'+esc(g.id)+'" aria-label="Projekt strony '+esc(g.name)+'">'+opt([['','– bez projektu']].concat(proj),g.project)+'</select></td></tr>').join('')+'</tbody></table>';
@@ -6642,12 +6645,13 @@ function pubPanel(){
     '<div class="row"><button type="submit" class="btn sm" data-pub="fb">Połącz Facebook</button>'+(fb?'<button type="button" class="btn sec sm danger" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form>';
   h+=(fb?'<details class="ds-det" data-agdet="fbre"'+(pubDet('fbre')?' open':'')+'><summary>Połącz ponownie</summary>'+how+fbForm+'</details>':how+fbForm)+'</div>';
   const fForm='<form class="dform" data-pubf="film"><label class="fl"><span>E-mail</span><input class="fi" type="email" data-fk="email" autocomplete="username" placeholder="zwykłe konto, np. ty+demo@…"></label><label class="fl"><span>Hasło</span><input class="fi" type="password" data-fk="haslo" autocomplete="new-password"></label>'+
-    '<div class="row"><button type="submit" class="btn sm" data-pub="film">Zapisz</button></div></form>';
-  h+='<div><h3>Konto do nagrywania filmów '+(acc?'<span class="lz green">ustawione</span>':'<span class="lz grey">brak</span>')+'</h3><p class="note">Konto na opisarnia.pl, którym panel loguje się do nagrań. Hasło zostaje na serwerze.</p>'+
+    '<div class="row"><button type="submit" class="btn sec sm" data-pub="film">Zapisz</button></div></form>';
+  const fBox='<div><h3>Konto do nagrań demonstracji '+(acc?'<span class="lz green">ustawione</span>':'<span class="lz grey">brak</span>')+'</h3><p class="note">Potrzebne, żeby panel nagrywał filmy z demonstracją strony (logowanie na opisarnia.pl). Hasło zostaje na serwerze.</p>'+
     (acc?'<p>'+esc(F.account)+'</p><details class="ds-det" data-agdet="filmre"'+(pubDet('filmre')?' open':'')+'><summary>Zmień konto</summary>'+fForm+'</details>':fForm)+'</div>';
-  h+='<div><h3>LinkedIn <span class="lz out">ręcznie</span></h3><p class="note">LinkedIn publikujesz ręcznie z posta: Udostępnij albo Kopiuj i otwórz LinkedIn.</p>'+
+  h+='<div><h3>LinkedIn <span class="muted">publikujesz Ty</span></h3><p class="note">LinkedIn publikujesz ręcznie z posta: Udostępnij albo Kopiuj i otwórz LinkedIn.</p>'+
     '<details class="ds-det" data-agdet="lihow"'+(pubDet('lihow')?' open':'')+'><summary>Dlaczego?</summary><p class="note">Regulamin API LinkedIn zabrania automatycznego publikowania. W poście: „Udostępnij” (telefon: aplikacja LinkedIn z grafiką i tekstem) albo „Kopiuj i otwórz LinkedIn” (Mac: edytor z wpisanym tekstem); godzinę ustawiasz w LinkedIn (ikona zegara).</p></details></div>';
-  return h+'</div></div></section>';
+  /* konto do nagrań to inna sprawa niż kanały: osobny blok pod kanałami */
+  return h+'</div><h3 class="pub-sep">Nagrania filmów</h3><div class="pubc">'+fBox+'</div></div></section>';
 }
 /* Kanały publikacji w Marketingu: zwinięcie całej sekcji (wybór właściciela na urządzeniu) i rozwinięte details (na czas sesji) */
 const PUB_OPEN_KEY='ag-pub-open';
@@ -6704,7 +6708,7 @@ function closeEditor(){ED.cur=null;edHost().innerHTML='';document.body.classList
 function edShell(){
   const c=ED.cur,t=D.tasks.find(x=>x.id===c.tid)||{title:'Post',channel:''};
   return '<div class="ed" id="ed" role="dialog" aria-modal="true" aria-labelledby="ed-t">'+
-    '<header class="ed-h"><button type="button" class="btn sec sm" data-edclose>← Wróć</button><div class="ed-tt"><b id="ed-t">'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b><span class="muted" id="ed-meta"></span></div><div class="ed-acts" id="ed-acts"></div></header>'+
+    '<header class="ed-h"><button type="button" class="btn sec sm" data-edclose>← Wróć</button><div class="ed-tt"><b id="ed-t">'+esc(t.title.replace(/^Opublikuj\s+/,''))+'</b><span class="muted" id="ed-meta"></span></div><div class="ed-acts" id="ed-acts"></div><p class="ed-next" id="ed-next" aria-live="polite"></p></header>'+
     '<div class="ed-b"><section class="ed-l" aria-label="Podgląd"><div class="ed-tabs" role="tablist" id="ed-tabs"></div><div id="ed-view" class="ed-view"><p class="muted">Wczytuję post…</p></div><ol class="ed-sc" id="ed-sc" aria-label="Sceny filmu"></ol></section>'+
     '<aside class="ed-r" aria-label="Poprawki"><h3>Co poprawić?</h3><div class="ed-chat" id="ed-chat" aria-live="polite"></div>'+
     '<form class="ed-f" data-edfix><div class="ed-at" id="ed-at"></div><textarea class="fi" rows="3" maxlength="1000" data-edq aria-label="Co poprawić" placeholder="Np. w tym miejscu wolniej i większy napis; w opisie na LinkedIn krócej; zamiast komody pokaż sofę"></textarea>'+
@@ -6721,17 +6725,23 @@ function edActs(){
   const put=(el,x)=>{if(el&&el.dataset.h!==x){el.innerHTML=x;el.dataset.h=x}};   /* bez przebudowy, gdy bez zmian (fokus, rozwinięcie) */
   if(!t){put(m,esc(projName(c.pid)+' · '+ddl(c.day)));put(a,'');return}
   const d=PD[c.pid+'|'+c.day],st=mkState(t,c.day),sc=parseSched(t.detail&&t.detail.scheduled),k=c.pid+'|'+c.day;
-  const who=t.state==='done'?'':sc?'publikuje panel ('+sc.ch.map(x=>PUBN[x]).join(', ')+')':'publikujesz Ty';
+  const who=t.state!=='done'&&sc?'publikuje panel ('+sc.ch.map(x=>PUBN[x]).join(', ')+')':'';
   put(m,esc(projName(c.pid))+' · '+esc(ddl(c.day))+(sc?', '+esc(sc.time):'')+(t.channel?' · '+mkChan(t):'')+(who?' · '+esc(who):'')+' <span class="lz '+st[0]+'">'+esc(st[1])+'</span>');
   let h='';const S=d&&d.ok&&d.sections||{},n=edMainSec(t,S),ck=esc(k+'|'+n);
   if(t.state!=='done'){
-    if(t.needsYou==='zgoda')h+='<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">Zatwierdź</button>';
+    if(t.needsYou==='zgoda')h+='<button type="button" class="btn sm" data-act="ok" data-id="'+esc(t.id)+'">Zatwierdź</button><button type="button" class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button>';
     else if(c.day<=D.todayKey)h+='<button type="button" class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Opublikowane</button>';
     if(n){if(canShare()){shareFile(c.pid,c.day,d);h+='<button type="button" class="btn sec sm" data-share="'+ck+'">Udostępnij</button>'}
       h+='<button type="button" class="btn sec sm" data-copy="'+ck+'">Kopiuj tekst</button>';
       const li=PCH.find(x=>x[0]==='LinkedIn');if(n==='LinkedIn'&&li&&/linkedin/i.test(t.channel||''))h+='<button type="button" class="btn sec sm" data-copyopen="'+ck+'" data-url="'+esc(li[1])+'">Otwórz LinkedIn z tekstem</button>'}
   }
   put(a,h);
+  /* co dalej: jedno zdanie pod paskiem (kto publikuje i kiedy pojawi się „Opublikowane”) */
+  const when=c.day===D.todayKey?'dziś':c.day<D.todayKey?'jak najszybciej':ddl(c.day);
+  const nx=t.state==='done'?'':sc?'Panel opublikuje post '+ddl(sc.day)+', '+sc.time+'.':
+    t.needsYou==='zgoda'?'Obejrzyj post i zatwierdź. Potem opublikujesz go '+when+' i klikniesz „Opublikowane”.':
+    c.day>D.todayKey?'Opublikujesz '+when+'; wtedy kliknij „Opublikowane”.':'';
+  put(document.getElementById('ed-next'),nx?esc(nx):'');
   const pl=document.getElementById('ed-plan');
   if(pl){const want=String(t.channel||'').toLowerCase().split(/[,\s]+/);
     put(pl,t.state!=='done'&&d&&d.ok&&LIVE&&D.publish&&PUBCH.some(([x])=>want.includes(x))?'<details class="ed-pl"'+(A.edPl?' open':'')+'><summary>Publikacja automatyczna</summary>'+pubPlanBox(t,c.day,d)+'</details>':'')}
@@ -7457,6 +7467,9 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-act]')){if(el.dataset.id){const id=el.dataset.id,k=el.dataset.act,t=D.tasks.find(x=>x.id===id);
+    /* „Zatwierdź” publikacji z datą w dowolnej liście: najpierw edytor posta z podglądem (tam „Zatwierdź” zatwierdza);
+       w edytorze i w szufladzie (podgląd posta jest nad przyciskiem) zatwierdza od razu */
+    if(k==='ok'&&t&&t.kind==='publikacja'&&isDay(t.date)&&!el.closest('#ed,#drawer')){closeDrawer();openEditor(t.project+'|'+t.date.slice(0,10)+'|'+t.id);return}
     /* edytor posta: akcja z formularzem (wynik, liczba) otwiera szufladę, więc najpierw zamknij edytor */
     if(ED.cur&&el.closest('#ed')&&t&&k==='done'&&(needsResult(t)||needsCount(t)))closeEditor();
     rowAct(el,()=>actTask(id,k))}return}
