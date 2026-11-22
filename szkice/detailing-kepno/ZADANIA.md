@@ -32,3 +32,5 @@ termin: 2027-01-15
   materiał: analiza-rynku-kepno-shieldnsilent.md#11
 
 ## Do rozplanowania
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.

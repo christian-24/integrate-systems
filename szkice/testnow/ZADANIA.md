@@ -32,3 +32,5 @@
   - [ ] nagranie ekranu z naturalnym ruchem człowieka
   - [ ] zgłoszenie w języku wymaganym przez test
   - [ ] wynik testu i wypłata zapisane w ZADANIA.md
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: Zadania (1 brak), README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.

@@ -121,3 +121,7 @@ termin: 2026-12-05
 - [ ] Podłącz Drive Shield & Silent tylko do odczytu | kto: claude | gdzie: chmura | kiedy: 2026-12-01 | po: Zaloguj Google dla Drive Shield & Silent
   cel: zdjęcia i filmy z Drive dostępne w panelu i dla agentów Shield & Silent bez pełnej kopii na serwerze
   gotowe gdy: pliki z Drive widoczne w Media projektu; agent projektu je czyta; pamięć podręczna do 1 GB; kopia nocna i Zasoby nie liczą plików z Drive
+
+## Do rozplanowania
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: Zadania (6 braków), README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.

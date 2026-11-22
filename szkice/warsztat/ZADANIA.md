@@ -32,3 +32,5 @@
   materiał: docs/plan-paludarium.md
   materiał: KARTA.md#Zasady pracy agentów
   Start dopiero po zatwierdzeniu bramki K15 (docs/gates/k15.md); projekt wstrzymany (2026-11-14). Build Windows w GitHub Actions.
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: Zadania (3 braki), README (4 braki), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (3 braki). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.

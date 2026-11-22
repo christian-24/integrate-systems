@@ -42,3 +42,5 @@ termin: 2027-02-28
   materiał: 03_plan_wdrozenia.md
 
 ## Do rozplanowania
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.

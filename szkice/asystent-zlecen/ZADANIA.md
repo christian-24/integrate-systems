@@ -31,3 +31,5 @@
   decyzja: przejdź instrukcję na Macu i potwierdź, że działa — powstała z analizy kodu, nie była wykonana na Macu. Uwaga: backend jest w Node.js, a KARTA.md#Zakres mówi „Backend w Pythonie”.
   zostało: instrukcji i testów nie uruchomiono (na serwerze nie ma Node.js, Chrome ani Codex CLI). Na Macu brak autostartu i skryptu startowego (start-all.ps1 działa tylko w Windows). Dane połączenia z panelem „Garaż” z PC są zaszyfrowane przez Windows i nie przenoszą się — na Macu trzeba je podać ponownie.
   następne: Dodaj skrypt startowy i autostart backendu dla Maca w repozytorium szukanie-auta | kto: claude | kiedy: 2026-11-24
+- [ ] Uzupełnić pliki projektu według standardu | kto: claude
+  cel: Uzupełnić według standard/STANDARD.md: Karta (1 brak), Zadania (2 braki), README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.
