@@ -1,0 +1,24 @@
+# Google Drive projektu %i tylko do odczytu (rclone) w szkice/<karta>/media/drive. Włącza i wyłącza go
+# /usr/local/bin/drive-wlacz (przycisk „Połącz Google Drive” w panelu). Instaluje uruchom/serwer/zainstaluj-drive.sh.
+[Unit]
+Description=Google Drive projektu %i tylko do odczytu (rclone)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=panel
+Group=projekty
+Environment=HOME=/home/panel
+# MNT: punkt montowania zapisany przez drive-wlacz
+EnvironmentFile=/etc/integrate/drive/%i.env
+# konfiguracja z tokenem: /home/panel/.config/rclone/rclone.conf (0600, panel); konto agent jej nie czyta
+ExecStart=/usr/bin/rclone mount drive-%i: ${MNT} --config /home/panel/.config/rclone/rclone.conf --read-only \
+  --allow-other --uid @UID@ --gid @GID@ --umask 0027 --vfs-cache-mode full --vfs-cache-max-size 1G \
+  --cache-dir /home/panel/.cache/rclone/%i --dir-cache-time 10m --poll-interval 1m
+ExecStop=/bin/fusermount3 -uz ${MNT}
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

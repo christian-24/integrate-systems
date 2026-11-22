@@ -653,6 +653,7 @@ body.ed-open{overflow:hidden}
 .mk-rh{font-size:13px;margin:6px 0 2px}
 .mk-rl{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}
 .dv{display:grid;gap:10px}
+.dv-st{margin:0;padding-left:20px;display:grid;gap:6px;font-size:13.5px}
 .dv p{margin:0}
 .dv-c{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .dv-c li{display:flex;gap:10px;align-items:baseline;font-size:13px;min-width:0}
@@ -4114,7 +4115,7 @@ function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+projChatBox(p);
+  if(tab==='plan')body=planView(p)+driveBox(p)+projChatBox(p);
   else if(tab==='tablica')body=projBoard(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
@@ -4166,6 +4167,49 @@ function planView(p){
   const nd=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">Twoje zadania bez terminu: '+nd+' · <a href="'+phref(p,'tablica')+'">Tablica</a></p>';
   return h+'</section>';
+}
+/* Google Drive projektu tylko do odczytu (GET/POST /api/drive…): link folderu → logowanie Google → wklejenie
+   adresu powrotu (http://127.0.0.1:53682/…, strona się nie otwiera) → montowanie w media/drive projektu */
+const DRV={};
+async function loadDrive(pid){
+  const d=DRV[pid]||(DRV[pid]={});
+  try{const r=await fetch('/api/drive?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){Object.assign(d,j,{err:''});if(!j.login)d.loginUrl=''}else d.err=String(j.error||'Nie odczytano stanu Drive.')}catch(e){d.err='Brak połączenia z serwerem.'}
+  d.loading=false;const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)render();
+}
+function driveBox(p){
+  if(!LIVE)return '';
+  let d=DRV[p.id];if(!d){d=DRV[p.id]={loading:true};loadDrive(p.id)}
+  let h='<section class="panel" id="pdrive"><h2>Google Drive <small><span>pliki projektu tylko do odczytu: w Media i dla agentów</span></small></h2><div class="pad dv">';
+  if(d.loading)return h+'<p class="note" role="status">Sprawdzam połączenie…</p></div></section>';
+  if(d.err)h+='<p class="warn">'+esc(d.err)+'</p>';
+  if(d.available===false)return h+'<p class="empty">Na serwerze brakuje rclone (uruchom/serwer/zainstaluj-drive.sh).</p></div></section>';
+  const busy=!!A.busy['drv:'+p.id];
+  if(d.connected){
+    h+='<p><span class="lz '+(d.mounted?'green':'yellow')+'">'+(d.mounted?'połączony':'połączony, pliki niewidoczne')+'</span>'+
+      (d.mounted?' '+(d.files!=null?d.files+' '+pl(d.files,'pozycja','pozycje','pozycji')+' w folderze · ':'')+'<a href="#media" data-drvmedia="'+esc(p.id)+'">Media</a>':'')+'</p>'+
+      '<div class="row">'+(d.mounted?'':'<button type="button" class="btn sm" data-drv="montuj" data-pid="'+esc(p.id)+'" data-k="drv-m"'+(busy?' aria-disabled="true"':'')+'>Pokaż pliki ponownie</button>')+
+      '<button type="button" class="btn sec sm" data-drv="odlacz" data-pid="'+esc(p.id)+'" data-k="drv-o"'+(busy?' aria-disabled="true"':'')+'>Odłącz</button></div>';
+  }else if(d.loginUrl){
+    h+='<ol class="dv-st"><li><a class="btn sm" href="'+esc(d.loginUrl)+'" target="_blank" rel="noopener">Zaloguj się w Google</a> i zatwierdź dostęp tylko do odczytu.</li>'+
+      '<li>Potem strona się nie otworzy: tak ma być. Skopiuj cały adres z paska przeglądarki (zaczyna się od <code>http://127.0.0.1:53682/</code>) i wklej tutaj.</li></ol>'+
+      '<form class="dform" data-drvfin="'+esc(p.id)+'"><input class="fi" name="url" autocomplete="off" inputmode="url" placeholder="http://127.0.0.1:53682/?state=…" aria-label="Adres po zalogowaniu">'+
+      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz</button><button type="button" class="btn sec sm" data-drv="anuluj" data-pid="'+esc(p.id)+'" data-k="drv-a">Anuluj</button></div></form>';
+  }else{
+    h+='<form class="dform" data-drvstart="'+esc(p.id)+'"><input class="fi" name="link" autocomplete="off" inputmode="url" placeholder="Link do folderu: https://drive.google.com/drive/folders/…" aria-label="Link do folderu na Google Drive">'+
+      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz Google Drive</button><span class="note">Panel widzi tylko ten folder i nic na Drive nie zmienia.</span></div></form>';
+  }
+  return h+'</div></section>';
+}
+async function driveAct(pid,path,body,okMsg){
+  if(A.busy['drv:'+pid])return;
+  A.busy['drv:'+pid]=true;render(true);
+  const x=await post(path,Object.assign({project:pid},body||{}));
+  A.busy['drv:'+pid]=false;
+  const d=DRV[pid]||(DRV[pid]={});
+  if(x.ok){if(x.data&&x.data.loginUrl)d.loginUrl=x.data.loginUrl;if(okMsg)say(okMsg)}else if(x.status!==401)say(failMsg(x,'Nie udało się.'));
+  await loadDrive(pid);
 }
 const PJC={};
 function projChatBox(p){
@@ -7116,6 +7160,10 @@ document.addEventListener('click',async ev=>{
     if(g==='cancel'||!t)closeForm();else if(g==='accept-only'){DR.form='';patchTask(t.id,ACT.accept)}else if(g==='done-only')finishTask(t,'',null,t.needsYou==='odbiór'?{needsYou:''}:null)}return}
   if(el=qq('[data-q]')){openDrawer('q',el.dataset.q);return}
   if(el=qq('[data-prxgo]')){ev.preventDefault();prxGo(el.dataset.prxgo);return}
+  if(el=qq('[data-drv]')){if(el.getAttribute('aria-disabled')==='true')return;const a=el.dataset.drv,pid=el.dataset.pid;
+    if(a==='odlacz'&&!confirm('Odłączyć Google Drive od projektu? Pliki z Drive znikną z panelu (na Drive zostają).'))return;
+    driveAct(pid,'/api/drive/'+a,{},a==='odlacz'?'Drive odłączony.':a==='montuj'?'Pliki z Drive widoczne.':'');return}
+  if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-act]')){if(el.dataset.id){const id=el.dataset.id,k=el.dataset.act;rowAct(el,()=>actTask(id,k))}return}
   if(el=qq('[data-run]')){openDrawer('run',el.dataset.run);return}
@@ -7183,6 +7231,8 @@ document.addEventListener('submit',ev=>{
   if(f.dataset.edfix!=null){ev.preventDefault();edSend(f);return}
   if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.pchat!=null){ev.preventDefault();sendPChat(f);return}
+  if(f.dataset.drvstart!=null){const v=(f.elements.link.value||'').trim();if(v)driveAct(f.dataset.drvstart,'/api/drive/start',{link:v});return}
+  if(f.dataset.drvfin!=null){const v=(f.elements.url.value||'').trim();if(v)driveAct(f.dataset.drvfin,'/api/drive/finish',{url:v},'Google Drive połączony.');return}
   if(f.dataset.fixpost!=null){ev.preventDefault();sendFixPost(f);return}
   if(f.dataset.fset!=null){saveFilmEdit(f);return}
   if(f.dataset.stusend!=null){sendStuAsk(f);return}

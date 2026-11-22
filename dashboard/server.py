@@ -23,6 +23,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
   POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
   GET  /api/project/chat      historia rozmowy o projekcie (?project=)
+  GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
+  POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
@@ -102,6 +104,7 @@ import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
+import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
@@ -1390,6 +1393,11 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/project/meta": lambda b: update_meta(b),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
+          "/api/drive/start": lambda b: get_drive().start(b.get("project", ""), b.get("link", "")),
+          "/api/drive/finish": lambda b: get_drive().finish(b.get("project", ""), b.get("url", "")),
+          "/api/drive/montuj": lambda b: get_drive().mount(b.get("project", "")),
+          "/api/drive/anuluj": lambda b: get_drive().cancel(b.get("project", "")),
+          "/api/drive/odlacz": lambda b: get_drive().disconnect(b.get("project", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
@@ -2241,6 +2249,16 @@ def start_deploy(body):
     return 200, ""
 
 
+_drive = {"obj": None}
+
+
+def get_drive():
+    """Połączenia Google Drive projektów (drive.py); jedno na proces."""
+    if _drive["obj"] is None:
+        _drive["obj"] = drive.Drive(card_dir)
+    return _drive["obj"]
+
+
 _resources = {"obj": None}
 
 
@@ -2853,6 +2871,10 @@ class Handler(BaseHTTPRequestHandler):
             if code == 200:
                 return self._send(200, text, "text/plain; charset=utf-8")
             return self._send(code, json.dumps({"ok": False, "error": text}, ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        if path == "/api/drive":
+            code, err, extra = get_drive().status((parse_qs(url.query).get("project") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
         if path == "/api/project/chat":
             code, err, extra = get_agents().project_chat_get((parse_qs(url.query).get("project") or [""])[0])
