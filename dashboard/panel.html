@@ -1714,6 +1714,8 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pv-today{margin:6px 0 0;font-size:var(--fs-md);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline}
 .pv-today b{color:var(--ink);font-weight:650}
 .pv-today a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.pv-p{white-space:nowrap}
+.pv-sep{color:var(--ink-3);margin:0 6px 0 0}
 .ty-kind{color:var(--ink-2);font-weight:600}
 .wk-camp{margin:12px 0 0;font-size:var(--fs-md);color:var(--ink-2)}
 .wk-camp a{color:var(--accent);display:inline-block}
@@ -1747,7 +1749,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .ty-flt{flex-wrap:wrap;overflow:visible}
   .ty-chips{flex:1 1 100%;flex-wrap:wrap}
   .pv-today{font-size:var(--fs-sm)}
-  .pv-today a{min-height:40px;display:inline-flex;align-items:center}
+  .pv-today a{display:inline-block;padding:10px 0;margin:-10px 0}
   .pv-today{row-gap:0}
   .pv-rows .r>.btn,.pv-rows .r>.pv-acts{margin-left:auto}
   .pv-rows .r>.btn{min-width:112px;justify-content:center}
@@ -1769,6 +1771,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pp-k{font-size:var(--fs-xs);font-weight:600;color:var(--ink-3)}
 .pp-over{color:var(--l-red);font-weight:600}
 #pdec .pv-pr{display:none}
+#prisk .rows li>.r{margin-left:auto}
 .pj-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
 .pj-fold>summary:hover{background:var(--hover)}
 .pj-fold>summary small{margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3)}
@@ -3444,9 +3447,10 @@ function pvToday(ys){
   const agT=!a?'agenci niedostępni':'agenci: '+(run?run+' '+pl(run,'pracuje','pracują','pracuje')+' teraz':ag?ag+' '+pl(ag,'zadanie','zadania','zadań')+' na dziś':'nic na dziś');
   /* zero bez odnośnika: nie ma dokąd prowadzić */
   const lk=(n,sec,t)=>n?'<a href="#ty" data-tysec="'+sec+'">'+n+' '+t+'</a>':'<span>'+n+' '+t+'</span>';
-  return '<p class="pv-today"><b>Dziś:</b> '+lk(dN,'dec',pl(dN,'decyzja','decyzje','decyzji'))+'<span aria-hidden="true"> · </span>'+
-    lk(tN,'dzis',pl(tN,'Twoje zadanie','Twoje zadania','Twoich zadań'))+'<span aria-hidden="true"> · </span>'+
-    '<a href="#agenci">'+esc(agT)+'</a><span aria-hidden="true"> · </span><span class="num'+(op.over>0?' pv-over':'')+'">Twój czas: '+op.m+' z '+op.cap+' min</span></p>'}
+  /* każdy człon z kropką przed nim jest jedną całością: wiersz nie kończy się kropką */
+  const part=(h,i)=>'<span class="pv-p">'+(i?'<span class="pv-sep" aria-hidden="true">·</span>':'')+h+'</span>';
+  return '<p class="pv-today"><b>Dziś:</b> '+[lk(dN,'dec',pl(dN,'decyzja','decyzje','decyzji')),lk(tN,'dzis',pl(tN,'Twoje zadanie','Twoje zadania','Twoich zadań')),
+    '<a href="#agenci">'+esc(agT)+'</a>','<span class="num'+(op.over>0?' pv-over':'')+'">Twój czas: '+op.m+' z '+op.cap+' min</span>'].map(part).join('')+'</p>'}
 /* Przegląd: gdy nic nie trwa (bez logowania, kolejki, publikacji w tej chwili i błędów odczytu), Teraz jest jedną linią w Pozostałe */
 const nwIdle=()=>{const a=D.agents;return !nwNow().length&&!lgNeed()&&!nwAct().error&&!nwPubs().now.length&&!(a&&limitT())&&!nwDone().some(x=>x.err)};
 function nwPanel(){
@@ -4628,7 +4632,7 @@ function mktView(p){
         '<form class="addf" data-addc="'+cid+'" data-pid="'+esc(p.id)+'"><input class="fi" name="title" maxlength="160" placeholder="Tytuł nowej publikacji" aria-label="Tytuł nowej publikacji" autocomplete="off"><button class="btn sec sm" type="submit">Dodaj publikację</button></form>'+
       '</div></details></div>'+
       (open.length?'<ul class="rows mk-prow">'+open.map(row).join('')+'</ul>':'')+
-      (done.length?'<details class="mk-done"><summary>Opublikowane: <span class="num">'+done.length+'</span></summary><ul class="rows mk-prow">'+done.map(row).join('')+'</ul></details>':'')+
+      (done.length?'<details class="mk-done"><summary>Opublikowane:&nbsp;<span class="num">'+done.length+'</span></summary><ul class="rows mk-prow">'+done.map(row).join('')+'</ul></details>':'')+
       (ps.length?'':'<p class="empty">Brak publikacji.</p>')+'</section>';
   }).join('');
 }
@@ -4803,11 +4807,11 @@ function burnChart(p){
   const t='„'+esc(s.title)+'”',rest=open+' z '+n;
   const verd=fut?'':left<0?'po terminie':ok?'zdąży':'nie zdąży';
   const al='Etap '+t+': zostało '+rest+', termin '+dd(s.date)+(verd?', '+verd:', zaczyna się '+dd(s.start));
-  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań (start i dziś, bez historii dziennej)</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
+  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
   const zad=v=>fmt1(v)+' '+(Math.round(v*10)===10?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
     '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
-    '<p class="cap">Etap '+t+'.'+(burnSteps.ok?'':' Linia od początku etapu do dziś (bez dat zamknięcia zadań).')+' Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
+    '<p class="cap">Etap '+t+'.'+' Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
@@ -5382,7 +5386,7 @@ function taskHtml(t){
   h+='<dt>'+(c?'Kampania':'Etap')+'</dt><dd>'+(c?esc(c.name):s?esc(s.title)+(isDay(s.date)?' <span class="muted">· termin '+dd(s.date)+'</span> '+lz(s.st):''):INBOX)+'</dd>';
   h+='<dt>Wykonawca</dt><dd><select class="fi" data-f="executor" aria-label="Wykonawca">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],t.executor||'')+'</select></dd>';
   h+='<dt>Gdzie</dt><dd><select class="fi" data-f="machine" aria-label="Gdzie">'+opt([['','–'],['cloud','serwer (chmura)'],['mac','Mac'],['pc','Windows']],t.machine||'')+'</select></dd>';
-  h+='<dt>Termin</dt><dd><div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-f="date" value="'+(isDay(t.date)?t.date:'')+'" aria-label="Termin">',t.date,'Termin')+'<button class="seg" data-dq="0">dziś</button><button class="seg" data-dq="1">jutro</button><button class="seg" data-dq="" aria-label="Usuń termin" title="Usuń termin">×</button></div>'+(lateT(t)?'<span class="lz red">po terminie</span>':'')+'</dd>';
+  h+='<dt>Termin</dt><dd><div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" aria-hidden="true" data-f="date" value="'+(isDay(t.date)?t.date:'')+'" aria-label="Termin">',t.date,'Termin')+'<button class="seg" data-dq="0">dziś</button><button class="seg" data-dq="1">jutro</button><button class="seg" data-dq="" aria-label="Usuń termin" title="Usuń termin">×</button></div>'+(lateT(t)?'<span class="lz red">po terminie</span>':'')+'</dd>';
   h+='<dt>Pora</dt><dd><select class="fi" data-f="slot" aria-label="Pora">'+opt([['','–'],['dzień','dzień'],['noc','noc']],t.slot||'')+'</select></dd>';
   h+='<dt>Czas</dt><dd><div class="row"><input class="fi" type="number" min="0" max="1440" step="5" data-f="minutes" value="'+(t.minutes?esc(String(t.minutes)):'')+'" aria-label="Czas w minutach" ><span class="muted">min Twojej pracy</span></div></dd>';
   const more=(t.needs||[]).filter(x=>x!==t.needsYou);
@@ -5734,18 +5738,19 @@ const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
   const rf=!prepDay(t)&&resFiles(t).length;
   const ym=yourMove(t);
+  const noRes=!rf&&!d.result&&!lastGitRun(t);
   let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf?(d.result?'<p class="move">'+esc(d.result)+'</p>':!lastGitRun(t)?'<p class="move muted">Agent nie opisał wyniku. Zapytaj Claude poniżej albo odeślij do poprawy.</p>':''):'')+(d.doneWhen?'<p class="move">Sprawdź: '+esc(d.doneWhen)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
   dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
     '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
-    '<div class="fl"><span>Kiedy</span>'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-fv="date" value="'+esc(fvv('date'))+'" aria-label="Kiedy">',fvv('date'),'Kiedy','fv:date')+'</div></div>'+
+    '<div class="fl"><span>Kiedy</span>'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" aria-hidden="true" data-fv="date" value="'+esc(fvv('date'))+'" aria-label="Kiedy">',fvv('date'),'Kiedy','fv:date')+'</div></div>'+
     '<label class="fl"><span>Cel</span><textarea class="fi" rows="2" maxlength="300" data-fv="goal" data-k="fv:goal">'+esc(fvv('goal'))+'</textarea></label>'+
     (needsCount(t)?countField(t):'')+
     '<div class="row"><button class="btn sm" data-k="fv:save">Odbierz i dodaj zadanie</button><button type="button" class="btn sec sm" data-dgo="accept-only" data-k="fv:only">Odbierz bez nowego zadania</button><button type="button" class="btn sec sm" data-dgo="cancel" data-k="fv:cancel">Anuluj</button></div></form>';
   else if(dForm(t,'fix'))h+='<form class="dform" data-dform="fix"><label class="fl"><span>Co poprawić (jedno zdanie)</span><textarea class="fi" rows="2" maxlength="300" data-fv="fix" data-k="fv:fix">'+esc(fvv('fix'))+'</textarea></label>'+
     '<div class="row"><button class="btn sm" data-k="fv:save">Wyślij do poprawy</button><button type="button" class="btn sec sm" data-dgo="cancel" data-k="fv:cancel">Anuluj</button></div></form>';
-  else h+='<div class="row"><button class="btn sm" data-act="accept" data-id="'+esc(t.id)+'"'+db+'>Odbierz</button><button class="btn sec sm" data-act="fix" data-id="'+esc(t.id)+'">Do poprawy</button></div>';
+  else h+='<div class="row"><button class="btn'+(noRes?' sec':'')+' sm" data-act="accept" data-id="'+esc(t.id)+'"'+db+'>Odbierz</button><button class="btn sec sm" data-act="fix" data-id="'+esc(t.id)+'">Do poprawy</button></div>';
   return h+dec+'</div>';
 }
 /* zadanie z „licznik: <nazwa>”: przy „Zrobione” pole „Ile <nazwa>?”; liczba idzie z zapisem stanu (count) */
@@ -6731,7 +6736,7 @@ function pubPlanBox(t,day,d){
   else{
     const f=PL[t.id]||(PL[t.id]={ch:{},day:isDay(day)&&day>=D.todayKey?day:D.todayKey,time:'09:00'});
     h+='<div class="row">'+avail.map(([c,n])=>{const on=f.ch[c]!=null?f.ch[c]:!(c==='reels'&&!film);return '<label class="chk"><input type="checkbox" data-pch="'+c+'"'+(on?' checked':'')+'> '+n+'</label>'}).join('')+'</div>'+
-      '<div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji">',f.day,'Dzień publikacji')+'<input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
+      '<div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" aria-hidden="true" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji">',f.day,'Dzień publikacji')+'<input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
       '<button class="btn sec sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
     const miss=list.filter(([c])=>!chanOk(t,c));
     if(miss.length)h+='<p class="note">Niepołączone: '+esc(miss.map(x=>x[1]).join(', '))+' (Marketing → Kanały publikacji).</p>';
@@ -7532,7 +7537,9 @@ async function load(force){
 /* Etapy: przycisk z datą otwiera wybór daty ukrytego pola (showPicker; awaryjnie focus i click) */
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-stgpick]');if(!b)return;
   const i=b.parentNode.querySelector('input[data-stage]');if(!i)return;
-  try{i.showPicker()}catch(e){try{i.focus();i.click()}catch(e2){}}},true);
+  try{i.showPicker()}catch(e){dpkShow(i)}},true);
+/* bez showPicker (starsze przeglądarki): ukryte pole staje się widoczne i dostaje fokus */
+function dpkShow(i){i.removeAttribute('aria-hidden');i.tabIndex=0;i.style.cssText='position:static;opacity:1;pointer-events:auto;width:auto;height:auto';try{i.focus();i.click()}catch(e){}}
 /* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
   PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
@@ -7545,7 +7552,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('summary [data-task]')){ev.preventDefault();openDrawer('task',el.dataset.task);return}
   if(el=qq('#stubox>summary,[data-stuproj]>summary,[data-stutpl]>summary')){const dt=el.parentElement;if(dt.id==='stubox')A.stuOpen=!dt.open;else if(dt.dataset.stutpl!=null)(A.stuTpl||(A.stuTpl={}))[dt.dataset.stutpl]=!dt.open;else (A.stuProj||(A.stuProj={}))[dt.dataset.stuproj]=!dt.open}
   if(el=qq('[data-skip]')){ev.preventDefault();const v=$('#view');v.focus();v.scrollIntoView();return}
-  if(el=qq('[data-dpk]')){const i=el.parentElement.querySelector('input');if(i){try{i.showPicker()}catch(e){i.focus();try{i.click()}catch(e2){}}}return}
+  if(el=qq('[data-dpk]')){const i=el.parentElement.querySelector('input');if(i){try{i.showPicker()}catch(e){dpkShow(i)}}return}
   if(el=qq('[data-bnmore]')){A.bnMore=!A.bnMore;renderSide(route());if(A.bnMore){const f=$('#bnsheet a');if(f)f.focus()}else focusK('bnmore');return}
   if(A.bnMore&&!qq('#bnsheet')){A.bnMore=false;renderSide(route())}
   if(el=qq('[data-more]')){const k=el.dataset.more;PF.more[k]=!PF.more[k];savePF();render(true);focusK('more:'+k);return}
