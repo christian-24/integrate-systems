@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Atrapa: TikTok Studio</title>
+<!-- Atrapa strony wgrywania TikTok Studio dla testu rozszerzenia (uruchom/chrome-udostepnij): ukryte pole pliku
+     (film), po wybraniu filmu edytor opisu (Draft.js) z nazwą pliku i „Post”. Konto: /passport/web/account/info/
+     (serwer testu). Wynik w atrybutach <html>: data-pliki, data-opis, data-opublikowane. -->
+<script src="/ext/wspolne.js"></script>
+<script src="/ext/selektory/tiktok.js"></script>
+<script src="/ext/tiktok.js"></script>
+</head><body>
+<main id="m"><button type="button">Select video</button><input type="file" accept="video/*" style="display:none"></main>
+<script>
+(function(){
+  const H=document.documentElement,m=document.getElementById('m');
+  m.querySelector('input').addEventListener('change',e=>{const fs=[...e.target.files];
+    H.setAttribute('data-pliki',fs.map(f=>f.name+':'+f.size+':'+f.type).join(','));
+    const ed=document.createElement('div');ed.className='public-DraftEditor-content';ed.contentEditable='true';ed.setAttribute('role','combobox');
+    ed.textContent=fs[0].name.replace(/\.[^.]+$/,'');m.appendChild(ed);
+    ed.addEventListener('input',()=>H.setAttribute('data-opis',ed.innerText));
+    const b=document.createElement('button');b.type='button';b.textContent='Post';b.addEventListener('click',()=>H.setAttribute('data-opublikowane','1'));m.appendChild(b)});
+})();
+</script>
+</body></html>

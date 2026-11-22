@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Atrapa: Meta Business Suite</title>
+<!-- Atrapa tworzenia posta w Meta Business Suite dla testu rozszerzenia (uruchom/chrome-udostepnij):
+     post: przycisk „Add photo/video” → menu „Upload from desktop” → pole pliku (pojawia się dopiero wtedy), pole opisu
+     contenteditable, „Publish”. ?reels=1: rolka: pole pliku od razu, po filmie krok „Next”, potem opis i „Share”.
+     Nazwa strony w nagłówku. Wynik w atrybutach <html>: data-pliki, data-opis, data-opublikowane. -->
+<script src="/ext/wspolne.js"></script>
+<script src="/ext/selektory/facebook.js"></script>
+<script src="/ext/facebook.js"></script>
+</head><body>
+<header><img alt="" width="5" height="5"><span>Shield &amp; Silent</span></header>
+<main id="m"></main>
+<script>
+(function(){
+  const H=document.documentElement,m=document.getElementById('m');
+  const btn=t=>'<div role="button" tabindex="0">'+t+'</div>';
+  function onBtn(root,text,fn){[...root.querySelectorAll('[role=button]')].forEach(b=>{if(b.textContent===text)b.addEventListener('click',fn)})}
+  function caption(root){const c=root.querySelector('[contenteditable]');c.addEventListener('input',()=>H.setAttribute('data-opis',c.innerText))}
+  function files(inp){inp.addEventListener('change',e=>H.setAttribute('data-pliki',[...e.target.files].map(f=>f.name+':'+f.size+':'+f.type).join(',')))}
+  if(/reels/.test(location.search)){
+    m.innerHTML='<p>Create reel</p><input type="file" accept="video/mp4,video/quicktime" style="display:none">';
+    const inp=m.querySelector('input');files(inp);
+    inp.addEventListener('change',()=>{m.innerHTML='<p>Edit</p>'+btn('Next');onBtn(m,'Next',()=>{
+      m.innerHTML='<div contenteditable="true" role="textbox" aria-label="Describe your reel"></div>'+btn('Share');
+      caption(m);onBtn(m,'Share',()=>H.setAttribute('data-opublikowane','1'))})});
+    return;
+  }
+  m.innerHTML='<div role="button" tabindex="0" aria-label="Add photo/video">Add photo/video</div><div id="menu" hidden>'+btn('Upload from desktop')+'</div>'+
+    '<div contenteditable="true" role="textbox" aria-label="Write something..."></div>'+btn('Publish');
+  caption(m);
+  onBtn(m,'Publish',()=>H.setAttribute('data-opublikowane','1'));
+  m.querySelector('[aria-label="Add photo/video"]').addEventListener('click',()=>{document.getElementById('menu').hidden=false});
+  onBtn(m,'Upload from desktop',()=>{if(m.querySelector('input'))return;
+    const inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.accept='image/*,video/*';inp.style.display='none';m.appendChild(inp);files(inp)});
+})();
+</script>
+</body></html>

@@ -22,7 +22,9 @@ Pod tytułem karty stoją pola (`- stan:`, `- faza:`, `- klient:`, `- próg:`, o
 `- priorytet: 1–5`: 1 to projekt najważniejszy, brak wiersza = 3. Inna wartość jest brakiem karty. Priorytet ustala
 kolejność spraw w raporcie PM i to, które zadania przesunąć, gdy dzień jest pełny (`priority` w danych projektu).
 `- instagram: @profil` to profil Instagram projektu: panel sprawdza go przy „Udostępnij na Instagramie” i pokazuje
-w podglądzie posta (`instagram` w danych projektu, bez @).
+w podglądzie posta (`instagram` w danych projektu, bez @). Tak samo, opcjonalnie: `- tiktok: @profil` (profil TikTok,
+bez @), `- facebook: Nazwa strony` i `- linkedin: Nazwa strony albo profilu` (nazwa jak na ekranie, do 100 znaków).
+Rozszerzenie Chrome sprawdza je przy „Udostępnij na …” (`facebook`, `linkedin`, `tiktok` w danych projektu).
 `- nagrywa: ty`: filmy projektu nagrywa właściciel według scenariusza nagrania (sekcja „Scenariusz nagrania”);
 `panel` albo brak pola: film robi panel ze scenariusza filmu (`filmOwner` w danych projektu).
 

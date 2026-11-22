@@ -86,6 +86,8 @@ CAMPAIGN_FILE = re.compile(r"^kampanie/[^/\\]+\.md$")
 TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
 INSTAGRAM = re.compile(r"^[A-Za-z0-9._]{1,30}$")      # nazwa profilu Instagram (pole karty instagram:)
+TIKTOK = re.compile(r"^[A-Za-z0-9._]{2,24}$")         # nazwa profilu TikTok (pole karty tiktok:)
+PAGE_NAME = re.compile(r"^[^|<>`\n]{1,100}$")         # strona Facebook, strona albo profil LinkedIn (nazwa jak na ekranie)
 META = re.compile(r"^\s*-\s*([^:|\[\]`]{1,30}?)\s*:\s*(.*?)\s*$")
 
 
@@ -727,7 +729,8 @@ def read_project(path, pid=None, decision=None):
                "docs": docs, "docsOk": docs_ok, "docsTotal": len(docs),
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
-               "priority": fields["priority"], "instagram": fields["instagram"], "filmOwner": fields["filmOwner"],
+               "priority": fields["priority"], "instagram": fields["instagram"], "facebook": fields["facebook"],
+               "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"],
                "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
@@ -785,7 +788,8 @@ def first_paragraph(body, limit=DESCRIPTION_MAX):
 
 
 def card_fields(meta, decision=None):
-    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3), instagram (profil, bez @), nagrywa (ty:
+    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3), instagram i tiktok (profil, bez @),
+    facebook i linkedin (nazwa strony albo profilu jak na ekranie; opcjonalne, sprawdza je rozszerzenie), nagrywa (ty:
     filmy nagrywa właściciel według scenariusza nagrania; panel albo brak: film robi panel). Karta wygrywa z decyzją zbieracza.
 
     decision: ostatnia decyzja zbieracza dla tego folderu ({"stan", "klient", "alias"}) albo None.
@@ -827,12 +831,25 @@ def card_fields(meta, decision=None):
     if instagram and not INSTAGRAM.match(instagram):
         errors.append("instagram: %s (nazwa profilu, np. @nazwa_profilu)" % raw)
         instagram = ""
+    raw = meta.get("tiktok", "").strip()
+    tiktok = raw.lstrip("@").strip()
+    if tiktok and not TIKTOK.match(tiktok):
+        errors.append("tiktok: %s (nazwa profilu, np. @nazwa_profilu)" % raw)
+        tiktok = ""
+    pages = {}
+    for key in ("facebook", "linkedin"):
+        raw = meta.get(key, "").strip()
+        pages[key] = raw.lstrip("@").strip()
+        if pages[key] and not PAGE_NAME.match(pages[key]):
+            errors.append("%s: %s (nazwa strony albo profilu, do 100 znaków)" % (key, raw[:40]))
+            pages[key] = ""
     raw = meta.get("nagrywa", "").strip().lower()       # kto nagrywa filmy projektu: ty (scenariusz nagrania) albo panel
     film_owner = raw in ("ty", "właściciel", "wlasciciel")
     if raw and not film_owner and raw not in ("panel", "agent"):
         errors.append("nagrywa: %s (dozwolone: ty, panel)" % meta["nagrywa"])
     return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
-            "priority": priority, "instagram": instagram.lower(), "filmOwner": film_owner, "errors": errors}
+            "priority": priority, "instagram": instagram.lower(), "facebook": pages["facebook"],
+            "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "errors": errors}
 
 
 def stage_done(stage, tasks):

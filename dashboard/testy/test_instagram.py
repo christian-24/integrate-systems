@@ -1,5 +1,5 @@
 """Udostępnienie posta na Instagramie: pakiet (udostepnij.py), trasy serwera, przycisk i podglądy w panelu,
-rozszerzenie Chrome (uruchom/chrome-instagram) na atrapie strony tworzenia posta.
+rozszerzenie Chrome (uruchom/chrome-udostepnij) na atrapie strony tworzenia posta.
 
 Test rozszerzenia uruchamia Chrome bez okna z pustym, tymczasowym profilem (nigdy profil właściciela) i tylko na
 lokalnej atrapie; bez Chrome albo z PANEL_TESTY_BEZ_RENDERU jest pomijany."""
@@ -20,7 +20,7 @@ from wspolne import TESTY, projekt, server
 import udostepnij
 
 ROOT = os.path.dirname(os.path.dirname(TESTY))
-EXT = os.path.join(ROOT, "uruchom", "chrome-instagram")
+EXT = os.path.join(ROOT, "uruchom", "chrome-udostepnij")
 PANEL = os.path.join(ROOT, "dashboard", "panel.html")
 CHROME = next((p for p in ("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
                            shutil.which("google-chrome") or "", shutil.which("chromium") or "",
@@ -168,9 +168,9 @@ class Panel(unittest.TestCase):
 
     def test_przycisk_i_zapas(self):
         h = self.html
-        self.assertIn("Udostępnij na Instagramie", h)
-        self.assertIn("/api/instagram/udostepnij", h)
-        self.assertIn("https://www.instagram.com/#is=", h)
+        self.assertIn("'sp-ig':['Instagram','na Instagramie'", h)
+        self.assertIn("/api/udostepnij", h)
+        self.assertIn("'#us='+encodeURIComponent(location.origin+r.data.path)", h)
         self.assertIn("Kopiuj opis", h)          # zapas bez rozszerzenia
         self.assertIn("Pobierz pliki", h)
 
@@ -250,13 +250,19 @@ document.getElementById('w').textContent=JSON.stringify(r);
 
 class Rozszerzenie(unittest.TestCase):
     def test_bez_klikania_udostepnij(self):
-        js = read(os.path.join(EXT, "instagram.js")).decode("utf-8")
+        js = read(os.path.join(EXT, "wspolne.js")).decode("utf-8")
         self.assertEqual(len(re.findall(r"\.click\(\)", js)), 1)              # jedno miejsce kliknięć: safeClick
         self.assertIn("próba kliknięcia przycisku publikacji", js)
+        self.assertEqual(len(re.findall(r"\.click\(\)", read(os.path.join(EXT, "instagram.js")).decode("utf-8"))), 0)
         man = json.loads(read(os.path.join(EXT, "manifest.json")))
         self.assertEqual(man["manifest_version"], 3)
         self.assertEqual(man["content_scripts"][0]["matches"], ["https://www.instagram.com/*"])
         self.assertNotIn("permissions", man)
+
+    def test_stara_sciezka(self):
+        old = os.path.join(ROOT, "uruchom", "chrome-instagram")
+        self.assertTrue(os.path.islink(old))
+        self.assertEqual(os.path.realpath(old), os.path.realpath(EXT))
 
 
 class Atrapa(BaseHTTPRequestHandler):
@@ -278,7 +284,7 @@ class Atrapa(BaseHTTPRequestHandler):
         path = urllib.parse.urlparse(self.path).path
         if path == "/atrapa.html":
             return self._out(200, read(os.path.join(TESTY, "atrapa_instagram.html")), "text/html; charset=utf-8")
-        if path.startswith("/ext/") and path[5:] in ("selektory.js", "instagram.js"):
+        if path.startswith("/ext/") and path[5:] in ("wspolne.js", "selektory/instagram.js", "instagram.js"):
             return self._out(200, read(os.path.join(EXT, path[5:])), "text/javascript; charset=utf-8")
         if path == "/api/v1/accounts/current_user/":
             return self._out(200, json.dumps({"user": {"username": self.user}}), "application/json")
@@ -317,9 +323,9 @@ class NaAtrapie(unittest.TestCase):
             out.append(p)
         return out
 
-    def run_page(self, handle, files, caption="Opis posta\nDruga linia #marka"):
+    def run_page(self, handle, files, caption="Opis posta\nDruga linia #marka", key="is"):
         tok = Atrapa.shares.create("Post", caption, files, handle)
-        url = "%s/atrapa.html#is=%s" % (self.base, urllib.parse.quote(self.base + "/udostepnij/" + tok, safe=""))
+        url = "%s/atrapa.html#%s=%s" % (self.base, key, urllib.parse.quote(self.base + "/udostepnij/" + tok, safe=""))
         out = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
                               "--user-data-dir=" + os.path.join(self.tmp, "profil"), "--virtual-time-budget=20000",
                               "--dump-dom", url], capture_output=True, text=True, timeout=90)
@@ -339,7 +345,7 @@ class NaAtrapie(unittest.TestCase):
 
     def test_film_przez_komunikat_ok(self):
         Atrapa.user = "shield.silent"
-        attrs = self.run_page("shield.silent", self.files("film.mp4"))
+        attrs = self.run_page("shield.silent", self.files("film.mp4"), key="us")      # nowy hash #us=
         self.assertEqual(attrs.get("data-panel-is"), "gotowe", attrs)
         self.assertEqual(attrs.get("data-pliki"), "film.mp4:16:video/mp4")
         self.assertNotIn("data-opublikowane", attrs)

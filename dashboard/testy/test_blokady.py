@@ -22,7 +22,7 @@ def run_js(js):
         return subprocess.run([OSA, "-l", "JavaScript", "-e", js], capture_output=True, text=True, timeout=60)
     lines = js.rstrip().split("\n")
     lines[-1] = "console.log(" + lines[-1].rstrip().rstrip(";") + ");"
-    return subprocess.run([NODE, "-e", "\n".join(lines)], capture_output=True, text=True, timeout=60)
+    return subprocess.run([NODE, "-"], input="\n".join(lines),  capture_output=True, text=True, timeout=60)
 
 HARNESS = r"""
 %(src)s

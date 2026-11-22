@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Panel projektów: udostępnij post",
+  "version": "2.0.0",
+  "description": "Wgrywa pliki i opis posta z panelu do okna tworzenia posta na Instagramie, Facebooku, LinkedInie i TikToku. Publikujesz sam.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["wspolne.js", "selektory/instagram.js", "instagram.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://business.facebook.com/*", "https://www.facebook.com/*"],
+      "js": ["wspolne.js", "selektory/facebook.js", "facebook.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.linkedin.com/*"],
+      "js": ["wspolne.js", "selektory/linkedin.js", "linkedin.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.tiktok.com/*"],
+      "js": ["wspolne.js", "selektory/tiktok.js", "tiktok.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://2-29-181-133.sslip.io/*", "https://*.2-29-181-133.sslip.io/*", "http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["panel.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

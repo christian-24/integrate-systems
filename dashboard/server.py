@@ -114,7 +114,7 @@ import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela: scena
 import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
-import udostepnij  # noqa: E402  (ręczne udostępnienie posta na Instagramie przez rozszerzenie Chrome)
+import udostepnij  # noqa: E402  (ręczne udostępnienie posta przez rozszerzenie Chrome: IG, FB, LinkedIn, TikTok)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex: warianty w folderze posta)
 SHARES = udostepnij.Shares()
 COSTS = koszty.Costs()
@@ -1715,28 +1715,47 @@ def get_publisher():
         return _publisher
 
 
-def instagram_share(body):
-    """POST /api/instagram/udostepnij {id, title}: pakiet posta dla rozszerzenia Chrome (udostepnij.py).
-    (kod, błąd, {path, token, handle, files, warning}). Publikuje właściciel na instagram.com."""
+# kanał zadania (pole kanał) → platforma pakietu udostępnienia; skróty jak CHAL w panel.html
+SHARE_CHANNELS = {"instagram": r"instagram|insta|\big\b", "facebook": r"facebook|\bfb\b|reels|rolki",
+                  "linkedin": r"linkedin|\bli\b", "tiktok": r"tiktok|\btt\b"}
+
+
+def post_share(body):
+    """POST /api/udostepnij {id, title, platforma}: pakiet posta dla rozszerzenia Chrome (udostepnij.py).
+    (kod, błąd, {path, token, url, platform, handle, files, warning}). Publikuje właściciel na stronie platformy."""
+    platform = str(body.get("platforma") or "instagram").lower()
+    if platform not in udostepnij.PLATFORMS:
+        return 400, "Nieznana platforma: %s." % platform[:30]
+    name = udostepnij.PLATFORMS[platform]["name"]
     t, data, folder = _find_task(body.get("id", ""), body.get("title", ""))
     if t is None:
         return folder
-    if t.get("kind") != "publikacja" or "instagram" not in str(t.get("channel") or "").lower():
-        return 400, "To nie jest publikacja z kanałem Instagram."
+    channel = str(t.get("channel") or "").lower()
+    if t.get("kind") != "publikacja" or not re.search(SHARE_CHANNELS[platform], channel):
+        return 400, "To nie jest publikacja z kanałem %s." % name
     pf = post_folder(t["project"], str(t.get("date") or "")[:10])
     if not pf:
         return 404, "Nie ma przygotowanego posta na dzień publikacji."
     info = post_info(pf)
-    files = udostepnij.media(pf, publikacja.Publisher.film(pf), post_image(pf) if info.get("image") else None)
-    if not files:
-        return 409, "Post nie ma grafiki, zdjęć ani filmu. Instagram wymaga zdjęcia albo filmu."
+    film = publikacja.Publisher.film(pf)
+    files = udostepnij.media(pf, film, post_image(pf) if info.get("image") else None, platform)
+    if not files and udostepnij.PLATFORMS[platform]["media"]:
+        return 409, ("Post nie ma filmu. TikTok wymaga filmu." if platform == "tiktok" else
+                     "Post nie ma grafiki, zdjęć ani filmu. %s wymaga zdjęcia albo filmu." % name)
     proj = next((p for p in data.get("projects") or [] if p.get("id") == t["project"]), {})
-    handle = str(proj.get("instagram") or "")
-    token = SHARES.create(t["title"], udostepnij.caption(info), files, handle)
-    warning = "" if handle else ("Karta projektu nie ma pola instagram: (nazwa profilu), więc rozszerzenie nie "
-                                 "sprawdzi, czy wybrany jest właściwy profil.")
-    return 200, "", {"path": "/udostepnij/" + token, "token": token, "handle": handle, "files": len(files),
-                     "warning": warning}
+    handle = str(proj.get(platform) or "")
+    text = udostepnij.caption(info, platform)
+    token = SHARES.create(t["title"], text, files, handle, platform)
+    warning = "" if handle else ("Karta projektu nie ma pola %s: (profil albo strona), więc rozszerzenie nie "
+                                 "sprawdzi, czy wybrane jest właściwe konto." % platform)
+    url = udostepnij.compose_url(platform, bool(film), bool(re.search(r"reels|rolki", channel)), text)
+    return 200, "", {"path": "/udostepnij/" + token, "token": token, "url": url, "platform": platform,
+                     "handle": handle, "files": len(files), "warning": warning}
+
+
+def instagram_share(body):
+    """POST /api/instagram/udostepnij {id, title}: dawna trasa, to samo co /api/udostepnij z platformą instagram."""
+    return post_share(dict(body, platforma="instagram"))
 
 
 def _post_project_name(pid):
@@ -1850,6 +1869,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/publikacja/plan": lambda b: get_publisher().plan(b),
           "/api/publikacja/anuluj": lambda b: get_publisher().cancel(b),
           "/api/instagram/udostepnij": instagram_share,
+          "/api/udostepnij": post_share,
           "/api/post/grafika-codex": graphic_order,
           "/api/post/wariant": graphic_variant,
           "/api/agent/merge": lambda b: get_agents().merge(b.get("id", ""), b.get("project", ""), b.get("branch", "")),
@@ -3413,7 +3433,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, fh.read(), ctype, [("Cache-Control", "no-store")])
         if path.startswith("/udostepnij/"):
             return self._share_get(path, parse_qs(url.query))
-        if path == "/api/instagram/udostepnij":       # czy rozszerzenie pobrało pakiet
+        if path in ("/api/udostepnij", "/api/instagram/udostepnij"):       # czy rozszerzenie pobrało pakiet
             st = SHARES.status((parse_qs(url.query).get("t") or [""])[0])
             return self._send(200 if st else 404, json.dumps(dict(st or {}, ok=bool(st)), ensure_ascii=False),
                               "application/json; charset=utf-8")
@@ -3665,18 +3685,22 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(code, json.dumps({"ok": code == 200, "error": err}, ensure_ascii=False),
                           "application/json; charset=utf-8")
 
-    def _cors(self):
-        """Nagłówki CORS pakietu udostępnienia: tylko dla strony instagram.com (rozszerzenie działa na niej)."""
-        if (self.headers.get("Origin") or "") != udostepnij.ORIGIN:
+    def _cors(self, path=""):
+        """Nagłówki CORS pakietu udostępnienia: tylko dokładny adres strony platformy pakietu (rozszerzenie działa
+        na niej); pakiet nieznany albo wygasły: dowolnej obsługiwanej platformy (komunikat o wygaśnięciu)."""
+        origin = self.headers.get("Origin") or ""
+        parts = path.split("/")
+        platform = SHARES.platform(parts[2]) if len(parts) > 2 else None
+        if not udostepnij.origin_ok(origin, platform):
             return [("Vary", "Origin")]
-        return [("Access-Control-Allow-Origin", udostepnij.ORIGIN), ("Vary", "Origin")]
+        return [("Access-Control-Allow-Origin", origin), ("Vary", "Origin")]
 
     def do_OPTIONS(self):
         """Zapytanie wstępne przeglądarki (sieć lokalna: Access-Control-Request-Private-Network) do pakietu."""
         path = urlparse(self.path).path
         if not self._host_ok() or not path.startswith("/udostepnij/") or not self._allowed(path):
             return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
-        hdr = self._cors()
+        hdr = self._cors(path)
         if len(hdr) > 1:
             hdr += [("Access-Control-Allow-Methods", "GET"), ("Access-Control-Max-Age", "600")]
             if self.headers.get("Access-Control-Request-Private-Network"):
@@ -3686,18 +3710,18 @@ class Handler(BaseHTTPRequestHandler):
     def _share_get(self, path, q):
         """GET /udostepnij/<token>: pakiet (JSON); /udostepnij/<token>/<n>[?pobierz=1]: plik n pakietu."""
         parts = path.split("/")
+        cors = self._cors(path)
         if len(parts) == 3:
             pkg = SHARES.package(parts[2])
             if pkg:
-                return self._send(200, json.dumps(pkg, ensure_ascii=False), "application/json; charset=utf-8",
-                                  self._cors())
+                return self._send(200, json.dumps(pkg, ensure_ascii=False), "application/json; charset=utf-8", cors)
         elif len(parts) == 4:
             hit = SHARES.file(parts[2], parts[3])
             if hit:
-                return self._send_file(hit[0], hit[1], bool((q.get("pobierz") or [""])[0]), self._cors())
+                return self._send_file(hit[0], hit[1], bool((q.get("pobierz") or [""])[0]), cors)
         return self._send(404, json.dumps({"ok": False, "error": "Pakiet wygasł albo nie istnieje. Udostępnij post "
                                            "z panelu jeszcze raz."}, ensure_ascii=False),
-                          "application/json; charset=utf-8", self._cors())
+                          "application/json; charset=utf-8", cors)
 
     def _send_file(self, fpath, ctype, download=False, extra=()):
         """Plik z obsługą Range (Safari na iPhonie odtwarza wideo tylko z odpowiedzi 206)."""

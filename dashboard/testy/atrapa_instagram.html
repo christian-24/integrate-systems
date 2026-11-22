@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="pl"><head><meta charset="utf-8"><title>Atrapa: tworzenie posta</title>
-<!-- Atrapa strony instagram.com dla testu rozszerzenia (uruchom/chrome-instagram): menu z „New post”, podmenu „Post”,
+<!-- Atrapa strony instagram.com dla testu rozszerzenia (uruchom/chrome-udostepnij): menu z „New post”, podmenu „Post”,
      okno z input[type=file], kroki „Next” (film: najpierw komunikat „OK”), pole opisu contenteditable, „Share”.
      Wynik zapisuje w atrybutach <html>: data-pliki (nazwy:rozmiary), data-opis, data-opublikowane. -->
-<script src="/ext/selektory.js"></script>
+<script src="/ext/wspolne.js"></script>
+<script src="/ext/selektory/instagram.js"></script>
 <script src="/ext/instagram.js"></script>
 <style>[role=dialog]{position:fixed;inset:40px;background:#fff;border:1px solid #888;padding:10px}</style>
 </head><body>

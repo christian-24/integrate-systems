@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Atrapa: LinkedIn</title>
+<!-- Atrapa strony głównej linkedin.com dla testu rozszerzenia (uruchom/chrome-udostepnij): „Start a post” otwiera okno
+     z polem opisu (Quill: .ql-editor), nazwą konta, „Add media” i „Post”. ?shareActive=true otwiera okno samo,
+     &text= wpisuje opis. „Add media” otwiera drugie okno (edytor multimediów) z polem pliku i „Next”.
+     Wynik w atrybutach <html>: data-pliki, data-opis, data-opublikowane. -->
+<script src="/ext/wspolne.js"></script>
+<script src="/ext/selektory/linkedin.js"></script>
+<script src="/ext/linkedin.js"></script>
+<style>[role=dialog]{position:fixed;inset:40px;background:#fff;border:1px solid #888;padding:10px}</style>
+</head><body>
+<div class="share-box"><button type="button" class="share-box-feed-entry__trigger">Start a post</button></div>
+<script>
+(function(){
+  const H=document.documentElement,qs=new URLSearchParams(location.search);
+  function open(){
+    if(document.getElementById('share'))return;
+    const d=document.createElement('div');d.id='share';d.setAttribute('role','dialog');
+    d.innerHTML='<div>Shield Silent sp. z o.o.</div><div class="ql-editor" contenteditable="true" role="textbox"></div>'+
+      '<button type="button" aria-label="Add media"><svg width="5" height="5"></svg></button><button type="button">Post</button>';
+    document.body.appendChild(d);
+    const ed=d.querySelector('.ql-editor');
+    ed.addEventListener('input',()=>H.setAttribute('data-opis',ed.innerText));
+    if(qs.get('text')){ed.innerText=qs.get('text');H.setAttribute('data-opis',ed.innerText)}
+    d.querySelector('[aria-label="Add media"]').addEventListener('click',media);
+    [...d.querySelectorAll('button')].forEach(b=>{if(b.textContent==='Post')b.addEventListener('click',()=>H.setAttribute('data-opublikowane','1'))});
+  }
+  function media(){
+    const d=document.createElement('div');d.id='media';d.setAttribute('role','dialog');
+    d.innerHTML='<p>Editor</p><input type="file" id="media-editor-file-selector__file-input" multiple accept="image/*,video/*" style="display:none"><button type="button">Next</button>';
+    document.body.appendChild(d);
+    d.querySelector('input').addEventListener('change',e=>H.setAttribute('data-pliki',[...e.target.files].map(f=>f.name+':'+f.size+':'+f.type).join(',')));
+    d.querySelector('button').addEventListener('click',()=>d.remove());
+  }
+  document.querySelector('.share-box-feed-entry__trigger').addEventListener('click',open);
+  if(qs.get('shareActive')==='true')setTimeout(open,300);
+})();
+</script>
+</body></html>

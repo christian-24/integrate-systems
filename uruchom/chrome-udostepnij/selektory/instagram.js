@@ -1,7 +1,7 @@
 /* Selektory i napisy strony instagram.com: jedyne miejsce do poprawek, gdy Instagram zmieni wygląd.
    Każda lista to warianty sprawdzane po kolei (pierwszy pasujący wygrywa); napisy porównywane bez wielkości liter,
    po polsku i po angielsku. Opis w README.md. */
-window.IS_SEL = {
+window.PANEL_SEL = {
   // przycisk tworzenia posta w menu bocznym (ikona z etykietą); klikany jest najbliższy link albo przycisk
   create: ['svg[aria-label="New post"]', 'svg[aria-label="Nowy post"]', 'svg[aria-label="Nowa publikacja"]',
            'svg[aria-label="Create"]', 'svg[aria-label="Utwórz"]', '[aria-label="New post"]', '[aria-label="Nowy post"]'],
@@ -19,8 +19,8 @@ window.IS_SEL = {
   // pole opisu (edytor contenteditable albo textarea)
   caption: ['[role="dialog"] div[contenteditable="true"][aria-label]', '[role="dialog"] [contenteditable="true"]',
             '[role="dialog"] textarea'],
-  // przycisk publikacji: rozszerzenie go NIE klika, tylko wyróżnia
-  shareText: ['Share', 'Udostępnij', 'Opublikuj', 'Publish'],
+  // przycisk publikacji: rozszerzenie go NIE klika (safeClick odmawia), tylko wyróżnia
+  publishText: ['Share', 'Udostępnij', 'Opublikuj', 'Publish'],
   // zalogowany profil: najpierw zapytanie strony (z nagłówkiem aplikacji webowej), potem obrazek profilu w menu
   currentUser: '/api/v1/accounts/current_user/?edit=true',
   appId: '936619743392459',

@@ -83,14 +83,19 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
   kanał nie wychodzi drugi raz (`stan.json`).
 - Instagram pobiera pliki z publicznego adresu `/media/<token>/…` (token na godzinę); wymaga `PANEL_PUBLIC_URL`
   i biblioteki Pillow (`python3-pil`) do JPEG. TikTok: jeszcze nie (wymaga audytu aplikacji przez TikTok).
-- „Udostępnij na Instagramie” (Marketing i edytor posta): publikacja z kanałem Instagram w projekcie, który nie publikuje
-  tam przez API (konto niepołączone) albo ma w karcie `- instagram: @profil`. Panel tworzy pakiet (`udostepnij.py`,
-  `POST /api/instagram/udostepnij`): opis (sekcja Instagram, inaczej Reels, Facebook), pliki (film sam; inaczej
-  `grafika.png` i zdjęcia `zdjecie-1.jpg`, `zdjecie-2.png`, `slajd-3.jpg`… jako karuzela, do 10) i profil z karty.
-  Pakiet żyje 30 minut pod `/udostepnij/<token>` (bez sesji, CORS tylko dla https://www.instagram.com). Panel otwiera
-  `https://www.instagram.com/#is=<adres pakietu>`; rozszerzenie Chrome (`uruchom/chrome-instagram/`, instalacja
-  w README tam) sprawdza zalogowany profil, wgrywa pliki, wkleja opis i zatrzymuje się: „Udostępnij” klikasz sam.
-  Gdy rozszerzenie nie pobierze pakietu w ~25 s, panel pokazuje „Kopiuj opis” i „Pobierz pliki”.
+- „Udostępnij na …” przez rozszerzenie Chrome (edytor posta, zakładka platformy bez publikacji przez API): Instagram
+  (też gdy karta ma `- instagram: @profil`), Facebook (strona niepołączona w Kanałach publikacji), LinkedIn, TikTok.
+  Panel tworzy pakiet (`udostepnij.py`, `POST /api/udostepnij {id, title, platforma}`; dawna trasa
+  `/api/instagram/udostepnij` to Instagram): opis (sekcja platformy w post.md, inaczej najbliższa), pliki (film sam;
+  inaczej `grafika.png` i zdjęcia `zdjecie-1.jpg`, `zdjecie-2.png`, `slajd-3.jpg`… do 10; TikTok tylko film) i
+  profil z karty (`instagram:`, `facebook:`, `linkedin:`, `tiktok:`). Pakiet żyje 30 minut pod `/udostepnij/<token>`
+  (bez sesji; CORS tylko dla dokładnych adresów platformy pakietu: https://www.instagram.com,
+  https://business.facebook.com, https://www.facebook.com, https://www.linkedin.com, https://www.tiktok.com).
+  Panel otwiera stronę tworzenia posta z `#us=<adres pakietu>`; rozszerzenie (`uruchom/chrome-udostepnij/`, instalacja
+  w README tam) sprawdza konto, wgrywa pliki, wkleja opis i zatrzymuje się: publikujesz sam. Bez rozszerzenia (panel
+  na adresie z manifestu nie widzi atrybutu `data-panel-rozszerzenie`) od razu, a inaczej po ~25 s bez pobrania pakietu
+  panel pokazuje okno: dlaczego (i jak zainstalować) oraz „Kopiuj opis” i „Pobierz pliki”. Telefon: systemowe
+  udostępnianie.
 - Edytor posta: zakładki podglądu Instagram, Facebook (też dla `reels`) i TikTok dla kanałów z pola kanału (Instagram
   tylko ze zdjęciem albo filmem, TikTok tylko z filmem): układ jak w aplikacji, opis ucięty przed „więcej”
   (Instagram 125 znaków, Facebook 250, TikTok 80, albo na pierwszym końcu wiersza), profil i awatar projektu.
@@ -102,8 +107,8 @@ otwiera szufladę z podglądem, filmem, „Co poprawić” (`POST /api/post/popr
 i czatem. Nic nie publikuje się samo, dopóki nie klikniesz „Zaplanuj”.
 Edytor posta: zakładki platform (Instagram, Facebook, LinkedIn, TikTok według kanałów i formy posta), pod zakładką
 podgląd i edycja opisu (`POST /api/post/tekst`: sekcja post.md) oraz grafiki (`POST /api/post/grafika`). Jedna akcja
-„Udostępnij na …”: publikacja przez API (z potwierdzeniem), Instagram przez rozszerzenie, inaczej strona tworzenia
-posta, opis w schowku i pobrane pliki. „Oznacz jako opublikowane” i odwrotnie w menu „⋯” (z „Cofnij”).
+„Udostępnij na …”: publikacja przez API (z potwierdzeniem), inaczej rozszerzenie Chrome na stronie tworzenia posta
+(telefon i zakładka „Post”: strona tworzenia posta, opis w schowku i pobrane pliki). „Oznacz jako opublikowane” i odwrotnie w menu „⋯” (z „Cofnij”).
 Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: prawdziwa przeglądarka (Playwright,
 `~/narzedzia/film`), kursor i podświetlenie kliknięć, napisy, MP4 1080×1920 (ffmpeg). Nagranie startuje samo, gdy
 film jest starszy niż scenariusz albo obrazy posta, albo przyciskiem „Nagraj film”. Zmiana samego studia (szablon,

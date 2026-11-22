@@ -2282,6 +2282,7 @@ function normalize(raw){
     o.threshold=o.threshold==='lekka'||o.threshold==='pelna'?o.threshold:(o.client?'pelna':'lekka');
     o.alias=o.alias||'';
     o.instagram=typeof o.instagram==='string'?o.instagram:'';      /* profil Instagram z karty (bez @) */
+    for(const f of ['facebook','linkedin','tiktok'])o[f]=typeof o[f]==='string'?o[f]:'';   /* strona albo profil z karty (rozszerzenie) */
     o.book=(Array.isArray(o.book)?o.book:o.docs).map(d=>({key:d.key||'',label:d.label||d.key||'',file:d.file||'',status:['ok','gaps','missing'].indexOf(d.status)>=0?d.status:'gaps',gaps:Array.isArray(d.gaps)?d.gaps:[]}));
     o.bookTotal=typeof o.bookTotal==='number'?o.bookTotal:(Array.isArray(p.book)?o.book.length:(typeof o.docsTotal==='number'?o.docsTotal:o.book.length));
     o.bookOk=typeof o.bookOk==='number'?o.bookOk:(Array.isArray(p.book)?o.book.filter(b=>b.status==='ok').length:(typeof o.docsOk==='number'?o.docsOk:o.book.filter(b=>b.status==='ok').length));
@@ -7091,49 +7092,65 @@ async function copyOpen(key,url){
   if(/^https:\/\//.test(url))window.open(url,'_blank','noopener');
   say((await p)?'Skopiowano tekst: '+n+'. Wklej go w otwartej karcie, dołącz grafikę i opublikuj; potem kliknij „Opublikowane”.':'Nie udało się skopiować. Zaznacz tekst ręcznie.');
 }
-/* ---------- „Udostępnij na Instagramie”: pakiet na serwerze, rozszerzenie Chrome (uruchom/chrome-instagram) wgrywa pliki i opis
-   na instagram.com i zatrzymuje się przed „Udostępnij”. Dla publikacji z kanałem Instagram, gdy projekt nie publikuje tam przez API
-   (konto niepołączone w Kanałach publikacji) albo ma w karcie pole instagram: (profil do sprawdzenia). ---------- */
-const IGS={};          // {id zadania: {token, files, busy, timer}}
+/* ---------- „Udostępnij na …” przez rozszerzenie Chrome (uruchom/chrome-udostepnij): pakiet na serwerze (POST /api/udostepnij
+   z platformą), strona tworzenia posta platformy z #us=<adres pakietu>; rozszerzenie wgrywa pliki i opis i zatrzymuje się przed
+   publikacją. Dla zakładek bez publikacji przez API; Instagram także, gdy karta ma pole instagram: (profil do sprawdzenia). ---------- */
+const UDP={'sp-ig':'instagram','sp-fb':'facebook','sp-li':'linkedin','sp-tt':'tiktok'};
+const UDS={};          // {id zadania|zakładka: {id, k, token, files, busy, timer}}
+const udKey=(id,k)=>id+'|'+k;
+/* rozszerzenie zaznacza się na stronie panelu (panel.js w rozszerzeniu): atrybut na <html>. Na adresach z manifestu brak
+   atrybutu znaczy „nie ma rozszerzenia” (okno zapasowe od razu); na innych adresach czekamy na pobranie pakietu (~25 s). */
+const udExt=()=>document.documentElement.getAttribute('data-panel-rozszerzenie')||'';
+const udKnown=()=>/^(?:(?:[\w-]+\.)?2-29-181-133\.sslip\.io|localhost|127\.0\.0\.1)$/.test(location.hostname);
+const udPubName=k=>k==='sp-ig'?'Udostępnij':'Opublikuj';
 function igCan(t){
   if(!t||t.kind!=='publikacja'||t.state==='done'||!/instagram/i.test(t.channel||''))return false;
   const p=P(t.project);return !!(p&&p.instagram)||!chanOk(t,'instagram');
 }
-async function igShare(id){
-  const t=D.tasks.find(x=>x.id===id);if(!t||(IGS[id]&&IGS[id].busy))return;
+async function udShare(id,k){
+  const t=D.tasks.find(x=>x.id===id),pl=UDP[k],key=udKey(id,k);if(!t||!pl||(UDS[key]&&UDS[key].busy))return;
   const w=window.open('','_blank');          /* karta od razu (blokada wyskakujących okien), adres po przygotowaniu pakietu */
-  IGS[id]=Object.assign(IGS[id]||{},{busy:true});igRedraw();
-  const r=await post('/api/instagram/udostepnij',{id:t.id,title:t.title});
-  IGS[id].busy=false;igRedraw();
+  UDS[key]=Object.assign(UDS[key]||{},{busy:true,id:id,k:k});igRedraw();
+  const r=await post('/api/udostepnij',{id:t.id,title:t.title,platforma:pl});
+  UDS[key].busy=false;igRedraw();
   if(!r.ok){if(w)w.close();if(r.status!==401)say(r.error||'Nie przygotowano posta do udostępnienia.');return}
-  const url='https://www.instagram.com/#is='+encodeURIComponent(location.origin+r.data.path);
+  const url=r.data.url+'#us='+encodeURIComponent(location.origin+r.data.path);
   if(w){w.opener=null;w.location.href=url}else window.open(url,'_blank','noopener');
-  Object.assign(IGS[id],{token:r.data.token,files:r.data.files||0});
-  say((r.data.warning?r.data.warning+' ':'')+'Otwieram Instagram: rozszerzenie wgra pliki i opis. Sprawdź post i sam kliknij „Udostępnij”.',12000);
-  igWatch(id,0);
+  Object.assign(UDS[key],{token:r.data.token,files:r.data.files||0});
+  udClose();
+  if(!udExt()&&udKnown())udFallback(key,false);       /* bez rozszerzenia: od razu kopiuj opis i pobierz pliki */
+  else say((r.data.warning?r.data.warning+' ':'')+'Otwieram '+SPN[k][0]+': rozszerzenie wgra pliki i opis. Sprawdź post i sam kliknij „'+udPubName(k)+'”.',12000);
+  udWatch(key,0);
 }
+const igShare=id=>udShare(id,'sp-ig');
 function igRedraw(){if(ED.cur)edActs();else render(true)}
-/* czy rozszerzenie pobrało pakiet; po ~25 s bez pobrania: zapas (kopiuj opis, pobierz pliki) */
-async function igWatch(id,n){
-  const s=IGS[id];if(!s||!s.token)return;
-  let st=null;try{const r=await fetch('/api/instagram/udostepnij?t='+encodeURIComponent(s.token),{cache:'no-store'});if(r.ok)st=await r.json()}catch(e){}
-  if(st&&st.fetched){say('Rozszerzenie wczytało post. Sprawdź go na Instagramie i sam kliknij „Udostępnij”.');return}
-  if(n<8){clearTimeout(s.timer);s.timer=setTimeout(()=>igWatch(id,n+1),3000);return}
-  igFallback(id);
+/* czy rozszerzenie pobrało pakiet; po ~25 s bez pobrania: okno zapasowe (kopiuj opis, pobierz pliki) */
+async function udWatch(key,n){
+  const s=UDS[key];if(!s||!s.token)return;
+  let st=null;try{const r=await fetch('/api/udostepnij?t='+encodeURIComponent(s.token),{cache:'no-store'});if(r.ok)st=await r.json()}catch(e){}
+  if(st&&st.fetched){udClose(key);say('Rozszerzenie wczytało post. Sprawdź go na stronie '+SPN[s.k][0]+' i sam kliknij „'+udPubName(s.k)+'”.');return}
+  if(n<8){clearTimeout(s.timer);s.timer=setTimeout(()=>udWatch(key,n+1),3000);return}
+  const el=document.getElementById('igfb');if(!el||el.dataset.key!==key)udFallback(key,!!udExt());
 }
-function igFallback(id){
+function udClose(key){const el=document.getElementById('igfb');if(el&&(!key||el.dataset.key===key))el.remove()}
+/* okno zapasowe: na górze dlaczego (brak rozszerzenia i jak je zainstalować, albo rozszerzenie nie wczytało posta), pod spodem ręcznie */
+function udFallback(key,ext){
+  const s=UDS[key];if(!s)return;const n=SPN[s.k][0];
   let el=document.getElementById('igfb');
-  if(!el){el=document.createElement('div');el.id='igfb';el.className='igfb';el.setAttribute('role','dialog');el.setAttribute('aria-label','Udostępnianie na Instagramie');document.body.appendChild(el)}
-  el.innerHTML='<p><b>Rozszerzenie nie wczytało posta.</b> Zainstaluj rozszerzenie panelu w Chrome (folder uruchom/chrome-instagram) albo dokończ ręcznie: skopiuj opis, pobierz pliki i dodaj je na Instagramie.</p>'+
-    '<div class="row"><button type="button" class="btn sm" data-igcopy="'+esc(id)+'">Kopiuj opis</button><button type="button" class="btn sec sm" data-igget="'+esc(id)+'">Pobierz pliki</button><button type="button" class="btn sec sm" data-igclose>Zamknij</button></div>';
+  if(!el){el=document.createElement('div');el.id='igfb';el.className='igfb';el.setAttribute('role','dialog');document.body.appendChild(el)}
+  el.dataset.key=key;el.setAttribute('aria-label','Udostępnianie: '+n);
+  el.innerHTML=(ext?'<p><b>Rozszerzenie nie wczytało posta.</b> Sprawdź otwartą kartę '+esc(n)+' (zalogowanie, właściwe konto) albo dokończ ręcznie: skopiuj opis, pobierz pliki i dodaj je sam.</p>'
+    :'<p><b>Rozszerzenie Chrome nie jest zainstalowane albo nieaktywne.</b></p><p class="note">Zainstaluj je raz: <code>chrome://extensions</code> → Tryb dewelopera → Załaduj rozpakowane → folder <code>IntegrateSystems/uruchom/chrome-udostepnij</code> na Macu. Teraz dokończ ręcznie: skopiuj opis, pobierz pliki i dodaj je na '+esc(n)+'.</p>')+
+    '<div class="row"><button type="button" class="btn sm" data-igcopy="'+esc(key)+'">Kopiuj opis</button><button type="button" class="btn sec sm" data-igget="'+esc(key)+'">Pobierz pliki</button><button type="button" class="btn sec sm" data-igclose>Zamknij</button></div>';
   const b=el.querySelector('button');if(b)b.focus();
 }
-async function igCopy(id){
-  const t=D.tasks.find(x=>x.id===id),d=t&&PD[t.project+'|'+String(t.date).slice(0,10)],text=d&&d.ok?spCap(d,'sp-ig'):'';
-  say(text&&await copyText(text)?'Skopiowano opis. Wklej go na Instagramie.':'Nie skopiowano opisu: otwórz post i skopiuj tekst Instagram.');
+async function igCopy(key){
+  const s=UDS[key],t=s&&D.tasks.find(x=>x.id===s.id),d=t&&PD[t.project+'|'+String(t.date).slice(0,10)],text=d&&d.ok?spCap(d,s.k):'';
+  say(text&&await copyText(text)?'Skopiowano opis. Wklej go na stronie '+SPN[s.k][0]+'.':'Nie skopiowano opisu: otwórz post i skopiuj opis z zakładki platformy.');
 }
-function igGet(id){
-  const s=IGS[id];if(!s||!s.token)return;
+function igGet(key){
+  const s=UDS[key];if(!s||!s.token)return;
+  if(!s.files){say('Ten post nie ma plików.');return}
   for(let i=0;i<s.files;i++)setTimeout(()=>{const a=document.createElement('a');a.href='/udostepnij/'+s.token+'/'+i+'?pobierz=1';a.download='';document.body.appendChild(a);a.click();a.remove()},i*400);
   say('Pobieram pliki: '+s.files+'. Pakiet jest ważny 30 minut.');
 }
@@ -7268,7 +7285,7 @@ function edPrimary(t,d,k){
   if(!t||t.state==='done')return null;
   if(t.needsYou==='zgoda')return {n:'Zatwierdź',attr:'data-act="ok" data-id="'+esc(t.id)+'"'};
   if(!d||!d.ok||!SPN[k])return null;
-  if(k==='sp-ig'&&IGS[t.id]&&IGS[t.id].busy)return {n:'Przygotowuję…',attr:'disabled'};
+  const us=UDS[udKey(t.id,k)];if(us&&us.busy)return {n:'Przygotowuję…',attr:'disabled'};
   return {n:k==='sp-gen'?'Kopiuj opis i pobierz pliki':'Udostępnij '+SPN[k][1],attr:'data-edgo="'+k+'"'};
 }
 function edMenu(t,d){
@@ -7374,8 +7391,9 @@ async function edImgUp(el){
   A.gfx=false;delete SF[pid+'|'+day];delete PD[pid+'|'+day];await loadPost(pid,day);
   say(ok?'Grafika zmieniona.':'Nie zapisano grafiki'+(msg?': '+msg:'')+'.');
 }
-/* „Udostępnij na …”: publikacja przez API (z potwierdzeniem), Instagram przez rozszerzenie, inaczej strona tworzenia posta
-   w nowej karcie, opis w schowku i pliki pobrane; publikuje właściciel na platformie */
+/* „Udostępnij na …”: publikacja przez API (z potwierdzeniem), inaczej rozszerzenie Chrome na stronie tworzenia posta
+   (udShare); telefon i zakładka „Post”: strona tworzenia posta w nowej karcie, opis w schowku i pliki pobrane;
+   publikuje właściciel na platformie */
 const SPURL={'sp-ig':()=>'https://www.instagram.com/','sp-fb':(d,tx,t)=>d.film&&chList(t).includes('reels')?'https://business.facebook.com/latest/reels_composer':'https://business.facebook.com/latest/composer',
   'sp-li':(d,tx)=>'https://www.linkedin.com/feed/?shareActive=true&text='+encodeURIComponent(tx),'sp-tt':()=>'https://www.tiktok.com/tiktokstudio/upload','sp-gen':()=>''};
 function edGo(k){
@@ -7387,7 +7405,8 @@ function edGo(k){
     enqueue(async()=>{const x=await post('/api/publikacja/plan',{id:t.id,title:t.title,channels:api,now:true});
       say(x.ok?'Publikuję '+SPN[k][1]+'. Wynik przyjdzie w powiadomieniu i pojawi się w zadaniu.':failMsg(x,'Nie opublikowano.'))});
     return}
-  if(k==='sp-ig'&&igCan(t)){igShare(t.id);return}
+  /* komputer: rozszerzenie Chrome na stronie tworzenia posta; telefon: systemowe udostępnianie (edManual) */
+  if(UDP[k]&&!(canShare()&&matchMedia('(pointer:coarse)').matches)){udShare(t.id,k);return}
   edManual(t,d,k);
 }
 async function edManual(t,d,k){
