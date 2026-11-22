@@ -87,6 +87,18 @@ class Logowanie(unittest.TestCase):
         self.assertEqual(self.helper_calls()[-1], "--wylacz proj")
         self.assertFalse(self.d.status("proj")[2]["connected"])
 
+    def test_anulowanie_usuwa_wpis(self):
+        self.assertEqual(self.d.start("proj", "1AbC_d-EfGh123")[0], 200)
+        with open(os.path.join(self.tmp, "cfg", "rclone.conf.zdalne")) as f:
+            self.assertIn("drive-proj", f.read())                               # rclone zapisał wpis przed logowaniem
+        self.assertFalse(self.d.status("proj")[2]["connected"])
+        self.d.cancel("proj")
+        st = self.d.status("proj")[2]
+        self.assertEqual((st["connected"], st["login"]), (False, False))
+        with open(os.path.join(self.tmp, "cfg", "rclone.conf.zdalne")) as f:
+            self.assertNotIn("drive-proj", f.read())
+        self.assertEqual(self.d.start("proj", "1AbC_d-EfGh123")[0], 200)        # można zacząć od nowa
+
     def test_bez_rclone(self):
         d = drive.Drive(lambda pid: self.card, rclone="", data_dir=self.tmp)
         self.assertEqual(d.status("proj")[2]["available"], False)

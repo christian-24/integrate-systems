@@ -89,8 +89,19 @@ class Drive:
             return False, str(e)[:200]
         return r.returncode == 0, (r.stdout + r.stderr).strip()[-200:]
 
-    def _stop_login(self):
-        """Wywołanie pod self.lock."""
+    def _connected(self, pid):
+        """Połączony = udane logowanie (plik dane/drive/<pid>.json) i wpis drive-<pid> w konfiguracji rclone.
+        rclone zapisuje wpis już przed zalogowaniem, więc sam wpis niczego nie znaczy."""
+        return os.path.exists(self._side(pid)) and ("drive-" + pid) in self._remotes()
+
+    def _drop_remote(self, pid):
+        try:
+            self._rc("config", "delete", "drive-" + pid)
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+    def _stop_login(self, drop=True):
+        """Wywołanie pod self.lock. drop: usuń niedokończony wpis rclone (logowanie przerwane)."""
         lg, self.login = self.login, None
         if not lg:
             return
@@ -105,6 +116,8 @@ class Drive:
                 lg["proc"].stdout.close()
             except OSError:
                 pass
+        if drop and not os.path.exists(self._side(lg["pid"])):
+            self._drop_remote(lg["pid"])
 
     def _check(self, pid):
         pid = str(pid or "")
@@ -123,7 +136,7 @@ class Drive:
                "login": False}
         if not self.rclone:
             return 200, "", out
-        out["connected"] = ("drive-" + pid) in self._remotes()
+        out["connected"] = self._connected(pid)
         try:
             with open(self._side(pid), encoding="utf-8") as f:
                 out["folder"] = str(json.load(f).get("folder") or "")
@@ -153,13 +166,15 @@ class Drive:
         fid = folder_id(link)
         if not fid:
             return 400, "Wklej link do folderu na Google Drive (…/drive/folders/…).", {}
-        if ("drive-" + pid) in self._remotes():
+        if self._connected(pid):
             return 409, "Ten projekt ma już połączony Drive. Najpierw odłącz.", {}
         with self.lock:
             lg = self.login
             if lg and lg["proc"].poll() is None and time.time() - lg["at"] < LOGIN_TTL and lg["pid"] != pid:
                 return 409, "Trwa logowanie Drive w innym projekcie. Spróbuj za kilka minut.", {}
             self._stop_login()
+            if ("drive-" + pid) in self._remotes():
+                self._drop_remote(pid)                  # wpis po przerwanym logowaniu
             os.makedirs(os.path.dirname(self.conf), mode=0o700, exist_ok=True)
             proc = subprocess.Popen([self.rclone, "--config", self.conf, "config", "create", "drive-" + pid, "drive",
                                      "scope=drive.readonly", "root_folder_id=" + fid], stdin=subprocess.DEVNULL,
@@ -225,10 +240,11 @@ class Drive:
                 lg["proc"].wait(timeout=60)
             except subprocess.SubprocessError:
                 pass
-            folder = lg["folder"]
-            self._stop_login()
-        if ("drive-" + pid) not in self._remotes():
-            return 500, "Google nie potwierdził logowania. Spróbuj jeszcze raz.", {}
+            folder, done = lg["folder"], lg["proc"].returncode == 0
+            if not done or ("drive-" + pid) not in self._remotes():
+                self._stop_login()                      # usuwa niedokończony wpis
+                return 500, "Google nie potwierdził logowania. Spróbuj jeszcze raz.", {}
+            self._stop_login(drop=False)
         try:
             os.chmod(self.conf, 0o600)
         except OSError:
@@ -245,7 +261,7 @@ class Drive:
         pid, err = self._check(pid)
         if err:
             return err
-        if ("drive-" + pid) not in self._remotes():
+        if not self._connected(pid):
             return 409, "Drive nie jest połączony.", {}
         ok, msg = self._helper(pid, self.card_dir(pid))
         return (200, "", {}) if ok else (500, "Montowanie nieudane: %s" % msg, {})

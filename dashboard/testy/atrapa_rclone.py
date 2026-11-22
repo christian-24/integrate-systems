@@ -40,8 +40,6 @@ elif rest[:2] == ["config", "create"]:
                 self.send_header("Location", "https://accounts.google.com/o/oauth2/auth?state=" + state)
                 self.end_headers()
             elif q.get("state") == [state] and q.get("code"):
-                with open(state_file, "a") as f:
-                    f.write("\n" + name)
                 self.send_response(200)
                 self.end_headers()
                 srv.done = True
@@ -49,6 +47,8 @@ elif rest[:2] == ["config", "create"]:
                 self.send_response(400)
                 self.end_headers()
 
+    with open(state_file, "a") as f:              # jak prawdziwy rclone: wpis zapisany przed zalogowaniem
+        f.write("\n" + name)
     srv = http.server.HTTPServer(("127.0.0.1", port), H)
     srv.done = False
     print("NOTICE: If your browser doesn't open automatically go to the following link: "
