@@ -23,14 +23,15 @@ Sprzedawcy mebli na Allegro i w Niemczech, małe firmy, decyzja u właściciela.
 Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, bez karty.
 
 ## Harmonogram
-- [ ] Opublikuj post „Darmowy generator opisów mebli już działa” | kto: ty | kanał: facebook, linkedin | kiedy: 2026-11-21 | czas: 15 | po: Potwierdź DPA
+- [x] Opublikuj post „Darmowy generator opisów mebli już działa” | kto: ty | kanał: facebook, linkedin | kiedy: 2026-11-21 | czas: 15 | po: Potwierdź DPA
   cel: ogłosić, że generator działa, i zaprosić 10 osób z branży do darmowego konta
   gotowe gdy: post opublikowany w kanałach z wiersza, link do opisarnia.pl w pierwszym komentarzu
   materiał: posty/2026-11-21-generator-dziala/post.md
   materiał: marketing/plan-10-kont.md#4
-  zaplanowane: 2026-11-22 22:13; facebook
   Post 1 z planu. Link do opisarnia.pl w pierwszym komentarzu, w treści adres słownie.
   Post kieruje do rejestracji: publikacja po „Potwierdź DPA…” w ZADANIA.md (pytanie 13 w KARTA.md).
+  link: https://www.facebook.com/1416011748262183_122115016131539109
+  wynik: opublikowane 22.11 22:14: facebook https://www.facebook.com/1416011748262183_122115016131539109
 - [ ] Obejrzyj film A nagrany przez panel: opis mebla PL i DE w 10 s | kto: ty | kiedy: 2026-11-20 | czas: 5
   cel: gotowy film do slotu A, do 60 sekund
   gotowe gdy: film.mp4 w posty/2026-11-20-film-a-opis-pl-de nagrany przez panel ze scenariusza posta i obejrzany w całości
