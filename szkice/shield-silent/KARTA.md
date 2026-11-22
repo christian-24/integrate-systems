@@ -42,3 +42,4 @@ Na 28.01.2027: 60+ zapytań z reklam łącznie, 11+ nowych klientów z marketing
    propozycja: tak, wstrzymanie 23 grudnia i włączenie 27 grudnia; przy terminie 3 stycznia reklamy stoją tydzień dłużej (ok. 315 zł budżetu bez wyświetleń, mniej zapytań przed kontrolą 2)
    skutek: kiedy: 2026-12-23 → Wstrzymać wszystkie reklamy
    skutek: kiedy: 2026-12-27 → Włączyć z powrotem Google i Meta
+   Odpowiedź: tak, wstrzymanie 23 grudnia i włączenie 27 grudnia; przy terminie 3 stycznia reklamy stoją tydzień dłużej (ok. 315 zł budżetu bez wyświetleń, mniej zapytań przed kontrolą 2)

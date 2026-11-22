@@ -95,8 +95,9 @@ termin: 2026-12-27
 - [x] Wyłączyć reklamy bonów | kto: ty | kiedy: 2026-12-21
   cel: 21 gru: wyłączyć reklamy bonów
   wynik: zamknięte przy porządkach 2026-11-21 (zbędne: kampania bonów ma datę końca 21 gru 23:59 i wyłącza się sama; sprawdzenie dopisane do zadania „Wstrzymać wszystkie reklamy”)
-- [ ] Wstrzymać wszystkie reklamy | kto: ty | kiedy: 2026-12-24 | czas: 5
+- [ ] Wstrzymać wszystkie reklamy | kto: ty | kiedy: 2026-12-23 | czas: 5
   cel: 24–26 gru: wstrzymać wszystkie reklamy (Google i Meta). Przy okazji sprawdź, czy kampania bonów wyłączyła się 21 gru
+  z pytania 1, 2026-11-22
 - [ ] Nagraj filmy tygodnia 21 gru – 27 gru | kto: ty | kiedy: 2026-12-27 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
@@ -104,8 +105,9 @@ termin: 2026-12-27
 ## Etap: Tydzień 28 gru – 3 sty: kontrola 2
 termin: 2027-01-03
 
-- [ ] Włączyć z powrotem Google i Meta | kto: ty | kiedy: 2027-01-03 | czas: 5
+- [ ] Włączyć z powrotem Google i Meta | kto: ty | kiedy: 2026-12-27 | czas: 5
   cel: 27 gru: włączyć z powrotem Google i Meta
+  z pytania 1, 2026-11-22
 - [ ] KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z… | kto: ty | kiedy: 2027-01-03 | czas: 20
   cel: 3 sty, KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z kanału, który nie działa
 - [ ] Nagraj filmy tygodnia 28 gru – 3 sty | kto: ty | kiedy: 2027-01-03 | czas: 90
