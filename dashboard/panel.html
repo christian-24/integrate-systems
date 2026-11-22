@@ -126,7 +126,7 @@ code{font:12.5px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--
 .plist .ph{font-size:11px;color:var(--ink-3);white-space:nowrap}
 .sidefoot{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;padding:0 6px}
 .av{width:28px;height:28px;border-radius:var(--r);display:grid;place-items:center;font-weight:700;color:var(--on-color);font-size:11px;flex:none;letter-spacing:.02em}
-.av.sm{width:18px;height:18px;font-size:9px;border-radius:var(--r-sm)}
+.av.sm{width:18px;height:18px;font-size:10px;border-radius:var(--r-sm)}
 
 /* obszar główny */
 .main{min-width:0;display:flex;flex-direction:column}
@@ -173,7 +173,7 @@ code{font:12.5px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--
 .btn.dec{border-color:var(--l-purple)}
 .btn.danger,.btn.sec.danger{background:var(--l-red-bg);color:var(--l-red);border-color:var(--l-red)}
 .btn.danger:hover{filter:brightness(.97)}
-.btn[disabled],.btn[aria-disabled="true"]{opacity:.55;cursor:default;filter:none}
+.btn[disabled],.btn[aria-disabled="true"]{background:var(--sunk);color:var(--ink-3);border-color:var(--line-2);cursor:default;filter:none}
 .lk{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left;overflow-wrap:anywhere}
 .lk:hover{color:var(--accent);text-decoration:underline}
 .linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;justify-self:start}
@@ -714,7 +714,7 @@ body.ed-open{overflow:hidden}
 .padd>.prx-chk{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-2);cursor:pointer}
 /* Projekty i standard (#projekty): klasy .prx- tylko w tym widoku */
 .prx-acts{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:flex-end}
-.prx-s>span:not(.av)+span::before{content:"· ";color:var(--ink-3)}
+.prx-s{column-gap:12px}
 .prx-files{text-decoration:none;white-space:nowrap}
 .prx-files:hover,.prx-files:focus-visible{text-decoration:underline}
 .plx .pf code{overflow-wrap:break-word;display:block;margin-top:4px}
@@ -774,7 +774,7 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
   .plx li{grid-template-columns:minmax(0,1fr)}
   .plx .r{justify-content:flex-start}
   .prx-coln{display:block;flex:1 1 100%;margin:0}
-  .prx-tw{display:none}
+  .prx-tw,.prx-tdet{display:none}
   .prx-cards{display:grid}
   .prx-stdt{display:none}
   .prx-std-doc{display:block}
@@ -784,7 +784,7 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
   .padd{margin:0 12px}
 }
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.dot[style]{box-shadow:0 0 0 1px var(--line-2)}
+.dot[style]{box-shadow:0 0 0 1px var(--ctl-line)}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ctl-line);background:var(--surface);border-radius:var(--r-pill);padding:2px 10px;cursor:pointer;font-size:13px}
 .chip[aria-pressed="false"]{color:var(--ink-3);text-decoration:line-through}
 .chip[aria-pressed="false"] .dot{opacity:.3}
@@ -1244,8 +1244,8 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .board .card.tb-blk,.board .card.tb-late{border-left:3px solid var(--l-red)}
 .card .meta .av{flex:none}
 .tb-pn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto;max-width:100%;min-width:0}
-.tb-st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 3 auto;min-width:0}
-.tb-pn+.tb-st::before{content:"·";content:"·" / "";margin-right:6px}
+.tb-stg{font-size:12px;color:var(--ink-3);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.tb-stg.late b{color:var(--l-red);font-weight:600}
 .tb-wt{max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;display:block}
 .colsw{position:sticky;top:0;background:var(--bg);z-index:3;padding:4px 0}
 .colsw .seg{font-size:13px;min-height:48px;line-height:1.25;padding:4px 6px}
@@ -1356,7 +1356,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .rows.tm-ev .t{display:flex;align-items:center;gap:8px;font-weight:400}
 .tm-set>summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:14px 16px;cursor:pointer}
 .tm-set>summary b{font-size:var(--fs-lg);font-weight:650}
-.tm-set>summary .muted{font-size:var(--fs-sm)}
+.tm-set>summary .muted{font-size:var(--fs-sm);font-weight:400}
 .tm-icsb{display:grid;gap:8px}
 .tm-icsb p{margin:0}
 .tm-url{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
@@ -1557,7 +1557,7 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
 .bk-mapd{margin:0;padding:0 16px 6px;font-size:var(--fs-sm);color:var(--ink-3)}
 .bk-tree>.bk-you>.bk-row{background:transparent}
 @media (max-width:620px){
-  .card .tb-st{display:none}
+  .card .tb-stg:not(.late){display:none}
   .tb-pn{max-width:none}
   .tb-head .tb-cnt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .tb-act{min-height:40px}
@@ -1565,7 +1565,7 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   .card.tb-hasact .foot{min-height:40px}
   .tm-cnt,.tm-pl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .bk-sum{flex-wrap:wrap;overflow:visible}
-  .bk-row .bk-next{display:none}
+  .bk-row .bk-next{display:block;white-space:normal;flex:1 1 100%}
   .bk-allb{display:none}
 }
 /* poprawki UI: Marketing */
@@ -1624,13 +1624,13 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 /* poprawki UI: elementy wspólne, Agenci, Serwer, Projekty i standard (wykonawca D) */
 .bn-dot{position:absolute;top:6px;left:calc(50% + 8px);width:8px;height:8px;border-radius:50%;background:var(--l-purple)}
 .bn-dot.red{background:var(--l-red)}
-.bs-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:10px 10px 2px;border-top:1px solid var(--line);margin-top:4px}
+.bs-h{font-size:var(--fs-sm);font-weight:600;color:var(--ink-3);padding:10px 10px 2px;border-top:1px solid var(--line);margin-top:4px}
 .bn-sheet .bs-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bn-sheet .count{font-size:12px;font-weight:700;background:var(--l-purple-bg);color:var(--l-purple);border-radius:9px;padding:0 6px;line-height:18px}
 .bn-sheet .count.red{background:var(--l-red-bg);color:var(--l-red)}
 .bn-sheet .count.blue{background:var(--l-blue-bg);color:var(--l-blue)}
 .bn-sheet .count.plain{background:var(--surface);color:var(--ink-3);border:1px solid var(--line)}
-.ag-sum{margin:0;padding:14px 16px 0;font-size:var(--fs-md);color:var(--ink)}
+.ag-sum{margin:0;padding:14px 16px 0;font-size:var(--fs-lg);font-weight:600;color:var(--ink)}
 #abar .ahint{padding-top:8px}
 .ag-tools .ag-st{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .ag-tools>summary small,.prx-stdall>summary small,.rs-det>summary small,.prx-cdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
@@ -1638,7 +1638,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pub-sum{padding:4px 16px 14px}
 .rs-det{border-top:1px solid var(--line);padding-top:12px!important}
 .rs-det .tw{margin:0 -16px}
-.pn-s{display:none}
 .prx-more{grid-column:2;grid-row:1;justify-self:end;font-size:13px}
 .prx-more>summary{font-weight:500;font-size:12px;color:var(--ink-3)}
 .prx-more[open]{grid-column:1/-1;grid-row:auto;justify-self:stretch}
@@ -1664,9 +1663,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 @media (max-width:620px){
   .kbd-h{display:none}
   .rs-path{display:none}
-  .pn-f{display:none}
-  .pn-s{display:inline}
-  .plx .prx-s .av{display:none}
   .plx li{grid-template-columns:minmax(0,1fr) auto}
   .prx-more>summary{display:inline-flex;min-height:40px;align-items:center;padding-left:8px}
   .prx-cdet{display:block}
@@ -1859,7 +1855,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .dmeta{margin:-6px 0 12px;font-size:var(--fs-sm);color:var(--ink-3)}
 .dmeta .late{color:var(--l-red);font-weight:600}
 .dbox.dr-chat{border:0;padding:0}
-.dr-foot{display:none}
 .run-tech{margin-top:12px}
 .run-tech>summary{cursor:pointer;font-weight:600;padding:6px 0}
 .bn-scrim{display:none}
@@ -1880,8 +1875,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .card .meta,.card .bd{font-size:13px}
   .lz.caps{font-size:13px}
   .plist .ph{font-size:12px}
-  .dr-foot{display:flex;position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));margin:16px -14px -20px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
-  .dr-foot .btn{flex:1;min-height:44px}
   .bs-foot .btn{min-height:44px}
 }
 /* poprawki UI runda 2: B (strona projektu) */
@@ -1910,6 +1903,22 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .ed-next{flex:1 1 100%;margin:0;font-size:13px;color:var(--ink-2)}
 .ed-next:empty{display:none}
 .pub-sep{margin:18px 0 10px;font-size:var(--fs-md)}
+/* poprawki UI runda 2: D */
+.ag-wait{margin:0;padding:6px 16px 0;font-size:var(--fs-md);color:var(--ink-2)}
+.tm-leg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-sm);color:var(--ink-3);margin:-8px 0 0}
+.tm-leg>span{display:inline-flex;align-items:center;gap:6px}
+.tm-leg .tm-ic svg{width:14px;height:14px}
+.bk-why:has(.bk-unb){display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bk-unb{margin-left:auto}
+.ag-ses>summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 16px;flex-wrap:wrap}
+.ag-ses>summary .muted{font-size:var(--fs-sm)}
+.prx-tdet>summary{cursor:pointer;font-weight:600;padding:8px 16px}
+.prx-tdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
+.prx-nm{overflow-wrap:anywhere}
+@media (max-width:620px){
+  .av.sm{width:22px;height:22px;font-size:11px}
+  .tm-leg{font-size:13px}
+}
 </style>
 
 <div class="app">
@@ -1993,11 +2002,11 @@ const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 const VIEWS=['przeglad','wskazniki','ty','marketing','media','tablica','terminy','blokady','agenci','koszty','projekty'];
-const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty i standard'};
+const VNAME={przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica: zadania ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
-  agenci:'Agenci: kto pracuje i historia uruchomień',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty i standard: rejestr i zgodność plików'};
+  agenci:'Agenci: kto pracuje i historia uruchomień',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (pozostałe widoki z licznikami i lista projektów) */
 const BNAV=['przeglad','ty','tablica','marketing'];
 const PTABS=[['plan','Plan'],['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy'],['ksiega','Księga'],['marketing','Marketing']];
@@ -2821,7 +2830,8 @@ function dlRow(x,o){
   const rl=o.lateShort&&d<0?(-d)+' '+pl(-d,'dzień','dni','dni'):relN(d);
   if(showD)S.push('<span class="tm-dm'+(d<0?' late':'')+'"><time datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'">'+ddl(x.d)+'</time>, '+rl+'</span>');
   const a=t&&needsMe(t)&&!(t.kind==='publikacja'&&!t.needsYou&&d>0)?ACTB(t):null;
-  const act=a?'<button class="btn sec sm tm-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tma:'+esc(t.id)+'">'+a[1]+'</button>':'';
+  const ed=a&&t.kind==='publikacja'&&t.channel&&isDay(t.date)&&a[0]==='ok'?t.project+'|'+t.date.slice(0,10)+'|'+t.id:'';
+  const act=a?'<button class="btn sec sm tm-act" '+(ed?'data-medit="'+esc(ed)+'"':'data-act="'+a[0]+'" data-id="'+esc(t.id)+'"')+' data-k="tma:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+x.t)+'">'+a[1]+'</button>':'';
   const dt=showD?'<time class="tm-due'+(d<0?' late':'')+'" datetime="'+esc(x.d)+'" title="'+esc(dLong(x.d))+'"><b aria-hidden="true">'+ddl(x.d)+'</b><span class="sr-only">'+esc(dLong(x.d))+'</span><span class="tm-sep">, </span><span class="tm-rel">'+rl+'</span></time>':
     (x.tm?'<span class="num tm-tm">'+esc(x.tm)+'</span>':'');
   return '<li class="tm-row'+(x.ev?' tm-evr':'')+'"><div class="tm-m"><div class="tm-tl">'+ic+title+'</div>'+(S.length?'<div class="s">'+S.join('')+'</div>':'')+'</div>'+
@@ -2838,10 +2848,14 @@ function tbDate(t){
 /* karta tablicy; plakietki: zablokowane, etap po terminie (data po terminie widać na czerwono), zgoda/odbiór, agent, czeka na.
    Wykonawca tylko, gdy to nie Ty. Akcja właściciela (Zrobione, Zatwierdź, Odbierz) jako osobny przycisk obok karty
    (karta sama jest przyciskiem, przycisk w przycisku jest niepoprawny) */
+/* etap na karcie: pełna nazwa (najwyżej 2 wiersze); termin etapu, który minął, tekstem w tym samym wierszu (bez osobnej pigułki) */
+function tbStage(t,lt){
+  const sg=stageOf(t.stage),late=lt&&!isLate(t)&&!!sg&&isDay(sg.date);
+  return '<span class="tb-stg'+(late?' late':'')+'">'+esc(t.group||INBOX)+(late?' · <b>etap po terminie ('+esc(dd(sg.date))+')</b>':'')+'</span>';
+}
 function card(t,showProj,old){
   const p=P(t.project),w=WHO[t.executor]||WHO[''],ar=D.agents?runOf(t):null,b=[],lt=lateT(t);
   if(t.state==='blocked')b.push('<span class="lz red">zablokowane</span>'+(t.blocked?'<span>'+esc(t.blocked)+'</span>':''));
-  if(lt&&!isLate(t)){const sg=stageOf(t.stage);b.push('<span class="lz red">'+(sg&&isDay(sg.date)&&isDay(t.date)&&t.date>sg.date?'po terminie etapu':'etap po terminie')+'</span>')}
   (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(BK_NEED[x]?BK_NEED[x][0]:x)+'</span>'));
   if(ar)b.push('<span class="lz blue">'+(ar.state==='running'?'agent pracuje':'agent w kolejce')+'</span>');
   else if(A.starting[t.id])b.push('<span class="lz grey">uruchamianie</span>');
@@ -2849,7 +2863,7 @@ function card(t,showProj,old){
   const who=t.state==='done'||t.executor==='ty'||!t.executor?'':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
   const a=needsMe(t)&&!t.waits.length&&t.state!=='blocked'?ACTB(t):null;
   const cl=(old?' old':'')+(t.state==='blocked'?' tb-blk':'')+(lt?' tb-late':'')+(a?' tb-hasact'+(who?' tb-actwho':''):'');
-  const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span><span class="meta">'+(showProj&&p?av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span>':'')+'<span class="tb-st">'+esc(t.group||INBOX)+'</span></span>'+
+  const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span>'+(showProj&&p?'<span class="meta">'+av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span></span>':'')+tbStage(t,lt)+
     (b.length?'<span class="bd">'+b.join('')+'</span>':'')+
     (who||dl||a?'<span class="foot">'+(who||'<span></span>')+dl+'</span>':'')+'</button>';
   return a?'<div class="tb-cw'+(old?' old':'')+'">'+c+'<button class="btn sec sm tb-act" data-act="'+a[0]+'" data-id="'+esc(t.id)+'" data-k="tba:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button></div>':c;
@@ -2867,7 +2881,7 @@ const TB_EMPTY={todo:'Brak zadań do zrobienia.',wip:'Nic w toku.',rev:'Nic do o
    rozwinięte, Później i Bez terminu zwinięte; dalej zwinięte „Czekają na inne” i „Agenci”. Rozwinięte grupy razem
    pokazują 15 kart, reszta po „Pokaż wszystkie”. Stan zwinięcia w A.tbGrp (sesja), „Pokaż wszystkie” w PF.more */
 const TB_CUT=15;
-const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Do 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
+const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Najbliższe 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
 const tbMine=t=>t.executor==='ty'||!t.executor||needsMe(t);
 const tbPer=t=>{if(isLate(t))return 'late';if(!isDay(t.date))return 'none';const d=dTo(t.date);return d<=0?'today':d<=7?'week':'later'};
 function tbGrpHead(key,label,n,open,cls){
@@ -3606,7 +3620,7 @@ const tmNarrow=()=>!!(window.matchMedia&&matchMedia('(max-width:760px)').matches
 /* details w Terminach: stan z bieżącej sesji (zdarzenie toggle), inaczej domyślny */
 const tmDet=(k,def)=>{const o=A.tmDet&&A.tmDet[k];return o!=null?o:def};
 /* grupa: wybór użytkownika (PF.tmSec), domyślnie na desktopie otwarte; na telefonie otwarte tylko Dziś (pierwsze 8 pozycji) */
-const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return !narrow||id==='today'};
+const tmSecOpen=(id,n,narrow)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return id==='today'};
 /* pozycje po filtrach; licznik rodzaju liczony przed filtrem rodzaju; przy jednym projekcie bez wydarzeń z kalendarza */
 function tmGroups(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -3621,7 +3635,7 @@ function tmGroups(){
   const G=[{id:'late',s:'Po terminie',n:anyRisk?'Po terminie i zagrożone':'Po terminie',f:x=>x.d<T||risk(x),date:1,cut:1,cutN:5,empty:'Nic po terminie.'},
     {id:'today',s:'Dziś',n:'Dziś · '+ddl(T),f:x=>x.d===T&&!risk(x),cut:nar?1:0,empty:'Nic na dziś.'},
     {id:'tom',s:'Jutro',n:'Jutro · '+ddl(tom),f:x=>x.d===tom&&!risk(x),empty:'Nic na jutro.'},
-    {id:'week',s:'W tym tygodniu',n:'W tym tygodniu',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
+    {id:'week',s:'Najbliższe 7 dni',n:'Najbliższe 7 dni',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
     {id:'later',s:'Później',n:'Później',f:x=>x.d>endW&&!risk(x),date:1,cut:1,empty:'Brak późniejszych terminów.'}];
   G.forEach(g=>{g.L=L.filter(g.f);g.raw=all.filter(g.f).length});
   return {cnt:cnt,L:L,G:G};
@@ -3641,7 +3655,7 @@ function tmTools(X,narrow){
       '<div class="chips" role="group" aria-label="Kalendarze pokazywane w Terminach">'+chips+'</div></div></details>':'');
   const off=hid.filter(k=>!(k==='kalendarz'&&noCal)).length;
   /* rodzaje i kalendarze zawsze zwinięte w „Filtry” (liczba wyłączonych rodzajów przy nazwie) */
-  const flt='<details class="tm-flt" data-tmdet="flt"'+(tmDet('flt',false)?' open':'')+'><summary>Filtry'+(off?' <span class="muted">· ukryte: '+esc(TM_K.filter(([k])=>hid.indexOf(k)>=0&&!(k==='kalendarz'&&noCal)).map(x=>x[1].toLowerCase()).join(', '))+'</span>':'')+'</summary><div class="tm-fltb">'+kinds+'</div></details>';
+  const flt='<details class="tm-flt" data-tmdet="flt"'+(tmDet('flt',false)?' open':'')+'><summary>Filtry'+'</summary><div class="tm-fltb">'+kinds+'</div></details>';
   return '<div class="toolbar tm-bar"><label class="tm-pl" for="bp">Projekt</label><select id="bp"><option value="all">Wszystkie projekty</option>'+D.projects.map(p=>'<option value="'+esc(p.id)+'"'+(PF.bp===p.id?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</select>'+
     '<button class="tm-tg" id="bm" aria-pressed="'+PF.mine+'" title="Twoje zadania i publikacje oraz zgody i odbiory zadań agentów; etapy i wydarzenia zostają">Tylko moje</button>'+
     flt+'<span class="muted num tm-cnt" role="status" aria-live="polite">'+n+' '+pl(n,'pozycja','pozycje','pozycji')+'</span></div>';
@@ -3693,7 +3707,7 @@ function tmGroup(g,narrow,showP){
   /* „Później”: domyślnie bez wydarzeń z kalendarza */
   const evN=g.id==='later'?g.L.filter(x=>x.kind==='kalendarz').length:0,V0=g.id==='later'&&!PF.tmLaterEv?g.L.filter(x=>x.kind!=='kalendarz'):g.L;
   /* grupy bez podziału na dni (Po terminie, Dziś, Jutro): najpierw Twoje, zadania agentów niżej w „Agenci” (na telefonie zwinięte) */
-  const splitA=!g.days&&g.id!=='later',AG=splitA?V0.filter(tmAgentRow):[],V=splitA?V0.filter(x=>!tmAgentRow(x)):V0;
+  const splitA=!g.days&&g.id!=='later',AG=[],V=splitA?V0.filter(x=>!tmAgentRow(x)).concat(V0.filter(tmAgentRow)):V0;
   /* długie grupy: pierwsze 8 wierszy (Po terminie: 5; w grupach z dniami cięcie na granicy dnia) */
   const cutN=g.cutN||TM_CUT,more=!!(A.tmMore&&A.tmMore[g.id]);let C=V;
   if(g.cut&&V.length>cutN){
@@ -3720,13 +3734,14 @@ function tmSet(c,top){
     '<details class="tm-ics"><summary>Jak dodać subskrypcję</summary><ol><li><b>Mac:</b> Kalendarz → Plik → Nowa subskrypcja kalendarza.</li><li><b>iPhone:</b> Ustawienia → Aplikacje → Kalendarz → Konta kalendarzy → Dodaj konto → Inne → Dodaj subskrybowany kalendarz.</li><li><b>iPhone</b> musi widzieć serwer panelu: adres Tailscale zamiast <code>localhost</code>.</li></ol></details></div>';
   const body='<div class="pad"><p><i class="dot '+c.dot+'" aria-hidden="true"></i> <b>'+esc(c.t)+'.</b> '+esc(c.s)+'</p>'+(c.btn?'<div>'+c.btn+'</div>':'')+ics+'</div>';
   if(top)return '<section class="panel tm-conn" aria-labelledby="tm-conn-h"><h2 id="tm-conn-h">Połączenie z kalendarzem</h2>'+body+'</section>';
-  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',false)?' open':'')+'><summary><i class="dot '+c.dot+'" aria-hidden="true"></i><b>Terminy w Twoim kalendarzu</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:c.short)+'</span></summary>'+body+'</details>';
+  return '<details class="panel tm-set" data-tmdet="set"'+(tmDet('set',false)?' open':'')+'><summary>'+(c.dot==='ok'?'<i class="dot ok" aria-hidden="true"></i>':'')+'<b>Dodaj terminy do kalendarza</b><span class="muted">'+esc(c.dot==='ok'?c.short+' · '+c.s:'subskrypcja w kalendarzu na komputerze albo telefonie')+'</span></summary>'+body+'</details>';
 }
 function vTerminy(){
   const c=calStatus(),X=tmGroups(),narrow=tmNarrow(),top=c.dot!=='ok'&&!!c.btn;
-  let h='<div class="pagehead"><div class="ph-main"><h1>Terminy</h1><p>Terminy etapów, zadań i publikacji, od najpilniejszych. Kalendarz włączysz w Filtrach.</p></div></div>';
+  let h='<div class="pagehead"><div class="ph-main"><h1>Terminy</h1><p>Terminy etapów, zadań i publikacji, od najpilniejszych.</p></div></div>';
   if(top)h+=tmSet(c,true);
-  h+=tmTools(X,narrow);
+  h+=tmTools(X,narrow)+'<p class="tm-leg"><span><span class="tm-ic" aria-hidden="true">'+TM_IC.etap+'</span>koniec etapu</span><span><span class="tm-ic" aria-hidden="true">'+TM_IC.publikacja+'</span>publikacja</span><span><span class="tm-ic" aria-hidden="true">'+TM_IC.zadanie+'</span>zadanie</span>'+
+    ((PF.tk||[]).indexOf('kalendarz')<0&&D.cal.calendars.length?'<span><i class="dot cal" aria-hidden="true"></i>wydarzenie z kalendarza</span>':'')+'</p>';
   /* „Dziś i jutro w kalendarzu” tylko z połączonym kalendarzem (bez niego wolne okna byłyby nieprawdziwe), pod „Po terminie” */
   const bar=c.dot==='ok'?tmBar(c,narrow):'';
   h+=X.G.map(g=>tmGroup(g,narrow,PF.bp==='all')+(g.id==='late'?bar:'')).join('');
@@ -3942,7 +3957,7 @@ const bkPill=(i,cls,more)=>i.count?'<span class="bk-n '+cls+'" title="'+esc(bkCn
 /* jedna nazwa liczby z menu i z h1 Blokad (bkYouN().n): ile zadań czeka na Twoje zadania */
 const bkYouCntT=n=>n+' '+pl(n,'zadanie czeka','zadania czekają','zadań czeka')+' na Twoje zadania';
 /* zgoda i odbiór w Blokadach mówią, czyje są: u korzenia „czeka na Twoją zgodę”, niżej „potem Twoja zgoda” */
-const BK_NEED={zgoda:['czeka na Twoją zgodę','potem Twoja zgoda'],'odbiór':['czeka na Twój odbiór','potem Twój odbiór']};
+const BK_NEED={zgoda:['czeka na zgodę','potem Twoja zgoda'],'odbiór':['czeka na odbiór','potem Twój odbiór']};
 /* kto teraz pracuje nad zadaniem (jak w Teraz): uruchomienie agenta, rozmowa z Claude, film posta, publikacja w tej
    chwili. Film trafia też do zadania „nagraj film” tylko przy jawnym powiązaniu: to zadanie jest poprzednikiem posta
    (po:) i ma materiał: w folderze posta (posty/<post>/…); sam tytuł nie wystarcza (dawniej /film|nagra/ przypisywało
@@ -4060,7 +4075,7 @@ function bkNode(m,n,depth,ctx,parent){
       ex.push('<span class="lz '+(guess?'yellow':'red')+'" title="Dni do terminu „'+esc(tg.title)+'” (z dzisiejszym) mniej dni pracy przed nim i nad nim, według szacowanego czasu; bez niego: Twoje 1 dzień, agenta pół dnia; publikacja 0">'+(guess?'może być ciasno':'ciasno')+'</span><span class="bk-tg'+(guess?' bk-guess':'')+'">'+bkDays(tg.steps)+' pracy do '+dd(tg.date)+', '+pl(tg.days,'został','zostały','zostało')+' '+bkDays(tg.days)+esc(bkEst(tg))+'</span>')}
     /* ten sam dzień co termin w wierszu: sam zapas; inny dzień: „potem termin DD.MM”, odległość tylko w title */
     else if(w&&g!=='today'){const same=w.id===t.id||w.date===t.date;
-      ex.push('<span title="Zapas do terminu „'+esc(w.title)+'” ('+dd(w.date)+', '+esc(rel(w.date))+'): dni do terminu mniej dni pracy przed nim'+esc(bkEst(w))+'">'+(same?'':'potem termin '+dd(w.date)+' · ')+'zapas '+bkDays(Math.max(0,w.slack),1)+'</span>')}
+      if(!same)ex.push('<span title="Zapas do terminu „'+esc(w.title)+'”: '+bkDays(Math.max(0,w.slack),1)+esc(bkEst(w))+'">potem termin '+dd(w.date)+'</span>')}
     /* zależne i tak stoją z innego powodu: pilność tego zadania jest mniejsza, niż wynika z zapasu */
     if(i.direct&&!i.ready&&i.other.length)ex.push('<span class="bk-stuck" title="'+esc('Następne zadanie czeka też na: '+i.other.map(x=>x==='[!]'?'zablokowane zadanie':'„'+x+'”').join(', '))+'">następne czeka też na inne</span>');
   }
@@ -4072,24 +4087,23 @@ function bkNode(m,n,depth,ctx,parent){
   if(missP.length)ex.push('<span class="bk-miss">czeka też na „'+esc(shortT(missP.join('”, „'),60))+'”: takiego zadania nie ma w projekcie</span>'+
     (bkSoon(t)?'<span class="lz red">'+bkDue(t)+': nie ruszy</span>':'')+
     '<button class="linkbtn bk-jump" data-bkjump="'+(bkSoon(t)?'bk-urgent':'bk-fix')+'" data-k="bkm:'+esc(ctx.root+'>'+n.id)+'" aria-label="'+esc('Popraw: '+t.title)+'">Popraw</button>');
-  if(i.count)ex.push(bkPill(i,'bk-nn',more));
   const k=ctx.root+'>'+n.id,sub='bks-'+bkDom(k),deep=depth+1>=bkD();
   const o=A.bkOpen&&A.bkOpen[k],dflt=!nwNarrow()&&depth===0&&!!ctx.first;
   const open=kids.length&&!deep&&(o!=null?o:(A.bkAll||dflt));
   /* aria-controls tylko przy rozwiniętym (zwinięta lista nie jest w DOM) */
   const tog=kids.length&&!deep?'<button class="bk-tog" data-bkx="'+esc(k)+'" data-k="bkx:'+esc(k)+'" aria-expanded="'+!!open+'"'+(open?' aria-controls="'+esc(sub)+'"':'')+' aria-label="Zadania, które ruszą po: '+esc(t.title)+'"><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span></button>':'<span class="bk-tg0" aria-hidden="true"></span>';
   /* zwinięty korzeń: w wierszu, co odblokowuje (pierwsze w kolejności zależne), bez rozwijania */
-  if(depth===0&&kids.length&&!open)ex.push('<span class="bk-next" title="'+esc(kids.map(x=>x.t.title).join('; '))+'">→ „'+esc(shortT(kids[0].t.title,48))+'”'+(kids.length>1?' i '+(kids.length-1)+' '+pl(kids.length-1,'inne','inne','innych'):'')+'</span>');
+  if(depth===0&&kids.length&&!open)ex.push('<span class="bk-next" title="'+esc(kids.map(x=>x.t.title).join('; '))+'">po tym ruszy: „'+esc(shortT(kids[0].t.title,48))+'”'+(kids.length>1?' i '+(kids.length-1)+' '+pl(kids.length-1,'inne','inne','innych'):'')+'</span>');
   const hot=depth===0&&you&&!ctx.flat&&m.urg(n)<=0&&!bkPanelDoes(t);
   const cls=hot?' bk-you':depth===0&&you&&!bkPanelDoes(t)?' bk-youl':'';
   /* jedno miejsce akcji: .bk-do po prawej (za „odblokowuje”), także naprawa pracy w toku (bkDoW), nie w metadanych */
   const act=(depth===0&&!ctx.flat?bkAct(n):'')||bkDoW(t);
   let h='<li class="bk-node'+cls+(crit?' bk-crit':'')+'" id="'+esc(domId)+'"><div class="bk-row">'+tog+'<div class="bk-main">'+btn+bkMeta(n,ctx.proj&&depth===0,ex,depth>0)+(depth===0&&ctx.why?ctx.why:'')+'</div>'+
-    bkPill(i,'bk-nw',more)+(act?'<span class="bk-do">'+act+'</span>':'')+'</div>';
+    (act?'<span class="bk-do">'+act+'</span>':'')+'</div>';
   if(kids.length&&deep){
     const rest=m.reachL([n]).filter(x=>!ctx.home[x.id]).length||i.count;
     h+='<button class="linkbtn bk-cut" data-bkfocus="'+esc(t.id)+'" data-k="bkf:'+esc(k)+'">+'+rest+' niżej · pokaż<span class="bk-sr">: '+rest+' '+pl(rest,'zadanie','zadania','zadań')+' niżej, pokaż od tego zadania</span></button>';
-  }else if(open)h+=(depth===0?'<div class="bk-then" aria-hidden="true">Potem ruszy:</div>':'')+'<ul class="bk-sub" id="'+esc(sub)+'" aria-label="Ruszą po: '+esc(t.title)+'">'+kids.map(x=>bkNode(m,x,depth+1,ctx,n)).join('')+'</ul>';
+  }else if(open)h+=(depth===0?'<div class="bk-then" aria-hidden="true">Po tym ruszy:</div>':'')+'<ul class="bk-sub" id="'+esc(sub)+'" aria-label="Ruszą po: '+esc(t.title)+'">'+kids.map(x=>bkNode(m,x,depth+1,ctx,n)).join('')+'</ul>';
   return h+'</li>';
 }
 /* drzewo od korzenia (Do zrobienia najpierw, Zablokowane, widok od jednego zadania) */
@@ -4134,7 +4148,7 @@ const bkWhyFix=(x,soon)=>'<div class="bk-why">'+(soon?bkDueLz(x.t.t):'')+esc(x.w
 /* sekcje zwijane, stan w A.bkSec; domyślnie: urgent i roots rozwinięte, blocked i fix rozwinięte na szerokim ekranie
    (na telefonie zwinięte: strona Blokad jest długa), youw zwinięta */
 const BK_SECS=['urgent','roots','map','blocked','fix','youw'];
-const BK_SECD={urgent:()=>true,roots:()=>true,map:()=>false,blocked:()=>!nwNarrow(),fix:()=>!nwNarrow(),youw:()=>false};
+const BK_SECD={urgent:()=>true,roots:()=>true,map:()=>false,blocked:()=>false,fix:()=>!nwNarrow(),youw:()=>false};
 const bkSecOpen=(id,dflt)=>{const o=A.bkSec&&A.bkSec[id];return o!=null?o:dflt!=null?!!dflt:BK_SECD[id]?BK_SECD[id]():!nwNarrow()};
 const bkSecHead=(id,title,n,extra,tip)=>{const open=bkSecOpen(id);
   return '<h2 id="bk-'+id+'-h"'+(tip?' title="'+esc(tip)+'"':'')+'><button class="nw-tog bk-stog" data-bksec="'+id+'" data-k="bks:'+id+'" aria-expanded="'+open+'"'+(open?' aria-controls="bks-'+id+'"':'')+'><span class="bk-chev'+(open?' on':'')+'" aria-hidden="true"></span>'+title+'</button><span class="bk-hr">'+(extra||'')+'<small class="num"><span class="bk-sr">, liczba:</span> '+n+'</small></span></h2>'};
@@ -4199,7 +4213,7 @@ function vBlokady(){
     '<details class="ds-det bk-how"'+(A.bkHow?' open':'')+'><summary>Jak liczona jest kolejność</summary><p>Od góry: najpierw to, co jest po terminie, potem to, co ma najmniej zapasu do najbliższego terminu (zapas widać w wierszu). Przy równym zapasie decyduje bliższy termin, potem liczba odblokowanych zadań, a na końcu priorytet projektu. Strzałka przy zadaniu pokazuje, co ruszy po nim.</p></details></div>'+
     '<div class="toolbar"><label class="muted bk-pl" for="bkp">Projekt</label><select id="bkp"><option value="">Aktywne projekty</option>'+opts.map(p=>'<option value="'+esc(p.id)+'" title="'+esc(p.name)+'"'+(PF.bk===p.id?' selected':'')+'>'+esc(bkPShort(p))+(act(p)?'':' ('+(PST_N[p.state]||p.state)+')')+'</option>').join('')+'</select>'+
     (roots.length?'<button class="tm-tg bk-minet" id="bm" aria-pressed="'+!!PF.mine+'" title="Twoje zadania (bez tych, które robi za Ciebie panel)">Tylko moje</button>':'')+
-    (anyKids?bkAllBtn('bkall'):'')+'</div>'+sumH+'</div>';
+    '</div>'+sumH+'</div>';
   if(fo)return h+'<div class="bk-back"><button class="btn sec sm" data-bkfocus="" data-k="bkf:back">← Wszystkie blokady</button></div>'+
     '<section class="panel" id="bk-focus" tabindex="-1" aria-labelledby="bk-focus-h"><h2 id="bk-focus-h">Od zadania: '+esc(shortT(fo.t.title,70))+'</h2>'+
     '<ul class="bk-tree">'+bkTree(m,fo,null)+'</ul></section>';
@@ -4223,7 +4237,7 @@ function vBlokady(){
     const cutR=nwNarrow()?dsCut('bk-roots',rs,5,'bks-roots'):{L:rs,more:''};
     const rootsH=cutR.L.map((n,i)=>{const gAll=rs.filter(x=>m.grp(x)===m.grp(n)).length;const g=m.grp(n),gl=g!==gPrev?(gPrev=g,BK_GRP[g]):null,cnt=gl?gAll:0,lz=g==='late'||g==='tight'?'red':g==='today'?'yellow':'';
       return (gl?'<li class="bk-grp" role="presentation"><h3 class="bk-grph" title="'+esc(gl[1])+'"><span>'+gl[0]+'</span> '+(lz?'<span class="lz '+lz+' num">'+cnt+'</span>':'<span class="num bk-gn">'+cnt+'</span>')+
-        '<span class="bk-gd"> · '+esc(gl[1])+'</span></h3>'+(i===0?LG:'')+'</li>':'')+bkTree(m,n,drawn,{first:i===0})}).join('');
+        '</h3>'+(i===0?LG:'')+'</li>':'')+bkTree(m,n,drawn,{first:i===0})}).join('');
     const crit=rootsH.indexOf(' bk-crit"')>=0;
     const lg=crit?'<span class="bk-lg" title="Najpilniejsza ścieżka: droga do zadania z najmniejszym zapasem do terminu"><i class="bk-cdot" aria-hidden="true"></i>najpilniejsza ścieżka<span class="bk-sr">: droga do zadania z najmniejszym zapasem do terminu</span></span>':'';
     return (warn?'<div class="over bk-cap" role="note">'+warn+'</div>':'')+
@@ -4232,7 +4246,7 @@ function vBlokady(){
       '<p class="empty">Żadne zadanie nie wstrzymuje innych. <a class="navlk" href="#ty">Twoje zadania na dziś: Dla Ciebie →</a></p>')});
   {const mp=bkMapSec(m,roots.concat(blocked));if(mp){const mn=(mp.match(/class="bkm-n/g)||[]).length;h+=sec('map','Mapa zależności',mn,'',()=>mp)}}
   if(blocked.length)h+=sec('blocked','Zablokowane',blocked.length,'',()=>
-    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+'</div>'+
+    '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+' <button class="btn sec sm bk-unb" data-task="'+esc(n.t.id)+'" data-k="bkunb:'+esc(n.id)+'" aria-label="'+esc('Usuń przeszkodę: '+n.t.title)+'">Usuń przeszkodę</button></div>'+
       (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+n.miss.map(x=>bkFixAct(n.t,x)).join(''):'')+bkWaitL(n.t)})).join('')+'</ul>');
   if(fix.length){const fm=mixed(fix.map(x=>x.t));
     /* zadanie pokazane już w „Nie ruszą na czas”: jeden wiersz z „Pokaż” (przyczyna i naprawa są tam) */
@@ -4825,22 +4839,23 @@ function agBarHtml(){
   const ck=A.busy.check||runs().some(r=>r.kind==='check'&&isAct(r)),no=!a.tools.claude.found,lg=lgNeed();
   const act=runs().filter(isAct).length,ys=youState(),wait=ys.youToday.concat(ys.youWeek).filter(x=>x.t&&(x.t.executor==='claude'||x.t.executor==='codex')).length;
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
-  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Teraz żaden agent nie pracuje')+
-    (wait?' · '+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Ciebie <a href="#ty">Dla Ciebie →</a>':'')+'.</p>';
-  if(no)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze.</p>';
+  /* hierarchia: stan (ciemny, większy) z samodzielnym uruchamianiem w jednym wierszu; pod nim jedno zdanie, co dalej */
+  const swOn=a.canRunTasks&&!no,auS='samodzielne uruchamianie '+(a.automat?'włączone':'wyłączone');
+  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Agenci teraz nie pracują')+(swOn?'':' · '+auS)+'.</p>';
+  if(wait)h+='<p class="ag-wait">'+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Twoją decyzję w najbliższych 7 dniach. <a class="navlk" href="#ty">Dla Ciebie →</a></p>';
+  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują, to normalne. Agenci ruszą w Twoim pierwszym projekcie. <a class="navlk" href="#projekty">Projekty →</a></p>';
+  else if(no)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
-  /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan tekstem (powód jest zdaniem obok) */
-  const swOn=a.canRunTasks&&!no;
-  h+='<div class="abar"><div class="ag-ac">'+(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':
-    '<span class="muted">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</span>')+
+  /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
+  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+
     (no?'':pmBtn('pm'))+
-    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>')+'</div></div>';
+    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
+  if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   if(limitT())h+='<p class="ahint">'+limitHint()+(a.automat?' · samodzielne uruchamianie czeka':'')+'</p>';
-  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <a href="#projekty">Dodaj projekt</a></p>';
   const tc=toolState('claude'),tx=toolState('codex'),to=!!(A.agDet&&A.agDet.tools);
   const TSH={ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'},tsh=(n,x)=>n+': '+(TSH[x.dot]||x.dot);
-  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia <small>· '+(tc.dot==='off'&&tx.dot==='off'?'nie zainstalowane':esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx)))+'</small></summary>'+
+  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia'+(tc.dot==='off'&&tx.dot==='off'?'':' <small>· '+esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx))+'</small>')+'</summary>'+
     '<div class="ag-st">'+pill(tc)+pill(tx)+'<span class="pill">Działa na: <b>'+esc(MACH[a.machine]||a.machine||'brak')+'</b></span></div></details>';
   return h;
 }
@@ -4903,7 +4918,9 @@ function srvPanel(o){
     :'<div class="row"><button class="btn sec sm" data-ag="lo" data-k="lo"'+(A.busy.lo?' aria-disabled="true"':'')+'>'+(A.busy.lo?'Wylogowuję…':'Wyloguj wszystkie urządzenia')+'</button></div>';
   const v=D.server?srvItems():null,LV=SRV_LV;
   /* widok Serwer: stan (kontrola zdrowia i kopie) na górze, sesje urządzeń (wylogowanie) zwinięte na końcu */
-  if(o==='ses')return '<section class="panel" id="ag-ses"><h2>Sesje urządzeń</h2><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></section>';
+  /* sesje urządzeń: zwinięte (otwarte przy potwierdzaniu wylogowania) */
+  if(o==='ses'){const so=!!(A.lo||A.busy.lo||(A.agDet&&A.agDet.ses));
+    return '<details class="panel ag-ses" id="ag-ses" data-agdet="ses"'+(so?' open':'')+'><summary><b>Sesje urządzeń</b><span class="muted">wylogowanie wszystkich urządzeń</span></summary><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></details>'}
   if(!v)return '';
   return '<section class="panel" id="ag-srv"><h2><span class="ag-h">Stan serwera <span class="lz '+LV[v.lvl][0]+'">'+LV[v.lvl][1]+'</span></span><small>'+(v.at?'<span>stan z '+esc(whenT(D.server.at))+'</span>':'')+'</small></h2>'+
     '<div class="pad">'+srvBar(true)+'</div></section>';
@@ -4973,8 +4990,8 @@ function devPanel(){
   /* jedno zdanie stanu; przycisk tylko, gdy jest co wdrożyć; reszta (panel testowy, dziennik, instrukcja) zwinięta */
   let h='<section class="panel" id="rozwoj"><h2>Rozwój panelu</h2><div class="pad dv">';
   if(d.error)h+='<p class="warn">'+esc(d.error)+'</p>';
-  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana jeszcze nie wdrożona','zmiany jeszcze nie wdrożone','zmian jeszcze nie wdrożonych')+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':''):'Brak zmian do wdrożenia.')+
-    (d.behind?' <span class="lz yellow" title="W działającym panelu są zmiany, których wersja rozwojowa jeszcze nie ma; wdrożenie je połączy">w działającym panelu '+d.behind+' '+pl(d.behind,'nowsza zmiana','nowsze zmiany','nowszych zmian')+'</span>':'')+'</p>';
+  /* jedno zdanie: czy jest co wdrożyć; zmiany, których wersja rozwojowa nie ma, tylko w szczegółach (właściciel nic z nimi nie robi) */
+  else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana czeka','zmiany czekają','zmian czeka')+' na wdrożenie'+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':'')+'.':'Nic nie czeka na wdrożenie. Nie musisz nic robić.')+'</p>';
   if(cm.length)h+='<details class="ds-det"><summary>Lista zmian <small>· '+cm.length+'</small></summary><ul class="dv-c">'+cm.slice(0,10).map(c=>'<li><code>'+esc(c.sha)+'</code><span>'+esc(c.subject)+'</span><span class="muted">'+esc(whenT(c.at))+'</span></li>').join('')+(cm.length>10?'<li class="muted">i '+(cm.length-10)+' więcej</li>':'')+'</ul></details>';
   const b=[];
   if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(L&&L.text?': '+esc(L.text):'')+'</span>');
@@ -4984,6 +5001,7 @@ function devPanel(){
   if(bad){const w=WDS[L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
   const op=bad||!!(A.agDet&&A.agDet.dvdet);
   h+='<details class="ds-det" data-agdet="dvdet"'+(op?' open':'')+'><summary>Panel testowy i wdrożenia</summary>';
+  if(d.behind)h+='<p class="dv-l">Działający panel ma '+d.behind+' '+pl(d.behind,'zmianę','zmiany','zmian')+', których wersja rozwojowa jeszcze nie ma; następne wdrożenie je połączy.</p>';
   if(d.auto)h+='<p class="dv-l">Wdrażanie samodzielne: każda zmiana trafia do działającego panelu po udanych testach.</p>';
   if(L&&!on&&!bad){const w=WDS[L.state]||['out',L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
   if(L&&!on&&d.log)h+='<details class="ds-det"><summary>Dziennik wdrożenia</summary><pre class="res">'+esc(d.log)+'</pre></details>';
@@ -5015,10 +5033,10 @@ function vKoszty(){
 function costPanel(){
   const k=D.costs;if(!k)return '';
   let h='<section class="panel" id="kpoz"><h2>'+(k.configured&&!k.loading?'Pozycje <small>szacunek z cennika · stan z '+esc(whenT(k.at))+'</small>':'Koszty serwera')+'</h2>';
-  if(!k.configured)return h+'<p class="empty">Koszty nie są podłączone.</p><details class="ds-det ds-pad"><summary>Jak podłączyć</summary><p>Na serwerze (ssh jako ops): <code>sudo ustaw-token-hetznera</code>. Token tylko do odczytu, jeden na projekt w Hetzner Console.</p></details></section>';
+  if(!k.configured)return h+'<p class="empty">Koszty nie są podłączone.</p><details class="ds-det ds-pad"><summary>Jak podłączyć</summary><p>Koszty podłącza administrator serwera: wpisuje na serwerze token tylko do odczytu z konsoli dostawcy (Hetzner), jeden na projekt. Opis jest w instrukcji instalacji panelu.</p></details></section>';
   if(k.loading)return h+'<p class="empty" role="status">Pobieram koszty…</p></section>';
   h+='<div class="pad"><div class="kpis"><div><b class="num">'+eur(k.month)+'</b>'+pln(k.month)+'<span>w tym miesiącu</span></div><div><b class="num">'+eur(k.total)+'</b>'+pln(k.total)+'<span>łącznie od założenia</span></div><div><b class="num">'+eur(k.monthly)+'</b>'+pln(k.monthly)+'<span>pełny miesiąc</span></div></div></div>';
-  h+='<div class="tw"><table><thead><tr><th>Projekt Hetzner</th><th>Pozycja</th><th>Rodzaj</th><th>Od</th><th class="num">Miesięcznie</th><th class="num">Ten miesiąc</th><th class="num">Łącznie</th></tr></thead><tbody>';
+  h+='<div class="tw"><table><thead><tr><th>Projekt</th><th>Pozycja</th><th>Rodzaj</th><th>Od</th><th class="num">Miesięcznie</th><th class="num">Ten miesiąc</th><th class="num">Łącznie</th></tr></thead><tbody>';
   k.projects.forEach(p=>{
     if(p.error){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="warn">'+esc(p.error)+'</td></tr>';return}
     if(!p.items.length){h+='<tr><td>'+esc(p.name)+'</td><td colspan="6" class="muted">brak płatnych zasobów</td></tr>';return}
@@ -5066,7 +5084,6 @@ function runHtml(r){
   if(r.costUsd)tx.push(['Równowartość w cenniku API',fmtUsd(r.costUsd)]);
   if(r.file)tx.push(['Plik','<code>'+esc(r.file)+'</code>']);
   h+='<details class="ds-det run-tech"><summary>Szczegóły techniczne</summary><dl>'+tx.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl></details>';
-  h+='<div class="dr-foot"><button class="btn sec" data-close="1" data-k="close2">Zamknij</button></div>';
   return h;
 }
 
@@ -5138,7 +5155,7 @@ function vProjekty(){
   const gN=grp.reduce((s,g)=>s+g.n,0);
   /* nagłówek: opis, stan w pigułkach, skok do formularza */
   /* nagłówek: liczby raz, jednym zdaniem; „Dodaj projekt” rozwija formularz pod listą */
-  let h='<div class="pagehead"><div class="ph-main"><h1>Projekty i standard</h1><p>Twoje projekty i ich Księga, czyli pliki, które każdy projekt powinien mieć.</p></div>'+
+  let h='<div class="pagehead"><div class="ph-main"><h1>Projekty</h1><p>Twoje projekty i ich Księga: dokumenty, które każdy projekt powinien mieć.</p></div>'+
     (canAdd?'<div class="prx-acts"><button type="button" class="btn" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button></div>':'')+'</div>';
   /* lista projektów */
   /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
@@ -5147,7 +5164,7 @@ function vProjekty(){
     (!reg&&nP?'<p class="note">'+(canAdd?'To projekty przykładowe. Własny dodasz przyciskiem „Dodaj projekt” u góry.':'To projekty przykładowe.')+'</p>':'')+
     (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="pn-f">'+esc(x.name)+'</span><span class="pn-s">'+esc(pShort(x))+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
+      let r='<li><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
         '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span></div>'+
         '</div>';
       /* folder, ścieżka i usuwanie zwinięte w „Więcej” (otwarte przy potwierdzaniu usunięcia) */
@@ -5189,7 +5206,7 @@ function vProjekty(){
     /* jedno zdanie i akcja (zleć agentowi w kartach i w Brakach); na telefonie karty projektów zwinięte, na komputerze tabela */
     h+='<section class="panel"><h2>Księga projektów <small>'+(okN===nP?'wszystkie komplet':'brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy'))+'</small></h2>'+
       ((allMiss.length||(nC&&reg&&canAdd))?'<p class="note prx-sum">'+(allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>':'')+
-      '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
+      '<details class="prx-tdet" data-prxdet="tab"'+(prxOpen('tab',false)?' open':'')+'><summary>Dokumenty w każdym projekcie <small>· tabela</small></summary><div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div></details>'+
       (nC?'<details class="prx-cdet" data-prxdet="cards"'+(prxOpen('cards',false)?' open':'')+'><summary>Projekty z brakami <small>· '+nC+'</small></summary><ul class="prx-cards">'+cards+'</ul></details>':'')+
       (gN?'<details class="ds-gap prx-gaps" data-prxdet="gaps"'+(prxOpen('gaps',false)?' open':'')+'><summary>Braki <small>· '+gN+'</small></summary>'+gl+'</details>':'<p class="empty">Wszystkie projekty mają komplet plików.</p>')+'</section>';
   }
@@ -5256,8 +5273,7 @@ function taskHtml(t){
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
   else if(needsResult(t)||needsCount(t)||dForm(t,'done'))mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p></div>'+finBox(t);
   else if(!mine){const dw=doWhat(t),sm=D.agents&&!D.agents.canRunTasks;
-    mv='<div class="move-box"><b>Robi to agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.</b>'+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+
-      (sm?'<p class="muted">W projektach przykładowych agenci nie pracują, więc tego zadania nie uruchomisz.</p>':'')+'</div>'}
+    mv='<div class="move-box"><b>'+(sm?'Zadanie dla agenta ('+esc(WHO[t.executor].n)+'). W projektach przykładowych agenci nie pracują.':'Robi to agent ('+esc(WHO[t.executor].n)+'). Nic nie musisz robić.')+'</b>'+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+'</div>'}
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
@@ -5300,8 +5316,6 @@ function taskHtml(t){
   if(t.check)h+='<dt>Sprawdza</dt><dd>'+esc(t.check.key)+' <span class="muted">· '+(t.check.ok===true?'ok':t.check.ok===false?'nie spełnione':'brak danych')+(atShort(t.check.at)?', '+esc(atShort(t.check.at)):'')+'</span></dd>';
   h+='<dt>Plik</dt><dd>'+(t.line?'<code>'+esc(t.file+':'+t.line)+'</code>':'<span class="muted">niezapisane</span>')+'</dd></dl>';
   h+='<p class="note">Zmiany zapisują się po wyjściu z pola. Esc zamyka, r uruchamia agenta.</p></details>';
-  /* telefon: drugi „Zamknij” na dole szuflady, w zasięgu kciuka */
-  h+='<div class="dr-foot"><button class="btn sec" data-close="1" data-k="close2">Zamknij</button></div>';
   return h;
 }
 /* jedno zdanie „co zrobić”: pierwszy niezrobiony krok, cel albo tytuł */
@@ -5644,7 +5658,7 @@ const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
   const rf=!prepDay(t)&&resFiles(t).length;
   const ym=yourMove(t);
-  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf&&d.result?'<p class="move">'+esc(d.result)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
+  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf?(d.result?'<p class="move">'+esc(d.result)+'</p>':!lastGitRun(t)?'<p class="move muted">Agent nie opisał wyniku.</p>':''):'')+(d.doneWhen?'<p class="move">Sprawdź: '+esc(d.doneWhen)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
   dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
@@ -6973,12 +6987,14 @@ function renderTop(){
   let h='',vis=!LIVE;
   if(!LIVE)h+='<span class="lz yellow" title="Zmiany działają do odświeżenia strony i nie są zapisywane.">Podgląd · dane przykładowe</span>';
   else{
-    if(D.projectsSource!=='registry')h+='<span class="lz yellow" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Projekty i standard.">Projekty przykładowe</span>';
+    /* telefon: pasek „Projekty przykładowe” tylko na Przeglądzie (na innych stronach nie zajmuje pierwszego rzędu) */
+    const smp=D.projectsSource!=='registry'&&(route().v==='przeglad'||!(window.matchMedia&&matchMedia('(max-width:820px)').matches));
+    if(smp)h+='<span class="lz yellow" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Projekty.">Projekty przykładowe</span>';
     /* kalendarz w ramie tylko przy problemie; przy „połączony” kropka z odsyłaczem do Terminów (pełny stan dla czytnika) */
     /* problem z kalendarzem na Przeglądzie pokazuje pigułka w nagłówku (.sys): tu zostaje tylko dla czytnika i przycisk */
     /* pigułka tylko przy prawdziwym problemie albo z akcją; „tylko na Macu” (serwer) to stan stały: nic nie pokazujemy */
     const c=calStatus(),prob=calProb(),pv=prob&&route().v==='przeglad';
-    if(D.projectsSource!=='registry')vis=true;
+    if(smp)vis=true;
     if(c.dot==='ok')h+='<a class="tst-ok" href="#terminy" title="'+esc(c.t+': '+c.s)+'"><i class="dot ok" aria-hidden="true"></i><span class="sr-only">Kalendarz: '+esc(c.short)+'</span></a>';
     else if(prob||c.btn){h+=(pv?'<span class="sr-only">Kalendarz: '+esc(c.short)+'</span>':pill({dot:c.dot,label:'Kalendarz: '+c.short,title:c.s}))+c.btn;if(!pv||c.btn)vis=true}
   }
