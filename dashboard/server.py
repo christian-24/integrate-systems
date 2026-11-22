@@ -24,7 +24,10 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
   GET  /api/project/chat      historia rozmowy o projekcie (?project=)
   POST /api/asystent          wiadomość do asystenta (wszystkie projekty, może przełączyć widok: „Pokaż: #adres”)
-  GET  /api/asystent          historia rozmowy z asystentem; POST /api/asystent/nowa czyści rozmowę
+  GET  /api/asystent          historia rozmowy z asystentem (z odpowiedzią w trakcie pisania); POST /api/asystent/nowa
+                               czyści rozmowę
+  POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> rozpoznany tekst -> wiadomość do asystenta;
+                               POST /api/asystent/glos/start wczytuje model mowy w tle
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
@@ -107,6 +110,9 @@ import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
+import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
+import udostepnij  # noqa: E402  (ręczne udostępnienie posta na Instagramie przez rozszerzenie Chrome)
+SHARES = udostepnij.Shares()
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
 PORT = int(os.environ.get("PANEL_PORT", "").strip() or "4801")
@@ -1374,6 +1380,30 @@ def get_publisher():
         return _publisher
 
 
+def instagram_share(body):
+    """POST /api/instagram/udostepnij {id, title}: pakiet posta dla rozszerzenia Chrome (udostepnij.py).
+    (kod, błąd, {path, token, handle, files, warning}). Publikuje właściciel na instagram.com."""
+    t, data, folder = _find_task(body.get("id", ""), body.get("title", ""))
+    if t is None:
+        return folder
+    if t.get("kind") != "publikacja" or "instagram" not in str(t.get("channel") or "").lower():
+        return 400, "To nie jest publikacja z kanałem Instagram."
+    pf = post_folder(t["project"], str(t.get("date") or "")[:10])
+    if not pf:
+        return 404, "Nie ma przygotowanego posta na dzień publikacji."
+    info = post_info(pf)
+    files = udostepnij.media(pf, publikacja.Publisher.film(pf), post_image(pf) if info.get("image") else None)
+    if not files:
+        return 409, "Post nie ma grafiki, zdjęć ani filmu. Instagram wymaga zdjęcia albo filmu."
+    proj = next((p for p in data.get("projects") or [] if p.get("id") == t["project"]), {})
+    handle = str(proj.get("instagram") or "")
+    token = SHARES.create(t["title"], udostepnij.caption(info), files, handle)
+    warning = "" if handle else ("Karta projektu nie ma pola instagram: (nazwa profilu), więc rozszerzenie nie "
+                                 "sprawdzi, czy wybrany jest właściwy profil.")
+    return 200, "", {"path": "/udostepnij/" + token, "token": token, "handle": handle, "files": len(files),
+                     "warning": warning}
+
+
 def get_agents():
     """Jeden zarządca uruchomień na proces; powstaje przy pierwszym użyciu (eksport podglądu go nie potrzebuje)."""
     global _agents
@@ -1401,8 +1431,10 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/drive/anuluj": lambda b: get_drive().cancel(b.get("project", "")),
           "/api/drive/odlacz": lambda b: get_drive().disconnect(b.get("project", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
-          "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", "")),
+          "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
+                                                                 b.get("open", "")),
           "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
+          "/api/asystent/glos/start": lambda b: get_agents().voice_warm(),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
@@ -1420,6 +1452,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/publikacja/odlacz": lambda b: get_publisher().disconnect(b),
           "/api/publikacja/plan": lambda b: get_publisher().plan(b),
           "/api/publikacja/anuluj": lambda b: get_publisher().cancel(b),
+          "/api/instagram/udostepnij": instagram_share,
           "/api/agent/merge": lambda b: get_agents().merge(b.get("id", ""), b.get("project", ""), b.get("branch", "")),
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
@@ -2664,6 +2697,7 @@ def post_info(folder):
     sv = film.scenario_version(folder) if out["scenario"] and fpath else None
     out["filmOld"] = bool(sv is not None and sv > os.path.getmtime(fpath) and not out["filmManual"])
     out["srt"] = bool(fpath) and os.path.isfile(os.path.join(folder, film.SRT))
+    out["photos"] = udostepnij.photos(folder)        # dodatkowe zdjęcia (karuzela na Instagramie)
     out["film4x5"] = bool(fpath) and os.path.isfile(os.path.join(folder, film.FEED))
     prev = os.path.join(folder, film.PREVIOUS)      # poprzednia wersja filmu (porównanie w panelu)
     out["filmPrev"] = {"at": int(os.stat(prev).st_ctime)} if fpath and os.path.isfile(prev) else None
@@ -2793,6 +2827,8 @@ class Handler(BaseHTTPRequestHandler):
             return True
         if self.command == "GET" and path.startswith("/media/"):     # plik dla Instagrama: jednorazowy token w ścieżce
             return True
+        if self.command in ("GET", "OPTIONS") and path.startswith("/udostepnij/"):   # pakiet: token w ścieżce
+            return True
         if path == "/terminy.ics":
             key = (parse_qs(query).get("k") or [""])[0]
             if self.command == "GET" and hmac.compare_digest(key.encode("utf-8"), ics_key().encode("ascii")):
@@ -2868,6 +2904,12 @@ class Handler(BaseHTTPRequestHandler):
             ctype = {".jpg": "image/jpeg", ".mp4": "video/mp4", ".mov": "video/quicktime"}.get(os.path.splitext(f)[1], "application/octet-stream")
             with open(f, "rb") as fh:
                 return self._send(200, fh.read(), ctype, [("Cache-Control", "no-store")])
+        if path.startswith("/udostepnij/"):
+            return self._share_get(path, parse_qs(url.query))
+        if path == "/api/instagram/udostepnij":       # czy rozszerzenie pobrało pakiet
+            st = SHARES.status((parse_qs(url.query).get("t") or [""])[0])
+            return self._send(200 if st else 404, json.dumps(dict(st or {}, ok=bool(st)), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/wejscie":
             if self._has_session() or (self._client_local() and not (local_guard() and TOKEN)):
                 return self._redirect("/")
@@ -2993,6 +3035,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._studio_upload(urlparse(self.path).query)
         if path == "/api/post/obraz":
             return self._post_image_upload(urlparse(self.path).query)
+        if path == "/api/asystent/glos":
+            return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/film/zmien") else 4096)
             if body is None:
@@ -3030,6 +3074,24 @@ class Handler(BaseHTTPRequestHandler):
             return None, "Wysyłka przerwana."
         return b"".join(data), ""
 
+    def _voice_upload(self, query):
+        """POST /api/asystent/glos?view=&open=: nagranie z mikrofonu (audio/webm z Chrome, audio/mp4 z Safari, do
+        4 MB) -> rozpoznany tekst -> wiadomość do asystenta. Odpowiedź: {"text"} i stan jak POST /api/asystent."""
+        q = parse_qs(query)
+        ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+        if not (ctype.startswith("audio/") or ctype in ("video/webm", "video/mp4")):
+            self.close_connection = True
+            return self._send(400, json.dumps({"ok": False, "error": "Nieobsługiwany format nagrania."},
+                                              ensure_ascii=False), "application/json; charset=utf-8")
+        data, err = self._raw_body(glos.AUDIO_MAX)
+        if data is None:
+            return self._send(400, json.dumps({"ok": False, "error": err.replace("Plik", "Nagranie")},
+                                              ensure_ascii=False), "application/json; charset=utf-8")
+        code, err, extra = get_agents().assistant_voice(ctype, data, (q.get("view") or [""])[0],
+                                                        (q.get("open") or [""])[0])
+        return self._send(code, json.dumps(dict(extra, ok=200 <= code < 300, error=err), ensure_ascii=False),
+                          "application/json; charset=utf-8")
+
     def _studio_upload(self, query):
         """POST /api/studio/plik?project=&rodzaj=muzyka|logo&licencja=[&rog=1|0]: surowy plik podkładu (mp3, m4a,
         wav, ogg) albo logo (png, jpg) do studio/ projektu i wpis w marka.json (studio_add_file; rog: logo w rogu
@@ -3064,12 +3126,46 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                           "application/json; charset=utf-8")
 
-    def _send_file(self, fpath, ctype, download=False):
+    def _cors(self):
+        """Nagłówki CORS pakietu udostępnienia: tylko dla strony instagram.com (rozszerzenie działa na niej)."""
+        if (self.headers.get("Origin") or "") != udostepnij.ORIGIN:
+            return [("Vary", "Origin")]
+        return [("Access-Control-Allow-Origin", udostepnij.ORIGIN), ("Vary", "Origin")]
+
+    def do_OPTIONS(self):
+        """Zapytanie wstępne przeglądarki (sieć lokalna: Access-Control-Request-Private-Network) do pakietu."""
+        path = urlparse(self.path).path
+        if not self._host_ok() or not path.startswith("/udostepnij/") or not self._allowed(path):
+            return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+        hdr = self._cors()
+        if len(hdr) > 1:
+            hdr += [("Access-Control-Allow-Methods", "GET"), ("Access-Control-Max-Age", "600")]
+            if self.headers.get("Access-Control-Request-Private-Network"):
+                hdr.append(("Access-Control-Allow-Private-Network", "true"))
+        return self._send(204, b"", "text/plain; charset=utf-8", hdr)
+
+    def _share_get(self, path, q):
+        """GET /udostepnij/<token>: pakiet (JSON); /udostepnij/<token>/<n>[?pobierz=1]: plik n pakietu."""
+        parts = path.split("/")
+        if len(parts) == 3:
+            pkg = SHARES.package(parts[2])
+            if pkg:
+                return self._send(200, json.dumps(pkg, ensure_ascii=False), "application/json; charset=utf-8",
+                                  self._cors())
+        elif len(parts) == 4:
+            hit = SHARES.file(parts[2], parts[3])
+            if hit:
+                return self._send_file(hit[0], hit[1], bool((q.get("pobierz") or [""])[0]), self._cors())
+        return self._send(404, json.dumps({"ok": False, "error": "Pakiet wygasł albo nie istnieje. Udostępnij post "
+                                           "z panelu jeszcze raz."}, ensure_ascii=False),
+                          "application/json; charset=utf-8", self._cors())
+
+    def _send_file(self, fpath, ctype, download=False, extra=()):
         """Plik z obsługą Range (Safari na iPhonie odtwarza wideo tylko z odpowiedzi 206)."""
         size = os.path.getsize(fpath)
         hdr = [("Content-Disposition", '%s; filename="%s"' % ("attachment" if download else "inline",
                                                              os.path.basename(fpath).replace('"', ""))),
-               ("Accept-Ranges", "bytes")]
+               ("Accept-Ranges", "bytes")] + list(extra)
         m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
         with open(fpath, "rb") as f:
             if m and (m.group(1) or m.group(2)):

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><title>Atrapa: tworzenie posta</title>
+<!-- Atrapa strony instagram.com dla testu rozszerzenia (uruchom/chrome-instagram): menu z „New post”, podmenu „Post”,
+     okno z input[type=file], kroki „Next” (film: najpierw komunikat „OK”), pole opisu contenteditable, „Share”.
+     Wynik zapisuje w atrybutach <html>: data-pliki (nazwy:rozmiary), data-opis, data-opublikowane. -->
+<script src="/ext/selektory.js"></script>
+<script src="/ext/instagram.js"></script>
+<style>[role=dialog]{position:fixed;inset:40px;background:#fff;border:1px solid #888;padding:10px}</style>
+</head><body>
+<nav><a href="#" role="link" id="utworz"><svg aria-label="New post" width="10" height="10"></svg><span>Create</span></a>
+  <a href="/profil/" role="link"><img alt="atrapa's profile picture" width="5" height="5"></a></nav>
+<div id="menu" hidden><a href="#" role="link" id="post"><span>Post</span></a></div>
+<script>
+(function(){
+  const H=document.documentElement,$=id=>document.getElementById(id);
+  function step(html){let d=document.querySelector('[role=dialog]');if(!d){d=document.createElement('div');d.setAttribute('role','dialog');document.body.appendChild(d)}d.innerHTML=html;return d}
+  const btn=t=>'<div role="button" tabindex="0">'+t+'</div>';
+  function onBtn(d,text,fn){[...d.querySelectorAll('[role=button]')].forEach(b=>{if(b.textContent===text)b.addEventListener('click',fn)})}
+  function caption(){const d=step('<div contenteditable="true" aria-label="Write a caption..." role="textbox"></div>'+btn('Share'));
+    onBtn(d,'Share',()=>H.setAttribute('data-opublikowane','1'));
+    d.querySelector('[contenteditable]').addEventListener('input',e=>H.setAttribute('data-opis',e.target.innerText))}
+  function filters(){const d=step('<p>Edit</p>'+btn('Next'));onBtn(d,'Next',caption)}
+  function crop(){const d=step('<p>Crop</p>'+btn('Next'));onBtn(d,'Next',filters)}
+  $('utworz').addEventListener('click',e=>{e.preventDefault();$('menu').hidden=false});
+  $('post').addEventListener('click',e=>{e.preventDefault();$('menu').hidden=true;
+    const d=step('<p>Create new post</p><input type="file" multiple accept="image/jpeg,image/png,video/mp4,video/quicktime" style="display:none">');
+    d.querySelector('input').addEventListener('change',e=>{const fs=[...e.target.files];
+      H.setAttribute('data-pliki',fs.map(f=>f.name+':'+f.size+':'+f.type).join(','));
+      if(fs.some(f=>f.type.startsWith('video/'))){const o=step('<p>Video posts are now shared as reels</p>'+btn('OK'));onBtn(o,'OK',crop)}else crop()})});
+})();
+</script>
+</body></html>

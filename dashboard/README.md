@@ -83,6 +83,17 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
   kanał nie wychodzi drugi raz (`stan.json`).
 - Instagram pobiera pliki z publicznego adresu `/media/<token>/…` (token na godzinę); wymaga `PANEL_PUBLIC_URL`
   i biblioteki Pillow (`python3-pil`) do JPEG. TikTok: jeszcze nie (wymaga audytu aplikacji przez TikTok).
+- „Udostępnij na Instagramie” (Marketing i edytor posta): publikacja z kanałem Instagram w projekcie, który nie publikuje
+  tam przez API (konto niepołączone) albo ma w karcie `- instagram: @profil`. Panel tworzy pakiet (`udostepnij.py`,
+  `POST /api/instagram/udostepnij`): opis (sekcja Instagram, inaczej Reels, Facebook), pliki (film sam; inaczej
+  `grafika.png` i zdjęcia `zdjecie-1.jpg`, `zdjecie-2.png`, `slajd-3.jpg`… jako karuzela, do 10) i profil z karty.
+  Pakiet żyje 30 minut pod `/udostepnij/<token>` (bez sesji, CORS tylko dla https://www.instagram.com). Panel otwiera
+  `https://www.instagram.com/#is=<adres pakietu>`; rozszerzenie Chrome (`uruchom/chrome-instagram/`, instalacja
+  w README tam) sprawdza zalogowany profil, wgrywa pliki, wkleja opis i zatrzymuje się: „Udostępnij” klikasz sam.
+  Gdy rozszerzenie nie pobierze pakietu w ~25 s, panel pokazuje „Kopiuj opis” i „Pobierz pliki”.
+- Edytor posta: zakładki podglądu Instagram, Facebook (też dla `reels`) i TikTok dla kanałów z pola kanału (Instagram
+  tylko ze zdjęciem albo filmem, TikTok tylko z filmem): układ jak w aplikacji, opis ucięty przed „więcej”
+  (Instagram 125 znaków, Facebook 250, TikTok 80, albo na pierwszym końcu wiersza), profil i awatar projektu.
 
 ## Marketing i filmy
 
@@ -191,6 +202,7 @@ Wiersze pod tytułem `KARTA.md`, obok `- stan:`:
 | Wiersz | Wartości | Bez wiersza |
 |---|---|---|
 | `- faza:` | pomysł, księga, budowa, wdrożenie, marketing, utrzymanie | faza wyliczona |
+| `- instagram:` | nazwa profilu, np. `@marka` (litery, cyfry, `.` i `_`) | bez sprawdzania profilu przy udostępnianiu |
 | `- klient:` | tak, nie | decyzja zbieracza, inaczej tak |
 | `- próg:` | lekka, pełna | pełna dla projektu klienta, lekka dla własnego |
 | `- stan:` | aktywny, wstrzymany, zakończony, backlog | decyzja zbieracza, inaczej aktywny |

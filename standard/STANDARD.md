@@ -21,6 +21,8 @@ Sekcja z tekstem `_Do uzupełnienia…_` liczy się jako brak. Nazw sekcji nie z
 Pod tytułem karty stoją pola (`- stan:`, `- faza:`, `- klient:`, `- próg:`, opis w `dashboard/README.md`) oraz
 `- priorytet: 1–5`: 1 to projekt najważniejszy, brak wiersza = 3. Inna wartość jest brakiem karty. Priorytet ustala
 kolejność spraw w raporcie PM i to, które zadania przesunąć, gdy dzień jest pełny (`priority` w danych projektu).
+`- instagram: @profil` to profil Instagram projektu: panel sprawdza go przy „Udostępnij na Instagramie” i pokazuje
+w podglądzie posta (`instagram` w danych projektu, bez @).
 
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.

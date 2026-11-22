@@ -85,6 +85,7 @@ CAMPAIGN_FILE = re.compile(r"^kampanie/[^/\\]+\.md$")
 
 TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
+INSTAGRAM = re.compile(r"^[A-Za-z0-9._]{1,30}$")      # nazwa profilu Instagram (pole karty instagram:)
 META = re.compile(r"^\s*-\s*([^:|\[\]`]{1,30}?)\s*:\s*(.*?)\s*$")
 
 
@@ -726,7 +727,7 @@ def read_project(path, pid=None, decision=None):
                "docs": docs, "docsOk": docs_ok, "docsTotal": len(docs),
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
-               "priority": fields["priority"],
+               "priority": fields["priority"], "instagram": fields["instagram"],
                "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
@@ -784,7 +785,7 @@ def first_paragraph(body, limit=DESCRIPTION_MAX):
 
 
 def card_fields(meta, decision=None):
-    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3). Karta wygrywa z decyzją zbieracza.
+    """Pola karty: stan, faza, klient, próg, alias, priorytet (1–5, brak = 3), instagram (profil, bez @). Karta wygrywa z decyzją zbieracza.
 
     decision: ostatnia decyzja zbieracza dla tego folderu ({"stan", "klient", "alias"}) albo None.
     Zwraca też listę błędów w wartościach pól (trafiają do braków karty).
@@ -820,8 +821,13 @@ def card_fields(meta, decision=None):
     priority = int(raw) if raw.isdigit() and int(raw) in PRIORITIES else PRIORITY_DEFAULT
     if raw and not (raw.isdigit() and int(raw) in PRIORITIES):
         errors.append("priorytet: %s (dozwolone: 1–5, 1 najważniejszy)" % raw)
+    raw = meta.get("instagram", "").strip()
+    instagram = raw.lstrip("@").strip()
+    if instagram and not INSTAGRAM.match(instagram):
+        errors.append("instagram: %s (nazwa profilu, np. @nazwa_profilu)" % raw)
+        instagram = ""
     return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
-            "priority": priority, "errors": errors}
+            "priority": priority, "instagram": instagram.lower(), "errors": errors}
 
 
 def stage_done(stage, tasks):

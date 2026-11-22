@@ -18,6 +18,13 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
   (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”. Tryby: czat-wolno (odpowiedź
   po 1,5 s), login (błąd 401), smieci (tekst zamiast JSON), wolno (bez odpowiedzi do limitu czasu).
+Stała sesja asystenta (argumenty `--input-format stream-json`): czyta wiersze {"type":"user",…} ze stdin i na każdy
+  odpowiada zdarzeniami stream_event (text_delta po kilka słów) i result z session_id strumien-1; odpowiedź
+  „Odpowiedź atrapy <n>: <40 znaków ostatniego wiersza wiadomości>”, n to numer wiadomości w tym procesie. Wiadomość
+  ze słowem „narzędzie” dodaje blok tool_use (Read); działania z wiadomości („Pokaż: #ty; Otwórz: …”) wracają
+  na końcu odpowiedzi (próby panelu w przeglądarce). `--resume wygasla`: błąd „No conversation found”, kod 1.
+  Tryby: login (wynik z błędem 401), czat-wolno (kawałki tekstu co 0,3 s), wolno (bez odpowiedzi).
+  Każda wiadomość to wiersz w dzienniku z polem pid procesu.
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
 """
 import json
@@ -109,6 +116,52 @@ def chat(prompt, how):
     return 0
 
 
+def stream(argv):
+    """Stała sesja: wiele wiadomości w jednym procesie (stream-json na wejściu i wyjściu)."""
+    if "--resume" in argv and argv[argv.index("--resume") + 1] == "wygasla":
+        sys.stderr.write("No conversation found with session ID: wygasla\n")
+        return 1
+    n, sid = 0, "strumien-1"
+    for raw in sys.stdin:
+        try:
+            msg = json.loads(raw)
+        except ValueError:
+            continue
+        text = str(((msg.get("message") or {}).get("content")) or "")
+        n += 1
+        how = mode()
+        journal({"argv": argv, "cwd": os.getcwd(), "prompt": text, "mode": how, "pid": os.getpid(), "stream": True})
+        if n == 1:
+            out({"type": "system", "subtype": "init", "session_id": sid, "model": "claude-atrapa-1"})
+        if how == "wolno":
+            time.sleep(120)
+            continue
+        if how == "login":
+            out({"type": "result", "is_error": True, "session_id": sid,
+                 "result": "Failed to authenticate. API Error: 401 OAuth access token has expired."})
+            continue
+        last = ([x.strip() for x in text.split("\n") if x.strip()] or [""])[-1]
+        answer = "Odpowiedź atrapy %d: %s" % (n, last[:40])
+        acts = re.findall(r"(?:Pokaż|Otwórz|Przewiń|Zamknij): [^;]*", last)   # działania z wiadomości wracają w odpowiedzi
+        if acts:
+            answer = "Odpowiedź atrapy %d." % n + "".join("\n" + a.strip() for a in acts)
+        out({"type": "stream_event", "session_id": sid, "event": {"type": "message_start"}})
+        if "narzędzie" in text:
+            out({"type": "stream_event", "session_id": sid,
+                 "event": {"type": "content_block_start", "content_block": {"type": "tool_use", "name": "Read"}}})
+            if how == "czat-wolno":
+                time.sleep(0.4)                 # narzędzie pracuje
+            out({"type": "stream_event", "session_id": sid, "event": {"type": "message_start"}})
+        words = answer.split(" ")
+        for i in range(0, len(words), 2):
+            out({"type": "stream_event", "session_id": sid, "event": {"type": "content_block_delta", "delta": {
+                "type": "text_delta", "text": " ".join(words[i:i + 2]) + (" " if i + 2 < len(words) else "")}}})
+            if how == "czat-wolno":
+                time.sleep(0.3)
+        out({"type": "result", "subtype": "success", "is_error": False, "result": answer, "session_id": sid})
+    return 0
+
+
 def main(argv):
     if "--version" in argv:
         print("2.1.156 (Claude Code)")
@@ -136,6 +189,8 @@ def main(argv):
         print(json.dumps({"loggedIn": not flag or os.path.exists(flag), "authMethod": "claude.ai", "apiProvider": "firstParty",
                           "subscriptionType": "max"}))
         return 0
+    if "--input-format" in argv and argv[argv.index("--input-format") + 1] == "stream-json":
+        return stream(argv)
     prompt = sys.stdin.read()
     how = mode()
     seen = ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "PANEL_TOKEN", "PANEL_NTFY_URL", "CLAUDECODE",

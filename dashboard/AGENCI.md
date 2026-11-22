@@ -42,6 +42,11 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_AGENT_USER` | brak | użytkownik systemu dla agentów; polecenie idzie przez `sudo -n -u <użytkownik> --` |
 | `PANEL_LOKALNY_KLUCZ_PLIK` | brak | plik klucza zapisu dla żądań z tego komputera (nagłówek `X-Panel-Klucz`) |
 | `PANEL_DZIEN_MIN` | `120` | dzienna pojemność właściciela w minutach (`dayMinutes` w `/api/data`) |
+| `PANEL_ASYSTENT_MODEL` | `sonnet` | model asystenta (okno Asystent w każdym widoku) |
+| `PANEL_ASYSTENT_BEZCZYNNOSC` | `1800` | po tylu sekundach bez wiadomości stała sesja asystenta kończy pracę |
+| `PANEL_GLOS_PYTHON` | brak | interpreter venv z faster-whisper (`uruchom/serwer/zainstaluj-glos.sh`); bez niego panel chowa „Mów” |
+| `PANEL_GLOS_MODELE`, `PANEL_GLOS_MODEL` | brak, `small` | katalog pobranych modeli i nazwa modelu Whisper |
+| `PANEL_GLOS_BEZCZYNNOSC` | `600` | po tylu sekundach bez nagrania pracownik mowy kończy pracę (zwalnia pamięć) |
 | `PANEL_NTFY_URL` | brak | adres tematu ntfy; powiadomienie po zakończeniu uruchomienia i gdy Claude wymaga logowania |
 | `CLAUDE_CODE_OAUTH_TOKEN` | brak | token z `claude setup-token` dla komputera bez przeglądarki |
 
@@ -333,6 +338,26 @@ Polecenie: `claude -p --output-format json --permission-mode default [--model M]
 wiadomość niesie kontekst zadania i zasady (krótko, po polsku, bez zmian w plikach, „Propozycja:” przy zbędnym albo
 niejasnym zadaniu, bez próśb o hasła i klucze); kolejne idą przez `--resume` z samym pytaniem. Agent w rozmowie
 niczego nie zmienia: bez powłoki, zapisu, sieci i serwerów MCP, także gdy `.claude/settings.json` projektu na nie pozwala.
+
+### Asystent i głos
+
+`POST /api/asystent` z `{"message", "view": "#adres", "open": id otwartego zadania}`; `GET /api/asystent`: historia,
+`pending`, `partial` (odpowiedź w trakcie pisania), `activity` („Czytam pliki projektu”), `voice` (czy działa
+rozpoznawanie mowy). Asystent to jeden długo żyjący proces `claude -p --input-format stream-json --output-format
+stream-json --verbose --include-partial-messages` (`dashboard/asystent.py`, jako `PANEL_AGENT_USER` jak zadania, te same
+narzędzia: odczyt i edycja tylko `ZADANIA.md`, `DECYZJE.md`, `kampanie/`). Pierwsza wiadomość niesie fakty
+(`assistant_facts`, z id zadań) i opis sterowania; kolejne tylko `[ekran: #adres; otwarte: …]` i nowe fakty, gdy dane
+się zmieniły. Po restarcie panelu albo bezczynności proces startuje z `--resume`; nieznana sesja zaczyna rozmowę od nowa.
+Odpowiedź może kończyć się wierszami działań, które panel wykonuje po kolei i ukrywa: `Pokaż: #adres`, `Otwórz: <id
+zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły`.
+
+`POST /api/asystent/glos?view=&open=`: nagranie (`audio/webm` z Chrome, `audio/mp4` z Safari, także ogg i wav; typ
+sprawdzany po nagłówku i pierwszych bajtach, do 4 MB) → tekst z `dashboard/glos_stt.py` (faster-whisper, `language=pl`,
+`initial_prompt` z nazwami projektów) → wiadomość jak wyżej; odpowiedź `{"text", "pending"}`. 409 z `"voice": false`,
+gdy rozpoznawanie nie jest zainstalowane; 422, gdy nic nie rozpoznano. `POST /api/asystent/glos/start` wczytuje model
+w tle (przy naciśnięciu „Mów”). Pracownik działa jako użytkownik panelu, startuje przy pierwszym nagraniu i kończy się
+po `PANEL_GLOS_BEZCZYNNOSC`. W panelu: przycisk „Mów” (klik: start, klik: stop; myszką także przytrzymanie) albo
+spacja, gdy fokus nie jest w polu ani na przycisku (przytrzymaj albo naciśnij dwa razy); Esc przerywa nagranie.
 
 ## Testy
 

@@ -24,6 +24,10 @@ import urllib.request
 import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import asystent  # noqa: E402  (stała sesja asystenta)
+import glos  # noqa: E402  (rozpoznawanie mowy)
 ROOT = os.path.dirname(HERE)
 WINDOWS = os.name == "nt"
 # Windows: serwer działa pod pythonw (bez konsoli), więc żaden proces potomny nie może otwierać okna.
@@ -288,6 +292,10 @@ class Manager:
         self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
         self._chat_meta = {}                  # plik rozmowy -> zadanie i czas pytania (widok Teraz w panelu)
         self._chat_done = []                  # zakończone rozmowy (Teraz → Ostatnie 24 h), najnowsze na końcu
+        self._as = asystent.Session(idle=_int(get("PANEL_ASYSTENT_BEZCZYNNOSC"), asystent.IDLE))  # stała sesja
+        self._as_live = {"partial": "", "activity": ""}   # odpowiedź asystenta w trakcie pisania
+        self._as_facts = ""                   # skrót faktów wysłanych w tej sesji (nowe fakty tylko po zmianie danych)
+        self.voice = glos.Recognizer(self.env, idle=_int(get("PANEL_GLOS_BEZCZYNNOSC"), glos.GLOS_IDLE))
         self._load()
         self._chat_restore()
         self._login_sent = self._state["needsLogin"]     # stan sprzed restartu nie wysyła powiadomienia drugi raz
@@ -500,6 +508,8 @@ class Manager:
         if self._login:
             self._login_stop(self._login)
         self._stop_event.set()
+        self._as.stop()
+        self.voice.stop()
         with self._lock:
             ids = [rid for rid, rec in self._runs.items() if rec["state"] in LIVE]
             procs = [p["proc"] for p in self._priv.values() if p.get("proc") is not None]
@@ -1127,34 +1137,49 @@ class Manager:
 
     # ---------- asystent: rozmowa o wszystkich projektach (Start i przycisk w każdym widoku) ----------
     ASSIST = "*asystent"
+    ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+    ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
+    ASSIST_VIEWS = (("#start", "Start: postęp projektów"), ("#ty", "Dla Ciebie: Twoje sprawy, zgody, odbiory"),
+                    ("#marketing", "Marketing: publikacje i nagrania"), ("#terminy", "Terminy: kalendarz"),
+                    ("#tablica", "Tablica zadań"), ("#agenci", "Agenci: uruchomienia"), ("#blokady", "Blokady"),
+                    ("#wskazniki", "Wskaźniki"), ("#projekty", "Lista projektów"), ("#przeglad", "Przegląd i raport PM"),
+                    ("#media", "Media"), ("#koszty", "Serwer i koszty"))
 
     def assistant_get(self):
-        """Historia rozmowy z asystentem: (kod, błąd, {"messages", "pending", "error"})."""
+        """Historia rozmowy z asystentem: (kod, błąd, {"messages", "pending", "error", "partial", "activity", "voice"}).
+        partial: tekst odpowiedzi w trakcie pisania (stała sesja), activity: co asystent teraz robi."""
         path = self._project_chat_file(self.ASSIST)
         with self._chat_lock:
             chat = self._chat_read(path)
             live = path in self._chat_live
+            cur = dict(self._as_live) if live else {}
         if chat["pending"] and not live:
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij wiadomość jeszcze raz."
-        return 200, "", {"messages": chat["messages"][-40:], "pending": live, "error": chat["error"]}
+        return 200, "", {"messages": chat["messages"][-40:], "pending": live, "error": chat["error"],
+                         "partial": cur.get("partial", ""), "activity": cur.get("activity", ""),
+                         "voice": self.voice.available()}
 
     @staticmethod
     def assistant_facts(data, today):
         """Krótkie fakty dla asystenta (bez czytania plików przy pytaniu „co mam zrobić”): Twoje sprawy na 7 dni,
-        po terminie, postęp projektów."""
+        publikacje na 7 dni, po terminie, postęp projektów. Przy sprawach id zadania (działanie „Otwórz:”)."""
         names = {p["id"]: p.get("name") or p["id"] for p in data["projects"]}
         active = {p["id"] for p in data["projects"] if p.get("state") not in ("backlog", "paused", "done")}
         week = (today + datetime.timedelta(days=7)).isoformat()
         tk = today.isoformat()
-        mine, late = [], []
+        mine, late, pubs = [], [], []
         for t in data["tasks"]:
             if t.get("state") == "done" or t.get("project") not in active:
                 continue
             d = t.get("date") or ""
-            line = "- %s | %s | %s%s" % (names[t["project"]], t.get("title", ""), d or "bez daty",
-                                        " | czeka na: " + t["needsYou"] if t.get("needsYou") else "")
-            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d) and d < tk:
+            line = "- %s | %s | %s%s%s" % (names[t["project"]], t.get("title", ""), d or "bez daty",
+                                          " | czeka na: " + t["needsYou"] if t.get("needsYou") else "",
+                                          " | id: " + t["id"] if t.get("id") else "")
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d[:10]) and d[:10] < tk:
                 late.append(line)
+            elif t.get("kind") == "publikacja":
+                if d and d[:10] <= week:
+                    pubs.append(line)
             elif (t.get("executor") == "ty" or t.get("needsYou")) and (not d or d <= week):
                 mine.append(line)
         prog = []
@@ -1163,15 +1188,33 @@ class Manager:
             if ts:
                 done = sum(1 for t in ts if t.get("state") == "done")
                 prog.append("- %s: %d%% (%d z %d zadań)" % (names[pid], round(100 * done / len(ts)), done, len(ts)))
+        by_date = lambda x: x.split(" | ")[2]  # noqa: E731
         out = ["Postęp projektów:"] + (sorted(prog) or ["- brak"])
-        out += ["", "Twoje sprawy (kto: ty albo czeka na Ciebie) do %s:" % week] + (sorted(mine, key=lambda x: x.split(" | ")[2])[:40] or ["- brak"])
+        out += ["", "Twoje sprawy (kto: ty albo czeka na Ciebie) do %s:" % week] + (sorted(mine, key=by_date)[:40] or ["- brak"])
+        out += ["", "Publikacje do %s:" % week] + (sorted(pubs, key=by_date)[:20] or ["- brak"])
         out += ["", "Po terminie:"] + (late[:30] or ["- brak"])
         return "\n".join(out)
 
-    def assistant_prompt(self, data, index, text, view):
+    @staticmethod
+    def _assistant_open(data, opened):
+        """Opis zadania otwartego w panelu (szuflada) albo ''."""
+        opened = str(opened or "")[:300]
+        t = next((x for x in data["tasks"] if opened and x.get("id") == opened), None)
+        if not t:
+            return ""
+        kind = "publikacja" if t.get("kind") == "publikacja" else "zadanie"
+        return "%s „%s” (id: %s)" % (kind, re.sub(r"\s+", " ", t.get("title", ""))[:160], t["id"])
+
+    def _assistant_screen(self, data, view, opened):
+        shown = self._assistant_open(data, opened)
+        return "[ekran: %s%s]" % (view or "#start", "; otwarte: " + shown if shown else "")
+
+    def assistant_prompt(self, data, index, text, view, opened=""):
         today = datetime.date.today()
         lines = ["Jesteś asystentem właściciela w panelu projektów. Dziś jest %s (%s)." % (today.isoformat(), PL_DAYS[today.weekday()]),
-                 "Właściciel często mówi głosem i słucha odpowiedzi: odpowiadaj bardzo krótko (2–5 zdań), bez tabel i nagłówków.",
+                 "Właściciel często mówi głosem; tekst pochodzi wtedy z rozpoznawania mowy i może przekręcać nazwy: "
+                 "dopasuj je do nazw projektów i zadań. Odpowiedź czyta na ekranie: bardzo krótko (2–5 zdań), "
+                 "bez tabel i nagłówków.",
                  "", self.assistant_facts(data, today), "", "Projekty (pliki kart):"]
         for p in data["projects"]:
             folder = index.get(p["id"])
@@ -1179,21 +1222,38 @@ class Manager:
                 cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
                 lines.append("- %s (id %s): %s/ZADANIA.md, kampanie: %s/kampanie" % (p.get("name") or p["id"], p["id"], cards, cards))
         lines += ["Format wierszy zadań: %s" % os.path.join(self.root, "standard", "STANDARD.md"),
+                  "", "Sterowanie panelem: na samym końcu odpowiedzi możesz dodać wiersze działań, każdy w osobnym "
+                  "wierszu. Panel wykonuje je po kolei i nie pokazuje ich właścicielowi:",
+                  "  Pokaż: #adres            przełącza widok",
+                  "  Otwórz: <id zadania>     otwiera szczegóły zadania albo publikacji (id z faktów; bez id: dokładny tytuł)",
+                  "  Przewiń: <nagłówek>      przewija bieżący widok do sekcji o tym nagłówku",
+                  "  Zamknij: szczegóły       zamyka otwarte zadanie",
+                  "Używaj ich, gdy właściciel prosi „pokaż”, „otwórz”, „przejdź”, albo gdy pomagają zobaczyć to, o czym "
+                  "mówisz. Najpierw Pokaż, potem Otwórz. Nie zapowiadaj ich w treści.",
+                  "Adresy widoków: " + "; ".join("%s (%s)" % v for v in self.ASSIST_VIEWS) + ".",
+                  "Projekt: #p-<id projektu> (plan), zakładki: " + ", ".join("#p-<id>-%s" % t for t in self.ASSIST_TABS) + ".",
                   "", "Zasady:",
                   "- Gdy właściciel pyta, co ma zrobić: wymień sprawy po kolei, najpierw po terminie, potem dziś. Przy sprawie, "
                   "która wymaga zgody lub odbioru, opisz ją jednym zdaniem i zapytaj „Zatwierdzasz?”. Na „tak” zamknij ją w pliku, "
                   "na poprawki wprowadź poprawki. Jedna sprawa naraz.",
                   "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela i tylko ZADANIA.md, DECYZJE.md i kampanie/ projektów, "
                   "w formacie ze STANDARD.md. Wierszy nie usuwasz; anulowane: [x] i wcięty wiersz `wynik: anulowane`.",
-                  "- Po zmianie dopisz na końcu wiersz „Zmieniono: <projekt>: <zadanie>”.",
-                  "- Możesz przełączyć widok panelu: ostatni wiersz odpowiedzi „Pokaż: #adres”. Adresy: #start, #ty (sprawy dla "
-                  "Ciebie), #marketing, #terminy, #tablica, #agenci, #p-<id projektu> (plan projektu), #p-<id>-marketing, "
-                  "#p-<id>-etapy, #ty?z=<id zadania>. Używaj, gdy pomaga zobaczyć to, o czym mówisz.",
+                  "- Po zmianie dopisz przed wierszami działań wiersz „Zmieniono: <projekt>: <zadanie>”.",
                   "- Nie zmieniasz kart, kodu ani innych plików, nie uruchamiasz poleceń, nie prosisz o hasła ani klucze.",
-                  "", "Teraz otwarty widok: %s" % (view or "#start"), "", "Wiadomość właściciela:", text]
+                  "- Każda kolejna wiadomość zaczyna się od [ekran: …] (co właściciel ma teraz przed sobą); gdy dane się "
+                  "zmienią, dostaniesz też nowe fakty.",
+                  "", self._assistant_screen(data, view, opened), "", "Wiadomość właściciela:", text]
         return "\n".join(lines) + "\n"
 
-    def assistant_send(self, message, view=""):
+    def _assistant_tools(self, index):
+        allow, dirs = ["Read", "Grep", "Glob", "LS"], []
+        for folder in index.values():
+            a, _, cards = self.project_chat_tools(folder)
+            allow += [x for x in a.split(",")[4:] if x not in allow]
+            dirs += [d for d in (cards, folder) if d not in dirs]
+        return allow, dirs
+
+    def assistant_send(self, message, view="", opened=""):
         text = str(message or "").strip()
         view = re.sub(r"[^\w#?=&.-]", "", str(view or ""))[:80]
         if not text:
@@ -1229,32 +1289,122 @@ class Manager:
             except OSError:
                 return 500, "Nie udało się zapisać rozmowy.", {}
             self._chat_live.add(file)
+            self._as_live = {"partial": "", "activity": ""}
             self._chat_meta[file] = {"taskId": "", "project": "", "file": "", "since": now_iso(), "title": "Asystent"}
             self._chat_save()
         try:
-            allow, dirs = ["Read", "Grep", "Glob", "LS"], []
-            for folder in index.values():
-                a, _, cards = self.project_chat_tools(folder)
-                allow += [x for x in a.split(",")[4:] if x not in allow]
-                dirs += [d for d in (cards, folder) if d not in dirs]
-            deny = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
-            if session:
-                prompt = "[widok: %s]\n%s\n" % (view or "#start", text)
-            else:
-                prompt = self.assistant_prompt(data, index, text, view)
-            args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default",
+            allow, dirs = self._assistant_tools(index)
+            args = _command(path) + ["-p", "--input-format", "stream-json", "--output-format", "stream-json",
+                                     "--verbose", "--include-partial-messages", "--permission-mode", "default",
                                      "--model", self.assist_model]
-            if session:
-                args += ["--resume", session]
             for d in dirs:
                 args += ["--add-dir", d]
-            args += ["--allowedTools", ",".join(allow), "--disallowedTools", deny, "--strict-mcp-config"]
-            threading.Thread(target=self._chat_run, args=(file, args, self.root, prompt, bool(session)),
+            args += ["--allowedTools", ",".join(allow), "--disallowedTools", self.ASSIST_DENY, "--strict-mcp-config"]
+            threading.Thread(target=self._assistant_turn, args=(file, args, session, data, index, text, view, opened),
                              daemon=True).start()
         except Exception:
             self._chat_end(file, "", "", "Nie udało się uruchomić rozmowy.")
             return 500, "Nie udało się uruchomić rozmowy.", {}
         return 202, "", {"pending": True}
+
+    def _as_update(self, **kw):
+        with self._chat_lock:
+            self._as_live.update(kw)
+
+    def _assistant_turn(self, file, args, session, data, index, text, view, opened):
+        """Wątek jednej wiadomości: stała sesja (start albo wznowienie przy potrzebie), odpowiedź z kawałkami tekstu."""
+        answer, error, dropped = "", "", False
+        try:
+            facts = self.assistant_facts(data, datetime.date.today())
+            stamp = hashlib.sha1(facts.encode("utf-8")).hexdigest()
+            key = hashlib.sha1(json.dumps(args).encode("utf-8")).hexdigest()
+            for attempt in (0, 1):
+                fresh = not session
+                if fresh:
+                    prompt = self.assistant_prompt(data, index, text, view, opened)
+                else:
+                    head = self._assistant_screen(data, view, opened)
+                    if stamp != self._as_facts:
+                        head += "\nAktualne fakty (dane się zmieniły):\n" + facts
+                    prompt = head + "\n" + text
+                if not self._as.alive(key):
+                    self._as.start(self.as_agent(args + (["--resume", session] if session else [])), cwd=self.root,
+                                   env=child_env(self.env), key=key, resumed=bool(session))
+                resumed = self._as.resumed
+                res = self._as.turn(prompt, on_text=lambda t: self._as_update(partial=t[:CHAT_ANSWER], activity=""),
+                                    on_tool=lambda a: self._as_update(activity=a), timeout=self.chat_timeout)
+                if res["ok"]:
+                    answer, session = res["text"][:CHAT_ANSWER], res["session"] or session
+                    self._as_facts = stamp
+                    break
+                if res["error"] == "czas":
+                    error = "Brak odpowiedzi w ciągu %d s. Spróbuj ponownie." % self.chat_timeout
+                    break
+                blob = res["blob"]
+                if LOGIN_RE.search(blob):
+                    error = "Wymaga logowania: %s" % self.login_cmd("claude", self.tool_path("claude"))
+                elif LIMIT_RE.search(blob):
+                    error = "Limit subskrypcji. Spróbuj później."
+                elif resumed and attempt == 0 and (res["error"] == "proces" or
+                                                    re.search(r"no conversation found|session.{0,40}not found", blob, re.I)):
+                    session, dropped = "", True     # sesja wygasła albo jej nie ma: nowa rozmowa z pełnymi faktami
+                    self._as.stop(keep_watch=True)
+                    self._as_update(partial="", activity="")
+                    continue
+                else:
+                    error = "Nie udało się uzyskać odpowiedzi (kod %s)." % res["code"]
+                self._as.stop(keep_watch=True)
+                break
+        except OSError:
+            error = "Nie udało się uruchomić polecenia claude."
+        except Exception:  # rozmowa nie może zostać w stanie oczekiwania
+            error = "Nie udało się uzyskać odpowiedzi."
+        finally:
+            if not answer and not error:
+                error = "Nie udało się uzyskać odpowiedzi."
+            self._chat_end(file, answer, session if answer else "", error)
+            if dropped and not answer:
+                self._as_clear_session(file)
+
+    def _as_clear_session(self, file):
+        """Po nieudanym wznowieniu: następna wiadomość zaczyna nową rozmowę (pełny prompt z faktami)."""
+        with self._chat_lock:
+            try:
+                chat = self._chat_read(file)
+                if chat["session"]:
+                    chat["session"] = ""
+                    self._chat_write(file, chat)
+            except OSError:
+                pass
+
+    def voice_warm(self):
+        """POST /api/asystent/glos/start: model mowy wczytuje się, gdy właściciel mówi."""
+        if not self.voice.available():
+            return 409, "Rozpoznawanie mowy nie jest zainstalowane na serwerze.", {"voice": False}
+        self.voice.warm()
+        return 200, "", {}
+
+    def voice_prompt(self, data):
+        """initial_prompt dla Whisper: nazwy projektów (rozpoznawanie myli je bez podpowiedzi)."""
+        names = [p.get("name") or p["id"] for p in data["projects"] if p.get("state") not in ("done",)]
+        return ("Panel projektów. Projekty: %s. Zadania, etapy, marketing, publikacje, zgoda, odbiór." %
+                ", ".join(names[:30]))[:600]
+
+    def assistant_voice(self, ctype, blob, view="", opened=""):
+        """POST /api/asystent/glos: nagranie -> tekst -> wiadomość do asystenta. Zwraca (kod, błąd, {"text", …})."""
+        if not self.voice.available():
+            return 409, "Rozpoznawanie mowy nie jest zainstalowane na serwerze.", {"voice": False}
+        ext, err = glos.check_audio(ctype, blob)
+        if err:
+            return 400, err, {}
+        data, _ = self.load_projects(resolve=False)
+        code, err, text = self.voice.transcribe(blob, ext, self.voice_prompt(data))
+        if code != 200:
+            return code, err, {"voice": self.voice.available()}
+        if not text:
+            return 422, "Nie rozpoznano mowy. Powiedz jeszcze raz, bliżej mikrofonu.", {}
+        code, err, extra = self.assistant_send(text, view, opened)
+        return code, err, dict(extra, text=text[:CHAT_MAX])
 
     def assistant_reset(self):
         file = self._project_chat_file(self.ASSIST)
@@ -1265,6 +1415,8 @@ class Manager:
                 self._chat_write(file, {"messages": [], "pending": False, "error": "", "session": ""})
             except OSError:
                 return 500, "Nie udało się wyczyścić rozmowy.", {}
+        self._as.stop(keep_watch=True)          # nowa rozmowa: następna wiadomość z pełnym promptem
+        self._as_facts = ""
         return 200, "", {}
 
     def _chat_run(self, file, args, cwd, prompt, resumed):
