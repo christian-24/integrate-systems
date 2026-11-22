@@ -1,6 +1,6 @@
 """Publikacja postów z panelu: Facebook (strony, zdjęcie, film, Reels) i LinkedIn (profil właściciela).
 
-Połączenia wkleja właściciel w panelu (widok Agenci → Publikacja); tokeny leżą w PANEL_PUBLIKACJA_DIR
+Połączenia wkleja właściciel w panelu (Marketing → Kanały publikacji); tokeny leżą w PANEL_PUBLIKACJA_DIR
 (domyślnie ~/dane/publikacja, pliki 0600) i nie trafiają do /api/data ani do dziennika.
 - Facebook: App ID, App Secret i token użytkownika z Graph API Explorer (pages_show_list, pages_read_engagement,
   pages_manage_posts, publish_video). Panel wymienia go na token długoterminowy i zapisuje tokeny stron
@@ -270,9 +270,9 @@ class Publisher:
         """Powód, dla którego publikacja nie wyjdzie, albo ""."""
         st = self.status()
         if ("facebook" in chans or "reels" in chans) and not self._page(t["project"]):
-            return "Facebook nie jest połączony ze stroną tego projektu (Agenci → Publikacja)."
+            return "Facebook nie jest połączony ze stroną tego projektu (Marketing → Kanały publikacji)."
         if "linkedin" in chans and not st["linkedin"]["connected"]:
-            return "LinkedIn nie jest połączony albo token wygasł (Agenci → Publikacja)."
+            return "LinkedIn nie jest połączony albo token wygasł (Marketing → Kanały publikacji)."
         folder = self.post_folder(t["project"], str(t.get("date") or "")[:10])
         if not folder:
             return "Nie ma przygotowanego posta na dzień publikacji."

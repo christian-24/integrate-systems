@@ -2441,24 +2441,34 @@ def login_blocked(add=False):
 
 
 LOGIN_PAGE = """<!doctype html><html lang="pl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel projektów</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Projekty · logowanie</title>
 @@APP@@
-<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+:root{--bg:#f6f7f9;--surface:#fff;--line:#dde1e7;--ink:#1d2433;--ink-3:#5a6577;--accent:#2563c9;--accent-ink:#fff;--ctl-line:#7d8696;--bad:#a8281a;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue","Noto Sans",Arial,sans-serif;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#15171c;--surface:#1d2027;--line:#30353f;--ink:#e7e9ee;--ink-3:#8d95a3;--accent:#6b9ef0;--accent-ink:#0f1420;--ctl-line:#6b7382;--bad:#ffaaa0}}
 html,body{height:100%%;margin:0}
-body{background:#0b1020;color:#e9e4d4;font:16px/1.4 "Alegreya Sans",system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
-form{width:min(320px,calc(100vw - 48px));padding:24px;border:1px solid rgba(226,179,71,.35);border-radius:10px;background:rgba(255,255,255,.04)}
-h1{margin:0 0 4px;font-size:20px;font-weight:700;color:#e2b347}
-p{margin:0 0 16px;color:#a9a48f;font-size:14px}
-p.blad{color:#f08a7a;margin:12px 0 0}
-input,button{width:100%%;box-sizing:border-box;font:inherit;border-radius:6px;padding:10px 12px}
-input{background:#0b1020;color:inherit;border:1px solid rgba(226,179,71,.45)}
-input:focus,button:focus{outline:2px solid #e2b347;outline-offset:1px}
-button{margin-top:12px;background:#e2b347;color:#0b1020;border:0;font-weight:700;cursor:pointer}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);display:flex;align-items:center;justify-content:center}
+form{width:min(340px,calc(100vw - 32px));box-sizing:border-box;padding:24px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:grid;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{width:32px;height:32px;border-radius:6px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;font-size:13px}
+h1{margin:0;font-size:18px;line-height:1.2}
+.brand small{display:block;font-size:13px;color:var(--ink-3)}
+label{font-weight:600;font-size:14px}
+.pw{display:flex;gap:8px}
+input,button{box-sizing:border-box;font:inherit;border-radius:6px;min-height:44px}
+input{flex:1;min-width:0;padding:8px 12px;background:var(--surface);color:var(--ink);border:1px solid var(--ctl-line)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{padding:8px 14px;font-weight:600;cursor:pointer}
+.pokaz{background:var(--surface);color:var(--ink);border:1px solid var(--ctl-line)}
+.wejdz{width:100%%;background:var(--accent);color:var(--accent-ink);border:0}
+p.blad{margin:0;color:var(--bad)}
 </style></head><body><form method="post" action="/wejscie">
-<h1>Panel projektów</h1><p>Hasło panelu</p>
-<input type="password" name="haslo" aria-label="Hasło panelu" autocomplete="current-password" autofocus required>
-<button type="submit">Wejdź</button>%s</form></body></html>"""
+<div class="brand"><div class="mark" aria-hidden="true">IS</div><div><h1>Projekty</h1><small>IntegrateSystems</small></div></div>
+<label for="haslo">Hasło</label>
+<div class="pw"><input type="password" id="haslo" name="haslo" autocomplete="current-password" autofocus required>
+<button type="button" class="pokaz" aria-pressed="false" aria-controls="haslo" onclick="var i=document.getElementById('haslo'),on=i.type==='password';i.type=on?'text':'password';this.setAttribute('aria-pressed',on);this.textContent=on?'Ukryj':'Pokaż'">Pokaż</button></div>
+<button type="submit" class="wejdz">Zaloguj</button>%s</form></body></html>"""
 
 
 def login_page(error=""):
