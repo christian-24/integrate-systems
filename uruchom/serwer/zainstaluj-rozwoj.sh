@@ -71,6 +71,8 @@ systemctl enable --now wdroz-panel-auto.path wdroz-panel-auto.timer >/dev/null  
 
 echo "5. Stała sesja Claude (Remote Control) w kopii roboczej: aplikacja Claude → Code → „Rozwój panelu”"
 install -m 644 "$SRC/claude-zdalnie.service" /etc/systemd/system/claude-zdalnie.service
+[ -f /etc/claude-zdalnie.json ] || printf "%s\n" "{\"model\": \"claude-opus-5-5\", \"effortLevel\": \"max\", \"autoCompactEnabled\": true}" > /etc/claude-zdalnie.json
+chmod 644 /etc/claude-zdalnie.json
 # zaufanie folderu dla Claude agenta (bez terminala nikt by o nie nie zapytał)
 runuser -u agent -- python3 - "$DEV" <<'PY'
 import json, os, sys
