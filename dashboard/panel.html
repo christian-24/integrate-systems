@@ -5136,9 +5136,31 @@ function runGroup(id,name,R,coll){
     (open?'<ul class="rows runs ag-runs" id="ag-g-'+id+'">'+M.map(g=>g.length>1?runRow(g[0],g):runRow(g[0])).join('')+'</ul>':'');
 }
 /* kolejność: stan agentów, uruchomienia (zmieniają się codziennie), serwer i publikacja (konfiguracja, ustawiana raz) */
+/* Agenci: logowanie Codexa (konto ChatGPT, bez klucza API): link OpenAI i kod urządzenia, sprawdzanie co 5 s */
+const CDX={url:'',code:'',busy:false,t:null};
+function cdxBox(){
+  const a=D.agents,t=a&&a.tools&&a.tools.codex;if(!t||!t.found||t.loggedIn){CDX.url=CDX.code='';return ''}
+  let h='<section class="panel" id="ag-codex"><h2>Codex</h2><div class="pad"><p class="lg-txt">Codex nie jest zalogowany. Bez tego nie działają grafiki w Marketingu ani zadania „kto: codex”.</p>';
+  if(CDX.url&&CDX.code)h+='<p class="lg-txt">1. Otwórz <a href="'+esc(CDX.url)+'" target="_blank" rel="noopener noreferrer">stronę logowania OpenAI</a> i zaloguj się kontem ChatGPT.</p><p class="lg-txt">2. Wpisz kod: <b class="cx-code">'+esc(CDX.code)+'</b></p><p class="muted">Panel sprawdza logowanie sam. Kod działa 15 minut.</p>';
+  else h+='<div class="lg-act"><button type="button" class="btn sm" data-cdxlogin="1"'+(CDX.busy?' aria-disabled="true"':'')+'>'+(CDX.busy?'Uruchamiam…':'Zaloguj Codex')+'</button><button type="button" class="btn sec sm" data-cdxcheck="1">Sprawdź ponownie</button></div>'+
+    '<p class="muted">Najpierw włącz w ChatGPT: Ustawienia → Bezpieczeństwo → logowanie kodem urządzenia.</p>';
+  return h+'</div></section>';
+}
+async function cdxCheck(){const x=await post('/api/agent/recheck',{});const ok=!!(x.data&&x.data.loggedIn&&x.data.loggedIn.codex);
+  if(ok){CDX.url=CDX.code='';clearInterval(CDX.t);CDX.t=null;say('Codex zalogowany.')}await load(true);return ok}
+document.addEventListener('click',async ev=>{const b=ev.target.closest&&ev.target.closest('[data-cdxlogin],[data-cdxcheck]');if(!b)return;ev.preventDefault();
+  if(!LIVE){say(PRV);return}
+  if(b.dataset.cdxcheck){if(!await cdxCheck())say('Codex nadal niezalogowany.');return}
+  if(CDX.busy)return;CDX.busy=true;render(true);
+  const x=await post('/api/agent/login',{tool:'codex'}),r=x.data||{};CDX.busy=false;
+  if(x.ok&&r.url&&r.code){CDX.url=r.url;CDX.code=r.code;clearInterval(CDX.t);CDX.t=setInterval(()=>{cdxCheck()},5000);setTimeout(()=>{clearInterval(CDX.t);CDX.t=null},15*60000)}
+  else if(x.ok)say('Otworzyłem Terminal. Zaloguj się w przeglądarce, potem kliknij „Sprawdź ponownie”.');
+  else if(x.status!==401)say(x.error||'Nie otworzono logowania.');
+  render(true)});
 function vAgenci(){
   const a=D.agents;
   let h='<div class="pagehead"><div class="ph-main"><h1>Agenci</h1><p>Agenci (Claude, Codex) wykonują zadania z Tablicy. Tu widać, kto pracuje i co zrobił.</p></div></div><section class="panel" id="abar" aria-label="Stan agentów">'+agBarHtml()+'</section>'+srvLine();
+  h+=cdxBox();
   if(a&&!a.runs.length)h=h.replace('</section>','<p class="ahint ag-none">Uruchomienia pojawią się tutaj, gdy agent zacznie zadanie.</p></section>');
   else if(a){
     const L=a.runs,act=L.filter(isAct).length,td=runsToday(),n=a.today.runs,tdI={};td.forEach(r=>{tdI[r.id]=1});
@@ -7432,13 +7454,7 @@ async function cxLoad(){
 }
 const cxName=n=>n==='grafika.png'?'Grafika':/^wariant-/.test(n)?'Wariant '+n.replace(/^wariant-(\d+).*/,'$1'):/^grafika-poprzednia/.test(n)?'Poprzednia':'Zdjęcie '+(n.match(/(\d+)\./)||['',''])[1];
 function cxLoginBox(t){
-  const L=CX.login||(t.login&&t.login.active?t.login:null);
-  const man=t.loginWeb?(t.agentUser?'sudo -u '+t.agentUser+' -H ':'')+t.loginCmd+' --device-auth':t.loginCmd;
-  let h='<div class="cx-lg"><p class="cx-warn">Codex nie jest zalogowany. Zaloguj się swoim kontem ChatGPT (bez klucza API).</p>';
-  if(L&&L.url)h+='<p>1. Otwórz <a href="'+esc(L.url)+'" target="_blank" rel="noopener noreferrer">stronę logowania OpenAI</a> i zaloguj się.</p><p>2. Wpisz tam kod: <b class="cx-code">'+esc(L.code)+'</b></p><p class="muted">Panel sprawdzi logowanie sam w ciągu kilku sekund.</p>';
-  else h+='<div class="row"><button type="button" class="btn sm" data-cxlogin>Zaloguj Codex</button><button type="button" class="btn sec sm" data-cxcheck>Sprawdź ponownie</button></div>'+
-    (t.loginWeb?'<p class="muted">Panel pokaże stronę OpenAI i kod. Wymaga włączonego logowania kodem urządzenia w ustawieniach bezpieczeństwa ChatGPT.</p>':'<p class="muted">Otworzy się Terminal i strona logowania w przeglądarce.</p>');
-  return h+'<details><summary>Logowanie ręczne</summary><div class="lg-cmd"><code>'+esc(man)+'</code><button type="button" class="btn sec sm" data-cxcopy="'+esc(man)+'">Kopiuj</button></div></details></div>';
+  return '<div class="cx-lg"><p class="cx-warn">Codex nie jest zalogowany.</p><div class="row"><a class="btn sec sm" href="#agenci">Zaloguj w Agentach</a></div></div>';
 }
 function cxRender(){
   const c=ED.cur,d=CX.d;if(!c||!document.getElementById('cx'))return;
