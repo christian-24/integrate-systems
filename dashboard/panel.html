@@ -141,7 +141,7 @@ code{font:12.5px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--
 .pagehead>*{min-width:0}
 .pagehead>.ph-main{flex:1 1 320px}
 .pagehead h1{font-size:var(--fs-h1);font-weight:650}
-.pagehead h1:focus{outline:none}
+.pagehead h1:focus,.ptitle h1:focus{outline:none}
 .pagehead p{color:var(--ink-3)}
 .pagehead .toolbar{justify-content:flex-end}
 .mobilenav{display:none}
@@ -1769,6 +1769,50 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .pv-dec .rows .r>.btn{min-width:120px;justify-content:center}
   .ty-see{min-height:40px;display:inline-flex;align-items:center}
 }
+/* poprawki UI runda 1: B (strona projektu) */
+.pj-sum{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0;font-size:14px;color:var(--ink-2);min-width:0}
+.pj-sum b{color:var(--ink);font-weight:600}
+.pj-sum>span{min-width:0;overflow-wrap:anywhere}
+.pj-late{color:var(--l-red);font-weight:600}
+.pj-ov>summary{list-style:none;cursor:pointer;align-items:center;min-height:32px;padding:4px 0;border-radius:var(--r-sm)}
+.pj-ov>summary::-webkit-details-marker,.pj-fold>summary::-webkit-details-marker,.pj-add>summary::-webkit-details-marker,.pj-gap>summary::-webkit-details-marker{display:none}
+.pj-ov>summary::after{content:"Szczegóły ▸";color:var(--ink-3);font-size:13px;margin-left:auto}
+.pj-ov[open]>summary::after{content:"Zwiń ▾"}
+.pj-ov>summary:focus-visible,.pj-fold>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pj-ovb{display:grid;gap:12px;padding-top:10px}
+.pj-ovb .note{margin:-4px 0 0}
+.ptabs{margin-top:4px}
+.pj-tabd{margin:-4px 0 0;font-size:14px;color:var(--ink-2)}
+.pp-k{display:inline-block;min-width:84px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-3)}
+.pp-over{color:var(--l-red);font-weight:600}
+#pdec .pv-pr{display:none}
+.pj-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
+.pj-fold>summary:hover{background:var(--hover)}
+.pj-fold>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
+.pj-fold[open]>summary::before{content:"▾"}
+.pj-fold>summary small{margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3)}
+.pj-ft{font-size:var(--fs-lg);font-weight:650}
+.pj-fold .chat{padding-top:0}
+.pj-add{display:grid;gap:10px;justify-items:start}
+.pj-add>summary{list-style:none;cursor:pointer}
+.pj-add[open]>summary{display:none}
+.pj-add .addf{width:100%}
+.pj-gap>summary{list-style:none;cursor:pointer;display:inline;font-weight:400}
+.pj-gap>summary::after{content:" ▸";color:var(--ink-3);font-size:12px}
+.pj-gap[open]>summary::after{content:" ▾"}
+.pj-gap .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
+p.kv2{margin:0;display:block}
+p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
+@media (max-width:620px){
+  .ptabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-right:28px;-webkit-mask-image:linear-gradient(to right,black calc(100% - 28px),transparent);mask-image:linear-gradient(to right,black calc(100% - 28px),transparent)}
+  .ptabs::-webkit-scrollbar{display:none}
+  .ptabs a{padding:8px 10px;white-space:nowrap;flex:none}
+  .pj-ov>summary{min-height:40px}
+  .pj-ov>summary::before,.pj-add>summary::before,.pj-gap>summary::before{content:none}
+  .pj-gap>summary{display:inline;min-height:0}
+  .pj-tabd,.pj-sum{font-size:13px}
+  .pp-l li{font-size:14px}
+}
 </style>
 
 <div class="app">
@@ -1858,7 +1902,7 @@ const VDESC={przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wsk
   agenci:'Agenci: kto pracuje, uruchomienia, publikacja',koszty:'Serwer: stan, pamięć, dysk, koszty i wdrażanie',projekty:'Projekty i standard: rejestr i zgodność plików'};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (pozostałe widoki z licznikami i lista projektów) */
 const BNAV=['przeglad','ty','tablica','marketing'];
-const PTABS=[['plan','Plan'],['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy i terminy'],['ksiega','Księga'],['marketing','Marketing']];
+const PTABS=[['plan','Plan'],['tablica','Tablica'],['wskazniki','Wskaźniki'],['etapy','Etapy'],['ksiega','Księga'],['marketing','Marketing']];
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
 
@@ -2310,7 +2354,7 @@ const ICON={
 const CI={ok:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="var(--bar-done)"/><path d="M5.5 9.3l2.2 2.2 4.6-4.8" stroke="var(--on-color)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  gaps:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="var(--l-yellow)" stroke-width="1.6"/><path d="M9 1.8a7.2 7.2 0 010 14.4z" fill="var(--l-yellow)"/></svg>',
  missing:'<svg class="ic" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="var(--l-red)" stroke-width="1.6"/><path d="M6.3 6.3l5.4 5.4M11.7 6.3l-5.4 5.4" stroke="var(--l-red)" stroke-width="1.6" stroke-linecap="round"/></svg>'};
-const BOOKLZ={ok:'<span class="ds-ok"><i class="dot ok" aria-hidden="true"></i>jest</span>',gaps:'<span class="lz yellow">braki</span>',missing:'<span class="lz red">brak pliku</span>'};
+const BOOKLZ={ok:'<span class="ds-ok"><i class="dot ok" aria-hidden="true"></i>jest</span>',gaps:'<span class="lz yellow">braki</span>',missing:'<span class="lz red">brak</span>'};
 /* zgodność z księgą: stan neutralny (.lz.out) z liczbą; kolor tylko przy progu 0–1 plik (czerwony) */
 function bookLz(p){if(!p.bookTotal)return '<span class="lz out">brak danych</span>';
   const t='Księga '+p.bookOk+'/'+p.bookTotal,tip=p.bookOk===p.bookTotal?'księga kompletna':p.bookOk===0?'brak księgi':'księga w trakcie';
@@ -4154,37 +4198,57 @@ function mkDay(day){
   setTimeout(find,30);
 }
 
-/* ---------- strona projektu ---------- */
+/* ---------- strona projektu ----------
+   Nagłówek zwarty na każdej zakładce: nazwa, stan i jedna linia (faza · postęp · bieżący etap). Na zakładce Plan ta linia
+   rozwija pasek faz i kafle (na komputerze otwarte, na telefonie zwinięte; stan w PF.more['pj-ov']).
+   Pod zakładkami jedno zdanie, co jest na zakładce (PTD). */
+const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
+  wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu. Kliknij datę, aby zmienić termin etapu.',
+  ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.',marketing:'Kampanie projektu i ich publikacje.'};
 function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+driveBox(p)+projChatBox(p);
+  if(tab==='plan')body=planView(p)+projChatBox(p)+driveBox(p);
   else if(tab==='tablica')body=projBoard(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
   else if(tab==='ksiega')body=bookView(p);
   else body=mktView(p);
-  return '<div class="phead"><div class="ptitle">'+av(p)+'<h1>'+esc(p.name)+'</h1>'+(p.alias?'<span class="muted">'+esc(p.alias)+'</span>':'')+lz(p.pst)+'<span class="lz out">'+(p.client?'projekt kliencki':'projekt własny')+'</span></div>'+
-    (p.description?'<p class="desc">'+esc(p.description)+'</p>':'')+
-    '<div class="stepper" role="group" aria-label="Faza projektu">'+PHASES.map((x,i)=>'<button data-phase="'+x[0]+'" data-pid="'+esc(p.id)+'" class="'+(i<pi?'done':i===pi?'cur':'')+'"'+(cm?'':' disabled')+' aria-pressed="'+(i===pi)+'" title="'+(cm?'Ustaw fazę: '+x[1]:'Projekty przykładowe: bez zapisu')+'"><b>'+x[1]+'</b>'+(i<pi?'zakończona':i===pi?'teraz':'')+'</button>').join('')+'</div>'+
-    '<p class="note">'+(p.phaseSource==='karta'?'Faza z karty projektu.':'Faza wyliczona z plików.')+(cm?' Kliknij fazę, aby zapisać ją w KARTA.md.':'')+'</p></div>'+
+  const sLate=s&&isDay(s.date)&&s.date<D.todayKey&&!s.done;
+  const sum='<span>Faza: <b>'+PHASES[pi][1]+'</b></span><span>Postęp: <b class="num">'+(c.all?pct+'%':'—')+'</b></span>'+
+    (s?'<span>Etap: <b>'+esc(s.title)+'</b>'+(isDay(s.date)?', '+(sLate?'<span class="pj-late">po terminie ('+ddl(s.date)+')</span>':'do '+ddl(s.date)):'')+'</span>':'');
+  const det=[c.done+' z '+c.all+' zadań'].concat(c.wip+c.blocked?['w toku '+(c.wip+c.blocked)]:[],c.rev?['czeka na odbiór '+c.rev]:[]).join(' · ');
+  const ov='<div class="stepper" role="group" aria-label="Faza projektu">'+PHASES.map((x,i)=>'<button data-phase="'+x[0]+'" data-pid="'+esc(p.id)+'" class="'+(i<pi?'done':i===pi?'cur':'')+'"'+(cm?'':' disabled')+' aria-pressed="'+(i===pi)+'" title="'+(cm?'Ustaw fazę: '+x[1]:'Projekty przykładowe: bez zmiany fazy')+'"><b>'+x[1]+'</b><span class="sr-only">, </span>'+(i<pi?'zakończona':i===pi?'teraz':'')+'</button>').join('')+'</div>'+
+    (cm?'<p class="note">Kliknij fazę, aby ją zmienić.</p>':'')+
     '<div class="facts">'+
-    '<div class="fact"><span class="l">Postęp zadań</span><span class="v num">'+(c.all?pct+'%':'—')+'</span><span class="d num">'+c.done+' z '+c.all+' · w toku '+(c.wip+c.blocked)+' · do odbioru '+c.rev+'</span></div>'+
+    '<div class="fact"><span class="l">Postęp</span><span class="v num">'+(c.all?pct+'%':'—')+'</span><span class="d num">'+det+'</span></div>'+
     '<div class="fact"><span class="l">Bieżący etap</span><span class="v">'+(s?esc(s.title):'—')+'</span><span class="d">'+(s?(isDay(s.date)?ddl(s.date)+' · '+rel(s.date):'bez terminu'):'brak etapów')+'</span></div>'+
-    '<div class="fact"><span class="l">Ramy projektu</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+
-    '<div class="fact"><span class="l">Zgodność z księgą</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' · próg '+(p.threshold==='pelna'?'pełna':'lekka')+'</span></div></div>'+
-    '<nav class="tabs" aria-label="Widoki projektu">'+PTABS.map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+body;
+    '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+
+    '<div class="fact" title="Księga: dokumenty, które każdy projekt powinien mieć"><span class="l">Księga</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+'</span></div></div>';
+  const open='pj-ov' in PF.more?PF.more['pj-ov']:!nwNarrow();
+  const line=tab==='plan'?'<details class="pj-ov" data-pvdet="pj-ov"'+(open?' open':'')+'><summary class="pj-sum">'+sum+'</summary><div class="pj-ovb">'+ov+'</div></details>':'<p class="pj-sum">'+sum+'</p>';
+  return '<div class="phead"><div class="ptitle">'+av(p)+'<h1>'+esc(p.name)+'</h1>'+(p.alias?'<span class="muted">'+esc(p.alias)+'</span>':'')+lz(p.pst)+'</div>'+
+    (p.description&&tab==='plan'?'<p class="desc">'+esc(p.description)+'</p>':'')+line+'</div>'+
+    '<nav class="tabs ptabs" aria-label="Widoki projektu">'+PTABS.map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+
+    '<p class="pj-tabd">'+PTD[tab]+'</p>'+body;
 }
 /* ---------- Plan projektu: najbliższe 7 dni i rozmowa o projekcie ----------
    Dzień: Twoje zadania (po terminie trafiają na dziś), filmy do nagrania (dzień przed publikacją, najwcześniej dziś),
    publikacje i zadania agentów. Kliknięcie otwiera zadanie. */
-const PPK={late:['red','Po terminie'],you:['blue','Ty'],rec:['purple','Nagraj'],pub:['green','Opublikuj'],agent:['grey','Agent']};
+/* rodzaj sprawy szarym tekstem; kolorowy znacznik tylko dla stanu „po terminie” */
+const PPK={late:['red','Po terminie'],you:['','Ty'],rec:['','Nagranie'],pub:['','Publikacja'],agent:['','Agent']};
 const PPO={late:0,you:1,rec:2,pub:3,agent:4};
+/* „Czeka na Ciebie”: decyzje projektu (zgody, odbiory, pytania) z tym samym wierszem i przyciskiem co w Przeglądzie */
+function planDec(p){
+  const ys=youState(),of=x=>(x.q?x.q.p.id:x.t.project)===p.id&&(x.q||x.need);
+  return ys.youToday.concat(ys.youWeek,ys.youLater).filter(of);
+}
 function planView(p){
   const T=D.todayKey,end=addK(T,6),day={},isAg=t=>t.executor==='claude'||t.executor==='codex';
+  const dec=planDec(p),decT={};dec.forEach(x=>{if(x.t)decT[x.t.id]=1});
   const put=(k,kind,t)=>{(day[k]||(day[k]=[])).push({kind:kind,t:t})};
-  D.tasks.filter(t=>t.project===p.id&&t.state!=='done').forEach(t=>{
+  D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&!decT[t.id]).forEach(t=>{
     const d=isDay(t.date)?t.date.slice(0,10):'';
     if(!d)return;
     if(t.kind==='publikacja'){
@@ -4195,19 +4259,26 @@ function planView(p){
     if(d>end)return;
     put(d<T?T:d,isAg(t)?'agent':d<T?'late':'you',t);
   });
+  const chan=t=>esc(String(t.channel||'').split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(' · '));
   const meta=x=>{const t=x.t,d=t.date.slice(0,10);
     if(x.kind==='rec')return 'publikacja '+(d===T?'dziś':ddl(d));
-    if(x.kind==='pub')return mkChan(t);
+    if(x.kind==='pub')return chan(t);
     if(x.kind==='late')return (t.kind==='publikacja'?'publikacja ':'termin ')+ddl(d);
     if(x.kind==='agent')return t.state==='doing'?'w toku':t.state==='blocked'?'zablokowane':WHO[t.executor]?WHO[t.executor].n:'';
     return t.minutes?t.minutes+' min':''};
   const name=x=>x.kind==='rec'||x.kind==='pub'?cap(x.t.title.replace(/^Opublikuj\s+/,'')):x.t.title;
+  /* minuty Twoich zadań w dniu; ponad limit dnia (dayMinutes) na czerwono */
+  const cap0=D.dayMinutes||120,mins=k=>day[k].filter(x=>x.kind==='you'||(x.kind==='late'&&x.t.executor==='ty')).reduce((m,x)=>m+(+x.t.minutes||0),0);
   const ks=Object.keys(day).sort();
-  let h='<section class="panel" id="pplan"><h2>Najbliższe dni <small><span>Twoje zadania, nagrania, publikacje i praca agentów</span></small></h2>';
-  if(!ks.length)h+='<p class="empty">Na najbliższe 7 dni nic nie zaplanowano.</p>';
-  else h+='<div class="pad pp">'+ks.map(k=>'<h3 class="pp-d">'+(k===T?'Dziś':k===addK(T,1)?'Jutro':esc(cap(ddl(k))))+' <span class="num muted">'+esc(dd(k))+'</span></h3><ul class="pp-l">'+
-    day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li><span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span><button type="button" class="lk" data-task="'+esc(x.t.id)+'" data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+
-      (meta(x)?'<span class="muted">'+meta(x)+'</span>':'')+'</li>').join('')+'</ul>').join('')+'</div>';
+  let h='';
+  if(dec.length)h+='<section class="panel" id="pdec"><h2>Czeka na Ciebie <small class="num">'+dec.length+'</small></h2><ul class="rows">'+dec.map(x=>todayRow(x,{prio:false})).join('')+'</ul></section>';
+  h+='<section class="panel" id="pplan"><h2>Najbliższe dni</h2>';
+  if(!ks.length)h+='<p class="empty">'+(dec.length?'Poza sprawami wyżej na 7 dni nic nie zaplanowano.':'Na najbliższe 7 dni nic nie zaplanowano.')+'</p>';
+  else h+='<div class="pad pp">'+ks.map(k=>{const m=mins(k);
+    return '<h3 class="pp-d">'+(k===T?'Dziś <span class="num muted">'+esc(dd(k))+'</span>':k===addK(T,1)?'Jutro <span class="num muted">'+esc(dd(k))+'</span>':esc(ddl(k)))+
+      (m?' <span class="num '+(m>cap0?'pp-over':'muted')+'"'+(m>cap0?' title="Ponad limit dnia: '+cap0+' min"':'')+'>· '+m+' min'+(m>cap0?' (limit '+cap0+')':'')+'</span>':'')+'</h3><ul class="pp-l">'+
+    day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li>'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'<button type="button" class="lk" data-task="'+esc(x.t.id)+'" data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+
+      (meta(x)?'<span class="muted">'+meta(x)+'</span>':'')+'</li>').join('')+'</ul>'}).join('')+'</div>';
   const nd=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">Twoje zadania bez terminu: '+nd+' · <a href="'+phref(p,'tablica')+'">Tablica</a></p>';
   return h+'</section>';
@@ -4222,13 +4293,17 @@ async function loadDrive(pid){
     if(r.ok&&j.ok!==false){Object.assign(d,j,{err:''});if(!j.login)d.loginUrl=''}else d.err=String(j.error||'Nie odczytano stanu Drive.')}catch(e){d.err='Brak połączenia z serwerem.'}
   d.loading=false;const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)render();
 }
+/* zwinięta sekcja pod treścią Planu (stan w PF.more['pj-drive']); w podsumowaniu stan połączenia */
+const pjFold=(k,id,title,small,body)=>'<details class="panel pj-fold" id="'+id+'" data-pvdet="'+k+'"'+(PF.more[k]?' open':'')+'><summary><span class="pj-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
 function driveBox(p){
   if(!LIVE)return '';
   let d=DRV[p.id];if(!d){d=DRV[p.id]={loading:true};loadDrive(p.id)}
-  let h='<section class="panel" id="pdrive"><h2>Google Drive <small><span>pliki projektu tylko do odczytu: w Media i dla agentów</span></small></h2><div class="pad dv">';
-  if(d.loading)return h+'<p class="note" role="status">Sprawdzam połączenie…</p></div></section>';
+  const st=d.loading?'':d.connected?(d.mounted?'połączony':'połączony, pliki niewidoczne'):'niepołączony';
+  const box=x=>pjFold('pj-drive','pdrive','Google Drive',st,'<div class="pad dv">'+x+'</div>');
+  let h='<p class="note">Panel tylko czyta wskazany folder; pliki będą w Media.</p>';
+  if(d.loading)return box(h+'<p class="note" role="status">Sprawdzam połączenie…</p>');
   if(d.err)h+='<p class="warn">'+esc(d.err)+'</p>';
-  if(d.available===false)return h+'<p class="empty">Na serwerze brakuje rclone (uruchom/serwer/zainstaluj-drive.sh).</p></div></section>';
+  if(d.available===false)return box(h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>');
   const busy=!!A.busy['drv:'+p.id];
   if(d.connected){
     h+='<p><span class="lz '+(d.mounted?'green':'yellow')+'">'+(d.mounted?'połączony':'połączony, pliki niewidoczne')+'</span>'+
@@ -4237,14 +4312,14 @@ function driveBox(p){
       '<button type="button" class="btn sec sm" data-drv="odlacz" data-pid="'+esc(p.id)+'" data-k="drv-o"'+(busy?' aria-disabled="true"':'')+'>Odłącz</button></div>';
   }else if(d.loginUrl){
     h+='<ol class="dv-st"><li><a class="btn sm" href="'+esc(d.loginUrl)+'" target="_blank" rel="noopener">Zaloguj się w Google</a> i zatwierdź dostęp tylko do odczytu.</li>'+
-      '<li>Potem strona się nie otworzy: tak ma być. Skopiuj cały adres z paska przeglądarki (zaczyna się od <code>http://127.0.0.1:53682/</code>) i wklej tutaj.</li></ol>'+
+      '<li>Potem strona się nie otworzy: tak ma być. Skopiuj cały adres z paska przeglądarki i wklej tutaj.</li></ol>'+
       '<form class="dform" data-drvfin="'+esc(p.id)+'"><input class="fi" name="url" autocomplete="off" inputmode="url" placeholder="http://127.0.0.1:53682/?state=…" aria-label="Adres po zalogowaniu">'+
       '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz</button><button type="button" class="btn sec sm" data-drv="anuluj" data-pid="'+esc(p.id)+'" data-k="drv-a">Anuluj</button></div></form>';
   }else{
-    h+='<form class="dform" data-drvstart="'+esc(p.id)+'"><input class="fi" name="link" autocomplete="off" inputmode="url" placeholder="Link do folderu: https://drive.google.com/drive/folders/…" aria-label="Link do folderu na Google Drive">'+
-      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz Google Drive</button><span class="note">Panel widzi tylko ten folder i nic na Drive nie zmienia.</span></div></form>';
+    h+='<form class="dform" data-drvstart="'+esc(p.id)+'"><input class="fi" name="link" autocomplete="off" inputmode="url" placeholder="Link do folderu Google Drive" aria-label="Link do folderu na Google Drive">'+
+      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz Google Drive</button></div></form>';
   }
-  return h+'</div></section>';
+  return box(h);
 }
 async function driveAct(pid,path,body,okMsg){
   if(A.busy['drv:'+pid])return;
@@ -4257,16 +4332,16 @@ async function driveAct(pid,path,body,okMsg){
 }
 const PJC={};
 function projChatBox(p){
-  if(!LIVE)return '<section class="panel" id="pchat"><h2>Rozmowa o projekcie</h2><p class="empty">Rozmowa działa w panelu na serwerze.</p></section>';
+  if(!LIVE)return pjFold('pj-chat','pchat','Rozmowa o projekcie','','<p class="empty">Rozmowa działa w panelu na serwerze.</p>');
   let c=PJC[p.id];
   if(!c){c=PJC[p.id]={messages:[],pending:false,error:'',loading:true};loadPChat(p.id)}
-  let h='<section class="panel chat" id="pchat"><h2>Rozmowa o projekcie <small><span>postęp, zadania, terminy, anulowanie</span></small></h2><div class="pad">';
-  h+=c.messages.length?'<div class="cms">'+c.messages.slice(-30).map(m=>'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>').join('')+'</div>':
-    '<p class="note">Np. „co mam zrobić jutro?”, „anuluj zadanie z wizytówką”, „przesuń film z piątku na sobotę”.</p>';
+  let h='<div class="pad chat">';
+  if(c.messages.length)h+='<div class="cms">'+c.messages.slice(-30).map(m=>'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>').join('')+'</div>';
   if(c.pending)h+='<p class="note" role="status">Claude czyta pliki projektu… (do ok. 2 min)</p>';
   if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
-  return h+'<form class="dform" data-pchat="'+esc(p.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Wiadomość o projekcie" placeholder="Napisz o zadaniach, postępie albo co anulować"></textarea>'+
-    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Enter wysyła. Claude zmienia zadania, kampanie i decyzje tylko, gdy o to poprosisz.</span></div></form></div></section>';
+  h+='<form class="dform" data-pchat="'+esc(p.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Wiadomość o projekcie" placeholder="Np. co mam zrobić jutro?"></textarea>'+
+    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Zmiany tylko na Twoją prośbę.</span></div></form></div>';
+  return pjFold('pj-chat','pchat','Rozmowa o projekcie',c.pending?'czekam na odpowiedź':c.messages.length?c.messages.length+' '+pl(c.messages.length,'wiadomość','wiadomości','wiadomości'):'',h);
 }
 async function loadPChat(pid){
   const c=PJC[pid]||(PJC[pid]={messages:[],pending:false,error:''}),was=c.pending;
@@ -4293,29 +4368,57 @@ async function sendPChat(f){
 function projBoard(p){
   const L=D.tasks.filter(t=>t.project===p.id&&t.kind!=='publikacja');
   const opts=p.stagesL.map(s=>'<option value="s:'+esc(s.id)+'"'+(p.cur===s?' selected':'')+'>Etap: '+esc(s.title)+'</option>').join('')+'<option value="i:"'+(p.cur?'':' selected')+'>'+INBOX+'</option>';
-  return '<form class="addf" data-addp="'+esc(p.id)+'"><select class="fi" name="dest" aria-label="Gdzie dodać">'+opts+'</select><input class="fi" name="title" maxlength="160" placeholder="Nowe zadanie" aria-label="Tytuł nowego zadania" autocomplete="off"><button class="btn sec" type="submit">Dodaj zadanie</button></form>'+
-    (L.length?board(L,false):'<div class="hint">Projekt nie ma jeszcze zadań. Dodaj pierwsze powyżej albo w ZADANIA.md.</div>');
+  /* formularz dodawania zwinięty pod jednym przyciskiem; bez zadań otwarty */
+  const k='pj-add',op=!L.length||PF.more[k];
+  return '<details class="pj-add" data-pvdet="'+k+'"'+(op?' open':'')+'><summary class="btn sec">Dodaj zadanie</summary><form class="addf" data-addp="'+esc(p.id)+'"><select class="fi" name="dest" aria-label="Gdzie dodać">'+opts+'</select><input class="fi" name="title" maxlength="160" placeholder="Nowe zadanie" aria-label="Tytuł nowego zadania" autocomplete="off"><button class="btn" type="submit">Dodaj</button></form></details>'+
+    (L.length?board(L,false):'<div class="hint">Projekt nie ma jeszcze zadań. Dodaj pierwsze powyżej.</div>');
 }
 function stagesView(p){
   const ds=p.stagesL.filter(s=>isDay(s.date)),cm=!LIVE||true;
-  if(!p.stagesL.length)return '<div class="hint">Projekt nie ma etapów. Etap to nagłówek <code>## Etap: nazwa</code> z wierszem <code>termin: RRRR-MM-DD</code> w ZADANIA.md.</div>';
+  if(!p.stagesL.length)return '<div class="hint">Projekt nie ma etapów. <span class="muted" title="W ZADANIA.md: nagłówek ## Etap: nazwa i wiersz termin: RRRR-MM-DD">Etapy dopisuje się w zadaniach projektu.</span></div>';
   const a=ds.length?ds.map(s=>s.start).concat([D.todayKey]).sort()[0]:D.todayKey,b=ds.length?ds.map(s=>s.date).concat([D.todayKey]).sort().slice(-1)[0]:D.todayKey;
   const span=Math.max(1,diff(b,a)+1),pos=k=>100*diff(k,a)/span;
   const cl={done:'var(--ink-3)',ok:'var(--bar-done)',risk:'var(--bar-warn)',late:'var(--l-red)',you:'var(--bar-rev)',none:'var(--line-2)'};
   return '<section class="panel"><h2>Etapy <small>'+(ds.length?dd(a)+' – '+dd(b):'bez terminów')+'</small></h2><ul class="stagelist">'+p.stagesL.map(s=>{
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
-    return '<li><div class="nm"><b>'+esc(s.title)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?s.open+' otwartych z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
+    return '<li><div class="nm"><b>'+esc(s.title)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?'otwarte: '+s.open+' z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
-    '</ul><p class="note">Czerwona kreska to dziś. Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM. Zmiana daty zapisuje termin w ZADANIA.md.</p></section>';
+      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" lang="pl" data-stage=""'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
+    '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś.</p></section>';
 }
+/* braki dokumentów z projekt.py (język standardu) → zdanie dla właściciela; przykłady w rozwinięciu */
+const nZ=(n,a,b,c)=>n+' '+pl(n,a,b,c);
+const GAPS=[
+  [/^zadania bez „gotowe gdy” w etapie z terminem: (\d+)/,n=>nZ(n,'zadanie nie ma','zadania nie mają','zadań nie ma')+' opisu, kiedy '+(n===1?'jest':'są')+' gotowe'],
+  [/^tytuł dłuższy niż (\d+) znaków: (\d+)/,(m,n)=>nZ(n,'zadanie ma','zadania mają','zadań ma')+' za długi tytuł (ponad '+m+' znaków)'],
+  [/^tytuł nie zaczyna się od czasownika: (\d+)/,n=>nZ(n,'zadanie ma','zadania mają','zadań ma')+' tytuł bez czasownika na początku'],
+  [/^Twoje zadania na (\d+) dni bez kroków i materiału: (\d+)/,(d,n)=>nZ(n,'Twoje zadanie','Twoje zadania','Twoich zadań')+' na '+d+' dni bez opisu, co zrobić'],
+  [/^Twoje zadania bez „czas”: (\d+)/,n=>nZ(n,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez szacowanego czasu'],
+  [/^zadania agenta bez „kiedy”: (\d+)/,n=>nZ(n,'zadanie agenta nie ma','zadania agentów nie mają','zadań agentów nie ma')+' daty'],
+  [/^otwarte zadania z „wynik:” bez odbioru i nie w toku: (\d+)/,n=>nZ(n,'zadanie ma','zadania mają','zadań ma')+' wynik, ale nie czeka na odbiór'],
+  [/^kampania w toku bez „cel liczbowy”: (\d+)/,n=>nZ(n,'kampania w toku nie ma','kampanie w toku nie mają','kampanii w toku nie ma')+' celu liczbowego'],
+  [/^„sprawdza:” z nieznanym kluczem.*?: (\d+) \(/,n=>nZ(n,'zadanie ma','zadania mają','zadań ma')+' nieznaną kontrolę wykonania'],
+  [/^„gotowe gdy” z „albo w zostało” albo tylko z wpisem do tabeli: (\d+)/,n=>nZ(n,'zadanie ma','zadania mają','zadań ma')+' opis gotowości, którego nie da się sprawdzić'],
+  [/^brak pliku /,()=>'brak dokumentu'],
+  [/^brak sekcji „(.*)”$/,x=>'brak części „'+x+'”'],
+  [/^sekcja „(.*)” do uzupełnienia$/,x=>'część „'+x+'” do uzupełnienia'],
+  [/^wpis „(.*)” bez daty w nagłówku$/,x=>'decyzja „'+x+'” bez daty']];
+function gapTxt(g){
+  g=String(g);const ex=/\((.*)\)\s*$/.exec(g);
+  for(const [re,fn] of GAPS){const m=re.exec(g);if(m)return {t:fn(...m.slice(1).map(v=>/^\d+$/.test(v)?+v:v)),ex:ex&&/: \d+ \(/.test(g)?ex[1]:'',raw:g}}
+  return {t:g,ex:'',raw:g};
+}
+const gapLi=g=>{const x=gapTxt(g);return x.ex?'<li title="'+esc(x.raw)+'"><details class="pj-gap"><summary>'+esc(x.t)+'</summary><span class="muted">'+esc(x.ex)+'</span></details></li>':'<li title="'+esc(x.raw)+'">'+esc(x.t)+'</li>'};
 function bookView(p){
-  const cm=canMeta(p),qa=p.questions;
-  return (qa.length?'<section class="panel"><h2>Pytania do Ciebie <small>'+qa.filter(x=>!x.answer).length+' bez odpowiedzi z '+qa.length+'</small></h2><ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul></section>':'')+'<section class="panel"><h2>Księga projektu <small>'+p.bookOk+' z '+p.bookTotal+'</small></h2>'+
-    '<div class="kv2"><label>Próg <select class="fi" data-meta="threshold" data-pid="'+esc(p.id)+'"'+(cm?'':' disabled')+'><option value="lekka"'+(p.threshold==='lekka'?' selected':'')+'>lekka</option><option value="pelna"'+(p.threshold==='pelna'?' selected':'')+'>pełna</option></select></label>'+
-    '<label>Projekt <select class="fi" data-meta="client" data-pid="'+esc(p.id)+'"'+(cm?'':' disabled')+'><option value="tak"'+(p.client?' selected':'')+'>kliencki</option><option value="nie"'+(p.client?'':' selected')+'>własny</option></select></label></div>'+
-    (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div>'+esc(x.label)+'</div><div class="f">'+esc(x.file)+'</div>'+(x.gaps.length&&x.status!=='ok'?'<ul>'+x.gaps.map(g=>'<li>'+esc(g)+'</li>').join('')+'</ul>':'')+'</div><div>'+BOOKLZ[x.status]+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
-    '<p class="note">'+(p.bookTotal&&p.bookOk===p.bookTotal?'Księga kompletna dla swojego progu.':'Projekt nie powinien przejść do budowy, dopóki księga nie będzie kompletna dla swojego progu.')+'</p></section>';
+  const cm=canMeta(p),qa=p.questions,thr=p.threshold==='pelna'?'pełne':'podstawowe',kind=p.client?'dla klienta':'własny',nq=qa.filter(x=>!x.answer).length;
+  const pre=PHI[p.phase]<PHI.budowa,full=p.bookTotal&&p.bookOk===p.bookTotal;
+  const meta=cm?'<div class="kv2"><label>Wymagania <select class="fi" data-meta="threshold" data-pid="'+esc(p.id)+'"><option value="lekka"'+(p.threshold==='lekka'?' selected':'')+'>podstawowe</option><option value="pelna"'+(p.threshold==='pelna'?' selected':'')+'>pełne</option></select></label>'+
+    '<label>Rodzaj <select class="fi" data-meta="client" data-pid="'+esc(p.id)+'"><option value="tak"'+(p.client?' selected':'')+'>dla klienta</option><option value="nie"'+(p.client?'':' selected')+'>własny</option></select></label></div>':
+    '<p class="kv2">Wymagania: <b>'+thr+'</b> · Rodzaj: <b>'+kind+'</b><span class="muted">W projektach przykładowych tego się nie zmienia.</span></p>';
+  return (qa.length?'<section class="panel"><h2>Pytania <small>'+(nq?nq+' bez odpowiedzi':'wszystkie z odpowiedzią')+'</small></h2><ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul></section>':'')+
+    '<section class="panel"><h2>Księga <small class="num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+' bez braków</small></h2>'+meta+
+    (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div title="'+esc(x.file)+'">'+esc(x.label)+(x.status==='ok'?'<span class="sr-only">: jest</span>':'')+'</div>'+(x.gaps.length&&x.status==='gaps'?'<ul>'+x.gaps.map(gapLi).join('')+'</ul>':'')+'</div><div>'+(x.status==='ok'?'':BOOKLZ[x.status])+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
+    '<p class="note">'+(full?'Księga kompletna.':pre?'Uzupełnij księgę przed rozpoczęciem budowy.':'Uzupełnij braki w księdze.')+'</p></section>';
 }
 function mktView(p){
   const cs=D.campaigns.filter(c=>c.project===p.id);
@@ -4394,7 +4497,7 @@ function kpis(L,one){
    ld+
    '<a class="stat"'+wipA+'><span class="l">Praca w toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">w toku '+n.wip+(n.rev?' · '+n.rev+' do odbioru':'')+'</span></a>'+
    '<a class="stat" href="'+hT+'" title="zrobione ÷ (zrobione + po terminie)"><span class="l">Etapy w terminie</span>'+(stDone+stLate?'<span class="v num">'+Math.round(100*stDone/(stDone+stLate))+'%</span>':nil)+'<span class="d num">'+stDone+' '+pl(stDone,'zrobiony','zrobione','zrobionych')+', '+stLate+' po terminie</span></a>'+
-   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · '+(dp>=0?'+':'−')+Math.abs(dp)+' '+pl(Math.abs(dp),'punkt','punkty','punktów')+' w 4 tygodnie':'')+'</span></div>'+
+   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · '+(dp>=0?'+':'')+dp+' '+pl(Math.abs(dp),'punkt procentowy','punkty procentowe','punktów procentowych')+' w 4 tygodnie':'')+'</span></div>'+
    /* tempo dopiero z danymi z 4 tygodni; wcześniej wiersz „tempo od …” pod kaflami */
    (thrOk?'<div class="stat"><span class="l">Tempo</span><span class="v num">'+fmt1(avgThr)+'</span><span class="d">'+(Number.isInteger(avgThr)?pl(avgThr,'zadanie','zadania','zadań'):'zadania')+' tygodniowo, średnio z 4 tygodni</span></div>':'')+'</div>';
 }
@@ -4475,29 +4578,37 @@ function cfdChart(id,L){
   return '<div class="leg">'+CFD_ST.slice().reverse().map(([k,n,v])=>'<span>'+sw(v)+n+'</span>').join('')+'</div><svg viewBox="0 0 '+Wd+' '+Hh+'" data-chart="'+id+'" tabindex="0" role="img" aria-label="'+al+'">'+g+areas+labs.map(l=>'<text class="lb" x="'+(ml+iw+10)+'" y="'+(l.y+4)+'">'+l.t+'</text>').join('')+'<line class="cx" x1="0" x2="0" y1="'+mt+'" y2="'+(mt+ih)+'" stroke="var(--ink)" stroke-width="1" opacity="0"/><rect class="hit" x="'+ml+'" y="'+mt+'" width="'+iw+'" height="'+ih+'" fill="transparent"/></svg>'+
     wkTable(id,['Tydzień do'].concat(CFD_ST.slice().reverse().map(s=>s[1])),idx.map(i=>[dd(W[i])].concat(CFD_ST.slice().reverse().map(s=>H[i][s[0]]))));
 }
+/* „Ile zostało w etapie”: linia planu od początku do terminu, linia „zostało” do dziś. Etap po terminie: oś sięga dziś,
+   termin zaznaczony pionową kreską. Etykiety osi X: pierwsza od lewej, ostatnia do prawej (bez nachodzenia na „0”). */
 function burnChart(p){
   const s=p.stagesL.find(x=>!x.done&&isDay(x.date));
   if(!s)return '<p class="cap">Brak etapu w toku z terminem.</p>';
   const n=s.total,open=s.open;
   if(!n)return '<p class="cap">Etap „'+esc(s.title)+'” nie ma zadań.</p>';
   const fut=isDay(s.start)&&s.start>D.todayKey;
-  const days=Math.max(1,diff(s.date,s.start)),today=Math.min(days,Math.max(0,diff(D.todayKey,s.start)));
+  const dl=Math.max(1,diff(s.date,s.start)),late=!fut&&D.todayKey>s.date,days=late?Math.max(dl,diff(D.todayKey,s.start)):dl;
+  const today=Math.min(days,Math.max(0,diff(D.todayKey,s.start)));
   /* sekcja na całą szerokość: szerszy viewBox, żeby tekst nie rósł ponad 12–15 px */
-  const Wd=nwNarrow()?600:900,Hh=230,ml=30,mr=20,mt=12,mb=26,iw=Wd-ml-mr,ih=Hh-mt-mb,x=i=>ml+iw*i/days,y=v=>mt+ih-ih*v/Math.max(1,n);
+  const Wd=nwNarrow()?600:900,Hh=240,ml=36,mr=24,mt=30,mb=30,iw=Wd-ml-mr,ih=Hh-mt-mb,x=i=>ml+iw*i/days,y=v=>mt+ih-ih*v/Math.max(1,n);
   let g='';for(let v=0;v<=n;v+=wkStep(n)){g+='<line class="gl" x1="'+ml+'" x2="'+(ml+iw)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(ml-8)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>'}
-  [0,Math.round(days/2),days].forEach(i=>{g+='<text x="'+x(i)+'" y="'+(Hh-6)+'" text-anchor="middle">'+dd(addK(s.start,i))+'</text>'});
-  const ideal='<path d="M'+x(0)+','+y(n)+'L'+x(days)+','+y(0)+'" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>';
+  const xs=[[0,'start'],[days,'end']];
+  if(late){if(x(days)-x(dl)>90)xs.splice(1,0,[dl,'middle'])}else if(days>=4)xs.splice(1,0,[Math.round(days/2),'middle']);
+  xs.forEach(([i,an])=>{g+='<text x="'+x(i)+'" y="'+(Hh-6)+'" text-anchor="'+an+'">'+dd(addK(s.start,i))+'</text>'});
+  if(late)g+='<line x1="'+x(dl)+'" x2="'+x(dl)+'" y1="'+mt+'" y2="'+(mt+ih)+'" stroke="var(--l-red)" stroke-width="1.5"/><text x="'+(x(dl)-6)+'" y="'+(mt-10)+'" text-anchor="end">termin '+dd(s.date)+'</text>';
+  const ideal='<path d="M'+x(0)+','+y(n)+'L'+x(dl)+','+y(0)+'" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>';
   /* etap w przyszłości: tylko linia planu, bez linii „Zostało zadań” i bez werdyktu o tempie */
-  const real=fut?'':'<path d="M'+x(0)+','+y(n)+'L'+x(today)+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+x(today)+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
-    '<text class="wk-today" x="'+Math.min(Math.max(x(today)+8,ml+24),Wd-90)+'" y="'+(y(open)-8)+'">dziś: '+open+' z '+n+'</text>';
+  const tx=x(today),right=tx>Wd-200;
+  const real=fut?'':'<path d="M'+x(0)+','+y(n)+(late?'L'+x(dl)+','+y(open):'')+'L'+tx+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+tx+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
+    '<text class="wk-today" x="'+(right?tx-10:Math.max(tx+10,ml+24))+'" y="'+Math.max(mt+16,y(open)-12)+'" text-anchor="'+(right?'end':'start')+'">dziś: '+open+' z '+n+'</text>';
   const left=diff(s.date,D.todayKey),pace=today?(n-open)/today:0,need=left>0?open/left:open,ok=left>=0&&pace>=need;
   const t='„'+esc(s.title)+'”',rest=open+' z '+n;
-  const verd=fut?'':left<0?'termin minął':ok?'zdąży':'nie zdąży';
+  const verd=fut?'':left<0?'po terminie':ok?'zdąży':'nie zdąży';
   const al='Etap '+t+': zostało '+rest+', termin '+dd(s.date)+(verd?', '+verd:', zaczyna się '+dd(s.start));
-  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan równomierny</span></div>';
+  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
+  const zad=v=>fmt1(v)+' '+(v===1?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
-    '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Termin minął: zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
-    '<p class="cap">Etap '+t+': robione dziennie '+fmt1(pace)+', potrzebne '+fmt1(need)+'.</p>';
+    '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
+    '<p class="cap">Etap '+t+'. Tempo: '+zad(pace)+' dziennie'+(left<0?'.':', potrzeba '+zad(need)+'.')+'</p>';
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
@@ -4537,7 +4648,7 @@ function wkRows(R,wip,more){
 }
 function metrics(L,one){
   const back='<a href="#wskazniki?p=all">Cały portfel</a>';
-  if(one&&!one.c.all)return '<div class="hint">Projekt nie ma jeszcze zadań, więc nie ma czego mierzyć. Wskaźniki pojawią się, gdy projekt dostanie zadania w ZADANIA.md.</div><p class="wk-cap">'+back+'</p>';
+  if(one&&!one.c.all)return '<div class="hint">Projekt nie ma jeszcze zadań, więc nie ma czego mierzyć. Wskaźniki pojawią się, gdy projekt dostanie zadania.</div><p class="wk-cap">'+back+'</p>';
   if(!L.length)return '<div class="hint">Brak projektów w toku.</div>';
   const ready=histReady(),from=D.history.length?D.history[0].date:D.todayKey;
   const sec=(cls,h2,body)=>'<section class="panel'+(cls?' '+cls:'')+'">'+h2+'<div class="chartbox">'+body+'</div></section>';
@@ -4545,7 +4656,7 @@ function metrics(L,one){
   /* jeden wiersz o historii zamiast ramki: od kiedy wykresy (14 dni) i tempo (28 dni) */
   if(!wkThr(L))h+='<p class="wk-cap">Historia od '+dd(from)+'. '+(ready?'Tempo od '+dd(wkFrom(28))+'.':'Wykresy od '+dd(wkFrom(14))+', tempo od '+dd(wkFrom(28))+'.')+'</p>';
   const S=[];
-  if(one)S.push(sec('wk-full','<h2 title="Zadania pozostałe do terminu">Spalanie etapu <small>'+back+'</small></h2>',burnChart(one)));
+  if(one)S.push(sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(one)));
   else S.push('<section class="panel wk-full"><h2 title="Wiersz otwiera wskaźniki projektu">Porównanie projektów <small>'+dsCnt(L.length,pl(L.length,'projekt','projekty','projektów'))+'</small></h2>'+compareTable(L)+'</section>');
   if(ready){
     S.push(sec('','<h2>Postęp w czasie <small>% zadań zrobionych</small></h2>',lineChart('m-line',L)));
@@ -6701,10 +6812,14 @@ function render(force){
     /* błąd w jednym widoku nie zatrzymuje odświeżania i nie udaje braku połączenia */
     try{vh=viewHtml(r)}catch(e){console.error(e);vh='<div class="banner bad" role="alert">Nie udało się pokazać tego widoku ('+esc(String(e&&e.message||e))+'). Dane z serwera są aktualne; przejdź do innego widoku albo odśwież stronę.</div>'}
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
+  if(r.v==='projekt')ptabsShow();
   else if(r.v==='agenci')setHtml($('#abar'),agBarHtml());
   renderDrawer(force);
   deepLink();
 }
+/* zakładki projektu na telefonie w jednym przewijanym wierszu: bieżąca zawsze widoczna */
+function ptabsShow(){const a=document.querySelector('.ptabs [aria-current]');if(!a)return;const n=a.parentNode;if(n.scrollWidth<=n.clientWidth)return;
+  const l=a.offsetLeft-n.offsetLeft;if(l<n.scrollLeft||l+a.offsetWidth>n.scrollLeft+n.clientWidth)n.scrollLeft=Math.max(0,l-16)}
 /* link z powiadomienia: #widok?z=<id zadania> otwiera zadanie, #widok?u=<id uruchomienia> uruchomienie;
    parametr znika z adresu (replaceState, bez hashchange), żeby odświeżenie nie otwierało szuflady ponownie */
 function deepLink(){
