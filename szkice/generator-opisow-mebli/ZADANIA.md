@@ -282,7 +282,7 @@ termin: 2026-11-30
 - [x] Dokończ: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak upra | kto: claude
   cel: nazw i regulaminów grup na Facebooku oraz przepisów o mailach marketingowych nie sprawdziłem w sieci (brak uprawnienia do wyszukiwania); szacunki kont to założenia, nie pomiary; plik leży w folderze karty, więc w repozytorium nie ma commita
   wynik: zamknięte przy porządkach 2026-11-21 (dubel: grupy i regulaminy są w „Wybierz 3–5 grup sprzedawców na Facebooku…”, przepisy o mailach w „Przygotuj teksty 3 maili aktywacyjnych z oceną RODO”)
-- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
+- [x] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
   - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
   - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
@@ -296,3 +296,5 @@ termin: 2026-11-30
   zostało: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie przy zadaniu wdrożenia); wierszy w kampanie/staly-rytm.md nie zmieniałem; zadanie agenta „Popraw stan ZDJ-1 w plikach zadań repozytorium” wisi w stanie „w toku” bez wyniku, nie ruszałem go
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude
   cel: Uzupełnić według standard/STANDARD.md: Zadania (2 braki), README (3 braki), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (3 braki). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.
+- [ ] Dokończ: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie prz | kto: claude
+  cel: nie sprawdzałem, czy agent ma uprawnienie do wysłania zmian na GitHub i dostęp do serwera Opisarni (wyjdzie przy zadaniu wdrożenia); wierszy w kampanie/staly-rytm.md nie zmieniałem; zadanie agenta „Popraw stan ZDJ-1 w plikach zadań repozytorium” wisi w stanie „w toku” bez wyniku, nie ruszałem go

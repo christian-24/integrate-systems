@@ -1,5 +1,23 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-22: Film „Serial odc. 2” – dźwięk, dodatkowe ujęcia i wezwanie
+- Kontekst: plan filmów (pkt 6, Pt 27) podaje cztery kroki z dymkami i mówi, że serial idzie na stałym dźwięku, bez lektora. Odcinek opiera się jednak na różnicy w dźwięku puku, a muzyka by ją zagłuszyła. Plan nie mówi, od jakiego kadru zacząć ani na czym pokazać planszę końcową. Imienia Cupry nie ma w plikach projektu.
+- Decyzja: w 2–8 s zostaje oryginalny dźwięk puku, a stały dźwięk serialu jest ściszony prawie do zera. Do planu dodane: początek na „twarzy” Cupry (jak w odc. 1), opcjonalne mrugnięcie świateł z pilota jako reakcja po „puszce”, tło pod planszę końcową i zapasowy puk w prawe tylne drzwi do odc. 3. Wezwanie w filmie to TAK/NIE w komentarzu (jak w planie); „Napisz model auta” i ceny tylko w przypiętym komentarzu. Odpowiedzi na komentarze nie obiecują wygłuszenia reszty drzwi. Imię zostaje polem [Imię] do wpisania.
+- Skutki: film ma 10–11 s zamiast 10 s; nagranie ok. 20 min. Plan przewidywał nagranie odc. 2 we wtorek 24 lis razem z odc. 3, zadanie podaje 26 lis; scenariusz działa w oba dni.
+- Kto: agent
+
+## 2026-11-22: Film „Auto klienta (archiwum 1)” – co znaczy „nagranie” przy filmie z archiwum
+- Kontekst: plan filmów (pkt 6, Śr 25) podaje tylko „archiwum 1, najlepiej to z wygłuszania, przypnij”. Auta klienta nie ma już w studiu, więc 24 lis nie da się nagrać przed i po. Nie wiadomo, które auta z archiwum mają parę zdjęć bez tablic (liczenie z 20–22 lis zna tylko właściciel).
+- Decyzja: scenariusz dzieli pracę na wybór materiału z archiwum i krótkie dogrywki w studiu (zdjęcia przed i po trzymane w ręce, ręce przy pracy na stole, tło pod planszę). Film ma układ wideo z pkt 3 planu: haczyk „[Model]. Zgadnij, co zrobiliśmy. Odpowiedź za 5 s.”, przed, po, odpowiedź, plansza „Napisz model auta”. Quiz „Ile godzin to zajęło?” zostaje na karuzelę 9 gru, jak w planie. Model, usługa i czas pracy są w scenariuszu polami do wpisania.
+- Skutki: właściciel wybiera auto sam we wtorek; gdy żadne auto z archiwum nie ma pary przed i po, środa idzie z zapasu (pkt 4 planu). Dogrywki nie udają auta klienta: praca jest pokazana na stole.
+- Kto: agent
+
+## 2026-11-22: Film „Ten sam puk. Miernik nie kłamie.” – jak liczyć i pokazać dB
+- Kontekst: plan filmów (pkt 6, Pn 23) mówi tylko „puk, na ekranie wynik dB” i „liczby tylko prawdziwe”. Jedno puknięcie ręką nie jest powtarzalne, a te same liczby mają wracać w odpowiedziach na wiadomości i kolejnych filmach.
+- Decyzja: w scenariuszu liczba do filmu to średnia wartości MAX z 5 puknięć na każdą stronę, zaokrąglona do pełnych dB; miernik (drugi telefon) stoi w kadrze ekranem do kamery, z zapasem w postaci zbliżenia ekranu i nagrania ekranu. Do planu dodana plansza końcowa „Napisz model auta” (9–11 s), jak w PUK #1. Próg „małej różnicy” przyjęty jako 3 dB albo mniej.
+- Skutki: pomiar trwa ok. 5 min dłużej, film 10–11 s zamiast 9 s. Właściciel może uprościć pomiar do jednego puku, ale wtedy liczba jest mniej pewna.
+- Kto: agent
+
 ## 2026-11-22: Post „Tak wygląda wygłuszenie od środka” – kolejność zdjęć i układ grafiki
 - Kontekst: 5 zdjęć właściciela z dwóch aut; trzy (czerwona mata) pokazują prawie to samo, zdjęcie 5 jest najciemniejsze. Na matach widać nadruk producenta, a tekst ma być bez nazw producentów. Agent nie miał w tej sesji uprawnień do ffmpeg ani innego programu do obrazów.
 - Decyzja: karuzela w kolejności 3, 2, 1, 4, 5 (najostrzejsze na okładkę, zdjęcie 5 można pominąć). Grafika do zrobienia: kolaż dwóch zdjęć obok siebie (1 po lewej, 3 po prawej, po jednym z każdego auta), pionowo 4:5, 1080 × 1350; tak opisuje ją już sekcja Alt w post.md. W tekście maty nazwane tylko rodzajem („mata tłumiąca drgania”), bez modeli aut, bo nie są podane. Ceny z „Ustalonych faktów” w Plan-filmow-do-28-stycznia.md.
