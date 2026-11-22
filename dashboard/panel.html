@@ -311,8 +311,8 @@ tbody tr[data-go]:focus-visible td{background:var(--hover)}
 .stagelist li{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) auto;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .stagelist li:first-child{border-top:0}
 .stagelist .nm b{display:block}
-.stagelist .nm span{font-size:12px;color:var(--ink-3)}
-.stagelist .stg-ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.stagelist .nm>span{font-size:12px;color:var(--ink-3)}
+.stagelist .stg-ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;position:relative}
 .tl{position:relative;height:22px;background:var(--sunk);border-radius:4px}
 .tl .b{position:absolute;top:4px;bottom:4px;border-radius:3px}
 .tl .today{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--l-red)}
@@ -785,7 +785,14 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
 .panel>details{padding:0 16px 12px}
 .panel>details+details{border-top:1px solid var(--line);padding-top:12px}
 .panel>details.ds-gap{padding-top:12px}
-summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
+/* dec. 36: jeden znacznik dla wszystkich <summary> (▸/▾ ze stałym odstępem), natywny znacznik ukryty także przy display:flex;
+   bez znacznika: „⋯” (menu projektu) i summary z własnym podpisem rozwinięcia (pj-ov, pj-add, pj-gap) */
+summary{cursor:pointer;font-weight:600;color:var(--ink-2);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::marker{content:""}
+summary::before{content:"▸";display:inline-block;width:.9em;margin-right:6px;flex:none;color:var(--ink-3);font-size:12px;font-weight:400}
+details[open]>summary::before{content:"▾"}
+.prx-more>summary::before,.pj-ov>summary::before,.pj-add>summary::before,.pj-gap>summary::before{content:none}
 summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--r-sm)}
 .panel>details[open]>summary,.ds-det[open]>summary{margin-bottom:8px}
 .panel>details ul,.panel>details ol,.ds-det ul,.ds-det ol{margin:6px 0 0;padding-left:20px;color:var(--ink-2)}
@@ -1005,10 +1012,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   /* cele dotyku ≥40 px: linki i przyciski tekstowe, summary, zakładki, tytuły wierszy list */
   .linkbtn,.lk.t,.rows a.t,.tabs a,.panel>h2 small a,.nx .lk,.nw-foot a,.navlk{min-height:40px;display:inline-flex;align-items:center}
   .rows .lk.t,.rows a.t{display:flex}
-  summary{min-height:40px;display:flex;align-items:center;gap:6px;list-style:none}
-  summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-  details[open]>summary::before{content:"▾"}
-  summary::-webkit-details-marker{display:none}
+  summary{min-height:40px;display:flex;align-items:center}
   .seg{min-width:40px}
   .pill{white-space:normal;max-width:100%}
   input[type=checkbox],input[type=radio]{width:20px;height:20px}
@@ -1110,9 +1114,8 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 /* „Twoje”: pełne tło tylko dla Twojego korzenia na dziś albo „ciasno” (bk-you); inne Twoje korzenie i listy:
    sam pasek po lewej (bk-youl); w poddrzewie wystarczy znacznik „Ty” (inaczej cała strona jest fioletowa) */
 /* jeden pasek 3 px dla obu, tło wewnątrz paddingu .bk-tree (bez ujemnego marginesu); metadane ink-2 na fioletowym tle (kontrast) */
-.bk-tree>.bk-you>.bk-row{background:var(--l-purple-bg);border-radius:6px;padding-left:8px;padding-right:8px;margin:4px 0;box-shadow:inset 3px 0 0 var(--l-purple)}
+.bk-tree>.bk-you>.bk-row{border-radius:6px}
 .bk-tree>.bk-you>.bk-row .bk-meta,.bk-tree>.bk-you>.bk-row .bk-n{color:var(--ink-2)}
-.bk-youl>.bk-row{box-shadow:inset 3px 0 0 var(--l-purple);padding-left:8px}
 .bk-later{color:var(--ink-2)}
 .bk-tog{flex:none;width:28px;height:28px;margin:-3px 0 0 -6px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid transparent;border-radius:6px;padding:0;font:inherit;color:var(--ink-2);cursor:pointer}
 .bk-chev{display:inline-block;width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateX(-1px) rotate(-45deg);transition:transform .15s}
@@ -1204,7 +1207,6 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   /* zwarty wiersz: tytuł na całą szerokość kolumny (29 px za strzałką), metadane, „odblokowuje”, „→ następne” i akcja
      płyną jednym ciągiem; akcja w linii z ostatnimi metadanymi, przy zawinięciu od kolumny tytułu */
   .bk-row{padding-left:29px;gap:4px 8px;justify-content:flex-start}
-  .bk-tree>.bk-you>.bk-row,.bk-youl>.bk-row{padding-left:37px}
   .bk-row>.bk-tg0{display:none}
   .bk-row>.bk-tog{margin:-9px -8px -9px -38px}
   .bk-row>.bk-main,.bk-row>.bk-main>.bk-meta{display:contents}
@@ -1354,10 +1356,6 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .tm-url{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .tm-url code{overflow-wrap:anywhere;min-width:0}
 .tm-ics>summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
-.tm-set>summary,.tm-cals>summary{list-style:none}
-.tm-set>summary::-webkit-details-marker,.tm-cals>summary::-webkit-details-marker{display:none}
-.tm-set>summary::before,.tm-cals>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-.tm-set[open]>summary::before,.tm-cals[open]>summary::before{content:"▾"}
 .nav .count.red{background:var(--l-red-bg);color:var(--l-red)}
 @media (max-width:760px){
   .tm-tg,.tm-jump,.tm-cals>summary,.tm-calp .linkbtn{min-height:40px}
@@ -1534,9 +1532,6 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
 .col>.ds-more{margin:0;padding:0 6px}
 .tm-rep .tm-pn{display:none}
 .tm-flt>summary{list-style:none;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ctl-line);border-radius:var(--r);padding:4px 10px;background:var(--surface);font-weight:500}
-.tm-flt>summary::-webkit-details-marker{display:none}
-.tm-flt>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-.tm-flt[open]>summary::before{content:"▾"}
 .tm-flt[open]{flex:1 1 100%}
 .tm-fltb{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px}
 .rows li.tm-dup{display:block}
@@ -1570,9 +1565,6 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
 .stu-rows .lz{white-space:normal}
 details.mk-stu{padding:0}
 details.mk-stu>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:12px 16px;min-height:40px;color:var(--ink)}
-details.mk-stu>summary::-webkit-details-marker{display:none}
-details.mk-stu>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-details.mk-stu[open]>summary::before{content:"▾"}
 details.mk-stu>summary h2{margin:0;font-size:var(--fs-lg);font-weight:650;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
 details.mk-stu>summary h2 small{font-size:var(--fs-xs);font-weight:500;color:var(--ink-3)}
 details.mk-stu>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -1631,7 +1623,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .rs-det .tw{margin:0 -16px}
 .prx-more{grid-column:2;grid-row:1;justify-self:end;align-self:center;font-size:13px;position:relative;z-index:2}
 .prx-more>summary{list-style:none;cursor:pointer;display:grid;place-items:center;min-width:36px;min-height:32px;border:1px solid var(--ctl-line);border-radius:var(--r);font-size:18px;line-height:1;color:var(--ink-2);background:var(--surface)}
-.prx-more>summary::-webkit-details-marker{display:none}
 .prx-menu{position:absolute;right:0;top:calc(100% + 4px);width:min(300px,80vw);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-2);padding:10px 12px;display:grid;gap:6px;z-index:5}
 .prx-more .pf{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;margin:6px 0 4px}
 .prx-more .r{justify-content:flex-start}
@@ -1665,12 +1656,9 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 /* poprawki UI: Przegląd, Dla Ciebie, Wskaźniki */
 .pv-fold>summary,.ty-later>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
 .ty-later>summary{padding:0 0 0 16px;flex-wrap:nowrap}
-.pv-fold>summary::-webkit-details-marker,.ty-later>summary::-webkit-details-marker,.over-det>summary::-webkit-details-marker,.ty-pg summary::-webkit-details-marker,.wk-rest>summary::-webkit-details-marker,.pmn-det>summary::-webkit-details-marker,.ty-eff>summary::-webkit-details-marker{display:none}
 .pv-fold>summary:hover,.ty-later>summary:hover{background:var(--hover)}
 .pv-fold>summary:focus-visible,.ty-later>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .pv-ft{font-size:var(--fs-lg);font-weight:650}
-.pv-fold>summary::before,.ty-later>summary::before,.over-det>summary::before,.ty-pg summary::before,.wk-rest>summary::before,.pmn-det>summary::before,.ty-eff>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-.pv-fold[open]>summary::before,.ty-later[open]>summary::before,.over-det[open]>summary::before,.ty-pg details[open]>summary::before,.wk-rest[open]>summary::before,.pmn-det[open]>summary::before,.ty-eff[open]>summary::before{content:"▾"}
 .pv-fold>summary{justify-content:flex-start}
 .pv-fold>summary small{margin-left:auto}
 .pv-fold>summary small{font-size:var(--fs-xs);color:var(--ink-3)}
@@ -1697,7 +1685,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .ty-eff{font-size:var(--fs-xs);color:var(--ink-3)}
 .ty-eff .eff{margin:2px 0 4px}
 .ty-eff1{color:var(--ink-2)}
-.ty-see{font-size:inherit;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.ty-see{font-size:inherit;color:var(--accent);font-weight:600}
 .rows li.ty-pg{display:block;padding:0}
 .ty-pg summary{padding:10px 0;flex-wrap:nowrap;align-items:flex-start}
 .ty-pg summary>span{padding-top:1px}
@@ -1725,8 +1713,12 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 /* poprawki UI runda 1, 2 i 3: A (Przegląd, Dla Ciebie, Wskaźniki) */
 .pv-today{margin:6px 0 0;font-size:var(--fs-md);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline}
 .pv-today b{color:var(--ink);font-weight:650}
-.pv-today a{color:var(--accent);text-decoration:none}
-.pv-today a:hover{text-decoration:underline}
+.pv-today a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.ty-kind{color:var(--ink-2);font-weight:600}
+.wk-camp{margin:12px 0 0;font-size:var(--fs-md);color:var(--ink-2)}
+.wk-camp a{color:var(--accent);display:inline-block}
+.wk-camp b{color:var(--ink);font-weight:650;white-space:nowrap}
+.pj-more.wk-mr>summary{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:12px 16px;margin-top:16px}
 .pv-today .pv-over{color:var(--l-red);font-weight:600}
 .panel>.pcards>.pcard,.pv-rest>.pcards>.pcard{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0}
 .panel>.pcards>.pcard:first-child,.pv-rest>.pcards>.pcard:first-child{border-top:0}
@@ -1755,7 +1747,8 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .ty-flt{flex-wrap:wrap;overflow:visible}
   .ty-chips{flex:1 1 100%;flex-wrap:wrap}
   .pv-today{font-size:var(--fs-sm)}
-  .pv-today a{min-height:0}
+  .pv-today a{min-height:40px;display:inline-flex;align-items:center}
+  .pv-today{row-gap:0}
   .pv-rows .r>.btn,.pv-rows .r>.pv-acts{margin-left:auto}
   .pv-rows .r>.btn{min-width:112px;justify-content:center}
   .ty-see{min-height:40px;display:inline-flex;align-items:center}
@@ -1766,7 +1759,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pj-sum>span{min-width:0;overflow-wrap:anywhere}
 .pj-late{color:var(--l-red);font-weight:600}
 .pj-ov>summary{list-style:none;cursor:pointer;align-items:center;min-height:40px;padding:4px 0;border-radius:var(--r-sm)}
-.pj-ov>summary::-webkit-details-marker,.pj-fold>summary::-webkit-details-marker,.pj-add>summary::-webkit-details-marker,.pj-gap>summary::-webkit-details-marker{display:none}
 .pj-ov>summary::after{content:"Szczegóły ▸";color:var(--accent);font-size:13px;font-weight:600;margin-left:auto;padding:8px 0 8px 12px}
 .pj-ov[open]>summary::after{content:"Zwiń ▾"}
 .pj-ov>summary:focus-visible,.pj-fold>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1779,8 +1771,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 #pdec .pv-pr{display:none}
 .pj-fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
 .pj-fold>summary:hover{background:var(--hover)}
-.pj-fold>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-.pj-fold[open]>summary::before{content:"▾"}
 .pj-fold>summary small{margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3)}
 .pj-ft{font-size:var(--fs-lg);font-weight:650}
 .pj-fold .chat{padding-top:0}
@@ -1798,7 +1788,6 @@ p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
   .ptabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
   .ptabs a{padding:8px 4px;white-space:nowrap;justify-content:center;text-align:center}
   .pj-ov>summary{min-height:40px}
-  .pj-ov>summary::before,.pj-add>summary::before,.pj-gap>summary::before{content:none}
   .pj-gap>summary{display:inline;min-height:0}
   .pj-tabd,.pj-sum{font-size:13px}
   .pp-l li{font-size:14px}
@@ -1825,7 +1814,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .mk-cdb{display:grid;gap:8px;padding:6px 0 4px}
 .mk-cdb .fl select{width:100%;max-width:320px}
 .mk-cdb code{overflow-wrap:anywhere}
-.mk-prow .r{align-items:center}
+.mk-prow .r{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px 10px}
 .md-ups{gap:8px;padding-bottom:14px}
 .md-ups .md-up{margin-left:0}
 @media (max-width:640px){
@@ -1873,9 +1862,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .stg-d{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
 .pj-bk{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:0 16px 14px}
 .pj-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:40px;font-weight:600;color:var(--ink-2)}
-.pj-more>summary::-webkit-details-marker{display:none}
-.pj-more>summary::before{content:"▸";color:var(--ink-3);font-size:12px}
-.pj-more[open]>summary::before{content:"▾"}
 .pj-more>summary small{color:var(--ink-3);font-weight:500}
 .pj-more>.cgrid{margin-top:8px}
 .kgrid.pj-k3{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -1883,10 +1869,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .pp-l li{grid-template-columns:minmax(0,1fr);gap:0;padding:4px 0}
   .pp-c{line-height:1.2}
   .pj-bk .lk{min-height:40px;display:inline-flex;align-items:center}
-  #pdec .rows .r,#prisk .rows .r{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 10px}
   .kgrid.pj-k3{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .pj-more>summary::before{content:"▸"}
-  .pj-more[open]>summary::before{content:"▾"}
 }
 /* poprawki UI runda 2: C (Marketing, edytor posta, Media, Marketing projektu) */
 .mk-act{justify-content:flex-end}
@@ -1897,8 +1880,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .ag-wait{margin:0;padding:6px 16px 0;font-size:var(--fs-md);color:var(--ink-2)}
 .bk-why:has(.bk-unb){display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .bk-unb{margin-left:auto}
-.ag-ses>summary,.prx-kd>summary{cursor:pointer;display:flex;align-items:center;gap:8px;padding:14px 16px;flex-wrap:wrap}
-.ag-ses>summary .muted,.prx-kd>summary .muted{font-size:var(--fs-sm)}
+.ag-ses>summary,.prx-kd>summary{cursor:pointer;display:flex;align-items:center;gap:0;padding:14px 16px;flex-wrap:wrap}
+.ag-ses>summary .muted,.prx-kd>summary .muted{margin-left:8px;font-size:var(--fs-sm)}
 .prx-nm{overflow-wrap:anywhere}
 @media (max-width:620px){
   .av.sm{width:22px;height:22px;font-size:11px}
@@ -1907,7 +1890,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .bk-howw .bk-how>summary{font-weight:400;color:var(--ink-3);font-size:var(--fs-sm)}
 .bk-lgp{margin:0 0 6px;padding:0 16px;font-size:var(--fs-sm);color:var(--ink-3)}
 .ag-none{padding-top:8px}
-.prx-smp{padding:12px 16px 0}
+.tm-blk{font-size:var(--fs-sm);color:var(--ink-3)}
 .navlk.inl{display:inline;min-height:0;padding:0}
 .prx-row{position:relative}
 .plx .prx-row a.t::after{content:"";position:absolute;inset:0}
@@ -1916,7 +1899,8 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .plx .prx-row .prx-files{position:relative;z-index:1}
 .plx .prx-row:hover{background:var(--hover)}
 .bnav:has(button[aria-expanded="true"]) a[aria-current="page"]{background:none;color:var(--ink-2)}
-#drawer .dr-chat+.dmore{margin-top:0}
+#drawer .dr-chat+.dmore{margin-top:-8px}
+#drawer .dr-chat:not([open]){gap:0}
 @media (max-width:620px){
   #drawer{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   #drawer .dhead .x{position:fixed;left:14px;right:14px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:23;min-height:48px;width:auto;background:var(--surface);box-shadow:0 0 0 12px var(--surface),var(--shadow-2);font-weight:600}
@@ -1931,13 +1915,34 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 /* poprawki UI runda 3: C (Marketing, edytor posta, Media, Marketing projektu) */
 .tl-items>.tl-card+.tl-card{border-top:1px solid var(--line);border-radius:0;padding-top:12px}
 .tl-card .mk-media{border-radius:8px;overflow:hidden}
-.mk-done>summary{cursor:pointer;padding:10px 16px;font-size:13.5px;color:var(--ink-2);min-height:40px;box-sizing:border-box;display:list-item}
+.mk-done>summary{cursor:pointer;padding:10px 16px;font-size:13.5px;color:var(--ink-2);min-height:40px;box-sizing:border-box}
 .mk-crow .s{display:flex;flex-wrap:wrap;gap:4px 10px}
 details.mk-done{padding:0}
 .mk-done>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .mk-crow .r{white-space:normal}
 .mk-cm{display:grid;grid-template-columns:minmax(80px,160px) auto;align-items:center;gap:8px}
 @media (max-width:640px){.mk-done>summary{padding-left:12px;padding-right:12px}.mk-crow .r{text-align:left;justify-items:start}.mk-cm{grid-template-columns:1fr}.mk-prow .r .btn{min-width:112px}.mk-act .btn{min-width:112px}}
+/* poprawki UI runda 5: B (strona projektu) */
+.stg-in{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.stg-btn{min-width:112px}
+.pp-l li:has(.pp-a){grid-template-columns:96px minmax(0,1fr) auto}
+.pp-a{justify-self:end}
+@media (max-width:620px){
+  .pp-l li:has(.pp-a){grid-template-columns:minmax(0,1fr) auto}
+  .pp-l li:has(.pp-a) .pp-c{grid-column:1}
+  .pp-l li:has(.pp-a) .pp-t{grid-column:1}
+  .pp-l li:has(.pp-a) .pp-a{grid-column:2;grid-row:1/span 2;align-self:center}
+}
+/* poprawki UI runda 5: C (Marketing, Marketing projektu) */
+@media (min-width:641px){
+  .mk-main{grid-template-columns:minmax(0,1fr) auto}
+  .mk-main>.mk-act{grid-column:2;grid-row:1;align-self:start;padding:10px 0 0 12px}
+  .mk-main>.mk-why{grid-column:1/-1}
+}
+/* poprawki UI runda 5: D */
+.dpk{position:relative;display:inline-flex}
+.dpk-i{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;border:0;padding:0;margin:0}
+.dpk-b{min-width:104px}
 </style>
 
 <div class="app">
@@ -2615,12 +2620,12 @@ function todayRow(x,o){
       const prop=x.q.proposal?'<div class="prop ty-clamp" id="'+pid+'" title="'+esc(x.q.proposal)+'">propozycja: '+esc(x.q.proposal)+'</div>'+
         (ne?'<details class="ty-eff"><summary>Po przyjęciu: '+ne+' '+pl(ne,'zmiana','zmiany','zmian')+'</summary>'+effList(x.q.effects).replace('<div class="effh">Po przyjęciu propozycji</div>','').replace('<ul class="eff','<ul id="'+eid+'" class="eff')+'</details>':''):'';
       const desc=' aria-describedby="'+pid+(ne?' '+eid:'')+'"',pl2=esc('Przyjmij propozycję: '+x.q.text);
-      return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t ty-q"'+idA+' data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'" title="'+esc(x.q.text)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+late+'<span class="lz purple">pytanie</span>'+prioLz(p,pv)+'</div>'+prop+'</div>'+
+      return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t ty-q"'+idA+' data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'" title="'+esc(x.q.text)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+late+'<span class="ty-kind">pytanie</span>'+prioLz(p,pv)+'</div>'+prop+'</div>'+
         tyDate(x,o.grp)+'<div class="ty-acts"><button class="btn sec sm" data-qans="'+esc(k)+'" data-k="qa2:'+esc(k)+'" aria-label="'+esc('Odpowiedz: '+x.q.text)+'">Odpowiedz</button>'+
         (pr?(ne&&cf?'<button class="btn sec sm dec ty-dec" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+'>Potwierdź: przyjmij z '+ne+' '+pl(ne,'skutkiem','skutkami','skutkami')+'</button>'+
             '<button class="btn sec sm" data-ag="qprop-no" data-id="'+esc(k)+'" data-k="qpn:'+esc(k)+'">Anuluj</button>':
           '<button class="btn sec sm dec ty-dec" data-ag="'+(ne?'qprop-ask':'qprop')+'" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'" aria-label="'+pl2+'"'+desc+(ne?' title="'+ne+' '+pl(ne,'skutek','skutki','skutków')+': potwierdzisz drugim kliknięciem"':'')+'>Przyjmij propozycję</button>'):'')+'</div></div></li>'}
-    return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t" data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+prioLz(p,pv)+'<span class="lz purple">pytanie</span>'+late+'</div>'+
+    return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t" data-q="'+esc(k)+'" data-k="tq:'+esc(k)+'">'+esc(x.q.text)+'</button><div class="s">'+pvPrS(p)+prioLz(p,pv)+'<span class="ty-kind">pytanie</span>'+late+'</div>'+
       helpL(x,'')+(x.q.proposal?'<div class="prop">propozycja: '+esc(x.q.proposal)+'</div>'+effList(x.q.effects):'')+'</div>'+
       (x.d?dateR(x.d):'<div class="r"><span class="muted">bez terminu</span>')+
       (pr?'<button class="btn sec sm dec" data-ag="qprop" data-id="'+esc(k)+'" data-k="qp:'+esc(k)+'">Przyjmij propozycję</button>':'')+
@@ -2634,7 +2639,7 @@ function todayRow(x,o){
   /* krótki, ogólny tytuł (np. „Publikacja”): w opisie wiersza nazwa etapu, żeby było wiadomo, czego dotyczy */
   const gen=t.title.length<=14&&t.group&&t.group!==t.title?'<span class="muted">etap: '+esc(t.group)+'</span>':'';
   const kind=(isFilmTask(t)?'<span class="muted">film od panelu</span>':t.kind==='publikacja'?'<span class="muted">publikacja'+(t.channel?' · '+esc(t.channel):'')+'</span>':'')+gen;
-  const need=x.need?'<span class="lz purple">'+esc(x.need)+'</span>':filmPending(t)?'<span class="muted" title="Film nagrywa panel ze scenariusza posta; potem tylko go obejrzysz">nagrywa panel</span>':'';
+  const need=x.need?'<span class="ty-kind">'+esc(x.need)+'</span>':filmPending(t)?'<span class="muted" title="Film nagrywa panel ze scenariusza posta; potem tylko go obejrzysz">nagrywa panel</span>':'';
   const open=tt=>'<button class="btn sec sm" data-task="'+id+'" data-k="to:'+id+'" aria-label="'+esc('Otwórz: '+t.title)+'"'+(tt?' title="'+tt+'"':'')+'>Otwórz</button>';
   /* zgoda na publikację: „Zatwierdź” otwiera edytor posta (podgląd i Zatwierdź nad nim), nie zatwierdza w ciemno */
   const pubEd=x.need==='zgoda'&&t.kind==='publikacja'&&isDay(String(t.date).slice(0,10));
@@ -2648,7 +2653,9 @@ function todayRow(x,o){
   const wn=t.waits&&t.waits.length&&t.state!=='done'?t.waits.length:0;
   /* zdanie o skutku zgody jest raz nad listą Decyzji; w wierszu tylko to, na co zgoda jeszcze czeka */
   const eff=x.need==='zgoda'&&wn?'Ruszy po Twojej zgodzie i po '+wn+' '+pl(wn,'zadaniu','zadaniach','zadaniach')+', na które czeka.':'';
-  const see=x.need==='odbiór'?'<button class="lk ty-see" data-task="'+id+'" data-k="see:'+id+'" aria-label="'+esc('Zobacz wynik: '+t.title)+'">Zobacz wynik</button>':'';
+  /* odbiór: „Zobacz wynik” tylko, gdy agent go opisał (albo jest uruchomienie); inaczej nie obiecujemy wyniku */
+  const hasRes=!!(t.detail&&t.detail.result)||!!t.runId,seeT=hasRes?'Zobacz wynik':'Szczegóły zadania';
+  const see=x.need==='odbiór'?'<button class="lk ty-see" data-task="'+id+'" data-k="see:'+id+'" aria-label="'+esc(seeT+': '+t.title)+'">'+seeT+'</button>':'';
   const nsT=ns.replace(/`[^`]*`/g,'').replace(/[\s:;,.()–-]/g,'').length<4?'':ns.replace(/`[^`]*`/g,'(polecenie w szczegółach)');
   if(ty){
     return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t"'+idA+' data-task="'+id+'" data-k="tt:'+id+'">'+esc(t.title)+'</button><div class="s">'+pvPrS(p)+late+(x.need?need:'')+kind+(x.need?'':need)+unlLz(t)+run+
@@ -2704,17 +2711,20 @@ function campGoals(){
     const p=P(c.project),tg=+c.target,rs=+c.result||0,pct=Math.min(100,Math.round(100*rs/tg));
     return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s">'+pvPr(p)+(isDay(c.end)?'<span>do '+dd(c.end)+'</span><span>'+rel(c.end)+'</span>':'')+'</div>'+
       '<div class="meter mk-meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span>'+
-      '<span class="pv-res"><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b> <span class="muted">'+esc(shortT(c.metric||'wynik',28))+' · <span class="num">'+pct+'%</span></span></span></div>'+
+      '<span class="pv-res"><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(shortT(mGen(c.metric),28))+' · <span class="num">'+pct+'%</span></span></span></div>'+
       (cntTxt(c)?'<div class="pv-cnt">'+cntLine(c)+'</div>':'')+measureForm(c)+'</div></li>'}).join('')+'</ul>','Wynik wobec celu liczbowego');
 }
 /* liczniki kampanii (suma wierszy „- data · nazwa n · zadanie” w Wynikach i wnioskach) */
 const cntTxt=c=>Object.keys(c.counters||{}).map(k=>k+' '+fmtN(c.counters[k])).join(' · ');
 const cntLine=c=>{const s=cntTxt(c);return s?'<span class="muted num cnl" title="Liczniki z zamkniętych zadań">'+esc(s)+'</span>':''};
+/* miara kampanii po liczbie „X z Y”: pierwsze słowo w dopełniaczu liczby mnogiej („64 z 200 zapisów na listę”) */
+const MGEN={zapisy:'zapisów',wyświetlenia:'wyświetleń',kliknięcia:'kliknięć',osoby:'osób',konta:'kont',rejestracje:'rejestracji',pobrania:'pobrań',zgłoszenia:'zgłoszeń',instalacje:'instalacji',zamówienia:'zamówień',wizyty:'wizyt',subskrypcje:'subskrypcji'};
+const mGen=m=>{m=String(m||'wynik');const w=m.split(' ')[0],g=MGEN[w.toLowerCase()];return g?g+m.slice(w.length):m};
 /* „Wpisz wynik”: nowy wynik kampanii (POST /api/campaign/update, pole wynik). Domyślnie sam przycisk; formularz po kliknięciu
    albo gdy pole ma wpisaną wartość (odświeżenie jej nie gubi) */
 function measureForm(c){
   const k='cm:'+c.id,id=esc(c.id),open=!!(A.pvCm&&A.pvCm[c.id])||(QD[k]!=null&&String(QD[k])!=='');
-  if(!open)return '<div class="pv-mtog"><button type="button" class="btn sec sm" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="false" aria-controls="pvcm-'+id+'">Wpisz wynik</button></div>';
+  if(!open)return '<div class="pv-mtog"><button type="button" class="btn sec sm" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="false" aria-controls="pvcm-'+id+'">'+(/zapis/i.test(c.metric||'')?'Wpisz liczbę zapisów':'Wpisz wynik')+'</button></div>';
   return '<form class="mform" id="pvcm-'+id+'" data-campm="'+id+'"><label class="fl"><span>Pomiar</span>'+
     '<input class="fi num" type="number" inputmode="decimal" min="0" step="any" name="m" data-k="'+esc(k)+'" data-qd="'+esc(k)+'" value="'+esc(QD[k]!=null?QD[k]:'')+'" placeholder="teraz '+esc(fmtN(c.result))+'" aria-label="Pomiar kampanii '+esc(c.name)+(c.metric?' ('+esc(c.metric)+')':'')+'"></label>'+
     '<button class="btn sec">Zapisz pomiar</button><button type="button" class="linkbtn" data-pvcm="'+id+'" data-k="pvcm:'+id+'" aria-expanded="true" aria-controls="pvcm-'+id+'">Anuluj</button></form>';
@@ -2779,7 +2789,8 @@ function dueLine(p){const s=p.cur;
 function projCard(p,shown){
   const due=p.cur&&isDay(p.cur.date);
   return '<li class="pcard pv-cc'+(p.state!=='active'?' pv-dim':'')+'" data-go="'+phref(p)+'" title="'+esc(p.name)+'"><div class="ph1">'+av(p)+'<a href="'+phref(p)+'">'+esc(pShort(p))+'</a>'+lz(p.pst)+'</div>'+
-    '<div class="kv">'+(due?'<span>Termin</span>'+dueLine(p):'')+'<span>Dalej</span>'+nextCell(p,shown)+'</div></li>'}
+    /* karta na telefonie: nazwa, stan i najbliższy termin; następny krok jest na stronie projektu */
+    (due?dueLine(p):'')+'</li>'}
 const QD={};
 function qForm(p,x){const k=p.id+':'+x.n,cm=canMeta(p),pr=x.proposal&&!x.answer;
   return (pr?'<div class="prop"><b>Propozycja agenta:</b> '+esc(x.proposal)+'</div>'+effList(x.effects)+
@@ -2905,7 +2916,7 @@ const TB_EMPTY={todo:'Brak zadań do zrobienia.',wip:'Nic w toku.',rev:'Nic do o
    rozwinięte, Później i Bez terminu zwinięte; dalej zwinięte „Czekają na inne” i „Agenci”. Rozwinięte grupy razem
    pokazują 15 kart, reszta po „Pokaż wszystkie”. Stan zwinięcia w A.tbGrp (sesja), „Pokaż wszystkie” w PF.more */
 const TB_CUT=15;
-const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Najbliższe 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
+const TB_PER=[['late','Po terminie',1],['today','Dziś',1],['week','Termin w ciągu 7 dni',1],['later','Później',0],['none','Bez terminu',0]];
 const tbMine=t=>t.executor==='ty'||!t.executor||needsMe(t);
 const tbPer=t=>{if(isLate(t))return 'late';if(!isDay(t.date))return 'none';const d=dTo(t.date);return d<=0?'today':d<=7?'week':'later'};
 function tbGrpHead(key,label,n,open,cls){
@@ -3082,12 +3093,12 @@ function vPrzeglad(){
   let nw;try{nw=nwIdle()?'':nwPanel()}catch(e){console.error(e);const lw=!!(a&&a.needsLogin&&a.loginWeb);
     nw='<section class="panel nw-panel"><h2>Teraz</h2><p class="nw-note nw-bad">Nie udało się pokazać sekcji Teraz ('+esc(String(e&&e.message||e))+'). Reszta Przeglądu działa.'+(a&&a.needsLogin?' Claude wymaga logowania.'+(lw?'':' '+nwLogin):'')+'</p>'+(lw?'<div class="nw-lgw">'+lgBan('copy')+'</div>':'')+'</section>'}
   if(dec.length)h+='<section class="panel pv-dec" aria-labelledby="h-dec"><h2 id="h-dec"><span>Decyzje</span><small><a class="navlk" href="#ty" data-tysec="dec">Pokaż wszystkie ('+decA.length+') <span aria-hidden="true">→</span></a></small></h2><ul class="rows pv-rows">'+
-    tyFold(dec,{prio:false,grp:'pvdec'},dKey,2,G=>{const x=G[0];return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'})+'</ul></section>';
+    tyFold(dec,{prio:false,grp:'pvdec'},dKey,2,G=>{const x=G[0];return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="ty-kind">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'})+'</ul></section>';
   h+=todayPanel(ys,todL);
   if(qs.length)h+=qPanel(qs,'Pytania z terminem do jutra');
   /* bez wiersza podsumowania nad listą: powtarzał liczby z wierszy poniżej */
   /* „Twoje zadanie wstrzymuje N innych” (Blokady) jest zwykłym wierszem ryzyka z jedną akcją */
-  const bc=bkYouN();if(bc.tasks)risks.push('<li><div><a class="t" href="#blokady">'+esc(bkYouTxt(bc))+'</a><div class="s"><span>inne zadania ruszą, gdy je zrobisz</span></div></div><div class="r"><a class="btn sec sm" href="#blokady">Zobacz blokady</a></div></li>');
+  const bc=bkYouN();if(bc.tasks)risks.push('<li><div><a class="t" href="#blokady">'+esc(bkYouTxt(bc))+'</a><div class="s"><span>'+bc.n+' '+pl(bc.n,'zadanie ruszy','zadania ruszą','zadań ruszy')+' po '+(bc.tasks===1?'Twoim zadaniu':'Twoich zadaniach')+'</span></div></div><div class="r"><a class="btn sec sm" href="#blokady">Zobacz blokady</a></div></li>');
   const rc=dsCut('pv-risk',risks,4,'pv-risk');
   if(risks.length)h+='<section class="panel"><h2>Ryzyka <small><span>'+dsCnt(risks.length,'')+' '+pl(risks.length,'ryzyko','ryzyka','ryzyk')+'</span>'+dsNav('#terminy','Terminy')+'</small></h2><ul class="rows pv-rows" id="pv-risk">'+rc.L.join('')+'</ul>'+rc.more+'</section>';
   else h+='<section class="panel pv-norisk"><h2>Ryzyka <small><span>brak</span>'+dsNav('#terminy','Terminy')+'</small></h2></section>';
@@ -3104,7 +3115,9 @@ function vPrzeglad(){
      nie trwa; podsumowanie PM (tylko przy prawdziwych projektach), terminy na najbliższe 7 dni, kampanie, plan dnia */
   const more=pmPanel()+pvFold('pv-week-f','Terminy: najbliższe 7 dni','','<p class="pv-fnav">'+dsNav('#terminy','Wszystkie terminy')+'</p>'+pvWeek(week),'Bez spraw pokazanych wyżej. Ikona przy pozycji to rodzaj: etap, zadanie, publikacja, wydarzenie z kalendarza.')+
     campGoals()+(LIVE||a?planBox():'');
-  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">Pozostałe</h2>'+more+'</section>';
+  /* nazwa mówi, co jest w środku: zwykle terminy i kampanie; z planem dnia albo podsumowaniem PM — „Pozostałe” */
+  const mT=/data-pvdet="pv-(pm|plan)"/.test(more)?'Pozostałe':'Terminy i kampanie';
+  if(more)h+='<section class="panel pv-more" aria-labelledby="h-pvmore"><h2 id="h-pvmore">'+mT+'</h2>'+more+'</section>';
   return h;
 }
 /* ---------- Teraz: jedna sekcja nad Dziś. Trwa (uruchomienia, filmy, rozmowy, publikacje w tej chwili),
@@ -3425,7 +3438,8 @@ const nwDot=dot=>'<i class="dot '+dot+' nw-hdot" aria-hidden="true"></i>';
 /* linia „Dziś” na górze Przeglądu (decyzja 21): decyzje na dziś, Twoje zadania na dziś, agenci, Twój czas */
 function pvToday(ys){
   const dN=ys.youToday.filter(tyIsDec).length,tN=ys.youToday.filter(x=>!tyIsDec(x)).length,op=overPlan(ys),a=D.agents;
-  const ag=D.tasks.filter(t=>(t.executor==='claude'||t.executor==='codex')&&t.state!=='done'&&t.date&&String(t.date).slice(0,10)<=D.todayKey).length;
+  /* agenci: ich zadania bez Twojej decyzji (zgoda, odbiór), z terminem dziś albo w toku — tak jak „Dziś” w Terminach */
+  const ag=D.tasks.filter(t=>(t.executor==='claude'||t.executor==='codex')&&t.state!=='done'&&!t.needsYou&&(t.state==='doing'||String(t.date||'').slice(0,10)===D.todayKey)).length;
   let run=0;try{run=nwNow().filter(x=>!x.q).length}catch(e){}
   const agT=!a?'agenci niedostępni':'agenci: '+(run?run+' '+pl(run,'pracuje','pracują','pracuje')+' teraz':ag?ag+' '+pl(ag,'zadanie','zadania','zadań')+' na dziś':'nic na dziś');
   /* zero bez odnośnika: nie ma dokąd prowadzić */
@@ -3610,7 +3624,7 @@ function vTy(){
   const decA=all.filter(tyIsDec).sort((a,b)=>prO(a)-prO(b)||(a.d||'9999').localeCompare(b.d||'9999')),dec=decA.filter(fx);
   /* ta sama sprawa w kilku projektach (np. odbiór porządków): jeden wiersz „w N projektach” */
   const decRows=tyFold(dec,Object.assign({grp:'dec'},ctx),x=>x.t&&x.need?x.need+'|'+x.t.title:'',2,G=>{const x=G[0];
-    return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="lz purple">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'});
+    return '<span class="ty-pgt">'+esc(x.t.title)+'</span><span class="ty-pgm"><span class="ty-kind">'+esc(x.need)+'</span> w '+G.length+' projektach '+G.map(y=>av(P(y.t.project),'sm')).join('')+'</span>'});
   const decS=decA.length?'<section class="panel ty-grp" id="ty-dec" data-sec="dec" tabindex="-1" aria-labelledby="ty-g-dec">'+hd('ty-g-dec','Decyzje',dec.length,decA.length,'',dec.length?'':'Filtr ukrywa decyzje.')+
     (dec.length?'<ul class="rows" id="ty-l-dec">'+decRows+'</ul>':'')+'</section>':'';
   const chA=ys.checked,ch=chA.filter(fc);
@@ -3637,7 +3651,7 @@ function vTy(){
     if(k==='pozniej')return '<details class="panel ty-grp ty-later'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" data-pvdet="ty-later"'+(PF.more['ty-later']?' open':'')+' aria-labelledby="ty-g-'+k+'"><summary>'+h2+'</summary>'+body+'</details>';
     return '<section class="panel ty-grp'+(vis.length?'':' ty-nil')+'" id="'+id+'" data-sec="'+k+'" tabindex="-1" aria-labelledby="ty-g-'+k+'">'+h2+body+'</section>'}).join('');
   /* bez kafli dziś/7 dni/później: te same liczby są w nagłówkach grup niżej */
-  return head+flt+decS+chkS+grp+bkLine('ty-bk');
+  return head+flt+decS+chkS+grp;
 }
 function vTablica(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -3656,7 +3670,7 @@ const tmNarrow=()=>!!(window.matchMedia&&matchMedia('(max-width:760px)').matches
 /* details w Terminach: stan z bieżącej sesji (zdarzenie toggle), inaczej domyślny */
 const tmDet=(k,def)=>{const o=A.tmDet&&A.tmDet[k];return o!=null?o:def};
 /* grupa: wybór użytkownika (PF.tmSec), domyślnie na desktopie otwarte; na telefonie otwarte tylko Dziś (pierwsze 8 pozycji) */
-const tmSecOpen=(id,L)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return (id==='today'||id==='tom')&&(L||[]).some(x=>x.kind!=='kalendarz'&&!tmAgentRow(x))};
+const tmSecOpen=(id,L)=>{const o=PF.tmSec&&PF.tmSec[id];if(o!=null)return o;return id==='today'||id==='tom'};
 /* pozycje po filtrach; licznik rodzaju liczony przed filtrem rodzaju; przy jednym projekcie bez wydarzeń z kalendarza */
 function tmGroups(){
   if(PF.bp!=='all'&&!P(PF.bp))PF.bp='all';
@@ -3671,7 +3685,7 @@ function tmGroups(){
   const G=[{id:'late',s:'Po terminie',n:anyRisk?'Po terminie i zagrożone':'Po terminie',f:x=>x.d<T||risk(x),date:1,cut:1,cutN:5,empty:'Nic po terminie.'},
     {id:'today',s:'Dziś',n:'Dziś · '+ddl(T),f:x=>x.d===T&&!risk(x),cut:nar?1:0,empty:'Nic na dziś.'},
     {id:'tom',s:'Jutro',n:'Jutro · '+ddl(tom),f:x=>x.d===tom&&!risk(x),empty:'Nic na jutro.'},
-    {id:'week',s:'Najbliższe 7 dni',n:'Najbliższe 7 dni',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
+    {id:'week',s:'Dalej w 7 dniach',n:'Dalej w 7 dniach',f:x=>x.d>tom&&x.d<=endW&&!risk(x),days:1,cut:1,empty:'Brak terminów w najbliższych 7 dniach.'},
     {id:'later',s:'Później',n:'Później',f:x=>x.d>endW&&!risk(x),date:1,cut:1,empty:'Brak późniejszych terminów.'}];
   G.forEach(g=>{g.L=L.filter(g.f);g.raw=all.filter(g.f).length});
   return {cnt:cnt,L:L,G:G};
@@ -3758,8 +3772,6 @@ function tmGroup(g,narrow,showP){
   if(AG.length){const ao=tmDet('ag:'+g.id,!narrow);
     b+='<details class="tm-agd" data-tmdet="ag:'+g.id+'"'+(ao?' open':'')+'><summary>Agenci <span class="num">'+AG.length+'</span></summary><ul class="rows">'+tmRows(AG,o)+'</ul></details>'}
   /* zablokowane zadania nie mają terminu w tej sekcji, ale są ryzykiem jak na Przeglądzie: jeden wiersz z odsyłaczem */
-  if(g.id==='late'){const bl=D.tasks.filter(t=>t.state==='blocked'&&(PF.bp==='all'||t.project===PF.bp)).length;
-    if(bl)b+='<p class="nw-more">Zablokowane: '+bl+' · <a class="navlk" href="#blokady">Blokady →</a></p>'}
   if(evN)b+='<p class="nw-more"><button class="linkbtn" data-tmlaterev="1" data-k="tmlev" aria-expanded="'+!!PF.tmLaterEv+'">'+(PF.tmLaterEv?'Ukryj wydarzenia z kalendarza':'Pokaż też '+evN+' '+pl(evN,'wydarzenie','wydarzenia','wydarzeń')+' z kalendarza')+'</button></p>';
   return sec(head+'<div id="'+id+'-b">'+b+'</div>');
 }
@@ -3783,6 +3795,8 @@ function vTerminy(){
   /* „Dziś i jutro w kalendarzu” tylko z połączonym kalendarzem (bez niego wolne okna byłyby nieprawdziwe), pod „Po terminie” */
   const bar=c.dot==='ok'?tmBar(c,narrow):'';
   h+=X.G.map(g=>tmGroup(g,narrow,PF.bp==='all')+(g.id==='late'?bar:'')).join('');
+  {const bl=D.tasks.filter(t=>t.state==='blocked'&&(PF.bp==='all'||t.project===PF.bp)).length;
+    if(bl)h+='<p class="tm-blk">Zadania zablokowane, bez terminu w tej liście: '+bl+'. <a class="navlk inl" href="#blokady">Blokady →</a></p>'}
   if(!top)h+=tmSet(c,false);
   return h;
 }
@@ -4033,7 +4047,7 @@ function bkMeta(n,withProj,extra,sub){
   if(wk){const lz=wk.film&&wk.why?'film stoi':wk.txt,one=wk.why?String(wk.why).split(/\.\s/)[0].replace(/\.$/,''):'';
     b.push('<span class="lz '+wk.c+'" title="'+esc(wk.why?wk.txt+': '+wk.why:'Szczegóły w sekcji Teraz na Przeglądzie')+'">'+esc(lz)+'</span>'+(one?'<span class="bk-wwhy" title="'+esc(wk.why)+'">'+esc(shortT(one,90))+'</span>':''))}
   else if(t.state==='doing')b.push('<span class="lz blue">w toku</span>');
-  if(t.state==='blocked')b.push('<span class="lz red" title="'+esc(t.blocked?'powód: '+t.blocked:'bez podanego powodu')+'">zablokowane</span>');
+  if(t.state==='blocked'&&!A.bkNoBlk)b.push('<span class="lz red" title="'+esc(t.blocked?'powód: '+t.blocked:'bez podanego powodu')+'">zablokowane</span>');
   /* zgoda zadania, które samo jeszcze czeka (poddrzewo, po:, [!]), to sprawa na potem, nie na teraz */
   const later=sub||t.waits.length>0||t.state==='blocked';
   (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>{const q=BK_NEED[x];
@@ -4280,9 +4294,10 @@ function vBlokady(){
       roots.length?'<p class="empty">Brak Twoich zadań w tej sekcji. <button class="linkbtn" data-bkmine="0" data-k="bkmine:e">Pokaż wszystkie</button></p>':
       '<p class="empty">Żadne zadanie nie wstrzymuje innych. <a class="navlk" href="#ty">Twoje zadania na dziś: Dla Ciebie →</a></p>')});
   {const mp=bkMapSec(m,roots.concat(blocked));if(mp){const mn=(mp.match(/class="bkm-n/g)||[]).length;h+=sec('map','Mapa zależności',mn,'',()=>mp)}}
-  if(blocked.length)h+=sec('blocked','Zablokowane',blocked.length,'',()=>
+  /* w sekcji „Zablokowane” bez pigułki „zablokowane” w wierszu (nagłówek już to mówi) */
+  if(blocked.length)h+=sec('blocked','Zablokowane',blocked.length,'',()=>{A.bkNoBlk=1;try{return ''+
     '<ul class="bk-tree" data-bktree="1">'+blocked.map(n=>inUrg[n.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(n.t.id)+'">'+esc(n.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkbu:'+esc(n.id)+'" aria-label="'+esc('Pokaż: '+n.t.title)+'">Pokaż</button></div></div></div></li>':bkTree(m,n,drawn,{flat:1,why:'<div class="bk-why'+(n.t.blocked?'':' none')+'">'+(n.t.blocked?'powód: '+esc(n.t.blocked):'bez podanego powodu')+' <button class="btn sec sm bk-unb" data-task="'+esc(n.t.id)+'" data-k="bkunb:'+esc(n.id)+'" aria-label="'+esc('Usuń przeszkodę: '+n.t.title)+'">Usuń przeszkodę</button></div>'+
-      (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+n.miss.map(x=>bkFixAct(n.t,x)).join(''):'')+bkWaitL(n.t)})).join('')+'</ul>');
+      (n.miss&&n.miss.length?'<div class="bk-why">'+esc(n.miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+n.miss.map(x=>bkFixAct(n.t,x)).join(''):'')+bkWaitL(n.t)})).join('')+'</ul>'}finally{A.bkNoBlk=0}});
   if(fix.length){const fm=mixed(fix.map(x=>x.t));
     /* zadanie pokazane już w „Nie ruszą na czas”: jeden wiersz z „Pokaż” (przyczyna i naprawa są tam) */
     const fixRow=(x,g)=>inUrg[x.t.id]?'<li class="bk-node bk-rep"><div class="bk-row"><span class="bk-tg0" aria-hidden="true"></span><div class="bk-main"><button class="lk bk-t" data-task="'+esc(x.t.t.id)+'">'+esc(x.t.t.title)+'</button><div class="bk-meta"><span>jest wyżej w „Nie ruszą na czas”</span><button class="linkbtn bk-jump" data-bkjump="bk-urgent" data-k="bkfu:'+esc(x.t.id+'|'+g.head)+'" aria-label="'+esc('Pokaż: '+x.t.t.title)+'">Pokaż</button></div></div></div></li>':
@@ -4347,7 +4362,7 @@ function mkDay(day){
    rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
    Pod zakładkami jedno zdanie, co jest na zakładce (PTD); Marketing ma własne zdanie w mktView. */
 const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
-  wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu. Kliknij datę, aby zmienić termin etapu.',
+  wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu i ich terminy.',
   ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.'};
 function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
@@ -4411,6 +4426,10 @@ function planView(p){
     if(x.kind==='agent')return t.state==='doing'?'w toku':t.state==='blocked'?'zablokowane':WHO[t.executor]?WHO[t.executor].n:'';
     return t.minutes?t.minutes+' min':''};
   const name=x=>x.kind==='rec'||x.kind==='pub'?cap(x.t.title.replace(/^Opublikuj\s+/,'')):x.t.title;
+  /* publikacja z kanałem i datą: stan i akcja jak na karcie w Marketingu (mkState, mkAct) */
+  const pubSA=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind!=='pub'||!t.channel||!d)return null;
+    const k=t.project+'|'+d;if(PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,d)}
+    const st=mkState(t,d);return {st:st,act:mkAct(t,d,st,'')}};
   /* publikacja z kanałem i datą: wiersz otwiera edytor posta z podglądem; reszta: szczegóły zadania */
   const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
   /* minuty Twoich zadań w dniu; ponad limit dnia (dayMinutes) na czerwono */
@@ -4431,7 +4450,8 @@ function planView(p){
     return '<h3 class="pp-d">'+(k===T?'Dziś <span class="num muted">'+esc(dd(k))+'</span>':k===addK(T,1)?'Jutro <span class="num muted">'+esc(dd(k))+'</span>':esc(ddl(k)))+
       (m?' <span class="num '+(m>cap0?'pp-over':'muted')+'"'+(m>cap0?' title="Ponad limit dnia: '+cap0+' min"':'')+'>· '+m+' min'+(m>cap0?' (limit '+cap0+')':'')+'</span>':'')+'</h3><ul class="pp-l">'+
     day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li><span class="pp-c">'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'</span>'+
-      '<span class="pp-t"><button type="button" class="lk" '+ppOpen(x)+' data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+'</span></li>').join('')+'</ul>'}).join('')+'</div>';
+      '<span class="pp-t"><button type="button" class="lk" '+ppOpen(x)+' data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+
+      (pubSA(x)?' <span class="lz '+pubSA(x).st[0]+'">'+esc(pubSA(x).st[1])+'</span>':'')+'</span>'+(pubSA(x)&&pubSA(x).act?'<span class="pp-a">'+pubSA(x).act+'</span>':'')+'</li>').join('')+'</ul>'}).join('')+'</div>';
   const nd=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Tablica</a></p>';
   return h+'</section>';
@@ -4536,8 +4556,9 @@ function stagesView(p){
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
     return '<li><div class="nm"><b>'+esc(s.title)+' '+lz(s.st)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?'otwarte: '+s.open+' z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="stg-ed"><input class="fi" type="date" lang="pl" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
-    '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś.</p></section>';
+      '<div class="stg-ed"><button type="button" class="btn sec sm stg-btn" data-stgpick="1" aria-label="'+esc('Zmień termin etapu '+s.title+(isDay(s.date)?', teraz '+ddl(s.date):''))+'">'+(isDay(s.date)?esc(ddl(s.date)):'ustaw termin')+'</button>'+
+      '<input class="stg-in" type="date" lang="pl" tabindex="-1" aria-hidden="true" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'"></div></li>'}).join('')+
+    '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś. Kliknij termin, aby go zmienić.</p></section>';
 }
 /* braki dokumentów z projekt.py (język standardu) → zdanie dla właściciela; przykłady w rozwinięciu */
 const nZ=(n,a,b,c)=>n+' '+pl(n,a,b,c);
@@ -4597,7 +4618,7 @@ function mktView(p){
     const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id),open=ps.filter(t=>t.state!=='done'),done=ps.filter(t=>t.state==='done');
     return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+ps.length+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
-      '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</b><span class="muted">'+esc(c.metric||'wynik')+' · '+pct+'%</span></div>'
+      '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b><span class="muted">'+esc(mGen(c.metric))+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
       (cntTxt(c)?'<p class="note">Liczniki z zadań: <span class="num">'+esc(cntTxt(c))+'</span></p>':'')+
       '<details class="mk-cdet"><summary>Szczegóły kampanii</summary><div class="mk-cdb">'+
@@ -4666,8 +4687,8 @@ function kpis(L,one){
   const wipA=n.rev?' href="#ty" data-tyfgo="od" title="Do odbioru: otwiera Dla Ciebie z filtrem Odbiory"':' href="'+hB+'"';
   return '<div class="kgrid">'+
    '<a class="stat'+(late?' red':'')+'" href="'+hT+'"><span class="l">Po terminie</span><span class="v num">'+late+'</span><span class="d">zadania i etapy</span></a>'+
-   '<a class="stat"'+wipA+'><span class="l">W toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">'+(n.rev?n.wip+' w pracy · '+n.rev+' do odbioru':'zadania w pracy')+'</span></a>'+
-   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · <span title="punkty procentowe">'+(dp>=0?'+':'−')+Math.abs(dp)+' pp.</span> w 4 tygodnie':'')+'</span></div>'+
+   '<a class="stat"'+wipA+'><span class="l">W toku</span><span class="v num">'+(n.wip+n.rev)+'</span><span class="d num">'+(n.rev?n.wip+' w pracy · '+n.rev+' do odbioru':pl(n.wip,'zadanie','zadania','zadań')+' w pracy')+'</span></a>'+
+   '<div class="stat"><span class="l">Postęp</span>'+(n.total?'<span class="v num">'+Math.round(pct)+'%</span>':nil)+'<span class="d num">'+n.done+' z '+n.total+' zadań'+(dp!=null&&ready?' · '+(dp>=0?'+':'−')+Math.abs(dp)+' '+pl(Math.abs(dp),'punkt procentowy','punkty procentowe','punktów procentowych')+' w 4 tygodnie':'')+'</span></div>'+
    wkLoad(ids)+'</div>';
 }
 /* obciążenie właściciela: minuty Twoich spraw na 7 kolejnych dni wobec pojemności dnia (dayMinutes); dziś z zaległymi,
@@ -4750,6 +4771,13 @@ function cfdChart(id,L){
 }
 /* „Ile zostało w etapie”: linia planu od początku do terminu, linia „zostało” do dziś. Etap po terminie: oś sięga dziś,
    termin zaznaczony pionową kreską. Etykiety osi X: pierwsza od lewej, ostatnia do prawej (bez nachodzenia na „0”). */
+/* linia „zostało” z dat zamknięcia zadań etapu (stateSince); bez kompletu dat: ''. Ustawia burnSteps.ok */
+function burnSteps(s,n,x,y,today){
+  const T=D.tasks.filter(t=>t.stage===s.id&&t.kind!=='publikacja'),dn=T.filter(t=>t.state==='done');
+  burnSteps.ok=T.length===n&&dn.every(t=>isDay(t.stateSince));if(!burnSteps.ok||!dn.length)return '';
+  const ds=dn.map(t=>Math.min(today,Math.max(0,diff(String(t.stateSince).slice(0,10),s.start)))).sort((a,b)=>a-b);
+  let left=n,o='';ds.forEach(i=>{o+='L'+x(i)+','+y(left);left--;o+='L'+x(i)+','+y(left)});return o;
+}
 function burnChart(p){
   const s=p.stagesL.find(x=>!x.done&&isDay(x.date));
   if(!s)return '<p class="cap">Brak etapu w toku z terminem.</p>';
@@ -4768,18 +4796,18 @@ function burnChart(p){
   const ideal='<path d="M'+x(0)+','+y(n)+'L'+x(dl)+','+y(0)+'" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>';
   /* etap w przyszłości: tylko linia planu, bez linii „Zostało zadań” i bez werdyktu o tempie */
   const tx=x(today),right=tx>Wd-200;
-  const real=fut?'':'<path d="M'+x(0)+','+y(n)+(late?'L'+x(dl)+','+y(open):'')+'L'+tx+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+tx+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
+  const real=fut?'':'<path d="M'+x(0)+','+y(n)+burnSteps(s,n,x,y,today)+'L'+tx+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+tx+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
     /* etykieta „dziś” nad punktem; przy etapie po terminie między kreską terminu a punktem albo nad linią, gdy brak miejsca */
     '<text class="wk-today" x="'+(right?tx:Math.max(tx+10,ml+24))+'" y="'+Math.max(mt+16,y(open)-14)+'" text-anchor="'+(right?'end':'start')+'"'+(late&&right&&tx-x(dl)<130?' dy="-16"':'')+'>dziś: '+open+' z '+n+'</text>';
   const left=diff(s.date,D.todayKey),pace=today?(n-open)/today:0,need=left>0?open/left:open,ok=left>=0&&pace>=need;
   const t='„'+esc(s.title)+'”',rest=open+' z '+n;
   const verd=fut?'':left<0?'po terminie':ok?'zdąży':'nie zdąży';
   const al='Etap '+t+': zostało '+rest+', termin '+dd(s.date)+(verd?', '+verd:', zaczyna się '+dd(s.start));
-  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
+  const leg='<div class="leg">'+(fut?'':'<span><i style="background:var(--c1)"></i>Zostało zadań (start i dziś, bez historii dziennej)</span>')+'<span><i class="wk-dash"></i>Plan</span></div>';
   const zad=v=>fmt1(v)+' '+(Math.round(v*10)===10?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
     '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
-    '<p class="cap">Etap '+t+'. Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
+    '<p class="cap">Etap '+t+'.'+(burnSteps.ok?'':' Linia od początku etapu do dziś (bez dat zamknięcia zadań).')+' Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
@@ -4825,10 +4853,16 @@ function metrics(L,one){
   const sec=(cls,h2,body)=>'<section class="panel'+(cls?' '+cls:'')+'">'+h2+'<div class="chartbox">'+body+'</div></section>';
   /* strona projektu: wykres etapu na górze, kafle, pozostałe wykresy zwinięte pod „Więcej wykresów” */
   if(one)return metricsOne(one,ready,from,sec,back);
-  return kpis(L,null)+histCap(L,ready,from)+
+  return kpis(L,null)+campLine(L,null)+histCap(L,ready,from)+
     '<div class="cgrid"><section class="panel wk-full"><h2 title="Wiersz otwiera wskaźniki projektu">Porównanie projektów <small>'+dsCnt(L.length,pl(L.length,'projekt','projekty','projektów'))+'</small></h2>'+compareTable(L)+'</section></div>'+
     wkMore(L,null,ready,sec);
 }
+/* wynik kampanii w toku z celem liczbowym: jedna linia pod kaflami (dla marketingu główna liczba); szczegóły w Marketingu */
+function campLine(L,one){
+  const ids=L.map(p=>p.id),C=D.campaigns.filter(c=>c.state==='active'&&+c.target>0&&ids.indexOf(c.project)>=0);
+  if(!C.length)return '';
+  return '<p class="wk-camp">'+(C.length>1?'Kampanie w toku: ':'Kampania w toku: ')+C.map(c=>{const pr=P(c.project);
+    return '<a href="'+phref(pr,'marketing')+'">'+esc(c.name)+'</a>'+(one?'':' <span class="muted">('+esc(pShort(pr))+')</span>')+' <b class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</b> '+esc(c.metric||'')}).join('<span aria-hidden="true"> · </span>')+'</p>'}
 /* jeden wiersz o historii zamiast ramki: od kiedy wykresy (14 dni) i tempo (28 dni) */
 const histCap=(L,ready,from)=>wkThr(L)?'':'<p class="wk-cap">Historia od '+dd(from)+'. '+(ready?'Tempo od '+dd(wkFrom(28))+'.':'Wykresy od '+dd(wkFrom(14))+', tempo od '+dd(wkFrom(28))+'.')+'</p>';
 /* „Więcej wykresów” (portfel i projekt, zwinięte): etapy i tempo z zakresem, kampanie, wykresy postępu, przepływ, wykonawcy */
@@ -4843,7 +4877,7 @@ function wkMore(L,one,ready,sec){
   const C=D.campaigns.filter(c=>c.state==='active'&&ids.indexOf(c.project)>=0);
   const camp=C.map(c=>{const T=D.tasks.filter(t=>t.kind==='publikacja'&&t.campaign===c.id),dn=T.filter(t=>t.state==='done').length,pr=P(c.project);
     return '<li><a href="'+phref(pr,'marketing')+'">'+esc(c.name)+'</a>'+(one?'':' <span class="muted">· '+esc(pShort(pr))+'</span>')+': '+
-      (+c.target>0?'<span class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</span> '+esc(c.metric||'')+' · ':'')+
+      (+c.target>0?'<span class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</span> '+esc(c.metric?mGen(c.metric):'')+' · ':'')+
       dn+' '+pl(dn,'publikacja opublikowana','publikacje opublikowane','publikacji opublikowanych')+', '+(T.length-dn)+' '+pl(T.length-dn,'zaplanowana','zaplanowane','zaplanowanych')+'</li>'}).join('');
   if(fl||camp)M.push('<section class="panel wk-full"><h2>Etapy, tempo i kampanie</h2><ul class="wk-facts">'+fl+camp+'</ul></section>');
   if(ready){
@@ -4853,10 +4887,10 @@ function wkMore(L,one,ready,sec){
   }
   M.push(sec('wk-full','<h2>Kto wykonuje <small>otwarte i zrobione zadania</small></h2>',whoBars(L)));
   const k=one?'pj-wk':'wk-more';
-  return '<details class="pj-more" data-pvdet="'+k+'"'+(PF.more[k]?' open':'')+'><summary>Więcej wykresów <small>etapy, tempo, kampanie, postęp w czasie</small></summary><div class="cgrid">'+M.join('')+'</div></details>';
+  return '<details class="pj-more wk-mr" data-pvdet="'+k+'"'+(PF.more[k]?' open':'')+'><summary>Więcej wykresów <small>etapy, tempo, kampanie, postęp w czasie</small></summary><div class="cgrid">'+M.join('')+'</div></details>';
 }
 function metricsOne(p,ready,from,sec,back){
-  return '<div class="cgrid">'+sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(p))+'</div>'+kpis([p],p)+
+  return '<div class="cgrid">'+sec('wk-full','<h2 title="Zadania pozostałe do terminu etapu">Ile zostało w etapie <small>'+back+'</small></h2>',burnChart(p))+'</div>'+kpis([p],p)+campLine([p],p)+
     histCap([p],ready,from)+wkMore([p],p,ready,sec);
 }
 function vWskazniki(){
@@ -4959,7 +4993,7 @@ function srvPanel(o){
   /* widok Serwer: stan (kontrola zdrowia i kopie) na górze, sesje urządzeń (wylogowanie) zwinięte na końcu */
   /* sesje urządzeń: zwinięte (otwarte przy potwierdzaniu wylogowania) */
   if(o==='ses'){const so=!!(A.lo||A.busy.lo||(A.agDet&&A.agDet.ses));
-    return '<details class="panel ag-ses" id="ag-ses" data-agdet="ses"'+(so?' open':'')+'><summary><b>Sesje urządzeń</b></summary><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></details>'}
+    return '<details class="panel ag-ses" id="ag-ses" data-agdet="ses"'+(so?' open':'')+'><summary><b>Sesje urządzeń</b><span class="muted">wylogowanie wszystkich urządzeń</span></summary><div class="pad"><p class="muted">Urządzenia wylogowują się same po 30 dniach.</p>'+lo+'</div></details>'}
   if(!v)return '';
   return '<section class="panel" id="ag-srv"><h2><span class="ag-h">Stan serwera <span class="lz '+LV[v.lvl][0]+'">'+LV[v.lvl][1]+'</span></span><small>'+(v.at?'<span>stan z '+esc(whenT(D.server.at))+'</span>':'')+'</small></h2>'+
     '<div class="pad">'+srvBar(true)+'</div></section>';
@@ -5200,7 +5234,7 @@ function vProjekty(){
   /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
   const PSO={late:0,risk:1,you:2,ok:3,none:4,paused:6,backlog:7,finished:8,done:8},PL=D.projects.map((p,i)=>[p,i]).sort((a,b)=>((PSO[a[0].pst]!=null?PSO[a[0].pst]:5)-(PSO[b[0].pst]!=null?PSO[b[0].pst]:5))||a[1]-b[1]).map(x=>x[0]);
   h+='<section class="panel" aria-labelledby="prx-list-h"><h2 class="sr-only" id="prx-list-h">Lista projektów</h2>'+
-    (!reg&&nP?'<p class="note prx-smp">To projekty przykładowe.</p>':'')+
+
     (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
       const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
       let r='<li class="prx-row"><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
@@ -5208,7 +5242,7 @@ function vProjekty(){
         '</div>';
       /* cały wiersz prowadzi do strony projektu; folder i usuwanie w menu „⋯” (otwartym przy potwierdzaniu usunięcia) */
       const mo=cf||prxOpen('m:'+x.id,false);
-      r+='<details class="prx-more" data-prxdet="'+esc('m:'+x.id)+'"'+(mo?' open':'')+'><summary aria-label="'+esc('Więcej: '+x.name)+'" title="Folder i usuwanie z rejestru"><span aria-hidden="true">⋯</span></summary><div class="prx-menu">'+
+      r+='<details class="prx-more" data-prxdet="'+esc('m:'+x.id)+'"'+(mo?' open':'')+'><summary aria-label="'+esc('Więcej o projekcie '+x.name)+'" title="Więcej o projekcie: folder i usuwanie z rejestru"><span aria-hidden="true">⋯</span></summary><div class="prx-menu">'+
         (LIVE&&full?'<div class="pf"><span class="muted">Folder:</span> <code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'<div class="r'+(cf?' prx-cf':'')+'">';
       if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu." aria-describedby="prx-col-'+id+'">ze zbieracza</span><span class="note prx-coln" id="prx-col-'+id+'">Aby zdjąć, zmień decyzję w zbieraczu.</span>';
       else if(reg&&canAdd)r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
@@ -5251,7 +5285,7 @@ function vProjekty(){
   /* jak działa standard: dla osób, które edytują pliki ręcznie */
   const D2=(k,s,body,cls)=>'<details data-prxdet="'+k+'"'+(cls?' class="'+cls+'"':'')+(prxOpen(k,false)?' open':'')+'><summary>'+s+'</summary>'+body+'</details>';
   const wf=f=>esc(f).replace(/\//g,'/<wbr>');
-  h+='<section class="panel prx-stdp"><details class="prx-stdall" data-prxdet="std"'+(prxOpen('std',false)?' open':'')+'><summary>Jak działa standard <small>· dla osób, które edytują pliki ręcznie</small></summary>'+
+  h+='<section class="panel prx-stdp"><details class="prx-stdall" data-prxdet="std"'+(prxOpen('std',false)?' open':'')+'><summary>Jak działa Księga <small>· dla osób, które edytują pliki ręcznie</small></summary>'+
     D2('std-files','Jakie pliki ma mieć projekt <small>· '+D.standard.length+'</small>',
       '<div class="tw prx-stdt"><table class="mx prx-std"><thead><tr><th scope="col">Dokument</th><th scope="col">Plik</th><th scope="col">Do czego służy</th><th scope="col">Stałe sekcje</th></tr></thead><tbody>'+
       D.standard.map(d=>'<tr><td><b>'+esc(d.label)+'</b></td><td><code>'+wf(d.file)+'</code></td><td class="soft">'+esc(d.purpose)+'</td><td>'+esc((d.sections||[]).join(', '))+'</td></tr>').join('')+'</tbody></table></div>'+
@@ -5290,6 +5324,10 @@ function dMeta(t,s,c){
   if(t.state!=='done'&&t.executor&&t.executor!=='ty'){const r=D.agents?runOf(t):null;m.push(r?(r.state==='running'?'agent pracuje':'agent w kolejce'):t.state==='doing'?'w toku':'jeszcze nie uruchomione')}
   return m.length?'<p class="dmeta">'+m.join(' · ')+'</p>':'';
 }
+/* dec. 34: pole daty jako przycisk z datą w formacie panelu („pt. 20.11”, „ustaw termin”); natywne pole ukryte wizualnie,
+   otwierane przez showPicker() (awaryjnie focus i click); zmiana pola idzie dotychczasową drogą (zdarzenie change) */
+const dpkT=v=>isDay(v)?ddl(String(v).slice(0,10)):'ustaw termin';
+const dpk=(inp,v,lab,k)=>'<span class="dpk"><button type="button" class="btn sec sm dpk-b" data-dpk="1"'+(k?' data-k="'+esc(k)+'"':'')+' aria-label="'+esc(lab+': '+dpkT(v)+', zmień')+'">'+esc(dpkT(v))+'</button>'+inp+'</span>';
 function taskHtml(t){
   const pub=t.kind==='publikacja',p=P(t.project),s=stageOf(t.stage),c=t.campaign?D.campaigns.find(x=>x.id===t.campaign):null;
   let h='<div class="dhead"><span class="muted dh-proj">'+(isFilmTask(t)?'Film do obejrzenia · ':pub?'Publikacja · ':'')+av(p,'sm')+'<span class="dh-nm">'+esc(projName(t.project))+'</span></span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
@@ -5344,7 +5382,7 @@ function taskHtml(t){
   h+='<dt>'+(c?'Kampania':'Etap')+'</dt><dd>'+(c?esc(c.name):s?esc(s.title)+(isDay(s.date)?' <span class="muted">· termin '+dd(s.date)+'</span> '+lz(s.st):''):INBOX)+'</dd>';
   h+='<dt>Wykonawca</dt><dd><select class="fi" data-f="executor" aria-label="Wykonawca">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],t.executor||'')+'</select></dd>';
   h+='<dt>Gdzie</dt><dd><select class="fi" data-f="machine" aria-label="Gdzie">'+opt([['','–'],['cloud','serwer (chmura)'],['mac','Mac'],['pc','Windows']],t.machine||'')+'</select></dd>';
-  h+='<dt>Termin</dt><dd><div class="row"><input class="fi" type="date" data-f="date" value="'+(isDay(t.date)?t.date:'')+'" aria-label="Termin"><button class="seg" data-dq="0">dziś</button><button class="seg" data-dq="1">jutro</button><button class="seg" data-dq="" aria-label="Usuń termin" title="Usuń termin">×</button></div>'+(lateT(t)?'<span class="lz red">po terminie</span>':'')+'</dd>';
+  h+='<dt>Termin</dt><dd><div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-f="date" value="'+(isDay(t.date)?t.date:'')+'" aria-label="Termin">',t.date,'Termin')+'<button class="seg" data-dq="0">dziś</button><button class="seg" data-dq="1">jutro</button><button class="seg" data-dq="" aria-label="Usuń termin" title="Usuń termin">×</button></div>'+(lateT(t)?'<span class="lz red">po terminie</span>':'')+'</dd>';
   h+='<dt>Pora</dt><dd><select class="fi" data-f="slot" aria-label="Pora">'+opt([['','–'],['dzień','dzień'],['noc','noc']],t.slot||'')+'</select></dd>';
   h+='<dt>Czas</dt><dd><div class="row"><input class="fi" type="number" min="0" max="1440" step="5" data-f="minutes" value="'+(t.minutes?esc(String(t.minutes)):'')+'" aria-label="Czas w minutach" ><span class="muted">min Twojej pracy</span></div></dd>';
   const more=(t.needs||[]).filter(x=>x!==t.needsYou);
@@ -5603,7 +5641,7 @@ function mergeRun(id){
   enqueue(async()=>{
     const x=await post('/api/agent/merge',r.pseudo?{project:r.project,branch:r.branch}:{id:id});A.busy.merge='';
     if(x.ok){A.merged[id]=1;say('Połączono zmiany agenta.');
-      const t=r.pseudo?D.tasks.find(y=>y.id===r.task):null;if(t&&t.state!=='done')finishTask(t,'scalono '+r.branch+' (lokalnie, bez push)',null,null)}
+      const t=r.pseudo?D.tasks.find(y=>y.id===r.task):null;if(t&&t.state!=='done')finishTask(t,'połączono zmiany agenta',null,null)}
     else if(x.status!==401)say(x.status===404&&!x.error?'Serwer nie obsługuje jeszcze łączenia zmian.':'Nie połączono zmian: '+(x.error?x.error.replace(/\.$/,''):'konflikt albo niezapisane zmiany w projekcie')+'.');
   });
 }
@@ -5694,20 +5732,20 @@ const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
 const fvv=k=>DR&&DR.fv&&DR.fv[k]!=null?DR.fv[k]:'';
 function accBox(t,d,db,dec){
-  const rf=!prepDay(t)&&resFiles(t).length,noRes=!rf&&!d.result&&!lastGitRun(t);
+  const rf=!prepDay(t)&&resFiles(t).length;
   const ym=yourMove(t);
-  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf?(d.result?'<p class="move">'+esc(d.result)+'</p>':!lastGitRun(t)?'<p class="move muted">Agent nie opisał wyniku.</p>':''):'')+(d.doneWhen?'<p class="move">Sprawdź: '+esc(d.doneWhen)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
+  let h='<div class="abox you"><b>Odbierz pracę agenta</b>'+(ym?'<p class="move">'+ym+'</p>':'')+(!rf?(d.result?'<p class="move">'+esc(d.result)+'</p>':!lastGitRun(t)?'<p class="move muted">Agent nie opisał wyniku. Zapytaj Claude poniżej albo odeślij do poprawy.</p>':''):'')+(d.doneWhen?'<p class="move">Sprawdź: '+esc(d.doneWhen)+'</p>':'')+dec+chgBlock(lastGitRun(t),false,t);
   dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
     '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
-    '<label class="fl"><span>Kiedy</span><input class="fi" type="date" data-fv="date" data-k="fv:date" value="'+esc(fvv('date'))+'"></label></div>'+
+    '<div class="fl"><span>Kiedy</span>'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-fv="date" value="'+esc(fvv('date'))+'" aria-label="Kiedy">',fvv('date'),'Kiedy','fv:date')+'</div></div>'+
     '<label class="fl"><span>Cel</span><textarea class="fi" rows="2" maxlength="300" data-fv="goal" data-k="fv:goal">'+esc(fvv('goal'))+'</textarea></label>'+
     (needsCount(t)?countField(t):'')+
     '<div class="row"><button class="btn sm" data-k="fv:save">Odbierz i dodaj zadanie</button><button type="button" class="btn sec sm" data-dgo="accept-only" data-k="fv:only">Odbierz bez nowego zadania</button><button type="button" class="btn sec sm" data-dgo="cancel" data-k="fv:cancel">Anuluj</button></div></form>';
   else if(dForm(t,'fix'))h+='<form class="dform" data-dform="fix"><label class="fl"><span>Co poprawić (jedno zdanie)</span><textarea class="fi" rows="2" maxlength="300" data-fv="fix" data-k="fv:fix">'+esc(fvv('fix'))+'</textarea></label>'+
     '<div class="row"><button class="btn sm" data-k="fv:save">Wyślij do poprawy</button><button type="button" class="btn sec sm" data-dgo="cancel" data-k="fv:cancel">Anuluj</button></div></form>';
-  else h+='<div class="row"><button class="btn '+(noRes?'sec ':'')+'sm" data-act="accept" data-id="'+esc(t.id)+'"'+db+'>Odbierz</button><button class="btn sec sm" data-act="fix" data-id="'+esc(t.id)+'">Do poprawy</button></div>';
+  else h+='<div class="row"><button class="btn sm" data-act="accept" data-id="'+esc(t.id)+'"'+db+'>Odbierz</button><button class="btn sec sm" data-act="fix" data-id="'+esc(t.id)+'">Do poprawy</button></div>';
   return h+dec+'</div>';
 }
 /* zadanie z „licznik: <nazwa>”: przy „Zrobione” pole „Ile <nazwa>?”; liczba idzie z zapisem stanu (count) */
@@ -5758,7 +5796,7 @@ function afterBlock(t){
     part.push('<div class="sub">Etap</div><p>'+esc(s.title)+' · <span class="num">'+dn+'/'+s.total+'</span>, po zamknięciu <span class="num">'+af+'/'+s.total+'</span>'+(isDay(s.date)?' · termin '+ddl(s.date)+' · '+rel(s.date):'')+'</p>'+
       '<div class="meter"><span class="track" role="img" aria-label="'+pct+'% etapu, po zamknięciu '+pa+'%"><i style="width:'+pct+'%;background:var(--bar-done)"></i><i style="width:'+(pa-pct)+'%;background:var(--bar-rev)"></i></span></div>')}
   if(c){const tg=+c.target||0,rs=+c.result||0,cv=t.counter?(c.counters[t.counter]||0):null;
-    part.push('<div class="sub">Kampania</div><p>'+esc(c.name)+(tg?' · <span class="num">'+fmtN(rs)+' / '+fmtN(tg)+'</span> '+esc(c.metric||'wynik')+' ('+Math.min(100,Math.round(100*rs/tg))+'%)':' · bez celu liczbowego')+
+    part.push('<div class="sub">Kampania</div><p>'+esc(c.name)+(tg?' · <span class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</span> '+esc(mGen(c.metric))+' ('+Math.min(100,Math.round(100*rs/tg))+'%)':' · bez celu liczbowego')+
       (cv!=null?' · '+esc(t.counter)+' dotąd <span class="num">'+fmtN(cv)+'</span>':'')+'</p>'+(cntTxt(c)?'<p class="dcap">Liczniki: '+esc(cntTxt(c))+'</p>':''))}
   if(!part.length)return '';
   return '<div class="dbox"><h3><span>Po zrobieniu</span>'+(t.unlockCount?'<small>odblokowuje '+t.unlockCount+'</small>':'')+'</h3>'+part.join('')+'</div>';
@@ -6594,7 +6632,7 @@ function mkCamps(fp){
   return '<section class="panel" id="mk-camp"><h2>Kampanie w toku <small class="num">'+L.length+'</small></h2><ul class="rows mk-crow">'+L.map(c=>{
     const p=P(c.project),tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0;
     return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s"><span>'+esc(pShort(p))+'</span>'+(isDay(c.end)?'<span>do '+esc(dd(c.end))+'</span>':'')+'</div></div>'+
-      '<div class="r">'+(tg?'<span class="meter mk-cm"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(c.metric||'wynik')+'</span></span></span>'
+      '<div class="r">'+(tg?'<span class="meter mk-cm"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(mGen(c.metric))+'</span></span></span>'
         :'<span><b class="num">'+fmtN(rs)+'</b> <span class="muted">'+esc(c.metric||'wynik')+'</span></span>')+'</div></li>'}).join('')+'</ul></section>';
 }
 /* stan posta: [kolor, stan, grupa]; ten sam w karcie (mCard), w liczniku (mkTodo) i na stronie projektu (mktView).
@@ -6611,8 +6649,11 @@ function mkState(t,day,fs){
   }
   const pr=D.tasks.find(x=>prepDay(x)===day&&x.project===t.project&&x.state!=='done');
   if(pr)return ['blue','agent przygotuje'+(isDay(pr.date)?' do '+ddl(pr.date):''),'prep'];
-  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n,'prep'];
-  return ['grey','do przygotowania',''];
+  /* bez zadania przygotowania: wykonawca publikacji przygotowuje post przed dniem publikacji */
+  const by=isDay(day)?' do '+ddl(addK(day,-1)):'';
+  if(t.executor&&t.executor!=='ty'&&WHO[t.executor])return ['blue','przygotuje '+WHO[t.executor].n+by,'prep'];
+  if(t.executor==='ty')return ['grey','przygotowujesz Ty'+by,''];
+  return ['grey','nikt nie przygotowuje',''];
 }
 /* nad osią: tylko błąd publikacji automatycznej (liczba pozycji stoi w nagłówku każdej sekcji) */
 function mkTodo(items){
@@ -6690,7 +6731,7 @@ function pubPlanBox(t,day,d){
   else{
     const f=PL[t.id]||(PL[t.id]={ch:{},day:isDay(day)&&day>=D.todayKey?day:D.todayKey,time:'09:00'});
     h+='<div class="row">'+avail.map(([c,n])=>{const on=f.ch[c]!=null?f.ch[c]:!(c==='reels'&&!film);return '<label class="chk"><input type="checkbox" data-pch="'+c+'"'+(on?' checked':'')+'> '+n+'</label>'}).join('')+'</div>'+
-      '<div class="row"><input class="fi" type="date" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji"><input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
+      '<div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" data-pday value="'+esc(f.day)+'" aria-label="Dzień publikacji">',f.day,'Dzień publikacji')+'<input class="fi" type="time" data-ptime value="'+esc(f.time)+'" step="300" aria-label="Godzina publikacji">'+
       '<button class="btn sec sm" data-pub="plan" data-id="'+esc(t.id)+'">Zaplanuj</button><button class="btn sec sm" data-pub="now" data-id="'+esc(t.id)+'">Opublikuj teraz</button></div>';
     const miss=list.filter(([c])=>!chanOk(t,c));
     if(miss.length)h+='<p class="note">Niepołączone: '+esc(miss.map(x=>x[1]).join(', '))+' (Marketing → Kanały publikacji).</p>';
@@ -6997,7 +7038,7 @@ function renderSide(r){
   const bnl=h=>esc(VNAME[h]+(C[h]&&C[h][0]?', '+(h==='blokady'?bkYouCntT(C[h][0]):C[h][0]+' '+NAVU[h]):''));
   setHtml($('#bnav'),BNAV.map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'" title="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bn-l" aria-hidden="true">'+(shortN[h]||VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
     '<button type="button" data-bnmore="1" data-k="bnmore" aria-haspopup="true" aria-expanded="'+!!A.bnMore+'" aria-controls="bnsheet"'+(!inBar?' aria-current="page"':'')+'>'+
-    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg><span class="bn-l">Więcej</span>'+(moreN?'<i class="bn-dot" aria-hidden="true"></i><span class="sr-only">, w pozostałych widokach: '+esc(moreN)+'</span>':'')+'</button>');
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg><span class="bn-l">Więcej</span>'+(moreN?'<i class="bn-dot'+(C.terminy[0]?' red':'')+'" aria-hidden="true"></i><span class="sr-only">, w pozostałych widokach: '+esc(moreN)+'</span>':'')+'</button>');
   const sh=$('#bnsheet'),sc=$('#bnscrim');if(sc)sc.hidden=!A.bnMore;if(sh){sh.hidden=!A.bnMore;
     /* arkusz „Więcej”: nagłówek z „Zamknij”, widoki spoza paska z tym samym licznikiem co menu, projekty, na dole Odśwież i Motyw.
        Zwykła nawigacja (lista linków), bez ról menu; Escape i dotknięcie tła zamykają */
@@ -7488,6 +7529,10 @@ async function load(force){
 }
 
 /* ---------- zdarzenia ---------- */
+/* Etapy: przycisk z datą otwiera wybór daty ukrytego pola (showPicker; awaryjnie focus i click) */
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-stgpick]');if(!b)return;
+  const i=b.parentNode.querySelector('input[data-stage]');if(!i)return;
+  try{i.showPicker()}catch(e){try{i.focus();i.click()}catch(e2){}}},true);
 /* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
   PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
@@ -7500,6 +7545,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('summary [data-task]')){ev.preventDefault();openDrawer('task',el.dataset.task);return}
   if(el=qq('#stubox>summary,[data-stuproj]>summary,[data-stutpl]>summary')){const dt=el.parentElement;if(dt.id==='stubox')A.stuOpen=!dt.open;else if(dt.dataset.stutpl!=null)(A.stuTpl||(A.stuTpl={}))[dt.dataset.stutpl]=!dt.open;else (A.stuProj||(A.stuProj={}))[dt.dataset.stuproj]=!dt.open}
   if(el=qq('[data-skip]')){ev.preventDefault();const v=$('#view');v.focus();v.scrollIntoView();return}
+  if(el=qq('[data-dpk]')){const i=el.parentElement.querySelector('input');if(i){try{i.showPicker()}catch(e){i.focus();try{i.click()}catch(e2){}}}return}
   if(el=qq('[data-bnmore]')){A.bnMore=!A.bnMore;renderSide(route());if(A.bnMore){const f=$('#bnsheet a');if(f)f.focus()}else focusK('bnmore');return}
   if(A.bnMore&&!qq('#bnsheet')){A.bnMore=false;renderSide(route())}
   if(el=qq('[data-more]')){const k=el.dataset.more;PF.more[k]=!PF.more[k];savePF();render(true);focusK('more:'+k);return}
@@ -7633,6 +7679,7 @@ document.addEventListener('click',async ev=>{
 });
 document.addEventListener('change',ev=>{
   if(!D)return;const el=ev.target;
+  if(el.classList&&el.classList.contains('dpk-i')){const b=el.parentElement.querySelector('.dpk-b');if(b){b.textContent=dpkT(el.value);b.setAttribute('aria-label',(el.getAttribute('aria-label')||'Termin')+': '+dpkT(el.value)+', zmień')}}
   if(el.id==='mnav'){location.hash=el.value;return}
   if(el.dataset.step!=null){toggleStep(+el.dataset.step,el.checked);return}
   if(el.dataset.film){uploadFilm(el);return}
