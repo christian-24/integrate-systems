@@ -311,8 +311,8 @@ tbody tr[data-go]:focus-visible td{background:var(--hover)}
 .stagelist li{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,2fr) auto;gap:16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
 .stagelist li:first-child{border-top:0}
 .stagelist .nm b{display:block}
-.stagelist .nm span{font-size:12px;color:var(--ink-3)}
-.stagelist .stg-ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.stagelist .nm>span{font-size:12px;color:var(--ink-3)}
+.stagelist .stg-ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;position:relative}
 .tl{position:relative;height:22px;background:var(--sunk);border-radius:4px}
 .tl .b{position:absolute;top:4px;bottom:4px;border-radius:3px}
 .tl .today{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--l-red)}
@@ -1883,7 +1883,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   .pp-l li{grid-template-columns:minmax(0,1fr);gap:0;padding:4px 0}
   .pp-c{line-height:1.2}
   .pj-bk .lk{min-height:40px;display:inline-flex;align-items:center}
-  #pdec .rows .r,#prisk .rows .r{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px 10px}
   .kgrid.pj-k3{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pj-more>summary::before{content:"▸"}
   .pj-more[open]>summary::before{content:"▾"}
@@ -1938,6 +1937,17 @@ details.mk-done{padding:0}
 .mk-crow .r{white-space:normal}
 .mk-cm{display:grid;grid-template-columns:minmax(80px,160px) auto;align-items:center;gap:8px}
 @media (max-width:640px){.mk-done>summary{padding-left:12px;padding-right:12px}.mk-crow .r{text-align:left;justify-items:start}.mk-cm{grid-template-columns:1fr}.mk-prow .r .btn{min-width:112px}.mk-act .btn{min-width:112px}}
+/* poprawki UI runda 5: B (strona projektu) */
+.stg-in{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.stg-btn{min-width:112px}
+.pp-l li:has(.pp-a){grid-template-columns:96px minmax(0,1fr) auto}
+.pp-a{justify-self:end}
+@media (max-width:620px){
+  .pp-l li:has(.pp-a){grid-template-columns:minmax(0,1fr) auto}
+  .pp-l li:has(.pp-a) .pp-c{grid-column:1}
+  .pp-l li:has(.pp-a) .pp-t{grid-column:1}
+  .pp-l li:has(.pp-a) .pp-a{grid-column:2;grid-row:1/span 2;align-self:center}
+}
 </style>
 
 <div class="app">
@@ -4347,7 +4357,7 @@ function mkDay(day){
    rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
    Pod zakładkami jedno zdanie, co jest na zakładce (PTD); Marketing ma własne zdanie w mktView. */
 const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
-  wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu. Kliknij datę, aby zmienić termin etapu.',
+  wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu i ich terminy.',
   ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.'};
 function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
@@ -4411,6 +4421,10 @@ function planView(p){
     if(x.kind==='agent')return t.state==='doing'?'w toku':t.state==='blocked'?'zablokowane':WHO[t.executor]?WHO[t.executor].n:'';
     return t.minutes?t.minutes+' min':''};
   const name=x=>x.kind==='rec'||x.kind==='pub'?cap(x.t.title.replace(/^Opublikuj\s+/,'')):x.t.title;
+  /* publikacja z kanałem i datą: stan i akcja jak na karcie w Marketingu (mkState, mkAct) */
+  const pubSA=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind!=='pub'||!t.channel||!d)return null;
+    const k=t.project+'|'+d;if(PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,d)}
+    const st=mkState(t,d);return {st:st,act:mkAct(t,d,st,'')}};
   /* publikacja z kanałem i datą: wiersz otwiera edytor posta z podglądem; reszta: szczegóły zadania */
   const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
   /* minuty Twoich zadań w dniu; ponad limit dnia (dayMinutes) na czerwono */
@@ -4431,7 +4445,8 @@ function planView(p){
     return '<h3 class="pp-d">'+(k===T?'Dziś <span class="num muted">'+esc(dd(k))+'</span>':k===addK(T,1)?'Jutro <span class="num muted">'+esc(dd(k))+'</span>':esc(ddl(k)))+
       (m?' <span class="num '+(m>cap0?'pp-over':'muted')+'"'+(m>cap0?' title="Ponad limit dnia: '+cap0+' min"':'')+'>· '+m+' min'+(m>cap0?' (limit '+cap0+')':'')+'</span>':'')+'</h3><ul class="pp-l">'+
     day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li><span class="pp-c">'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'</span>'+
-      '<span class="pp-t"><button type="button" class="lk" '+ppOpen(x)+' data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+'</span></li>').join('')+'</ul>'}).join('')+'</div>';
+      '<span class="pp-t"><button type="button" class="lk" '+ppOpen(x)+' data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+
+      (pubSA(x)?' <span class="lz '+pubSA(x).st[0]+'">'+esc(pubSA(x).st[1])+'</span>':'')+'</span>'+(pubSA(x)&&pubSA(x).act?'<span class="pp-a">'+pubSA(x).act+'</span>':'')+'</li>').join('')+'</ul>'}).join('')+'</div>';
   const nd=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Tablica</a></p>';
   return h+'</section>';
@@ -4536,8 +4551,9 @@ function stagesView(p){
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
     return '<li><div class="nm"><b>'+esc(s.title)+' '+lz(s.st)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?'otwarte: '+s.open+' z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="stg-ed"><input class="fi" type="date" lang="pl" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
-    '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś.</p></section>';
+      '<div class="stg-ed"><button type="button" class="btn sec sm stg-btn" data-stgpick="1" aria-label="'+esc('Zmień termin etapu '+s.title+(isDay(s.date)?', teraz '+ddl(s.date):''))+'">'+(isDay(s.date)?esc(ddl(s.date)):'ustaw termin')+'</button>'+
+      '<input class="stg-in" type="date" lang="pl" tabindex="-1" aria-hidden="true" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'"></div></li>'}).join('')+
+    '</ul><p class="note" title="Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM.">Czerwona kreska to dziś. Kliknij termin, aby go zmienić.</p></section>';
 }
 /* braki dokumentów z projekt.py (język standardu) → zdanie dla właściciela; przykłady w rozwinięciu */
 const nZ=(n,a,b,c)=>n+' '+pl(n,a,b,c);
@@ -4750,6 +4766,13 @@ function cfdChart(id,L){
 }
 /* „Ile zostało w etapie”: linia planu od początku do terminu, linia „zostało” do dziś. Etap po terminie: oś sięga dziś,
    termin zaznaczony pionową kreską. Etykiety osi X: pierwsza od lewej, ostatnia do prawej (bez nachodzenia na „0”). */
+/* linia „zostało” z dat zamknięcia zadań etapu (stateSince); bez kompletu dat: ''. Ustawia burnSteps.ok */
+function burnSteps(s,n,x,y,today){
+  const T=D.tasks.filter(t=>t.stage===s.id&&t.kind!=='publikacja'),dn=T.filter(t=>t.state==='done');
+  burnSteps.ok=T.length===n&&dn.every(t=>isDay(t.stateSince));if(!burnSteps.ok||!dn.length)return '';
+  const ds=dn.map(t=>Math.min(today,Math.max(0,diff(String(t.stateSince).slice(0,10),s.start)))).sort((a,b)=>a-b);
+  let left=n,o='';ds.forEach(i=>{o+='L'+x(i)+','+y(left);left--;o+='L'+x(i)+','+y(left)});return o;
+}
 function burnChart(p){
   const s=p.stagesL.find(x=>!x.done&&isDay(x.date));
   if(!s)return '<p class="cap">Brak etapu w toku z terminem.</p>';
@@ -4768,7 +4791,7 @@ function burnChart(p){
   const ideal='<path d="M'+x(0)+','+y(n)+'L'+x(dl)+','+y(0)+'" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4" fill="none"/>';
   /* etap w przyszłości: tylko linia planu, bez linii „Zostało zadań” i bez werdyktu o tempie */
   const tx=x(today),right=tx>Wd-200;
-  const real=fut?'':'<path d="M'+x(0)+','+y(n)+(late?'L'+x(dl)+','+y(open):'')+'L'+tx+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+tx+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
+  const real=fut?'':'<path d="M'+x(0)+','+y(n)+burnSteps(s,n,x,y,today)+'L'+tx+','+y(open)+'" stroke="var(--c1)" stroke-width="2" fill="none"/><circle cx="'+tx+'" cy="'+y(open)+'" r="4" fill="var(--c1)" stroke="var(--surface)" stroke-width="2"/>'+
     /* etykieta „dziś” nad punktem; przy etapie po terminie między kreską terminu a punktem albo nad linią, gdy brak miejsca */
     '<text class="wk-today" x="'+(right?tx:Math.max(tx+10,ml+24))+'" y="'+Math.max(mt+16,y(open)-14)+'" text-anchor="'+(right?'end':'start')+'"'+(late&&right&&tx-x(dl)<130?' dy="-16"':'')+'>dziś: '+open+' z '+n+'</text>';
   const left=diff(s.date,D.todayKey),pace=today?(n-open)/today:0,need=left>0?open/left:open,ok=left>=0&&pace>=need;
@@ -4779,7 +4802,7 @@ function burnChart(p){
   const zad=v=>fmt1(v)+' '+(Math.round(v*10)===10?'zadanie':'zadania');
   const cap=fut?'<p class="wk-verd">Etap zaczyna się '+dd(s.start)+', zostało '+rest+' zadań.</p><p class="cap">Etap '+t+' do '+dd(s.date)+'.</p>':
     '<p class="wk-verd">'+(left<0?'<b class="wk-bad">Po terminie ('+dd(s.date)+'): zostało '+rest+'</b>':ok?'<b class="wk-ok">Zdąży: zostało '+rest+' do '+dd(s.date)+'</b>':'<b class="wk-bad">Nie zdąży: zostało '+rest+' do '+dd(s.date)+'</b>')+'</p>'+
-    '<p class="cap">Etap '+t+'. Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
+    '<p class="cap">Etap '+t+'.'+(burnSteps.ok?'':' Linia od początku etapu do dziś (bez dat zamknięcia zadań).')+' Tempo etapu: '+zad(7*pace)+' tygodniowo'+(left<0?'.':', potrzeba '+zad(7*need)+'.')+'</p>';
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
@@ -7488,6 +7511,10 @@ async function load(force){
 }
 
 /* ---------- zdarzenia ---------- */
+/* Etapy: przycisk z datą otwiera wybór daty ukrytego pola (showPicker; awaryjnie focus i click) */
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-stgpick]');if(!b)return;
+  const i=b.parentNode.querySelector('input[data-stage]');if(!i)return;
+  try{i.showPicker()}catch(e){try{i.focus();i.click()}catch(e2){}}},true);
 /* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
   PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
