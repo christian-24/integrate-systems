@@ -2975,7 +2975,7 @@ def step_error(e):
     return msg
 
 
-RECORD_HINTS = (("brak konta demo", "Dodaj konto demo do nagrań: Agenci → Publikacja → Konto do nagrań."),
+RECORD_HINTS = (("brak konta demo", "Dodaj konto demo do nagrań: Marketing → Kanały publikacji → Konto do nagrywania filmów."),
                 ("logowanie kontem demo", "Panel nie zalogował się kontem demo. Sprawdź e-mail i hasło w Agenci → "
                                           "Publikacja → Konto do nagrań."),
                 ("logowanie:", "Logowanie nie zadziałało tak, jak zakłada scenariusz. Przekaż błąd agentowi."),
@@ -3050,7 +3050,7 @@ def record_page(folder, sc, brand, work):
                 with open(account_file(), encoding="utf-8") as f:
                     acc = json.load(f)
             except (OSError, ValueError):
-                raise RuntimeError("brak konta demo do nagrań (panel: Agenci → Publikacja → Konto do nagrań)")
+                raise RuntimeError("brak konta demo do nagrań (panel: Marketing → Kanały publikacji)")
             login = login_spec(sc["logowanie"])
             page.goto(login["url"], wait_until="networkidle", timeout=60000)
             if landed("logowanie") != _host(login["url"])[1]:      # konto demo tylko na hoście logowania
