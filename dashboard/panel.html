@@ -312,7 +312,7 @@ tbody tr[data-go]:focus-visible td{background:var(--hover)}
 .stagelist li:first-child{border-top:0}
 .stagelist .nm b{display:block}
 .stagelist .nm span{font-size:12px;color:var(--ink-3)}
-.stagelist .ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.stagelist .stg-ed{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .tl{position:relative;height:22px;background:var(--sunk);border-radius:4px}
 .tl .b{position:absolute;top:4px;bottom:4px;border-radius:3px}
 .tl .today{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--l-red)}
@@ -991,7 +991,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   .topbar,.content,.banners{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
   .stepper{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:10px}
   .stagelist li{grid-template-columns:minmax(0,1fr);gap:6px}
-  .stagelist .ed{justify-content:flex-start}
+  .stagelist .stg-ed{justify-content:flex-start}
   .padd{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:620px){
@@ -1010,7 +1010,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   .btn,.btn.sm,.seg,.x,.chip,.sw,.toolbar select,.fi:not(textarea){min-height:40px}
   .btn.sm{padding:4px 12px}
   /* cele dotyku ≥40 px: linki i przyciski tekstowe, summary, zakładki, tytuły wierszy list */
-  .linkbtn,.lk.t,.rows a.t,.tabs a,.stepper button,.panel>h2 small a,.nx .lk,.nw-foot a,.navlk{min-height:40px;display:inline-flex;align-items:center}
+  .linkbtn,.lk.t,.rows a.t,.tabs a,.panel>h2 small a,.nx .lk,.nw-foot a,.navlk{min-height:40px;display:inline-flex;align-items:center}
   .rows .lk.t,.rows a.t{display:flex}
   summary{min-height:40px;display:flex;align-items:center;gap:6px;list-style:none}
   summary::before{content:"▸";color:var(--ink-3);font-size:12px}
@@ -4262,7 +4262,7 @@ function stagesView(p){
     const bar=isDay(s.date)?'<span class="b" style="left:'+pos(s.start)+'%;width:'+Math.max(1.5,pos(s.date)-pos(s.start)+100/span)+'%;background:'+cl[s.st]+'"></span>':'';
     return '<li><div class="nm"><b>'+esc(s.title)+'</b><span class="num">'+(isDay(s.date)?dd(s.start)+' – '+dd(s.date)+' · ':'')+(s.total?s.open+' otwartych z '+s.total:'bez zadań')+(s.needsYou&&!s.done?' · czeka na '+esc(s.needsYou):'')+'</span></div>'+
       '<div class="tl" aria-hidden="true">'+bar+'<span class="today" style="left:'+pos(D.todayKey)+'%"></span></div>'+
-      '<div class="ed">'+lz(s.st)+'<input class="fi" type="date" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
+      '<div class="stg-ed">'+lz(s.st)+'<input class="fi" type="date" data-stage="'+esc(s.id)+'" value="'+(isDay(s.date)?s.date:'')+'" aria-label="Termin etapu '+esc(s.title)+'"></div></li>'}).join('')+
     '</ul><p class="note">Czerwona kreska to dziś. Początek etapu liczony od końca poprzedniego. Stan etapu jak w raporcie PM. Zmiana daty zapisuje termin w ZADANIA.md.</p></section>';
 }
 function bookView(p){
