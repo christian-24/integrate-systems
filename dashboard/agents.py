@@ -4,6 +4,7 @@ Sama biblioteka standardowa, Python 3.9+, macOS i Windows. Moduł nie importuje 
 dostaje od niego funkcję load_projects, wspólny zamek zapisu i moduł projekt.
 """
 import collections
+import contextlib
 import datetime
 import glob
 import hashlib
@@ -28,6 +29,8 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import asystent  # noqa: E402  (stała sesja asystenta)
 import glos  # noqa: E402  (rozpoznawanie mowy)
+import grafiki  # noqa: E402  (grafiki do postów przez Codex)
+import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
 ROOT = os.path.dirname(HERE)
 WINDOWS = os.name == "nt"
 # Windows: serwer działa pod pythonw (bez konsoli), więc żaden proces potomny nie może otwierać okna.
@@ -52,6 +55,7 @@ PL_DAYS = ("poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota",
 CHAT_MAX = 2000             # znaków w jednej wiadomości właściciela
 CHAT_KEEP = 100             # tyle wiadomości zostaje w historii zadania
 CHAT_ANSWER = 8000          # najwyżej tyle znaków odpowiedzi
+AS_ANSWER = 16000           # odpowiedź asystenta: tekst i blok kart
 CHAT_PARALLEL = 3           # tyle rozmów naraz czeka na odpowiedź
 CHAT_EXPIRED = "Rozmowa wygasła. Wyślij pytanie jeszcze raz."
 LOGIN_TTL = 600           # s: tyle czeka logowanie przez panel na kod
@@ -117,6 +121,12 @@ def git_numstat(top, base, branch):
 
 
 # Mniej spraw do właściciela (decyzja 2026-11-21): pytania tylko o to, czego nikt poza nim nie rozstrzygnie,
+# Zadanie Codexa o grafice (AGENCI.md „Grafiki (Codex)”): obrazy wbudowanym narzędziem na subskrypcji ChatGPT.
+CODEX_IMAGE_RULES = [
+    "- Grafiki i zdjęcia twórz i poprawiaj wbudowanym narzędziem obrazów ($imagegen), bez klucza API. Wynik zapisz "
+    "jako PNG w folderze posta (posty/<dzień>-<nazwa>/) pod nazwą wariant-<n>.png z kolejnym wolnym numerem; "
+    "nie nadpisuj grafika.png ani zdjęć (właściciel wybiera wariant w edytorze posta).",
+]
 # najwyżej jedno otwarte pytanie na projekt, odbiór tylko dla pracy wychodzącej na zewnątrz albo z decyzją.
 OWNER_RULES = [
     "- Właściciela angażuj tylko w sprawy, których nikt poza nim nie rozstrzygnie: pieniądze i koszty, dane prawne "
@@ -278,8 +288,10 @@ class Manager:
                        "rytmDone": []}
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
+        self._tools_read = False              # stan narzędzi odczytany choć raz (grafiki: „Codex niezalogowany”)
         self._tools_busy = False
         self._login = None          # logowanie przez panel (serwer bez okna): proces, adres, stan
+        self._cx_login = None       # logowanie Codex kodem urządzenia (serwer bez okna): proces, adres, kod
         self.login_web = (get("PANEL_LOGIN_WEB") or "").strip() == "1" or not (sys.platform == "darwin" or WINDOWS)
         self.launcher = lambda args, **kw: subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                                             stderr=subprocess.DEVNULL, **kw)
@@ -295,6 +307,13 @@ class Manager:
         self._as = asystent.Session(idle=_int(get("PANEL_ASYSTENT_BEZCZYNNOSC"), asystent.IDLE))  # stała sesja
         self._as_live = {"partial": "", "activity": ""}   # odpowiedź asystenta w trakcie pisania
         self._as_facts = ""                   # skrót faktów wysłanych w tej sesji (nowe fakty tylko po zmianie danych)
+        self._as_lib = ""                     # skrót listy kart wysłanej w tej sesji
+        # internet dla asystenta (karty news): WebSearch i WebFetch tylko do odczytu; PANEL_ASYSTENT_INTERNET=0 wyłącza
+        self.assist_web = (get("PANEL_ASYSTENT_INTERNET") or "1").strip() != "0"
+        if self.assist_web:
+            self.ASSIST_DENY = ",".join(x for x in self.ASSIST_DENY.split(",") if x not in self.ASSIST_WEB)
+        self.cards = karty.Library((get("PANEL_ASYSTENT_KARTY") or "").strip() or
+                                   os.path.join(self.runs_dir, "czat", "asystent-karty.json"))
         self.voice = glos.Recognizer(self.env, idle=_int(get("PANEL_GLOS_BEZCZYNNOSC"), glos.GLOS_IDLE))
         self._load()
         self._chat_restore()
@@ -391,7 +410,7 @@ class Manager:
             try:
                 tools = self._read_tools()
                 with self._lock:
-                    self._tools, self._tools_at = tools, time.time()
+                    self._tools, self._tools_at, self._tools_read = tools, time.time(), True
                 self._login_alert()
             finally:
                 self._tools_busy = False
@@ -737,7 +756,7 @@ class Manager:
             "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + film_rules(title) + OWNER_RULES + [
+        ] + git_rules + film_rules(title) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
@@ -1138,6 +1157,7 @@ class Manager:
     # ---------- asystent: rozmowa o wszystkich projektach (Start i przycisk w każdym widoku) ----------
     ASSIST = "*asystent"
     ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+    ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#start", "Start: postęp projektów"), ("#ty", "Dla Ciebie: Twoje sprawy, zgody, odbiory"),
                     ("#marketing", "Marketing: publikacje i nagrania"), ("#terminy", "Terminy: kalendarz"),
@@ -1155,9 +1175,60 @@ class Manager:
             cur = dict(self._as_live) if live else {}
         if chat["pending"] and not live:
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij wiadomość jeszcze raz."
-        return 200, "", {"messages": chat["messages"][-40:], "pending": live, "error": chat["error"],
+        msgs = []
+        for m in chat["messages"][-40:]:
+            if m.get("role") == "claude":
+                text, ops = karty.extract(m.get("text", ""))
+                m = dict(m, text=text, cards=ops)
+            msgs.append(m)
+        return 200, "", {"messages": msgs, "pending": live, "error": chat["error"],
                          "partial": cur.get("partial", ""), "activity": cur.get("activity", ""),
                          "voice": self.voice.available()}
+
+    def _assistant_keep_cards(self, answer):
+        """Karty z "zapisz": true trafiają do biblioteki (następnym razem model poda samo id)."""
+        _, ops = karty.extract(answer)
+        try:
+            self.cards.save([c for c in ops["pokaz"] if c.get("zapisz")])
+        except (karty.Bad, OSError):
+            pass
+
+    def assistant_cards_get(self):
+        """GET /api/asystent/karty: biblioteka, karty wbudowane i układ płótna."""
+        lib = self.cards.read()
+        return 200, "", {"karty": sorted(lib["karty"].values(), key=lambda c: c["id"]), "wbudowane": karty.STARTERS,
+                         "przypiete": lib["przypiete"], "ukryte": lib["ukryte"]}
+
+    def assistant_cards_post(self, body):
+        """POST /api/asystent/karty: {"zapisz": karta} | {"usun": id} | {"przypiete": [id]} | {"ukryj": id} |
+        {"pokaz": id}. Zmiany tylko z sesją (jak każdy zapis panelu)."""
+        ops = [k for k in ("zapisz", "usun", "przypiete", "ukryj", "pokaz") if k in body]
+        if len(ops) != 1:
+            return 400, "Jedno działanie: zapisz, usun, przypiete, ukryj albo pokaz.", {}
+        op, val = ops[0], body[ops[0]]
+        try:
+            if op == "zapisz":
+                if not isinstance(val, dict) or "dane" in val:
+                    return 400, "Zapisać można kartę z zapytaniem.", {}
+                code, err, ids = self.cards.save([val])
+                if code == 200 and not ids:
+                    return 400, "Zapisać można kartę z zapytaniem.", {}
+                return code, err, {"zapisane": ids}
+            if op == "przypiete":
+                if not isinstance(val, list) or len(val) > 60 or not all(isinstance(x, str) and karty.ID_RE.match(x) for x in val):
+                    return 400, "Lista id kart (najwyżej 60).", {}
+                return self.cards.layout(pins=val) + ({},)
+            if not isinstance(val, str) or not karty.ID_RE.match(val):
+                return 400, "Nieprawidłowe id karty.", {}
+            if op == "usun":
+                return self.cards.remove(val) + ({},)
+            if op == "ukryj":
+                return self.cards.layout(hide=val, at=now_iso()) + ({},)
+            return self.cards.layout(show=val) + ({},)
+        except karty.Bad as e:
+            return 400, str(e)[:300], {}
+        except OSError:
+            return 500, "Nie udało się zapisać biblioteki kart.", {}
 
     @staticmethod
     def assistant_facts(data, today):
@@ -1213,8 +1284,8 @@ class Manager:
         today = datetime.date.today()
         lines = ["Jesteś asystentem właściciela w panelu projektów. Dziś jest %s (%s)." % (today.isoformat(), PL_DAYS[today.weekday()]),
                  "Właściciel często mówi głosem; tekst pochodzi wtedy z rozpoznawania mowy i może przekręcać nazwy: "
-                 "dopasuj je do nazw projektów i zadań. Odpowiedź czyta na ekranie: bardzo krótko (2–5 zdań), "
-                 "bez tabel i nagłówków.",
+                 "dopasuj je do nazw projektów i zadań. Odpowiedź czyta na ekranie: bardzo krótko (1–3 zdania), "
+                 "bez tabel i nagłówków; szczegóły pokazujesz jako karty.",
                  "", self.assistant_facts(data, today), "", "Projekty (pliki kart):"]
         for p in data["projects"]:
             folder = index.get(p["id"])
@@ -1228,8 +1299,8 @@ class Manager:
                   "  Otwórz: <id zadania>     otwiera szczegóły zadania albo publikacji (id z faktów; bez id: dokładny tytuł)",
                   "  Przewiń: <nagłówek>      przewija bieżący widok do sekcji o tym nagłówku",
                   "  Zamknij: szczegóły       zamyka otwarte zadanie",
-                  "Używaj ich, gdy właściciel prosi „pokaż”, „otwórz”, „przejdź”, albo gdy pomagają zobaczyć to, o czym "
-                  "mówisz. Najpierw Pokaż, potem Otwórz. Nie zapowiadaj ich w treści.",
+                  "Otwórz używaj, gdy właściciel prosi „otwórz” albo gdy szczegóły zadania pomagają. Pokaż tylko poza "
+                  "stroną Asystent (ekran inny niż #asystent). Nie zapowiadaj działań w treści.",
                   "Adresy widoków: " + "; ".join("%s (%s)" % v for v in self.ASSIST_VIEWS) + ".",
                   "Projekt: #p-<id projektu> (plan), zakładki: " + ", ".join("#p-<id>-%s" % t for t in self.ASSIST_TABS) + ".",
                   "", "Zasady:",
@@ -1242,11 +1313,16 @@ class Manager:
                   "- Nie zmieniasz kart, kodu ani innych plików, nie uruchamiasz poleceń, nie prosisz o hasła ani klucze.",
                   "- Każda kolejna wiadomość zaczyna się od [ekran: …] (co właściciel ma teraz przed sobą); gdy dane się "
                   "zmienią, dostaniesz też nowe fakty.",
-                  "", self._assistant_screen(data, view, opened), "", "Wiadomość właściciela:", text]
+                  "", karty.PROMPT] + ([karty.PROMPT_WEB] if self.assist_web else []) + [
+                  "", self._assistant_library(), "",
+                  self._assistant_screen(data, view, opened), "", "Wiadomość właściciela:", text]
         return "\n".join(lines) + "\n"
 
+    def _assistant_library(self):
+        return "Karty gotowe (id, typ, tytuł):\n" + "\n".join(self.cards.summary())
+
     def _assistant_tools(self, index):
-        allow, dirs = ["Read", "Grep", "Glob", "LS"], []
+        allow, dirs = ["Read", "Grep", "Glob", "LS"] + (list(self.ASSIST_WEB) if self.assist_web else []), []
         for folder in index.values():
             a, _, cards = self.project_chat_tools(folder)
             allow += [x for x in a.split(",")[4:] if x not in allow]
@@ -1317,6 +1393,8 @@ class Manager:
         try:
             facts = self.assistant_facts(data, datetime.date.today())
             stamp = hashlib.sha1(facts.encode("utf-8")).hexdigest()
+            lib = self._assistant_library()
+            lib_stamp = hashlib.sha1(lib.encode("utf-8")).hexdigest()
             key = hashlib.sha1(json.dumps(args).encode("utf-8")).hexdigest()
             for attempt in (0, 1):
                 fresh = not session
@@ -1326,16 +1404,19 @@ class Manager:
                     head = self._assistant_screen(data, view, opened)
                     if stamp != self._as_facts:
                         head += "\nAktualne fakty (dane się zmieniły):\n" + facts
+                    if lib_stamp != self._as_lib:
+                        head += "\n" + lib
                     prompt = head + "\n" + text
                 if not self._as.alive(key):
                     self._as.start(self.as_agent(args + (["--resume", session] if session else [])), cwd=self.root,
                                    env=child_env(self.env), key=key, resumed=bool(session))
                 resumed = self._as.resumed
-                res = self._as.turn(prompt, on_text=lambda t: self._as_update(partial=t[:CHAT_ANSWER], activity=""),
+                res = self._as.turn(prompt, on_text=lambda t: self._as_update(partial=t[:AS_ANSWER], activity=""),
                                     on_tool=lambda a: self._as_update(activity=a), timeout=self.chat_timeout)
                 if res["ok"]:
-                    answer, session = res["text"][:CHAT_ANSWER], res["session"] or session
-                    self._as_facts = stamp
+                    answer, session = res["text"][:AS_ANSWER], res["session"] or session
+                    self._as_facts, self._as_lib = stamp, lib_stamp
+                    self._assistant_keep_cards(answer)
                     break
                 if res["error"] == "czas":
                     error = "Brak odpowiedzi w ciągu %d s. Spróbuj ponownie." % self.chat_timeout
@@ -1416,7 +1497,9 @@ class Manager:
             except OSError:
                 return 500, "Nie udało się wyczyścić rozmowy.", {}
         self._as.stop(keep_watch=True)          # nowa rozmowa: następna wiadomość z pełnym promptem
-        self._as_facts = ""
+        self._as_facts = self._as_lib = ""
+        with contextlib.suppress(OSError):
+            self.cards.layout(clear_hidden=True)  # karty z poprzedniej rozmowy znikają razem z nią
         return 200, "", {}
 
     def _chat_run(self, file, args, cwd, prompt, resumed):
@@ -2172,6 +2255,147 @@ class Manager:
             self._enqueue(rec, {"args": args, "cwd": self.runs_dir, "prompt": CHECK_PROMPT + "\n"})
         return 200, "", {"id": rec["id"]}
 
+    # ---------- grafiki do postów (Codex, AGENCI.md: „Grafiki (Codex)”) ----------
+    def graphic_tool(self):
+        """Stan Codexa dla edytora posta: need = "" (gotowy) | "off" | "install" | "login"."""
+        mode = grafiki.mode(self.env)
+        path = self.tool_path("codex")
+        with self._lock:
+            info = dict(self._tools.get("codex") or self._tool_blank())
+            known = self._tools_read
+            cx = self._cx_login
+            login = {"active": True, "url": cx["url"], "code": cx["code"]} \
+                if cx and cx["proc"].poll() is None and cx["url"] else {"active": False}
+        need = "off" if mode == "wylaczone" else "install" if not path else \
+            "login" if known and not info.get("loggedIn") else ""
+        return {"mode": mode, "need": need, "found": bool(path), "loggedIn": bool(info.get("loggedIn")),
+                "checked": known, "loginCmd": self.login_cmd("codex", path), "loginWeb": self.login_web,
+                "agentUser": self.agent_user, "login": login}
+
+    def graphic_runs(self, pid, day):
+        """Zlecenia grafiki tego posta, najnowsze najpierw (najwyżej 5)."""
+        with self._lock:
+            runs = [r for r in reversed(list(self._runs.values()))
+                    if r["kind"] == "grafika" and r.get("project") == pid and r.get("post") == day]
+            return [{k: r.get(k) for k in ("id", "state", "error", "result", "ask", "variants", "queuedAt", "endedAt",
+                                           "activity")} for r in runs[:5]]
+
+    def run_graphic(self, pid, day, folder, text, names, project_name=""):
+        """Zlecenie grafiki: `codex exec` w folderze posta z obrazami wejściowymi (--image). (kod, błąd, dane)."""
+        text = re.sub(r"\s+", " ", str(text or "")).strip()
+        if len(text) < grafiki.TEXT_MIN:
+            return 400, "Napisz, co zrobić z grafiką.", {}
+        if len(text) > grafiki.TEXT_MAX:
+            return 400, "Najwyżej %d znaków." % grafiki.TEXT_MAX, {}
+        if not isinstance(names, list) or len(names) > grafiki.INPUTS_MAX:
+            return 400, "Wybierz najwyżej %d zdjęć." % grafiki.INPUTS_MAX, {}
+        allowed = grafiki.inputs(folder)
+        names = [str(n) for n in names]
+        if any(n not in allowed for n in names) or len(set(names)) != len(names):
+            return 409, "Zdjęcia posta zmieniły się. Odświeżam.", {}
+        tool = self.graphic_tool()
+        if tool["need"] == "off":
+            return 409, "Grafiki przez Codex są wyłączone w ustawieniach panelu (PANEL_GRAFIKA).", {"need": "off"}
+        if tool["need"] == "install":
+            return 409, "Codex nie jest zainstalowany na tym komputerze.", {"need": "install"}
+        if tool["need"] == "login":
+            return 409, "Codex nie jest zalogowany. Zaloguj się kontem ChatGPT.", {"need": "login"}
+        path = self.tool_path("codex")
+        with self._lock:
+            if any(r["kind"] == "grafika" and r["state"] in LIVE and r.get("project") == pid and r.get("post") == day
+                   for r in self._runs.values()):
+                return 409, "Codex już pracuje nad grafiką tego posta.", {}
+            start = grafiki.next_number(folder)
+            rec = self._new("grafika", "codex", "Grafika do posta %s" % day, project=pid,
+                            project_name=project_name or pid)
+            rec.update(post=day, ask=_short(text, 300), inputs=names, variants=[])
+            args = _command(path) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
+                                     "-C", folder]
+            if names:       # jeden argument z „=”: --image przyjmuje kilka wartości i nie może połknąć „-”
+                args.append("--image=" + ",".join(os.path.join(folder, n) for n in names))
+            args.append("-")
+            self._enqueue(rec, {"args": args, "cwd": folder, "prompt": grafiki.prompt(text, names, start, folder),
+                                "limit": grafiki.timeout(self.env),
+                                "graphic": {"folder": folder, "start": start, "since": time.time()}})
+        return 200, "", {"id": rec["id"]}
+
+    def _graphic_done(self, rec, priv, state, error):
+        """Po zleceniu grafiki: warianty w folderze posta (z katalogu sesji Codex, gdy sam ich nie skopiował)."""
+        g = priv.get("graphic") or {}
+        if not g.get("folder"):
+            return state, error
+        home = grafiki.codex_home(self.env, self.agent_user)
+        session = os.path.join(home, "generated_images", priv["thread"]) if home and priv.get("thread") else ""
+        try:
+            made = grafiki.collect(g["folder"], g["start"], g["since"], session)
+        except Exception as e:      # błąd zbierania nie może zatrzymać zamknięcia uruchomienia
+            log("Grafika %s: %s" % (rec["id"], e))
+            made = []
+        with self._lock:
+            rec["variants"] = made
+        if state == "done" and not made:
+            return "error", "Codex skończył, ale nie zapisał żadnego obrazu. Spróbuj jeszcze raz albo zmień polecenie."
+        return state, error
+
+    def _codex_device_login(self, args):
+        """`codex login --device-auth` w tle: adres strony i jednorazowy kod dla właściciela. Proces sam kończy się
+        po potwierdzeniu kodu na stronie OpenAI; panel niczego nie wpisuje."""
+        with self._lock:
+            cur = self._cx_login
+            if cur and cur["proc"].poll() is None and cur["url"] and cur["code"]:
+                return 200, "", {"url": cur["url"], "code": cur["code"]}
+            if cur and cur["proc"].poll() is None:
+                try:
+                    cur["proc"].kill()
+                except OSError:
+                    pass
+            try:
+                proc = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                        env=child_env(self.env), cwd=tempfile.gettempdir(), encoding="utf-8",
+                                        errors="replace", bufsize=1, start_new_session=not WINDOWS)
+            except OSError as e:
+                return 500, "Nie udało się uruchomić logowania Codex: %s" % e, {}
+            rec = {"proc": proc, "url": "", "code": "", "lines": collections.deque(maxlen=20)}
+            self._cx_login = rec
+        read_done = threading.Event()
+
+        def read():
+            for line in proc.stdout:
+                line = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", line).strip()
+                if not line:
+                    continue
+                rec["lines"].append(_short(line, 300))
+                m = re.search(r"https://\S+", line)
+                if m and not rec["url"]:
+                    rec["url"] = m.group(0).rstrip(".,)")
+                elif re.match(r"^[A-Z0-9]{4,}-[A-Z0-9]{4,}$", line) and not rec["code"]:
+                    rec["code"] = line
+            read_done.set()
+            with self._lock:
+                self._tools_at = 0.0
+        threading.Thread(target=read, daemon=True).start()
+
+        def expire():
+            if proc.poll() is None:
+                try:
+                    proc.kill()
+                except OSError:
+                    pass
+        timer = threading.Timer(LOGIN_TTL + 300, expire)     # kod urządzenia ważny 15 min
+        timer.daemon = True
+        timer.start()
+        end = time.time() + 15
+        while time.time() < end and not (rec["url"] and rec["code"]) and not read_done.is_set():
+            time.sleep(0.05)
+        if not (rec["url"] and rec["code"]):
+            expire()
+            text = " ".join(rec["lines"]) or "brak odpowiedzi"
+            if re.search(r"device code|enable", text, re.I):
+                return 409, "Włącz logowanie kodem urządzenia w ustawieniach bezpieczeństwa ChatGPT i spróbuj " \
+                            "jeszcze raz (%s)." % _short(text, 160), {}
+            return 500, "Logowanie Codex nie podało adresu: %s" % _short(text, 200), {}
+        return 200, "", {"url": rec["url"], "code": rec["code"]}
+
     def open_login(self, tool="claude"):
         """Otwiera okno terminala z poleceniem logowania; właściciel loguje się w przeglądarce.
         Panel niczego nie wpisuje i nie widzi danych logowania."""
@@ -2182,8 +2406,8 @@ class Manager:
             return 409, "Brak polecenia %s. Instalacja: INSTALACJA.md." % tool, {}
         args = _command(path) + (["login"] if tool == "codex" else ["auth", "login"])
         if self.login_web:
-            if tool != "claude":
-                return 409, "Logowanie Codex przez panel nie jest obsługiwane: %s" % self.login_cmd(tool, path), {}
+            if tool != "claude":            # serwer bez okna: kod urządzenia (właściciel potwierdza go na stronie OpenAI)
+                return self._codex_device_login(self.as_agent(args + ["--device-auth"]))
             return self._login_web_start(self.as_agent(args))
         try:
             if sys.platform == "darwin":
@@ -2442,7 +2666,7 @@ class Manager:
                 stop_now = priv.get("stop")
             if stop_now:
                 self._kill(proc)
-            timer = threading.Timer(self.timeout, self._on_timeout, [rec])
+            timer = threading.Timer(priv.get("limit") or self.timeout, self._on_timeout, [rec])
             timer.daemon = True
             timer.start()
             try:
@@ -2579,6 +2803,9 @@ class Manager:
         elif kind == "thread.started" or kind == "session.created":
             with self._lock:
                 rec["model"] = str(ev.get("model") or rec["model"])
+                thread = str(ev.get("thread_id") or ev.get("session_id") or "")
+                if thread and re.match(r"^[\w.-]{1,100}$", thread):
+                    (self._priv.get(rec["id"]) or {})["thread"] = thread
 
     def _conclude(self, rec, st, code):
         """Klasyfikacja końca: stopped → timeout → login → limit → error → done."""
@@ -2591,7 +2818,7 @@ class Manager:
         if priv.get("stop"):
             return self._finish(rec, "stopped", "")
         if priv.get("timeout"):
-            return self._finish(rec, "timeout", "Przekroczony czas: %d min." % max(1, self.timeout // 60))
+            return self._finish(rec, "timeout", "Przekroczony czas: %d min." % max(1, (priv.get("limit") or self.timeout) // 60))
         if failed and (status == "401" or LOGIN_RE.search(blob)):
             hint = self.login_cmd(rec["tool"], self.tool_path(rec["tool"]))
             return self._finish(rec, "login", "Wymaga logowania: %s" % hint)
@@ -2629,6 +2856,8 @@ class Manager:
             priv["finishing"] = True
         if rec["kind"] == "task":                      # wiersz zadania przed ogłoszeniem stanu końcowego
             self._close_task(rec, state, priv.get("git"))
+        if rec["kind"] == "grafika" and state not in ("stopped",):
+            state, error = self._graphic_done(rec, priv, state, error)
         if rec["kind"] == "plan" and state == "done":
             body, plan = self.parse_plan(result, (self._priv.get(rec["id"]) or {}).get("cands") or {})
             result = body[:4000]

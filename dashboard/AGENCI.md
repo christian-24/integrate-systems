@@ -42,11 +42,16 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_AGENT_USER` | brak | użytkownik systemu dla agentów; polecenie idzie przez `sudo -n -u <użytkownik> --` |
 | `PANEL_LOKALNY_KLUCZ_PLIK` | brak | plik klucza zapisu dla żądań z tego komputera (nagłówek `X-Panel-Klucz`) |
 | `PANEL_DZIEN_MIN` | `120` | dzienna pojemność właściciela w minutach (`dayMinutes` w `/api/data`) |
-| `PANEL_ASYSTENT_MODEL` | `sonnet` | model asystenta (okno Asystent w każdym widoku) |
+| `PANEL_ASYSTENT_MODEL` | `sonnet` | model asystenta (strona Asystent) |
+| `PANEL_ASYSTENT_INTERNET` | `1` | `0` zabiera asystentowi WebSearch i WebFetch (karty news); domyślnie włączone, tylko odczyt |
+| `PANEL_ASYSTENT_KARTY` | `<katalog uruchomień>/czat/asystent-karty.json` | biblioteka kart asystenta i układ płótna |
 | `PANEL_ASYSTENT_BEZCZYNNOSC` | `1800` | po tylu sekundach bez wiadomości stała sesja asystenta kończy pracę |
 | `PANEL_GLOS_PYTHON` | brak | interpreter venv z faster-whisper (`uruchom/serwer/zainstaluj-glos.sh`); bez niego panel chowa „Mów” |
 | `PANEL_GLOS_MODELE`, `PANEL_GLOS_MODEL` | brak, `small` | katalog pobranych modeli i nazwa modelu Whisper |
 | `PANEL_GLOS_BEZCZYNNOSC` | `600` | po tylu sekundach bez nagrania pracownik mowy kończy pracę (zwalnia pamięć) |
+| `PANEL_GRAFIKA` | `codex` | grafiki do postów: `codex` (Codex na subskrypcji ChatGPT) albo `wylaczone` (sekcja „Grafiki (Codex)”) |
+| `PANEL_GRAFIKA_TIMEOUT` | `900` | limit czasu jednego zlecenia grafiki, sekundy |
+| `PANEL_CODEX_HOME` | `~<PANEL_AGENT_USER>/.codex` albo `CODEX_HOME`, `~/.codex` | katalog danych Codex (obrazy z `generated_images/<wątek>/`) |
 | `PANEL_NTFY_URL` | brak | adres tematu ntfy; powiadomienie po zakończeniu uruchomienia i gdy Claude wymaga logowania |
 | `CLAUDE_CODE_OAUTH_TOKEN` | brak | token z `claude setup-token` dla komputera bez przeglądarki |
 
@@ -351,6 +356,19 @@ się zmieniły. Po restarcie panelu albo bezczynności proces startuje z `--resu
 Odpowiedź może kończyć się wierszami działań, które panel wykonuje po kolei i ukrywa: `Pokaż: #adres`, `Otwórz: <id
 zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły`.
 
+Strona Asystent (`#asystent`, pierwsza w menu) to płótno kart i rozmowa (z boku od 1100 px, niżej przyklejona na dole).
+Inne widoki nie mają okna asystenta; pytania ze Startu i spacja przechodzą na tę stronę. Model nie pisze HTML: kończy
+odpowiedź blokiem ```` ```karty ```` z JSON `{"pokaz": [karta…], "usun": [id…]}`. Katalog typów (liczba, lista, tabela,
+wykres, postep, tydzien, notatka, news), język zapytań i opis dla modelu: `dashboard/karty.py` (`PROMPT`). Panel
+sprawdza blok (`karty.extract`: nieznany typ, nieznane pole, HTML, link inny niż http(s) odrzucają kartę) i oddaje
+karty w `GET /api/asystent` (`messages[].cards`: `pokaz`, `usun`, `bledy`). Karta z `zapytanie` jest liczona w
+przeglądarce z `/api/data` (`kqRun` w panel.html), więc liczby są aktualne; `dane` wprost tylko dla newsów i notatek.
+Biblioteka: `GET /api/asystent/karty` (zapisane, wbudowane, przypięte, ukryte), `POST /api/asystent/karty` z jednym
+z `{"zapisz": karta}`, `{"usun": id}`, `{"przypiete": [id]}`, `{"ukryj": id}`, `{"pokaz": id}` (sesja jak każdy zapis;
+najwyżej 100 kart i 256 kB). Karty z `"zapisz": true` zapisuje panel po odpowiedzi; lista gotowych kart idzie w prompcie
+(i ponownie, gdy się zmieni), więc model najpierw podaje samo `{"id": …}`. Nowa rozmowa zdejmuje karty rozmowy,
+przypięte zostają. Na stronie Asystent działanie `Pokaż:` jest pomijane (odpowiedzią jest karta).
+
 `POST /api/asystent/glos?view=&open=`: nagranie (`audio/webm` z Chrome, `audio/mp4` z Safari, także ogg i wav; typ
 sprawdzany po nagłówku i pierwszych bajtach, do 4 MB) → tekst z `dashboard/glos_stt.py` (faster-whisper, `language=pl`,
 `initial_prompt` z nazwami projektów) → wiadomość jak wyżej; odpowiedź `{"text", "pending"}`. 409 z `"voice": false`,
@@ -358,6 +376,36 @@ gdy rozpoznawanie nie jest zainstalowane; 422, gdy nic nie rozpoznano. `POST /ap
 w tle (przy naciśnięciu „Mów”). Pracownik działa jako użytkownik panelu, startuje przy pierwszym nagraniu i kończy się
 po `PANEL_GLOS_BEZCZYNNOSC`. W panelu: przycisk „Mów” (klik: start, klik: stop; myszką także przytrzymanie) albo
 spacja, gdy fokus nie jest w polu ani na przycisku (przytrzymaj albo naciśnij dwa razy); Esc przerywa nagranie.
+
+### Grafiki (Codex)
+
+Podział pracy: grafiki (generowanie i poprawianie zdjęć do postów) robi Codex wbudowanym narzędziem obrazów
+(`$imagegen`, model obrazów OpenAI) na logowaniu ChatGPT, bez klucza API; teksty, zadania i resztę dalej Claude.
+Ustawienie: `PANEL_GRAFIKA` (`codex` domyślnie, `wylaczone`). Wybór wykonawcy zadań (`kto:`) się nie zmienia.
+Generowanie zużywa limit planu ChatGPT 3–5 razy szybciej niż zwykła tura; plan Free go nie ma.
+
+- `GET /api/post/warianty?project=&date=`: `variants` i `inputs` (`[{name, at}]`: grafika.png, zdjęcia karuzeli,
+  warianty, `grafika-poprzednia-*.png`), `folder`, `max` (najwyżej 6 obrazów wejściowych), `runs` (ostatnie 5 zleceń
+  tego posta: `id`, `state`, `error`, `result`, `ask`, `variants`), `tool`: `need` (`""` gotowy, `off`, `install`,
+  `login`), `loginCmd`, `loginWeb`, `agentUser`, `login` (`active`, `url`, `code` logowania kodem urządzenia).
+- `POST /api/post/grafika-codex {project, date, polecenie, zdjecia: [nazwy]}`: zlecenie (rodzaj uruchomienia
+  `grafika`, widać je w Agentach, limit `PANEL_GRAFIKA_TIMEOUT`). Polecenie: `codex exec --json --sandbox
+  workspace-write --skip-git-repo-check -C <folder posta> --image=<a>,<b> -` (jako `PANEL_AGENT_USER`). Codex zapisuje
+  wyniki jako `wariant-<n>.png` od pierwszego wolnego numeru i niczego nie nadpisuje. Po zakończeniu panel bierze nowe
+  warianty; gdy Codex zostawił obraz tylko w `<CODEX_HOME>/generated_images/<wątek>/`, panel kopiuje go jako wariant.
+  Brak obrazu przy udanym przebiegu to stan `error`. 409 z `need`, gdy Codexa nie ma, nie jest zalogowany albo grafiki
+  są wyłączone; jedno zlecenie naraz na post.
+- `POST /api/post/wariant {project, date, name, akcja}`: `grafika` (wariant staje się `grafika.png`; poprzednia grafika
+  i `grafika.svg` zostają jako `grafika-poprzednia-<czas>`), `karuzela` (wariant jako kolejne `zdjecie-<n>`), `usun`.
+- Logowanie Codex z panelu: na Macu i PC `POST /api/agent/login {"tool": "codex"}` otwiera Terminal z `codex login`;
+  na serwerze (`PANEL_LOGIN_WEB`) panel uruchamia `codex login --device-auth` jako agent i zwraca `{url, code}`:
+  właściciel otwiera stronę OpenAI i wpisuje kod (wymaga włączonego logowania kodem urządzenia w ustawieniach
+  bezpieczeństwa ChatGPT). Panel nie widzi haseł ani tokenów.
+- Zadania `kto: codex` dostają zasadę: grafiki przez `$imagegen`, wynik jako `wariant-<n>.png` w folderze posta.
+  Tak Claude (albo asystent) zleca grafikę bez panelu: zakłada zadanie `kto: codex`; z panelu ta sama trasa
+  `/api/post/grafika-codex`.
+- Klucz API zamiast subskrypcji (decyzja właściciela): `codex login --with-api-key` dla użytkownika agenta; wtedy
+  generowanie idzie według cennika API. Panel niczego nie zmienia.
 
 ## Testy
 

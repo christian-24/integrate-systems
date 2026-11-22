@@ -44,7 +44,9 @@ class LogowanieWeb(Baza):
         self.web.open_login("claude")
         self.assertEqual(self.web.submit_login_code("")[0], 400)
         self.assertEqual(self.web.submit_login_code("dwa slowa")[0], 400)
-        self.assertEqual(self.web.open_login("codex")[0], 409)
+        # Codex: logowanie kodem urządzenia (adres i kod dla właściciela), osobno od logowania Claude
+        code, _, extra = self.web.open_login("codex")
+        self.assertEqual((code, extra.get("code")), (200, "ABCD-1234"))
 
     def test_trasa_serwera(self):
         import server

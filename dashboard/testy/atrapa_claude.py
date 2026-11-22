@@ -23,6 +23,7 @@ Stała sesja asystenta (argumenty `--input-format stream-json`): czyta wiersze {
   „Odpowiedź atrapy <n>: <40 znaków ostatniego wiersza wiadomości>”, n to numer wiadomości w tym procesie. Wiadomość
   ze słowem „narzędzie” dodaje blok tool_use (Read); działania z wiadomości („Pokaż: #ty; Otwórz: …”) wracają
   na końcu odpowiedzi (próby panelu w przeglądarce). `--resume wygasla`: błąd „No conversation found”, kod 1.
+  Wiadomość ze słowem „karty” zwraca blok ```karty``` (CARDS), „zła karta” blok z kartami do odrzucenia.
   Tryby: login (wynik z błędem 401), czat-wolno (kawałki tekstu co 0,3 s), wolno (bez odpowiedzi).
   Każda wiadomość to wiersz w dzienniku z polem pid procesu.
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
@@ -116,6 +117,29 @@ def chat(prompt, how):
     return 0
 
 
+# blok kart (wiadomość ze słowem „karty”): kilka typów z katalogu, jedna karta do zapisania w bibliotece
+CARDS = {"pokaz": [
+    {"id": "dzis-dla-ciebie"},
+    {"id": "otwarte-wg-projektu", "typ": "wykres", "rodzaj": "slupki", "tytul": "Otwarte zadania według projektu",
+     "zapytanie": {"zrodlo": "zadania", "filtr": {"stan": "otwarte"}, "grupuj": "projekt"}, "zapisz": True},
+    {"id": "minuty-7-dni", "typ": "wykres", "rodzaj": "slupki", "tytul": "Twoje minuty w 7 dni",
+     "zapytanie": {"zrodlo": "zadania", "filtr": {"kto": "dla-ciebie", "od": "dziś", "do": "+6"}, "grupuj": "dzien",
+                   "miara": "minuty"}},
+    {"id": "zgody", "typ": "liczba", "tytul": "Zgody czekają",
+     "zapytanie": {"zrodlo": "zadania", "filtr": {"czeka": "zgoda", "stan": "otwarte"}}},
+    {"id": "najblizsze", "typ": "tabela", "tytul": "Najbliższe zadania", "kolumny": ["tytul", "projekt", "data", "kto"],
+     "rozmiar": "szeroka", "zapytanie": {"zrodlo": "zadania", "filtr": {"stan": "otwarte"}, "sortuj": "data", "limit": 6}},
+    {"id": "newsy", "typ": "news", "tytul": "Wiadomości z branży", "dane": {"pozycje": [
+        {"tytul": "Przykładowa wiadomość o narzędziach do wideo", "zrodlo": "example.com", "data": "2026-11-21",
+         "link": "https://example.com/a", "opis": "Krótki opis z atrapy."},
+        {"tytul": "Druga przykładowa wiadomość", "zrodlo": "example.org", "data": "2026-11-20",
+         "link": "https://example.org/b"}]}},
+    {"id": "notatka", "typ": "notatka", "tytul": "Na jutro", "dane": {"tekst": "Najpierw zgody, potem nagranie."}}]}
+BAD_CARDS = {"pokaz": [{"id": "zly-typ", "typ": "iframe", "tytul": "X"},
+                       {"id": "html", "typ": "notatka", "tytul": "<b>X</b>", "dane": {"tekst": "x"}},
+                       {"id": "dobra", "typ": "liczba", "tytul": "Dobra", "zapytanie": {"zrodlo": "zadania"}}]}
+
+
 def stream(argv):
     """Stała sesja: wiele wiadomości w jednym procesie (stream-json na wejściu i wyjściu)."""
     if "--resume" in argv and argv[argv.index("--resume") + 1] == "wygasla":
@@ -145,6 +169,10 @@ def stream(argv):
         acts = re.findall(r"(?:Pokaż|Otwórz|Przewiń|Zamknij): [^;]*", last)   # działania z wiadomości wracają w odpowiedzi
         if acts:
             answer = "Odpowiedź atrapy %d." % n + "".join("\n" + a.strip() for a in acts)
+        if "zła karta" in last:
+            answer = "Odpowiedź atrapy %d." % n + "\n```karty\n" + json.dumps(BAD_CARDS, ensure_ascii=False) + "\n```"
+        elif "karty" in last:
+            answer = "Odpowiedź atrapy %d: karty." % n + "\n```karty\n" + json.dumps(CARDS, ensure_ascii=False) + "\n```"
         out({"type": "stream_event", "session_id": sid, "event": {"type": "message_start"}})
         if "narzędzie" in text:
             out({"type": "stream_event", "session_id": sid,

@@ -26,6 +26,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/asystent          wiadomość do asystenta (wszystkie projekty, może przełączyć widok: „Pokaż: #adres”)
   GET  /api/asystent          historia rozmowy z asystentem (z odpowiedzią w trakcie pisania); POST /api/asystent/nowa
                                czyści rozmowę
+  GET  /api/asystent/karty     biblioteka kart asystenta (zapisane, wbudowane, przypięte, ukryte);
+  POST /api/asystent/karty     {"zapisz": karta} | {"usun": id} | {"przypiete": [id]} | {"ukryj": id} | {"pokaz": id}
   POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> rozpoznany tekst -> wiadomość do asystenta;
                                POST /api/asystent/glos/start wczytuje model mowy w tle
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
@@ -112,6 +114,7 @@ import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
 import udostepnij  # noqa: E402  (ręczne udostępnienie posta na Instagramie przez rozszerzenie Chrome)
+import grafiki  # noqa: E402  (grafiki do postów przez Codex: warianty w folderze posta)
 SHARES = udostepnij.Shares()
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
@@ -1404,6 +1407,55 @@ def instagram_share(body):
                      "warning": warning}
 
 
+def _post_project_name(pid):
+    data, _ = load_projects(resolve=False)
+    p = next((x for x in data["projects"] if x["id"] == pid), {})
+    return p.get("alias") or p.get("name") or pid
+
+
+def graphic_state(pid, day):
+    """GET /api/post/warianty: warianty, obrazy do wyboru, zlecenia Codex i stan Codexa dla edytora posta."""
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień.", {}
+    names = grafiki.variants(folder)
+    out = {"folder": os.path.basename(folder), "variants": [{"name": n, "at": int(os.path.getmtime(os.path.join(folder, n)))}
+                                                             for n in names],
+           "inputs": [{"name": n, "at": int(os.path.getmtime(os.path.join(folder, n)))} for n in grafiki.inputs(folder)],
+           "image": os.path.isfile(os.path.join(folder, "grafika.png")),
+           "photos": udostepnij.photos(folder), "max": grafiki.INPUTS_MAX}
+    m = get_agents()
+    m.refresh_tools()
+    out.update(tool=m.graphic_tool(), runs=m.graphic_runs(pid, day))
+    return 200, "", out
+
+
+def graphic_order(body):
+    """POST /api/post/grafika-codex {project, date, polecenie, zdjecia: [nazwy plików posta]}: zlecenie dla Codexa."""
+    pid, day = str(body.get("project") or ""), str(body.get("date") or "")
+    folder = post_folder(pid, day)
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    return get_agents().run_graphic(pid, day, folder, body.get("polecenie", ""), body.get("zdjecia") or [],
+                                    _post_project_name(pid))
+
+
+def graphic_variant(body):
+    """POST /api/post/wariant {project, date, name, akcja: grafika | karuzela | usun}."""
+    folder = post_folder(str(body.get("project") or ""), str(body.get("date") or ""))
+    if not folder:
+        return 404, "Nie ma posta na ten dzień."
+    do = {"grafika": grafiki.use_as_graphic, "karuzela": grafiki.add_to_carousel, "usun": grafiki.remove}.get(
+        str(body.get("akcja") or ""))
+    if not do:
+        return 400, "Nieznana akcja."
+    with _write_lock:
+        try:
+            return do(folder, str(body.get("name") or ""))
+        except OSError as e:
+            return 500, "Nie zapisano zmiany: %s." % (e.strerror or e)
+
+
 def get_agents():
     """Jeden zarządca uruchomień na proces; powstaje przy pierwszym użyciu (eksport podglądu go nie potrzebuje)."""
     global _agents
@@ -1434,6 +1486,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
                                                                  b.get("open", "")),
           "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
+          "/api/asystent/karty": lambda b: get_agents().assistant_cards_post(b),
           "/api/asystent/glos/start": lambda b: get_agents().voice_warm(),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
@@ -1453,6 +1506,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/publikacja/plan": lambda b: get_publisher().plan(b),
           "/api/publikacja/anuluj": lambda b: get_publisher().cancel(b),
           "/api/instagram/udostepnij": instagram_share,
+          "/api/post/grafika-codex": graphic_order,
+          "/api/post/wariant": graphic_variant,
           "/api/agent/merge": lambda b: get_agents().merge(b.get("id", ""), b.get("project", ""), b.get("branch", "")),
           "/api/agent/automat": lambda b: get_agents().set_automat(b.get("enabled")),
           "/api/agent/login": lambda b: get_agents().open_login(b.get("tool", "claude")),
@@ -2934,6 +2989,10 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_drive().status((parse_qs(url.query).get("project") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/asystent/karty":
+            code, err, extra = get_agents().assistant_cards_get()
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
         if path == "/api/asystent":
             code, err, extra = get_agents().assistant_get()
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
@@ -2967,6 +3026,11 @@ class Handler(BaseHTTPRequestHandler):
             if not fpath:
                 return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
             return self._send_file(fpath, MEDIA_TYPES[os.path.splitext(fpath)[1].lower()], bool((q.get("pobierz") or [""])[0]))
+        if path == "/api/post/warianty":
+            q = parse_qs(url.query)
+            code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
@@ -3038,7 +3102,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/asystent/glos":
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/film/zmien") else 4096)
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty", "/api/film/zmien") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")

@@ -37,11 +37,25 @@ PC bez przeglądarki pod ręką: wygeneruj token i wpisz go do `dashboard/panel.
 claude setup-token
 ```
 
-Codex (tylko gdy używasz zadań `kto: codex`):
+Codex (zadania `kto: codex` i grafiki do postów):
 
 ```bash
 codex login
 ```
+
+### Codex do grafik
+
+Grafiki do postów (edytor posta → „Grafika (Codex)”) robi Codex na Twoim planie ChatGPT (bez klucza API; plan Free
+nie ma generowania obrazów). Na serwerze instalacja jednym poleceniem, potem logowanie:
+
+```bash
+sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-codex.sh
+```
+
+Logowanie: w ChatGPT włącz w ustawieniach bezpieczeństwa logowanie kodem urządzenia, potem w panelu kliknij
+„Zaloguj Codex” w edytorze posta i wpisz pokazany kod na stronie OpenAI. Bez panelu:
+`sudo -u agent -H /home/agent/.local/bin/codex login --device-auth`. Na Macu: `codex login`.
+Szczegóły: `dashboard/AGENCI.md`, sekcja „Grafiki (Codex)”.
 
 Sprawdzenie: widok Agenci → „Test połączenia”. Panel usuwa klucze API ze środowiska agentów,
 więc praca idzie na limit subskrypcji. Koszt w panelu to równowartość, nie opłata.
