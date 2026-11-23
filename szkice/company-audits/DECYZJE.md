@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-23: Wizytówki Oprogramowani: hasło bez ERP
+- Kontekst: poprawka właściciela do wizytówek: „za duża skłonność do ERP, a my przecież automatyzujemy i integrujemy”; zawężenie do ERP zamyka drogę do innych zleceń.
+- Decyzja: z wizytówek znika słowo „ERP” i nazwy programów. Hasło na przodzie: „Automatyzujemy i integrujemy. Ty zajmujesz się firmą.”, podpis: „Automatyzacje i integracje dla firm”. Wersja firmowa na tyle: „Automatyzacje i integracje” oraz „Łączymy programy i zdejmujemy z ludzi ręczną robotę”. Wygląd i dane kontaktowe bez zmian.
+- Skutki: hasło wizytówki różni się od nagłówka strony oprogramowani.com, która nadal mówi o zamówieniach i ERP; strony to zadanie nie zmienia. Teksty da się zmienić w wizytowki/zrodla/wizytowka.js.
+- Kto: agent
+
 ## 2026-11-23: Wizytówki Oprogramowani: wygląd i źródło danych
 - Kontekst: zadanie „Przygotuj projekt wizytówek Oprogramowani do weryfikacji”. Wskazany brief (strona-www/BRIEF_strona_www.md, maj 2026) opisuje dawny kierunek sprzed marki: kremowe tło, terakota, krój Fraunces. Obecna strona oprogramowani.com wygląda inaczej (Inter, biel i ciemne tło, czerwień #d93425, znak O·PRO·GRAMOWANI), a warunek zadania to spójność ze stroną. W plikach tego repozytorium dane kontaktowe są puste (`_data/firma.json`: „[DO USTALENIA]”).
 - Decyzja: wygląd wizytówek wzięty z kodu obecnej strony (repozytorium oprogramowani-onepager), a nie z briefu. Dane kontaktowe też stamtąd: 663 206 373, kontakt@oprogramowani.com, Krystian Stryjakiewicz, rola „Procesy i rozmowa z klientem”. Powstały dwa warianty: imienna Krystiana i firmowa bez nazwiska. Wizytówki Pawła nie ma, bo w plikach brakuje jego nazwiska i numeru. Każdy wariant ma plik 90×50 mm i wersję ze spadami 3 mm.
