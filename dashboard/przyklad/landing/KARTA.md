@@ -33,3 +33,6 @@ Strona produktu z formularzem kontaktowym.
 ## Pytania do właściciela
 1. Czy formularz ma wysyłać kopię zgłoszenia do zgłaszającego?
    termin: +2
+   opcja: tak, kopia do zgłaszającego
+   opcja: nie, tylko powiadomienie do nas
+   propozycja: tak, kopia do zgłaszającego

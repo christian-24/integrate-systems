@@ -355,8 +355,9 @@ class Manager:
         self._runs = collections.OrderedDict()
         self._queue = []
         self._priv = {}                       # id -> dane robocze, których nie pokazujemy (folder, prompt, proces)
-        self._state = {"automat": False, "needsLogin": False, "limitUntil": None, "since": {}, "sessionKey": "",
-                       "rytmDone": []}
+        self._state = {"automat": False, "needsLogin": False, "limitUntil": None, "since": {}, "marks": {},
+                       "sessionKey": "", "rytmDone": []}
+        self._seen_marks = {}                 # klucz zadania -> stan z ostatniego track_marks (zmiany widziane na żywo)
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
         self._tools_read = False              # stan narzędzi odczytany choć raz (grafiki: „Codex niezalogowany”)
@@ -549,6 +550,10 @@ class Manager:
             self._state["since"] = {k: v for k, v in since.items() if isinstance(k, str) and isinstance(v, dict)
                                     and isinstance(v.get("s"), str) and isinstance(v.get("d"), str)} \
                 if isinstance(since, dict) else {}
+            marks = saved.get("marks")
+            self._state["marks"] = {k: v for k, v in marks.items() if isinstance(k, str) and isinstance(v, dict)
+                                    and v.get("s") in ("done", "blocked") and isinstance(v.get("d"), str)} \
+                if isinstance(marks, dict) else {}
             key = saved.get("sessionKey")
             self._state["sessionKey"] = key if isinstance(key, str) and re.match(r"^[0-9a-f]{32,128}$", key) else ""
             done = saved.get("rytmDone")
@@ -654,10 +659,15 @@ class Manager:
         tools = {"claude": self.tool_found("claude"), "codex": self.tool_found("codex")}
         today = today or datetime.date.today()
         since = self.track_states(tasks, today) if source == "registry" else {}
+        marks = self.track_marks(tasks, today) if source == "registry" else {}
         for t in tasks:
             t["runId"] = live.get((t["project"], t["file"], t["title"]), "")
             t["runBlock"] = run_block(t, source, live, tools)
-            t["stateSince"] = since.get(self.projekt.task_key(t), "")
+            k = self.projekt.task_key(t)
+            t["stateSince"] = since.get(k, "")
+            mark = marks.get(k) or ("", "")
+            t["doneAt"] = mark[1] if mark[0] == "done" else ""
+            t["blockedSince"] = mark[1] if mark[0] == "blocked" else ""
             t["stalled"], t["reviewOverdue"] = self.projekt.state_flags(t, t["stateSince"], bool(t["runId"]), today)
 
     def track_states(self, tasks, today):
@@ -687,6 +697,50 @@ class Manager:
                 self._state["since"] = new
                 self._save_state()
             return {k: v["d"] for k, v in new.items()}
+
+    def track_marks(self, tasks, today):
+        """Od kiedy zadanie jest zrobione ([x]) albo zablokowane ([!] / blokada:): {klucz: (stan, "RRRR-MM-DD")}.
+
+        Zapis w stan.json (pole marks, tylko znane daty). Zmianę stanu widzianą przez panel (poprzednio inny stan
+        w tym procesie albo w stan.json) liczy od dziś. Zadanie zastane w tym stanie dostaje dzień zakończenia
+        ostatniego uruchomienia agenta dla zadania, a bez uruchomienia "" (nieznana). Wpisy zrobionych starsze
+        niż MARKS_KEEP_DAYS dni nie są przechowywane."""
+        with self._lock:
+            old = self._state.get("marks") or {}
+            since = self._state.get("since") or {}
+            seen = self._seen_marks
+            ended = {}
+            for r in self._runs.values():
+                if r.get("kind") == "task" and r.get("endedAt"):
+                    k = "%s|%s|%s" % (r["project"], r["file"], r["title"])
+                    ended[k] = max(ended.get(k, ""), str(r["endedAt"])[:10])
+            cutoff = (today - datetime.timedelta(days=MARKS_KEEP_DAYS)).isoformat()
+            day = today.isoformat()
+            new, out, now_seen = {}, {}, {}
+            for t in tasks:
+                k = self.projekt.task_key(t)
+                status = mark_status(t)
+                now_seen[k] = status
+                if status == "open":
+                    continue
+                prev = old.get(k)
+                if isinstance(prev, dict) and prev.get("s") == status:
+                    d = prev["d"]
+                else:
+                    before = seen.get(k) or (prev.get("s") if isinstance(prev, dict) else "") or \
+                        ("open" if k in since else None)
+                    if before is not None and before != status:
+                        d = day                                        # zmiana widziana przez panel
+                    else:
+                        d = min(ended.get(k) or "", day)               # zastane: koniec uruchomienia albo ""
+                out[k] = (status, d)
+                if d and not (status == "done" and d < cutoff):
+                    new[k] = {"s": status, "d": d}
+            self._seen_marks = now_seen
+            if new != old:
+                self._state["marks"] = new
+                self._save_state()
+            return out
 
     # ---------- sesje panelu (server.py) ----------
     def session_key(self):
@@ -844,6 +898,8 @@ class Manager:
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
+            "- Gdy pytanie jest wyborem, dopisz pod nim 2–3 wcięte wiersze `   opcja: …` (krótko, wzajemnie "
+            "wykluczające się odpowiedzi); `propozycja:` wskazuje wtedy jedną z opcji, tym samym tekstem.",
             "- Gdy masz rekomendację, dopisz pod pytaniem wcięty wiersz `   propozycja: …`. Gdy przyjęcie propozycji "
             "zmienia zadania w ZADANIA.md, pod propozycją zawsze dopisz każdą zmianę jako wcięty wiersz "
             "`   skutek: <operacja>`, jedna operacja w wierszu: `po: <fragment poprzednika> → <fragment tytułu "
@@ -3956,6 +4012,7 @@ RYTM_SUFFIX = " (stały rytm)"
 RYTM_FILE = "kampanie/staly-rytm.md"
 RYTM_AHEAD = 2      # dni: z takim wyprzedzeniem powstaje zadanie na kolejny post
 RYTM_RESULT_DAYS = 2        # publikacja zrobiona dawniej niż tyle dni (48 h) bez wynik: → zadanie właściciela
+MARKS_KEEP_DAYS = 90        # wpisy zrobionych (doneAt) starsze niż tyle dni znikają ze stan.json
 RYTM_KEEP = 500             # tyle kluczy publikacji z założonym zadaniem wyniku zostaje w stan.json
 RESULT_TASK = "Wpisz wynik publikacji "
 FILM_TASK = ("Nagraj film", "Obejrzyj film")   # publikacja z „po: Nagraj/Obejrzyj film…”: post powstaje po nagraniu
@@ -4035,6 +4092,15 @@ def run_block(task, source, live, tools, sample_ok=False):
     return ""
 
 
+def mark_status(task):
+    """"done" ([x]), "blocked" ([!] albo pole blokada:), "open" (pozostałe) — dla doneAt i blockedSince."""
+    if task.get("state") == "done":
+        return "done"
+    if task.get("state") == "blocked" or (task.get("blocked") or "").strip():
+        return "blocked"
+    return "open"
+
+
 def annotate_sample(tasks, block):
     """runId i runBlock dla zadań przykładowych, na podstawie bloku z agenci-przyklad.json."""
     runs = [r for r in block.get("runs") or [] if isinstance(r, dict) and r.get("state") in LIVE]
@@ -4045,3 +4111,4 @@ def annotate_sample(tasks, block):
         live = {(t["project"], t["file"], t["title"])} if t["runId"] else ()
         t["runBlock"] = run_block(t, "sample", live, tools, sample_ok=True)
         t["stateSince"], t["stalled"], t["reviewOverdue"] = "", False, False
+        t["doneAt"], t["blockedSince"] = "", ""

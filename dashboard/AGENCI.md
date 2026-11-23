@@ -128,7 +128,9 @@ merged, mergeCommit   po /api/agent/merge: czas scalenia i commit scalenia
 
 Pliki: `../uruchomienia/<id>.json` (rekord), `../uruchomienia/<id>.log` (surowy strumień),
 `../uruchomienia/stan.json` (Automat, znacznik logowania, limit; `since`: od kiedy zadanie jest w toku albo czeka
-na odbiór, `{"projekt|plik|tytuł": {"s": "doing|review", "d": "RRRR-MM-DD"}}`; `sessionKey`: klucz sesji panelu;
+na odbiór, `{"projekt|plik|tytuł": {"s": "doing|review", "d": "RRRR-MM-DD"}}`; `marks`: od kiedy zadanie jest
+zrobione albo zablokowane, `{"projekt|plik|tytuł": {"s": "done|blocked", "d": "RRRR-MM-DD"}}`, tylko znane daty,
+zrobione starsze niż 90 dni usuwane; `sessionKey`: klucz sesji panelu;
 `rytmDone`: publikacje, dla których powstało już zadanie wpisania wyniku). Serwer trzyma 200 ostatnich rekordów.
 Po restarcie serwera uruchomienia `queued` i `running` dostają stan `stopped`.
 
@@ -186,7 +188,8 @@ do sekcji „Pytania do właściciela” w `KARTA.md` (tylko sprawy, których ni
 pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty
 znane tylko jemu; najwyżej jedno otwarte pytanie na projekt; resztę agent rozstrzyga sam i zapisuje w `DECYZJE.md`
 z `- Kto: agent`; `wymaga: odbiór` tylko dla pracy wychodzącej na zewnątrz, z `decyzja:` albo z kodem do scalenia), z wierszem `   termin: RRRR-MM-DD`, gdy to potrzebne (poza tym karty
-nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyjęcie zmienia zadania, zawsze z wierszami
+nie zmienia); przy pytaniu z wyborem dopisuje 2–3 wiersze `   opcja: …` (krótko, wzajemnie wykluczające się; panel
+pokazuje je jako odpowiedzi do wyboru), rekomendację dopisuje jako `   propozycja: …` (przy opcjach: jedna z nich), a gdy jej przyjęcie zmienia zadania, zawsze z wierszami
 `   skutek: <operacja>` (`po: … → …`, `kiedy: RRRR-MM-DD → …`, `stan: zrobione|wstrzymane → …`, `nowe: <wiersz zadania>`;
 panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela”). Wiersza `gotowe gdy:` agent nie zmienia
 i nie łagodzi (bez „albo w zostało:”); niespełniony warunek opisuje w `zostało:` i kończy stanem `[!]`. Agent zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
@@ -297,9 +300,13 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
 
 Pola z odczytu plików (np. `priority` projektu, `proposal` pytania, `target` i `result` kampanii) serwer przekazuje
 bez filtrowania; `dayMinutes` to `PANEL_DZIEN_MIN`. Każde zadanie w `tasks` ma dodatkowo: `runId` (id uruchomienia w kolejce albo w toku, inaczej `""`), `runBlock`,
-`stateSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, `check` (pole `sprawdza:` z `server.checks` albo plikiem;
+`stateSince`, `doneAt`, `blockedSince`, `stalled`, `reviewOverdue`, `ownerNeeds`, `check` (pole `sprawdza:` z `server.checks` albo plikiem;
 `null` bez pola), a z odczytu plików `detail`, `needs`, `after`, `waitingFor`, `unlocks` i `unlockCount`
-(opis w `README.md`, „Szczegóły zadania i następny krok”). Pytania mają `effects`, kampanie `counters`. Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
+(opis w `README.md`, „Szczegóły zadania i następny krok”). `doneAt` („RRRR-MM-DD” od kiedy `[x]`) i `blockedSince` (od kiedy `[!]` albo pole `blokada:`)
+są `""`, gdy zadanie jest w innym stanie albo data jest nieznana: zmiana widziana przez panel liczy się od dnia, w którym
+panel ją zobaczył; zadanie zastane w tym stanie dostaje dzień końca ostatniego uruchomienia agenta dla zadania, a bez
+uruchomienia `""`. Projekty przykładowe: `""`. Pytania mają `effects` i `options` (wiersze `opcja:`, bez nich `[]`),
+kampanie `counters`. Poza tym `/api/data` ma `youToday`, `youWeek`, `youLater`
 i `server` (README, „Stan serwera”).
 
 ```
