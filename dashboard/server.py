@@ -19,7 +19,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/pm          uruchamia raport PM
   POST /api/agent/check       test połączenia z Claude Code albo Codex
   POST /api/agent/stop        zatrzymuje uruchomienie albo zdejmuje je z kolejki
-  POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików)
+  POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików);
+                              "execute": true („Wyślij i wykonaj”): polecenie pod zadaniem (poprawka:) i uruchomienie agenta
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
   POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
   GET  /api/project/chat      historia rozmowy o projekcie (?project=)
@@ -1838,7 +1839,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
           "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
           "/api/strona/koncepcja": lambda b: get_agents().site.concept(b),
-          "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", "")),
+          "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", ""),
+                                                             execute=b.get("execute") is True),
           "/api/drive/start": lambda b: get_drive().start(b.get("project", ""), b.get("link", "")),
           "/api/drive/finish": lambda b: get_drive().finish(b.get("project", ""), b.get("url", "")),
           "/api/drive/montuj": lambda b: get_drive().mount(b.get("project", "")),

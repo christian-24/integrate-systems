@@ -692,6 +692,9 @@ body.ed-open{overflow:hidden}
 .chat .cm.me{background:var(--accent-soft)} .chat .cm.ai{background:var(--sunk)}
 .chat .cm b{display:block;font-size:12px;color:var(--ink-3)}
 .chat .prop{margin:6px 0 0;font-weight:600}
+/* wiadomość panelu w rozmowie (stan uruchomienia agenta z rozmowy): bez tła, z ramką, stan .lz aktualizuje się sam */
+.cm.pn{background:transparent!important;border:1px solid var(--line-2);font-size:13px!important}
+.cm.pn .lz{margin-left:4px;vertical-align:1px}.cm.pn .lk{color:var(--accent);margin-left:6px}
 .abox .move{margin:6px 0;font-size:13.5px;line-height:1.5}
 .post h3{margin:0;font-size:14px}
 .post .ptx p{margin:6px 0 0;font-size:13.5px;line-height:1.5;white-space:normal}
@@ -4606,7 +4609,7 @@ function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+driveBox(p);
+  if(tab==='plan')body=planView(p)+projChatBox(p)+driveBox(p);   /* rozmowa zwinięta; prośba o pracę uruchamia agenta */
   else if(tab==='tablica')body=projBoard(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
@@ -4751,11 +4754,11 @@ function projChatBox(p){
   let c=PJC[p.id];
   if(!c){c=PJC[p.id]={messages:[],pending:false,error:'',loading:true};loadPChat(p.id)}
   let h='<div class="pad chat">';
-  if(c.messages.length)h+='<div class="cms">'+c.messages.slice(-30).map(m=>'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>').join('')+'</div>';
+  if(c.messages.length)h+='<div class="cms">'+c.messages.slice(-30).map(m=>chatMsg(m,'')).join('')+'</div>';
   if(c.pending)h+='<p class="note" role="status">Claude czyta pliki projektu… (do ok. 2 min)</p>';
   if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
   h+='<form class="dform" data-pchat="'+esc(p.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Wiadomość o projekcie" placeholder="Np. co mam zrobić jutro?"></textarea>'+
-    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Zmiany tylko na Twoją prośbę.</span></div></form></div>';
+    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Zmiany tylko na Twoją prośbę. Prośba o pracę („zrób”, „przygotuj”) zakłada zadanie agenta i od razu je uruchamia.</span></div></form></div>';
   return pjFold('pj-chat','pchat','Rozmowa o projekcie',c.pending?'czekam na odpowiedź':c.messages.length?c.messages.length+' '+pl(c.messages.length,'wiadomość','wiadomości','wiadomości'):'',h);
 }
 async function loadPChat(pid){
@@ -4767,8 +4770,8 @@ async function loadPChat(pid){
   c.loading=false;
   const r=CUR;if(!(r&&r.v==='projekt'&&r.p&&r.p.id===pid))return;
   if(was&&!c.pending)load();                     // odpowiedź mogła zmienić zadania
-  render();
-  if(c.pending)setTimeout(()=>{const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)loadPChat(pid)},3000);
+  render();clearTimeout(c.poll);
+  if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)loadPChat(pid)},c.pending?3000:5000);
 }
 async function sendPChat(f){
   const pid=f.dataset.pchat,ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim(),c=PJC[pid]||(PJC[pid]={messages:[],pending:false,error:''});
@@ -5804,15 +5807,26 @@ function chatBox(t){
   if(!LIVE)return '';
   let c=CH[t.id];
   if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
-  let h='<details class="dbox chat dr-chat"'+(c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>Zapytaj Claude o to zadanie</summary>';
-  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>').join('')+'</div>';
+  const ag=t.executor==='claude'||t.executor==='codex';
+  let h='<details class="dbox chat dr-chat"'+(c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
+  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id)).join('')+'</div>';
   if(c.pending)h+='<p class="note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>';
   if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
-  h+='<form class="dform" data-chat="'+esc(t.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Pytanie o zadanie" placeholder="Np. po co to zadanie? Co dokładnie mam wpisać? Czy można je pominąć?"></textarea>'+
-    '<div class="row"><button class="btn sm"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Enter wysyła. Claude czyta zadanie, kartę i pliki projektu; niczego nie zmienia.</span></div></form></details>';
+  const dis=c.pending||c.exec?' aria-disabled="true"':'';
+  h+='<form class="dform" data-chat="'+esc(t.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Pytanie albo polecenie do zadania" placeholder="Np. po co to zadanie? Albo polecenie dla agenta i „Wyślij i wykonaj”."></textarea>'+
+    '<div class="row"><button class="btn sm"'+dis+'>Wyślij</button>'+(ag&&t.kind!=='publikacja'?'<button type="button" class="btn sec sm" data-chatexec="'+esc(t.id)+'"'+dis+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta">Wyślij i wykonaj</button>':'')+
+    '<span class="note">Wyślij: Claude odpowiada, niczego nie zmienia.'+(ag?' Wyślij i wykonaj (albo „zrób to” na końcu): agent wykonuje polecenie.':'')+'</span></div></form></details>';
   return h;
 }
 const chatText=x=>'<div>'+String(x||'').split('\n').map(l=>/^\s*(Propozycja|Zmieniono):/i.test(l)?'<p class="prop">'+esc(l)+'</p>':esc(l)).join('<br>')+'</div>';
+/* wiadomość panelu w rozmowie: stan uruchomienia agenta (agents.panel_view: text, label, live, taskId); here: id otwartego zadania */
+const PNL={'w kolejce':'yellow','w toku':'blue','do odbioru':'purple','zrobione':'green'};
+function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|limit|wymaga|przekroczony)/.test(l)?'red':'grey');
+  return '<div class="cm pn"><b>Panel</b><div>'+esc(m.text||'')+(l?'<span class="lz '+c+'">'+esc(l)+'</span>':'')+
+    (m.taskId&&m.taskId!==here?'<button type="button" class="lk" data-task="'+esc(m.taskId)+'">Szczegóły</button>':'')+'</div></div>'}
+const chatMsg=(m,here)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>';
+/* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
+const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
 async function loadChat(id){
   let c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
   try{const r=await fetch('/api/task/chat?id='+encodeURIComponent(id),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
@@ -5820,16 +5834,24 @@ async function loadChat(id){
     if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[];c.pending=!!j.pending;c.error=String(j.error||'')}
     else if(r.status!==404)c.error=String(j.error||'Czat jest niedostępny.')}catch(e){c.error='Brak połączenia z serwerem.'}
   c.loading=false;
-  if(DR&&DR.kind==='task'&&DR.id===id){renderDrawer();if(c.pending)setTimeout(()=>{if(DR&&DR.id===id)loadChat(id)},2500)}
+  if(DR&&DR.kind==='task'&&DR.id===id){renderDrawer();clearTimeout(c.poll);
+    if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{if(DR&&DR.id===id)loadChat(id)},c.pending?2500:5000)}
 }
-async function sendChat(f){
+/* exec: „Wyślij i wykonaj” (albo „zrób to” na końcu): serwer zapisuje polecenie pod zadaniem i uruchamia agenta, odpowiedź od razu */
+const CH_EXEC=/(^|[\s,.;:!?—–-])(zrób to|zrob to|wykonaj( to)?)[\s.!]*$/i;
+async function sendChat(f,exec){
   const id=f.dataset.chat,t=D.tasks.find(x=>x.id===id),ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim();
-  if(!t||!text)return;const c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
-  if(c.pending){say('Czekam jeszcze na odpowiedź.');return}
+  if(!t)return;if(!text){if(exec){say('Napisz polecenie dla agenta.');ta.focus()}return}
+  const c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
+  if(c.pending||c.exec){say('Czekam jeszcze na odpowiedź.');return}
   if(!LIVE){say(PRV);return}
-  ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.pending=true;c.error='';if(DR)DR.chat=1;renderDrawer(true);
-  const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text});
-  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano pytania.';renderDrawer(true);return}
+  exec=!!exec||CH_EXEC.test(text);
+  ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.error='';if(exec)c.exec=true;else c.pending=true;if(DR)DR.chat=1;renderDrawer(true);
+  const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:exec});
+  c.exec=false;
+  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano.';renderDrawer(true);return}
+  if(exec){await load(true);const n=D&&D.tasks.find(y=>y.project===t.project&&y.file===t.file&&y.title===t.title);
+    if(n&&DR&&DR.kind==='task'&&DR.id===id&&n.id!==id){CH[n.id]=c;DR.id=n.id;DR.ref=refOf(n)}loadChat(n?n.id:id);return}
   load();setTimeout(()=>loadChat(id),2500);
 }
 /* blok „Co zrobić”: cel, kroki (odhaczane z panelu), warunek ukończenia, materiały, notatki */
@@ -7990,7 +8012,7 @@ const AS={messages:[],pending:false,error:'',loaded:false,partial:'',activity:''
 /* działania na końcu odpowiedzi asystenta, każde w osobnym wierszu (prompt w agents.py, assistant_prompt):
    Pokaż: #adres · Otwórz: <id zadania albo tytuł> · Przewiń: <nagłówek> · Zamknij: szczegóły. Nie są pokazywane. */
 /*asActs:start*/
-const AS_ACT=/^\s*(Pokaż|Otwórz|Przewiń|Zamknij)\s*:\s*(.*?)\s*$/i;
+const AS_ACT=/^\s*(Pokaż|Otwórz|Przewiń|Zamknij|Uruchom)\s*:\s*(.*?)\s*$/i;   /* Uruchom wykonuje serwer; tu tylko ukryty w trakcie pisania */
 function asActs(t){const body=[],acts=[];
   String(t||'').split('\n').forEach(l=>{const m=AS_ACT.exec(l),k=m?m[1].toLowerCase():'';
     if(m&&(m[2]||k==='zamknij'))acts.push({k:k,v:m[2]});else body.push(l)});
@@ -8028,7 +8050,7 @@ function asStatus(){
 function asMsgs(){let h='';
   if(!AS.messages.length&&!AS.pending)h+='<p class="note">Zapytaj albo powiedz. Asystent odpowiada krótko, a liczby, listy i newsy pokazuje jako karty obok. '+
     (AS.voice?'Mów: przycisk Mów albo przytrzymaj spację. ':'')+'Zadania zmienia tylko na Twoją prośbę.</p>';
-  h+=AS.messages.map(m=>{if(m.role==='ty')return '<div class="cm me">'+chatText(m.text)+'</div>';
+  h+=AS.messages.map(m=>{if(m.role==='ty')return '<div class="cm me">'+chatText(m.text)+'</div>';if(m.role==='panel')return pnMsg(m,'');
     const c=m.cards||{},t=asClean(m.text),n=(c.pokaz||[]).length,bad=c.bledy||[];
     return '<div class="cm ai">'+chatText(t||(n?(n===1?'Karta na płótnie.':'Karty na płótnie: '+n+'.'):''))+'</div>'+
       (bad.length?'<p class="ap-bad" title="'+esc(bad.join('; '))+'">Panel nie pokazał '+(bad.length===1?'jednej karty':bad.length+' kart')+' z tej odpowiedzi (opis spoza katalogu).</p>':'')}).join('');
@@ -8065,13 +8087,14 @@ async function asLoad(){
     else AS.error=String(j.error||'Asystent jest niedostępny.')}catch(e){AS.error='Brak połączenia z serwerem.'}
   AS.loaded=true;
   if(was&&!AS.pending){
-    const last=AS.messages[AS.messages.length-1];AS.partial='';AS.activity='';AS.mcount=AS.messages.length;
+    const last=AS.messages.filter(m=>m.role!=='panel').pop();AS.partial='';AS.activity='';AS.mcount=AS.messages.length;
     await apLibLoad();await load(true);
+    if(pnLive(AS.messages))asPoll(5000);
     if(last&&last.role==='claude'){const x=asActs(last.text);if(x.acts.length){await asDo(x.acts);return}}}
   /* nowe wiadomości (pierwsze wczytanie, inna karta przeglądarki): płótno od nowa */
   if(AS.mcount!==AS.messages.length){AS.mcount=AS.messages.length;if(asPage()){render();if(AS.pending)asPoll(400);return}}
   asRender();
-  if(AS.pending)asPoll(400);
+  if(AS.pending)asPoll(400);else if(pnLive(AS.messages))asPoll(5000);
 }
 async function asSend(text){
   text=String(text||'').trim();if(!text)return;
@@ -9031,6 +9054,7 @@ document.addEventListener('click',async ev=>{
     if(ED.cur&&el.closest('#ed')&&t&&k==='done'&&(needsResult(t)||needsCount(t)))closeEditor();
     rowAct(el,()=>actTask(id,k))}return}
   if(el=qq('[data-run]')){openDrawer('run',el.dataset.run);return}
+  if(el=qq('[data-chatexec]')){const f=el.closest('form[data-chat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendChat(f,true);return}
   if(el=qq('[data-task]')){openDrawer('task',el.dataset.task);return}
   if(el=qq('[data-state]')){if(DR&&DR.kind==='task'){const k=el.dataset.state,t=findTask(DR.ref,true);
     if(t&&k==='done'&&(needsResult(t)||needsCount(t)))openForm(t.id,'done');else patchTask(DR.id,{state:k})}return}

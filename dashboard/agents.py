@@ -75,6 +75,40 @@ GIT_NAME, GIT_EMAIL = "Panel projektów", "panel@localhost"     # gdy repozytori
 RESULT_PATH = re.compile(r"(?<![\w./-])(/?(?:[\w.-]+/)*[\w-][\w.-]*\.(?:md|txt|csv|json|html|svg|png|jpe?g|pdf|ya?ml))"
                          r"(?![\w/])", re.I)
 RESULT_PATHS_MAX = 10
+# Render HTML → PDF/PNG dla agenta zadania (AGENCI.md, „Render HTML do PDF i PNG”): jeden skrypt panelu,
+# w narzędziach Claude tylko jako Bash(<python> <skrypt>:*). Skrypt leży w repozytorium panelu (na serwerze
+# /home/panel/…, agent go nie zmieni).
+RENDER_SCRIPT = os.path.join(HERE, "html-do-pdf.py")
+# Uruchamianie z rozmów (AGENCI.md, „Rozmowa o projekcie” i „Asystent”): wiersz działania w odpowiedzi modelu.
+# Model tylko prosi; uruchamia serwer przez run_task po sprawdzeniu tych samych reguł co przycisk „Uruchom”.
+RUN_LINE = re.compile(r"^[ \t>*`-]*Uruchom\s*:\s*(.+?)\s*$", re.I)
+RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
+# „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
+EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
+# wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
+CHAT_RULES_V = "2"
+PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
+
+
+def take_run_lines(answer):
+    """Odpowiedź bez wierszy „Uruchom: <projekt> | <tytuł>” (albo „Uruchom: <tytuł>”) i lista (projekt, tytuł)."""
+    keep, found = [], []
+    for line in str(answer or "").split("\n"):
+        m = RUN_LINE.match(line)
+        if not m:
+            keep.append(line)
+            continue
+        value = m.group(1).strip().strip("`")
+        pid, _, title = value.rpartition("|") if "|" in value else ("", "", value)
+        title = title.strip().strip("„”\"'`«»").strip()
+        item = (pid.strip(), title)
+        if title and item not in found:
+            found.append(item)
+    return "\n".join(keep).rstrip(), found[:RUN_MAX]
+
+
+def _norm_title(text):
+    return re.sub(r"\s+", " ", str(text or "")).strip().rstrip(".").lower()
 
 
 def _inside(base, path):
@@ -753,14 +787,16 @@ class Manager:
             "panel sam zatwierdza i scala gałęzie agenta. Gdy do dokończenia potrzebujesz od właściciela danych "
             "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
-            "- Gdy pod zadaniem jest wiersz `poprawka:`, to uwagi właściciela po odbiorze: popraw pracę według nich.",
+            "- Gdy pod zadaniem jest wiersz `poprawka:`, to polecenie albo uwagi właściciela (po odbiorze albo "
+            "z rozmowy o zadaniu): wykonaj je, a istniejącą pracę popraw według nich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
             "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
             "`  zostało: …`, gdy coś nie zostało zrobione (tylko to, co ważne dla właściciela, np. czego nie sprawdzono; "
             "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES + [
+        ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
+            + self.render_rules() + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
             "`   termin: RRRR-MM-DD` pod pytaniem.",
@@ -776,6 +812,37 @@ class Manager:
             "`blokada: powód` (bez `wymaga: odbiór`)." % (git["file"] if git else file),
             "- Zakończ odpowiedź trzema krótkimi punktami: Zrobione, Sprawdzone, Zostało.",
         ]) + "\n"
+
+    def render_command(self):
+        """Polecenie renderu HTML → PDF/PNG (prefiks dla agenta) albo '' (Windows, brak Pythona z Playwright).
+        PANEL_RENDER: całe polecenie; PANEL_RENDER_PYTHON: Python z Playwright; inaczej Python zrzutów strony
+        na serwerze albo ~/narzedzia/pw, ~/narzedzia/film na Macu i PC."""
+        given = (self.env.get("PANEL_RENDER") or "").strip()
+        if given:
+            return given
+        if WINDOWS:
+            return ""
+        py = os.path.expanduser((self.env.get("PANEL_RENDER_PYTHON") or "").strip())
+        if not py:
+            for cand in (strona.SHOT_PYTHON, "~/narzedzia/pw/bin/python",
+                         self.env.get("PANEL_FILM_PYTHON") or "~/narzedzia/film/bin/python"):
+                cand = os.path.expanduser(cand)
+                if os.path.isfile(cand):
+                    py = cand
+                    break
+        if not py or not os.path.isfile(py):
+            return ""
+        return "%s %s" % (shlex.quote(py), shlex.quote(RENDER_SCRIPT))
+
+    def render_rules(self):
+        cmd = self.render_command()
+        if not cmd:
+            return ["- Zamiana HTML na PDF albo PNG jest na tym komputerze niedostępna (brak Playwright): przygotuj "
+                    "plik HTML i wpisz to w `zostało:`."]
+        return ["- PDF albo PNG z pliku HTML (np. wizytówka, ulotka, grafika): `%s <plik.html> <wynik.pdf> "
+                "<wynik.png>` (opcje: `--strona 90x50mm` albo `--strona A4`, `--szerokosc 1080`, `--ekran`). Tylko "
+                "pliki lokalne, zasoby z sieci są blokowane (fonty i obrazy trzymaj obok HTML). PNG obejrzyj "
+                "narzędziem Read (to obraz)." % cmd]
 
     def _find_task(self, task_id=None, key=None):
         """Zadanie po id albo po (projekt, plik, tytuł). Zwraca (zadanie, dane, indeks folderów)."""
@@ -859,7 +926,9 @@ class Manager:
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-C", cwd] + (extra if git else []) + ["-"]
         else:
-            tools = ",".join([TASK_TOOLS] + (self.site.tools(site) if site else []))
+            render = self.render_command()
+            tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
+                             (self.site.tools(site) if site else []))
             args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", tools])
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
@@ -876,9 +945,15 @@ class Manager:
         except (OSError, ValueError):
             data = {}
         data = data if isinstance(data, dict) else {}
-        msgs = [m for m in data.get("messages") or [] if isinstance(m, dict) and m.get("role") in ("ty", "claude")]
+        msgs = [m for m in data.get("messages") or [] if isinstance(m, dict) and m.get("role") in ("ty", "claude", PANEL_ROLE)]
         return {"session": str(data.get("session") or ""), "messages": msgs[-CHAT_KEEP:],
-                "pending": data.get("pending") is True, "error": str(data.get("error") or "")}
+                "pending": data.get("pending") is True, "error": str(data.get("error") or ""), "v": str(data.get("v") or "")}
+
+    @staticmethod
+    def _chat_session(chat):
+        """Sesja do wznowienia: '' przy złym id albo zasadach z innej wersji promptu (CHAT_RULES_V)."""
+        ok = re.fullmatch(r"[\w-]{1,100}", chat["session"]) and chat.get("v") == CHAT_RULES_V
+        return chat["session"] if ok else ""
 
     def _chat_write(self, path, chat):
         chat["messages"] = chat["messages"][-CHAT_KEEP:]
@@ -896,7 +971,7 @@ class Manager:
             live = path in self._chat_live
         if chat["pending"] and not live:            # odpowiedź przerwana restartem panelu
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij pytanie jeszcze raz."
-        return 200, "", {"messages": chat["messages"], "pending": live, "error": chat["error"]}
+        return 200, "", {"messages": self.panel_view(chat["messages"]), "pending": live, "error": chat["error"]}
 
     RECENT_FIELDS = ("id", "kind", "tool", "state", "auto", "machine", "project", "projectName", "taskId", "file",
                      "title", "queuedAt", "startedAt", "endedAt", "durationMs")
@@ -973,6 +1048,9 @@ class Manager:
                   "- Odpowiadasz na pytanie właściciela o to jedno zadanie.",
                   "- Krótko i konkretnie, prostym językiem po polsku. Bez żargonu technicznego, chyba że właściciel o niego prosi.",
                   "- Możesz czytać pliki projektu, ale niczego nie zmieniasz i nie uruchamiasz poleceń.",
+                  "- Gdy właściciel prosi o wykonanie pracy przy tym zadaniu, napisz jednym zdaniem, że wystarczy wysłać "
+                  "polecenie przyciskiem „Wyślij i wykonaj” (albo dopisać „zrób to” na końcu wiadomości): panel zapisze "
+                  "je pod zadaniem i uruchomi agenta.",
                   "- Gdy zadanie wygląda na zbędne, błędne albo niejasne, powiedz to wprost i zaproponuj jedną konkretną "
                   "zmianę (np. zamknąć je, zmienić termin, zastąpić je innym zadaniem) w jednym zdaniu zaczynającym się "
                   "od „Propozycja:”.",
@@ -980,9 +1058,11 @@ class Manager:
                   "", "Pytanie właściciela:", text]
         return "\n".join(lines) + "\n"
 
-    def chat_send(self, task_id, title, message):
+    def chat_send(self, task_id, title, message, execute=False):
         """Wiadomość właściciela w rozmowie o zadaniu; odpowiedź Claude przychodzi w tle (chat_get).
-        Zwraca (kod, błąd, dodatki): 202 z {"pending": True} albo błąd 400, 404, 409, 500."""
+        execute (przycisk „Wyślij i wykonaj”) albo „zrób to” / „wykonaj” na końcu: polecenie dla agenta (chat_execute).
+        Zwraca (kod, błąd, dodatki): 202 z {"pending": True}, 200 z {"status"} przy wykonaniu albo błąd 400, 404,
+        409, 500."""
         text = str(message or "").strip()
         if not text:
             return 400, "Napisz pytanie.", {}
@@ -995,6 +1075,8 @@ class Manager:
             return 409, CONFLICT, {}
         if data["projectsSource"] != "registry":
             return 409, "Projekty przykładowe", {}
+        if execute is True or EXEC_END.search(text):
+            return self.chat_execute(task, index, text)
         path = self.tool_path("claude")
         if not path:
             return 409, "Brak polecenia claude", {}
@@ -1013,7 +1095,7 @@ class Manager:
             if len(self._chat_live) >= CHAT_PARALLEL:
                 return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
             chat = self._chat_read(file)
-            session = chat["session"] if re.fullmatch(r"[\w-]{1,100}", chat["session"]) else ""
+            session = self._chat_session(chat)
             chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
             chat.update(pending=True, error="")
             try:
@@ -1048,6 +1130,185 @@ class Manager:
             return 500, "Nie udało się uruchomić rozmowy.", {}
         return 202, "", {"pending": True}
 
+    # ---------- uruchamianie z rozmów (AGENCI.md, „Uruchamianie z rozmów”) ----------
+    def chat_execute(self, task, index, text):
+        """„Wyślij i wykonaj” w rozmowie o zadaniu: wiadomość trafia pod zadanie jako `poprawka:` (polecenie dla
+        agenta), zadanie wraca do [ ] (zrobione, w toku, do odbioru, blokada), potem launch_task. Bez modelu.
+        Zwraca (200, "", {"status": wiadomość panelu}) albo błąd zapisu rozmowy."""
+        file = self._chat_file(task)
+        with self._chat_lock:
+            if file in self._chat_live:
+                return 409, "Czekam jeszcze na odpowiedź.", {}
+            chat = self._chat_read(file)
+            chat["messages"].append({"role": "ty", "text": text, "at": now_iso(), "exec": True})
+            try:
+                self._chat_write(file, chat)
+            except OSError:
+                return 500, "Nie udało się zapisać rozmowy.", {}
+        msg = self._execute_order(task, index, text)
+        with self._chat_lock:
+            chat = self._chat_read(file)
+            chat["messages"].append(msg)
+            try:
+                self._chat_write(file, chat)
+            except OSError:
+                pass
+        return 200, "", {"status": self.panel_view([msg])[0]}
+
+    def _execute_order(self, task, index, text):
+        msg = self._panel_msg(task)
+        key = (task["project"], task["file"], task["title"])
+        why = ""
+        if task.get("kind") == "publikacja":
+            why = "publikację wykonujesz samodzielnie."
+        elif task.get("executor") not in ("claude", "codex"):
+            why = "to zadanie nie jest dla agenta (kto: %s). Zmień wykonawcę w szczegółach." % (task.get("executor") or "brak")
+        elif key in self._live_keys():
+            msg.update(runId=self._live_keys()[key],
+                       text="Agent już pracuje nad tym zadaniem. Polecenie wyślij po zakończeniu.")
+            return msg
+        if why:
+            msg["text"] = "Nie uruchomiono „%s”: %s" % (task["title"], why)
+            return msg
+        changes = {}
+        needs = needs_of(task)
+        if task.get("state") in ("done", "doing", "blocked"):     # zrobione wraca do [ ] tylko z poprawką
+            changes["state"] = "todo"
+        if task.get("state") == "blocked" or task.get("blocked"):
+            changes["blocked"] = ""
+        if "odbiór" in needs:
+            changes["needs"] = [n for n in needs if n != "odbiór"]
+        folder = index[task["project"]]
+        try:
+            with self.write_lock:
+                ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "poprawka", text[:1000])
+                if ok and changes:
+                    ok = self.projekt.update_task(folder, task["file"], task["line"], task["title"], changes)
+        except (ValueError, OSError):
+            ok = False
+        if not ok:
+            msg["text"] = "Nie zapisano polecenia: zadanie zmieniło się w pliku. Odśwież i wyślij jeszcze raz."
+            return msg
+        fresh, data, _ = self._find_task(key=key)
+        if not fresh:
+            msg["text"] = "Nie zapisano polecenia: nie ma już tego zadania."
+            return msg
+        return self.launch_task(fresh, data)
+
+    @staticmethod
+    def _panel_msg(task):
+        return {"role": PANEL_ROLE, "at": now_iso(), "project": task.get("project", ""), "file": task.get("file", ""),
+                "title": task.get("title", ""), "runId": "", "text": ""}
+
+    def chat_launches(self, answer, pid=""):
+        """Wiersze „Uruchom:” z odpowiedzi rozmowy: (odpowiedź bez nich, [wiadomość panelu na każde zadanie]).
+        pid: rozmowa o projekcie (zadania tylko z tego projektu); '' asystent (projekt z wiersza albo dowolny)."""
+        text, wanted = take_run_lines(answer)
+        if not wanted:
+            return answer, []
+        out = []
+        for want_pid, title in wanted:
+            data, _ = self.load_projects()
+            task = self._match_task(data, pid or want_pid, title, only=bool(pid))
+            if task:
+                out.append(self.launch_task(task, data))
+            else:
+                out.append(dict(self._panel_msg({"project": pid, "title": title}),
+                                text="Nie uruchomiono „%s”: nie ma takiego zadania w ZADANIA.md." % title))
+        return text, out
+
+    @staticmethod
+    def _match_task(data, pid, title, only=False):
+        """Zadanie do uruchomienia po tytule: najpierw otwarte, potem zrobione. pid: id, nazwa albo alias projektu;
+        only: szukaj tylko w tym projekcie."""
+        if pid and not any(p["id"] == pid for p in data["projects"]):
+            low = pid.strip().lower()
+            pid = next((p["id"] for p in data["projects"] if low in ((p.get("name") or "").lower(),
+                                                                    (p.get("alias") or "").lower())), "" if not only else pid)
+        want = _norm_title(title)
+        cands = [t for t in data["tasks"] if t.get("kind") != "publikacja" and (not pid or t["project"] == pid)
+                 and _norm_title(t["title"]) == want]
+        order = {"todo": 0, "blocked": 1, "doing": 2, "done": 3}
+        cands.sort(key=lambda t: order.get(t.get("state"), 2))
+        return cands[0] if cands else None
+
+    def launch_task(self, task, data):
+        """Uruchomienie z rozmowy przez run_task, z tymi samymi regułami co przycisk „Uruchom”. Zwraca wiadomość
+        panelu: „Uruchomiono: …”, „W kolejce: …” albo „Nie uruchomiono „…”: powód.”"""
+        msg = self._panel_msg(task)
+        title = task["title"]
+        live = self._live_keys()
+        key = (task["project"], task["file"], title)
+        if key in live:
+            msg.update(runId=live[key], text="Już w toku: %s" % title)
+            return msg
+
+        def no(why):
+            msg["text"] = "Nie uruchomiono „%s”: %s" % (title, why)
+            return msg
+        block = self.run_block(task, data["projectsSource"], live)
+        if block:
+            return no(block[0].lower() + block[1:].rstrip(".") + ".")
+        if task.get("executor") not in ("claude", "codex"):
+            return no("zadanie nie ma wykonawcy agenta (kto: claude albo codex).")
+        tool = "codex" if task["executor"] == "codex" else "claude"
+        today = datetime.date.today().isoformat()
+        with self._lock:
+            automat, login = self._state["automat"], self._state["needsLogin"]
+
+        def later(when):
+            if automat and task.get("date") and str(task["date"])[:10] <= today:
+                return " Ma datę dziś: Automat uruchomi je %s." % when
+            return " Uruchom je potem w szczegółach zadania."
+        if login and tool == "claude":
+            return no("Claude wymaga logowania (Agenci → Zaloguj)." + later("po zalogowaniu"))
+        limit = self.limit_until()
+        if limit:
+            return no("limit subskrypcji do %s." % limit[11:16] + later("po odnowieniu limitu"))
+        code, err, extra = self.run_task(task["id"], title)
+        if code != 200:
+            return no((err or "błąd").rstrip(".") + ".")
+        rec = self.get(extra["id"]) or {}
+        msg["runId"] = extra["id"]
+        if rec.get("state") == "queued":
+            with self._lock:
+                busy = [r["title"] for r in self._runs.values() if r["state"] == "running" and r["id"] != extra["id"]]
+            msg["text"] = ("W kolejce: agent pracuje nad „%s”, to zadanie ruszy po nim." % _short(busy[0], 120)
+                           if busy else "W kolejce: %s" % title)
+        else:
+            msg["text"] = "Uruchomiono: %s" % title
+        return msg
+
+    def panel_view(self, msgs):
+        """Wiadomości rozmowy; przy wiadomościach panelu bieżący stan uruchomienia: taskId (obecne id zadania, link do
+        szczegółów), live (stan rekordu: queued, running, done, error…) i label (krótko: w kolejce, w toku, do odbioru,
+        zrobione, blokada…). Stan liczony przy odczycie, więc aktualizuje się sam."""
+        if not any(m.get("role") == PANEL_ROLE for m in msgs):
+            return list(msgs)
+        data, _ = self.load_projects(resolve=False)
+        tasks = {(t["project"], t["file"], t["title"]): t for t in data["tasks"]}
+        out = []
+        for m in msgs:
+            if m.get("role") == PANEL_ROLE:
+                t = tasks.get((m.get("project"), m.get("file"), m.get("title")))
+                with self._lock:
+                    rec = dict(self._runs.get(m.get("runId") or "") or {})
+                live, label = rec.get("state", ""), ""
+                if live == "queued":
+                    label = "w kolejce"
+                elif live == "running":
+                    label = "w toku"
+                elif t and t.get("state") == "blocked":
+                    label = "blokada" + (": " + _short(t["blocked"], 80) if t.get("blocked") else "")
+                elif live == "done":
+                    label = ("do odbioru" if t and "odbiór" in needs_of(t) else
+                             "zrobione" if t and t.get("state") == "done" else "skończone")
+                elif live:
+                    label = STATE_LABEL.get(live, live)
+                m = dict(m, taskId=t["id"] if t else "", live=live, label=label)
+            out.append(m)
+        return out
+
     # ---------- rozmowa o projekcie: postęp, zadania, anulowanie ----------
     def _project_chat_file(self, pid):
         return os.path.join(self.runs_dir, "czat", "projekt-" + hashlib.sha1(str(pid).encode("utf-8")).hexdigest() + ".json")
@@ -1063,7 +1324,7 @@ class Manager:
             live = path in self._chat_live
         if chat["pending"] and not live:
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij wiadomość jeszcze raz."
-        return 200, "", {"messages": chat["messages"], "pending": live, "error": chat["error"]}
+        return 200, "", {"messages": self.panel_view(chat["messages"]), "pending": live, "error": chat["error"]}
 
     @staticmethod
     def project_chat_tools(folder):
@@ -1075,6 +1336,21 @@ class Manager:
             b = base.rstrip("/")                    # ścieżka bezwzględna: reguła Edit(//…)
             allow += ["Edit(/%s/ZADANIA.md)" % b, "Edit(/%s/DECYZJE.md)" % b, "Edit(/%s/kampanie/**)" % b]
         return ",".join(allow), "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task", cards
+
+    @staticmethod
+    def run_rules(prefix, today):
+        """Zasady rozmowy o projekcie i asystenta: prośba o pracę = zadanie agenta i wiersz „Uruchom:”."""
+        return [
+            "- Gdy właściciel prosi o wykonanie pracy (zrób, przygotuj, napisz, napraw, sprawdź…), nie robisz jej sam: "
+            "dopisz w ZADANIA.md projektu zadanie agenta `- [ ] <Tytuł od czasownika> | kto: claude | kiedy: %s` "
+            "(w etapie, którego dotyczy, inaczej w „## Do rozplanowania”) z wciętymi o 2 spacje wierszami "
+            "`  cel: …` i `  gotowe gdy: …` z prośby. Pasujące otwarte zadanie agenta wykorzystaj zamiast "
+            "zakładać nowe. Potem na samym końcu odpowiedzi dodaj wiersz `Uruchom: %s<dokładny tytuł zadania>`; "
+            "panel uruchomi agenta i sam pokaże stan, więc nie piszesz, że praca ruszyła." % (today.isoformat(), prefix),
+            "- Pytanie o stan, termin czy plan to nie prośba o pracę: wtedy bez nowego zadania i bez „Uruchom:”. "
+            "„wymaga: zgoda” dopisujesz tylko, gdy praca wysyła coś na zewnątrz (publikacja, wysyłka, płatność); "
+            "takie zadanie czeka na zgodę właściciela w panelu.",
+        ]
 
     def project_chat_prompt(self, project, folder, cards, text):
         name = project.get("name") or project.get("id")
@@ -1097,6 +1373,7 @@ class Manager:
                  "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
                  "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
                  "- Po każdej zmianie napisz na końcu wiersz zaczynający się od „Zmieniono:” z plikiem i zadaniem.",
+                 ] + self.run_rules("%s | " % project.get("id"), today) + [
                  "- Nie zmieniasz KARTA.md, kodu ani innych plików i nie uruchamiasz poleceń.",
                  "- Nigdy nie proś o hasła, klucze ani tokeny.",
                  "", "Wiadomość właściciela:", text]
@@ -1134,7 +1411,7 @@ class Manager:
             if len(self._chat_live) >= CHAT_PARALLEL:
                 return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
             chat = self._chat_read(file)
-            session = chat["session"] if re.fullmatch(r"[\w-]{1,100}", chat["session"]) else ""
+            session = self._chat_session(chat)
             chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
             chat.update(pending=True, error="")
             try:
@@ -1154,7 +1431,7 @@ class Manager:
             if session:
                 args += ["--resume", session]
             args += _card_dirs(folder) + ["--allowedTools", allow, "--disallowedTools", deny, "--strict-mcp-config"]
-            threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session)),
+            threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session), pid),
                              daemon=True).start()
         except Exception:
             self._chat_end(file, "", "", "Nie udało się uruchomić rozmowy.")
@@ -1183,7 +1460,7 @@ class Manager:
         if chat["pending"] and not live:
             chat["error"] = chat["error"] or "Odpowiedź przerwana. Wyślij wiadomość jeszcze raz."
         msgs = []
-        for m in chat["messages"][-40:]:
+        for m in self.panel_view(chat["messages"][-40:]):
             if m.get("role") == "claude":
                 text, ops = karty.extract(m.get("text", ""))
                 m = dict(m, text=text, cards=ops)
@@ -1306,6 +1583,7 @@ class Manager:
                   "  Otwórz: <id zadania>     otwiera szczegóły zadania albo publikacji (id z faktów; bez id: dokładny tytuł)",
                   "  Przewiń: <nagłówek>      przewija bieżący widok do sekcji o tym nagłówku",
                   "  Zamknij: szczegóły       zamyka otwarte zadanie",
+                  "  Uruchom: <id projektu> | <dokładny tytuł>   uruchamia agenta dla zadania (zasady niżej)",
                   "Otwórz używaj, gdy właściciel prosi „otwórz” albo gdy szczegóły zadania pomagają. Pokaż tylko poza "
                   "stroną Asystent (ekran inny niż #asystent). Nie zapowiadaj działań w treści.",
                   "Adresy widoków: " + "; ".join("%s (%s)" % v for v in self.ASSIST_VIEWS) + ".",
@@ -1317,6 +1595,7 @@ class Manager:
                   "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela i tylko ZADANIA.md, DECYZJE.md i kampanie/ projektów, "
                   "w formacie ze STANDARD.md. Wierszy nie usuwasz; anulowane: [x] i wcięty wiersz `wynik: anulowane`.",
                   "- Po zmianie dopisz przed wierszami działań wiersz „Zmieniono: <projekt>: <zadanie>”.",
+                  ] + self.run_rules("<id projektu> | ", today) + [
                   "- Nie zmieniasz kart, kodu ani innych plików, nie uruchamiasz poleceń, nie prosisz o hasła ani klucze.",
                   "- Każda kolejna wiadomość zaczyna się od [ekran: …] (co właściciel ma teraz przed sobą); gdy dane się "
                   "zmienią, dostaniesz też nowe fakty.",
@@ -1363,7 +1642,7 @@ class Manager:
             if len(self._chat_live) >= CHAT_PARALLEL:
                 return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
             chat = self._chat_read(file)
-            session = chat["session"] if re.fullmatch(r"[\w-]{1,100}", chat["session"]) else ""
+            session = self._chat_session(chat)
             chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
             del chat["messages"][:-60]
             chat.update(pending=True, error="")
@@ -1450,7 +1729,8 @@ class Manager:
         finally:
             if not answer and not error:
                 error = "Nie udało się uzyskać odpowiedzi."
-            self._chat_end(file, answer, session if answer else "", error)
+            answer, extra = self._after_answer(answer, "*")
+            self._chat_end(file, answer, session if answer else "", error, extra)
             if dropped and not answer:
                 self._as_clear_session(file)
 
@@ -1509,7 +1789,7 @@ class Manager:
             self.cards.layout(clear_hidden=True)  # karty z poprzedniej rozmowy znikają razem z nią
         return 200, "", {}
 
-    def _chat_run(self, file, args, cwd, prompt, resumed):
+    def _chat_run(self, file, args, cwd, prompt, resumed, launch=None):
         answer, session, error = "", "", ""
         if WINDOWS:
             kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | NO_WINDOW["creationflags"]}
@@ -1534,18 +1814,33 @@ class Manager:
         except Exception:  # rozmowa nie może zostać w stanie oczekiwania
             error = "Nie udało się uzyskać odpowiedzi."
         finally:
-            self._chat_end(file, answer, session, error)
+            answer, extra = self._after_answer(answer, launch)
+            self._chat_end(file, answer, session, error, extra)
 
-    def _chat_end(self, file, answer, session, error):
+    def _after_answer(self, answer, launch):
+        """Wiersze „Uruchom:” z odpowiedzi: (odpowiedź bez nich, wiadomości panelu). launch: id projektu rozmowy
+        o projekcie, "*" dla asystenta (wszystkie projekty), None bez uruchamiania (rozmowa o zadaniu)."""
+        if not answer or launch is None:
+            return answer, []
+        try:
+            return self.chat_launches(answer, "" if launch == "*" else launch)
+        except Exception as e:  # odpowiedź musi trafić do rozmowy mimo błędu uruchomienia
+            log("Uruchomienie z rozmowy: %s" % e)
+            text, wanted = take_run_lines(answer)
+            return text, [{"role": PANEL_ROLE, "at": now_iso(), "project": "", "file": "", "title": t, "runId": "",
+                           "text": "Nie uruchomiono „%s”: błąd panelu." % t} for _, t in wanted]
+
+    def _chat_end(self, file, answer, session, error, extra=()):
         with self._chat_lock:
             try:
                 chat = self._chat_read(file)
                 if session:
-                    chat["session"] = session
+                    chat["session"], chat["v"] = session, CHAT_RULES_V
                 elif error == CHAT_EXPIRED:
                     chat["session"] = ""            # następna wiadomość zaczyna rozmowę od nowa, z kontekstem
                 if answer:
                     chat["messages"].append({"role": "claude", "text": answer, "at": now_iso()})
+                chat["messages"] += list(extra)
                 chat.update(pending=False, error=error)
                 self._chat_write(file, chat)
             except OSError:

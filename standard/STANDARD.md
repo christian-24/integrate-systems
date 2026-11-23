@@ -134,7 +134,7 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `wynik:` | krótki wynik pracy | agent |
 | `decyzja:` | co właściciel ma zatwierdzić przy odbiorze | agent |
 | `zostało:` | czego nie zrobiono | agent |
-| `poprawka:` | uwagi właściciela przy „Do poprawy”; agent poprawia pracę według nich | właściciel |
+| `poprawka:` | uwagi właściciela przy „Do poprawy” albo polecenie z „Wyślij i wykonaj” w rozmowie o zadaniu; agent wykonuje je i poprawia pracę | właściciel, panel |
 | `następne:` | jedna propozycja kolejnego zadania w formacie wiersza bez stanu: `Tytuł \| kto: … \| kiedy: …` | agent |
 | `trwa: N dni` | notatka: zadanie trwa N dni od `kiedy` (raport PM liczy z tego zapas etapu) | właściciel, PM |
 | `wyświetlenia:`, `kliknięcia:`, `konta:` | wynik publikacji, liczba całkowita (`1200` albo `1 200`) | właściciel, agent |

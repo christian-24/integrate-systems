@@ -149,7 +149,21 @@ w katalogu tymczasowym systemu (agent nie musi mieć dostępu do `uruchomienia/`
 Lista dla zadań Claude (`TASK_TOOLS` w `agents.py`), bez push i bez sieci:
 `Bash(git status:*)`, `Bash(git diff:*)`, `Bash(git log:*)`, `Bash(git switch -c:*)`, `Bash(git checkout -b:*)`,
 `Bash(git add:*)`, `Bash(git commit:*)`, `Bash(python3 -m pytest:*)`, `Bash(pytest:*)`, `Bash(python3 -m unittest:*)`,
-`Read`, `Edit`, `Write`, `Glob`, `Grep`.
+`Read`, `Edit`, `Write`, `Glob`, `Grep`, a gdy render jest dostępny także `Bash(<python> <panel>/dashboard/html-do-pdf.py:*)`
+(niżej). Ogólnego `Bash` zadania nie dostają.
+
+#### Render HTML do PDF i PNG
+
+`dashboard/html-do-pdf.py <plik.html> <wynik.pdf> [<wynik.png>] [--strona A4|90x50mm|1080x1350px] [--szerokosc px]
+[--skala 1–3] [--ekran]`: wizytówka, ulotka, grafika z HTML. Tylko plik lokalny (adresy http odrzucone), zasoby
+z sieci blokowane (Chromium bez sieci, liczba zablokowanych w wyniku), wynik tylko w folderze bieżącym albo w folderze
+pliku HTML, najwyżej 4 pliki; PDF z tłem i rozmiarem z CSS `@page` albo `--strona`. Python z Playwright
+(`render_command` w `agents.py`): `PANEL_RENDER` (całe polecenie) → `PANEL_RENDER_PYTHON` → na serwerze
+`/home/agent/narzedzia/pw/bin/python` (jak zrzuty strony) → `~/narzedzia/pw`, `~/narzedzia/film` (Mac). Bez takiego
+Pythona (i na Windows) polecenie zadania mówi, że render jest niedostępny i agent wpisuje to w `zostało:`; Python bez
+Playwright kończy skrypt kodem 3 z czytelnym komunikatem. Skrypt leży w repozytorium panelu, którego agent nie zmienia
+(na serwerze `/home/panel/…`), więc reguła `Bash(<python> <skrypt>:*)` nie daje mu innych poleceń. Codex dostaje tę samą
+wskazówkę w poleceniu (ma własną piaskownicę).
 
 Panel nigdy nie używa `--dangerously-skip-permissions`, `bypassPermissions` ani odpowiedników w Codex.
 Polecenia powłoki, na które agent ma zgodę, ustala `.claude/settings.json` projektu; odmowy widać w rekordzie (`denials`).
@@ -176,7 +190,8 @@ nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyj�
 panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela”). Wiersza `gotowe gdy:` agent nie zmienia
 i nie łagodzi (bez „albo w zostało:”); niespełniony warunek opisuje w `zostało:` i kończy stanem `[!]`. Agent zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
 albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
-Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”), prompt ją podaje, a agent poprawia pracę według niej.
+Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy” albo polecenie z „Wyślij i wykonaj” w rozmowie
+o zadaniu), prompt ją podaje, a agent wykonuje polecenie i poprawia pracę według niej.
 Folder bez repozytorium git (albo `PANEL_AGENT_WORKTREE=0`): pracę w repozytorium agent zapisuje na nowej gałęzi
 `agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem (bez push, bez plików KARTA.md, ZADANIA.md, DECYZJE.md)
 i podaje gałąź i skrót commita w `wynik:`. W repozytorium git gałąź zakłada panel (niżej).
@@ -332,12 +347,12 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 | `/api/project/add` | `{"path": folder, "name"?: nazwa, "files": bool}` | dopisuje istniejący folder do rejestru; `files: true` zakłada brakujące pliki standardu (niczego nie nadpisuje) |
 | `/api/project/remove` | `{"id": projekt}` | usuwa z rejestru; pliki zostają |
 
-Rozmowa o zadaniu (tylko odczyt):
+Rozmowa o zadaniu (tylko odczyt; „Wyślij i wykonaj” w „Uruchamianie z rozmów”):
 `POST /api/task/chat` z `{"id": taskId, "title": tytuł, "message": tekst}` (najwyżej 2000 znaków, treść żądania
 do 32 KB) zapisuje pytanie i uruchamia w tle Claude; odpowiedź 202 `{"ok": true, "error": "", "pending": true}`;
 400 pusta albo za długa wiadomość, 404 brak zadania, 409 zmieniony wiersz, poprzednia odpowiedź jeszcze trwa
 („Czekam jeszcze na odpowiedź.”), brak `claude`, wymagane logowanie, limit albo 3 rozmowy naraz.
-`GET /api/task/chat?id=<taskId>`: `{"ok": true, "messages": [{"role": "ty"|"claude", "text", "at"}], "pending": bool,
+`GET /api/task/chat?id=<taskId>`: `{"ok": true, "messages": [{"role": "ty"|"claude"|"panel", "text", "at"}], "pending": bool,
 "error": str}`; 404 bez zadania. Historia (najwyżej 100 wiadomości, id sesji Claude) w
 `uruchomienia/czat/<sha1 „projekt|plik|tytuł”>.json`.
 Polecenie: `claude -p --output-format json --permission-mode default [--model M] [--resume <sesja>] [--add-dir …]
@@ -346,6 +361,33 @@ Polecenie: `claude -p --output-format json --permission-mode default [--model M]
 wiadomość niesie kontekst zadania i zasady (krótko, po polsku, bez zmian w plikach, „Propozycja:” przy zbędnym albo
 niejasnym zadaniu, bez próśb o hasła i klucze); kolejne idą przez `--resume` z samym pytaniem. Agent w rozmowie
 niczego nie zmienia: bez powłoki, zapisu, sieci i serwerów MCP, także gdy `.claude/settings.json` projektu na nie pozwala.
+
+### Uruchamianie z rozmów
+
+Każda rozmowa może od razu uruchomić pracę agenta. Uruchamia zawsze serwer przez `run_task` (te same reguły co przycisk
+„Uruchom”: `runBlock`, logowanie, limit, `PANEL_AGENTS_MAX`), nigdy model. Zadania z `wymaga: zgoda` czekają na
+kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie mają powłoki.
+
+- **Rozmowa o zadaniu.** Obok „Wyślij” przycisk „Wyślij i wykonaj” (tylko przy zadaniu `kto: claude|codex`); to samo
+  robi „zrób to”, „wykonaj” albo „wykonaj to” na końcu wiadomości (`EXEC_END`). `POST /api/task/chat` z
+  `"execute": true`: bez modelu rozmowy panel zapisuje wiadomość pod zadaniem jako `poprawka:` (najwyżej 1000 znaków),
+  zadanie `[x]`, `[~]` albo `[!]` wraca do `[ ]` (zdejmuje `blokada:` i `wymaga: odbiór`, `wymaga: zgoda` zostaje),
+  potem `run_task`. Odpowiedź 200 `{"status": wiadomość panelu}`. Zadanie właściciela, publikacja i zadanie, nad którym
+  agent już pracuje: plik bez zmian, tylko komunikat.
+- **Rozmowa o projekcie** i **Asystent.** Prośba o pracę („zrób”, „przygotuj”, „napraw”…) to zadanie agenta w
+  `ZADANIA.md` (`- [ ] Tytuł | kto: claude | kiedy: <dziś>` z `cel:` i `gotowe gdy:`; pasujące otwarte zadanie zamiast
+  nowego) i na końcu odpowiedzi wiersz działania `Uruchom: <id projektu> | <dokładny tytuł>` (`take_run_lines`,
+  najwyżej 3 w odpowiedzi; w rozmowie o projekcie projekt jest zawsze ten rozmowy, asystent przyjmuje też nazwę albo
+  alias). Panel usuwa ten wiersz z odpowiedzi, szuka zadania po tytule (najpierw otwarte) i woła `run_task`. Pytanie
+  o stan nie zakłada zadań i nie uruchamia.
+- **Stan w rozmowie.** Po każdym uruchomieniu w historii jest wiadomość panelu (`role: "panel"`, nie od modelu):
+  „Uruchomiono: …”, „W kolejce: agent pracuje nad „…”, to zadanie ruszy po nim.”, „Już w toku: …” albo „Nie uruchomiono
+  „…”: powód.” (czeka na zgodę, po Twojej stronie, brak wykonawcy agenta, nie ma takiego zadania, logowanie, limit; przy
+  logowaniu i limicie z dopiskiem, czy zadanie z dzisiejszą datą weźmie Automat). `GET` rozmów dokłada do takiej wiadomości
+  `taskId` (link „Szczegóły”), `live` (stan uruchomienia) i `label` (w kolejce, w toku, do odbioru, zrobione, blokada,
+  błąd…), liczone przy każdym odczycie; panel odświeża rozmowę co 5 s, dopóki coś jest w kolejce albo w toku.
+- Zasady promptów rozmów mają wersję (`CHAT_RULES_V`); rozmowa zapisana z inną wersją zaczyna nową sesję z pełnym
+  promptem, żeby dostała nowe zasady.
 
 ### Asystent i głos
 
@@ -357,7 +399,8 @@ narzędzia: odczyt i edycja tylko `ZADANIA.md`, `DECYZJE.md`, `kampanie/`). Pier
 (`assistant_facts`, z id zadań) i opis sterowania; kolejne tylko `[ekran: #adres; otwarte: …]` i nowe fakty, gdy dane
 się zmieniły. Po restarcie panelu albo bezczynności proces startuje z `--resume`; nieznana sesja zaczyna rozmowę od nowa.
 Odpowiedź może kończyć się wierszami działań, które panel wykonuje po kolei i ukrywa: `Pokaż: #adres`, `Otwórz: <id
-zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły`.
+zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły` (w przeglądarce) i `Uruchom: <id projektu> | <tytuł>`
+(na serwerze, „Uruchamianie z rozmów”).
 
 Strona Asystent (`#asystent`, pierwsza w menu) to płótno kart i rozmowa (z boku od 1100 px, niżej przyklejona na dole).
 Inne widoki nie mają okna asystenta; pytania ze Startu i spacja przechodzą na tę stronę. Model nie pisze HTML: kończy
@@ -481,6 +524,8 @@ jest w menu ⋯. Kolejne polecenie poprawia ostatnią wersję. Ścieżek serwera
 Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i klucz lokalny: `testy/test_runda3_agenci.py`
 (tymczasowe repozytorium git). Skutki pytań, licznik, kontrola serwera przy zadaniu, prompt (`skutek:`, `gotowe gdy`)
 i odmowa scalenia z plikami sekretów: `testy/test_runda5_serwer.py` (atrapa w trybie `sekret`).
+Uruchamianie z rozmów (wiersz `Uruchom:`, `run_task` raz, kolejka przy zajętym agencie, blokady, „Wyślij i wykonaj”,
+stan w rozmowie, przycisk w czacie zadania w Chromium) i render HTML → PDF/PNG: `testy/test_czat_uruchamia.py`.
 Podgląd strony (pola karty, budowanie atrapą bez Node.js, `/podglad/`, uwaga → zadanie → scalenie i podgląd,
 koncepcja, zrzut-strony.py pomijany bez Playwright): `testy/test_strona.py` (atrapa w trybach `strona`,
 `strona-bez-zmian`). `GET /api/strona?project=`: `site`, `build` (`state` ok|building|error, `at`, `error`, `log`,

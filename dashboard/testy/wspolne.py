@@ -118,7 +118,9 @@ class Baza(unittest.TestCase):
                     "ATRAPA_TRYB_PLIK": self.mode_file, "ATRAPA_DZIENNIK": self.journal, "ATRAPA_PID_PLIK": self.pid_file,
                     "ANTHROPIC_API_KEY": "klucz-testowy", "OPENAI_API_KEY": "klucz-testowy",
                     "PANEL_TOKEN": "haslo-testowe", "CLAUDECODE": "1", "CLAUDE_CODE_OAUTH_TOKEN": "token-testowy",
-                    "PANEL_AGENT_USER": "", "PANEL_AGENT_WORKTREE": "1"})
+                    "PANEL_AGENT_USER": "", "PANEL_AGENT_WORKTREE": "1",
+                    # render HTML → PDF wyłączony (stała lista narzędzi); test_czat_uruchamia włącza go sam
+                    "PANEL_RENDER": "", "PANEL_RENDER_PYTHON": os.path.join(self.tmp, "bez-renderu")})
         env.update(extra)
         return env
 

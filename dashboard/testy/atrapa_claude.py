@@ -19,7 +19,8 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   strona   jak ok, a w folderze strony z promptu („Folder strony: …”) dopisuje akapit do index.html
   strona-bez-zmian  jak ok, plików strony nie zmienia
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
-  (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”. Tryby: czat-wolno (odpowiedź
+  (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”; wiersze „Uruchom: …” (rozdzielone
+  „;”) z ostatniego wiersza wracają na końcu odpowiedzi (rozmowa o projekcie uruchamia zadania). Tryby: czat-wolno (odpowiedź
   po 1,5 s), login (błąd 401), smieci (tekst zamiast JSON), wolno (bez odpowiedzi do limitu czasu).
 Stała sesja asystenta (argumenty `--input-format stream-json`): czyta wiersze {"type":"user",…} ze stdin i na każdy
   odpowiada zdarzeniami stream_event (text_delta po kilka słów) i result z session_id strumien-1; odpowiedź
@@ -168,8 +169,12 @@ def chat(prompt, how):
     if how == "czat-wolno":
         time.sleep(1.5)
     last = ([x.strip() for x in prompt.split("\n") if x.strip()] or [""])[-1]
+    answer = "Odpowiedź atrapy: " + last[:40]
+    runs = re.findall(r"Uruchom: [^;]*", last)        # wiersze działań z wiadomości wracają na końcu odpowiedzi
+    if runs:
+        answer = "Odpowiedź atrapy." + "".join("\n" + r.strip() for r in runs)
     print(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": "sesja-1",
-                      "result": "Odpowiedź atrapy: " + last[:40]}, ensure_ascii=False))
+                      "result": answer}, ensure_ascii=False))
     return 0
 
 
@@ -222,7 +227,7 @@ def stream(argv):
             continue
         last = ([x.strip() for x in text.split("\n") if x.strip()] or [""])[-1]
         answer = "Odpowiedź atrapy %d: %s" % (n, last[:40])
-        acts = re.findall(r"(?:Pokaż|Otwórz|Przewiń|Zamknij): [^;]*", last)   # działania z wiadomości wracają w odpowiedzi
+        acts = re.findall(r"(?:Pokaż|Otwórz|Przewiń|Zamknij|Uruchom): [^;]*", last)   # działania z wiadomości wracają w odpowiedzi
         if acts:
             answer = "Odpowiedź atrapy %d." % n + "".join("\n" + a.strip() for a in acts)
         if "zła karta" in last:
