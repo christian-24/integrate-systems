@@ -2311,6 +2311,323 @@ div.od-mk{cursor:default}
   .od-doc{padding:16px}
 }
 @media (prefers-reduced-motion:reduce){.od-spin,.od-steps li.od-now .od-ic{animation:none}}
+/* Asystent: sceny (wzór: audyt-ui/asystent-propozycja.html). Odpowiedź jako sekwencja scen z podpisem u góry i sterowaniem
+   na dole; obszar sceny przyklejony do okna pod paskiem górnym, nad dolnym paskiem telefonu (top/left/bottom liczy ASC.measure).
+   --pc: barwa projektu (--c1..--c8), --as-t1/--as-t2: poświata sceny. Wszystkie klasy z prefiksem as-. */
+.as-sc{position:fixed;z-index:13;top:0;left:0;right:0;bottom:0;overflow:hidden;background:var(--bg);--as-glow:.10;--as-top-h:56px;--as-cap-h:0px;--as-dock-h:190px;
+  --as-l:max(16px,env(safe-area-inset-left,0px));--as-r:max(16px,env(safe-area-inset-right,0px))}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .as-sc{--as-glow:.16}}
+:root[data-theme="dark"] .as-sc{--as-glow:.16}
+body.ap-on.as-sc-on .app{padding-right:0}
+body.ap-on.as-sc-on .content{padding-bottom:0}
+.as-ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.as-amb{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.as-amb i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:var(--as-glow);transition:background-color 1.2s ease}
+.as-amb .as-a1{left:-28vmax;top:-34vmax;background-color:var(--as-t1,var(--accent))}
+.as-amb .as-a2{right:-30vmax;bottom:-38vmax;background-color:var(--as-t2,var(--c3))}
+/* nagłówek: Asystent, przełącznik Sceny / Karty, zamknięcie odpowiedzi */
+.as-top{position:absolute;z-index:6;top:0;left:0;right:0;height:var(--as-top-h);padding:0 var(--as-r) 0 var(--as-l);display:flex;align-items:center;gap:var(--g-m)}
+.as-badge{display:flex;align-items:center;gap:8px;margin:0;font-weight:600;font-size:var(--fs-lg)}
+.as-badge .as-orb{width:22px;height:22px}
+.as-sp{flex:1}
+.as-ib{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);border:1px solid transparent;background:none;cursor:pointer}
+.as-ib:hover{background:var(--hover);border-color:var(--line)}
+.as-sc:not(.as-play) .as-ib[data-asc="close"]{visibility:hidden}
+.as-mode{display:inline-flex;padding:2px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface)}
+.as-mb{min-height:44px;min-width:64px;padding:0 14px;border:0;border-radius:var(--r-pill);background:none;color:var(--ink-2);font:inherit;font-weight:600;cursor:pointer}
+.as-mb[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.as-kh{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.as-kt{margin:0;font-size:var(--fs-h1);flex:1}
+/* kula: akcent i kolory wykresów panelu */
+.as-orb{position:relative;border-radius:50%;overflow:hidden;flex:none;background:radial-gradient(circle at 50% 50%,var(--accent-soft),var(--surface));box-shadow:inset 0 0 0 1px var(--line)}
+.as-orb i{position:absolute;border-radius:50%;opacity:.85}
+.as-orb .as-b1{width:90%;height:90%;left:-14%;top:-12%;background:radial-gradient(circle,var(--accent),transparent 68%);animation:as-orbit 9s linear infinite;transform-origin:70% 70%}
+.as-orb .as-b2{width:80%;height:80%;right:-16%;bottom:-14%;background:radial-gradient(circle,var(--c3),transparent 68%);animation:as-orbit 12s linear infinite reverse;transform-origin:30% 30%}
+.as-orb .as-b3{width:70%;height:70%;left:18%;bottom:-24%;background:radial-gradient(circle,var(--c7),transparent 68%);animation:as-orbit 15s linear infinite;transform-origin:50% 0}
+.as-orb::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 32% 26%,var(--surface),transparent 34%);opacity:.55}
+.as-sc[data-s="think"] .as-orb i{animation-duration:2.4s}
+@keyframes as-orbit{to{transform:rotate(360deg)}}
+/* ekran startowy */
+.as-home{position:absolute;top:var(--as-top-h);left:var(--as-l);right:var(--as-r);bottom:var(--as-dock-h);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;transition:opacity .35s}
+.as-home .as-orb{width:min(180px,40vw,24vh);height:min(180px,40vw,24vh);box-shadow:inset 0 0 0 1px var(--line),0 0 80px -10px var(--accent)}
+.as-home h2{margin:0;font-size:clamp(24px,3.2vw,34px);font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.as-home p{margin:0;color:var(--ink-3);font-size:var(--fs-lg)}
+.as-sc.as-play .as-home{opacity:0;pointer-events:none;visibility:hidden}
+/* podpis narracji u góry sceny */
+.as-cap{position:absolute;z-index:5;top:calc(var(--as-top-h) + 2px);left:var(--as-l);right:var(--as-r);margin:0 auto;width:fit-content;max-width:720px;
+  display:flex;align-items:flex-start;gap:10px;padding:9px 16px 9px 9px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-2);transition:opacity .3s,transform .4s}
+.as-sc:not(.as-play) .as-cap{opacity:0;transform:translateY(-8px);pointer-events:none}
+.as-cap .as-orb{width:26px;height:26px}
+.as-capt{font-size:var(--fs-lg);font-weight:500;line-height:1.4;padding-top:2px;min-height:21px}
+.as-capt .as-w{color:var(--ink-3);opacity:.45;transition:opacity .2s,color .2s}
+.as-capt .as-w.as-on{color:var(--ink);opacity:1}
+.as-capt .as-think{color:var(--ink-3)}
+.as-paused{display:inline-block;margin-left:8px;font-size:var(--fs-xs);color:var(--ink-3);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 8px;vertical-align:1px}
+/* scena */
+.as-stage{position:absolute;inset:0;z-index:1}
+.as-scene{position:absolute;inset:0;display:flex;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
+  padding:calc(var(--as-top-h) + var(--as-cap-h) + 24px) var(--as-r) calc(var(--as-dock-h) + 16px) var(--as-l)}
+.as-scene::-webkit-scrollbar{display:none}
+.as-in{width:min(1040px,100%);margin:auto;min-width:0}
+.as-gen{animation:as-rise .7s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--d,0)*80ms + 100ms)}
+@keyframes as-rise{from{opacity:0;transform:translateY(18px)}}
+.as-fx{transition:opacity .45s,box-shadow .45s,border-color .45s}
+.as-scene.as-focusing .as-fx{opacity:.5}
+.as-scene.as-focusing .as-fx.as-focus{opacity:1}
+.as-scene.as-focusing .as-card.as-fx.as-focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),var(--shadow-2)}
+.as-eb{font-family:var(--mono);font-size:var(--fs-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.as-h2{font-size:clamp(26px,4vw,46px);font-weight:750;letter-spacing:-.03em;line-height:1.08;margin:8px 0 0;overflow-wrap:anywhere}
+.as-sub{color:var(--ink-3);font-size:clamp(14px,1.4vw,17px);margin:10px 0 0;max-width:640px}
+.as-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow-1)}
+.as-pill{display:inline-block;font-size:var(--fs-xs);font-weight:600;padding:2px 9px;border-radius:var(--r-pill);white-space:nowrap}
+.as-pill.green{background:var(--l-green-bg);color:var(--l-green)}.as-pill.yellow{background:var(--l-yellow-bg);color:var(--l-yellow)}
+.as-pill.red{background:var(--l-red-bg);color:var(--l-red)}.as-pill.purple{background:var(--l-purple-bg);color:var(--l-purple)}
+.as-pill.grey{background:var(--l-grey-bg);color:var(--l-grey)}.as-pill.blue{background:var(--l-blue-bg);color:var(--l-blue)}
+.as-pdot{width:10px;height:10px;border-radius:3px;background:var(--pc);flex:none}
+/* przejścia scen */
+.as-scene.as-enter{animation:as-zIn .6s cubic-bezier(.16,1,.3,1) both}
+.as-scene.as-leave{pointer-events:none;animation:as-zOut .4s ease forwards}
+.as-scene.as-enter.as-t-slide{animation-name:as-sIn}.as-scene.as-leave.as-t-slide{animation-name:as-sOut}
+.as-scene.as-enter.as-t-back{animation-name:as-bIn}.as-scene.as-leave.as-t-back{animation-name:as-bOut}
+.as-scene.as-enter.as-t-rise{animation-name:as-rIn}.as-scene.as-leave.as-t-rise{animation-name:as-rOut}
+@keyframes as-zIn{from{opacity:0;transform:scale(.96)}}@keyframes as-zOut{to{opacity:0;transform:scale(1.03)}}
+@keyframes as-sIn{from{opacity:0;transform:translateX(8%)}}@keyframes as-sOut{to{opacity:0;transform:translateX(-6%)}}
+@keyframes as-bIn{from{opacity:0;transform:translateX(-8%)}}@keyframes as-bOut{to{opacity:0;transform:translateX(6%)}}
+@keyframes as-rIn{from{opacity:0;transform:translateY(6%)}}@keyframes as-rOut{to{opacity:0;transform:translateY(-4%)}}
+/* pierścień postępu */
+.as-ring{position:relative;flex:none;--p:0}
+.as-ring svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.as-ring circle{fill:none}
+.as-ring .as-trk{stroke:var(--sunk)}
+.as-ring .as-val{stroke:var(--pc);stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--p));animation:as-ringIn 1.4s cubic-bezier(.16,1,.3,1) .2s both}
+@keyframes as-ringIn{from{stroke-dashoffset:100}}
+.as-rp{position:absolute;inset:0;display:grid;place-items:center;font-weight:750;letter-spacing:-.03em}
+.as-rp small{font-size:.5em;color:var(--ink-3);margin-left:1px}
+/* scena: liczba */
+.as-hero{text-align:center}
+.as-hn{font-size:clamp(96px,20vw,220px);font-weight:800;letter-spacing:-.06em;line-height:.9;font-variant-numeric:tabular-nums}
+.as-hn.as-sm{font-size:clamp(56px,13vw,170px)}
+.as-hn.as-unk{font-size:clamp(36px,6vw,72px);letter-spacing:-.03em}
+.as-ht{font-size:clamp(22px,3vw,36px);font-weight:650;letter-spacing:-.02em;margin-top:10px}
+.as-hrow{display:flex;justify-content:center;gap:clamp(20px,6vw,64px);margin-top:clamp(24px,5vh,44px);flex-wrap:wrap}
+.as-hrow>div{text-align:center;min-width:90px;padding:4px 8px;border-radius:12px}
+.as-hrow b{display:block;font-size:clamp(30px,4vw,44px);font-weight:750;letter-spacing:-.03em}
+.as-hrow span{color:var(--ink-3);font-size:var(--fs-md)}
+.as-hrow .as-acc b{color:var(--accent)}.as-hrow .as-warn b{color:var(--l-red)}
+.as-dots{display:flex;justify-content:center;gap:10px;margin-bottom:18px}
+.as-dots i{width:12px;height:12px;border-radius:50%;background:var(--pc);animation:as-pop .5s cubic-bezier(.34,1.4,.5,1) both;animation-delay:calc(var(--d)*90ms + .2s)}
+@keyframes as-pop{from{transform:scale(0)}}
+/* scena: pierścienie */
+.as-rings{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:clamp(10px,1.6vw,18px);margin-top:clamp(22px,4vh,40px)}
+.as-rc{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:20px 10px}
+.as-rc .as-ring{width:clamp(92px,10vw,128px);height:clamp(92px,10vw,128px)}
+.as-rc .as-rp{font-size:clamp(20px,2.1vw,26px)}
+.as-rc b{font-size:var(--fs-lg);line-height:1.25;overflow-wrap:anywhere}
+.as-ph{font-size:var(--fs-xs);color:var(--ink-3)}
+/* scena: zmiany */
+.as-chgs{display:grid;gap:10px;margin-top:clamp(20px,4vh,36px)}
+.as-chg{display:grid;grid-template-columns:minmax(120px,190px) 1fr 84px minmax(120px,170px);align-items:center;gap:16px;padding:14px 18px}
+.as-chgn{display:flex;align-items:center;gap:10px;font-weight:600;min-width:0}
+.as-chgn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.as-chgbar{position:relative;height:10px;border-radius:9px;background:var(--sunk);overflow:hidden}
+.as-chgbar .as-was{position:absolute;left:0;top:0;bottom:0;background:var(--line-2)}
+.as-chgbar .as-gain{position:absolute;top:0;bottom:0;background:var(--pc);animation:as-gain 1s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--d)*110ms + .5s);transform-origin:left}
+@keyframes as-gain{from{transform:scaleX(0)}}
+.as-chgd{font-weight:750;font-size:20px;letter-spacing:-.02em;text-align:right;font-variant-numeric:tabular-nums}
+.as-chgd.as-up{color:var(--l-green)}.as-chgd.as-zero{color:var(--ink-3);font-size:var(--fs-md);font-weight:600}
+.as-chg .as-pill{justify-self:end}
+.as-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:var(--fs-xs);color:var(--ink-3)}
+.as-legend i{display:inline-block;width:14px;height:6px;border-radius:3px;margin-right:6px;vertical-align:middle}
+/* scena: ryzyka */
+.as-risks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;margin-top:clamp(20px,4vh,36px)}
+.as-rk{padding:22px}
+.as-rkh{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.as-rkh b{font-size:20px;font-weight:700;letter-spacing:-.02em;flex:1;min-width:0;overflow-wrap:anywhere}
+.as-rk p{margin:0;color:var(--ink-2);font-size:var(--fs-md)}
+.as-tlx{position:relative;height:62px;margin:22px 4px 10px}
+.as-tlx .as-trk{position:absolute;left:0;right:0;top:30px;height:6px;border-radius:9px;background:var(--sunk)}
+.as-tlx .as-fill{position:absolute;left:0;top:30px;height:6px;border-radius:9px 0 0 9px;background:var(--pc);animation:as-grow 1s ease .4s both;transform-origin:left}
+.as-tlx .as-over{position:absolute;top:30px;height:6px;border-radius:0 9px 9px 0;background:repeating-linear-gradient(45deg,var(--l-red) 0 6px,var(--l-red-bg) 6px 12px)}
+@keyframes as-grow{from{transform:scaleX(0)}}
+.as-mk{position:absolute;top:0;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.as-mk::after{content:'';display:block;width:2px;height:24px;margin:5px auto 0;background:currentColor;border-radius:2px}
+.as-mk.as-end{transform:translateX(calc(-100% + 1px));text-align:right}.as-mk.as-end::after{margin-right:0}
+.as-mk.as-today{transform:translateX(-1px);color:var(--l-red)}.as-mk.as-today::after{margin-left:0}
+.as-blk{display:flex;align-items:center;gap:14px;margin:18px 0 12px}
+.as-lock{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;background:var(--l-red-bg);color:var(--l-red);flex:none}
+.as-lock .as-ic{width:26px;height:26px}
+.as-blk b{font-size:clamp(24px,3.2vw,38px);font-weight:750;letter-spacing:-.03em;display:block;line-height:1}
+.as-blk span{color:var(--ink-3);font-size:var(--fs-sm)}
+.as-act{display:inline-flex;align-items:center;gap:8px;margin-top:14px;min-height:44px;padding:0 14px;border-radius:var(--r);background:var(--sunk);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+.as-act:hover{background:var(--hover)}
+/* scena: tempo */
+.as-tp{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr);gap:28px;align-items:center;margin-top:clamp(16px,3vh,28px)}
+.as-tpn{font-size:clamp(72px,11vw,140px);font-weight:800;letter-spacing:-.06em;line-height:.9;color:var(--l-green)}
+.as-tpn.as-down{color:var(--l-yellow)}
+.as-tpc{padding:20px 20px 12px}
+.as-tpc svg{width:100%;height:auto;display:block;overflow:visible}
+.as-ln{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.as-ln.as-now{stroke:var(--accent);stroke-width:3;stroke-dasharray:1;stroke-dashoffset:1;animation:as-draw 1.6s ease .4s forwards}
+.as-ln.as-prev{stroke:var(--line-2);stroke-width:2;stroke-dasharray:4 6}
+.as-area{fill:var(--accent);opacity:0;animation:as-fadeA .8s ease 1.2s forwards}
+@keyframes as-draw{to{stroke-dashoffset:0}}@keyframes as-fadeA{to{opacity:.1}}
+.as-pt{fill:var(--surface);stroke:var(--accent);stroke-width:2.5}
+.as-days{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:8px}
+.as-lg2{display:flex;gap:16px;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--ink-3);margin-bottom:10px}
+.as-lg2 i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+/* scena: stos decyzji */
+.as-wallet{position:relative;max-width:560px;margin:clamp(20px,4vh,36px) auto 0;height:calc(196px + (var(--n) - 1)*76px)}
+.as-wcard{position:absolute;left:0;right:0;top:calc(var(--i)*76px);height:196px;border-radius:18px;padding:18px 20px;text-align:left;overflow:hidden;cursor:pointer;font:inherit;color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-2);
+  transform:scale(calc(1 - (var(--n) - 1 - var(--i))*.03));transform-origin:50% 0;
+  animation:as-deal .7s cubic-bezier(.34,1.3,.5,1) both;animation-delay:calc(var(--i)*120ms + .25s);transition:transform .35s,border-color .3s}
+.as-wcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pc)}
+.as-wcard:hover{border-color:var(--accent)}
+@keyframes as-deal{from{opacity:0;transform:translateY(120px)}}
+.as-wh{display:flex;align-items:center;gap:10px;font-weight:600;padding-right:80px}
+.as-kind{color:var(--ink-3);font-weight:400;font-size:var(--fs-sm)}
+.as-wcard b{display:block;font-size:19px;font-weight:700;letter-spacing:-.02em;margin:22px 0 6px;line-height:1.25;overflow-wrap:anywhere}
+.as-wcard p{margin:0;font-size:var(--fs-sm);color:var(--ink-3)}
+.as-go{position:absolute;right:16px;top:14px;font-size:var(--fs-xs);padding:4px 10px;border-radius:var(--r-pill);background:var(--accent-soft);color:var(--accent)}
+.as-more{text-align:center;color:var(--ink-3);margin:14px 0 0}
+/* decyzja */
+.as-mh{display:flex;align-items:center;gap:10px;margin-bottom:clamp(14px,3vh,26px);flex-wrap:wrap}
+.as-mh .as-ring{width:44px;height:44px}.as-mh .as-rp{font-size:12px}
+.as-mhn{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.as-mh .as-eb{margin-left:auto}
+.as-h2.as-dq{font-size:clamp(24px,3.2vw,38px)}
+.as-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px;margin-top:clamp(18px,3vh,28px)}
+.as-tile{position:relative;text-align:left;padding:20px;border-radius:16px;background:var(--surface);border:1px solid var(--line-2);min-height:44px;color:var(--ink);font:inherit;cursor:pointer;transition:transform .3s,opacity .3s,border-color .2s,background .2s}
+.as-tile:hover{border-color:var(--accent);background:var(--hover)}
+.as-tile b{display:block;font-size:clamp(18px,1.9vw,22px);font-weight:700;letter-spacing:-.02em;margin-bottom:6px;padding-right:30px}
+.as-tile p{margin:0;color:var(--ink-3);font-size:var(--fs-md)}
+.as-tile.as-rec{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.as-rb{display:inline-block;font-size:var(--fs-xs);font-weight:600;padding:3px 9px;border-radius:var(--r-pill);margin-bottom:10px;background:var(--accent-soft);color:var(--accent)}
+.as-okm{position:absolute;right:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--bar-done);color:var(--on-color);display:grid;place-items:center;transform:scale(0);transition:transform .35s cubic-bezier(.34,1.4,.5,1)}
+.as-okm .as-ic{width:15px;height:15px;stroke-width:3}
+.as-tile.as-sel{border-color:var(--bar-done);background:var(--l-green-bg);box-shadow:0 0 0 1px var(--bar-done)}
+.as-tile.as-sel .as-okm{transform:scale(1)}
+.as-tile.as-off{opacity:.4}
+.as-why{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--sunk);border:1px solid var(--line);color:var(--ink-2)}
+.as-why ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.as-why .as-ic{color:var(--accent);margin-top:2px}
+.as-later{display:block;margin:10px auto 0;min-height:44px;padding:0 14px;border:0;background:none;font:inherit;color:var(--ink-3);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+/* podsumowanie */
+.as-doneic{width:clamp(70px,9vw,96px);height:clamp(70px,9vw,96px);margin:0 auto 14px;display:block}
+.as-doneic circle{fill:none;stroke:var(--bar-done);stroke-width:3;stroke-dasharray:1;stroke-dashoffset:1;animation:as-draw .9s ease .2s forwards}
+.as-doneic path{fill:none;stroke:var(--bar-done);stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:as-draw .5s ease .9s forwards}
+.as-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:clamp(18px,3vh,30px)}
+.as-stat{text-align:center}
+.as-stat b{display:block;font-size:clamp(34px,4.6vw,52px);font-weight:800;letter-spacing:-.04em}
+.as-stat span{color:var(--ink-3)}
+.as-rlist{margin-top:10px;padding:6px 18px;text-align:left}
+.as-rrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.as-rrow:first-child{border-top:0}
+.as-rn{flex:1;min-width:0;overflow-wrap:anywhere}.as-rv{font-weight:600;text-align:right}.as-rv.as-muted{color:var(--ink-3);font-weight:400}
+/* plan dnia */
+.as-blocks{display:flex;height:60px;border-radius:14px;overflow:hidden;margin-top:clamp(20px,4vh,32px);gap:3px}
+.as-blocks div{flex:var(--m);min-width:10px;background:var(--pc);display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;
+  animation:as-blk .7s cubic-bezier(.34,1.2,.5,1) both;animation-delay:calc(var(--d)*110ms + .3s);transform-origin:left}
+.as-blocks span{font-size:var(--fs-xs);font-weight:650;background:var(--surface);color:var(--ink);padding:2px 8px;border-radius:var(--r-pill)}
+@keyframes as-blk{from{transform:scaleX(0);opacity:0}}
+.as-tcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;margin-top:14px}
+.as-tcard .as-eb{color:var(--pc)}
+.as-tcard b{display:block;font-size:var(--fs-xl);font-weight:650;margin:8px 0 4px;line-height:1.3;overflow-wrap:anywhere}
+.as-tcard p{margin:0;color:var(--ink-3)}
+.as-why2{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.as-tcard .as-act{margin-top:10px}
+.as-rest{margin:12px 0 0;padding:0;color:var(--ink-2)}
+.as-rest li{list-style:none;padding:8px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline}
+.as-rest li>span:first-child{flex:1;min-width:0}
+.as-rest .as-m{color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.as-rest .as-pn{color:var(--ink-3);font-size:var(--fs-sm)}
+.as-capw{margin:14px 0 0}
+.as-chill{display:flex;justify-content:center;gap:clamp(20px,5vw,56px);margin-top:clamp(24px,5vh,40px);flex-wrap:wrap}
+.as-chill>div{display:flex;flex-direction:column;align-items:center;gap:10px;font-weight:600;text-align:center}
+.as-chill .as-ring{width:clamp(96px,12vw,124px);height:clamp(96px,12vw,124px)}.as-chill .as-rp{font-size:24px}
+.as-chill small{color:var(--ink-3);font-weight:400}
+/* przegląd projektu */
+.as-cover{display:flex;align-items:center;gap:clamp(22px,5vw,60px)}
+.as-cover .as-ring{width:clamp(150px,22vw,260px);height:clamp(150px,22vw,260px)}
+.as-cover .as-rp{font-size:clamp(38px,5vw,60px)}
+.as-cvn{font-size:clamp(38px,7.4vw,96px);font-weight:800;letter-spacing:-.05em;line-height:.95;margin:10px 0 16px;overflow-wrap:anywhere}
+.as-cvm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--ink-3);font-size:var(--fs-lg)}
+.as-cvm b{color:var(--ink);font-weight:600}
+.as-cvd{display:inline-flex;margin-top:18px;padding:6px 14px;border-radius:var(--r-pill);font-weight:600}
+.as-cvd.as-up{background:var(--l-green-bg);color:var(--l-green)}.as-cvd.as-zero{background:var(--l-yellow-bg);color:var(--l-yellow)}
+.as-dl{list-style:none;padding:0;display:grid;gap:14px;margin:clamp(18px,3.5vh,32px) 0 0}
+.as-dl li{display:flex;align-items:center;gap:14px;font-size:clamp(19px,2.4vw,28px);font-weight:650;letter-spacing:-.02em;animation:as-rise .7s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(var(--d)*220ms + .3s)}
+.as-dl li small{display:block;font-size:var(--fs-sm);color:var(--ink-3);font-weight:400;letter-spacing:0}
+.as-ck{width:clamp(28px,3vw,36px);height:clamp(28px,3vw,36px);flex:none}
+.as-ck circle{fill:var(--l-green-bg);stroke:var(--bar-done);stroke-width:2}
+.as-ck path{fill:none;stroke:var(--bar-done);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:as-draw .45s ease both;animation-delay:calc(var(--d)*220ms + .8s)}
+.as-empty{color:var(--ink-3);font-size:var(--fs-xl);margin:20px 0 0}
+.as-wl{display:grid;gap:10px;margin-top:clamp(18px,3.5vh,32px)}
+.as-wt{display:flex;align-items:center;gap:14px;padding:16px 18px}
+.as-av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:650;font-size:var(--fs-md);background:var(--who-none);color:var(--who-ink);flex:none}
+.as-av.ty{background:var(--who-ty)}.as-av.claude{background:var(--who-claude)}.as-av.codex{background:var(--who-codex)}
+.as-wtb{flex:1;min-width:0}.as-wtb b{display:block;font-size:var(--fs-xl);font-weight:600;overflow-wrap:anywhere}.as-wtb small{color:var(--ink-3);font-size:var(--fs-sm)}
+.as-wtb small.as-me{color:var(--l-purple);font-weight:600}
+.as-since{font-family:var(--mono);font-size:var(--fs-sm);color:var(--ink-3);white-space:nowrap}
+/* odpowiedź modelu: tekst i karty (apCard) */
+.as-ans{display:grid;gap:16px;max-width:860px}
+.as-q{margin:6px 0 0;color:var(--ink-3)}
+.as-txt{font-size:clamp(17px,2vw,21px);line-height:1.5}
+.as-txt p{margin:0}
+.as-ans .ap-cv{margin-top:4px}
+.as-anc .ap-ib{width:44px;height:44px}
+/* dół: sterowanie scen, podpowiedzi i pole rozmowy (istniejący dok .ap-dock, z mikrofonem) */
+.as-dk{position:absolute;z-index:4;left:0;right:0;bottom:0;padding:18px var(--as-r) 10px var(--as-l);
+  background:linear-gradient(to bottom,transparent,var(--bg) 16px);display:flex;flex-direction:column;align-items:center;gap:8px}
+.as-ctrl{display:flex;align-items:center;gap:4px;width:min(640px,100%)}
+.as-sc:not(.as-play) .as-ctrl{display:none}
+.as-cb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);flex:none;border:0;background:none;cursor:pointer}
+.as-cb:hover{background:var(--hover)}.as-cb:disabled{opacity:.3;cursor:default;background:none}
+.as-segs{flex:1;display:flex;gap:4px;min-width:0}
+.as-seg{flex:1;height:44px;display:flex;align-items:center;cursor:pointer;min-width:0;border:0;background:none;padding:0}
+.as-seg i{display:block;width:100%;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.as-seg i b{display:block;height:100%;width:0;background:var(--accent);border-radius:4px}
+.as-seg.as-past i b{width:100%;background:var(--ink-3)}
+.as-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:900px;width:100%}
+.as-sug{min-height:44px;border:1px solid var(--line-2);background:var(--surface);padding:0 16px;border-radius:var(--r-pill);color:var(--ink-2);font:inherit;white-space:nowrap;cursor:pointer;transition:background .2s,border-color .2s;animation:as-rise .4s ease both;animation-delay:calc(var(--d)*50ms)}
+.as-sug:hover{background:var(--hover);border-color:var(--accent)}
+.as-dkh{width:min(640px,100%)}
+.as-dk .ap-dock{position:static;width:100%;max-height:none;background:none;border:0;box-shadow:none;display:flex;flex-direction:column}
+.as-dk .ap-dh,.as-dk .as-ms,.as-dk .ap-sug{display:none}
+.as-dk .as-st:not(:empty){padding:0 4px 6px}
+.as-dk .as-f{border:1px solid var(--ctl-line);border-radius:28px;background:var(--surface);padding:4px 4px 4px 14px;align-items:center}
+.as-dk .as-f:focus-within{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.as-dk .as-f textarea{border:0;background:none;box-shadow:none;outline:0;font-size:16px;min-height:44px;padding:11px 0;line-height:22px}
+.as-dk .as-f .btn{min-height:44px;border-radius:22px;padding:0 18px}
+.as-dk .as-mic{min-height:44px;border-radius:22px}
+@media (max-width:760px){
+  .as-chg{grid-template-columns:1fr auto;gap:8px 12px;padding:12px 14px}
+  .as-chgbar{grid-column:1/-1;grid-row:2}
+  .as-chg .as-pill{grid-column:1/-1;grid-row:3;justify-self:start}
+  .as-tp{grid-template-columns:1fr;gap:16px}
+  .as-cover{flex-direction:column;align-items:flex-start;gap:16px}
+  .as-rings{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .as-wcard{height:180px}
+}
+@media (max-width:560px){
+  .as-sc{--as-top-h:52px}
+  .as-badge span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .as-capt{font-size:var(--fs-md)}
+  .as-chips{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
+  .as-chips::-webkit-scrollbar{display:none}
+  .as-wallet{height:calc(180px + (var(--n) - 1)*64px)}
+  .as-wcard{top:calc(var(--i)*64px)}
+  .as-wcard b{font-size:17px;margin-top:16px}
+  .as-blocks{height:48px}
+  .as-blocks div{padding:0 6px;font-size:var(--fs-xs)}
+  .as-hrow{gap:14px}
+  .as-dk .as-f .btn{padding:0 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  .as-sc *,.as-sc *::before,.as-sc *::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .as-sc .as-orb i{animation:none!important}
+}
+@media print{.as-sc{position:static}.as-dk,.as-amb{display:none}}
 </style>
 
 <div class="app">
@@ -2415,10 +2732,10 @@ const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'<
 /* ---------- stan strony ---------- */
 let D=null,offline=false,srvErr=0,notice='',noticeT=null,timer=null,pending=0,queue=Promise.resolve(),tmpN=0,loadSeq=0,FX=null,HC={},CUR=null,DR=null,gWait=0,q='';
 /* Terminy: tk = ukryte rodzaje (etap, zadanie, publikacja, kalendarz), tmSec = zwinięte/rozwinięte grupy, tmLaterEv = wydarzenia w „Później” */
-const PF={bp:'all',mine:false,ms:'all',theme:'',hidden:[],col:'todo',bk:'',more:{},tk:['kalendarz'],tmSec:{},tmLaterEv:false};
+const PF={bp:'all',mine:false,ms:'all',theme:'',hidden:[],col:'todo',bk:'',more:{},tk:['kalendarz'],tmSec:{},tmLaterEv:false,asMode:'sceny'};
 try{const z=JSON.parse(localStorage.getItem('pulpit.v1')||'{}');if(z&&typeof z==='object'){
   if(typeof z.bp==='string')PF.bp=z.bp;PF.mine=!!z.mine;if(typeof z.ms==='string')PF.ms=z.ms;
-  if(Array.isArray(z.tk))PF.tk=z.tk.filter(k=>['etap','zadanie','publikacja','kalendarz'].indexOf(k)>=0);PF.tmLaterEv=!!z.tmLaterEv;
+  if(Array.isArray(z.tk))PF.tk=z.tk.filter(k=>['etap','zadanie','publikacja','kalendarz'].indexOf(k)>=0);PF.tmLaterEv=!!z.tmLaterEv;if(z.asMode==='karty')PF.asMode='karty';
   if(z.tmSec&&typeof z.tmSec==='object')Object.keys(z.tmSec).forEach(k=>{PF.tmSec[k]=!!z.tmSec[k]});
   if(z.theme==='light'||z.theme==='dark')PF.theme=z.theme;if(COLS.some(c=>c[0]===z.col))PF.col=z.col;if(typeof z.bk==='string')PF.bk=z.bk;if(z.more&&typeof z.more==='object')Object.keys(z.more).forEach(k=>{PF.more[k]=!!z.more[k]});if(Array.isArray(z.hidden))PF.hidden=z.hidden.map(String)}}catch(e){}
 try{if(!PF.hidden.length){const h=JSON.parse(localStorage.getItem('panel.hiddenCals')||'[]');if(Array.isArray(h))PF.hidden=h.map(String)}}catch(e){}
@@ -2455,7 +2772,9 @@ function normalize(raw){
       return {n:typeof x.n==='number'?x.n:i+1,text:x.text,answer:typeof x.answer==='string'?x.answer:'',date:isDay(qd)?qd:'',
         proposal:typeof x.proposal==='string'?x.proposal.trim():'',
         /* skutki przyjęcia propozycji (wiersze „skutek:” pod pytaniem) */
-        effects:(Array.isArray(x.effects)?x.effects:[]).filter(e=>typeof e==='string'&&e.trim()).map(e=>e.trim())}});
+        effects:(Array.isArray(x.effects)?x.effects:[]).filter(e=>typeof e==='string'&&e.trim()).map(e=>e.trim()),
+        /* opcje odpowiedzi (wiersze „opcja:” pod pytaniem); starszy serwer: [] */
+        options:(Array.isArray(x.options)?x.options:[]).filter(e=>typeof e==='string'&&e.trim()).map(e=>e.trim()).slice(0,6)}});
     /* priorytet z karty (1 najważniejszy, 5 najmniej); bez pola 3 */
     const pr=typeof p.priority==='string'?parseInt(p.priority,10):p.priority;
     o.prioritySet=Number.isInteger(pr)&&pr>=1&&pr<=5;o.priority=o.prioritySet?pr:3;
@@ -2484,7 +2803,9 @@ function normalize(raw){
       waitingFor:Array.isArray(z.waitingFor)?z.waitingFor.filter(x=>x&&typeof x.title==='string'&&x.title).map(x=>({title:x.title,done:!!x.done})):[],
       check:normCheck(z.check),counter:normCounter(z),campFile:String(z.campaignFile||z.kampania||'').trim(),
       unlocksIn:Array.isArray(z.unlocks)?z.unlocks.filter(u=>u&&typeof u.title==='string'&&u.title).map(u=>({id:String(u.id||''),title:u.title,executor:WHO[u.executor]?u.executor:'',date:(v=>isDay(v)?v:'')(String(rr(u.date)||''))})):null,
-      unlockCountIn:Number.isFinite(+z.unlockCount)&&z.unlockCount!==null&&z.unlockCount!==''?+z.unlockCount:null})),
+      unlockCountIn:Number.isFinite(+z.unlockCount)&&z.unlockCount!==null&&z.unlockCount!==''?+z.unlockCount:null,
+      /* od kiedy zrobione / zablokowane (RRRR-MM-DD); brak pola albo nieznana data: '' */
+      doneAt:(v=>isDay(v)?v:'')(String(rr(z.doneAt)||'').slice(0,10)),blockedSince:(v=>isDay(v)?v:'')(String(rr(z.blockedSince)||'').slice(0,10))})),
     server:normServer(raw.server),
     costs:normCosts(raw.costs),
     resources:normRes(raw.resources),
@@ -2668,7 +2989,7 @@ const canMeta=p=>!LIVE||(p?originOf(p)!=='sample':D.projectsSource==='registry')
 function facts(){
   if(FX)return FX;
   const open=D.tasks.filter(t=>t.state!=='done'),you=open.filter(needsMe).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.title.localeCompare(b.title));
-  const qs=[];D.projects.forEach(p=>p.questions.forEach(x=>{if(!x.answer)qs.push({p:p,n:x.n,text:x.text,date:x.date||'',proposal:x.proposal||'',effects:x.effects||[]})}));
+  const qs=[];D.projects.forEach(p=>p.questions.forEach(x=>{if(!x.answer)qs.push({p:p,n:x.n,text:x.text,date:x.date||'',proposal:x.proposal||'',effects:x.effects||[],options:x.options||[]})}));
   return FX={qs:qs,open:open,you:you,late:open.filter(lateT),lateOwn:open.filter(isLate),blocked:open.filter(t=>t.state==='blocked'),
     lateStages:D.stages.filter(s=>s.st==='late'),riskStages:D.stages.filter(s=>s.st==='risk')};
 }
@@ -8206,7 +8527,7 @@ async function asDo(acts){let moved=false;
     else if(a.k==='przewiń')asScroll(a.v);
     else if(a.k==='zamknij'){if(DR)closeDrawer()}}
   asRender();
-  const ta=$('#asys textarea');if(ta&&!DR&&!matchMedia('(max-width:820px)').matches)ta.focus({preventScroll:true})}
+  const ta=$('.ap-dock textarea');if(ta&&!DR&&!matchMedia('(max-width:820px)').matches)ta.focus({preventScroll:true})}
 function asStatus(){
   if(AS.mic==='start')return '<span class="as-dot"></span>Włączam mikrofon…';
   if(AS.mic==='rec')return '<span class="as-dot"></span><span>Słucham… <b id="asrec">'+asFmt(Math.floor((Date.now()-AS.t0)/1000))+'</b></span><button type="button" class="lk" data-ascancel="1">Anuluj</button>';
@@ -8227,12 +8548,18 @@ const AS_MICI='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" strok
 function asMicHtml(){if(!AS.voice)return '';const on=AS.mic==='rec'||AS.mic==='start';
   return '<button type="button" class="btn sec as-mic" data-asmic="1" aria-pressed="'+on+'"'+(AS.mic==='stt'?' disabled':'')+' title="Mów (przytrzymaj spację)">'+(on?'Stop':AS_MICI+'Mów')+'</button>'}
 function asRender(){
-  const host=$('#asys');if(!host||!D)return;
+  const h0=$('#asys');if(!h0||!D)return;
   if(LIVE&&!AS.boot){AS.boot=true;asLoad();apLibLoad()}
-  const page=asPage();
+  const page=asPage(),sc=page&&asMode()==='sceny';
   document.body.classList.toggle('ap-on',page);
+  document.body.classList.toggle('as-sc-on',sc);
+  /* tryb Sceny: dok rozmowy (pole i mikrofon) stoi w dolnej części sceny (#asdock), nie z boku */
+  if(sc)ASC.mount();else ASC.unmount();
+  const host=sc?$('#asdock'):h0;
+  if(sc&&h0.firstChild)h0.innerHTML='';
   /* rozmowa jest tylko na stronie Asystent; po wyjściu nagrywanie się kończy */
-  if(!page){if(host.firstChild){if(AS.mic)asRecStop(true);host.innerHTML=''}return}
+  if(!page){if(h0.firstChild){if(AS.mic)asRecStop(true);h0.innerHTML=''}return}
+  if(!host)return;
   if(!host.querySelector('.ap-dock'))host.innerHTML='<section class="ap-dock" aria-label="Rozmowa z asystentem"><div class="ap-dh"><h2>Rozmowa</h2>'+
     '<button type="button" class="btn sec sm ap-hist" data-ashist="1" aria-controls="asms"></button><button type="button" class="btn sec sm" data-asnew="1" title="Nowa rozmowa; przypięte karty zostają">Nowa</button></div>'+
     '<div class="as-ms" id="asms" aria-live="polite"></div><div class="ap-sug" id="apsug"></div><div class="as-st" id="asst" role="status"></div><form class="as-f" data-asform="1"><span id="asmic"></span>'+
@@ -8242,6 +8569,7 @@ function asRender(){
   const ms=$('#asms');if(setHtml(ms,asMsgs()))ms.scrollTop=ms.scrollHeight;
   setHtml($('#apsug'),!AS.messages.length&&!AS.pending&&!AS.mic?AP_SUG.map(t=>'<button type="button" class="btn sec sm" data-asq="'+esc(t)+'">'+esc(t)+'</button>').join(''):'');
   setHtml($('#asst'),asStatus());setHtml($('#asmic'),asMicHtml());
+  if(sc)ASC.sync();
 }
 function asPoll(ms){clearTimeout(AS.poll);AS.poll=setTimeout(asLoad,ms)}
 async function asLoad(){
@@ -8313,7 +8641,7 @@ async function asRecDone(type){
   if(j.voice===false)AS.voice=false;
   if(j.text&&(st===202||j.ok)){AS.messages.push({role:'ty',text:j.text});AS.pending=true;AS.partial='';AS.activity='';AS.error='';asRender();asPoll(300);return}
   AS.error=j.error||'Nie udało się rozpoznać nagrania.';
-  if(j.text){const ta=$('#asys textarea');if(ta&&!ta.value)ta.value=j.text}
+  if(j.text){const ta=$('.ap-dock textarea');if(ta&&!ta.value)ta.value=j.text}
   asRender();
 }
 /* spacja (fokus poza polem, przyciskiem i linkiem): przytrzymaj i mów albo naciśnij, mów i naciśnij jeszcze raz; Esc przerywa nagranie */
@@ -8337,10 +8665,10 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
     post('/api/asystent/nowa',{}).then(async()=>{AS.messages=[];AS.error='';AS.hist=false;AS.mcount=0;await apLibLoad();render()})}
   else if(b.dataset.asmic!=null){if(AS.skipClick){AS.skipClick=false;return}if(AS.mic==='rec'||AS.mic==='start')asRecStop();else asRecStart()}
   else if(b.dataset.ascancel!=null)asRecStop(true);
-  else if(b.dataset.asq!=null){if(!asPage())location.hash='#asystent';asSend(b.dataset.asq)}
+  else if(b.dataset.asq!=null){if(asMode()==='sceny'){ASC.ask(b.dataset.asq);return}if(!asPage())location.hash='#asystent';asSend(b.dataset.asq)}
 });
 document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset||f.dataset.asform==null)return;ev.preventDefault();ev.stopPropagation();
-  const ta=f.querySelector('textarea');const t=ta.value;ta.value='';asSend(t)},true);
+  const ta=f.querySelector('textarea');const t=ta.value;ta.value='';if(asScOn())ASC.handle(t);else asSend(t)},true);
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey&&ev.target.closest&&ev.target.closest('.as-f')&&ev.target.tagName==='TEXTAREA'){ev.preventDefault();ev.target.form.requestSubmit()}});
 
 /* ---------- strona Asystent: płótno kart (katalog i walidacja w karty.py, opis dla modelu w karty.PROMPT) ---------- */
@@ -8528,8 +8856,9 @@ function apCard(x){const c=x.c;let body;
     '<button type="button" class="ap-ib" data-apx="'+esc(c.id)+'" title="Zdejmij z płótna" aria-label="Zdejmij kartę '+esc(c.tytul)+'">'+AP_X+'</button></div>'+
     body+'<p class="ap-src">'+esc(src)+'</p></article>'}
 function vAsystent(){
+  if(asMode()==='sceny')return ASC.shell();
   const L=apCards(),lib=AS.lib.karty;
-  let h='<h1 class="sr-only">Asystent</h1><div class="ap-cv">'+L.map(apCard).join('')+'</div>';
+  let h='<div class="as-kh"><h1 class="as-kt">Asystent</h1>'+asModeSw('karty')+'</div><div class="ap-cv">'+L.map(apCard).join('')+'</div>';
   if(!L.length)h+='<p class="ap-empty">Płótno jest puste. Zapytaj asystenta, a odpowie kartami.</p>';
   if(lib.length)h+='<details class="ap-lib" data-pvdet="ap-lib"'+(PF.more['ap-lib']?' open':'')+'><summary>Zapisane karty ('+lib.length+')</summary><ul>'+
     lib.map(c=>{const on=AS.lib.przypiete.indexOf(c.id)>=0;return '<li><span class="ap-rt">'+esc(c.tytul)+'<small>'+esc(c.opis||c.typ)+'</small></span>'+
@@ -8554,6 +8883,504 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   if(b.dataset.apx!=null){apPost({ukryj:b.dataset.apx},'Nie udało się zdjąć karty.');return}
   if(b.dataset.apdel!=null){apPost({usun:b.dataset.apdel},'Nie udało się usunąć karty.')}
 });
+
+/* ---------- strona Asystent: sceny (wzór: audyt-ui/asystent-propozycja.html, umowa ASYSTENT-UMOWA.md) ----------
+   Tryb domyślny strony Asystent. Odpowiedź = sekwencja scen liczonych z D: pasek segmentów, ← → pauza, przejście samo
+   (pauza na scenach decyzji), podpis narracji u góry (aria-live). Rozpoznane polecenia działają lokalnie, inne pytania
+   idą do modelu (asSend, POST /api/asystent), a odpowiedź to scena „odpowiedź”: tekst i karty z cards.pokaz (apCard).
+   Drugi tryb: płótno kart (vAsystent), przełącznik „Sceny / Karty” w nagłówku (PF.asMode). Pola doneAt, blockedSince
+   i question.options mogą nie istnieć (starszy serwer): wtedy sceny ich nie pokazują. */
+const asMode=()=>PF.asMode==='karty'?'karty':'sceny';
+const asScOn=()=>asPage()&&asMode()==='sceny';
+const asModeSw=m=>'<div class="as-mode" role="group" aria-label="Tryb strony Asystent">'+[['sceny','Sceny'],['karty','Karty']].map(x=>
+  '<button type="button" class="as-mb" data-asmode="'+x[0]+'" data-k="asmode:'+x[0]+'" aria-pressed="'+(m===x[0])+'">'+x[1]+'</button>').join('')+'</div>';
+const ASC=(()=>{
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const low=s=>s?s.charAt(0).toLowerCase()+s.slice(1):s;
+const PHN={};PHASES.forEach(x=>PHN[x[0]]=x[1]);
+const who=k=>(WHO[k]||WHO['']).n;
+const I={check:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  lock:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>',
+  info:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  pause:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"/></svg>',
+  play:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"/></svg>',
+  open:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v5H5V6h5"/></svg>',
+  prev:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+  next:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  x:'<svg class="as-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+const ORB='<div class="as-orb" aria-hidden="true"><i class="as-b1"></i><i class="as-b2"></i><i class="as-b3"></i></div>';
+const T=()=>D.todayKey,R=n=>addK(D.todayKey,n);
+
+/* ----- fakty dla scen: tylko z D (derive, youState) ----- */
+const F={
+  active:()=>D.projects.filter(p=>p.state==='active').slice().sort((a,b)=>a.priority-b.priority),
+  pct:p=>p.tasksTotal?Math.round(100*p.tasksDone/p.tasksTotal):0,
+  /* wpis historii najbliższy dniu k (nie późniejszy) */
+  histAt:k=>{let e=null;for(const h of D.history){if(h.date<=k)e=h;else break}return e},
+  pctAt:(p,k)=>{const e=F.histAt(k),n=e&&e.projects[p.id];return n&&+n.total?Math.round(100*(+n.done||0)/+n.total):null},
+  week:p=>{const was=F.pctAt(p,R(-7));return was==null?null:F.pct(p)-was},
+  /* zrobione w projekcie w dniu k: dziś z bieżących danych, wcześniej z wpisu historii z tego dnia (bez wpisu: null) */
+  doneOn:(p,k)=>{if(k===T())return p.tasksDone;const e=D.history.find(h=>h.date===k),n=e&&e.projects[p.id];return e?(n?+n.done||0:0):null},
+  closedOn:k=>F.active().reduce((s,p)=>{const a=F.doneOn(p,k),b=F.doneOn(p,addK(k,-1));return s+(a==null||b==null?0:Math.max(0,a-b))},0),
+  hasDay:k=>k===T()||D.history.some(h=>h.date===k),
+  closedWeek:off=>{let s=0;for(let i=0;i<7;i++)s+=F.closedOn(R(-i-off));return s},
+  blocked:p=>D.tasks.filter(t=>t.project===p.id&&t.state==='blocked'),
+  waitsOf:t=>(t.waits&&t.waits.length?t.waits:t.blocked?[t.blocked]:[]),
+  /* stan: po terminie > blokada > zagrożony > czeka na Ciebie > w normie */
+  status:p=>p.pst==='late'?['red','po terminie']:F.blocked(p).length?['red','blokada']:p.pst==='risk'?['yellow','zagrożony']:p.pst==='you'?['purple','czeka na Ciebie']:['green','w normie'],
+  attention:()=>F.active().filter(p=>p.pst==='late'||p.pst==='risk'||F.blocked(p).length),
+  /* zrobione w ostatnich 7 dniach (doneAt z serwera); hasDates: czy projekt ma daty zamknięcia */
+  doneWeek:p=>D.tasks.filter(t=>t.project===p.id&&t.state==='done'&&t.doneAt&&t.doneAt>=R(-6)).sort((a,b)=>a.doneAt<b.doneAt?-1:1),
+  hasDates:p=>D.tasks.some(t=>t.project===p.id&&t.state==='done'&&t.doneAt),
+  /* decyzje (pytania, zgody, odbiory z youState, aktywne projekty): po priorytecie projektu, potem terminie (jak pm.py) */
+  decisions:()=>{const ys=youState();
+    return ys.youToday.concat(ys.youWeek,ys.youLater).filter(tyIsDec).map(x=>{
+      if(x.q)return {id:'q:'+x.q.p.id+':'+x.q.n,kind:'pytanie',p:x.q.p,q:x.q,title:x.q.text,date:x.d,min:2};
+      return {id:'t:'+x.t.id,kind:x.need,p:P(x.t.project),t:x.t,title:x.t.title,date:x.d,min:x.min}})
+      .filter(d=>d.p&&(d.kind==='pytanie'||d.kind==='zgoda'||d.kind==='odbiór'))
+      .sort((a,b)=>a.p.priority-b.p.priority||(a.date||'9999').localeCompare(b.date||'9999'))},
+  /* sprawy właściciela na dziś w kolejności youState (termin, odblokowania, priorytet) */
+  today:()=>youState().youToday.map(x=>{const p=x.q?x.q.p:P(x.t.project);
+    return {kind:x.q?'pytanie':x.need||'zadanie',p:p,t:x.t||null,q:x.q||null,title:x.q?x.q.text:x.t.title,date:x.d,min:x.q?2:x.min,uc:x.uc||0,
+      why:x.q?'Pytanie z karty projektu':(x.t.detail&&x.t.detail.goal)||''}}).filter(x=>x.p),
+  waiting:p=>{const L=[];D.tasks.filter(t=>t.project===p.id&&t.state!=='done').forEach(t=>{
+      if(t.state==='blocked')L.push({t:t,who:'',av:'!',txt:'czeka na: '+(F.waitsOf(t).join(', ')||'nieznane'),since:t.blockedSince?diff(T(),t.blockedSince):null});
+      else if(t.executor==='ty'||t.needsYou)L.push({t:t,who:'ty',av:'Ty',me:true,txt:t.needsYou==='zgoda'?'czeka na Twoją zgodę':t.needsYou==='odbiór'?'czeka na Twój odbiór':'Twoja kolej',due:t.date});
+      else if(t.state==='doing')L.push({t:t,who:t.executor,av:(WHO[t.executor]||WHO['']).i,txt:who(t.executor)+' pracuje',due:t.date})});
+    return L}
+};
+const pc=p=>'--pc:var(--c'+(p.ci+1)+')';
+const ring=(p,cls)=>'<div class="as-ring '+(cls||'')+'" style="'+pc(p)+';--p:'+F.pct(p)+'"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="as-trk" cx="50" cy="50" r="42" stroke-width="9"/><circle class="as-val" cx="50" cy="50" r="42" stroke-width="9" pathLength="100"/></svg><span class="as-rp"><span>'+F.pct(p)+'<small>%</small></span></span></div>';
+const head=(eb,title,sub)=>'<div class="as-gen" style="--d:0"><span class="as-eb">'+eb+'</span><h2 class="as-h2">'+title+'</h2>'+(sub?'<p class="as-sub">'+sub+'</p>':'')+'</div>';
+const spill=s=>'<span class="as-pill '+s[0]+'">'+esc(s[1])+'</span>';
+const tint=(a,b)=>['var(--'+a+')','var(--'+b+')'];
+const dueTxt=k=>!k?'':k<T()?'po terminie':k===T()?'dziś':ddl(k);
+const CH_STATUS=['Przejdźmy przez decyzje','Co się zmieniło?','Na czym mam się dziś skupić?'];
+const CH_TODAY=['Jaki jest stan projektów?','Przejdźmy przez decyzje','Przegląd projektów'];
+const CH_REV=['Dalej','Wróć','Jaki jest stan projektów?'];
+const HOME_CHIPS=['Jaki jest stan projektów?','Co się zmieniło?','Przejdźmy przez decyzje','Na czym mam się dziś skupić?','Przegląd projektów'];
+
+/* ----- sceny: key, html(), lines() [{f: id elementów do wskazania, t: podpis}], tint, tr, chips, wait ----- */
+function scOverview(){
+  const A=F.active(),nd=F.decisions().length,na=F.attention().length,cw=F.closedWeek(0),d=fromKey(T());
+  return {key:'overview',tint:tint('accent','c3'),chips:CH_STATUS,
+    html:()=>'<div class="as-in as-hero"><div class="as-dots" aria-hidden="true">'+A.map((p,i)=>'<i style="'+pc(p)+';--d:'+i+'"></i>').join('')+'</div>'+
+      '<div class="as-gen" style="--d:0"><span class="as-eb">'+esc(DNI[d.getDay()]+', '+d.getDate()+' '+MD[d.getMonth()])+'</span></div>'+
+      '<div class="as-hn as-fx" id="aso-n"><span data-count="'+A.length+'">'+A.length+'</span></div>'+
+      '<div class="as-ht as-gen" style="--d:2">'+pl(A.length,'aktywny projekt','aktywne projekty','aktywnych projektów')+'</div>'+
+      '<div class="as-hrow as-gen" style="--d:4">'+
+        '<div class="as-fx" id="aso-c"><b data-count="'+cw+'">'+cw+'</b><span>'+pl(cw,'zadanie zamknięte','zadania zamknięte','zadań zamkniętych')+' w 7 dni</span></div>'+
+        '<div class="as-acc as-fx" id="aso-d"><b data-count="'+nd+'">'+nd+'</b><span>'+pl(nd,'decyzja czeka','decyzje czekają','decyzji czeka')+'</span></div>'+
+        '<div class="as-warn as-fx" id="aso-w"><b data-count="'+na+'">'+na+'</b><span>'+pl(na,'projekt wymaga','projekty wymagają','projektów wymaga')+' uwagi</span></div></div></div>',
+    lines:()=>[{f:['aso-n'],t:A.length?'Masz '+A.length+' '+pl(A.length,'aktywny projekt.','aktywne projekty.','aktywnych projektów.'):'Nie masz aktywnych projektów.'},
+      {f:['aso-c','aso-d'],t:'W ostatnich 7 dniach zamknięto '+cw+' '+pl(cw,'zadanie','zadania','zadań')+', a '+nd+' '+pl(nd,'decyzja czeka','decyzje czekają','decyzji czeka')+' na Ciebie.'}]}}
+
+function scRings(){
+  const A=F.active(),ok=A.filter(p=>F.status(p)[0]==='green'),bad=F.attention();
+  return {key:'rings',tint:tint('c1','c3'),chips:CH_STATUS,
+    html:()=>'<div class="as-in">'+head('Postęp','Gdzie jest każdy projekt','Zrobione zadania z wszystkich zadań projektu.')+
+      '<div class="as-rings">'+A.map((p,i)=>'<div class="as-card as-rc as-fx as-gen" id="asrg-'+esc(p.id)+'" style="--d:'+(i+1)+'">'+ring(p)+'<b>'+esc(p.name)+'</b><span class="as-ph">'+esc(PHN[p.phase]||'')+(p.cur?' · '+esc(p.cur.title):'')+'</span>'+spill(F.status(p))+'</div>').join('')+'</div></div>',
+    lines:()=>{const L=[];
+      if(ok.length)L.push({f:ok.map(p=>'asrg-'+p.id),t:(ok.length===A.length?'Wszystkie projekty idą':ok.length+' '+pl(ok.length,'projekt idzie','projekty idą','projektów idzie'))+' zgodnie z planem.'});
+      if(bad.length)L.push({f:bad.map(p=>'asrg-'+p.id),t:(bad.length===1?'Uwagi wymaga ':'Uwagi wymagają: ')+bad.map(p=>p.name).join(' i ')+'.'});
+      if(!L.length)L.push({f:[],t:'Brak aktywnych projektów.'});
+      return L}}}
+
+function scChanges(){
+  const A=F.active().map(p=>({p:p,d:F.week(p),was:F.pctAt(p,R(-7))})).sort((a,b)=>(b.d||0)-(a.d||0));
+  const ev=x=>{const nb=F.blocked(x.p).filter(t=>t.blockedSince&&t.blockedSince>=R(-6));
+    if(x.p.pst==='late')return ['red','termin minął'];if(nb.length)return ['red','nowa blokada'];
+    if(!F.hasDates(x.p))return null;const n=F.doneWeek(x.p).length;return ['grey',n+' '+pl(n,'zadanie zamknięte','zadania zamknięte','zadań zamkniętych')]};
+  const up=A.filter(x=>x.d>0),zero=A.filter(x=>x.d===0),none=A.filter(x=>x.d==null);
+  return {key:'changes',tint:tint('c3','c1'),chips:CH_STATUS,
+    html:()=>'<div class="as-in">'+head('Ostatnie 7 dni','Co się zmieniło',none.length===A.length&&A.length?'Historia postępu zbiera się od niedawna; porównanie z tygodniem wcześniej będzie później.':'')+
+      '<div class="as-chgs">'+A.map((x,i)=>{const was=x.was==null?F.pct(x.p):x.was,d=x.d||0,e=ev(x);
+        return '<div class="as-card as-chg as-fx as-gen" id="asc-'+esc(x.p.id)+'" style="--d:'+(i+1)+';'+pc(x.p)+'">'+
+        '<div class="as-chgn"><i class="as-pdot"></i><span>'+esc(x.p.name)+'</span></div>'+
+        '<div class="as-chgbar" role="img" aria-label="'+esc(x.p.name+': '+(x.was==null?'brak danych sprzed tygodnia, teraz ':was+'% tydzień temu, teraz ')+F.pct(x.p)+'%')+'"><i class="as-was" style="width:'+was+'%"></i><i class="as-gain" style="left:'+was+'%;width:'+Math.max(d,0)+'%;--d:'+i+'"></i></div>'+
+        '<div class="as-chgd '+(d>0?'as-up':'as-zero')+'">'+(x.d==null?'brak danych':d>0?'+'+d+' pp':d<0?d+' pp':'bez zmian')+'</div>'+(e?spill(e):'<span></span>')+'</div>'}).join('')+'</div>'+
+      '<div class="as-legend as-gen" style="--d:7"><span><i style="background:var(--line-2)"></i>tydzień temu</span><span><i style="background:var(--accent)"></i>przyrost (kolor projektu)</span><span>pp: punkty procentowe postępu</span></div></div>',
+    lines:()=>{const L=[];if(up.length)L.push({f:['asc-'+up[0].p.id],t:'Najwięcej ruszył projekt '+up[0].p.name+', o '+up[0].d+' pp.'});
+      if(up.length>1)L.push({f:up.slice(1).map(x=>'asc-'+x.p.id),t:up.slice(1).map(x=>x.p.name+' +'+x.d+' pp').join(', ')+'.'});
+      if(zero.length)L.push({f:zero.map(x=>'asc-'+x.p.id),t:zero.map(x=>x.p.name).join(' i ')+(zero.length===1?' stoi':' stoją')+' w miejscu.'});
+      if(!L.length)L.push({f:[],t:A.length?'Brak historii sprzed tygodnia do porównania.':'Brak aktywnych projektów.'});
+      return L}}}
+
+function riskCard(p,i){
+  const late=p.stagesL.find(s=>s.st==='late'),bl=F.blocked(p),mine=D.tasks.filter(t=>t.project===p.id&&t.state!=='done'&&t.executor==='ty');
+  let h='<div class="as-card as-rk as-fx as-gen" id="ask-'+esc(p.id)+'" style="--d:'+(i+1)+';'+pc(p)+'"><div class="as-rkh"><i class="as-pdot"></i><b>'+esc(p.name)+'</b>'+spill(F.status(p))+'</div>';
+  if(late&&isDay(late.start)){const span=Math.max(1,diff(late.date,late.start)),now=diff(T(),late.start),tot=Math.max(span,now)+2,x=v=>Math.round(100*v/tot);
+    h+='<p>Etap „'+esc(late.title)+'” miał termin '+ddl(late.date)+'.</p>'+
+      '<div class="as-tlx" aria-hidden="true"><div class="as-trk"></div><div class="as-fill" style="width:'+x(span)+'%"></div><div class="as-over" style="left:'+x(span)+'%;width:'+(x(now)-x(span))+'%"></div>'+
+      '<div class="as-mk as-end" style="left:'+x(span)+'%">termin '+dd(late.date)+'</div><div class="as-mk as-today" style="left:'+x(now)+'%">dziś</div></div>'}
+  else if(p.lateTasks)h+='<p>'+p.lateTasks+' '+pl(p.lateTasks,'zadanie jest','zadania są','zadań jest')+' po terminie.</p>';
+  else if(p.pst==='risk'&&p.cur)h+='<p>Etap „'+esc(p.cur.title)+'” ('+ddl(p.cur.date)+') ma więcej otwartych zadań niż dni do terminu.</p>';
+  bl.forEach(t=>{const n=t.blockedSince?diff(T(),t.blockedSince):null,w=F.waitsOf(t);
+    h+='<div class="as-blk"><div class="as-lock" aria-hidden="true">'+I.lock+'</div><div>'+(n!=null?'<b>'+n+' '+pl(n,'dzień','dni','dni')+'</b>':'<b>blokada</b>')+'<span>'+esc(t.title)+(w.length?' · czeka na: '+esc(w.join(', ')):'')+'</span></div></div>'});
+  if(mine.length)h+='<p>Twoja część: '+mine.map(t=>esc(t.title)+(t.date?' ('+dueTxt(t.date)+')':'')).join(', ')+'.</p>'+
+    '<button type="button" class="as-act" data-asact="task" data-id="'+esc(mine[0].id)+'">'+I.open+'Otwórz zadanie</button>';
+  return h+'</div>'}
+function scRisks(){
+  const L=F.attention();
+  return {key:'risks',tint:tint('c8','c2'),chips:CH_STATUS,
+    html:()=>'<div class="as-in">'+head('Ryzyka',L.length?L.length+' '+pl(L.length,'projekt wymaga','projekty wymagają','projektów wymaga')+' uwagi':'Bez ryzyk')+
+      (L.length?'<div class="as-risks">'+L.map(riskCard).join('')+'</div>':'<p class="as-empty as-gen">Żaden projekt nie jest po terminie ani zablokowany.</p>')+'</div>',
+    lines:()=>L.length?L.map(p=>{const late=p.stagesL.find(s=>s.st==='late'),bl=F.blocked(p)[0],w=bl?F.waitsOf(bl):[];
+      const bt=bl?(bl.blockedSince?'blokada od '+diff(T(),bl.blockedSince)+' '+pl(diff(T(),bl.blockedSince),'dnia','dni','dni'):'zadanie „'+bl.title+'” jest zablokowane')+(w.length?', czeka na: '+w.join(', '):'')+'.':'';
+      return {f:['ask-'+p.id],t:p.name+': '+(late?'etap „'+late.title+'” jest po terminie'+(bl?'; '+bt:'.'):bl?bt:p.lateTasks?'zadania po terminie.':'zagrożony termin.')}})
+      :[{f:[],t:'Nic nie jest po terminie ani zablokowane.'}]}}
+
+function chartSVG(now,prev){
+  const W=560,H=180,max=Math.max(1,...now,...prev)+1,pts=a=>a.map((v,i)=>[i*(W/6),H-v/max*H]);
+  const path=p=>p.map((q,i)=>{if(!i)return 'M'+q[0]+' '+q[1];const o=p[i-1],cx=(o[0]+q[0])/2;return 'C'+cx+' '+o[1]+' '+cx+' '+q[1]+' '+q[0]+' '+q[1]}).join(' ');
+  const n=pts(now),dn=path(n);
+  return '<svg viewBox="-8 -10 '+(W+16)+' '+(H+20)+'" aria-hidden="true"><path class="as-area" d="'+dn+' L'+W+' '+H+' L0 '+H+'Z"/><path class="as-ln as-prev" d="'+path(pts(prev))+'"/><path class="as-ln as-now" d="'+dn+'" pathLength="1"/>'+
+    n.map(q=>'<circle class="as-pt" cx="'+q[0]+'" cy="'+q[1]+'" r="4"/>').join('')+'</svg>'}
+function scTempo(){
+  const now=[],prev=[],days=[];for(let i=6;i>=0;i--){now.push(F.closedOn(R(-i)));prev.push(F.closedOn(R(-i-7)));days.push(DN[fromKey(R(-i)).getDay()])}
+  const a=now.reduce((s,v)=>s+v,0),b=prev.reduce((s,v)=>s+v,0),full=F.hasDay(R(-14)),pctc=b&&full?Math.round(100*(a-b)/b):null,best=now.indexOf(Math.max(...now));
+  const title=pctc==null?'Tempo z ostatniego tygodnia':pctc>0?'Zamykacie więcej niż tydzień temu':pctc<0?'Zamykacie mniej niż tydzień temu':'Tempo jak tydzień temu';
+  return {key:'tempo',tint:tint('c3','accent'),chips:CH_STATUS,
+    html:()=>'<div class="as-in">'+head('Tempo',title)+'<div class="as-tp"><div class="as-fx as-gen" id="astp-n" style="--d:1"><div class="as-tpn'+(pctc<0?' as-down':'')+'">'+(pctc==null?a:(pctc>0?'+':'')+pctc+'%')+'</div>'+
+      '<p class="as-sub">'+a+' '+pl(a,'zadanie zamknięte','zadania zamknięte','zadań zamkniętych')+' w 7 dni (Ty i agenci)'+(full?', tydzień wcześniej '+b:'')+'.</p></div>'+
+      '<div class="as-card as-tpc as-fx as-gen" id="astp-c" style="--d:2" role="img" aria-label="'+esc('Zamknięte zadania dziennie, ostatnie 7 dni: '+now.join(', ')+'; tydzień wcześniej: '+prev.join(', '))+'"><div class="as-lg2"><span><i style="background:var(--accent)"></i>ostatnie 7 dni</span><span><i style="background:var(--line-2)"></i>tydzień wcześniej</span></div>'+chartSVG(now,prev)+
+      '<div class="as-days">'+days.map(d=>'<span>'+d+'</span>').join('')+'</div></div></div></div>',
+    lines:()=>[{f:['astp-n'],t:pctc==null?'Zamknięto '+a+' '+pl(a,'zadanie','zadania','zadań')+' w 7 dni.':'Zamknięto '+a+' '+pl(a,'zadanie','zadania','zadań')+', tydzień wcześniej '+b+'.'}]
+      .concat(a?[{f:['astp-c'],t:'Najwięcej zamknięć: '+DNI[fromKey(R(best-6)).getDay()]+', '+now[best]+'.'}]:[])}}
+
+const DK={pytanie:'pytanie',zgoda:'zgoda','odbiór':'odbiór pracy'};
+function scWallet(){
+  const L=F.decisions(),top=L.slice(0,3),n=top.length;
+  return {key:'wallet',tint:tint('c7','accent'),wait:'yes',onYes:()=>startDecisions(0),chips:n?['Tak, przejdźmy po kolei','Co się zmieniło?','Zamknij']:['Na czym mam się dziś skupić?','Zamknij'],
+    html:()=>'<div class="as-in">'+head('Decyzje','Czekają na Ciebie')+(n?'<div class="as-wallet as-fx" id="aswl" style="--n:'+n+'">'+top.map((d,j)=>({d:d,j:j})).reverse().map((x,i)=>{const d=x.d;
+      return '<button type="button" class="as-wcard" data-asact="dec" data-i="'+x.j+'" style="--i:'+i+';'+pc(d.p)+'"><span class="as-wh"><i class="as-pdot"></i>'+esc(d.p.name)+' <span class="as-kind">· '+DK[d.kind]+'</span></span>'+
+      '<b>'+esc(d.title)+'</b><p>'+(d.kind==='pytanie'?(d.q.proposal?'Jest propozycja agenta':'Bez propozycji'):d.kind==='zgoda'?'Agent czeka na zgodę':'Agent skończył, czeka na odbiór')+(d.date?' · termin '+ddl(d.date):'')+'</p><span class="as-go">Otwórz</span></button>'}).join('')+'</div>'+
+      (L.length>n?'<p class="as-more as-gen" style="--d:5">i '+(L.length-n)+' '+pl(L.length-n,'kolejna','kolejne','kolejnych')+'</p>':''):'<p class="as-empty as-gen">Nic nie czeka na Twoją decyzję.</p>')+'</div>',
+    lines:()=>[{f:['aswl'],t:L.length?'Czeka na Ciebie '+L.length+' '+pl(L.length,'sprawa','sprawy','spraw')+': '+[['pytanie','pytania','pytań'],['zgoda','zgody','zgód'],['odbiór','odbiory','odbiorów']].map(k=>{const c=L.filter(d=>d.kind===k[0]).length;return c?c+' '+pl(c,k[0],k[1],k[2]):''}).filter(Boolean).join(', ')+'.':'Nic nie czeka na Twoją decyzję.'}]
+      .concat(L.length?[{f:['aswl'],t:'Przejdziemy po kolei?'}]:[])}}
+
+/* decyzja: wybór kafelka = odpowiedź; DEC[id] = {k, label, v} albo null (odłożone) */
+const DEC={};
+function decOptions(d){
+  if(d.kind==='pytanie'){const o=[],pr=d.q.proposal;if(pr)o.push({label:'Przyjmij propozycję',note:pr,rec:true,v:'accept'});
+    (d.q.options||[]).filter(x=>x!==pr).forEach(x=>o.push({label:cap(x),ans:x,note:'Zapisze to jako odpowiedź w karcie projektu.',v:'opt'}));
+    o.push({label:'Odpowiem sam',note:'Wpiszesz własną odpowiedź w Księdze projektu.',v:'own'});return o}
+  if(d.kind==='zgoda')return [{label:'Zatwierdź',note:who(d.t.executor)+' zaczyna: '+low(d.t.title)+'.',rec:true,v:'ok'},{label:'Wstrzymaj',note:'Zadanie zostaje, agent go nie rusza.',v:'hold'}];
+  return [{label:'Obejrzyj',note:'Strona Odbiór pracy: wynik, wersje, Akceptuję albo Popraw.',rec:true,v:'view'},{label:'Później',note:'Zostaje na liście do odbioru.',v:'later'}]}
+function decScene(d,i,n,ctx){
+  const p=d.p,O=decOptions(d),ri=O.findIndex(o=>o.rec);
+  const goal=d.t&&d.t.detail?d.t.detail.goal:'';
+  const why=d.kind==='pytanie'?(d.q.effects.length&&d.q.proposal?'<div class="as-why as-fx as-gen" id="asd-why" style="--d:6">'+I.info+'<div><b>Po przyjęciu propozycji:</b><ul>'+d.q.effects.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul></div></div>':'')
+    :goal||d.min?'<div class="as-why as-fx as-gen" id="asd-why" style="--d:6">'+I.info+'<span>'+esc(goal)+(d.min?(goal?' · ':'')+dur(d.min):'')+'</span></div>':'';
+  return {key:'dec-'+d.id,kind:'dec',d:d,O:O,tint:tint('c7','c'+(p.ci+1)),tr:'rise',
+    get wait(){return d.id in DEC?null:'decision'},
+    get chips(){return d.id in DEC?['Dalej','Wróć','Na czym mam się dziś skupić?']:O.map(o=>o.label).concat(['Odłóż na później'])},
+    html:()=>{const c=DEC[d.id],has=d.id in DEC;
+      return '<div class="as-in"><div class="as-mh as-gen" style="--d:0">'+ring(p)+'<span class="as-mhn">'+esc(p.name)+'</span><span class="as-eb">'+(ctx||'Decyzja')+' '+(i+1)+' z '+n+'</span></div>'+
+      '<span class="as-eb as-gen" style="--d:1">'+(d.kind==='pytanie'?'Pytanie z karty projektu':d.kind==='zgoda'?'Agent czeka na Twoją zgodę':'Praca agenta do odbioru')+(d.date?' · termin '+ddl(d.date):'')+'</span>'+
+      '<h2 class="as-h2 as-dq as-fx as-gen" id="asdq" style="--d:2">'+esc(d.title)+'</h2>'+
+      '<div class="as-tiles" role="group" aria-label="Odpowiedź">'+O.map((o,k)=>'<button type="button" class="as-tile as-fx as-gen'+(o.rec?' as-rec':'')+(has?(c&&c.k===k?' as-sel':' as-off'):'')+'" id="asd-'+k+'" data-asact="opt" data-i="'+k+'" style="--d:'+(k+3)+'" aria-pressed="'+(has&&!!c&&c.k===k)+'">'+
+        (o.rec?'<span class="as-rb">'+(d.kind==='pytanie'?'Propozycja agenta':'Zalecane')+'</span>':'')+'<b>'+esc(o.label)+'</b><p>'+esc(o.note)+'</p><span class="as-okm">'+I.check+'</span></button>').join('')+'</div>'+why+
+      (has?'':'<button type="button" class="as-later as-gen" style="--d:7" data-asact="skip">Odłóż na później</button>')+'</div>'},
+    lines:()=>{const c=DEC[d.id];if(d.id in DEC)return [{f:c?['asd-'+c.k]:[],t:c?'Tu już wybrałeś: '+low(O[c.k].label)+'.':'Tę sprawę odłożyłeś na później.'}];
+      const L=[{f:['asdq'],t:p.name+': '+d.title}];
+      if(ri>=0)L.push({f:['asd-'+ri].concat(why?['asd-why']:[]),t:d.kind==='pytanie'?'Agent proponuje: '+low(d.q.proposal)+'. Wybierz kafelek.':d.kind==='zgoda'?'Zatwierdź, a agent zacznie. Albo wstrzymaj.':'Obejrzyj wynik i odbierz albo poproś o poprawkę.'});
+      else L.push({f:['asd-0'],t:'Wybierz odpowiedź albo odłóż na później.'});
+      return L}}}
+function scRecap(L){
+  return {key:'recap',tint:tint('c3','c7'),chips:['Jaki jest stan projektów?','Na czym mam się dziś skupić?','Zamknij'],
+    html:()=>{const dec=L.filter(d=>DEC[d.id]),skip=L.filter(d=>d.id in DEC&&!DEC[d.id]),left=L.length-dec.length-skip.length;
+      return '<div class="as-in" style="text-align:center"><svg class="as-doneic as-gen" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" pathLength="1"/><path d="M30 51l13 13 27-28" pathLength="1"/></svg>'+
+      '<span class="as-eb as-gen" style="--d:1">Decyzje</span><h2 class="as-h2 as-gen" style="--d:2">'+(dec.length?'Zapisane':L.length?'Nic nie zapisano':'Nic nie czekało')+'</h2>'+
+      '<div class="as-stats"><div class="as-card as-stat as-fx as-gen" id="ass1" style="--d:3"><b>'+dec.length+'</b><span>'+pl(dec.length,'wybór','wybory','wyborów')+'</span></div>'+
+      '<div class="as-card as-stat as-fx as-gen" id="ass2" style="--d:4"><b>'+skip.length+'</b><span>'+pl(skip.length,'odłożona','odłożone','odłożonych')+'</span></div>'+
+      '<div class="as-card as-stat as-fx as-gen" id="ass3" style="--d:5"><b>'+left+'</b><span>bez odpowiedzi</span></div></div>'+
+      (L.length?'<div class="as-card as-rlist as-fx as-gen" id="asrl" style="--d:6">'+L.map(d=>{const c=DEC[d.id];return '<div class="as-rrow" style="'+pc(d.p)+'"><i class="as-pdot"></i><span class="as-rn">'+esc(d.p.name)+' · '+esc(d.title)+'</span><span class="as-rv'+(c?'':' as-muted')+'">'+(c?esc(c.label):d.id in DEC?'odłożone':'—')+'</span></div>'}).join('')+'</div>':'')+'</div>'},
+    lines:()=>{const n=L.filter(d=>DEC[d.id]).length;return [{f:['ass1'].concat(L.length?['asrl']:[]),t:n?'Wybrane: '+n+'. Odpowiedzi i zgody trafiają do kart projektów i zadań.':'Decyzje zostają na później.'}]}}}
+
+/* plan dnia */
+function todayScenes(){
+  const L=F.today(),sum=L.reduce((s,x)=>s+(x.min||0),0),unk=L.filter(x=>!x.min).length,uc=L.reduce((s,x)=>s+x.uc,0),lim=D.dayMinutes||120;
+  const busy=new Set(L.map(x=>x.p.id)),free=F.active().filter(p=>!busy.has(p.id)&&!F.blocked(p).length&&p.pst!=='late');
+  const why=x=>[x.date&&x.date<T()?['red','po terminie']:null,x.uc?['blue','odblokuje '+x.uc]:null,x.kind!=='zadanie'?['purple',x.kind]:null].filter(Boolean);
+  const top=L.slice(0,3),rest=L.slice(3);
+  const open=x=>x.t?'<button type="button" class="as-act" data-asact="task" data-id="'+esc(x.t.id)+'">'+I.open+'Otwórz zadanie</button>':
+    '<button type="button" class="as-act" data-asact="q" data-id="'+esc(x.p.id+':'+x.q.n)+'">'+I.open+'Odpowiedz</button>';
+  return [
+    {key:'t-hero',tint:tint('c4','accent'),chips:CH_TODAY,
+      html:()=>'<div class="as-in as-hero"><div class="as-gen" style="--d:0"><span class="as-eb">Plan na dziś</span></div><div class="as-hn as-sm'+(!sum&&L.length?' as-unk':'')+' as-fx" id="asth">'+(sum?dur(sum):L.length?'czas nieznany':'0')+'</div>'+
+        '<div class="as-ht as-gen" style="--d:2">'+L.length+' '+pl(L.length,'sprawa','sprawy','spraw')+(uc?', odblokują '+uc+' '+pl(uc,'zadanie','zadania','zadań'):'')+'</div>'+
+        (unk&&sum?'<p class="as-sub as-gen" style="--d:3;margin:10px auto 0">'+unk+' bez podanego czasu</p>':'')+
+        (sum>lim?'<p class="as-gen as-capw" style="--d:4">'+spill(['yellow','o '+dur(sum-lim)+' ponad Twój dzień ('+dur(lim)+')'])+'</p>':'')+'</div>',
+      lines:()=>[{f:['asth'],t:L.length?'Na dziś masz '+L.length+' '+pl(L.length,'sprawę','sprawy','spraw')+', '+(sum?dur(sum)+(unk?' (i '+unk+' bez podanego czasu)':''):'czas nieznany')+(uc?'. Odblokują '+uc+' '+pl(uc,'zadanie','zadania','zadań')+'.':'.'):'Na dziś nic nie czeka po Twojej stronie.'}]
+        .concat(sum>lim?[{f:['asth'],t:'To '+dur(sum-lim)+' ponad Twój dzień. Najmniej pilne może poczekać do jutra.'}]:[])},
+    {key:'t-blocks',tint:tint('c2','c1'),tr:'rise',chips:CH_TODAY,
+      html:()=>'<div class="as-in">'+head('Kolejność',!L.length?'Nic na dziś':top.length===3?'Najpierw te trzy':'W tej kolejności')+
+        (L.length?'<div class="as-blocks" role="img" aria-label="'+esc(L.map(x=>x.title+' '+(x.min?dur(x.min):'czas nieznany')).join(', '))+'">'+L.map((x,k)=>'<div style="--m:'+(x.min||10)+';'+pc(x.p)+';--d:'+k+'" title="'+esc(x.title)+'">'+(x.min&&x.min>=20?'<span>'+x.min+' min</span>':'')+'</div>').join('')+'</div>':'')+
+        '<div class="as-tcards">'+top.map((x,k)=>'<div class="as-card as-tcard as-fx as-gen" id="astb'+k+'" style="--d:'+(k+3)+';'+pc(x.p)+'"><span class="as-eb">'+(k+1)+' · '+esc(x.p.name)+' · '+(x.min?dur(x.min):'czas nieznany')+'</span><b>'+esc(x.title)+'</b>'+(x.why?'<p>'+esc(x.why)+'</p>':'')+'<div class="as-why2">'+why(x).map(spill).join('')+'</div>'+open(x)+'</div>').join('')+'</div>'+
+        (rest.length?'<ul class="as-rest as-fx as-gen" id="astr" style="--d:7">'+rest.map(x=>'<li><span>'+esc(x.title)+' <span class="as-pn">· '+esc(x.p.name)+'</span></span><span class="as-m">'+(x.min?dur(x.min):'czas nieznany')+'</span></li>').join('')+'</ul>':'')+'</div>',
+      lines:()=>!L.length?[{f:[],t:'Na dziś nic nie czeka.'}]:top.map((x,k)=>({f:['astb'+k],t:(k===0?'Najpierw ':k===1?'Potem ':'Następnie ')+low(x.title)+' ('+x.p.name+')'+(x.date&&x.date<T()?', bo jest po terminie.':x.uc?', bo odblokuje '+x.uc+' '+pl(x.uc,'zadanie','zadania','zadań')+'.':'.')}))
+        .concat(rest.length?[{f:['astr'],t:'Na koniec '+rest.length+' '+pl(rest.length,'sprawa','sprawy','spraw')+', razem '+dur(rest.reduce((s,x)=>s+(x.min||0),0))+'.'}]:[])},
+    {key:'t-chill',tint:tint('c3','c7'),tr:'rise',chips:CH_TODAY,
+      html:()=>'<div class="as-in" style="text-align:center">'+head('Spokojnie',free.length?'To dziś może poczekać':'Dziś wszystko potrzebuje uwagi')+
+        '<div class="as-chill as-fx" id="astc">'+free.map((p,k)=>'<div class="as-gen" style="--d:'+(k+1)+'">'+ring(p)+'<span>'+esc(p.name)+'<br><small>'+esc(p.cur?p.cur.title+(isDay(p.cur.date)?' · '+ddl(p.cur.date):''):'')+'</small></span></div>').join('')+'</div></div>',
+      lines:()=>[{f:['astc'],t:free.length?free.map(p=>p.name).join(' i ')+(free.length===1?' idzie':' idą')+' zgodnie z planem i dziś nie '+(free.length===1?'potrzebuje':'potrzebują')+' Ciebie.':'Każdy projekt ma dziś coś po Twojej stronie albo wymaga uwagi.'}]}
+  ]}
+
+/* przegląd projekt po projekcie */
+function projectScenes(p,i,n,decs){
+  const d=F.week(p),dn=F.doneWeek(p),dates=F.hasDates(p),W=F.waiting(p),mini='<div class="as-mh as-gen" style="--d:0">'+ring(p)+'<span class="as-mhn">'+esc(p.name)+'</span><span class="as-eb">'+(i+1)+' z '+n+'</span></div>';
+  const st=F.status(p),tn=tint('c'+(p.ci+1),'accent'),L=[],id=esc(p.id);
+  L.push({key:'cover-'+p.id,p:p,tint:tn,tr:i?'slide':'zoom',chips:CH_REV,
+    html:()=>'<div class="as-in as-cover"><div class="as-fx as-gen" id="ascv-r" style="--d:0">'+ring(p)+'</div><div class="as-fx" id="ascv-i" style="min-width:0">'+
+      '<span class="as-eb as-gen" style="--d:1">Projekt '+(i+1)+' z '+n+(p.description?' · '+esc(p.description):'')+'</span><h2 class="as-cvn as-gen" style="--d:2">'+esc(p.name)+'</h2>'+
+      '<div class="as-cvm as-gen" style="--d:3">'+spill(st)+'<span>'+esc(PHN[p.phase]||'')+'</span>'+(p.cur?'<span>Etap: <b>'+esc(p.cur.title)+'</b>'+(isDay(p.cur.date)?' · '+ddl(p.cur.date):'')+'</span>':'')+'</div>'+
+      (d==null?'':'<div class="as-cvd as-gen '+(d>0?'as-up':'as-zero')+'" style="--d:4">'+(d>0?'+'+d+' pp w 7 dni':'Bez postępu w 7 dni')+'</div>')+'</div></div>',
+    lines:()=>[{f:['ascv-r','ascv-i'],t:p.name+'. '+F.pct(p)+'% zrobione, '+st[1]+'.'}]});
+  L.push({key:'done-'+p.id,p:p,tint:tn,tr:'rise',chips:CH_REV,
+    html:()=>'<div class="as-in">'+mini+'<span class="as-eb as-gen" style="--d:1">Zrobione w ostatnich 7 dniach</span>'+
+      (dn.length?'<ul class="as-dl as-fx" id="asdn">'+dn.map((t,k)=>'<li style="--d:'+k+'"><svg class="as-ck" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18"/><path d="M12 20.5l5.5 5.5L28.5 14" pathLength="1"/></svg><span>'+esc(t.title)+'<small>'+esc(who(t.executor))+' · '+ddl(t.doneAt)+'</small></span></li>').join('')+'</ul>'
+        :'<p class="as-empty as-fx as-gen" id="asdn" style="--d:2">'+(dates?'W tym tygodniu nic nie zamknięto.':'Brak danych o datach zamknięcia zadań.')+'</p>')+'</div>',
+    lines:()=>[{f:['asdn'],t:dn.length?'Zrobione: '+dn.map(t=>low(t.title)).join(', ')+'.':dates?'W tym tygodniu nic tu nie zamknięto.':'Panel nie zna jeszcze dat zamknięcia zadań w tym projekcie.'}]});
+  L.push({key:'wait-'+p.id,p:p,tint:tn,tr:'rise',chips:CH_REV,
+    html:()=>'<div class="as-in">'+mini+'<span class="as-eb as-gen" style="--d:1">Czeka</span>'+
+      (W.length?'<div class="as-wl as-fx" id="aswt">'+W.map((w,k)=>'<div class="as-card as-wt as-gen" style="--d:'+(k+2)+'"><div class="as-av '+(w.who||'')+'" aria-hidden="true">'+esc(w.av)+'</div><div class="as-wtb"><b>'+esc(w.t.title)+'</b><small class="'+(w.me?'as-me':'')+'">'+esc(w.txt)+'</small></div>'+
+        '<div class="as-since">'+(w.since!=null?w.since+' '+pl(w.since,'dzień','dni','dni'):w.due?dueTxt(w.due):'')+'</div></div>').join('')+'</div>'
+        :'<p class="as-empty as-fx as-gen" id="aswt">Nic nie czeka.</p>')+'</div>',
+    lines:()=>{const b=W.filter(w=>w.since!=null),m=W.filter(w=>w.me),L2=[];
+      if(b.length)L2.push({f:['aswt'],t:b.map(w=>w.t.title+' czeka od '+w.since+' '+pl(w.since,'dnia','dni','dni')).join('. ')+'.'});
+      else if(W.some(w=>w.t.state==='blocked'))L2.push({f:['aswt'],t:W.filter(w=>w.t.state==='blocked').map(w=>w.t.title).join(', ')+': zablokowane.'});
+      if(m.length)L2.push({f:['aswt'],t:'Po Twojej stronie: '+m.map(w=>low(w.t.title)).join(', ')+'.'});
+      if(!L2.length)L2.push({f:['aswt'],t:W.length?'Agenci pracują, nic nie czeka na Ciebie.':'Nic nie czeka.'});return L2}});
+  const DL=decs.filter(x=>x.p===p);
+  DL.forEach((x,k)=>L.push(decScene(x,k,DL.length,'Decyzja w projekcie')));
+  return L}
+
+/* odpowiedź modelu: tekst i karty z cards.pokaz (apCard, przypinanie jak na płótnie) */
+function ansCards(m){const c=m&&m.cards||{};return (c.pokaz||[]).map(x=>x&&x.typ?x:x?apDef(x.id,null):null).filter(x=>x&&x.typ)}
+const ansCardsHtml=m=>ansCards(m).map(c=>apCard({c:c,pin:AS.lib.przypiete.indexOf(c.id)>=0,fresh:false})).join('');
+function scAnswer(q,m,err){
+  const txt=m?asClean(m.text):'',n=ansCards(m).length;
+  const fm=/^[^\n]*?[.!?](?=\s|$)|^[^\n]+/.exec(txt.trim()),first=fm?fm[0].trim():'';
+  return {key:'answer',m:m,tint:tint('accent','c7'),wait:'yes',chips:['Jaki jest stan projektów?','Na czym mam się dziś skupić?','Zamknij'],
+    html:()=>'<div class="as-in"><div class="as-ans"><div class="as-gen" style="--d:0"><span class="as-eb">Odpowiedź</span><p class="as-q">'+esc('„'+q+'”')+'</p></div>'+
+      (err?'<p class="warn as-fx as-gen" id="asan-t" style="--d:1">'+esc(err)+'</p>':
+      '<div class="as-txt as-fx as-gen" id="asan-t" style="--d:1">'+(txt?chatText(txt):'<p>'+(n?'Odpowiedź jest na '+(n===1?'karcie':'kartach')+' poniżej.':'Brak treści odpowiedzi.')+'</p>')+'</div>')+
+      (n?'<div class="ap-cv as-anc as-fx as-gen" id="asan-c" style="--d:2">'+ansCardsHtml(m)+'</div>':'')+'</div></div>',
+    lines:()=>err?[{f:['asan-t'],t:err}]:[{f:['asan-t'],t:first.length>180?first.slice(0,177)+'…':first||'Odpowiedź gotowa.'}]
+      .concat(n?[{f:['asan-c'],t:n===1?'Szczegóły na karcie. Możesz ją przypiąć do płótna kart.':'Szczegóły na kartach ('+n+'). Możesz je przypiąć do płótna kart.'}]:[])}}
+
+/* ----- odtwarzacz: segmenty, ← → pauza, automatyczne przejście, podpis słowo po słowie ----- */
+const SP={flow:[],i:-1,paused:false,name:'',mk:null,lines:[],k:0,t0:0,dur:0,raf:0,timer:0,wt:0};
+const E={};          /* elementy bieżącej ramki #asv */
+let ro=null,cmd='',WQ=null;
+const cur=()=>SP.flow[SP.i];
+const playing=()=>!!E.root&&E.root.classList.contains('as-play');
+function setMode(m){E.root.classList.toggle('as-play',m==='play');measure()}
+function measure(){
+  const r=E.root;if(!r)return;
+  const b=$('#banner'),m=$('.main'),bn=$('#bnav');
+  const top=b?Math.max(0,Math.round(b.getBoundingClientRect().bottom)):0,left=m?Math.max(0,Math.round(m.getBoundingClientRect().left)):0;
+  const bot=bn&&getComputedStyle(bn).display!=='none'?bn.offsetHeight:0;
+  r.style.top=top+'px';r.style.left=left+'px';r.style.bottom=bot+'px';
+  r.style.setProperty('--as-cap-h',playing()&&E.cap?E.cap.offsetHeight+'px':'0px');
+  if(E.dk)r.style.setProperty('--as-dock-h',E.dk.offsetHeight+'px')}
+function setChips(a){if(E.chips)E.chips.innerHTML=a.map((c,i)=>'<button type="button" class="as-sug" style="--d:'+i+'">'+esc(c)+'</button>').join('')}
+function setTint(t){if(t&&E.root){E.root.style.setProperty('--as-t1',t[0]);E.root.style.setProperty('--as-t2',t[1])}}
+function stopTimers(){cancelAnimationFrame(SP.raf);clearTimeout(SP.timer);clearTimeout(SP.wt)}
+/* podpis: słowa pojawiają się w tempie czytania; czytnik dostaje całe zdanie raz */
+function setCap(text,opt){opt=opt||{};clearTimeout(SP.wt);if(!E.capt)return;
+  if(opt.think){E.capt.innerHTML='<span class="as-think">'+esc(text)+'</span>';E.live.textContent=text;return}
+  const w=String(text).split(/\s+/).filter(Boolean);
+  E.capt.innerHTML=w.map(x=>'<span class="as-w'+(reduce||opt.now?' as-on':'')+'">'+esc(x)+'</span>').join(' ')+(SP.paused?'<span class="as-paused">pauza</span>':'');
+  E.live.textContent=text;
+  if(reduce||opt.now)return;
+  const S2=E.capt.querySelectorAll('.as-w');let j=0;const step=()=>{if(j<S2.length){S2[j++].classList.add('as-on');SP.wt=setTimeout(step,130)}};step()}
+function setFocus(ids){const sc=E.stage&&E.stage.querySelector('.as-scene:not(.as-leave)');if(!sc)return;
+  sc.querySelectorAll('.as-fx.as-focus').forEach(e=>e.classList.remove('as-focus'));
+  const els=(ids||[]).map(id=>sc.querySelector('#'+CSS.escape(id))).filter(Boolean);
+  sc.classList.toggle('as-focusing',els.length>0);els.forEach(e=>e.classList.add('as-focus'));
+  /* telefon: wskazany element przewija się do widoku */
+  if(els[0]&&sc.scrollHeight>sc.clientHeight+4){const r=els[0].getBoundingClientRect(),sr=sc.getBoundingClientRect(),cs=getComputedStyle(sc),top=sr.top+parseFloat(cs.paddingTop),bot=sr.top+sc.clientHeight-parseFloat(cs.paddingBottom);
+    if(r.top<top||r.bottom>bot)sc.scrollBy({top:r.top-top-8,behavior:reduce?'auto':'smooth'})}}
+function buildSegs(){E.segs.innerHTML=SP.flow.map((s,i)=>'<button type="button" class="as-seg" data-asc="seg" data-i="'+i+'" aria-label="Scena '+(i+1)+' z '+SP.flow.length+'"><i><b></b></i></button>').join('')}
+function segProgress(x){Array.prototype.forEach.call(E.segs.children,(s,i)=>{s.classList.toggle('as-past',i<SP.i);if(i===SP.i)s.setAttribute('aria-current','step');else s.removeAttribute('aria-current');
+  s.querySelector('b').style.width=i<SP.i?'100%':i>SP.i?'0':Math.round(Math.min(1,x)*100)+'%'})}
+function updatePause(){const b=E.pause;if(!b)return;b.innerHTML=SP.paused?I.play:I.pause;b.setAttribute('aria-label',SP.paused?'Wznów':'Pauza');b.title=(SP.paused?'Wznów':'Pauza')+(AS.voice?'':' (spacja)')}
+function swapScene(sc,type){
+  const el=document.createElement('section');el.className='as-scene';el.setAttribute('aria-label','Scena '+(SP.i+1)+' z '+SP.flow.length);
+  try{el.innerHTML=sc.html()}catch(e){console.error(e);el.innerHTML='<div class="as-in"><p class="warn">Nie udało się pokazać tej sceny.</p></div>'}
+  const old=E.stage.querySelector('.as-scene:not(.as-leave)');
+  if(old&&!reduce){old.classList.add('as-leave','as-t-'+type);setTimeout(()=>old.remove(),420)}else if(old)old.remove();
+  if(!reduce){el.classList.add('as-enter','as-t-'+type);setTimeout(()=>el.classList.remove('as-enter','as-t-'+type),700)}
+  E.stage.appendChild(el);setTint(sc.tint);countUp(el)}
+function countUp(root){if(reduce)return;root.querySelectorAll('[data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now()+200;
+  const f=t=>{const k=Math.max(0,Math.min(1,(t-t0)/900));el.textContent=Math.round(to*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)};el.textContent='0';requestAnimationFrame(f)})}
+function showScene(i,type){
+  if(i<0||i>=SP.flow.length||!E.root)return;stopTimers();SP.i=i;const sc=cur();
+  swapScene(sc,type||sc.tr||'zoom');setChips(sc.chips||CH_STATUS);
+  E.prev.disabled=i===0;E.next.disabled=i===SP.flow.length-1;
+  try{SP.lines=sc.lines()}catch(e){console.error(e);SP.lines=[]}SP.k=0;segProgress(0);
+  if(SP.paused){const l=SP.lines[0];setCap(l?l.t:'',{now:true});setFocus(l?l.f:[]);return}
+  SP.timer=setTimeout(()=>playLine(0),reduce?50:280)}
+const lineDur=t=>Math.max(2600,String(t).split(/\s+/).length*330+1400);
+function playLine(k){
+  const sc=cur(),L=SP.lines;stopTimers();SP.k=k;if(!sc)return;
+  if(k>=L.length){segProgress(1);
+    if(sc.wait)return;              /* decyzja, pytanie „przejdziemy?” i odpowiedź: czekają */
+    SP.timer=setTimeout(()=>{if(!SP.paused)next()},700);return}
+  setCap(L[k].t);setFocus(L[k].f);SP.dur=lineDur(L[k].t);SP.t0=performance.now();
+  const n=L.length,tick=t=>{const e=Math.min(1,(t-SP.t0)/SP.dur);segProgress((k+e)/n);if(e<1)SP.raf=requestAnimationFrame(tick);else playLine(k+1)};
+  SP.raf=requestAnimationFrame(tick)}
+function next(){if(SP.i<SP.flow.length-1)showScene(SP.i+1,SP.flow[SP.i+1].tr||'zoom')}
+function prev(){if(SP.i>0)showScene(SP.i-1,'back')}
+function togglePause(){if(!playing()||SP.i<0)return;SP.paused=!SP.paused;updatePause();
+  if(SP.paused){stopTimers();const l=SP.lines[SP.k]||SP.lines[SP.lines.length-1];setCap(l?l.t:'',{now:true})}
+  else playLine(Math.min(SP.k,SP.lines.length))}
+/* name: przepływ, mk: buduje sceny od nowa (powrót na stronę), start: scena początkowa */
+function playFlow(name,mk,start,label){
+  if(!E.root)return;
+  setMode('play');E.root.dataset.s='think';SP.paused=false;updatePause();stopTimers();
+  SP.name=name;SP.mk=mk;SP.flow=mk();SP.i=-1;buildSegs();segProgress(0);setChips([]);
+  E.stage.querySelectorAll('.as-scene').forEach(s=>s.remove());
+  setCap(label||'Zbieram dane panelu…',{think:true});
+  const st=typeof start==='function'?start(SP.flow):start||0;
+  SP.timer=setTimeout(()=>{if(!E.root)return;E.root.dataset.s='idle';showScene(Math.max(0,st),'zoom')},reduce?100:650)}
+function home(){stopTimers();SP.flow=[];SP.i=-1;SP.name='';SP.mk=null;if(!E.root)return;
+  E.stage.querySelectorAll('.as-scene').forEach(s=>s.remove());E.segs.innerHTML='';E.root.dataset.s='idle';setMode('home');setTint(tint('accent','c3'));setChips(HOME_CHIPS);E.live.textContent=''}
+/* oczekiwanie na model: kula pulsuje, podpis z postępem (AS.activity), bez segmentów */
+function waiting(q){if(!E.root)return;stopTimers();setMode('play');E.root.dataset.s='think';SP.flow=[];SP.i=-1;SP.name='wait';SP.mk=null;E.segs.innerHTML='';
+  E.stage.querySelectorAll('.as-scene').forEach(s=>s.remove());setChips([]);E.prev.disabled=E.next.disabled=true;
+  setCap(AS.activity?AS.activity+'…':'Szukam odpowiedzi…',{think:true})}
+
+/* przepływy */
+const startStatus=k=>playFlow('status',()=>[scOverview(),scRings(),scChanges(),scRisks(),scTempo(),scWallet()],k?f=>f.findIndex(s=>s.key===k):0,'Sprawdzam projekty…');
+function startDecisions(i){
+  if(SP.name==='decisions'&&playing()){showScene(i||0,'rise');return}
+  playFlow('decisions',()=>{const L=F.decisions();return L.map((d,k)=>decScene(d,k,L.length)).concat([scRecap(L)])},i||0,'Zbieram decyzje…')}
+const startToday=()=>playFlow('today',todayScenes,0,'Układam plan na dziś…');
+const startReview=pid=>playFlow('review',()=>{const A=F.active(),L=F.decisions();return [].concat(...A.map((p,i)=>projectScenes(p,i,A.length,L))).concat([scRecap(L.filter(d=>A.indexOf(d.p)>=0))])},
+  pid?f=>f.findIndex(s=>s.key==='cover-'+pid):0,'Zbieram zmiany z 7 dni…');
+function showAnswer(q,m,err){const sc=scAnswer(q,m,err);playFlow('answer',()=>[sc],0,'Odpowiedź gotowa')}
+
+/* decyzje: wybór kafelka wykonuje działanie istniejącą drogą panelu (answerQ, actTask, Odbiór pracy, Księga) */
+function run(d,o){
+  const p=d.p,cm=canMeta(p);
+  if(o.v==='own'){const k='qa:'+p.id+':'+d.q.n,h=phref(p,'ksiega');
+    const go=()=>setTimeout(()=>{const n=document.querySelector('[data-k="'+CSS.escape(k)+'"]');if(n){n.scrollIntoView({block:'center'});n.focus()}},80);if(location.hash===h)go();else{addEventListener('hashchange',go,{once:true});location.hash=h}return 'away'}
+  if(o.v==='view'){location.hash=odHref(d.t.id);return 'away'}
+  if(o.v==='later'||o.v==='hold'&&!d.t)return '';
+  if(!cm){say(PRV);return ''}
+  if(o.v==='accept')answerQ(p.id,d.q.n,d.q.proposal,true);
+  else if(o.v==='opt')answerQ(p.id,d.q.n,o.ans,false);
+  else if(o.v==='ok'||o.v==='hold'){const t=D.tasks.find(x=>x.id===d.t.id);if(!t){say('Tego zadania już nie ma na liście.');return ''}
+    /* publikacja: jak w listach panelu najpierw podgląd posta (szuflada), tam Zatwierdź */
+    if(o.v==='ok'&&t.kind==='publikacja'){openDrawer('task',t.id);return 'away'}
+    const prev={};Object.keys(ACT[o.v]).forEach(f=>{prev[f]=t[f]||''});const id=t.id,title=t.title;
+    actTask(id,o.v);if(LIVE)sayUndo((o.v==='ok'?'Zatwierdzono: ':'Wstrzymano: ')+title,()=>{const x=D.tasks.find(y=>y.id===id);if(x)patchTask(x.id,prev)})}
+  return ''}
+function choose(k){const sc=cur();if(!sc||sc.kind!=='dec')return;const d=sc.d,o=sc.O[k];if(!o)return;stopTimers();
+  DEC[d.id]={k:k,label:o.label,v:o.v};
+  const root=E.stage.querySelector('.as-scene:not(.as-leave)');
+  if(root){root.querySelectorAll('.as-tile').forEach((t,j)=>{t.classList.toggle('as-sel',j===k);t.classList.toggle('as-off',j!==k);t.setAttribute('aria-pressed',String(j===k))});
+    const lb=root.querySelector('.as-later');if(lb)lb.remove()}
+  setChips(sc.chips);segProgress(1);
+  setCap({accept:'Propozycja przyjęta.',opt:'Odpowiedź: '+low(o.label)+'.',own:'Otwieram pytanie w Księdze projektu.',ok:'Zatwierdzone.',hold:'Wstrzymane.',view:'Otwieram odbiór pracy.',later:'Zostaje do odbioru.'}[o.v]);setFocus(['asd-'+k]);
+  const r=run(d,o);
+  if(r!=='away'&&!SP.paused)SP.timer=setTimeout(()=>{if(cur()===sc)next()},1600)}
+function skipDec(){const sc=cur();if(!sc||sc.kind!=='dec')return;stopTimers();DEC[sc.d.id]=null;setCap('Odkładam tę sprawę.');
+  const root=E.stage.querySelector('.as-scene:not(.as-leave) .as-later');if(root)root.remove();setChips(sc.chips);
+  if(!SP.paused)SP.timer=setTimeout(()=>{if(cur()===sc)next()},1100)}
+
+/* polecenia: podpowiedzi i pole tekstowe; rozpoznane przepływy działają lokalnie, reszta idzie do modelu */
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ł/g,'l');
+function handle(raw){raw=String(raw||'').trim();const t=norm(raw).replace(/[?!.]+$/,'').trim();if(!t||!E.root)return;
+  const sc=cur();
+  if(sc&&sc.kind==='dec'&&!(sc.d.id in DEC)){const k=sc.O.findIndex(o=>norm(o.label)===t);if(k>=0)return choose(k);if(/^odloz/.test(t))return skipDec()}
+  if(/^dalej$/.test(t))return next();
+  if(/^wroc$/.test(t))return prev();
+  if(/^zamknij$/.test(t))return home();
+  if(/^tak\b|po kolei/.test(t)){if(sc&&sc.onYes)return sc.onYes();return startDecisions(0)}
+  if(/co sie zmienilo|zmiany w tygodniu/.test(t))return startStatus('changes');
+  if(/^(jaki jest )?stan( projektow)?$|^status|jak ida projekty/.test(t))return startStatus();
+  if(/decyz/.test(t))return startDecisions(0);
+  if(/^co mam dzis|na czym mam sie dzis|plan (na )?dzis|plan dnia/.test(t))return startToday();
+  if(/^przeglad( projektow)?$/.test(t))return startReview();
+  const p=F.active().find(p=>{const w=norm(p.name).split(/[ .(]/)[0];return w.length>=3&&(t===w||t==='przeglad '+w||t==='projekt '+w)});if(p)return startReview(p.id);
+  if(!LIVE){say(PRV);return}
+  if(AS.pending){say('Czekam jeszcze na odpowiedź.');return}
+  asSend(raw)}
+/* pytanie z innego widoku (Start: data-asq): najpierw strona Asystent, potem polecenie */
+function ask(text){if(asScOn()&&E.root){handle(text);return}cmd=String(text||'');location.hash='#asystent'}
+
+/* stan rozmowy z modelem (wołane z asRender): wysłane pytanie → oczekiwanie, koniec → scena odpowiedzi */
+function sync(){
+  if(!E.root)return;
+  if(AS.pending){
+    if(!WQ){let n=-1;AS.messages.forEach((m,i)=>{if(m.role==='ty')n=i});WQ={q:n>=0?AS.messages[n].text:'',n:n};waiting(WQ.q)}
+    else if(SP.name==='wait')setCap(AS.activity?AS.activity+'…':asClean(AS.partial)?'Piszę odpowiedź…':'Szukam odpowiedzi…',{think:true});
+    return}
+  if(WQ&&AS.loaded){const w=WQ;WQ=null;let m=null;AS.messages.forEach((x,i)=>{if(i>w.n&&x.role==='claude')m=x});
+    if(m)showAnswer(w.q,m,'');else showAnswer(w.q,null,AS.error||'Brak odpowiedzi asystenta.');return}
+  /* karta odpowiedzi po przypięciu: odśwież przyciski */
+  const sc=cur();if(sc&&sc.key==='answer'){const box=E.stage.querySelector('.as-scene:not(.as-leave) .as-anc');if(box)setHtml(box,ansCardsHtml(sc.m))}}
+
+/* ramka strony (stała treść: render nie podmienia jej przy odświeżaniu danych) */
+function shell(){
+  return '<div class="as-sc" id="asv" data-s="idle"><div class="as-amb" aria-hidden="true"><i class="as-a1"></i><i class="as-a2"></i></div>'+
+    '<header class="as-top"><h1 class="as-badge">'+ORB+'<span>Asystent</span></h1><span class="as-sp"></span>'+asModeSw('sceny')+
+    '<button type="button" class="as-ib" data-asc="close" aria-label="Zamknij odpowiedź" title="Zamknij (Esc)">'+I.x+'</button></header>'+
+    '<div class="as-stage"></div>'+
+    '<section class="as-home" aria-labelledby="ashello">'+ORB+'<h2 id="ashello">O co chcesz zapytać?</h2><p class="as-day"></p></section>'+
+    '<div class="as-cap">'+ORB+'<div class="as-capt" aria-hidden="true"></div></div><div class="sr-only" aria-live="polite" data-aslive="1"></div>'+
+    '<div class="as-dk"><div class="as-ctrl"><button type="button" class="as-cb" data-asc="prev" aria-label="Poprzednia scena" title="Poprzednia (←)">'+I.prev+'</button>'+
+    '<div class="as-segs"></div><button type="button" class="as-cb" data-asc="pause" aria-label="Pauza"></button>'+
+    '<button type="button" class="as-cb" data-asc="next" aria-label="Następna scena" title="Następna (→)">'+I.next+'</button></div>'+
+    '<div class="as-chips" role="group" aria-label="Podpowiedzi"></div><div class="as-dkh" id="asdock"></div></div></div>'}
+function mount(){
+  const r=$('#asv');if(!r)return;
+  if(r!==E.root){
+    E.root=r;E.stage=r.querySelector('.as-stage');E.segs=r.querySelector('.as-segs');E.chips=r.querySelector('.as-chips');E.cap=r.querySelector('.as-cap');
+    E.capt=r.querySelector('.as-capt');E.live=r.querySelector('[data-aslive]');E.dk=r.querySelector('.as-dk');
+    E.prev=r.querySelector('[data-asc="prev"]');E.next=r.querySelector('[data-asc="next"]');E.pause=r.querySelector('[data-asc="pause"]');
+    const d=fromKey(D.todayKey);r.querySelector('.as-day').textContent=DNI[d.getDay()].replace(/^./,c=>c.toUpperCase())+', '+d.getDate()+' '+MD[d.getMonth()];
+    if(ro)ro.disconnect();if(window.ResizeObserver){ro=new ResizeObserver(measure);ro.observe(E.cap);ro.observe(E.dk)}
+    updatePause();
+    /* powrót na stronę: ostatni przepływ w miejscu, w którym był, zatrzymany */
+    if(cmd){const c=cmd;cmd='';home();setTimeout(()=>handle(c),0)}
+    else if(SP.mk&&SP.flow.length){const i=SP.i;SP.flow=SP.mk();setMode('play');buildSegs();SP.paused=true;updatePause();showScene(Math.min(Math.max(0,i),SP.flow.length-1),'zoom')}
+    else home()}
+  measure()}
+function unmount(){if(!E.root)return;stopTimers();if(ro)ro.disconnect();for(const k in E)delete E[k]}
+
+/* zdarzenia */
+document.addEventListener('click',ev=>{const t=ev.target;if(!t||!t.closest)return;
+  const m=t.closest('[data-asmode]');
+  if(m){ev.preventDefault();const v=m.dataset.asmode==='karty'?'karty':'sceny';if(PF.asMode!==v){PF.asMode=v;savePF();render(true);focusK('asmode:'+v)}return}
+  if(!E.root||!E.root.contains(t))return;
+  const s=t.closest('.as-sug');if(s){handle(s.textContent);return}
+  const c=t.closest('[data-asc]');
+  if(c){const a=c.dataset.asc;if(a==='prev')prev();else if(a==='next')next();else if(a==='pause')togglePause();else if(a==='close')home();
+    else if(a==='seg'){const i=+c.dataset.i;showScene(i,i<SP.i?'back':'slide')}return}
+  const b=t.closest('[data-asact]');if(!b)return;const a=b.dataset.asact;
+  if(a==='opt')choose(+b.dataset.i);else if(a==='skip')skipDec();
+  else if(a==='dec')startDecisions(+b.dataset.i);
+  else if(a==='task'){if(D.tasks.find(x=>x.id===b.dataset.id))openDrawer('task',b.dataset.id);else say('To zadanie zniknęło z listy.')}
+  else if(a==='q'){if(qOf(b.dataset.id)){openDrawer('q',b.dataset.id);focusK('qa:'+b.dataset.id)}}});
+document.addEventListener('keydown',ev=>{
+  if(!E.root||!asScOn()||DR||ED.cur||ev.altKey||ev.ctrlKey||ev.metaKey)return;
+  const a=document.activeElement,inField=!!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  /* Esc w pustym polu rozmowy też zamyka odpowiedź (z tekstem: czyści pole, jak w reszcie panelu) */
+  if(ev.key==='Escape'&&inField&&playing()&&!a.value&&E.root.contains(a)){home();return}
+  if(inField||!playing())return;
+  if(ev.key==='Escape'){ev.preventDefault();home();const ta=E.root.querySelector('.ap-dock textarea');if(ta)ta.focus({preventScroll:true});return}
+  if(ev.key==='ArrowRight'){ev.preventDefault();next()}
+  else if(ev.key==='ArrowLeft'){ev.preventDefault();prev()}
+  /* spacja: pauza, gdy nie służy do mówienia (asKeyFree przejmuje ją wcześniej przy włączonym głosie) */
+  else if(ev.key===' '&&!(a&&a.closest&&a.closest('button,a[href],summary'))){ev.preventDefault();togglePause()}});
+addEventListener('resize',()=>{if(E.root)measure()});
+return {shell:shell,mount:mount,unmount:unmount,sync:sync,handle:handle,ask:ask};
+})();
 
 /* ---------- strona „Odbiór pracy” (#odbior?z=<id zadania>) ----------
    Wersje wyniku, porównanie, „Co zmieniono”, Akceptuję (także wybrane warianty) i Popraw ze znacznikami na obrazie albo filmie.
