@@ -819,7 +819,8 @@ def read_project(path, pid=None, decision=None):
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
                "priority": fields["priority"], "instagram": fields["instagram"], "facebook": fields["facebook"],
                "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"],
-               "site": fields["site"], "questions": questions}
+               "site": fields["site"], "github": fields["github"], "githubBranch": fields["githubBranch"],
+               "questions": questions}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
     if fields["phase"]:
@@ -936,9 +937,30 @@ def card_fields(meta, decision=None):
     if raw and not film_owner and raw not in ("panel", "agent"):
         errors.append("nagrywa: %s (dozwolone: ty, panel)" % meta["nagrywa"])
     site = site_fields(meta, errors)
-    return {"state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
+    raw = meta.get("github", "").strip()             # repozytorium projektu na GitHubie: właściciel/repozytorium
+    github = github_repo(raw)
+    if raw and not github:
+        errors.append("github: %s (właściciel/repozytorium, np. firma/strona)" % raw[:60])
+    raw = meta.get("github gałąź", meta.get("github galaz", "")).strip().strip("`")
+    github_branch = raw if GIT_BRANCH.match(raw) and not raw.endswith((".", "/", ".lock")) else ""
+    if raw and not github_branch:
+        errors.append("github gałąź: %s (nazwa gałęzi bez spacji)" % raw[:60])
+    return {"github": github, "githubBranch": github_branch, "state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
             "priority": priority, "instagram": instagram.lower(), "facebook": pages["facebook"],
             "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "site": site, "errors": errors}
+
+
+GITHUB_REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}/[A-Za-z0-9_.-]{1,100}$")
+GIT_BRANCH = re.compile(r"^(?!-)(?!.*\.\.)(?!.*//)[A-Za-z0-9._/-]{1,200}$")
+
+
+def github_repo(value):
+    """Pole „github:” → "właściciel/repozytorium" (przyjmuje też adres https albo git@github.com:…); "" gdy źle."""
+    v = str(value or "").strip().strip("`").strip()
+    m = re.match(r"^(?:https?://(?:www\.)?github\.com/|git@github\.com:)(.+)$", v, re.I)
+    v = (m.group(1) if m else v).strip("/")
+    v = v[:-4] if v.lower().endswith(".git") else v
+    return v if GITHUB_REPO.match(v) and ".." not in v else ""
 
 
 def site_path_ok(value):

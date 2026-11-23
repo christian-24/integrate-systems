@@ -121,6 +121,7 @@ import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
 import udostepnij  # noqa: E402  (ręczne udostępnienie posta przez rozszerzenie Chrome: IG, FB, LinkedIn, TikTok)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex: warianty w folderze posta)
+import kopie  # noqa: E402  (kopia projektu a GitHub: stan, wysłanie, klon, kosz)
 SHARES = udostepnij.Shares()
 COSTS = koszty.Costs()
 HOST = os.environ.get("PANEL_HOST", "").strip() or "127.0.0.1"
@@ -1868,6 +1869,8 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/campaign/update": lambda b: update_campaign(b),
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
           "/api/project/meta": lambda b: update_meta(b),
+          "/api/github/stan": lambda b: github_state(b), "/api/github/wyslij": lambda b: github_push(b),
+          "/api/github/usun-kopie": lambda b: github_remove(b),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
           "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
@@ -2635,6 +2638,131 @@ def git_states(folders):
             threading.Thread(target=work, daemon=True).start()
     with st["lock"]:
         return {f: dict(st["value"][f]) for f in folders if f in st["value"]}
+
+
+# ---------- kopia projektu a GitHub (kopie.py; AGENCI.md „Kopia projektu i GitHub”) ----------
+def _gh_project(body):
+    """(projekt, folder, None) albo (None, None, (kod, błąd)) dla {"project": id}."""
+    pid = str(body.get("project") or "")
+    data, index = load_projects(resolve=False)
+    p = next((x for x in data["projects"] if x["id"] == pid), None)
+    if not p or pid not in index:
+        return None, None, (404, "Nie ma takiego projektu.")
+    if data["projectsSource"] != "registry":
+        return None, None, (409, "Projekty przykładowe: bez kopii na serwerze.")
+    return p, index[pid], None
+
+
+def _gh_view(p, folder):
+    """Stan kopii z blokadami usunięcia (z pracą agenta i budowaniem podglądu) i polem removable."""
+    st = kopie.state(folder, p.get("github") or "", p.get("githubBranch") or "", projekt.CARDS)
+    m = get_agents()
+    live = m.has_live(p["id"])
+    with m.site._lock:
+        building = p["id"] in m.site._busy
+    if st["repo"]:
+        if building:
+            st["blocks"].insert(0, "Trwa budowanie podglądu strony")
+        if live:
+            st["blocks"].insert(0, "Agent pracuje w projekcie")
+        if p.get("origin") != "registry":
+            st["blocks"].append("Projekt ze zbieracza: kopię usuwasz na komputerze, z którego pochodzi")
+    st.update(agentLive=live, removable=st["repo"] and not st["blocks"], folder=short_path(folder),
+              project=p["id"])
+    if st["removed"].get("trash"):
+        st["removed"]["trash"] = short_path(st["removed"]["trash"])
+    return st
+
+
+def _gh_forget(folder):
+    with _git_state["lock"]:
+        _git_state["value"].pop(folder, None)
+
+
+def github_state(body):
+    """POST /api/github/stan {"project", "fetch"?: bool}: stan kopii; fetch tylko na żądanie („Sprawdź”)."""
+    p, folder, err = _gh_project(body)
+    if err:
+        return err
+    msg = ""
+    if body.get("fetch") is True:
+        if not kopie.has_repo(folder):
+            msg = "Kopii nie ma na serwerze: nie ma czego sprawdzać."
+        else:
+            with kopie.folder_lock(folder):
+                ok, why = kopie.fetch(folder, p.get("github") or "")
+            msg = "Sprawdzono na GitHubie." if ok else why
+            if not ok:
+                return 502, msg, {"state": _gh_view(p, folder)}
+    _gh_forget(folder)
+    return 200, "", {"state": _gh_view(p, folder), "message": msg}
+
+
+PUSH_ORDER = ("access", "missing", "timeout", "rejected", "error", "sent", "nothing")
+
+
+def github_push(body):
+    """POST /api/github/wyslij {"project", "branches"?: [nazwy]}: push gałęzi bazowej (wybranej w kopii) i wybranych
+    innych, bez --force; potem stan od nowa. 200 wysłano / nic do wysłania, 409 odrzucone, 502 brak dostępu."""
+    p, folder, err = _gh_project(body)
+    if err:
+        return err
+    st = kopie.state(folder, p.get("github") or "", p.get("githubBranch") or "")
+    if not st["repo"]:
+        return 409, "Kopii nie ma na serwerze: nie ma czego wysłać."
+    if not st["origin"]:
+        return 409, "Repozytorium projektu nie ma origin."
+    if st["github"] and not st["originOk"]:
+        return 409, "origin wskazuje inne repozytorium niż pole github: w karcie (%s)." % st["github"]
+    known = {b["name"] for b in st["branches"]}
+    extra = body.get("branches") if isinstance(body.get("branches"), list) else []
+    names = ([st["branch"]] if st["branch"] else []) + [str(b) for b in extra if isinstance(b, str)]
+    names = list(dict.fromkeys(n for n in names if n))
+    if not names:
+        return 409, "W kopii nie jest wybrana żadna gałąź (odłączony HEAD). Wybierz gałęzie do wysłania."
+    bad = [n for n in names if n not in known]
+    if bad:
+        return 400, "Nie ma gałęzi: %s." % ", ".join(bad[:3])
+    with kopie.folder_lock(folder):
+        results = kopie.push(folder, names, p.get("github") or "")
+    _gh_forget(folder)
+    kinds = {r["result"] for r in results}
+    worst = next(k for k in PUSH_ORDER if k in kinds)
+    msg = " ".join(r["message"] for r in results)
+    extra = {"state": _gh_view(p, folder), "results": results, "result": worst, "message": msg}
+    if worst in ("sent", "nothing"):
+        return 200, "", extra
+    return (409 if worst in ("rejected", "error") else 502), msg, extra
+
+
+def github_remove(body):
+    """POST /api/github/usun-kopie {"project", "confirm": true}: przeniesienie kopii do kosza, gdy nic lokalnego nie
+    zginie (najpierw git fetch; blokady jak w _gh_view). Folder zostaje z dowiązaniami karty."""
+    if body.get("confirm") is not True:
+        return 400, "Potwierdź usunięcie kopii."
+    p, folder, err = _gh_project(body)
+    if err:
+        return err
+    m = get_agents()
+    with m._start_lock, kopie.folder_lock(folder):
+        if not kopie.has_repo(folder):
+            return 409, "Kopii nie ma na serwerze."
+        st = _gh_view(p, folder)
+        if st["blocks"]:
+            return 409, "Nie usunięto: %s." % "; ".join(st["blocks"]), {"state": st}
+        ok, why = kopie.fetch(folder, p.get("github") or "")
+        if not ok:
+            return 502, "Nie sprawdzono GitHuba, kopia zostaje. %s" % why, {"state": _gh_view(p, folder)}
+        st = _gh_view(p, folder)
+        if st["blocks"]:
+            return 409, "Nie usunięto: %s." % "; ".join(st["blocks"]), {"state": st}
+        ok, dest = kopie.move_to_trash(folder, p.get("github") or "")
+    _gh_forget(folder)
+    if not ok:
+        return 500, dest, {"state": _gh_view(p, folder)}
+    return 200, "", {"trash": short_path(dest), "state": _gh_view(p, folder),
+                     "message": "Kopia w koszu: %s. Projekt zostaje; kopia sklonuje się z GitHuba przy następnym zadaniu."
+                     % short_path(dest)}
 
 
 def build_data():

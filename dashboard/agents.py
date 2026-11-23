@@ -31,6 +31,7 @@ import asystent  # noqa: E402  (stała sesja asystenta)
 import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
 import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
+import kopie  # noqa: E402  (kopia projektu a GitHub: klon na start)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela)
 import strona  # noqa: E402  (podgląd strony WWW projektu)
 ROOT = os.path.dirname(HERE)
@@ -980,6 +981,11 @@ class Manager:
             tool = "codex" if task["executor"] == "codex" else "claude"
             path = self.tool_path(tool)
             first_steps = []
+            ok, note = self.ensure_copy(next((p for p in data["projects"] if p["id"] == task["project"]), {}), folder)
+            if not ok:
+                return 409, note, {}
+            if note:
+                first_steps.append({"t": time.strftime("%H:%M:%S"), "text": note})
             if self.git_pull:
                 note, pulled = self._git_pull(folder)
                 if note:
@@ -1016,6 +1022,15 @@ class Manager:
             self._task_command(priv)
             self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
+
+    @staticmethod
+    def ensure_copy(project, folder):
+        """Klon na start: karta z polem github:, a folder projektu bez repozytorium (kopia usunięta albo jej brak)
+        → klon z GitHuba przed zadaniem albo budowaniem podglądu. (True, notatka albo "") / (False, powód blokady)."""
+        github = (project or {}).get("github") or ""
+        if not github or not folder or kopie.has_repo(folder):
+            return True, ""
+        return kopie.clone(folder, github, project.get("githubBranch") or "")
 
     def _task_command(self, priv, git=None):
         """Polecenie, katalog i prompt zadania. git (z _worktree_open): praca w katalogu roboczym gałęzi

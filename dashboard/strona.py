@@ -311,6 +311,9 @@ class Site:
         site = (p or {}).get("site")
         if not site:
             return self._fail(pid, "Karta projektu nie ma pola strona:.")
+        ok, note = self.m.ensure_copy(p, folder)            # kopia usunięta z serwera: klon z GitHuba przed budowaniem
+        if not ok:
+            return self._fail(pid, note)
         sdir = os.path.realpath(os.path.join(folder, site["dir"]))
         if not _inside(folder, sdir) or not os.path.isdir(sdir):
             return self._fail(pid, "Nie ma folderu strony %s w projekcie." % site["dir"])
