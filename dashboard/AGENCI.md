@@ -295,6 +295,14 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
   strona pokazuje je we wskazówce logowania, a bez tego pola pokazuje `claude auth login`.
 - Limit subskrypcji (429, komunikat o limicie, zdarzenie `rate_limit_event` ze statusem odmowy): stan `limit`,
   `limitUntil` = czas odnowienia, a gdy nieznany, godzina od teraz. Automat czeka do tej chwili.
+- Bezpiecznik zużycia (od 2026-11-23, po zadaniu „wizytówki”, które przez 33 własnych pomocników zużyło cały limit
+  5 godzin): każde `rate_limit_event` niesie zużycie okien limitu (`unifiedWindows.five_hour.utilization`, 0–1). Rekord
+  uruchomienia ma `limitStart` (pierwszy odczyt) i `limitNow` (ostatni). Gdy `limitNow − limitStart` ≥ `PANEL_RUN_BUDGET_PROC`
+  (domyślnie 20 punktów procentowych), panel zatrzymuje uruchomienie (stan `stopped`, `error` z powodem). Automat nie uruchamia
+  nowych zadań, gdy ostatnio odczytane zużycie limitu 5 godzin ≥ `PANEL_AUTOMAT_DO_PROC` (domyślnie 80%), żeby zostawić resztę
+  właścicielowi. `/api/data` → `agents.usage`: `{"five","seven","at","budget","reserve"}` (ułamki; `null`, gdy brak odczytu
+  z ostatnich 5 godzin). Zadania, raport PM, rozmowy i Asystent mają `--disallowedTools` z pomocnikami, przepływami
+  i harmonogramem (`RUN_DENY`), a zadania i raport PM także `--strict-mcp-config` (bez konektorów konta).
 
 ## `/api/data`
 

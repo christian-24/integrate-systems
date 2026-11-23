@@ -903,6 +903,10 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .rd-img img{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;background:var(--sunk);border:1px solid var(--line);border-radius:6px}
 .rd-img span{overflow-wrap:anywhere}
 .rd-pdf{display:flex;flex-wrap:wrap;gap:6px}
+.ag-use{display:grid;gap:4px}
+.ag-use .ag-hot{color:var(--l-red)}
+.ag-usetop ul{margin:4px 0 0}
+.ag-usetop li{display:flex;justify-content:space-between;gap:12px;align-items:center}
 .rd .sub{margin:0}
 .rdx{max-height:70vh}
 .rd .mat .mh:last-child{border-bottom:0}
@@ -3059,13 +3063,19 @@ function normAgents(a){
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
     maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
-    runs:(a.runs||[]).map(normRun)};
+    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun)};
 }
+/* zużycie limitów subskrypcji (agents.usage: ułamki 0–1 albo null) i bezpiecznik jednego uruchomienia */
+const frac=v=>v==null||v===''||!Number.isFinite(+v)?null:Math.max(0,Math.min(1,+v));
+const normUsage=u=>{u=u&&typeof u==='object'?u:{};return {five:frac(u.five),seven:frac(u.seven),budget:frac(u.budget)||0.2,reserve:frac(u.reserve)||0.8}};
+/* ile punktów procentowych limitu 5 godzin zużyło uruchomienie (null: brak odczytu) */
+const runUse=r=>r.limitStart!=null&&r.limitNow!=null?Math.max(0,Math.round(100*(r.limitNow-r.limitStart))):null;
 /* uruchomienie z /api/data (agents.runs i activity.runs) */
 function normRun(r){
   r=r&&typeof r==='object'?r:{};
   return Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:'claude',state:RS[r.state]&&r.state!=='unknown'?r.state:r.state?'unknown':'error',
       title:r.title||KIND[r.kind]||'',queuedAt:absT(r.queuedAt),startedAt:absT(r.startedAt),endedAt:absT(r.endedAt),
+      limitStart:frac(r.limitStart),limitNow:frac(r.limitNow),
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[],
       /* praca w git worktree: gałąź, baza i pliki zmienione względem bazy (git diff --numstat) */
       branch:typeof r.branch==='string'?r.branch:'',base:typeof r.base==='string'?r.base:'',merged:!!r.merged,
@@ -5794,11 +5804,21 @@ function runShort(r){
   return nwStep(shortT(raw,90));
 }
 /* wiersz uruchomienia: tytuł pierwszy, stan i czas po prawej (telefon: pod tytułem); g = scalone kolejne o tym samym tytule i stanie */
+/* Agenci: zużycie limitu subskrypcji teraz, bezpiecznik i uruchomienia, które zużyły najwięcej (ostatnie 7 dni) */
+function usageBox(a,L){
+  const u=a.usage,wk=Date.now()-7*864e5,top=L.filter(r=>runUse(r)!=null&&(+tOf(r.startedAt||r.queuedAt)||0)>=wk).sort((x,y)=>runUse(y)-runUse(x)).slice(0,5);
+  if(u.five==null&&!top.length)return '';
+  let h='<div class="ag-use">'+(u.five!=null?'<p class="ahint">Zużycie limitu 5 godzin: <b class="num'+(u.five>=u.reserve?' ag-hot':'')+'">'+Math.round(100*u.five)+'%</b>'+(u.seven!=null?' · tygodniowego: <span class="num">'+Math.round(100*u.seven)+'%</span>':'')+'</p>':'')+
+    '<p class="note">Bezpiecznik: uruchomienie, które zużyje '+Math.round(100*u.budget)+'% limitu 5 godzin, jest zatrzymywane. Automat nie rusza powyżej '+Math.round(100*u.reserve)+'%.</p>';
+  if(top.length)h+='<details class="ag-usetop"><summary>Najwięcej zużyły (7 dni)</summary><ul class="rows">'+top.map(r=>'<li><button class="lk t" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button><span class="num'+(runUse(r)>=10?' ag-hot':'')+'">'+runUse(r)+'%</span></li>').join('')+'</ul></details>';
+  return h+'</div>';
+}
 function runRow(r,g){
   const m=[],d=fmtDur(runDur(r)),pn=r.projectName||(r.project?projName(r.project):'');
   m.push(pn?esc(pn):KSH[r.kind]||KIND[r.kind]);m.push(TOOL[r.tool]);if(r.auto)m.push('samodzielnie');
   if(r.state==='running'&&r.activity)m.push(nwStep(r.activity));else if(!isAct(r)){const w=runShort(r);if(w)m.push(w)}
   if(keyWarn(r))m.push('<span class="lz yellow">klucz API</span>');
+  const u=runUse(r);if(u!=null)m.push(u>=10?'<span class="lz red" title="Zużycie limitu 5 godzin przez to uruchomienie">limit 5 h: '+u+'%</span>':'limit 5 h: '+u+'%');
   let wh=esc(whenT(r.startedAt||r.queuedAt))+(d?' · '+d:''),det='';
   if(g){const o=g[g.length-1],k='rg:'+o.id,op=!!(A.agDet&&A.agDet[k]);
     wh=esc(whenT(o.startedAt||o.queuedAt))+' – '+esc(whenT(r.startedAt||r.queuedAt));
@@ -5849,6 +5869,7 @@ function vAgenci(){
     /* nagłówek: tylko liczby różne od zera; zużycie (tokeny, równowartość) tylko, gdy coś zużyto */
     h+='<section class="panel" id="ag-runs"><h2>Uruchomienia <small title="'+esc('Najwyżej '+(a.maxParallel||1)+' naraz')+'">'+(n?'<span>Dziś '+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+'</span>':'')+(act?'<span class="lz blue">'+act+' w toku</span>':'')+
       (er?'<span class="lz red">'+er+' '+pl(er,'błąd','błędy','błędów')+' dziś</span>':'')+'</small></h2>'+
+      usageBox(a,L)+
       (a.today.tokens?'<p class="ahint" title="Równowartość w cenniku API; przy subskrypcji nie jest pobierana">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+'</p>':'')+
       (er?'<p class="ahint"><button class="chip ag-errf" data-agerr="1" data-k="agerr" aria-pressed="'+fe+'">Pokaż błędy ('+er+')</button></p>':'');
     h+=L.length?runGroup('act','W toku',F.filter(isAct))+runGroup('today','Dziś',F.filter(r=>!isAct(r)&&tdI[r.id]))+runGroup('old','Wcześniej',F.filter(r=>!isAct(r)&&!tdI[r.id]),true):
@@ -6026,6 +6047,7 @@ function runHtml(r){
   const tx=[['Uruchomione',r.auto?'samodzielnie':'ręcznie']];
   if(r.model)tx.push(['Model',esc(r.model)]);
   if(r.turns)tx.push(['Tury',String(r.turns)]);
+  if(runUse(r)!=null)tx.push(['Zużycie limitu 5 godzin',runUse(r)+'% (od '+Math.round(100*r.limitStart)+'% do '+Math.round(100*r.limitNow)+'%)']);
   if(r.tokensIn||r.tokensOut)tx.push(['Tokeny',fmtTok(r.tokensIn)+' we · '+fmtTok(r.tokensOut)+' wy']);
   if(r.costUsd)tx.push(['Równowartość w cenniku API',fmtUsd(r.costUsd)]);
   if(r.file)tx.push(['Plik','<code>'+esc(r.file)+'</code>']);
@@ -10203,7 +10225,7 @@ function agentPost(path,body,fail,done){
 }
 function simRun(o,t){
   const r=Object.assign({id:'podglad-'+(++tmpN),state:'queued',auto:false,machine:D.agents.machine,project:'',projectName:'',taskId:'',file:'',queuedAt:isoL(new Date()),startedAt:null,endedAt:null,
-    durationMs:null,activity:'',steps:[],result:'',error:'',turns:0,tokensIn:0,tokensOut:0,costUsd:0,model:'',keySource:'none',denials:[]},o);
+    durationMs:null,activity:'',steps:[],result:'',error:'',turns:0,tokensIn:0,tokensOut:0,costUsd:0,model:'',keySource:'none',denials:[],limitStart:null,limitNow:null},o);
   D.agents.runs.unshift(r);if(t)t.runId=r.id;
   say(PRV);render();
   const at=(ms,fn)=>setTimeout(()=>{if(runById(r.id)===r&&isAct(r)){fn();render()}},ms);

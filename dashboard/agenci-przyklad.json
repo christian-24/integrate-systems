@@ -22,6 +22,7 @@
  "loginWeb": false,
  "login": {"active": false},
  "maxParallel": 2,
+ "usage": {"five": null, "seven": null, "at": "", "budget": 0.2, "reserve": 0.8},
  "canRunTasks": true,
  "today": {
   "runs": 5,
@@ -73,6 +74,8 @@
    "model": "claude-sonnet-5-5",
    "fix": "",
    "pins": [],
+   "limitStart": null,
+   "limitNow": null,
    "keySource": "none",
    "denials": []
   },
@@ -103,6 +106,8 @@
    "model": "",
    "fix": "",
    "pins": [],
+   "limitStart": null,
+   "limitNow": null,
    "keySource": "",
    "denials": []
   },
@@ -133,6 +138,8 @@
    "model": "claude-sonnet-5-5",
    "fix": "",
    "pins": [],
+   "limitStart": null,
+   "limitNow": null,
    "keySource": "none",
    "denials": []
   },
@@ -163,6 +170,8 @@
    "model": "claude-sonnet-5-5",
    "fix": "",
    "pins": [],
+   "limitStart": null,
+   "limitNow": null,
    "keySource": "none",
    "denials": [
     "Bash: xcodebuild test -scheme App"
@@ -195,6 +204,8 @@
    "model": "claude-sonnet-5-5",
    "fix": "",
    "pins": [],
+   "limitStart": null,
+   "limitNow": null,
    "keySource": "none",
    "denials": []
   }

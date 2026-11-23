@@ -52,7 +52,10 @@ TASK_TOOLS = ",".join([
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
 # Rozmowa o zadaniu (AGENCI.md, „Rozmowa o zadaniu”): tylko odczyt plików, bez powłoki, zapisu i sieci.
 CHAT_TOOLS = "Read,Grep,Glob,LS"
-CHAT_DENY = "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+# Agent uruchomiony z panelu nie zakłada własnych pomocników ani przepływów (2026-11-23: zadanie „wizytówki” uruchomiło
+# 33 pomocników i zużyło cały limit 5 godzin) i nie dostaje konektorów konta (--strict-mcp-config).
+RUN_DENY = "Agent,Task,Workflow,SendMessage,TaskStop,Monitor,CronCreate,CronDelete,ScheduleWakeup,RemoteTrigger,PushNotification"
+CHAT_DENY = "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
 PL_DAYS = ("poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela")
 CHAT_MAX = 2000             # znaków w jednej wiadomości właściciela
 CHAT_KEEP = 100             # tyle wiadomości zostaje w historii zadania
@@ -333,6 +336,10 @@ class Manager:
         self.default_node = default == "1" if default in ("0", "1") else self.machine != "mac"
         self.max_parallel = _int(get("PANEL_AGENTS_MAX"), 2)
         self.timeout = _int(get("PANEL_AGENT_TIMEOUT"), 3600)
+        # bezpiecznik zużycia: limit 5 godzin subskrypcji (rate_limit_event w strumieniu claude, ułamek 0–1)
+        self.run_budget = max(0.02, min(1.0, _int(get("PANEL_RUN_BUDGET_PROC"), 20) / 100.0))   # jedno uruchomienie
+        self.auto_reserve = max(0.1, min(1.0, _int(get("PANEL_AUTOMAT_DO_PROC"), 80) / 100.0))  # Automat do tylu %
+        self._usage = {"five": None, "seven": None, "at": 0.0, "resetsAt": None}
         self.model = (get("PANEL_AGENT_MODEL") or "").strip()
         self.pm_model = (get("PANEL_PM_MODEL") or "").strip()
         # Stały rytm postów: "projekt=dni,projekt=dni". Automat zakłada zadanie „Przygotować post na …”.
@@ -771,6 +778,7 @@ class Manager:
                     "tools": {k: dict(v) for k, v in self._tools.items()},
                     "needsLogin": self._state["needsLogin"], "limitUntil": limit,
                     "automat": self._state["automat"], "maxParallel": self.max_parallel, "canRunTasks": True,
+                    "usage": self.usage_state(),
                     "loginWeb": self.login_web,
                     "login": ({"active": True, "url": self._login["url"]}
                               if self._login and self._login["proc"].poll() is None and self._login["url"] else {"active": False}),
@@ -791,7 +799,7 @@ class Manager:
                 "projectName": project_name, "taskId": task_id, "file": file, "title": title,
                 "queuedAt": now_iso(), "startedAt": None, "endedAt": None, "durationMs": None, "activity": "",
                 "steps": [], "result": "", "error": "", "turns": 0, "tokensIn": 0, "tokensOut": 0, "costUsd": 0,
-                "model": "", "keySource": "", "denials": []}
+                "model": "", "keySource": "", "denials": [], "limitStart": None, "limitNow": None}
 
     def _enqueue(self, rec, priv):
         with self._lock:
@@ -1031,7 +1039,8 @@ class Manager:
             render = self.render_command()
             tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
                              (self.site.tools(site) if site else []))
-            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", tools])
+            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", tools, "--disallowedTools", RUN_DENY,
+                                                                     "--strict-mcp-config"])
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
     # ---------- rozmowa o zadaniu ----------
@@ -1546,7 +1555,7 @@ class Manager:
 
     # ---------- asystent: rozmowa o wszystkich projektach (Start i przycisk w każdym widoku) ----------
     ASSIST = "*asystent"
-    ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
+    ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
     ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#start", "Start: postęp projektów"), ("#ty", "Dla Ciebie: Twoje sprawy, zgody, odbiory"),
@@ -2704,7 +2713,8 @@ class Manager:
             prompt = ("Przygotuj raport według standard/PM.md: uruchom `python3 standard/pm.py` i zapisz notatkę do "
                       "raporty/%s.md (nadpisz wcześniejszą z tego dnia). Odpowiedz raportem.\n"
                       % datetime.date.today().isoformat())
-            args = self._claude_args(path, self.pm_model, ["--agent", "pm", "--allowedTools", PM_TOOLS])
+            args = self._claude_args(path, self.pm_model, ["--agent", "pm", "--allowedTools", PM_TOOLS,
+                                                           "--disallowedTools", RUN_DENY, "--strict-mcp-config"])
             self._enqueue(rec, {"args": args, "cwd": self.root, "prompt": prompt})
         return 200, "", {"id": rec["id"]}
 
@@ -3612,6 +3622,7 @@ class Manager:
             st["rate"] = info
             if str(info.get("status") or "").lower() in DENIED:
                 st["limit"] = True
+            self._watch_budget(rec, info)
         elif kind == "result":
             st["result"] = ev
             usage = ev.get("usage") or {}
@@ -3682,6 +3693,51 @@ class Manager:
                 if thread and re.match(r"^[\w.-]{1,100}$", thread):
                     (self._priv.get(rec["id"]) or {})["thread"] = thread
 
+    @staticmethod
+    def _window(info, name):
+        """Zużycie okna limitu (0–1) z rate_limit_info albo None."""
+        win = ((info.get("unifiedWindows") or {}).get(name) or {}) if isinstance(info, dict) else {}
+        val = win.get("utilization")
+        if val is None and name == "five_hour" and info.get("rateLimitType") == "five_hour":
+            val = info.get("utilization")
+        try:
+            return max(0.0, min(1.0, float(val))) if val is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    def _watch_budget(self, rec, info):
+        """Zużycie limitu 5 godzin w trakcie uruchomienia; ponad run_budget od startu: zatrzymanie z powodem."""
+        five, seven = self._window(info, "five_hour"), self._window(info, "seven_day")
+        if five is None:
+            return
+        with self._lock:
+            self._usage.update(five=five, at=time.time(), resetsAt=(info.get("unifiedWindows") or {}).get(
+                "five_hour", {}).get("resetsAt") or info.get("resetsAt"))
+            if seven is not None:
+                self._usage["seven"] = seven
+            if rec.get("limitStart") is None:
+                rec["limitStart"] = five
+            rec["limitNow"] = five
+            used = five - rec["limitStart"]
+            priv = self._priv.setdefault(rec["id"], {})
+            over = used >= self.run_budget and not priv.get("stop")
+            if over:
+                priv["budget"] = ("Zatrzymano: to uruchomienie zużyło już %d%% limitu 5 godzin (próg %d%%). "
+                                  "Zwykłe zadanie zużywa kilka procent; sprawdź, czym agent się zajmował."
+                                  % (round(used * 100), round(self.run_budget * 100)))
+        if over:
+            self._step(rec, "Bezpiecznik: zużyto %d%% limitu 5 godzin, zatrzymuję" % round(used * 100))
+            self.stop(rec["id"])
+
+    def usage_state(self):
+        """Ostatnie znane zużycie limitów subskrypcji dla panelu: {"five","seven","at","resetsAt","budget","reserve"}."""
+        with self._lock:
+            u = dict(self._usage)
+        stale = not u["at"] or time.time() - u["at"] > 5 * 3600
+        return {"five": None if stale else u["five"], "seven": None if stale else u["seven"],
+                "at": now_iso(datetime.datetime.fromtimestamp(u["at"])) if u["at"] else "",
+                "budget": self.run_budget, "reserve": self.auto_reserve}
+
     def _conclude(self, rec, st, code):
         """Klasyfikacja końca: stopped → timeout → login → limit → error → done."""
         priv = self._priv.get(rec["id"]) or {}
@@ -3691,7 +3747,7 @@ class Manager:
         blob = " ".join([text, st["failed"]] + list(st["tail"]))
         status = str(st["status"] or "")
         if priv.get("stop"):
-            return self._finish(rec, "stopped", "")
+            return self._finish(rec, "stopped", priv.get("budget") or "")
         if priv.get("timeout"):
             return self._finish(rec, "timeout", "Przekroczony czas: %d min." % max(1, (priv.get("limit") or self.timeout) // 60))
         if failed and (status == "401" or LOGIN_RE.search(blob)):
@@ -3873,6 +3929,9 @@ class Manager:
             if not self._state["automat"] or self._state["needsLogin"]:
                 return started
         if self.limit_until():
+            return started
+        five = self.usage_state()["five"]
+        if five is not None and five >= self.auto_reserve:     # zostaw resztę limitu 5 godzin dla właściciela
             return started
         now = now or datetime.datetime.now()
         today = now.date().isoformat()

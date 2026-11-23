@@ -61,7 +61,8 @@ class Zadanie(Baza):
         self.assertEqual(rec["state"], "done")
         call = self.calls()[-1]
         self.assertEqual(call["argv"], ["-p", "--output-format", "stream-json", "--verbose",
-                                        "--permission-mode", "acceptEdits", "--allowedTools", agents.TASK_TOOLS])
+                                        "--permission-mode", "acceptEdits", "--allowedTools", agents.TASK_TOOLS,
+                                        "--disallowedTools", agents.RUN_DENY, "--strict-mcp-config"])
         tools = agents.TASK_TOOLS.split(",")                             # bez push i bez sieci
         self.assertIn("Bash(git commit:*)", tools)
         self.assertIn("Bash(git switch -c:*)", tools)
@@ -327,6 +328,37 @@ class Automat(Baza):
         projekt.update_task(self.folder, "ZADANIA.md", t["line"], "Auto dziś", {"state": "todo"})
         self.assertEqual(self.manager.tick(at(13)), [])                    # ta sama poprawka nie rusza trzeci raz
 
+    def test_bezpiecznik_zuzycia(self):
+        """Uruchomienie, które podniesie zużycie limitu 5 godzin o ≥ 20 pp., jest zatrzymywane z powodem; Automat
+        nie rusza przy zużyciu ≥ 80%."""
+        self.assertIn("Agent", agents.RUN_DENY.split(","))
+        self.set_mode("wolno")
+        code, _, extra = self.manager.run_task(self.task("Zadanie A")["id"], "Zadanie A")
+        self.assertEqual(code, 200)
+        rid = extra["id"]
+        for _ in range(200):
+            if self.manager.get(rid)["state"] == "running":
+                break
+            time.sleep(0.02)
+        rec = self.manager._runs[rid]
+        ev = lambda u: {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed", "rateLimitType": "five_hour",
+                        "unifiedWindows": {"five_hour": {"utilization": u}, "seven_day": {"utilization": 0.5}}}}
+        self.manager._on_claude(rec, ev(0.30), {"rate": None, "limit": False}, self.folder)
+        self.manager._on_claude(rec, ev(0.45), {"rate": None, "limit": False}, self.folder)
+        self.assertEqual(self.manager.get(rid)["state"], "running")                 # +15 pp.: dalej pracuje
+        self.manager._on_claude(rec, ev(0.51), {"rate": None, "limit": False}, self.folder)
+        done = self.wait(rid)
+        self.assertEqual(done["state"], "stopped")
+        self.assertIn("21% limitu 5 godzin", done["error"])
+        self.assertEqual((done["limitStart"], done["limitNow"]), (0.30, 0.51))
+        self.assertEqual(self.manager.snapshot()["usage"]["five"], 0.51)
+        open(os.path.join(self.notes, TODAY + ".md"), "w").close()
+        self.manager.set_automat(True)
+        self.manager._usage["five"] = 0.85
+        self.assertEqual(self.manager.tick(at(10)), [])                    # rezerwa dla właściciela
+        self.manager._usage["five"] = 0.40
+        self.assertEqual(len(self.manager.tick(at(10))), 1)
+
     def test_raport_pm_raz_dziennie(self):
         self.manager.set_automat(True)
         with open(os.path.join(self.folder, "ZADANIA.md"), "w", encoding="utf-8") as f:
@@ -340,7 +372,8 @@ class Automat(Baza):
         call = self.calls()[-1]
         self.assertEqual(os.path.realpath(call["cwd"]), os.path.realpath(self.root))
         self.assertEqual(call["argv"], ["-p", "--output-format", "stream-json", "--verbose", "--permission-mode",
-                                        "acceptEdits", "--agent", "pm", "--allowedTools", agents.PM_TOOLS])
+                                        "acceptEdits", "--agent", "pm", "--allowedTools", agents.PM_TOOLS,
+                                        "--disallowedTools", agents.RUN_DENY, "--strict-mcp-config"])
         self.assertIn("raporty/%s.md" % TODAY, call["prompt"])
         self.assertEqual(self.manager.tick(at(9)), [])                     # drugi raz tego dnia nie rusza
 
