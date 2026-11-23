@@ -2168,6 +2168,149 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
 @media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:40px}}
+/* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
+.od{display:grid;gap:var(--g-m);min-width:0}
+.od-top{display:grid;gap:4px}
+.od-back{justify-self:start;color:var(--accent);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;min-height:36px}
+.od-back:hover{text-decoration:underline}
+.od-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:6px 16px}
+.od-crumb{font-size:var(--fs-sm);color:var(--ink-3)}
+.od-h1{font-size:var(--fs-h1);font-weight:650;overflow-wrap:anywhere}
+.od-h1:focus{outline:none}
+.od-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:var(--fs-sm);color:var(--ink-2)}
+.od-page{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--g-l);align-items:start}
+.od-main{display:grid;gap:var(--g-m);min-width:0}
+.od-aside{display:grid;gap:var(--g-m);position:sticky;top:12px;min-width:0}
+.od-tb{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.od-hint{margin-left:auto;font-size:var(--fs-xs);color:var(--ink-3)}
+.od-hint.od-hint-on{color:var(--accent);font-weight:600}
+.od-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--ctl-line);border-radius:var(--r);overflow:hidden;background:var(--surface);max-width:100%}
+.od-seg button{border:0;background:transparent;padding:0 12px;min-height:36px;cursor:pointer;color:var(--ink-2);font-weight:600;font-size:var(--fs-sm);white-space:nowrap}
+.od-seg button+button{border-left:1px solid var(--line-2)}
+.od-seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.od-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.od-tgl{border:1px solid var(--ctl-line);background:var(--surface);border-radius:var(--r);padding:0 12px;min-height:36px;cursor:pointer;font-weight:600;font-size:var(--fs-sm);color:var(--ink-2)}
+.od-tgl[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.od-vsel .fi{min-height:36px}
+.od-stage{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;display:grid;gap:var(--g-l);min-width:0}
+.od-stage.od-old{opacity:.55}
+.od-vars{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--g-l);align-items:start}
+.od-fig{margin:0;display:grid;gap:8px;min-width:0}
+.od-fig>figcaption{display:flex;align-items:center;gap:6px;font-weight:600;font-size:var(--fs-sm);color:var(--ink-2);overflow-wrap:anywhere}
+.od-fig>figcaption .muted{font-weight:400}
+.od-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.od-pair>div{display:grid;gap:4px;align-content:start;min-width:0}
+.od-pl{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+.od-mk{position:relative;display:block;width:100%;padding:0;border:0;background:none;cursor:zoom-in;text-align:left;border-radius:var(--r-sm);color:inherit;font:inherit}
+.od-mk img{display:block;width:100%;height:auto;border-radius:var(--r-sm);box-shadow:var(--shadow-2);background:var(--surface);-webkit-user-select:none;user-select:none}
+div.od-mk{cursor:default}
+.od-pinmode .od-mk,.od-mk.od-mk-pin{cursor:crosshair;outline:2px dashed var(--accent);outline-offset:4px}
+.od-ph{display:grid;place-items:center;min-height:160px;padding:16px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm);background:var(--surface);border:1px dashed var(--line-2);border-radius:var(--r-sm)}
+.od-none{color:var(--ink-3);font-size:var(--fs-sm);padding:12px;border:1px dashed var(--line-2);border-radius:var(--r-sm)}
+.od-pin{position:absolute;transform:translate(-50%,-50%);min-width:26px;height:26px;padding:0 6px;border-radius:13px;background:var(--accent);color:var(--accent-ink);border:2px solid var(--surface);font:700 12px/22px var(--font);text-align:center;box-shadow:var(--shadow-2);pointer-events:none;white-space:nowrap;z-index:2}
+.od-pin.od-pin-ok{background:var(--l-green-bg);color:var(--l-green);border-color:var(--l-green)}
+.od-pin.od-pin-s{position:static;transform:none;display:inline-block;box-shadow:none}
+.od-cmp{position:relative}
+.od-cmp-top{position:absolute;inset:0}
+.od-cmp-top .od-mk img{box-shadow:none}
+.od-cmp-line{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--accent);transform:translateX(-1px);pointer-events:none;z-index:3}
+.od-cmp-r{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+.od-cmp-r input{width:100%;min-height:36px}
+.od-vid{position:relative;background:var(--media-bg);border-radius:var(--r-lg);overflow:hidden}
+.od-vid video{display:block;width:100%;max-height:70vh;background:var(--media-bg)}
+.od-vpin{position:absolute;inset:0 0 48px 0;border:2px dashed var(--accent);background:transparent;cursor:crosshair;z-index:3}
+.od-doc{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px 28px;max-width:760px;margin:0 auto;width:100%;box-shadow:var(--shadow-1);line-height:1.6;overflow-wrap:anywhere}
+.od-doc h3{font-size:var(--fs-lg);font-weight:650;margin:14px 0 6px}
+.od-doc h3:first-child{margin-top:0}
+.od-doc p{margin:0 0 10px}
+.od-doc ul,.od-doc ol{margin:0 0 10px;padding-left:20px}
+.od-doc.od-diff p{margin:0 0 4px}
+.od-ln ins{background:var(--l-green-bg);color:var(--l-green);text-decoration:none;border-radius:2px;padding:0 2px}
+.od-ln del{background:var(--l-red-bg);color:var(--l-red);border-radius:2px;padding:0 2px}
+.od-pdfs{display:grid;gap:10px}
+.od-dec{display:grid;gap:10px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg)}
+.od-dec h2{font-size:var(--fs-lg);font-weight:650}
+.od-q{font-size:var(--fs-sm);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.od-pick{display:grid;gap:6px}
+.od-pick .od-seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.od-pick .od-seg.od-seg-w{display:flex}
+.od-pick .od-seg button{padding:0 6px;min-height:40px;overflow:hidden;text-overflow:ellipsis}
+.od-acts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:8px}
+.od-acts .btn{min-height:48px;font-size:var(--fs-lg);white-space:normal;text-align:center}
+.od-acts>.btn:only-child{grid-column:1/-1}
+.od-note{font-size:var(--fs-xs);color:var(--ink-3)}
+.od-fix{display:grid;gap:10px}
+.od-fix textarea.fi{width:100%;resize:vertical;min-height:72px}
+.od-chips{display:flex;flex-wrap:wrap;gap:6px}
+.od-pins{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.od-pins li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center}
+.od-pins .fi{width:100%}
+.od-x{border:0;background:none;color:var(--ink-3);min-width:40px;min-height:40px;cursor:pointer;border-radius:var(--r);font-size:18px}
+.od-x:hover{background:var(--hover);color:var(--ink)}
+.od-pinbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between}
+.od-pinbar b{color:var(--accent)}
+.od-wk1{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+.od-run{display:inline-flex;align-items:center;gap:8px;color:var(--l-blue);font-weight:600;min-width:0;overflow-wrap:anywhere}
+.od-work{border:1px solid var(--l-blue);background:var(--l-blue-bg);color:var(--l-blue);border-radius:var(--r-lg);padding:14px 16px;display:grid;gap:10px}
+.od-work h2{font-size:var(--fs-lg);font-weight:650;display:flex;align-items:center;gap:8px}
+.od-work p{color:var(--ink-2)}
+.od-steps{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.od-steps li{display:flex;align-items:center;gap:8px;color:var(--ink-2);min-width:0;overflow-wrap:anywhere}
+.od-steps li.od-now{color:var(--ink);font-weight:600}
+.od-steps li.od-ok{color:var(--l-green)}
+.od-ic{width:18px;height:18px;border-radius:50%;border:2px solid var(--line-2);flex:none;display:grid;place-items:center;font-size:11px;font-weight:700}
+.od-steps li.od-ok .od-ic{border-color:var(--bar-done);background:var(--bar-done);color:var(--on-color)}
+.od-steps li.od-now .od-ic{border-color:var(--bar-wip);border-right-color:transparent;animation:od-spin 1s linear infinite}
+.od-spin{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;display:inline-block;animation:od-spin 1s linear infinite;flex:none}
+@keyframes od-spin{to{transform:rotate(360deg)}}
+.od-sent{background:var(--surface);color:var(--ink-2);border-radius:var(--r);padding:8px 10px;font-size:var(--fs-sm);overflow-wrap:anywhere}
+.od-pad{padding:0 16px 14px;display:grid;gap:10px;min-width:0}
+.od-chg ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.od-sub{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+.od-chg ul.od-done{list-style:none;padding:0;gap:6px}
+.od-done li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;color:var(--ink-2)}
+.od-ok{color:var(--l-green);font-weight:700}
+.od-fb{justify-self:stretch}
+.od-det>summary{cursor:pointer;padding:12px 16px;font-weight:650;min-height:44px;display:flex;align-items:center}
+.od-dl{margin:0}
+.od-dl dt{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+.od-dl dd{margin:0 0 8px;overflow-wrap:anywhere}
+.od-ask .od-askf{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.od-msg{font-size:var(--fs-sm);border-radius:var(--r);padding:8px 10px;background:var(--sunk);overflow-wrap:anywhere;white-space:pre-wrap}
+.od-msg.od-me{background:var(--accent-soft)}
+.od-msg div{margin-top:8px;white-space:normal}
+.od-lk{color:var(--accent);font-weight:600;text-decoration:underline}
+.od-ov{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;z-index:35;padding:16px}
+.od-box{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:560px;max-height:88vh;overflow:auto;box-shadow:var(--shadow-2);display:grid;gap:12px;padding:16px}
+.od-box.od-wide{max-width:min(1100px,96vw)}
+.od-box-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.od-box-h h2{font-size:var(--fs-lg);font-weight:650;overflow-wrap:anywhere}
+.od-zoom img{max-height:74vh;width:auto;max-width:100%;margin:0 auto}
+.od-files{list-style:none;margin:0;padding:0;display:grid}
+.od-files li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.od-files small{display:block;color:var(--ink-3);font-size:var(--fs-xs)}
+@media (max-width:820px){
+  body.od-on .bnav{display:none}
+  body.od-on .content{padding-bottom:calc(var(--od-bar-h,0px) + 24px)}
+  body.od-on .toast{bottom:calc(var(--od-bar-h,0px) + 12px)}
+  .od-page{grid-template-columns:minmax(0,1fr)}
+  .od-aside{position:static}
+  .od-stage{padding:12px}
+  .od-hint{display:none}
+  .od-hint.od-hint-on{display:inline;margin-left:0}
+  .od-dec{position:fixed;left:0;right:0;bottom:0;z-index:12;border-radius:var(--r-lg) var(--r-lg) 0 0;border-width:1px 0 0;box-shadow:var(--shadow-2);
+    padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:72vh;overflow:auto}
+  .od-dec h2.od-dh{display:none}
+  .od-seg button,.od-tgl,.od-back,.od-x,.od-vsel .fi{min-height:44px}
+  .od .btn,.od .chip,.od .fi,.od input.fi:not([type=checkbox]),.od-pick .od-seg button,.od-cmp-r input{min-height:44px}
+  .od-chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .od-chips .chip{flex:none}
+  .od-ov{place-items:end center;padding:0}
+  .od-box{border-radius:var(--r-lg) var(--r-lg) 0 0;max-width:none;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  .od-box.od-wide{max-width:none}
+  .od-doc{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.od-spin,.od-steps li.od-now .od-ic{animation:none}}
 </style>
 
 <div class="app">
@@ -2252,7 +2395,7 @@ const MACHL={pc:'na Windows',mac:'na Macu',cloud:'na serwerze'};
 const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 const VIEWS=['asystent','start','przeglad','wskazniki','ty','marketing','media','tablica','terminy','blokady','agenci','koszty','projekty'];
-const VNAME={asystent:'Asystent',start:'Start',przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty'};
+const VNAME={asystent:'Asystent',start:'Start',przeglad:'Przegląd',wskazniki:'Wskaźniki',ty:'Dla Ciebie',marketing:'Marketing',media:'Media',tablica:'Tablica',terminy:'Terminy',blokady:'Blokady',agenci:'Agenci',koszty:'Serwer',projekty:'Projekty',odbior:'Odbiór pracy'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={asystent:'Asystent: rozmowa głosem i tekstem, odpowiedzi jako karty',start:'Start: postęp projektów',przeglad:'Przegląd: co trwa, co na dziś, projekty',wskazniki:'Wskaźniki: postęp, tempo i przepływ pracy',ty:'Dla Ciebie: sprawy, które wymagają Ciebie (pytania, zgody, odbiory, Twoje zadania)',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',tablica:'Tablica: zadania ze wszystkich projektów',terminy:'Terminy: etapy, zadania, publikacje i kalendarz',blokady:'Blokady: zadania, które wstrzymują inne',
@@ -2382,6 +2525,8 @@ function normDetail(d){
     /* i: numer kroku w pliku (od 0), potrzebny do zapisu klucza krok */
     steps:L(d.steps).map((x,i)=>x&&typeof x.text==='string'&&x.text.trim()?{done:!!x.done,text:x.text.trim(),i:i}:null).filter(Boolean),
     result:s(d.result),decision:s(d.decision),left:s(d.left),fix:fix,next:parseNext(next),notes:notes,stats:stats,
+    changes:L(d.changes).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),     /* zmiany: (co agent zmienił po poprawce) */
+    pins:L(d.pins).filter(x=>x&&typeof x==='object'),                                     /* znaczniki poprawki ({n,file,x,y,t,note}) */
     scheduled:s(d.scheduled),
     branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,6),
     answers:L(d.answers).filter(a=>a&&typeof a.label==='string'&&a.label.trim()).map(a=>({label:a.label.trim(),value:s(a.value)}))};
@@ -2877,7 +3022,9 @@ function todayRow(x,o){
   const open=tt=>'<button class="btn sec sm" data-task="'+id+'" data-k="to:'+id+'" aria-label="'+esc('Otwórz: '+t.title)+'"'+(tt?' title="'+tt+'"':'')+'>Otwórz</button>';
   /* zgoda na publikację: „Zatwierdź” otwiera edytor posta (podgląd i Zatwierdź nad nim), nie zatwierdza w ciemno */
   const pubEd=x.need==='zgoda'&&t.kind==='publikacja'&&isDay(String(t.date).slice(0,10));
-  const btn=pubEd?'<button class="btn sec sm dec'+(ty?' ty-dec':'')+'" data-medit="'+esc(t.project+'|'+String(t.date).slice(0,10)+'|'+t.id)+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc('Obejrzyj i zatwierdź: '+t.title)+'" title="Otwiera podgląd posta z przyciskiem Zatwierdź">Zatwierdź</button>':
+  /* odbiór: „Obejrzyj” otwiera stronę odbioru (podgląd, wersje, Akceptuję / Popraw) */
+  const btn=x.need==='odbiór'?'<a class="btn sec sm dec'+(ty?' ty-dec':'')+'" href="'+esc(odHref(t.id))+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc('Obejrzyj i odbierz: '+t.title)+'">Obejrzyj</a>':
+    pubEd?'<button class="btn sec sm dec'+(ty?' ty-dec':'')+'" data-medit="'+esc(t.project+'|'+String(t.date).slice(0,10)+'|'+t.id)+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc('Obejrzyj i zatwierdź: '+t.title)+'" title="Otwiera podgląd posta z przyciskiem Zatwierdź">Zatwierdź</button>':
     filmPending(t)&&!x.need?open('Film nagrywa panel; zamkniesz zadanie po obejrzeniu filmu'):wt?open(''):
     '<button class="btn sec sm'+(x.need?' dec'+(ty?' ty-dec':''):'')+'" data-act="'+a[0]+'" data-id="'+id+'" data-k="'+(ty?'act:':'ta:')+id+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button>';
   /* „Jutro”: Twoje zadanie na dziś albo po terminie przesuwa się o jeden dzień (Przegląd i Dla Ciebie → Dziś) */
@@ -2887,9 +3034,8 @@ function todayRow(x,o){
   const wn=t.waits&&t.waits.length&&t.state!=='done'?t.waits.length:0;
   /* zdanie o skutku zgody jest raz nad listą Decyzji; w wierszu tylko to, na co zgoda jeszcze czeka */
   const eff=x.need==='zgoda'&&wn?'Ruszy po Twojej zgodzie i po '+wn+' '+pl(wn,'zadaniu','zadaniach','zadaniach')+', na które czeka.':'';
-  /* odbiór: „Zobacz wynik” tylko, gdy agent go opisał (albo jest uruchomienie); inaczej nie obiecujemy wyniku */
-  const hasRes=!!(t.detail&&t.detail.result)||!!t.runId,seeT=hasRes?'Zobacz wynik':'Szczegóły zadania';
-  const see=x.need==='odbiór'?'<button class="lk ty-see" data-task="'+id+'" data-k="see:'+id+'" aria-label="'+esc(seeT+': '+t.title)+'">'+seeT+'</button>':'';
+  /* odbiór: wynik pokazuje strona odbioru („Obejrzyj”); tytuł wiersza nadal otwiera szczegóły zadania */
+  const see='';
   const nsT=ns.replace(/`[^`]*`/g,'').replace(/[\s:;,.()–-]/g,'').length<4?'':ns.replace(/`[^`]*`/g,'(polecenie w szczegółach)');
   if(ty){
     return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t"'+idA+' data-task="'+id+'" data-k="tt:'+id+'">'+esc(t.title)+'</button><div class="s">'+pvPrS(p)+late+(x.need?need:'')+kind+(x.need?'':need)+unlLz(t)+run+
@@ -5749,7 +5895,8 @@ function taskHtml(t){
   else if(t.waits.length)mv='<div class="move-box"><b>Jeszcze nie teraz.</b><p>Najpierw: '+t.waits.map(w=>{const x=D.tasks.find(y=>y.title===w&&y.project===t.project);return x?'<button class="lk" data-task="'+esc(x.id)+'">'+esc(w)+'</button>':esc(w)}).join('; ')+'</p></div>';
   else if(zg){if(pub&&t.channel&&isDay(t.date)){mv=postBox(t,t.date.slice(0,10),false);shown.post=1}   /* najpierw podgląd posta, potem zgoda */
     mv+='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>Zatwierdź</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>'}
-  else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+accBox(t,d,db,dec);shown.post=1}
+  /* odbiór: krótko „Wynik do odbioru · wersja N” i przejście na stronę odbioru; formularze z list (nowe zadanie, poprawka) zostają */
+  else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+(dForm(t,'accept')||dForm(t,'fix')?accBox(t,d,db,dec):odDrawerBox(t));shown.post=1}
   else if(d.asks.length&&!d.answers.length){mv=askBox(t);shown.ask=1}
   else if(br){mv='<div class="abox you"><b>Przejrzyj zmiany agenta i połącz je z projektem</b><p class="move">Połączenie zamyka to zadanie.</p>'+chgBlock(br,true,t)+'</div>'}
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
@@ -5759,12 +5906,14 @@ function taskHtml(t){
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
+  if(d.fix&&!od&&t.state!=='done'&&(t.executor==='claude'||t.executor==='codex')&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
+    mv+='<p class="note"><a href="'+esc(odHref(t.id))+'" data-k="od:drl">Postęp poprawki na stronie odbioru</a></p>';
   /* film posta na górze (także gdy zadanie czeka na poprzednie): rodzaj, szablon, długość, kto nagra. W każdym
      zadaniu z postem (film, publikacja, „Przygotować post”) cały film z „Co poprawić” jest na wierzchu, nie w szczegółach */
   const full=!!fday&&!shown.post;
   if(fday&&!shown.post){mv+=filmTop(t,fday,ftask,false);if(full){mv+=postBox(t,fday,false,'film');shown.film=1}}
   /* „gotowe, gdy” i pełny następny krok (w listach są skrócone do dwóch wierszy) */
-  const readUp=t.state!=='done'&&!!t.detail&&resFiles(t).length>0;
+  const readUp=t.state!=='done'&&!od&&!!t.detail&&resFiles(t).length>0;
   if(readUp)mv=readBlock(t)+mv;            /* najpierw treść, potem decyzja i przyciski */
   h+=mv;
   if(t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
@@ -5839,6 +5988,7 @@ async function loadChat(id){
     if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[];c.pending=!!j.pending;c.error=String(j.error||'')}
     else if(r.status!==404)c.error=String(j.error||'Czat jest niedostępny.')}catch(e){c.error='Brak połączenia z serwerem.'}
   c.loading=false;
+  if(CUR&&CUR.v==='odbior'&&OD.id===id&&!(DR&&DR.id===id)){render();clearTimeout(c.poll);if(c.pending)c.poll=setTimeout(()=>{if(CUR&&CUR.v==='odbior'&&OD.id===id)loadChat(id)},2500)}
   if(DR&&DR.kind==='task'&&DR.id===id){renderDrawer();clearTimeout(c.poll);
     if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{if(DR&&DR.id===id)loadChat(id)},c.pending?2500:5000)}
 }
@@ -5886,11 +6036,13 @@ function matButtons(t,loc){
     (cur?'<div class="mat" id="dmat">'+matInner(t,cur)+'</div>':'');
 }
 /* ścieżki względne plików .md i .txt z wyniku i reszty pracy (agent podaje je w wynik:), bez już podanych materiałów */
-function resFiles(t){
+function resFiles(t,media){
   const d=t.detail;if(!d)return [];
   const txt=[d.result,d.left].filter(Boolean).join('\n'),out=[],seen={};
   d.refs.forEach(r=>{seen[r.path+'#'+r.anchor]=1});
-  const re=/(^|[\s(„"'`:])((?:[\w.\-]+\/)*[\w\-][\w.\-]*\.(?:md|txt|png|jpe?g|webp|pdf))(?:#([\w\-]+))?(?=$|[\s),.;:"'`”])/gi;
+  /* media: także filmy (strona odbioru) */
+  const re=media?/(^|[\s(„"'`:])((?:[\w.\-]+\/)*[\w\-][\w.\-]*\.(?:md|txt|png|jpe?g|webp|pdf|mp4|mov))(?:#([\w\-]+))?(?=$|[\s),.;:"'`”])/gi:
+    /(^|[\s(„"'`:])((?:[\w.\-]+\/)*[\w\-][\w.\-]*\.(?:md|txt|png|jpe?g|webp|pdf))(?:#([\w\-]+))?(?=$|[\s),.;:"'`”])/gi;
   let m;
   while((m=re.exec(txt))){
     const path=m[2].replace(/^\.\//,''),anchor=m[3]||'',k=path+'#'+anchor;
@@ -8403,10 +8555,502 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   if(b.dataset.apdel!=null){apPost({usun:b.dataset.apdel},'Nie udało się usunąć karty.')}
 });
 
+/* ---------- strona „Odbiór pracy” (#odbior?z=<id zadania>) ----------
+   Wersje wyniku, porównanie, „Co zmieniono”, Akceptuję (także wybrane warianty) i Popraw ze znacznikami na obrazie albo filmie.
+   Dane: GET /api/odbior (umowa ODBIOR-UMOWA.md), pliki przez url z odpowiedzi (obrazy i filmy jako blob: przerysowanie widoku
+   nie pobiera ich ponownie). Bez tego żądania (projekty przykładowe, podgląd) jedna wersja „bieżąca” z D.tasks i /api/plik/surowy;
+   zapis wtedy drogą szuflady (Odbierz, Do poprawy), w podglądzie komunikat PRV. Stan pracy agenta odświeżany co 3 s. */
+const OD={id:'',m:null,err:'',busy:false,seq:0,poll:0,on:false,back:null,view:0,side:'f',cmp:false,cmode:'',slider:50,pick:'all',
+  fix:null,ov:null,sent:null,wait:0,blob:{},txt:{},vt:{},act:false,nv:0,noApi:false,live:'',ovFocus:false};
+const ODV={};                                       /* liczba wersji zadania (szuflada: „Wynik do odbioru · wersja N”) */
+const OD_MAXPINS=12;
+const odKind=p=>/\.(png|jpe?g|webp)$/i.test(p)?'image':/\.(mp4|mov)$/i.test(p)?'video':/\.pdf$/i.test(p)?'pdf':/\.(md|txt)$/i.test(p)?'text':'';
+const odHref=id=>'#odbior?z='+encodeURIComponent(id);
+const odRouteId=()=>{const m=/[?&]z=([^&]*)/.exec(location.hash||'');if(!m)return '';try{return decodeURIComponent(m[1])}catch(e){return ''}};
+const odTm=t=>{t=Math.max(0,Math.round(+t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+const odActive=m=>!!m&&!!m.run&&(m.run.state==='queued'||m.run.state==='running');
+const odPhase=m=>odActive(m)||OD.wait>Date.now()?'work':m.task.state==='done'?'done':'review';
+const odLast=m=>m.versions[m.versions.length-1];
+const odVer=m=>m.versions[Math.min(Math.max(OD.view,1),m.versions.length)-1];
+const odName=s=>{s=String(s||'').replace(/[-_]+/g,' ').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):''};
+/* pytanie, które brzmi jak poprawka: pod odpowiedzią „Wyślij jako poprawkę” */
+const OD_FIXRE=/zmie[nń]|popraw|inaczej|zamiast|usu[nń]|wi[eę]ksz|mniejsz|za du[zż]o|za ma[lł]o|dodaj|bez /i;
+const OD_CHIPS={image:['Inny tekst','Większe logo','Inne kolory','Mniej tekstu'],text:['Krócej','Prostszy język','Inny tytuł','Dodaj przykład'],
+  video:['Większe napisy','Krócej','Wolniej','Inne zakończenie'],other:['Krócej','Prościej','Więcej szczegółów']};
+function odLiveSay(t){let el=document.getElementById('odlive');
+  if(!el){el=document.createElement('div');el.id='odlive';el.className='sr-only';el.setAttribute('aria-live','polite');document.body.appendChild(el)}
+  if(t&&OD.live!==t){OD.live=t;el.textContent=t}}
+function odPinN(p,i){if(!p||typeof p!=='object')return null;const num=v=>v===''||v==null||!isFinite(+v)?null:+v;
+  return {n:Number.isInteger(+p.n)&&+p.n>0?+p.n:i+1,file:typeof p.file==='string'?p.file:'',x:num(p.x),y:num(p.y),t:num(p.t),note:typeof p.note==='string'?p.note:''}}
+/* odpowiedź GET /api/odbior → model strony; url plików tylko względne /api/… */
+function odNorm(j){
+  const s=v=>typeof v==='string'?v:'',L=v=>Array.isArray(v)?v:[],t=j.task||{};
+  const vs=L(j.versions).map((v,i)=>{v=v&&typeof v==='object'?v:{};return {n:Number.isInteger(+v.n)&&+v.n>0?+v.n:i+1,at:s(v.at),saved:v.saved!==false,result:s(v.result),decision:s(v.decision),left:s(v.left),
+    changes:L(v.changes).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),
+    fixes:L(v.fixes).map(f=>({text:s(f&&f.text).trim(),pins:L(f&&f.pins).map(odPinN).filter(Boolean)})).filter(f=>f.text||f.pins.length),
+    /* plik pominięty przy zapisie wersji (za duży): bez podglądu, tylko wzmianka w arkuszu plików */
+    skipped:L(v.files).filter(f=>f&&typeof f.path==='string'&&f.skipped).map(f=>({path:f.path,name:s(f.name)||f.path.split('/').pop(),why:typeof f.skipped==='string'?f.skipped:''})),
+    files:L(v.files).filter(f=>f&&typeof f.path==='string'&&!f.skipped&&typeof f.url==='string'&&/^\/api\//.test(f.url)).map(f=>({path:f.path,name:s(f.name)||f.path.split('/').pop(),
+      kind:['image','pdf','text','video'].indexOf(f.kind)>=0?f.kind:odKind(f.path),url:f.url})).filter(f=>f.kind)}}).sort((a,b)=>a.n-b.n);
+  vs.forEach((v,i)=>{v.n=i+1});
+  if(!vs.length)vs.push({n:1,at:'',saved:false,result:s(t.result),decision:s(t.decision),left:s(t.left),changes:[],fixes:[],files:[],skipped:[]});
+  const r=j.run&&typeof j.run==='object'?j.run:null;
+  return {api:true,task:{id:s(t.id)||OD.id,title:s(t.title),project:s(t.project),projectName:s(t.projectName)||projName(s(t.project)),stage:s(t.stage),
+      state:s(t.state),needsYou:s(t.needsYou),executor:s(t.executor),goal:s(t.goal),doneWhen:s(t.doneWhen),decision:s(t.decision),left:s(t.left),fix:s(t.fix),
+      pins:L(t.pins).map(odPinN).filter(Boolean)},
+    versions:vs,accepted:L(j.accepted).filter(x=>typeof x==='string'&&x),
+    run:r?{id:s(r.id),state:s(r.state)||'unknown',queuedAt:s(r.queuedAt),startedAt:s(r.startedAt),
+      steps:L(r.steps).filter(x=>x&&typeof x.text==='string').map(x=>({t:s(x.t),text:x.text})),position:Number.isInteger(r.position)?r.position:null,
+      activity:s(r.activity),error:s(r.error)}:null};
+}
+/* bez /api/odbior: jedna wersja „bieżąca” z zadania (wynik:, zostało:, pliki z wyniku jak w szufladzie) */
+function odFromTask(t){
+  const d=t.detail||normDetail(null),br=LIVE?readBranch(t):'',r=D.agents?(runOf(t)||lastRunOf(t)):null,s=stageOf(t.stage);
+  const files=resFiles(t,true).map(x=>{const k=odKind(x.path);
+    return {path:x.path,name:x.path.split('/').pop(),kind:k,json:k==='text',
+      url:k==='text'?'/api/plik?project='+encodeURIComponent(t.project)+'&path='+encodeURIComponent(x.path)+(br?'&branch='+encodeURIComponent(br):''):assetUrl(t,x)}}).filter(f=>f.kind);
+  return {api:false,task:{id:t.id,title:t.title,project:t.project,projectName:projName(t.project),stage:s?s.title:(t.group||''),state:t.state,needsYou:t.needsYou||'',
+      executor:t.executor||'',goal:d.goal,doneWhen:d.doneWhen,decision:d.decision,left:d.left,fix:d.fix,pins:(d.pins||[]).map(odPinN).filter(Boolean)},
+    versions:[{n:1,at:'',saved:false,result:d.result,decision:d.decision,left:d.left,changes:d.changes||[],fixes:[],files:files,skipped:[]}],accepted:[],
+    run:r?{id:r.id,state:r.state,queuedAt:r.queuedAt||'',startedAt:r.startedAt||'',steps:r.steps||[],position:null,activity:r.activity||'',error:''}:null};
+}
+function odOpen(id){
+  Object.keys(OD.blob).forEach(u=>{const b=OD.blob[u];if(b&&b.src)URL.revokeObjectURL(b.src)});
+  clearTimeout(OD.poll);
+  Object.assign(OD,{id:id,m:null,err:'',busy:false,view:0,side:'f',cmp:false,cmode:'',slider:50,pick:'all',fix:null,ov:null,sent:null,wait:0,blob:{},txt:{},vt:{},act:false,nv:0});
+  if(id)odLoad();
+}
+async function odLoad(){
+  await Promise.resolve();                         /* nigdy synchronicznie w środku render() */
+  const id=OD.id,seq=++OD.seq;clearTimeout(OD.poll);if(!id||!D)return;
+  let m=null,err='',gone=false;
+  if(LIVE&&!OD.noApi){
+    try{const r=await fetch('/api/odbior?id='+encodeURIComponent(id),{cache:'no-store'});
+      if(r.status===401){location.assign('/wejscie');return}
+      let j=null;try{j=await r.json()}catch(e){}
+      if(r.ok&&j&&j.ok!==false&&j.task)m=odNorm(j);
+      else if(r.status===404&&j)gone=true;       /* serwer zna /api/odbior, ale nie zna zadania */
+      else if(r.status===404||r.status===405)OD.noApi=true;   /* serwer bez /api/odbior: dane z D.tasks */
+      else err=(j&&j.error)||'Nie udało się wczytać pracy (błąd '+r.status+').';
+    }catch(e){err='Brak połączenia z serwerem. Spróbuję ponownie.'}
+  }
+  if(seq!==OD.seq||id!==OD.id)return;
+  if(!m&&!err){const t=D.tasks.find(x=>x.id===id);
+    if(t&&!gone)m=odFromTask(t);
+    else{const o=OD.m&&D.tasks.find(x=>x.project===OD.m.task.project&&x.title===OD.m.task.title&&x.id!==id);
+      /* wiersz zadania przesunął się w pliku (nowe id): ta sama strona pod nowym adresem */
+      if(o){try{history.replaceState(null,'',location.pathname+location.search+odHref(o.id))}catch(e){}OD.id=o.id;OD.seq++;odLoad();return}
+      err='Tego zadania nie ma już na liście (zmieniło się albo zostało zamknięte).'}}
+  if(m){
+    const act=odActive(m),n=m.versions.length;
+    if(OD.m&&OD.act&&!act){
+      /* nowa wersja; pierwszy zapis zastępuje wersję „bieżącą” bez zapisu, więc liczba wersji może zostać ta sama */
+      if(n>OD.nv||m.run&&m.run.state==='done'){OD.view=n;OD.cmp=n>OD.nv&&n>1;OD.cmode='';OD.sent=null;OD.wait=0;say('Wersja '+n+' gotowa: '+shortT(m.task.title,60)+'.',8000)}
+      else if(m.run&&m.run.state!=='done'){OD.wait=0;say('Agent nie skończył poprawki ('+(RS[m.run.state]||RS.unknown)[1]+(m.run.error?': '+shortT(m.run.error,120):'')+'). Szczegóły w zadaniu.',8000)}}
+    if(!OD.m||OD.view<1||OD.view>n)OD.view=n;
+    if(act)OD.wait=0;
+    OD.m=m;OD.err='';OD.act=act;OD.nv=n;ODV[id]=n;
+    if(act){const s=m.run.steps[m.run.steps.length-1];odLiveSay(m.run.state==='queued'?'Poprawka w kolejce.':'Agent poprawia'+(s?': '+nwPlain(s.text):'.'))}
+  }else OD.err=err;
+  if(CUR&&CUR.v==='odbior')render();
+  if((m&&(odActive(m)||OD.wait>Date.now()))||(!m&&err&&!/nie ma/i.test(err)))OD.poll=setTimeout(()=>{if(CUR&&CUR.v==='odbior'&&OD.id===id)odLoad()},3000);
+}
+/* liczba wersji dla szuflady (jedno ciche żądanie na zadanie) */
+async function odCount(id){
+  try{const r=await fetch('/api/odbior?id='+encodeURIComponent(id),{cache:'no-store'});let j=null;try{j=await r.json()}catch(e){}
+    ODV[id]=r.ok&&j&&Array.isArray(j.versions)?Math.max(1,j.versions.length):-1}catch(e){ODV[id]=-1}
+  if(DR&&DR.kind==='task'&&DR.id===id)renderDrawer();
+}
+function odDrawerBox(t){
+  if(LIVE&&ODV[t.id]==null){ODV[t.id]=0;odCount(t.id)}
+  const n=ODV[t.id]>0?ODV[t.id]:0,d=t.detail||normDetail(null);
+  return '<div class="abox you"><b>Wynik do odbioru'+(n?' · wersja '+n:'')+'</b>'+(d.result?'<p class="move">'+esc(shortT(d.result,180))+'</p>':'')+
+    '<div class="row"><a class="btn sm" href="'+esc(odHref(t.id))+'" data-k="od:dr">Obejrzyj i odbierz</a></div></div>';
+}
+/* pliki jako blob: (obraz, film) i tekst; w podglądzie bez serwera nic nie pobieramy */
+function odBlob(f){let c=OD.blob[f.url];if(c)return c;c=OD.blob[f.url]={st:LIVE?'load':'off'};if(LIVE)odFetchBlob(f.url);return c}
+async function odFetchBlob(u){
+  let c={st:'err'};
+  try{const r=await fetch(u,{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    if(r.ok){const b=await r.blob();c={st:'ok',src:URL.createObjectURL(b)}}}catch(e){}
+  if(OD.blob[u]){OD.blob[u]=c;if(CUR&&CUR.v==='odbior')render()}else if(c.src)URL.revokeObjectURL(c.src);
+}
+function odTxt(f){let c=OD.txt[f.url];if(c)return c;c=OD.txt[f.url]={st:LIVE?'load':'off'};if(LIVE)odFetchTxt(f);return c}
+async function odFetchTxt(f){
+  let c={st:'err'};
+  try{const r=await fetch(f.url,{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    if(r.ok){if(f.json){const j=await r.json();if(typeof j.text==='string')c={st:'ok',text:j.text}}else c={st:'ok',text:await r.text()}}}catch(e){}
+  if(OD.txt[f.url]){OD.txt[f.url]=c;if(CUR&&CUR.v==='odbior')render()}
+}
+/* warianty: każdy obraz to wariant; „przod/front” i „tyl/back” w nazwie łączą dwa obrazy w jeden wariant z przodem i tyłem */
+const OD_FRONT=/(^|[-_ .])(przod|przód|front)(?=$|[-_ .])/i,OD_BACK=/(^|[-_ .])(tyl|tył|back)(?=$|[-_ .])/i;
+function odGroups(v){
+  const im=v.files.filter(f=>f.kind==='image'),base=f=>f.name.replace(/\.[^.]+$/,'');
+  const sides=im.length>=2&&im.every(f=>OD_FRONT.test(base(f))||OD_BACK.test(base(f)))&&im.some(f=>OD_FRONT.test(base(f)))&&im.some(f=>OD_BACK.test(base(f)));
+  if(!sides)return {sides:false,vars:im.map(f=>({key:base(f),name:odName(base(f))||f.name,f:f,b:null}))};
+  const G={},order=[];
+  im.forEach(f=>{const b=base(f),fr=OD_FRONT.test(b),k=b.replace(fr?OD_FRONT:OD_BACK,'').replace(/^[-_ .]+|[-_ .]+$/g,'')||'projekt';
+    if(!G[k]){G[k]={key:k,name:odName(k),f:null,b:null};order.push(k)}G[k][fr?'f':'b']=f});
+  return {sides:true,vars:order.map(k=>G[k])};
+}
+/* wariant w odbiorze częściowym: nazwy jego obrazów bez rozszerzenia (przód i tył osobno), jak oczekuje /api/odbior/akceptuj */
+const odVarFiles=g=>[g.f,g.b].filter(Boolean).map(f=>f.name.replace(/\.[^.]+$/,''));
+/* odebrane obrazy → nazwy wariantów (przód i tył razem) */
+function odAccNames(m){const A=m.accepted;if(!A.length)return '';const G=odGroups(odLast(m)),out=[];
+  G.vars.forEach(g=>{const f=odVarFiles(g);if(f.some(x=>A.indexOf(x)>=0))out.push(g.name)});
+  A.forEach(x=>{if(!G.vars.some(g=>odVarFiles(g).indexOf(x)>=0))out.push(odName(x))});return out.join(', ')}
+const odFindVar=(v,key)=>v?odGroups(v).vars.find(g=>g.key===key)||null:null;
+const odIdx=(v,f)=>v.n+'|'+v.files.indexOf(f);
+function odPins(v,f){
+  const m=OD.m,out=[],nx=m.versions[v.n];
+  if(nx)nx.fixes.forEach(x=>x.pins.forEach(p=>{if(p.file===f.path&&p.x!=null&&p.y!=null)out.push([p,1])}));
+  if(v.n===m.versions.length){(OD.sent?OD.sent.pins:odActive(m)?m.task.pins:[]).forEach(p=>{if(p.file===f.path)out.push([p,0])});if(OD.fix)OD.fix.pins.forEach(p=>{if(p.file===f.path)out.push([p,0])})}
+  return out.map(([p,ok])=>'<span class="od-pin'+(ok?' od-pin-ok':'')+'" style="left:'+Math.min(100,Math.max(0,p.x))+'%;top:'+Math.min(100,Math.max(0,p.y))+'%" aria-hidden="true">'+
+    (ok?'✓ ':'')+p.n+(p.t!=null?' · '+odTm(p.t):'')+'</span>').join('');
+}
+/* obraz: przycisk (powiększenie albo znacznik) z obrazem i znacznikami; o.slider: bez przycisku */
+function odImg(v,f,label,o){
+  o=o||{};const b=odBlob(f),m=OD.m,pin=!!(OD.fix&&OD.fix.pinMode)&&v.n===m.versions.length&&!o.cmp;
+  const inner=b.st==='ok'?'<img src="'+esc(b.src)+'" alt="'+esc(label+', wersja '+v.n)+'" draggable="false">':
+    '<span class="od-ph">'+(b.st==='load'?'Wczytuję obraz…':b.st==='off'?'Podgląd obrazu działa w panelu na serwerze.':'Nie udało się wczytać obrazu. <a href="'+esc(f.url)+'" target="_blank" rel="noopener">Otwórz plik</a>')+'</span>';
+  if(o.slider||b.st!=='ok')return '<div class="od-mk">'+inner+odPins(v,f)+'</div>';
+  return '<button type="button" class="od-mk'+(pin?' od-mk-pin':'')+'" data-odmk="'+odIdx(v,f)+'" data-k="od:mk:'+odIdx(v,f)+(o.cmp?':c':'')+'" aria-label="'+esc((pin?'Wskaż miejsce: ':'Powiększ: ')+label+', wersja '+v.n)+'">'+inner+odPins(v,f)+'</button>';
+}
+function odFig(g,v,pv,cmp,sides){
+  const side=sides?OD.side:'f',f=g[side],sl=sides?(side==='f'?'przód':'tył'):'',lab=g.name+(sl?', '+sl:'');
+  const none=w=>'<p class="od-none">Brak '+(sides?(side==='f'?'przodu':'tyłu'):'obrazu')+' w wersji '+w+'</p>';
+  let body;
+  if(cmp){const pg=odFindVar(pv,g.key),pf=pg?pg[side]:null;
+    if(OD.cmode==='slider'&&f&&pf&&odBlob(f).st==='ok'&&odBlob(pf).st==='ok')body='<div class="od-cmp">'+odImg(pv,pf,lab,{slider:1})+
+      '<div class="od-cmp-top" style="clip-path:inset(0 0 0 '+OD.slider+'%)">'+odImg(v,f,lab,{slider:1})+'</div><i class="od-cmp-line" style="left:'+OD.slider+'%"></i></div>'+
+      '<div class="od-cmp-r"><span>Wersja '+pv.n+'</span><input type="range" min="0" max="100" value="'+OD.slider+'" data-odsl="1" data-k="od:sl:'+esc(g.key)+'" aria-label="'+esc('Porównanie wersji '+pv.n+' i '+v.n+', '+lab)+'"><span>Wersja '+v.n+'</span></div>';
+    else body='<div class="od-pair"><div><small class="od-pl">Wersja '+pv.n+'</small>'+(pf?odImg(pv,pf,lab,{cmp:1}):none(pv.n))+'</div><div><small class="od-pl">Wersja '+v.n+'</small>'+(f?odImg(v,f,lab,{cmp:1}):none(v.n))+'</div></div>'}
+  else body=f?odImg(v,f,lab):none(v.n);
+  return '<figure class="od-fig"><figcaption>'+esc(g.name)+(sl?' <span class="muted">· '+sl+'</span>':'')+'</figcaption>'+body+'</figure>';
+}
+function odVideoEl(v,f,label,cmp){
+  const b=odBlob(f),pin=!cmp&&!!(OD.fix&&OD.fix.pinMode)&&v.n===OD.m.versions.length;
+  if(b.st!=='ok')return '<div class="od-vid"><span class="od-ph">'+(b.st==='load'?'Wczytuję film…':b.st==='off'?'Podgląd filmu działa w panelu na serwerze.':'Nie udało się wczytać filmu. <a href="'+esc(f.url)+'" target="_blank" rel="noopener">Otwórz plik</a>')+'</span></div>';
+  return '<div class="od-vid"><video controls playsinline preload="metadata" src="'+esc(b.src)+'" data-odv="'+esc(f.url)+'" data-k="od:v:'+odIdx(v,f)+(cmp?':c':'')+'" aria-label="'+esc(label+', wersja '+v.n)+'"></video>'+odPins(v,f)+
+    (pin?'<button type="button" class="od-vpin" data-odmk="'+odIdx(v,f)+'" data-k="od:vp:'+odIdx(v,f)+'" aria-label="'+esc('Wskaż miejsce na filmie: '+label)+'"></button>':'')+'</div>';
+}
+function odVideo(f,v,pv,cmp){
+  const lab=odName(f.name.replace(/\.[^.]+$/,''))||f.name;
+  let body;
+  if(cmp){const pf=pv&&(pv.files.find(x=>x.kind==='video'&&x.path===f.path)||pv.files.find(x=>x.kind==='video'));
+    body='<div class="od-pair"><div><small class="od-pl">Wersja '+pv.n+'</small>'+(pf?odVideoEl(pv,pf,lab,1):'<p class="od-none">Brak filmu w wersji '+pv.n+'</p>')+'</div><div><small class="od-pl">Wersja '+v.n+'</small>'+odVideoEl(v,f,lab,1)+'</div></div>'}
+  else body=odVideoEl(v,f,lab,0);
+  return '<figure class="od-fig"><figcaption>'+esc(lab)+'</figcaption>'+body+'</figure>';
+}
+/* „Zmiany” w tekście: prosty diff wierszy (najdłuższy wspólny podciąg), wiersze dodane i usunięte zaznaczone */
+function odDiff(a,b){
+  a=String(a).split(/\r?\n/);b=String(b).split(/\r?\n/);
+  if(a.length*b.length>400000)return null;
+  const n=a.length,m=b.length,L=[];for(let i=0;i<=n;i++)L.push(new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const out=[];let i=0,j=0;
+  while(i<n&&j<m){if(a[i]===b[j]){out.push([0,a[i]]);i++;j++}else if(L[i+1][j]>=L[i][j+1])out.push([-1,a[i++]]);else out.push([1,b[j++]])}
+  while(i<n)out.push([-1,a[i++]]);while(j<m)out.push([1,b[j++]]);
+  return out;
+}
+function odDiffHtml(a,b){
+  const D2=odDiff(a,b);if(!D2)return '<p class="od-none">Tekst za długi do porównania wierszy. Użyj „Obok siebie”.</p>';
+  const ln=s=>{const h=/^#{1,6}\s+(.*)$/.exec(s);return h?'<b>'+mdInl(h[1])+'</b>':mdInl(s.replace(/^(\s*)[-*+]\s+/,'$1• '))};
+  const add=D2.filter(x=>x[0]>0&&x[1].trim()).length,del=D2.filter(x=>x[0]<0&&x[1].trim()).length;
+  return '<p class="od-sub">'+(add||del?add+' '+pl(add,'wiersz dodany','wiersze dodane','wierszy dodanych')+', '+del+' '+pl(del,'usunięty','usunięte','usuniętych'):'Bez zmian w tekście')+'</p>'+
+    '<div class="od-doc od-diff">'+D2.filter(x=>x[1].trim()||x[0]===0).map(x=>'<p class="od-ln">'+(x[0]>0?'<ins><span class="sr-only">dodane: </span>'+ln(x[1])+'</ins>':x[0]<0?'<del><span class="sr-only">usunięte: </span>'+ln(x[1])+'</del>':x[1].trim()?ln(x[1]):'&nbsp;')+'</p>').join('')+'</div>';
+}
+function odTxtBody(f,c){
+  return c.st==='ok'?'<article class="od-doc">'+md(c.text)+'</article>':'<p class="od-ph">'+(c.st==='load'?'Wczytuję tekst…':c.st==='off'?'Podgląd tekstu działa w panelu na serwerze.':'Nie udało się wczytać pliku '+esc(f.name)+'.')+'</p>';
+}
+function odDoc(f,v,pv,cmp,many){
+  const c=odTxt(f);let body;
+  if(cmp){const pf=pv&&(pv.files.find(x=>x.kind==='text'&&x.path===f.path)||pv.files.find(x=>x.kind==='text')),pc=pf?odTxt(pf):null;
+    if(!pf)body='<p class="od-none">Brak tekstu w wersji '+pv.n+'</p>'+odTxtBody(f,c);
+    else if(OD.cmode==='side')body='<div class="od-pair"><div><small class="od-pl">Wersja '+pv.n+'</small>'+odTxtBody(pf,pc)+'</div><div><small class="od-pl">Wersja '+v.n+'</small>'+odTxtBody(f,c)+'</div></div>';
+    else body=c.st==='ok'&&pc.st==='ok'?odDiffHtml(pc.text,c.text):odTxtBody(f,c.st!=='ok'?c:pc)}
+  else body=odTxtBody(f,c);
+  return '<figure class="od-fig">'+(many?'<figcaption>'+esc(f.name)+'</figcaption>':'')+body+'</figure>';
+}
+function odModes(v){const k={};v.files.forEach(f=>{k[f.kind]=1});const L=[];
+  if(k.image)L.push(['side','Obok siebie'],['slider','Suwak']);if(k.text){L.unshift(['diff','Zmiany']);if(!k.image)L.push(['side','Obok siebie'])}
+  if(!L.length&&k.video)L.push(['side','Obok siebie']);return L}
+const odSeg=(items,val,key,label,cls)=>'<span class="od-seg'+(cls?' '+cls:'')+'" role="group" aria-label="'+esc(label)+'">'+items.map(([v,t])=>'<button type="button" data-od="'+key+':'+esc(v)+'" data-k="od:'+key+':'+esc(v)+'" aria-pressed="'+(String(v)===String(val))+'">'+esc(t)+'</button>').join('')+'</span>';
+function odState(m,ph){
+  if(ph==='work')return m.run&&m.run.state==='queued'?'<span class="lz grey">W kolejce</span>':'<span class="lz blue"><span class="od-spin" aria-hidden="true"></span>Agent poprawia</span>';
+  if(ph==='done')return '<span class="lz green">Odebrane</span>';
+  if(m.task.needsYou==='odbiór')return '<span class="lz purple">Do odbioru</span>';
+  return '<span class="lz grey">'+esc((TS[m.task.state]||TS.todo)[1])+'</span>';
+}
+/* następna wersja: „wersja N+1”, a gdy bieżąca nie jest zapisana (stare zadanie), pierwszy zapis da „nową wersję” */
+const odNextN=m=>odLast(m).saved?'wersja '+(m.versions.length+1):'nowa wersja';
+function odWork(m){
+  const r=m.run,nv=odNextN(m),q=!!r&&r.state==='queued',st=r?r.steps.slice(-5):[],more=r?r.steps.length-st.length:0;
+  const sent=OD.sent||(m.task.fix||m.task.pins.length?{text:m.task.fix,pins:m.task.pins}:null);
+  return '<section class="od-work" aria-labelledby="od-wk-h"><h2 id="od-wk-h"><span class="od-spin" aria-hidden="true"></span>'+(q?'W kolejce':'Agent poprawia')+' — '+nv+'</h2>'+
+    (q?'<p>'+(r.position?'Pozycja w kolejce: '+r.position+'. ':'')+'Agent zacznie, gdy zwolni się miejsce.</p>':
+      r&&r.activity&&r.state==='running'&&!st.length?'<ol class="od-steps"><li class="od-now"><span class="od-ic" aria-hidden="true"></span><span>'+nwStep(r.activity)+'<span class="sr-only"> (teraz)</span></span></li></ol>':
+      st.length?(more?'<p class="od-sub">Wcześniej: '+more+' '+pl(more,'krok','kroki','kroków')+'</p>':'')+'<ol class="od-steps">'+st.map((s,i)=>{const now=i===st.length-1&&r.state==='running';
+        return '<li class="'+(now?'od-now':'od-ok')+'"><span class="od-ic" aria-hidden="true">'+(now?'':'✓')+'</span><span>'+nwStep(s.text)+(now?'<span class="sr-only"> (teraz)</span>':'')+'</span></li>'}).join('')+'</ol>':
+      '<p>Agent zaczyna pracę.</p>')+
+    (sent&&(sent.text||sent.pins.length)?'<div class="od-sent"><b>Twoje uwagi:</b> '+esc(sent.text)+(sent.pins.length?(sent.text?' · ':'')+'znaczniki: '+sent.pins.map(p=>p.n+(p.note?' „'+esc(p.note)+'”':'')).join(', '):'')+'</div>':'')+
+    '<p>Możesz wyjść. '+cap(nv)+' pokaże się na tej stronie, gdy agent skończy.</p></section>';
+}
+function odChanges(m,v){
+  const fx=v.fixes,items=[];fx.forEach(f=>{if(f.text)items.push(esc(f.text));f.pins.forEach(p=>items.push('Znacznik '+p.n+(p.note?': '+esc(p.note):'')))});
+  if(v.n<2&&!v.changes.length&&!items.length)return v.result?'<section class="panel od-chg" aria-labelledby="od-chg-h"><h2 id="od-chg-h">Opis od agenta</h2><div class="od-pad"><p>'+esc(v.result)+'</p></div></section>':'';
+  return '<section class="panel od-chg" aria-labelledby="od-chg-h"><h2 id="od-chg-h">Co zmieniono w wersji '+v.n+'</h2><div class="od-pad">'+
+    (v.changes.length?'<ul>'+v.changes.map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>':v.result?'<p>'+esc(v.result)+'</p>':'<p class="muted">Agent nie opisał zmian.</p>')+
+    (items.length?'<p class="od-sub">Twoje uwagi do '+(v.n>1?'wersji '+(v.n-1):'poprzedniego wyniku')+'</p><ul class="od-done">'+items.map(t=>'<li><span class="od-ok" aria-hidden="true">✓</span><span>'+t+'</span></li>').join('')+'</ul>':'')+'</div></section>';
+}
+const odAll=G=>G.vars.length===2?'obie':'wszystkie';
+function odDec(m,ph){
+  const T=m.task,v=odLast(m),G=odGroups(v),back=OD.back||{href:'#ty',label:VNAME.ty};
+  let h='<section class="od-dec" id="od-dec" aria-labelledby="od-dec-h">';
+  if(ph==='work'){const r=m.run,s=r&&r.steps.length?r.steps[r.steps.length-1]:null;
+    return h+'<h2 id="od-dec-h" class="od-dh">Decyzja</h2><div class="od-wk1"><span class="od-run"><span class="od-spin" aria-hidden="true"></span>'+
+      (r&&r.state==='queued'?'W kolejce':'Agent poprawia'+(s?' · '+nwStep(s.text):''))+'</span><a class="btn sec" href="'+esc(back.href)+'" data-k="od:back2">Wróć do listy</a></div></section>'}
+  if(ph==='done'){const nx=odNext(),t=D.tasks.find(x=>x.id===T.id);
+    return h+'<h2 id="od-dec-h" class="od-dh">Decyzja</h2><p class="od-q"><span class="lz green">Odebrane</span> '+(m.accepted.length?'warianty: '+esc(odAccNames(m)):'')+'</p>'+
+      (t&&hasFollow(t)?'<button type="button" class="btn sec" data-od="follow" data-k="od:follow">Dodaj następne zadanie</button>':'')+
+      '<div class="od-acts">'+(nx?'<a class="btn sec" href="'+esc(back.href)+'" data-k="od:back2">Wróć do listy</a><a class="btn" href="'+esc(odHref(nx.id))+'" data-k="od:next">Następny odbiór</a>':
+        '<a class="btn" href="'+esc(back.href)+'" data-k="od:back2">Wróć do listy</a>')+'</div></section>'}
+  const F=OD.fix;
+  if(F&&F.pinMode){const vid=!G.vars.length;
+    return h+'<h2 id="od-dec-h" class="od-dh">Popraw</h2><div class="od-pinbar"><span>Dotknij miejsca na '+(vid?'filmie':'projekcie')+'. Postawisz znacznik <b>'+(F.seq+1)+'</b>.</span>'+
+      '<button type="button" class="btn sec" data-od="pinoff" data-k="od:pinoff">Gotowe</button></div></section>'}
+  if(F){const ok=!!(F.text.trim()||F.pins.length),hasI=G.vars.length>0,hasV=v.files.some(f=>f.kind==='video');
+    const kind=hasI?'image':hasV?'video':v.files.some(f=>f.kind==='text')?'text':'other';
+    h+='<h2 id="od-dec-h">Co poprawić w wersji '+v.n+'?</h2><form class="od-fix" data-odform="fix"><label for="od-fx" class="sr-only">Co zmienić?</label>'+
+      '<textarea id="od-fx" class="fi" rows="3" maxlength="2000" data-odfx="1" data-k="od:fx" placeholder="Co zmienić? Np. inne hasło, większe logo">'+esc(F.text)+'</textarea>'+
+      '<div class="od-chips" role="group" aria-label="Podpowiedzi">'+OD_CHIPS[kind].map(c=>'<button type="button" class="chip" data-od="chip:'+esc(c)+'" data-k="od:chip:'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>';
+    if(F.pins.length)h+='<ul class="od-pins">'+F.pins.map(p=>'<li><span class="od-pin od-pin-s" aria-hidden="true">'+p.n+(p.t!=null?' · '+odTm(p.t):'')+'</span>'+
+      '<input class="fi" data-odpin="'+p.n+'" data-k="od:pn:'+p.n+'" maxlength="300" aria-label="'+esc('Uwaga do znacznika '+p.n+' ('+p.lab+(p.t!=null?', '+odTm(p.t):'')+')')+'" placeholder="Co tu zmienić?" value="'+esc(p.note)+'">'+
+      '<button type="button" class="od-x" data-od="pindel:'+p.n+'" data-k="od:pd:'+p.n+'" aria-label="Usuń znacznik '+p.n+'">×</button></li>').join('')+'</ul>';
+    if(hasI||hasV)h+='<button type="button" class="btn sec" data-od="pinon" data-k="od:pinon"'+(F.pins.length>=OD_MAXPINS?' aria-disabled="true" title="Najwyżej '+OD_MAXPINS+' znaczników"':'')+'>＋ Wskaż miejsce na '+(hasI?'projekcie':'filmie')+'</button>';
+    return h+'<div class="od-acts"><button type="button" class="btn sec" data-od="fixcancel" data-k="od:fixcancel">Anuluj</button><button type="submit" class="btn" data-k="od:send"'+(ok&&!OD.busy?'':' disabled')+'>Wyślij do poprawy</button></div>'+
+      (F.warn?'<p class="banner warn" role="alert">'+esc(F.warn)+'</p>':'<p class="od-note">Agent zacznie od razu. Postęp zobaczysz na tej stronie.</p>')+'</form></section>'}
+  h+='<h2 id="od-dec-h" class="od-dh">Decyzja</h2>';
+  const many=G.vars.length>1,pk=many&&G.vars.some(g=>g.key===OD.pick)?OD.pick:'all',pg=G.vars.find(g=>g.key===pk);
+  if(many)h+='<div class="od-pick"><span class="od-q" id="od-pk">Akceptujesz:</span>'+odSeg([['all',cap(odAll(G))]].concat(G.vars.map(g=>[g.key,g.name])),pk,'pick','Które warianty akceptujesz',G.vars.length>3?'od-seg-w':'')+'</div>';
+  const lbl='Akceptuję'+(many?' '+(pg?'„'+pg.name+'”':odAll(G)):'');
+  h+='<div class="od-acts"><button type="button" class="btn sec" data-od="fixopen" data-k="od:fixopen">Popraw</button><button type="button" class="btn" data-od="accept" data-k="od:accept"'+(OD.busy?' aria-disabled="true"':'')+'>'+esc(lbl)+'</button></div>';
+  if(pg)h+='<p class="od-note">Nie odbierasz: '+esc(G.vars.filter(g=>g!==pg).map(g=>g.name).join(', '))+'.</p>';
+  if(OD.view<m.versions.length)h+='<p class="od-note">Odbierasz najnowszą wersję ('+m.versions.length+').</p>';
+  return h+'</section>';
+}
+function odNext(){const ys=youState();const x=ys.youToday.concat(ys.youWeek,ys.youLater).find(y=>y.t&&y.need==='odbiór'&&y.t.id!==OD.id);return x?x.t:null}
+function odFilesBtn(v){
+  const pdf=v.files.filter(f=>f.kind==='pdf');if(!v.files.length&&!v.skipped.length)return '';
+  return '<button type="button" class="btn sec od-fb" data-od="files" data-k="od:files">'+(pdf.length?'Pliki do druku ('+pdf.length+')':'Pliki ('+(v.files.length+v.skipped.length)+')')+'</button>';
+}
+function odDet(m,v){
+  const T=m.task,rows=[['Cel',T.goal],['Gotowe, gdy',T.doneWhen],['Wynik (wersja '+v.n+')',v.result],['Do zatwierdzenia',v.decision||T.decision],['Zostało',v.left||T.left]].filter(x=>x[1]);
+  return '<details class="panel od-det"><summary>Szczegóły</summary><div class="od-pad">'+(rows.length?'<dl class="od-dl">'+rows.map(([a,b])=>'<dt>'+esc(a)+'</dt><dd>'+esc(b)+'</dd>').join('')+'</dl>':'')+
+    (D.tasks.some(x=>x.id===T.id)?'<button type="button" class="btn sec sm" data-task="'+esc(T.id)+'" data-k="od:task">Wszystkie szczegóły zadania</button>':'')+'</div></details>';
+}
+function odAsk(T){
+  if(!LIVE)return '';
+  let c=CH[T.id];if(!c){c=CH[T.id]={messages:[],pending:false,error:'',loading:true};loadChat(T.id)}
+  const L=c.messages.filter(x=>x.role!=='panel').slice(-6);
+  const lastQ=[...L].reverse().find(x=>x.role==='ty'),lastA=L.length&&L[L.length-1].role!=='ty';
+  return '<section class="panel od-ask" aria-labelledby="od-ask-h"><h2 id="od-ask-h">Zapytaj o tę pracę</h2><div class="od-pad">'+
+    L.map((x,i)=>'<div class="od-msg'+(x.role==='ty'?' od-me':'')+'"><b>'+(x.role==='ty'?'Ty':'Claude')+':</b> '+esc(x.text||'')+
+      (i===L.length-1&&lastA&&lastQ&&OD_FIXRE.test(lastQ.text||'')?'<div><button type="button" class="btn sec sm" data-od="chat2fix" data-k="od:c2f">Wyślij jako poprawkę</button></div>':'')+'</div>').join('')+
+    (c.pending?'<p class="od-note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>':'')+(c.error?'<p class="od-note">'+esc(c.error)+'</p>':'')+
+    '<form class="od-askf" data-odform="ask"><label class="sr-only" for="od-ask-i">Pytanie o tę pracę</label><input id="od-ask-i" class="fi" maxlength="2000" autocomplete="off" data-k="od:ask" placeholder="Np. jaki papier proponujesz?">'+
+    '<button class="btn sec" type="submit" data-k="od:asks"'+(c.pending?' aria-disabled="true"':'')+'>Zapytaj</button></form>'+
+    '<p class="od-note">Pytanie nie zmienia pracy. Żeby zmienić, użyj „Popraw”.</p></div></section>';
+}
+function odOverlay(m){
+  const o=OD.ov;if(!o)return '';
+  const box=(h2,body,wide,extra)=>'<div class="od-ov" data-od="ovbg"><div class="od-box'+(wide?' od-wide':'')+'" role="dialog" aria-modal="true" aria-labelledby="od-ov-h"><div class="od-box-h"><h2 id="od-ov-h">'+h2+'</h2>'+
+    '<span class="row">'+(extra||'')+'<button type="button" class="od-x" data-od="ovclose" data-k="od:ovclose" aria-label="Zamknij">×</button></span></div>'+body+'</div></div>';
+  const v=odVer(m);
+  if(o.t==='files'){const pdf=v.files.filter(f=>f.kind==='pdf'),L=pdf.length?pdf:v.files;
+    return box((pdf.length?'Pliki do druku':'Pliki')+' · wersja '+v.n,'<ul class="od-files">'+L.map(f=>'<li><span>'+esc(f.name)+'<small>'+esc(f.path)+'</small></span>'+
+      '<span class="row"><a class="btn sec sm" href="'+esc(f.url)+'" target="_blank" rel="noopener">Otwórz</a><a class="btn sec sm" href="'+esc(f.url)+'" download="'+esc(f.name)+'">Pobierz</a></span></li>').join('')+'</ul>'+
+      (pdf.length&&v.files.length>pdf.length?'<p class="od-note">Obrazy i teksty tej wersji są na stronie.</p>':'')+
+      (v.skipped.length?'<ul class="od-files">'+v.skipped.map(f=>'<li><span>'+esc(f.name)+'<small>'+esc(f.path)+'</small></span><span class="od-note">plik za duży, pominięty</span></li>').join('')+'</ul>':''))}
+  if(o.t==='zoom'){const vv=m.versions[o.v-1],f=vv&&vv.files[o.i];if(!f)return '';
+    const G=odGroups(vv),g=G.vars.find(x=>x.f===f||x.b===f),side=G.sides&&g?(g.f===f?'f':'b'):'';
+    const sw=G.sides&&g&&g.f&&g.b?odSeg([['f','Przód'],['b','Tył']],side,'zside','Strona'):'';
+    return box(esc((g?g.name:f.name)+(side?' · '+(side==='f'?'przód':'tył'):''))+' · wersja '+vv.n,'<div class="od-mk od-zoom">'+(odBlob(f).st==='ok'?'<img src="'+esc(odBlob(f).src)+'" alt="'+esc((g?g.name:f.name)+', wersja '+vv.n)+'">':'')+odPins(vv,f)+'</div>'+
+      '<p class="od-note"><a href="'+esc(f.url)+'" target="_blank" rel="noopener">Otwórz w pełnym rozmiarze</a></p>',1,sw)}
+  return '';
+}
+function vOdbior(r){
+  const back=OD.back||{href:'#ty',label:VNAME.ty},bk='<a class="od-back" href="'+esc(back.href)+'" data-k="od:back">← '+esc(back.label)+'</a>';
+  const m=OD.m;
+  if(!r.z)return '<div class="od"><div class="od-top">'+bk+'<h1 class="od-h1" tabindex="-1">Odbiór pracy</h1></div><div class="banner">W adresie brakuje zadania. Wejdź przez „Obejrzyj” w Decyzjach.</div></div>';
+  if(!m)return '<div class="od"><div class="od-top">'+bk+'<h1 class="od-h1" tabindex="-1">Odbiór pracy</h1></div>'+(OD.err?'<div class="banner warn" role="alert">'+esc(OD.err)+'</div>':'<p class="muted" role="status">Wczytuję pracę do odbioru…</p>')+'</div>';
+  const T=m.task,ph=odPhase(m),n=m.versions.length,v=odVer(m),pv=v.n>1?m.versions[v.n-2]:null,G=odGroups(v),wk=ph==='work';
+  const cmp=OD.cmp&&!!pv&&!wk,modes=odModes(v);if(cmp&&!modes.some(x=>x[0]===OD.cmode))OD.cmode=modes.length?modes[0][0]:'side';
+  const who=WHO[T.executor]&&T.executor!=='ty'?WHO[T.executor].n:'',st=stageOf(T.stage),stage=st?st.title:T.stage;
+  let h='<div class="od"><div class="od-top">'+bk+'<div class="od-hd"><div><p class="od-crumb">'+esc(T.projectName||projName(T.project))+(stage?' · '+esc(stage):'')+'</p><h1 class="od-h1" tabindex="-1">'+esc(T.title)+'</h1></div>'+
+    '<div class="od-meta">'+odState(m,ph)+'<span>wersja '+v.n+' z '+n+'</span>'+(who||v.at?'<span class="muted">'+(who?'przygotował '+esc(who):'')+(who&&v.at?' · ':'')+(v.at?esc(whenT(v.at)):'')+'</span>':'')+'</div></div></div>';
+  h+='<div class="od-page"><div class="od-main">';
+  if(wk&&OD.fix&&OD.fix.warn)h+='<div class="banner warn" role="alert">'+esc(OD.fix.warn)+'</div>';
+  if(wk)h+=odWork(m);
+  if(ph==='done')h+='<div class="banner ok" role="status"><span class="dot ok" aria-hidden="true"></span>Odebrano'+(m.accepted.length?': '+esc(odAccNames(m)):'')+'.'+(v.files.some(f=>f.kind==='pdf')?' Pliki do druku są gotowe.':'')+'</div>';
+  if(!m.api&&LIVE&&!wk&&ph!=='done')h+='<p class="od-note">Serwer nie zapisuje jeszcze wersji: widać bieżący wynik zadania.</p>';
+  if(v.n<n&&!cmp&&!wk)h+='<div class="banner">Oglądasz starszą wersję. <button type="button" class="lk od-lk" data-od="ver:'+n+'" data-k="od:vlast">Pokaż wersję '+n+'</button></div>';
+  let tb='';
+  if(n>1)tb+=n<=5?odSeg(m.versions.map(x=>[x.n,'Wersja '+x.n]),v.n,'ver','Wersja'):
+    '<label class="od-vsel"><span class="sr-only">Wersja</span><select class="fi" data-odver="1" data-k="od:vsel">'+m.versions.map(x=>'<option value="'+x.n+'"'+(x.n===v.n?' selected':'')+'>Wersja '+x.n+'</option>').join('')+'</select></label>';
+  if(G.sides)tb+=odSeg([['f','Przód'],['b','Tył']],OD.side,'side','Strona');
+  if(pv&&!wk){tb+='<button type="button" class="od-tgl" data-od="cmp" data-k="od:cmp" aria-pressed="'+cmp+'">Porównaj z wersją '+pv.n+'</button>';if(cmp&&modes.length>1)tb+=odSeg(modes,OD.cmode,'cmode','Sposób porównania')}
+  const pin=!!(OD.fix&&OD.fix.pinMode);
+  if(pin)tb+='<span class="od-hint od-hint-on">Dotknij miejsca na '+(G.vars.length?'projekcie':'filmie')+'</span>';else if(G.vars.length)tb+='<span class="od-hint">Dotknij, aby powiększyć</span>';
+  if(tb)h+='<div class="od-tb">'+tb+'</div>';
+  const vids=v.files.filter(f=>f.kind==='video'),txts=v.files.filter(f=>f.kind==='text'),pdfs=v.files.filter(f=>f.kind==='pdf');
+  let stg='';
+  if(G.vars.length)stg+='<div class="od-vars">'+G.vars.map(g=>odFig(g,v,pv,cmp,G.sides)).join('')+'</div>';
+  stg+=vids.map(f=>odVideo(f,v,pv,cmp)).join('')+txts.map(f=>odDoc(f,v,pv,cmp,txts.length>1)).join('');
+  if(!stg&&pdfs.length)stg='<div class="od-pdfs"><p>Wynik to '+pdfs.length+' '+pl(pdfs.length,'plik PDF','pliki PDF','plików PDF')+'.</p><div class="row">'+pdfs.map(f=>'<a class="btn sec" href="'+esc(f.url)+'" target="_blank" rel="noopener">Otwórz: '+esc(f.name.replace(/\.pdf$/i,''))+'</a>').join('')+'</div></div>';
+  if(stg)h+='<section class="od-stage'+(wk?' od-old':'')+(pin?' od-pinmode':'')+'" aria-label="'+esc('Podgląd pracy, wersja '+v.n+(wk?' (w trakcie poprawy)':''))+'">'+stg+'</section>';
+  else if(!v.result)h+='<div class="banner">Agent nie dołączył plików ani opisu wyniku. Zapytaj o tę pracę albo odeślij do poprawy.</div>';
+  if(!wk)h+=odChanges(m,v);
+  h+='</div><aside class="od-aside" aria-label="Decyzja i szczegóły">'+odDec(m,ph)+odFilesBtn(v)+odDet(m,v)+odAsk(T)+'</aside></div></div>';
+  return h+odOverlay(m);
+}
+/* po narysowaniu: klasa strony (telefon bez dolnego paska), wysokość decyzji przyklejonej do dołu, czas filmów */
+function odAfter(on){
+  document.body.classList.toggle('od-on',!!on);
+  const d=on&&document.getElementById('od-dec'),fx=!!d&&getComputedStyle(d).position==='fixed';
+  document.documentElement.style.setProperty('--od-bar-h',fx?d.offsetHeight+'px':'0px');
+  if(!on)return;
+  document.querySelectorAll('#view video[data-odv]').forEach(vd=>{const u=vd.dataset.odv;
+    if(!vd._od){vd._od=1;vd.addEventListener('timeupdate',()=>{OD.vt[u]=vd.currentTime});
+      const t=OD.vt[u];if(t){const go=()=>{try{vd.currentTime=t}catch(e){}};if(vd.readyState>=1)go();else vd.addEventListener('loadedmetadata',go,{once:true})}}});
+  if(OD.ovFocus){OD.ovFocus=false;const b=document.querySelector('.od-box [data-od="ovclose"]');if(b)b.focus()}
+}
+function odRe(k){render(true);if(k)focusK(k)}
+function odFixOpen(text){
+  const m=OD.m;if(!m)return;
+  OD.fix={text:text||'',pins:[],pinMode:false,seq:0};OD.view=m.versions.length;OD.cmp=false;OD.ov=null;
+  render(true);const t=document.getElementById('od-fx');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}
+}
+function odMk(el,ev){
+  const m=OD.m;if(!m)return;
+  const [vn,fi]=el.dataset.odmk.split('|').map(Number),v=m.versions[vn-1],f=v&&v.files[fi];if(!f)return;
+  const F=OD.fix;
+  if(F&&F.pinMode&&vn===m.versions.length&&odPhase(m)==='review'){
+    if(F.pins.length>=OD_MAXPINS){say('Najwyżej '+OD_MAXPINS+' znaczników.');return}
+    const box=(el.querySelector('img')||el).getBoundingClientRect();let x=50,y=50;
+    if((ev.clientX||ev.clientY)&&box.width&&box.height){x=Math.round((ev.clientX-box.left)/box.width*100);y=Math.round((ev.clientY-box.top)/box.height*100)}
+    const vd=f.kind==='video'?el.parentElement.querySelector('video'):null;
+    const G=odGroups(v),g=G.vars.find(z=>z.f===f||z.b===f);
+    const p={n:++F.seq,file:f.path,x:Math.max(0,Math.min(100,x)),y:Math.max(0,Math.min(100,y)),t:vd?Math.round(vd.currentTime*10)/10:null,note:'',
+      lab:g?g.name+(G.sides?', '+(g.f===f?'przód':'tył'):''):f.name};
+    if(vd)vd.pause();
+    F.pins.push(p);F.pinMode=false;render(true);
+    const i=document.querySelector('[data-odpin="'+p.n+'"]');if(i)i.focus();
+    say('Postawiono znacznik '+p.n+'. Wpisz, co tu zmienić.');return}
+  if(f.kind==='image'){OD.ov={t:'zoom',v:vn,i:fi,back:el.dataset.k};OD.ovFocus=true;render(true)}
+}
+function odOvClose(){const b=OD.ov&&OD.ov.t==='files'?'od:files':OD.ov&&OD.ov.back;OD.ov=null;odRe(b)}
+async function odSend(){
+  const m=OD.m,F=OD.fix;if(!m||!F||OD.busy)return;
+  const text=F.text.trim(),pins=F.pins.map(p=>({file:p.file,x:p.x,y:p.y,t:p.t,note:p.note.trim().slice(0,300)}));
+  if(!text&&!pins.length){say('Napisz, co zmienić, albo wskaż miejsce.');return}
+  F.warn='';
+  const T=m.task,t=D.tasks.find(x=>x.id===T.id),nvt=odNextN(m);
+  if(!LIVE){say(PRV);return}
+  if(!m.api){                                     /* serwer bez /api/odbior: poprawka drogą „Do poprawy” (znaczniki jako tekst) */
+    if(!t){say('Tego zadania nie ma już na liście.');return}
+    const full=[text].concat(F.pins.map(p=>'znacznik '+p.n+' ('+p.file+', '+(p.t!=null?odTm(p.t):p.x+'% od lewej, '+p.y+'% od góry')+'): '+p.note.trim())).filter(Boolean).join('; ');
+    OD.sent={text:text,pins:F.pins.slice()};OD.fix=null;OD.wait=Date.now()+20000;sendFix(t,full);window.scrollTo(0,0);setTimeout(()=>{if(OD.id===T.id)odLoad()},3000);return}
+  OD.busy=true;render(true);
+  const x=await post('/api/odbior/popraw',{id:T.id,title:T.title,text:text,pins:pins});
+  OD.busy=false;
+  if(!x.ok){if(x.status!==401)say(failMsg(x,'Nie wysłano poprawki.'));render(true);if(x.status===409){load(true);odLoad()}return}
+  const st=x.data&&x.data.status,stt=String(st&&st.text||'');
+  /* agent już pracował: poprawka nie została zapisana; formularz zostaje z tekstem i znacznikami */
+  if(/już pracuje/i.test(stt)){F.pinMode=false;F.warn=stt+' Poprawka nie została zapisana. Wyślij ją, gdy agent skończy.';say(F.warn,10000);render(true);odLoad();return}
+  OD.sent={text:text,pins:F.pins.slice()};OD.fix=null;OD.cmp=false;OD.view=m.versions.length;OD.wait=Date.now()+20000;
+  say(stt||'Wysłano. Agent poprawia, '+nvt+'.',8000);
+  render(true);window.scrollTo(0,0);const h=document.querySelector('#view .od-h1');if(h)h.focus({preventScroll:true});
+  load(true);odLoad();
+}
+async function odAccept(){
+  const m=OD.m;if(!m||OD.busy)return;
+  const T=m.task,t=D.tasks.find(x=>x.id===T.id),G=odGroups(odLast(m)),pg=G.vars.length>1?G.vars.find(g=>g.key===OD.pick):null;
+  const what=pg?'„'+pg.name+'”':shortT(T.title,60);
+  if(t&&needsCount(t)){actTask(t.id,'accept');return}          /* licznik: liczba w formularzu szuflady */
+  if(!m.api||!LIVE){if(!t){say('Tego zadania nie ma już na liście.');return}
+    patchTask(t.id,ACT.accept);if(LIVE)say('Odebrano: '+what+'.');odLoad();return}
+  OD.busy=true;render(true);
+  const x=await post('/api/odbior/akceptuj',{id:T.id,title:T.title,variants:pg?odVarFiles(pg):null});
+  OD.busy=false;
+  if(!x.ok){if(x.status!==401)say(failMsg(x,'Nie odebrano pracy.'));render(true);if(x.status===409){load(true);odLoad()}return}
+  m.task.state='done';m.accepted=x.data&&Array.isArray(x.data.accepted)?x.data.accepted:pg?odVarFiles(pg):[];OD.view=m.versions.length;OD.cmp=false;
+  say('Odebrano: '+what+'.',8000);render(true);const h=document.querySelector('#view .od-h1');if(h)h.focus({preventScroll:true});
+  load(true);odLoad();
+}
+async function odAskSend(f){
+  const m=OD.m;if(!m)return;const i=f.querySelector('input'),text=(i.value||'').trim(),T=m.task;if(!text)return;
+  if(!LIVE){say(PRV);return}
+  const c=CH[T.id]||(CH[T.id]={messages:[],pending:false,error:''});if(c.pending){say('Czekam jeszcze na odpowiedź.');return}
+  i.value='';c.messages.push({role:'ty',text:text});c.pending=true;c.error='';odRe('od:ask');
+  const x=await post('/api/task/chat',{id:T.id,title:T.title,message:text,execute:false});
+  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano pytania.';render();return}
+  setTimeout(()=>loadChat(T.id),2500);
+}
+document.addEventListener('click',ev=>{
+  if(!D||!CUR||CUR.v!=='odbior')return;
+  const mk=ev.target.closest&&ev.target.closest('[data-odmk]');if(mk){ev.preventDefault();odMk(mk,ev);return}
+  const b=ev.target.closest&&ev.target.closest('[data-od]');if(!b)return;
+  const k=b.dataset.od,i=k.indexOf(':'),a=i<0?k:k.slice(0,i),arg=i<0?'':k.slice(i+1),m=OD.m;
+  if(a==='ovbg'){if(ev.target===b)odOvClose();return}
+  if(b.getAttribute('aria-disabled')==='true'||b.disabled||!m)return;
+  const F=OD.fix,fk='od:'+a+':'+arg;
+  switch(a){
+    case 'ver':OD.view=+arg;if(OD.view<2)OD.cmp=false;odRe(fk);break;
+    case 'side':OD.side=arg==='b'?'b':'f';odRe(fk);break;
+    case 'zside':if(OD.ov){const vv=m.versions[OD.ov.v-1],g=odGroups(vv).vars.find(x=>x.f===vv.files[OD.ov.i]||x.b===vv.files[OD.ov.i]),f=g&&g[arg];if(f)OD.ov.i=vv.files.indexOf(f)}odRe(fk);break;
+    case 'cmp':OD.cmp=!OD.cmp;odRe('od:cmp');break;
+    case 'cmode':OD.cmode=arg;odRe(fk);break;
+    case 'pick':OD.pick=arg;odRe(fk);break;
+    case 'fixopen':odFixOpen('');break;
+    case 'fixcancel':OD.fix=null;odRe('od:fixopen');break;
+    case 'chip':if(F){F.text=F.text.trim()?F.text.trim().replace(/[.,;]$/,'')+'; '+arg.toLowerCase():arg;render(true);const t=document.getElementById('od-fx');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length)}}break;
+    case 'pinon':if(F){F.pinMode=true;OD.view=m.versions.length;OD.cmp=false;render(true);const s=document.querySelector('#view .od-stage');if(s)s.scrollIntoView({block:'start'});focusK('od:pinoff')}break;
+    case 'pinoff':if(F){F.pinMode=false;odRe('od:fx')}break;
+    case 'pindel':if(F){F.pins=F.pins.filter(p=>p.n!==+arg);odRe(F.pins.length?'':'od:pinon');if(!F.pins.length){const t=document.getElementById('od-fx');if(t)t.focus()}}break;
+    case 'accept':odAccept();break;
+    case 'files':OD.ov={t:'files'};OD.ovFocus=true;render(true);break;
+    case 'ovclose':odOvClose();break;
+    case 'follow':openForm(m.task.id,'accept');break;
+    case 'chat2fix':{const c=CH[m.task.id],q=c?[...c.messages].reverse().find(x=>x.role==='ty'):null;odFixOpen(q?q.text:'');break}
+  }
+});
+document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset||!f.dataset.odform)return;ev.preventDefault();
+  if(f.dataset.odform==='fix')odSend();else if(f.dataset.odform==='ask')odAskSend(f)});
+document.addEventListener('input',ev=>{const el=ev.target;if(!el.closest||!el.closest('.od'))return;
+  if(el.dataset.odfx!=null&&OD.fix){OD.fix.text=el.value;const b=document.querySelector('[data-k="od:send"]');if(b)b.disabled=!(OD.fix.text.trim()||OD.fix.pins.length)||OD.busy;return}
+  if(el.dataset.odpin!=null&&OD.fix){const p=OD.fix.pins.find(x=>x.n===+el.dataset.odpin);if(p)p.note=el.value;return}
+  if(el.dataset.odsl!=null){OD.slider=+el.value;
+    document.querySelectorAll('#view .od-cmp').forEach(c=>{const t=c.querySelector('.od-cmp-top'),l=c.querySelector('.od-cmp-line');if(t)t.style.clipPath='inset(0 0 0 '+OD.slider+'%)';if(l)l.style.left=OD.slider+'%'});
+    document.querySelectorAll('#view input[data-odsl]').forEach(r=>{if(r!==el)r.value=OD.slider})}});
+document.addEventListener('change',ev=>{const el=ev.target;if(el.dataset&&el.dataset.odver!=null&&OD.m){OD.view=+el.value||OD.m.versions.length;if(OD.view<2)OD.cmp=false;odRe('od:vsel')}});
+/* Esc: najpierw powiększenie albo arkusz plików, potem tryb znacznika; Tab zostaje w otwartym oknie */
+document.addEventListener('keydown',ev=>{
+  if(!CUR||CUR.v!=='odbior'||DR)return;
+  if(ev.key==='Escape'&&OD.ov){ev.preventDefault();ev.stopPropagation();odOvClose();return}
+  if(ev.key==='Escape'&&OD.fix&&OD.fix.pinMode){ev.preventDefault();ev.stopPropagation();OD.fix.pinMode=false;odRe('od:pinon');return}
+  if(ev.key==='Tab'&&OD.ov){const box=document.querySelector('#view .od-box');if(!box)return;
+    const f=Array.prototype.filter.call(box.querySelectorAll(FOCUSABLE),x=>!x.disabled&&x.offsetParent!==null),a=document.activeElement,i=f.indexOf(a);
+    if(!f.length)return;if(ev.shiftKey&&i<=0){ev.preventDefault();f[f.length-1].focus()}else if(!ev.shiftKey&&(i<0||i===f.length-1)){ev.preventDefault();f[0].focus()}}
+},true);
+window.addEventListener('resize',()=>{if(CUR&&CUR.v==='odbior')odAfter(true)});
+
+
 /* ---------- nawigacja ---------- */
 function route(){
   let h='';try{h=decodeURIComponent((location.hash||'').slice(1))}catch(e){}
   h=h||'start';
+  if(/^odbior(\?|$)/.test(h))return {v:'odbior',z:odRouteId()};
   const qi=h.indexOf('?');if(qi>=0){const qs=h.slice(qi+1),v=h.slice(0,qi);h=v;const m=/(?:^|&)p=([^&]*)/.exec(qs);
     if(m&&D){const id=m[1],ok=id==='all'||id===''||!!P(id);if(ok){if(v==='tablica'||v==='terminy')PF.bp=id||'all';else if(v==='blokady')PF.bk=id==='all'?'':id;else if(v==='wskazniki')PF.ms=id||'all'}}}
   if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='plan';
@@ -8495,6 +9139,7 @@ function setToast(t){const el=$('#toast');if(el&&el.textContent!==t)el.textConte
 function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);noticeT=setTimeout(()=>{notice='';setToast('')},ms||7000)}
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
+  if(r.v==='odbior')return vOdbior(r);
   return ({asystent:vAsystent,start:vStart,przeglad:vPrzeglad,wskazniki:vWskazniki,ty:vTy,marketing:vMarketing,media:vMedia,tablica:vTablica,terminy:vTerminy,blokady:vBlokady,agenci:vAgenci,koszty:vKoszty,projekty:vProjekty}[r.v]||vPrzeglad)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
@@ -8505,14 +9150,20 @@ const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELE
   return false};
 function render(force){
   if(!D)return;
-  const r=route();CUR=r;
-  document.title=(r.v==='projekt'?r.p.name+' · ':VNAME[r.v]+' · ')+'Panel projektów';
-  if(r.v!=='projekt'&&r.v!=='start')A.view=r.v;
+  const r=route();
+  /* strona odbioru: powrót do widoku, z którego weszło „Obejrzyj”; wejście na stronę odświeża dane odbioru */
+  if(r.v==='odbior'){if(CUR&&CUR.v!=='odbior')OD.back=CUR.v==='projekt'?{href:phref(CUR.p),label:pShort(CUR.p)}:{href:'#'+CUR.v,label:VNAME[CUR.v]||VNAME.ty};
+    if(r.z!==OD.id)odOpen(r.z);else if(!OD.on)odLoad();OD.on=true}
+  else if(OD.on){OD.on=false;clearTimeout(OD.poll);if(OD.fix)OD.fix.pinMode=false;OD.ov=null}
+  CUR=r;
+  document.title=(r.v==='projekt'?r.p.name+' · ':r.v==='odbior'&&OD.m?OD.m.task.title+' · '+VNAME.odbior+' · ':VNAME[r.v]+' · ')+'Panel projektów';
+  if(r.v!=='projekt'&&r.v!=='start'&&r.v!=='odbior')A.view=r.v;
   renderSide(r);renderCrumbs(r);renderTop();
   if(force||!typingIn('#view')){tipHide();let vh;
     /* błąd w jednym widoku nie zatrzymuje odświeżania i nie udaje braku połączenia */
     try{vh=viewHtml(r)}catch(e){console.error(e);vh='<div class="banner bad" role="alert">Nie udało się pokazać tego widoku ('+esc(String(e&&e.message||e))+'). Dane z serwera są aktualne; przejdź do innego widoku albo odśwież stronę.</div>'}
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
+  odAfter(r.v==='odbior');
   if(r.v==='projekt'){pjGo();if(r.tab==='strona')wwMount(r.p)}
   else if(r.v==='agenci')setHtml($('#abar'),agBarHtml());
   renderDrawer(force);
@@ -8527,6 +9178,7 @@ function pjGo(){const id=A.pjGo;if(!id)return;A.pjGo='';const n=document.getElem
 /* link z powiadomienia: #widok?z=<id zadania> otwiera zadanie, #widok?u=<id uruchomienia> uruchomienie;
    parametr znika z adresu (replaceState, bez hashchange), żeby odświeżenie nie otwierało szuflady ponownie */
 function deepLink(){
+  if(/^#odbior(\?|$)/.test(location.hash||''))return;     /* ?z= strony odbioru zostaje w adresie */
   const h=location.hash||'',m=/[?&](z|u)=([^&]*)/.exec(h);if(!m)return;
   let id='';try{id=decodeURIComponent(m[2])}catch(e){}
   const rest=h.replace(/([?&])(z|u)=[^&]*&?/,'$1').replace(/[?&]$/,'');
