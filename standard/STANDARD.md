@@ -33,6 +33,13 @@ w `dashboard/AGENCI.md`, „Podgląd strony”). Opcjonalnie `- strona build: po
 `npm ci && npm run build -- --base=./`, Vite ze ścieżkami względnymi) i `- strona wynik: folder` (względem folderu
 strony, domyślnie `dist`). Ścieżka z `..`, z `/` na początku albo ze spacją jest brakiem karty. Bez pola `strona:`
 projekt nie ma podglądu.
+`- github: właściciel/repozytorium`: repozytorium projektu na GitHubie, źródło prawdy dla kodu (`github` w danych
+projektu). Opcjonalnie `- github gałąź: nazwa` (gałąź bazowa klonu, domyślnie gałąź domyślna na GitHubie;
+`githubBranch`). Kopia na serwerze jest potrzebna tylko na czas pracy: panel pokazuje jej stan względem GitHuba,
+wysyła gałęzie na GitHub, usuwa kopię do kosza, gdy nic lokalnego nie zginie, i klonuje ją przed następnym zadaniem
+agenta albo budowaniem podglądu (opis w `dashboard/AGENCI.md`, „Kopia projektu i GitHub”). Karta i zadania zostają
+w IntegrateSystems (dowiązania w folderze projektu). Wartość, która nie jest `właściciel/repozytorium`, jest brakiem
+karty. Pole `- repozytorium:` zostaje wolnym opisem.
 
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.

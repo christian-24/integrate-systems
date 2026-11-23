@@ -1696,6 +1696,13 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .rs-det .tw{margin:0 -16px}
 .prx-more{grid-column:2;grid-row:1;justify-self:end;align-self:center;font-size:13px;position:relative;z-index:2}
 .prx-more>summary{list-style:none;cursor:pointer;display:grid;place-items:center;min-width:36px;min-height:32px;border:1px solid var(--ctl-line);border-radius:var(--r);font-size:18px;line-height:1;color:var(--ink-2);background:var(--surface)}
+.gh-row>summary .muted{font-weight:400}
+.gh{display:grid;gap:8px}
+.gh-dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;margin:0}
+.gh-dl dt{color:var(--ink-2)}.gh-dl dd{margin:0;overflow-wrap:anywhere}
+.gh-sel{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:4px 14px}.gh-sel legend{color:var(--ink-2);padding:0;margin-bottom:2px}
+.gh-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (max-width:600px){.gh-dl{grid-template-columns:1fr}.gh-dl dd{margin-bottom:4px}}
 .prx-menu{position:absolute;right:0;top:calc(100% + 4px);width:min(300px,80vw);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-2);padding:10px 12px;display:grid;gap:6px;z-index:5}
 .prx-more .pf{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;margin:6px 0 4px}
 .prx-more .r{justify-content:flex-start}
@@ -5080,6 +5087,7 @@ const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i pr
 /* GitHub projektu (p.git z serwera): link w nowej karcie albo „Brak GitHuba”, plus niewypchnięte commity */
 function gitTag(p){
   const g=p.git;if(!g)return '';
+  if(!g.repo&&p.github)return '<span class="pj-git"><a href="#koszty" title="Kopia projektu jest tylko na GitHubie ('+esc(p.github)+'); panel sklonuje ją przy następnym zadaniu">Kopia na GitHubie</a></span>';
   const u=/^https:\/\//.test(g.url||'')?g.url:'',n=g.unpushed|0;
   let h=g.remote==='github'&&u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">GitHub</a>'
     :g.remote==='inny'?(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(g.host||'Repozytorium')+'</a>':'<span title="Repozytorium poza GitHubem">'+esc(g.host||'Repozytorium lokalne')+'</span>')
@@ -5947,6 +5955,89 @@ function resPanel(){
     r.projects.map(p=>row('<a href="'+phref(p)+'">'+esc(p.name)+'</a>',p.size,git?(p.git?gb(p.git):'—'):null)).join('')+'</tbody></table></div>';
   return h+'<p class="note ds-pad">Liczone co 10 minut'+(r.sizesAt?', ostatnio '+esc(whenT(new Date(r.sizesAt*1000).toISOString())):'')+'. Pliki projektu obejmują rozmowy, filmy i zdjęcia z karty.</p></details></section>';
 }
+/* kopie projektów a GitHub (AGENCI.md „Kopia projektu i GitHub”): stan na żądanie (/api/github/stan), „Sprawdź” (git fetch),
+   „Wyślij na GitHub” (push bez --force), „Usuń kopię z serwera” (do kosza, z potwierdzeniem; blokady wymienione) */
+const GHS={},GHM={},GHSEL={};
+const ghLink=r=>'<a href="https://github.com/'+esc(r)+'" target="_blank" rel="noopener noreferrer">'+esc(r)+'</a>';
+function ghSet(pid,r,okText){
+  const d=r.data||{};if(d.state)GHS[pid]=d.state;else if(GHS[pid]===null)GHS[pid]=undefined;
+  const t=r.ok?(okText||d.message||''):(r.error||'Nie udało się.');GHM[pid]=t?{ok:r.ok,text:t}:null;
+}
+function ghLoad(pid,fetch){
+  if(!LIVE)return;
+  if(fetch)A.busy['gh:'+pid]='check';else if(GHS[pid]===undefined)GHS[pid]=null;
+  post('/api/github/stan',{project:pid,fetch:!!fetch}).then(r=>{if(r.status===401)return;ghSet(pid,r);if(fetch)A.busy['gh:'+pid]='';render(true)});
+}
+function ghAct(a,pid){
+  if(!LIVE){say(PRV);return}
+  if(A.busy['gh:'+pid])return;
+  if(a==='gh-check'){ghLoad(pid,true);render(true);return}
+  if(a==='gh-rm'){A.ghConf=pid;render(true);focusK('ghn:'+pid);return}
+  if(a==='gh-rm-no'){A.ghConf='';render(true);focusK('ghr:'+pid);return}
+  const push=a==='gh-push';
+  if(!push&&a!=='gh-rm-yes')return;
+  A.ghConf='';A.busy['gh:'+pid]=push?'push':'rm';GHM[pid]=null;render(true);
+  const body=push?{project:pid,branches:Array.from(GHSEL[pid]||[])}:{project:pid,confirm:true};
+  post(push?'/api/github/wyslij':'/api/github/usun-kopie',body).then(r=>{if(r.status===401)return;
+    A.busy['gh:'+pid]='';ghSet(pid,r);if(r.ok&&push)GHSEL[pid]=new Set();render(true);if(GHM[pid])say(GHM[pid].text,10000);load(true)});
+}
+function ghSum(p){
+  const g=p.git||{},s=GHS[p.id];
+  if(!g.repo&&!(s&&s.repo))return p.github?'kopia na GitHubie, sklonuje się przy następnym zadaniu':'folder bez repozytorium git';
+  if(s&&s.repo){const t=[s.branch||'odłączony HEAD'];if(s.ahead)t.push(s.ahead+' do wysłania');if(s.behind)t.push(s.behind+' do pobrania');if(s.dirtyCount)t.push(s.dirtyCount+' '+pl(s.dirtyCount,'plik niezatwierdzony','pliki niezatwierdzone','plików niezatwierdzonych'));return t.join(' · ')}
+  return g.unpushed?g.unpushed+' '+pl(g.unpushed,'commit niewysłany','commity niewysłane','commitów niewysłanych'):'';
+}
+function ghBody(p){
+  const pid=p.id,s=GHS[pid],busy=A.busy['gh:'+pid]||'',m=GHM[pid],id=esc(pid);
+  const msg=m?'<p class="'+(m.ok?'note':'warn')+' gh-msg" role="status">'+esc(m.text)+'</p>':'';
+  if(!s)return '<div class="gh">'+msg+'<p class="note" role="status">Wczytuję stan kopii…</p></div>';
+  let h='<div class="gh">';
+  if(!s.repo){
+    if(s.stub)h+='<p>Kopia na GitHubie'+(s.github?' ('+ghLink(s.github)+(s.githubBranch?', gałąź '+esc(s.githubBranch):'')+')':'')+', sklonuje się przy następnym zadaniu albo budowaniu podglądu.</p>'+
+      (s.removed&&s.removed.trash?'<p class="note">Poprzednia kopia w koszu: <code>'+esc(s.removed.trash).replace(/\//g,'/<wbr>')+'</code>'+(s.removed.removedAt?' ('+esc(whenT(s.removed.removedAt))+')':'')+'.</p>':'');
+    else h+='<p class="muted">Folder projektu nie jest repozytorium git'+(s.github?'':', a karta nie ma pola github:')+'.</p>';
+    return h+msg+'</div>';
+  }
+  const rows=[];
+  rows.push(['GitHub',s.github?ghLink(s.github)+(s.githubBranch?' <span class="muted">· gałąź klonu '+esc(s.githubBranch)+'</span>':''):'<span class="muted">brak pola github: w karcie</span>']);
+  rows.push(['origin',s.origin?'<code>'+esc(s.origin)+'</code>'+(s.github&&!s.originOk?' <span class="warn">inne repozytorium niż w karcie</span>':''):'<span class="warn">brak</span>']);
+  const st=[];
+  if(s.remoteBranch){if(s.ahead)st.push(s.ahead+' '+pl(s.ahead,'commit','commity','commitów')+' do wysłania');if(s.behind)st.push(s.behind+' '+pl(s.behind,'commit','commity','commitów')+' na GitHubie, których tu nie ma');if(!st.length)st.push('zgodna z '+esc(s.remoteBranch))}
+  else st.push('nie ma jej na GitHubie'+(s.ahead?' ('+s.ahead+' '+pl(s.ahead,'commit','commity','commitów')+')':''));
+  rows.push(['Gałąź','<b>'+esc(s.branch||'odłączony HEAD')+'</b> · '+st.join(' · ')]);
+  const nb=s.branches.filter(b=>!b.current&&!b.remote),late=s.branches.filter(b=>!b.current&&b.remote&&b.ahead);
+  const bl=L=>L.map(b=>esc(b.name)+(b.unpushed?' <span class="muted num">('+b.unpushed+')</span>':'')).join(', ');
+  const own=nb.filter(b=>!b.agent),ag=nb.filter(b=>b.agent);
+  if(own.length)rows.push(['Gałęzie bez odpowiednika na GitHubie',bl(own)]);
+  if(ag.length)rows.push(['Gałęzie agentów bez odpowiednika',bl(ag)]);
+  if(late.length)rows.push(['Gałęzie przed GitHubem',late.map(b=>esc(b.name)+' <span class="muted num">('+b.ahead+')</span>').join(', ')]);
+  rows.push(['Pliki',s.dirtyCount?'<span class="warn">'+s.dirtyCount+' '+pl(s.dirtyCount,'niezatwierdzony albo nieśledzony','niezatwierdzone albo nieśledzone','niezatwierdzonych albo nieśledzonych')+'</span>: '+
+    s.dirty.slice(0,8).map(d=>'<code>'+esc(d.path)+'</code>').join(', ')+(s.dirtyCount>8?', …':''):'wszystkie zatwierdzone <span class="muted">(bez .agent/, node_modules/, wyników budowania i .zrzuty/)</span>']);
+  rows.push(['Sprawdzono na GitHubie',s.fetchedAt?esc(whenT(s.fetchedAt)):'jeszcze nie (kliknij „Sprawdź”)']);
+  h+='<dl class="gh-dl">'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>';
+  /* inne gałęzie do wysłania: wybór zapamiętany w GHSEL (odświeżanie danych go nie kasuje) */
+  const opt=s.branches.filter(b=>!b.current&&b.unpushed),sel=GHSEL[pid]||(GHSEL[pid]=new Set());
+  if(opt.length)h+='<fieldset class="gh-sel"><legend>Wyślij też</legend>'+opt.map(b=>'<label class="prx-chk"><input type="checkbox" data-ghb="'+id+'" value="'+esc(b.name)+'"'+(sel.has(b.name)?' checked':'')+'> '+esc(b.name)+' <span class="muted num">('+b.unpushed+')</span></label>').join('')+'</fieldset>';
+  const dis=busy?' aria-disabled="true"':'';
+  h+='<div class="gh-acts"><button type="button" class="btn sec sm" data-ag="gh-check" data-id="'+id+'" data-k="ghc:'+id+'"'+dis+' title="git fetch z limitem czasu">'+(busy==='check'?'Sprawdzam…':'Sprawdź')+'</button>'+
+    '<button type="button" class="btn sm" data-ag="gh-push" data-id="'+id+'" data-k="ghp:'+id+'"'+dis+(s.origin?'':' disabled')+' title="push bieżącej gałęzi'+(sel.size?' i wybranych':'')+', bez --force">'+(busy==='push'?'Wysyłam…':'Wyślij na GitHub')+'</button>';
+  if(A.ghConf===pid&&s.removable)h+='<span class="rsn" id="gh-q-'+id+'">Przenieść kopię do kosza na serwerze? Projekt zostaje w panelu, kopia sklonuje się z GitHuba przy następnym zadaniu.</span>'+
+    '<button type="button" class="btn danger sm" data-ag="gh-rm-yes" data-id="'+id+'" data-k="ghy:'+id+'" aria-describedby="gh-q-'+id+'">Usuń kopię</button><button type="button" class="btn sec sm" data-ag="gh-rm-no" data-id="'+id+'" data-k="ghn:'+id+'">Anuluj</button>';
+  else h+='<button type="button" class="btn sec sm" data-ag="gh-rm" data-id="'+id+'" data-k="ghr:'+id+'"'+(s.removable&&!busy?'':' aria-disabled="true"')+(s.blocks.length?' aria-describedby="gh-b-'+id+'"':'')+'>'+(busy==='rm'?'Usuwam…':'Usuń kopię z serwera')+'</button>';
+  h+='</div>';
+  if(s.blocks.length)h+='<div class="note" id="gh-b-'+id+'">Usunięcie kopii blokuje:<ul>'+s.blocks.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul></div>';
+  return h+msg+'</div>';
+}
+function ghPanel(){
+  if(!LIVE||D.projectsSource!=='registry')return '';
+  const L=D.projects.filter(p=>p.github||(p.git&&p.git.repo));
+  if(!L.length)return '';
+  let h='<section class="panel" id="github"><h2>Projekty i GitHub <small>kopie na serwerze</small></h2><p class="note ds-pad">Źródłem kodu jest GitHub. Kopia na serwerze jest potrzebna na czas pracy agentów i podglądu. Po wysłaniu zmian możesz ją usunąć; panel sklonuje ją przy następnym zadaniu.</p>';
+  h+=L.map(p=>{const k='gh:'+p.id,op=!!(A.agDet&&A.agDet[k]);
+    if(op&&GHS[p.id]===undefined)ghLoad(p.id,false);
+    return '<details class="ds-det ds-pad gh-row" data-agdet="'+esc(k)+'"'+(op?' open':'')+'><summary><b>'+esc(p.name)+'</b> <span class="muted">'+esc(ghSum(p))+'</span></summary>'+ghBody(p)+'</details>'}).join('');
+  return h+'</section>';
+}
 /* rozwój panelu na serwerze (ROZWOJ.md): zmiany na gałęzi rozwoj, panel testowy, przycisk „Wdróż” z potwierdzeniem */
 const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
 function devPanel(){
@@ -5984,7 +6075,7 @@ function vKoszty(){
   /* podtytuł: czym jest strona; stan dopisany tylko, gdy wymaga uwagi (liczby są niżej, bez powtórzeń) */
   const k=D.costs,v=D.server?srvItems():null;
   let h='<div class="pagehead"><div class="ph-main"><h1>Serwer</h1><p>Stan serwera, na którym działają panel i agenci.'+(v&&v.lvl!=='ok'?' <b>'+({warn:'Do sprawdzenia.',bad:'Jest problem.'}[v.lvl])+'</b>':'')+'</p></div></div>';
-  h+=srvPanel()+resPanel();
+  h+=srvPanel()+resPanel()+ghPanel();
   const tail=devPanel()+srvPanel('ses');
   if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>'+tail;
   if(k.configured&&!k.loading){
@@ -10348,6 +10439,7 @@ function agentAct(el){
   else if(a==='prm'){A.confirm=id;render(true);focusK('pn:'+id)}
   else if(a==='prm-no'){A.confirm='';render(true);focusK('pr:'+id)}
   else if(a==='prm-yes')removeProject(id);
+  else if(a.startsWith('gh-'))ghAct(a,id);
   else if(a==='padd-go'){const d=$('#padd-d');if(d&&!d.open){d.open=true;(A.prxDet||(A.prxDet={})).add=true}const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
   else if(a==='prx-zl')prxDelegate(id);
   else if(a==='plan-go')acceptPlan(id);
@@ -10749,6 +10841,10 @@ document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dat
   if(el.dataset&&el.dataset.pvdet){if(!!PF.more[el.dataset.pvdet]!==el.open){PF.more[el.dataset.pvdet]=el.open;savePF()}return}if(el.dataset&&el.dataset.stuproj!=null){(A.stuProj||(A.stuProj={}))[el.dataset.stuproj]=el.open;return}if(el.dataset&&el.dataset.stutpl!=null){(A.stuTpl||(A.stuTpl={}))[el.dataset.stutpl]=el.open;return}if(el.dataset&&el.dataset.stud!=null){A.stuDet=el.open;return}if(!DR)return;if(el.id==='dmore')DR.more=el.open;else if(el.id==='dchat')DR.chat=el.open},true);
 /* obrót telefonu albo zmiana szerokości okna: głębokość drzewa Blokad, zwinięcie Teraz i limity od razu, nie przy następnym odczycie */
 try{const mq=matchMedia('(max-width:620px)'),fn=()=>render(true);if(mq.addEventListener)mq.addEventListener('change',fn);else if(mq.addListener)mq.addListener(fn)}catch(e){}
+document.addEventListener('toggle',ev=>{const d=ev.target;if(!d||!d.dataset||!/^gh:/.test(d.dataset.agdet||'')||!d.open)return;
+  const pid=d.dataset.agdet.slice(3);(A.agDet||(A.agDet={}))[d.dataset.agdet]=true;if(GHS[pid]===undefined){ghLoad(pid,false);render(true)}},true);
+document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||!c.dataset.ghb)return;
+  const S=GHSEL[c.dataset.ghb]||(GHSEL[c.dataset.ghb]=new Set());if(c.checked)S.add(c.value);else S.delete(c.value)});
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';A.bnMore=false;
   const a=document.activeElement,lost=!a||a===document.body||!document.contains(a)||!!(a.closest&&a.closest('#view,#bnsheet'));
   render(true);window.scrollTo(0,0);

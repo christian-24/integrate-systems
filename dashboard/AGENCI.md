@@ -232,6 +232,43 @@ repozytorium to nie jest sam folder IntegrateSystems:
 Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty) i bez podpisywania commitów.
 Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w folderze projektu, krok w rekordzie to opisuje.
 
+### Kopia projektu i GitHub
+
+Repozytorium na GitHubie (pole karty `- github: właściciel/repozytorium`, opcjonalnie `- github gałąź: nazwa`) jest
+źródłem prawdy. Kopia w folderze projektu na serwerze jest potrzebna tylko na czas pracy (zadania agentów,
+podgląd strony). Moduł `dashboard/kopie.py`, widok: Serwer → „Projekty i GitHub” (wiersz projektu z repozytorium git
+albo z polem `github:`; stan wczytuje się po rozwinięciu wiersza). Na stronie projektu kopia usunięta ma znacznik
+„Kopia na GitHubie”.
+
+- **Stan** (bez sieci): `origin` (bez danych logowania), bieżąca gałąź, commity przed/za `origin/<gałąź>`, lokalne
+  gałęzie bez odpowiednika na GitHubie (osobno `agent/…`), pliki niezatwierdzone i nieśledzone (bez `.agent/`,
+  `node_modules/`, `.zrzuty/` i wyników budowania: `dist/`, `build/`, `.next/` itp.; bez dowiązań karty), czas
+  ostatniego `git fetch`. **„Sprawdź”** robi `git fetch --prune origin` z limitem czasu (`PANEL_GITHUB_TIMEOUT`, 60 s).
+- **„Wyślij na GitHub”**: `git push origin <gałąź>:<gałąź>` bieżącej gałęzi i zaznaczonych innych gałęzi z niewysłanymi
+  commitami, z procesu panelu (jego klucz SSH), bez `--force` i bez haków. Gałąź nowa na GitHubie dostaje upstream.
+  Komunikat: wysłano / nic do wysłania / odrzucone (na GitHubie są nowsze commity) / brak dostępu (co ustawić: klucz
+  SSH konta panelu z prawem zapisu) / brak repozytorium / brak odpowiedzi. `origin` inny niż pole `github:` blokuje
+  wysłanie.
+- **„Usuń kopię z serwera”**: aktywne, gdy pole `github:` jest w karcie, `origin` to to repozytorium, nie ma plików
+  niezatwierdzonych i nieśledzonych (poza wykluczonymi), każda lokalna gałąź jest na GitHubie albo scalona w gałąź,
+  która tam jest (`git rev-list <gałąź> --not --remotes=origin` puste), nie ma katalogów roboczych w `.agent/`,
+  `KARTA.md` i `ZADANIA.md` są dowiązaniami do `szkice/` w IntegrateSystems, nie pracuje agent, nie trwa budowanie
+  podglądu, a projekt jest z rejestru. Inaczej przycisk jest wyłączony, a pod nim lista blokad. Po potwierdzeniu panel
+  wstrzymuje przyjmowanie zadań, robi `git fetch` (błąd = kopia zostaje), sprawdza blokady jeszcze raz i przenosi folder
+  do `<folder nadrzędny>/.kosz/<projekt>-RRRR-MM-DD` (kolejne tego dnia: `-2`, `-3`). Niczego nie kasuje. W folderze
+  projektu zostają dowiązania karty (`KARTA.md`, `ZADANIA.md`, `DECYZJE.md`, `kampanie`) i plik
+  `.kopia-na-githubie.json` (kiedy, dokąd), więc projekt zostaje w rejestrze i w panelu z kartą i zadaniami.
+- **Klon na start**: gdy karta ma `github:`, a folder projektu nie ma repozytorium, panel przed zadaniem agenta
+  (`/api/agent/run`, Automat, uruchomienia z rozmów i uwag do strony) i przed budowaniem podglądu klonuje
+  repozytorium (gałąź z `github gałąź:`, bez niej domyślną) obok folderu, przenosi do klonu dowiązania karty
+  (dopisane do `.git/info/exclude` razem z `/.agent/`, `.zrzuty/`, `node_modules/`) i podmienia folder. Krok
+  uruchomienia: „Sklonowano z GitHuba: …”. Błąd klonu blokuje start z powodem (409, np. „Nie sklonowano z GitHuba: brak
+  dostępu…”); podgląd strony dostaje ten powód jako błąd budowania. Folder z innymi plikami bez repozytorium nie jest
+  nadpisywany (409).
+- Adres klonu: `PANEL_GITHUB_URL` z `{repo}` (domyślnie `git@github.com:{repo}.git`). Git bez pytań o hasło
+  (`BatchMode=yes`, `StrictHostKeyChecking=accept-new`, `GIT_TERMINAL_PROMPT=0`). Jedna operacja naraz na folder.
+- Agent zadania dalej nie ma `git push` (`TASK_TOOLS`); wysyła tylko panel na przycisk.
+
 ### Kiedy zadania nie da się uruchomić (`runBlock`)
 
 Pierwszy pasujący powód; pusty tekst oznacza, że można uruchomić.
@@ -365,6 +402,9 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 | `/api/strona/koncepcja` | `{"project", "path", "text"?}` | zadanie „według koncepcji”; 400, gdy ścieżki nie ma w projekcie |
 | `/api/project/add` | `{"path": folder, "name"?: nazwa, "files": bool}` | dopisuje istniejący folder do rejestru; `files: true` zakłada brakujące pliki standardu (niczego nie nadpisuje) |
 | `/api/project/remove` | `{"id": projekt}` | usuwa z rejestru; pliki zostają |
+| `/api/github/stan` | `{"project", "fetch"?: bool}` | stan kopii (`state`: `repo`, `stub`, `removed`, `github`, `githubBranch`, `origin`, `originOk`, `branch`, `remoteBranch`, `ahead`, `behind`, `branches` [`name`, `remote`, `ahead`, `behind`, `unpushed`, `agent`, `current`], `dirty`, `dirtyCount`, `worktrees`, `fetchedAt`, `cardsLinked`, `agentLive`, `blocks`, `removable`); `fetch: true` najpierw `git fetch` (502 z opisem, gdy się nie udał) |
+| `/api/github/wyslij` | `{"project", "branches"?: [nazwy]}` | push bieżącej gałęzi i podanych, bez `--force`; `result`: `sent`/`nothing` (200), `rejected`/`error` (409), `access`/`missing`/`timeout` (502); `results` po gałęziach, `message`, `state` |
+| `/api/github/usun-kopie` | `{"project", "confirm": true}` | przeniesienie kopii do kosza (opis wyżej); 400 bez potwierdzenia, 409 z blokadami, 502 gdy `git fetch` się nie udał; odpowiedź `trash`, `message`, `state` |
 
 Rozmowa o zadaniu (tylko odczyt; „Wyślij i wykonaj” w „Uruchamianie z rozmów”):
 `POST /api/task/chat` z `{"id": taskId, "title": tytuł, "message": tekst}` (najwyżej 2000 znaków, treść żądania
