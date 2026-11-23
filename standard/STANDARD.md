@@ -134,7 +134,9 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `wynik:` | krótki wynik pracy | agent |
 | `decyzja:` | co właściciel ma zatwierdzić przy odbiorze | agent |
 | `zostało:` | czego nie zrobiono | agent |
-| `poprawka:` | uwagi właściciela przy „Do poprawy” albo polecenie z „Wyślij i wykonaj” w rozmowie o zadaniu; agent wykonuje je i poprawia pracę | właściciel, panel |
+| `poprawka:` | uwagi właściciela przy „Do poprawy”, ze strony odbioru („Popraw”) albo polecenie z „Wyślij i wykonaj” w rozmowie o zadaniu; agent wykonuje je i poprawia pracę | właściciel, panel |
+| `  - znacznik N (plik, położenie): uwaga` | wiersze pod `poprawka:`: uwaga do miejsca na obrazie (`wizytowki/podglad.png, 34% od lewej, 60% od góry`) albo chwili filmu (`film/zapowiedz.mp4, 0:12`); najwyżej 12; nowa poprawka je zastępuje, agent ich nie zmienia | panel |
+| `zmiany:` | po pracy z `poprawka:`: 2–3 krótkie zmiany rozdzielone `; `, przy każdej uwadze i znaczniku „zrobione” albo powód (`zmiany: tło granatowe; znacznik 1: zrobione`) | agent |
 | `następne:` | jedna propozycja kolejnego zadania w formacie wiersza bez stanu: `Tytuł \| kto: … \| kiedy: …` | agent |
 | `trwa: N dni` | notatka: zadanie trwa N dni od `kiedy` (raport PM liczy z tego zapas etapu) | właściciel, PM |
 | `wyświetlenia:`, `kliknięcia:`, `konta:` | wynik publikacji, liczba całkowita (`1200` albo `1 200`) | właściciel, agent |
@@ -290,7 +292,7 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 
 Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wykonane kroki, a na koniec dopisuje pod
 swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jeden wiersz `następne:`. Przy wierszu
-`poprawka:` poprawia pracę według niego. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
+`poprawka:` poprawia pracę według niego (i według znaczników pod nim) i dopisuje `zmiany:`. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
 (z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia, i z `   propozycja:`, gdy ma rekomendację).
 Propozycja, która zmienia zadania (wstrzymać, przesunąć, zamknąć, dodać, kolejność), zawsze ma wiersze `   skutek:`
 z operacjami z sekcji o pytaniach. Wiersza `gotowe gdy:` agent nie łagodzi: nie dopisuje „albo w zostało:”;

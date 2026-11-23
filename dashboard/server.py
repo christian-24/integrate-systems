@@ -22,6 +22,10 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików);
                               "execute": true („Wyślij i wykonaj”): polecenie pod zadaniem (poprawka:) i uruchomienie agenta
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
+  GET  /api/odbior            strona „Odbiór pracy” (?id=): zadanie, wersje wyniku, uruchomienie, odebrane warianty
+  GET  /api/odbior/plik       plik wersji wyniku (?id=&v=&path=), z Range
+  POST /api/odbior/popraw     poprawka ze znacznikami pod zadaniem i od razu uruchomienie agenta
+  POST /api/odbior/akceptuj   odbiór całości albo wybranych wariantów (zadanie zrobione)
   POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
   GET  /api/project/chat      historia rozmowy o projekcie (?project=)
   POST /api/asystent          wiadomość do asystenta (wszystkie projekty, może przełączyć widok: „Pokaż: #adres”)
@@ -357,7 +361,7 @@ def update_task(body):
 
 
 DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
-               "wyświetlenia", "kliknięcia", "konta", "link", "gałąź", "pyta", "odpowiedź")
+               "wyświetlenia", "kliknięcia", "konta", "link", "gałąź", "pyta", "odpowiedź", "zmiany")
 DETAIL_ALIASES = {"nastepne": "następne", "wyswietlenia": "wyświetlenia", "klikniecia": "kliknięcia",
                   "material": "materiał", "zostalo": "zostało", "galaz": "gałąź", "odpowiedz": "odpowiedź"}
 
@@ -1870,6 +1874,10 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/strona/koncepcja": lambda b: get_agents().site.concept(b),
           "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", ""),
                                                              execute=b.get("execute") is True),
+          "/api/odbior/popraw": lambda b: get_agents().review_fix(b.get("id", ""), b.get("title", ""), b.get("text", ""),
+                                                                  b.get("pins")),
+          "/api/odbior/akceptuj": lambda b: get_agents().review_accept(b.get("id", ""), b.get("title", ""),
+                                                                       b.get("variants")),
           "/api/drive/start": lambda b: get_drive().start(b.get("project", ""), b.get("link", "")),
           "/api/drive/finish": lambda b: get_drive().finish(b.get("project", ""), b.get("url", "")),
           "/api/drive/montuj": lambda b: get_drive().mount(b.get("project", "")),
@@ -3425,6 +3433,22 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
+    def _send_range(self, body, ctype):
+        """Bajty pliku z obsługą nagłówka Range (film w Safari wymaga odpowiedzi 206)."""
+        size = len(body)
+        head = [("Cache-Control", "no-store"), ("Content-Disposition", "inline"), ("Accept-Ranges", "bytes")]
+        m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
+        if not m or not (m.group(1) or m.group(2)):
+            return self._send(200, body, ctype, head)
+        if m.group(1):
+            start = int(m.group(1))
+            end = min(int(m.group(2)), size - 1) if m.group(2) else size - 1
+        else:
+            start, end = max(0, size - int(m.group(2))), size - 1
+        if start >= size or start > end:
+            return self._send(416, b"", ctype, head + [("Content-Range", "bytes */%d" % size)])
+        return self._send(206, body[start:end + 1], ctype, head + [("Content-Range", "bytes %d-%d/%d" % (start, end, size))])
+
     def _redirect(self, where, headers=()):
         self._send(303, "", "text/plain; charset=utf-8", [("Location", where)] + list(headers))
 
@@ -3524,6 +3548,16 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_agents().chat_get((parse_qs(url.query).get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/odbior":                 # strona „Odbiór pracy”: zadanie, wersje wyniku, uruchomienie
+            code, err, extra = get_agents().review((parse_qs(url.query).get("id") or [""])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        if path == "/api/odbior/plik":            # plik wersji wyniku (obraz, PDF, tekst, film)
+            qs = parse_qs(url.query)
+            code, body, ctype = get_agents().review_file(*((qs.get(k) or [""])[0] for k in ("id", "v", "path")))
+            if code != 200:
+                return self._send(code, body, "text/plain; charset=utf-8")
+            return self._send_range(body, ctype)
         if path == "/api/plik/surowy":            # obraz albo PDF z wyniku zadania (podgląd w szufladzie)
             code, body, ctype = read_project_asset(url.query)
             if code != 200:
@@ -3636,7 +3670,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/asystent/glos":
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
+            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
                                                          "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
                                                          "/api/scenariusz/tekst") else 4096)
             if body is None:

@@ -72,6 +72,7 @@
    "costUsd": 0,
    "model": "claude-sonnet-5-5",
    "fix": "",
+   "pins": [],
    "keySource": "none",
    "denials": []
   },
@@ -101,6 +102,7 @@
    "costUsd": 0,
    "model": "",
    "fix": "",
+   "pins": [],
    "keySource": "",
    "denials": []
   },
@@ -130,6 +132,7 @@
    "costUsd": 0.21,
    "model": "claude-sonnet-5-5",
    "fix": "",
+   "pins": [],
    "keySource": "none",
    "denials": []
   },
@@ -159,6 +162,7 @@
    "costUsd": 1.12,
    "model": "claude-sonnet-5-5",
    "fix": "",
+   "pins": [],
    "keySource": "none",
    "denials": [
     "Bash: xcodebuild test -scheme App"
@@ -190,6 +194,7 @@
    "costUsd": 0.54,
    "model": "claude-sonnet-5-5",
    "fix": "",
+   "pins": [],
    "keySource": "none",
    "denials": []
   }

@@ -81,6 +81,41 @@ RESULT_PATHS_MAX = 10
 RENDER_SCRIPT = os.path.join(HERE, "html-do-pdf.py")
 # Uruchamianie z rozmów (AGENCI.md, „Rozmowa o projekcie” i „Asystent”): wiersz działania w odpowiedzi modelu.
 # Model tylko prosi; uruchamia serwer przez run_task po sprawdzeniu tych samych reguł co przycisk „Uruchom”.
+# Wersje wyniku zadania (strona „Odbiór pracy”): <runs_dir>/wersje/<sha1(projekt|plik|tytuł)[:16]>/<n>/meta.json
+# i kopie plików z wyniku. Ścieżki jak resFiles w panelu (wynik:, zostało:), także film.
+VERSION_PATH = re.compile(r"(?:^|(?<=[\s(„\"'`:]))((?:[\w.-]+/)*[\w-][\w.-]*\.(?:md|txt|png|jpe?g|webp|pdf|mp4|mov))"
+                          r"(?:#[\w-]+)?(?=$|[\s),.;:\"'`”])", re.I | re.A)
+VERSION_KINDS = {".png": "image", ".jpg": "image", ".jpeg": "image", ".webp": "image", ".pdf": "pdf",
+                 ".md": "text", ".txt": "text", ".mp4": "video", ".mov": "video"}
+VERSION_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
+                 ".pdf": "application/pdf", ".md": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8",
+                 ".mp4": "video/mp4", ".mov": "video/quicktime"}
+VERSION_FILE_MAX = 15 * 1024 * 1024     # jeden plik w kopii wersji (i odczyt z folderu albo gałęzi)
+VERSION_TOTAL_MAX = 60 * 1024 * 1024    # razem na wersję
+VERSION_FILES = 12
+VERSIONS_KEEP = 20
+VARIANTS_LABEL = "odebrane warianty"    # odpowiedź: odebrane warianty = a, b (odbiór części wariantów)
+REVIEW_FIX_DEFAULT = "Popraw według znaczników poniżej."
+
+
+def version_paths(text, refs=()):
+    """Ścieżki plików z tekstu wyniku jak resFiles w panelu: bez .., bez ZADANIA.md i materiałów zadania, do 12."""
+    skip = {r.get("path") for r in refs if isinstance(r, dict) and not r.get("anchor")}
+    out = []
+    for m in VERSION_PATH.finditer(str(text or "")):
+        path = m.group(1)
+        path = path[2:] if path.startswith("./") else path
+        if re.search(r"(^|/)\.\.(/|$)", path) or path.lower() == "zadania.md" or path in skip or path in out:
+            continue
+        out.append(path)
+    return out[:VERSION_FILES]
+
+
+def variant_name(path):
+    """Nazwa wariantu z pliku obrazu: „wizytowki/podglad.png” -> „podglad”."""
+    return os.path.splitext(posixpath.basename(path))[0]
+
+
 RUN_LINE = re.compile(r"^[ \t>*`-]*Uruchom\s*:\s*(.+?)\s*$", re.I)
 RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
 # „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
@@ -334,6 +369,7 @@ class Manager:
         self._stop_event = threading.Event()
         self._thread = None
         self._git_lock = threading.Lock()     # operacje panelu na repozytoriach projektów (worktree, commit, merge)
+        self._ver_lock = threading.Lock()     # zapis i porządki wersji wyniku (strona odbioru)
         self.chat_timeout = 180               # s: odpowiedź w rozmowie o zadaniu
         self.assist_model = (get("PANEL_ASYSTENT_MODEL") or "sonnet").strip()  # tańszy model dla asystenta
         self._chat_lock = threading.Lock()    # pliki rozmów i _chat_live
@@ -747,6 +783,11 @@ class Manager:
                            ("next", "Zaproponowane następne zadanie")):
             if d.get(key):
                 out.append("%s: %s" % (label, d[key]))
+        pins = [p for p in d.get("pins") or [] if isinstance(p, dict) and p.get("file")]
+        if pins:
+            out.append("Znaczniki właściciela do poprawki (wiersze pod poprawka:; plik względem folderu projektu, "
+                       "położenie w %% od lewej i od góry obrazu, przy filmie chwila m:ss; obejrzyj ten plik przed poprawką):")
+            out += ["  " + projekt_pin_line(p) for p in pins]
         return out
 
     def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=()):
@@ -788,11 +829,14 @@ class Manager:
             "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to polecenie albo uwagi właściciela (po odbiorze albo "
-            "z rozmowy o zadaniu): wykonaj je, a istniejącą pracę popraw według nich.",
+            "z rozmowy o zadaniu): wykonaj je, a istniejącą pracę popraw według nich. Wiersze `- znacznik N (plik, "
+            "położenie): uwaga` pod poprawką to uwagi do miejsca na obrazie (albo chwili filmu); nie zmieniaj ich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
             "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
             "`  zostało: …`, gdy coś nie zostało zrobione (tylko to, co ważne dla właściciela, np. czego nie sprawdzono; "
-            "bez spraw technicznych: gdzie leży plik, commit, gałąź, git).",
+            "bez spraw technicznych: gdzie leży plik, commit, gałąź, git); po pracy z wierszem `poprawka:` także "
+            "`  zmiany: …`: 2–3 krótkie zmiany rozdzielone „; ”, a przy każdej uwadze i znaczniku „zrobione” albo "
+            "powód (np. `  zmiany: tło granatowe; logo większe; znacznik 1: zrobione; znacznik 2: bez zmian, bo …`).",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
         ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
@@ -898,6 +942,7 @@ class Manager:
                             task["id"], task["file"])
             rec["steps"] = first_steps
             rec["fix"] = str((task.get("detail") or {}).get("fix") or "")[:1000]   # Automat: nowa poprawka = nowe uruchomienie
+            rec["pins"] = [dict(p) for p in (task.get("detail") or {}).get("pins") or [] if isinstance(p, dict)]
             priv = {"folder": folder, "client": project.get("client") is True,
                     "label": project.get("alias") or project.get("name") or task["project"],
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
@@ -1132,7 +1177,7 @@ class Manager:
         return 202, "", {"pending": True}
 
     # ---------- uruchamianie z rozmów (AGENCI.md, „Uruchamianie z rozmów”) ----------
-    def chat_execute(self, task, index, text):
+    def chat_execute(self, task, index, text, pins=None):
         """„Wyślij i wykonaj” w rozmowie o zadaniu: wiadomość trafia pod zadanie jako `poprawka:` (polecenie dla
         agenta), zadanie wraca do [ ] (zrobione, w toku, do odbioru, blokada), potem launch_task. Bez modelu.
         Zwraca (200, "", {"status": wiadomość panelu}) albo błąd zapisu rozmowy."""
@@ -1141,12 +1186,15 @@ class Manager:
             if file in self._chat_live:
                 return 409, "Czekam jeszcze na odpowiedź.", {}
             chat = self._chat_read(file)
-            chat["messages"].append({"role": "ty", "text": text, "at": now_iso(), "exec": True})
+            mine = {"role": "ty", "text": text, "at": now_iso(), "exec": True}
+            if pins:
+                mine["pins"] = pins
+            chat["messages"].append(mine)
             try:
                 self._chat_write(file, chat)
             except OSError:
                 return 500, "Nie udało się zapisać rozmowy.", {}
-        msg = self._execute_order(task, index, text)
+        msg = self._execute_order(task, index, text, pins)
         with self._chat_lock:
             chat = self._chat_read(file)
             chat["messages"].append(msg)
@@ -1156,7 +1204,7 @@ class Manager:
                 pass
         return 200, "", {"status": self.panel_view([msg])[0]}
 
-    def _execute_order(self, task, index, text):
+    def _execute_order(self, task, index, text, pins=None):
         msg = self._panel_msg(task)
         key = (task["project"], task["file"], task["title"])
         why = ""
@@ -1182,7 +1230,8 @@ class Manager:
         folder = index[task["project"]]
         try:
             with self.write_lock:
-                ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "poprawka", text[:1000])
+                ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "poprawka", text[:1000],
+                                             pins=pins)
                 if ok and changes:
                     ok = self.projekt.update_task(folder, task["file"], task["line"], task["title"], changes)
         except (ValueError, OSError):
@@ -2028,28 +2077,42 @@ class Manager:
             return None, (409, "Nie ma gałęzi %s." % rec["branch"])
         return (rec, top), None
 
-    def branch_blob(self, project, branch, rel, types, max_size):
-        """GET /api/plik/surowy z branch=: (bajty | None, błąd) obrazu albo PDF z gałęzi agent/… w folderze projektu."""
+    def _branch_spec(self, project, branch, rel):
+        """(repozytorium, "refs/heads/<gałąź>:<ścieżka>", rozmiar) pliku z gałęzi agent/… w folderze projektu
+        albo (None, błąd, None)."""
         branch, rel = str(branch), str(rel or "").strip().replace("\\", "/")
         if not self.projekt.BRANCH.match(branch) or ".." in branch:
-            return None, "Gałąź agenta ma postać agent/nazwa."
-        if not rel.lower().endswith(tuple(types)):
-            return None, "Panel pokazuje tylko obrazy PNG, JPG, WEBP i pliki PDF."
+            return None, "Gałąź agenta ma postać agent/nazwa.", None
         _, index = self.load_projects(resolve=False)
         folder = index.get(project)
         top = self._git_top(folder) if folder else ""
         if not top:
-            return None, "Nie ma takiego pliku."
+            return None, "Nie ma takiego pliku.", None
         base = os.path.relpath(os.path.realpath(folder), top).replace(os.sep, "/")
         path = posixpath.normpath(posixpath.join("" if base == "." else base, rel))
         if rel.startswith("/") or path == ".." or path.startswith("../") or "\x00" in rel:
-            return None, "Nie ma takiego pliku."
+            return None, "Nie ma takiego pliku.", None
         spec = "refs/heads/%s:%s" % (branch, path)
         code, size, _ = git_run(top, ["cat-file", "-s", spec], timeout=15)
         if code != 0 or not size.strip().isdigit():
-            return None, "Nie ma takiego pliku w folderze ani na gałęzi %s." % branch
-        if int(size.strip()) > max_size:
+            return None, "Nie ma takiego pliku w folderze ani na gałęzi %s." % branch, None
+        return top, spec, int(size.strip())
+
+    def branch_blob(self, project, branch, rel, types, max_size):
+        """GET /api/plik/surowy z branch=: (bajty | None, błąd) obrazu albo PDF z gałęzi agent/… w folderze projektu."""
+        if not self.projekt.BRANCH.match(str(branch)) or ".." in str(branch):
+            return None, "Gałąź agenta ma postać agent/nazwa."
+        if not str(rel or "").strip().lower().endswith(tuple(types)):
+            return None, "Panel pokazuje tylko obrazy PNG, JPG, WEBP i pliki PDF."
+        top, spec, size = self._branch_spec(project, branch, rel)
+        if not top:
+            return None, spec
+        if size > max_size:
             return None, "Plik jest większy niż %d MB." % (max_size >> 20)
+        return self._branch_read(top, spec, branch)
+
+    @staticmethod
+    def _branch_read(top, spec, branch):
         env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0")
         try:
             p = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull, "cat-file", "blob", spec], cwd=top,
@@ -2252,6 +2315,327 @@ class Manager:
                 log("Materiał dla %s: %s" % (t["title"], e))
         if added:
             self._step(rec, "Materiał z wyniku dopisany do %d zadań z po:" % added)
+
+    # ---------- wersje wyniku i strona „Odbiór pracy” ----------
+    def _versions_dir(self, project, file, title):
+        key = "%s|%s|%s" % (project, file, title)
+        return os.path.join(self.runs_dir, "wersje", hashlib.sha1(key.encode("utf-8")).hexdigest()[:16])
+
+    def versions(self, project, file, title):
+        """Zapisane wersje wyniku zadania (meta.json), od najstarszej."""
+        base = self._versions_dir(project, file, title)
+        try:
+            names = [n for n in os.listdir(base) if n.isdigit()]
+        except OSError:
+            return []
+        out = []
+        for name in names:
+            try:
+                with open(os.path.join(base, name, "meta.json"), encoding="utf-8") as f:
+                    meta = json.load(f)
+            except (OSError, ValueError):
+                continue
+            if isinstance(meta, dict) and meta.get("n") == int(name):
+                out.append(meta)
+        return sorted(out, key=lambda m: m["n"])
+
+    @staticmethod
+    def _result_bases(folder):
+        root = os.path.realpath(folder)
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+        return [root] + ([cards] if cards != root else [])
+
+    def _result_locate(self, project, folder, rel, branch):
+        """Plik z wyniku: ("dysk", ścieżka, rozmiar), ("gałąź", (repozytorium, spec), rozmiar) albo None.
+        Najpierw folder projektu i karty, potem gałąź agenta."""
+        if not folder or not rel or "\x00" in rel or os.path.isabs(rel):
+            return None
+        bases = self._result_bases(folder)
+        for base in bases:
+            path = os.path.realpath(os.path.join(base, rel))
+            if any(_inside(b, path) for b in bases) and os.path.isfile(path):
+                try:
+                    return "dysk", path, os.path.getsize(path)
+                except OSError:
+                    return None
+        if branch:
+            top, spec, size = self._branch_spec(project, branch, rel)
+            if top:
+                return "gałąź", (top, spec), size
+        return None
+
+    def _result_read(self, where, branch=""):
+        kind, src, _ = where
+        if kind == "dysk":
+            try:
+                with open(src, "rb") as f:
+                    return f.read()
+            except OSError:
+                return None
+        return self._branch_read(src[0], src[1], branch)[0]
+
+    def _task_run(self, key):
+        """Bieżące (w kolejce albo w toku) albo ostatnie uruchomienie zadania: kopia rekordu i miejsce w kolejce."""
+        with self._lock:
+            recs = [r for r in self._runs.values()
+                    if r.get("kind") == "task" and (r.get("project"), r.get("file"), r.get("title")) == key]
+            live = [r for r in recs if r["state"] in LIVE]
+            rec = live[0] if live else (max(recs, key=lambda r: r.get("queuedAt") or "") if recs else None)
+            if not rec:
+                return None, None
+            pos = self._queue.index(rec["id"]) + 1 if rec["state"] == "queued" and rec["id"] in self._queue else None
+            return dict(rec, steps=list(rec.get("steps") or [])), pos
+
+    def _task_branch(self, task):
+        """Gałąź agenta z wynikiem zadania: ostatnie uruchomienie z gałęzią, inaczej pole gałąź:."""
+        key = (task["project"], task["file"], task["title"])
+        with self._lock:
+            recs = [r for r in self._runs.values() if r.get("kind") == "task" and r.get("branch")
+                    and (r.get("project"), r.get("file"), r.get("title")) == key]
+        if recs:
+            return max(recs, key=lambda r: r.get("queuedAt") or "")["branch"]
+        return str((task.get("detail") or {}).get("branch") or "")
+
+    def _save_version(self, rec):
+        """Po udanym uruchomieniu zadania: nowa wersja wyniku (wynik:, zostało:, decyzja:, zmiany:, poprawka
+        z rekordu i kopie plików z wyniku). Bez nadpisywania; najwyżej VERSIONS_KEEP wersji na zadanie."""
+        key = (rec["project"], rec["file"], rec["title"])
+        data, index = self.load_projects(resolve=False)
+        folder = index.get(rec["project"])
+        task = next((t for t in data["tasks"] if (t["project"], t["file"], t["title"]) == key), None)
+        if not folder or not task:
+            return None
+        d = task.get("detail") or {}
+        result, left, decision = (str(d.get(k) or "") for k in ("result", "left", "decision"))
+        if not (result or left or decision):
+            return None
+        base = self._versions_dir(*key)
+        with self._ver_lock:
+            old = self.versions(*key)
+            n = (old[-1]["n"] if old else 0) + 1
+            os.makedirs(base, exist_ok=True)
+            while True:
+                try:
+                    os.mkdir(os.path.join(base, str(n)))
+                    break
+                except FileExistsError:
+                    n += 1
+            here = os.path.join(base, str(n))
+            changes = [str(c) for c in d.get("changes") or []]
+            if old and old[-1].get("changes") == changes:
+                changes = []                    # wiersz zmiany: z poprzedniej pracy, agent go nie odnowił
+            fixes = []
+            if rec.get("fix") or rec.get("pins"):
+                fixes.append({"text": str(rec.get("fix") or ""), "pins": list(rec.get("pins") or [])})
+            files, total = [], 0
+            for i, rel in enumerate(version_paths(result + "\n" + left, d.get("refs") or [])):
+                ext = os.path.splitext(rel.lower())[1]
+                where = self._result_locate(rec["project"], folder, rel, rec.get("branch") or "")
+                if not where:
+                    continue
+                entry = {"path": rel, "kind": VERSION_KINDS[ext], "size": where[2]}
+                if where[2] > VERSION_FILE_MAX:
+                    entry["skipped"] = "większy niż %d MB" % (VERSION_FILE_MAX >> 20)
+                elif total + where[2] > VERSION_TOTAL_MAX:
+                    entry["skipped"] = "razem ponad %d MB" % (VERSION_TOTAL_MAX >> 20)
+                else:
+                    blob = self._result_read(where, rec.get("branch") or "")
+                    if blob is None:
+                        continue
+                    copy = "plik-%d%s" % (i + 1, ext)
+                    with open(os.path.join(here, copy), "wb") as f:
+                        f.write(blob)
+                    entry.update(size=len(blob), copy=copy)
+                    total += len(blob)
+                files.append(entry)
+            meta = {"n": n, "at": now_iso(), "runId": rec["id"], "result": result, "left": left,
+                    "decision": decision, "changes": changes, "fixes": fixes, "files": files}
+            tmp = os.path.join(here, "meta.json.tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(meta, f, ensure_ascii=False, indent=1)
+            os.replace(tmp, os.path.join(here, "meta.json"))
+            for m in (old + [meta])[:-VERSIONS_KEEP]:
+                shutil.rmtree(os.path.join(base, str(m["n"])), ignore_errors=True)
+        return meta
+
+    @staticmethod
+    def _file_url(task_id, n, path):
+        return "/api/odbior/plik?" + urllib.parse.urlencode({"id": task_id, "v": n, "path": path})
+
+    def _current_version(self, task, folder):
+        """Wersja „bieżąca” (saved=false) z pól zadania, gdy wersji zapisanych nie ma."""
+        d = task.get("detail") or {}
+        rec, _ = self._task_run((task["project"], task["file"], task["title"]))
+        branch = self._task_branch(task)
+        files = []
+        for rel in version_paths("%s\n%s" % (d.get("result") or "", d.get("left") or ""), d.get("refs") or []):
+            where = self._result_locate(task["project"], folder, rel, branch)
+            if where:
+                files.append({"path": rel, "kind": VERSION_KINDS[os.path.splitext(rel.lower())[1]], "size": where[2]})
+        fixes = [{"text": d["fix"], "pins": list(d.get("pins") or [])}] if d.get("fix") else []
+        return {"n": 1, "at": (rec or {}).get("endedAt") or "", "saved": False, "runId": (rec or {}).get("id", ""),
+                "result": d.get("result") or "", "left": d.get("left") or "", "decision": d.get("decision") or "",
+                "changes": list(d.get("changes") or []), "fixes": fixes, "files": files}
+
+    def review(self, task_id):
+        """GET /api/odbior?id=: zadanie, wersje wyniku (od najstarszej), bieżące albo ostatnie uruchomienie,
+        odebrane warianty. (kod, błąd, dane)."""
+        task, data, index = self._find_task(task_id=str(task_id))
+        if not task:
+            return 404, "Nie ma tego zadania.", {}
+        d = task.get("detail") or {}
+        key = (task["project"], task["file"], task["title"])
+        project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
+        stage = next((s["title"] for s in data["stages"] if s["id"] == task.get("stage")), "")
+        info = {"id": task["id"], "title": task["title"], "project": task["project"],
+                "projectName": project.get("name") or task["project"], "stage": stage, "state": task.get("state", ""),
+                "needsYou": task.get("needsYou", ""), "executor": task.get("executor", ""),
+                "goal": d.get("goal") or "", "doneWhen": d.get("doneWhen") or "", "decision": d.get("decision") or "",
+                "left": d.get("left") or "", "fix": d.get("fix") or "", "pins": list(d.get("pins") or [])}
+        saved = self.versions(*key)
+        if saved:
+            versions = [{"n": m["n"], "at": m.get("at", ""), "saved": True, "runId": m.get("runId", ""),
+                         "result": m.get("result", ""), "decision": m.get("decision", ""), "left": m.get("left", ""),
+                         "changes": list(m.get("changes") or []), "fixes": list(m.get("fixes") or []),
+                         "files": [dict(f) for f in m.get("files") or []]} for m in saved]
+        else:
+            versions = [self._current_version(task, index.get(task["project"]))]
+        for v in versions:
+            for f in v["files"]:
+                f.pop("copy", None)
+                f.update(name=posixpath.basename(f["path"]), url=self._file_url(task["id"], v["n"], f["path"]))
+        rec, pos = self._task_run(key)
+        run = None
+        if rec:
+            run = {"id": rec["id"], "state": rec["state"], "queuedAt": rec.get("queuedAt"),
+                   "startedAt": rec.get("startedAt"), "endedAt": rec.get("endedAt"), "steps": rec["steps"],
+                   "activity": rec.get("activity", ""), "error": rec.get("error", ""), "position": pos}
+        accepted = next((a.get("value", "") for a in d.get("answers") or []
+                         if isinstance(a, dict) and a.get("label", "").lower() == VARIANTS_LABEL), "")
+        return 200, "", {"task": info, "versions": versions, "run": run,
+                         "accepted": [x.strip() for x in accepted.split(",") if x.strip()]}
+
+    def review_file(self, task_id, n, path):
+        """GET /api/odbior/plik: (kod, bajty | komunikat, typ). Tylko pliki wymienione w wersji n: kopia z wersji,
+        a dla wersji bieżącej (albo pliku pominiętego w kopii) folder projektu lub gałąź agenta."""
+        ctype = VERSION_TYPES.get(os.path.splitext(str(path).lower())[1])
+        if not ctype:
+            return 404, "Nie ma takiego pliku.", ""
+        task, _, index = self._find_task(task_id=str(task_id))
+        if not task:
+            return 404, "Nie ma tego zadania.", ""
+        try:
+            n = int(n)
+        except (TypeError, ValueError):
+            return 404, "Nie ma takiej wersji.", ""
+        key = (task["project"], task["file"], task["title"])
+        folder = index.get(task["project"])
+        saved = self.versions(*key)
+        if saved:
+            meta = next((m for m in saved if m["n"] == n), None)
+            if not meta:
+                return 404, "Nie ma takiej wersji.", ""
+            entry = next((f for f in meta.get("files") or [] if isinstance(f, dict) and f.get("path") == path), None)
+            if not entry:
+                return 404, "Nie ma takiego pliku w tej wersji.", ""
+            copy = str(entry.get("copy") or "")
+            if copy:
+                here = os.path.join(self._versions_dir(*key), str(n))
+                src = os.path.realpath(os.path.join(here, copy))
+                if os.path.dirname(src) != os.path.realpath(here) or not os.path.isfile(src):
+                    return 404, "Nie ma takiego pliku.", ""
+                with open(src, "rb") as f:
+                    return 200, f.read(), ctype
+            branch = self._task_branch(task)
+        else:
+            if n != 1:
+                return 404, "Nie ma takiej wersji.", ""
+            d = task.get("detail") or {}
+            if path not in version_paths("%s\n%s" % (d.get("result") or "", d.get("left") or ""), d.get("refs") or []):
+                return 404, "Nie ma takiego pliku w tej wersji.", ""
+            branch = self._task_branch(task)
+        where = self._result_locate(task["project"], folder, path, branch)
+        if not where:
+            return 404, "Nie ma takiego pliku.", ""
+        if where[2] > VERSION_FILE_MAX:
+            return 404, "Plik jest większy niż %d MB." % (VERSION_FILE_MAX >> 20), ""
+        blob = self._result_read(where, branch)
+        if blob is None:
+            return 404, "Nie udało się odczytać pliku.", ""
+        return 200, blob, ctype
+
+    def review_fix(self, task_id, title, text, pins):
+        """POST /api/odbior/popraw: poprawka ze znacznikami pod zadaniem i od razu uruchomienie (jak „Wyślij
+        i wykonaj”). (kod, błąd, {"status"})."""
+        text = str(text or "").strip()
+        if not isinstance(pins, list):
+            pins = [] if pins in (None, "") else None
+        if pins is None:
+            return 400, "Znaczniki to lista.", {}
+        if not text and not pins:
+            return 400, "Napisz, co zmienić, albo wskaż miejsce na projekcie.", {}
+        if len(text) > 1000:
+            return 400, "Najwyżej 1000 znaków.", {}
+        if len(pins) > self.projekt.PIN_MAX:
+            return 400, "Najwyżej %d znaczników." % self.projekt.PIN_MAX, {}
+        try:
+            pins = [self.projekt.pin_check(p) for p in pins]
+        except ValueError as e:
+            return 400, "Nie zapisano: %s." % e, {}
+        task, data, index = self._find_task(task_id=str(task_id))
+        if not task or task["project"] not in index:
+            return 404, "Nie ma tego zadania.", {}
+        if task["title"] != str(title):
+            return 409, CONFLICT, {}
+        if data["projectsSource"] != "registry":
+            return 409, "Projekty przykładowe", {}
+        return self.chat_execute(task, index, text or REVIEW_FIX_DEFAULT, pins or None)
+
+    def review_accept(self, task_id, title, variants=None):
+        """POST /api/odbior/akceptuj: zadanie zrobione (bez wymaga: odbiór). Odbiór części wariantów: pod zadaniem
+        „odpowiedź: odebrane warianty = a, b”. (kod, błąd, {})."""
+        task, data, index = self._find_task(task_id=str(task_id))
+        if not task or task["project"] not in index:
+            return 404, "Nie ma tego zadania.", {}
+        if task["title"] != str(title):
+            return 409, CONFLICT, {}
+        key = (task["project"], task["file"], task["title"])
+        if key in self._live_keys():
+            return 409, "Agent jeszcze pracuje nad tym zadaniem.", {}
+        part = []
+        if variants is not None:
+            if not isinstance(variants, list) or not all(isinstance(v, str) for v in variants):
+                return 400, "Warianty to lista nazw.", {}
+            wanted = list(dict.fromkeys(v.strip() for v in variants if v.strip()))
+            if not wanted:
+                return 400, "Wybierz co najmniej jeden wariant.", {}
+            _, _, extra = self.review(task["id"])
+            last = (extra.get("versions") or [{}])[-1]
+            names = list(dict.fromkeys(variant_name(f["path"]) for f in last.get("files") or []
+                                       if f.get("kind") == "image"))
+            unknown = [v for v in wanted if v not in names]
+            if unknown:
+                return 400, "Nie ma wariantu %s." % ", ".join(unknown), {}
+            if len(wanted) < len(names):
+                part = [n for n in names if n in wanted]
+        folder = index[task["project"]]
+        d = task.get("detail") or {}
+        try:
+            with self.write_lock:
+                ok = True
+                if part:
+                    answers = ["%s = %s" % (a.get("label", ""), a.get("value", "")) for a in d.get("answers") or []
+                               if isinstance(a, dict) and a.get("label", "").lower() != VARIANTS_LABEL]
+                    ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "odpowiedź",
+                                                 answers + ["%s = %s" % (VARIANTS_LABEL, ", ".join(part))])
+                if ok:
+                    ok = self.projekt.update_task(folder, task["file"], task["line"], task["title"],
+                                                  {"state": "done", "needsYou": ""})
+        except ValueError as e:
+            return 400, "Nie zapisano: %s." % e, {}
+        except OSError:
+            return 400, "Nie udało się zapisać zmiany.", {}
+        return (200, "", {"accepted": part}) if ok else (409, CONFLICT, {})
 
     def run_pm(self, auto=False):
         path = self.tool_path("claude")
@@ -3343,6 +3727,10 @@ class Manager:
                 self._pass_materials(rec, dict(git, branch=rec.get("branch") or git["branch"]) if git else None)
             except Exception as e:
                 log("Materiał z wyniku: %s" % e)
+            try:
+                self._save_version(rec)
+            except Exception:       # wersja to dodatek: błąd nie zmienia zakończenia uruchomienia
+                pass
 
     def _settle_task(self, rec, state):
         """Po zakończeniu: wiersz dalej [~] → przy niepowodzeniu wraca [ ], przy sukcesie dostaje wymaga: odbiór."""
@@ -3478,6 +3866,17 @@ class Manager:
                 started.append(extra["id"])
                 free -= 1
         return started
+
+
+def projekt_pin_line(pin):
+    """Wiersz znacznika jak w ZADANIA.md (bez importu modułu projekt w funkcji statycznej)."""
+    parts = [pin["file"]]
+    if pin.get("t") is not None:
+        parts.append("%d:%02d" % divmod(int(pin["t"]), 60))
+    if pin.get("x") is not None and pin.get("y") is not None:
+        pct = lambda v: ("%.1f" % float(v)).rstrip("0").rstrip(".")     # noqa: E731
+        parts += ["%s%% od lewej" % pct(pin["x"]), "%s%% od góry" % pct(pin["y"])]
+    return ("- znacznik %s (%s): %s" % (pin.get("n") or "", ", ".join(parts), pin.get("note") or "")).rstrip()
 
 
 def with_answers(task, tasks):

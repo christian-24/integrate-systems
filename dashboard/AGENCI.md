@@ -191,8 +191,10 @@ nie zmienia); rekomendację dopisuje jako `   propozycja: …`, a gdy jej przyj�
 panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela”). Wiersza `gotowe gdy:` agent nie zmienia
 i nie łagodzi (bez „albo w zostało:”); niespełniony warunek opisuje w `zostało:` i kończy stanem `[!]`. Agent zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
 albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
-Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy” albo polecenie z „Wyślij i wykonaj” w rozmowie
-o zadaniu), prompt ją podaje, a agent wykonuje polecenie i poprawia pracę według niej.
+Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”, ze strony odbioru albo polecenie z „Wyślij
+i wykonaj” w rozmowie o zadaniu), prompt ją podaje razem ze znacznikami (wiersze `- znacznik N (plik, położenie): uwaga`,
+ścieżka obrazu albo filmu względem folderu projektu), a agent wykonuje polecenie, poprawia pracę według niej i dopisuje
+`zmiany:` (2–3 zmiany rozdzielone „; ”, przy każdej uwadze i znaczniku „zrobione” albo powód).
 Folder bez repozytorium git (albo `PANEL_AGENT_WORKTREE=0`): pracę w repozytorium agent zapisuje na nowej gałęzi
 `agent/RRRR-MM-DD-krotka-nazwa` jednym lokalnym commitem (bez push, bez plików KARTA.md, ZADANIA.md, DECYZJE.md)
 i podaje gałąź i skrót commita w `wynik:`. W repozytorium git gałąź zakłada panel (niżej).
@@ -205,6 +207,7 @@ Po zakończeniu:
   które istnieją w folderze projektu, w folderze karty albo na gałęzi uruchomienia, panel dopisuje jako
   `materiał: <ścieżka>` (względem folderu projektu) do otwartych zadań tego samego pliku, które mają `po:` na tym
   zadaniu; ścieżki, które zadanie już ma w `materiał:`, pomija; najwyżej 10 ścieżek.
+- stan `done`: nowa wersja wyniku (niżej, „Odbiór pracy”), gdy zadanie ma `wynik:`, `zostało:` albo `decyzja:`.
 
 ### Gałąź uruchomienia (git worktree)
 
@@ -327,7 +330,7 @@ liczone od chwili otwarcia strony).
 | Żądanie | Treść | Działanie |
 |---|---|---|
 | `/api/agent/run` | `{"id": taskId, "title": tytuł}` | uruchamia zadanie; 409, gdy wiersz się zmienił albo `runBlock` niepusty |
-| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `poprawka`, `następne`, a dla publikacji `wyświetlenia`, `kliknięcia`, `konta`, `link`; `krok` z value `{"index": n, "done": bool}`; 400 przy złej wartości, 409, gdy wiersz się zmienił |
+| `/api/task/detail` | `{"id": taskId, "title": tytuł, "key": klucz, "value": tekst}` | jeden klucz szczegółów: `cel`, `gotowe gdy`, `materiał`, `wynik`, `decyzja`, `zostało`, `zmiany`, `poprawka`, `następne`, a dla publikacji `wyświetlenia`, `kliknięcia`, `konta`, `link`; `krok` z value `{"index": n, "done": bool}`; 400 przy złej wartości, 409, gdy wiersz się zmienił |
 | `/api/session/logout-all` | `{}` | unieważnia wszystkie sesje panelu (nowy klucz sesji) |
 | `/api/agent/pm` | `{}` | raport PM; 409, gdy już trwa |
 | `/api/agent/check` | `{"tool": "claude"}` | test połączenia |
@@ -389,6 +392,41 @@ kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie 
   błąd…), liczone przy każdym odczycie; panel odświeża rozmowę co 5 s, dopóki coś jest w kolejce albo w toku.
 - Zasady promptów rozmów mają wersję (`CHAT_RULES_V`); rozmowa zapisana z inną wersją zaczyna nową sesję z pełnym
   promptem, żeby dostała nowe zasady.
+
+### Odbiór pracy (wersje wyniku, znaczniki)
+
+Strona odbioru w panelu (`#odbior?z=<taskId>`) pokazuje wynik zadania w wersjach, z porównaniem, „Akceptuję” i „Popraw”.
+
+- **Wersja** = stan wyniku po jednym udanym uruchomieniu zadania. Po `_finish` ze stanem `done` panel zapisuje
+  `uruchomienia/wersje/<sha1 „projekt|plik|tytuł”[:16]>/<n>/meta.json` i kopie plików z wyniku (`plik-<i>.<rozszerzenie>`):
+  `{"n", "at", "runId", "result", "left", "decision", "changes": [...], "fixes": [{"text", "pins": [...]}],
+  "files": [{"path", "kind": "image|pdf|text|video", "size", "copy"?, "skipped"?}]}`. Pliki z wyniku: ścieżki
+  .md/.txt/.png/.jpg/.jpeg/.webp/.pdf/.mp4/.mov z `wynik:` i `zostało:` (jak `resFiles` w panelu, bez `..`, `ZADANIA.md`
+  i materiałów zadania, najwyżej 12), z folderu projektu albo karty, a gdy ich tam nie ma, z gałęzi uruchomienia. Plik
+  ponad 15 MB albo ponad 60 MB razem: bez kopii, z polem `skipped` (odczyt wtedy z folderu albo gałęzi). `fixes` to
+  poprawka, na którą odpowiadało uruchomienie (`fix` i `pins` rekordu); `changes` puste, gdy agent nie odnowił `zmiany:`.
+  Wersje nie są nadpisywane, najwyżej 20 na zadanie (najstarsze usuwane). Bez wersji zapisanych (stare zadania) API
+  zwraca jedną wersję bieżącą z pól zadania (`n: 1`, `saved: false`).
+- **Znaczniki**: pod `poprawka:` wiersze `  - znacznik N (plik, 34% od lewej, 60% od góry): uwaga`, przy filmie
+  `(plik, 0:12)` (oba naraz też); parsowane do `detail.pins` (`{"n", "file", "x", "y", "t", "note"}`, x i y w %, t w s).
+  Każdy zapis `poprawka:` zastępuje stare znaczniki. Rekord uruchomienia ma `pins` obok `fix`.
+- `GET /api/odbior?id=<taskId>`: `{"ok", "task": {"id", "title", "project", "projectName", "stage", "state", "needsYou",
+  "executor", "goal", "doneWhen", "decision", "left", "fix", "pins"}, "versions": [{"n", "at", "saved", "runId",
+  "result", "decision", "left", "changes", "fixes", "files": [{"path", "name", "kind", "size", "url", "skipped"?}]}]`
+  (od najstarszej), `"run": {"id", "state", "queuedAt", "startedAt", "endedAt", "steps": [{"t", "text"}], "activity",
+  "error", "position"} | null` (bieżące albo ostatnie uruchomienie; `position` w kolejce od 1), `"accepted": [nazwy]}`;
+  404 bez zadania.
+- `GET /api/odbior/plik?id=&v=&path=`: bajty pliku wymienionego w wersji `v` (kopia wersji; dla wersji bieżącej albo
+  pliku `skipped` folder projektu lub gałąź agenta), typ jak `/api/plik/surowy` plus `text/plain` (.md, .txt) i
+  `video/mp4`, `video/quicktime`; bez SVG i HTML; `nosniff`, `no-store`, `Range` (206, film w Safari). Inne ścieżki: 404.
+- `POST /api/odbior/popraw` `{"id", "title", "text", "pins": [{"file", "x", "y", "t", "note"}]}`: tekst do 1000 znaków,
+  najwyżej 12 znaczników, x i y 0–100 (oba albo żaden), t w sekundach, uwaga do 300 znaków, plik obrazu albo filmu
+  (bez `..`). Pusty tekst i brak znaczników: 400; sam znacznik: `poprawka: Popraw według znaczników poniżej.`
+  Zapis i uruchomienie jak „Wyślij i wykonaj” (`chat_execute`, wpis w rozmowie o zadaniu); odpowiedź `{"status"}`.
+- `POST /api/odbior/akceptuj` `{"id", "title", "variants": [nazwy] | null}`: zadanie `[x]` bez `wymaga:` (jak „Odbierz”).
+  Warianty to obrazy ostatniej wersji (nazwa pliku bez rozszerzenia). Gdy podano nie wszystkie: pod zadaniem
+  `odpowiedź: odebrane warianty = a, b` (pozostałe odpowiedzi zostają); odpowiedź `{"accepted": [...]}`. 400 przy
+  pustej liście albo nieznanym wariancie, 409 przy zmienionym wierszu albo gdy agent jeszcze pracuje.
 
 ### Asystent i głos
 
@@ -527,6 +565,8 @@ Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i 
 i odmowa scalenia z plikami sekretów: `testy/test_runda5_serwer.py` (atrapa w trybie `sekret`).
 Uruchamianie z rozmów (wiersz `Uruchom:`, `run_task` raz, kolejka przy zajętym agencie, blokady, „Wyślij i wykonaj”,
 stan w rozmowie, przycisk w czacie zadania w Chromium) i render HTML → PDF/PNG: `testy/test_czat_uruchamia.py`.
+Odbiór pracy (wersje po uruchomieniu, limit 20, wersja bieżąca, plik wersji i odmowa innych ścieżek, gałąź agenta,
+poprawka ze znacznikami, odbiór całości i wariantów, `zmiany:`): `testy/test_odbior.py`.
 Podgląd strony (pola karty, budowanie atrapą bez Node.js, `/podglad/`, uwaga → zadanie → scalenie i podgląd,
 koncepcja, zrzut-strony.py pomijany bez Playwright): `testy/test_strona.py` (atrapa w trybach `strona`,
 `strona-bez-zmian`). `GET /api/strona?project=`: `site`, `build` (`state` ok|building|error, `at`, `error`, `log`,

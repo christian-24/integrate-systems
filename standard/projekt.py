@@ -295,13 +295,13 @@ DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "ma
                "poprawka": "fix", "następne": "next", "nastepne": "next",
                "wyświetlenia": "views", "wyswietlenia": "views", "kliknięcia": "clicks", "klikniecia": "clicks",
                "konta": "accounts", "link": "link", "gałąź": "branch", "galaz": "branch", "pyta": "asks",
-               "odpowiedź": "answers", "odpowiedz": "answers", "zaplanowane": "scheduled"}
+               "odpowiedź": "answers", "odpowiedz": "answers", "zaplanowane": "scheduled", "zmiany": "changes"}
 DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
               "left": "zostało", "fix": "poprawka", "next": "następne", "views": "wyświetlenia",
               "clicks": "kliknięcia", "accounts": "konta", "link": "link", "branch": "gałąź", "asks": "pyta",
-              "answers": "odpowiedź", "scheduled": "zaplanowane"}
+              "answers": "odpowiedź", "scheduled": "zaplanowane", "changes": "zmiany"}
 DETAIL_ORDER = ["goal", "doneWhen", "refs", "branch", "asks", "answers", "scheduled", "steps", "views", "clicks", "accounts", "link", "result", "decision",
-                "left", "fix", "next"]   # kroki i notatki: "steps"
+                "left", "changes", "fix", "next"]   # kroki i notatki: "steps"; znaczniki („- znacznik …”) stoją pod poprawką
 # Wyniki publikacji (wiersze kampanii): liczby całkowite i adres. W szczegółach publikacji zawsze obecne
 # (None / ""), w zadaniach ZADANIA.md tylko wtedy, gdy wiersz jest zapisany.
 PUB_COUNTS = ("views", "clicks", "accounts")
@@ -314,6 +314,12 @@ DETAIL_LINE = re.compile(r"^(?:[-*]\s+)?([^:|\[\]`]{2,20}?)\s*:\s*(.*?)\s*$")
 STEP = re.compile(r"^[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
 TITLE_MAX = 120
 NOUN_START = re.compile(r"^\w{3,}(anie|enie|ęcie|ycie)$")   # „Wdrożenie”, „Przygotowanie”: rzeczownik zamiast czasownika
+# Znaczniki poprawki (strona odbioru): wiersze pod `poprawka:`, np.
+# „  - znacznik 1 (wizytowki/podglad.png, 34% od lewej, 60% od góry): uwaga”, przy filmie „(film.mp4, 0:12)”.
+PIN = re.compile(r"^[-*]\s+znacznik\s+(\d{1,2})\s+\((.+?)\)\s*:\s*(.*?)\s*$", re.I)
+PIN_FILE = re.compile(r"^(?:[\w.-]+/)*[\w-][\w.-]*\.(?:png|jpe?g|webp|mp4|mov)$", re.I | re.A)
+PIN_MAX = 12
+PIN_NOTE = 300
 DONE_LOOSE = re.compile(r"\balbo\s+w\s+[„\"]?zostało", re.I)    # „gotowe gdy: … albo w zostało: …” to nie warunek
 DONE_TABLE = re.compile(r"\btabel", re.I)
 DONE_ENTRY = re.compile(r"\bwpis", re.I)
@@ -328,7 +334,78 @@ def weak_done(text):
 
 def blank_detail():
     return {"goal": "", "doneWhen": "", "refs": [], "steps": [], "result": "", "decision": "", "left": "", "fix": "",
-            "next": "", "notes": []}
+            "next": "", "notes": [], "changes": [], "pins": []}
+
+
+def _pct(value):
+    return ("%.1f" % value).rstrip("0").rstrip(".")
+
+
+def pin_check(pin):
+    """Znacznik z panelu {"file", "x", "y", "t", "note"} -> znormalizowany słownik albo ValueError. x, y w % (0–100,
+    oba albo żaden), t w sekundach (film); co najmniej położenie albo chwila."""
+    if not isinstance(pin, dict):
+        raise ValueError("znacznik: {file, x, y, t, note}")
+    path = str(pin.get("file") or "").strip().replace("\\", "/")
+    if path.startswith("./"):
+        path = path[2:]
+    if not PIN_FILE.match(path) or re.search(r"(^|/)\.\.(/|$)", path) or len(path) > 200:
+        raise ValueError("znacznik: plik obrazu albo filmu z wyniku")
+    out = {"file": path, "x": None, "y": None, "t": None}
+    for k in ("x", "y"):
+        v = pin.get(k)
+        if v is None:
+            continue
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not 0 <= v <= 100:
+            raise ValueError("znacznik: położenie w % od 0 do 100")
+        out[k] = round(float(v), 1)
+    if (out["x"] is None) != (out["y"] is None):
+        raise ValueError("znacznik: podaj oba położenia (od lewej i od góry)")
+    t = pin.get("t")
+    if t is not None:
+        if isinstance(t, bool) or not isinstance(t, (int, float)) or not 0 <= t < 100 * 3600:
+            raise ValueError("znacznik: chwila filmu w sekundach")
+        out["t"] = int(t)
+    if out["x"] is None and out["t"] is None:
+        raise ValueError("znacznik: położenie na obrazie albo chwila filmu")
+    note = str(pin.get("note") or "")
+    if len(note) > PIN_NOTE:
+        raise ValueError("znacznik: uwaga do %d znaków" % PIN_NOTE)
+    out["note"] = _clean(note, PIN_NOTE)
+    return out
+
+
+def pin_line(n, pin):
+    """Wiersz znacznika (bez wcięcia): „- znacznik 1 (plik, 0:12, 34% od lewej, 60% od góry): uwaga”."""
+    parts = [pin["file"]]
+    if pin.get("t") is not None:
+        parts.append("%d:%02d" % divmod(int(pin["t"]), 60))
+    if pin.get("x") is not None:
+        parts += ["%s%% od lewej" % _pct(pin["x"]), "%s%% od góry" % _pct(pin["y"])]
+    return ("- znacznik %d (%s): %s" % (n, ", ".join(parts), pin.get("note") or "")).rstrip()
+
+
+def parse_pin(line):
+    """Wiersz znacznika -> {"n", "file", "x", "y", "t", "note"} albo None."""
+    m = PIN.match(line.strip())
+    if not m:
+        return None
+    parts = [p.strip() for p in m.group(2).split(",")]
+    if not PIN_FILE.match(parts[0]):
+        return None
+    out = {"n": int(m.group(1)), "file": parts[0], "x": None, "y": None, "t": None, "note": m.group(3)}
+    for p in parts[1:]:
+        tm = re.match(r"^(\d{1,4}):(\d\d)$", p)
+        pos = re.match(r"^(\d{1,3}(?:[.,]\d+)?)\s*%\s*od\s+(lewej|góry|gory)$", p, re.I)
+        if tm:
+            out["t"] = int(tm.group(1)) * 60 + int(tm.group(2))
+        elif pos:
+            out["x" if pos.group(2).lower() == "lewej" else "y"] = float(pos.group(1).replace(",", "."))
+        else:
+            return None
+    if (out["x"] is None) != (out["y"] is None) or (out["x"] is None and out["t"] is None):
+        return None
+    return out
 
 
 def ref_of(value):
@@ -368,6 +445,10 @@ def parse_detail(lines):
         if step:
             d["steps"].append({"done": step.group(1) in "xX", "text": step.group(2)})
             continue
+        pin = parse_pin(s) if PIN.match(s) else None
+        if pin:
+            d["pins"].append(pin)
+            continue
         key, value = detail_key(line)
         if key in PUB_COUNTS:
             n = count_of(value)
@@ -396,6 +477,8 @@ def parse_detail(lines):
         elif key == "answers":                # „odpowiedź: etykieta = wartość”, wiersz na pole
             label, _, val = value.partition("=")
             d.setdefault("answers", []).append({"label": label.strip(), "value": val.strip()})
+        elif key == "changes":                # „zmiany: a; b; c” po pracy z poprawką
+            d["changes"] += [c.strip() for c in value.split(";") if c.strip()]
         elif key:
             d[key] = (d[key] + " " + value).strip() if d[key] else value
         else:
@@ -1139,7 +1222,7 @@ def next_value(value):
     return text
 
 
-def set_detail(root, file_rel, line_no, title, key, value):
+def set_detail(root, file_rel, line_no, title, key, value, pins=None):
     """Dopisuje, zmienia albo (pusta wartość) usuwa jeden klucz szczegółów pod wierszem zadania.
 
     key: cel, gotowe gdy, materiał, wynik, decyzja, zostało, poprawka, następne, wyświetlenia, kliknięcia, konta,
@@ -1147,6 +1230,9 @@ def set_detail(root, file_rel, line_no, title, key, value):
     wartości (lista albo wartości w osobnych wierszach tekstu); zapis zastępuje wszystkie dotychczasowe wiersze
     materiału. „następne” to wiersz zadania bez stanu („Tytuł | kto: … | kiedy: …”), sprawdzany jak wiersz zadania.
     „krok” przyjmuje {"index": n, "done": bool} i zmienia znacznik n-tego wciętego kroku (liczone od 0).
+    „zmiany” to lista (albo tekst) zapisana w jednym wierszu, rozdzielona „; ”.
+    „poprawka” z pins (lista {"file", "x", "y", "t", "note"}, pin_check): pod poprawką wiersze „- znacznik N (…): …”;
+    każdy zapis poprawki zastępuje dotychczasowe znaczniki.
     False, gdy wiersz zadania zmienił się od odczytu; ValueError przy złym kluczu albo wartości.
     """
     name = str(key or "").strip().lower()
@@ -1155,6 +1241,8 @@ def set_detail(root, file_rel, line_no, title, key, value):
     field = DETAIL_KEYS.get(name)
     if not field:
         raise ValueError("nieznany klucz szczegółów (dozwolone: %s, %s)" % (", ".join(DETAIL_OUT.values()), STEP_KEY))
+    if field == "changes" and isinstance(value, list):
+        value = "; ".join(_clean(v, 300).replace(";", ",") for v in value if str(v).strip())
     if isinstance(value, list):
         raw = [str(v) for v in value]
     elif isinstance(value, str):
@@ -1186,6 +1274,13 @@ def set_detail(root, file_rel, line_no, title, key, value):
         values = [v for v in (_clean(v, 300 if field == "refs" else 1000) for v in raw) if v]
     if field not in ("refs", "answers"):
         values = values[:1]
+    marks = []
+    if pins:
+        if field != "fix" or not values:
+            raise ValueError("znaczniki tylko pod poprawką z tekstem")
+        if not isinstance(pins, list) or len(pins) > PIN_MAX:
+            raise ValueError("najwyżej %d znaczników" % PIN_MAX)
+        marks = [pin_line(n, pin_check(p)) for n, p in enumerate(pins, 1)]
     path = _task_file(root, file_rel)
     lines = _lines(path)
     i = int(line_no) - 1
@@ -1200,6 +1295,7 @@ def set_detail(root, file_rel, line_no, title, key, value):
     cr = "\r" if lines[i].endswith("\r") else ""
     kinds = {k: detail_key(lines[k])[0] for k in range(i + 1, end)}
     kinds = {k: (f if f and not STEP.match(lines[k].strip()) else "steps") for k, f in kinds.items()}
+    kinds.update({k: "fix" for k in kinds if PIN.match(lines[k].strip())})   # znaczniki należą do poprawki
     existing = [k for k, f in kinds.items() if f == field]
     if existing:
         at = existing[0]
@@ -1210,7 +1306,8 @@ def set_detail(root, file_rel, line_no, title, key, value):
         for k, f in kinds.items():
             if DETAIL_ORDER.index(f) <= rank:
                 at = k + 1
-    lines[at:at] = ["%s%s: %s%s" % (DETAIL_INDENT, DETAIL_OUT[field], v, cr) for v in values]
+    lines[at:at] = ["%s%s: %s%s" % (DETAIL_INDENT, DETAIL_OUT[field], v, cr) for v in values] + \
+        [DETAIL_INDENT + m + cr for m in marks]
     write_atomic(path, "\n".join(lines))
     return True
 
