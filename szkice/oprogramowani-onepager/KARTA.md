@@ -7,6 +7,7 @@
 - stan: aktywny
 - maszyna: chmura
 - strona: site
+- strona build: npm ci && npm run build:panel
 - repozytorium: serwer `~/projekty/oprogramowani-onepager` (GitHub, gałąź nowa-koncepcja)
 - założono: 2026-11-22
 
