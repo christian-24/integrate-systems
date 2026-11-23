@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-23: Wizytówka Oprogramowani: jeden wariant, format 89×59 mm
+- Kontekst: trzecia poprawka właściciela: „tylko 1”, tekst „Łączymy…” z drugiego wariantu, „godzina na nas” zamienić na „8 lat doświadczenia”, format 89×59 mm do wgrania na stronie drukarni. Poprawka nie mówi, gdzie ma stanąć zdanie „Łączymy…” ani czym jest 89×59 mm.
+- Decyzja: zostaje tylko wizytówka imienna Krystiana. Zdanie „Łączymy programy i automatyzujemy powtarzalne zadania” stoi pod nazwiskiem w miejscu roli „Procesy i rozmowa z klientem” (tam stało w wersji firmowej). Format 89×59 mm przyjęty jako wizytówka 85×55 mm ze spadem 2 mm z każdej strony; tekst 6 mm od linii cięcia. Hasło na przodzie bez zmian („Mniej ręcznej pracy w firmie.”), bo zwrot „Ty zajmujesz się firmą” zniknął już po drugiej poprawce. Plik 90×50 mm zostaje obok, bo wymaga go warunek zadania.
+- Skutki: jeśli drukarnia chce innego spadu albo rola ma wrócić pod nazwisko, wystarczy zmiana w wizytowki/zrodla i ponowne złożenie plików. Liczba „8 lat” pochodzi od właściciela, w plikach projektu jej nie ma.
+- Kto: agent
+
 ## 2026-11-23: Wizytówki Oprogramowani: hasło bez ERP
 - Kontekst: poprawka właściciela do wizytówek: „za duża skłonność do ERP, a my przecież automatyzujemy i integrujemy”; zawężenie do ERP zamyka drogę do innych zleceń.
 - Decyzja: z wizytówek znika słowo „ERP” i nazwy programów. Hasło na przodzie: „Automatyzujemy i integrujemy. Ty zajmujesz się firmą.”, podpis: „Automatyzacje i integracje dla firm”. Wersja firmowa na tyle: „Automatyzacje i integracje” oraz „Łączymy programy i zdejmujemy z ludzi ręczną robotę”. Wygląd i dane kontaktowe bez zmian.
