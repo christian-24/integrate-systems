@@ -122,6 +122,7 @@ baseCommit    commit, od którego powstała gałąź
 changes       [{"path": "notatki/analiza.md", "added": 3, "removed": 0}]   git diff --numstat baseCommit...branch,
               ścieżki względem katalogu głównego repozytorium, najwyżej 200; plik binarny: 0, 0 i "binary": true
 commits       liczba commitów gałęzi ponad baseCommit
+fix           treść `poprawka:` zadania w chwili startu; Automat uruchamia zadanie drugi raz tego samego dnia tylko przy nowej poprawce
 merged, mergeCommit   po /api/agent/merge: czas scalenia i commit scalenia
 ```
 

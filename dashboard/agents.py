@@ -897,6 +897,7 @@ class Manager:
             rec = self._new("task", tool, title, auto, task["project"], project.get("name", task["project"]),
                             task["id"], task["file"])
             rec["steps"] = first_steps
+            rec["fix"] = str((task.get("detail") or {}).get("fix") or "")[:1000]   # Automat: nowa poprawka = nowe uruchomienie
             priv = {"folder": folder, "client": project.get("client") is True,
                     "label": project.get("alias") or project.get("name") or task["project"],
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
@@ -3436,7 +3437,8 @@ class Manager:
             # raz dziennie: liczy się próba Automatu albo raport udany lub trwający; ręczny, przerwany nie blokuje
             pm_today = any(r["kind"] == "pm" and (r["auto"] or r["state"] in LIVE or r["state"] == "done")
                            for r in todays)
-            done_today = {(r["project"], r["file"], r["title"]) for r in todays if r["kind"] == "task"}
+            # raz dziennie na zadanie, chyba że po uruchomieniu doszła nowa poprawka (uwagi z „Do poprawy”)
+            done_today = {(r["project"], r["file"], r["title"], r.get("fix") or "") for r in todays if r["kind"] == "task"}
             free = self.max_parallel - sum(1 for r in self._runs.values() if r["state"] in LIVE)
         if now.hour >= self.pm_hour and not pm_today and \
                 not os.path.exists(os.path.join(self.notes_dir, today + ".md")):
@@ -3468,7 +3470,8 @@ class Manager:
                 continue
             if (t["slot"] == "noc" and not night) or (t["slot"] == "dzień" and night):
                 continue
-            if (t["project"], t["file"], t["title"]) in done_today or run_block(t, "registry", live, tools):
+            if (t["project"], t["file"], t["title"], str((t.get("detail") or {}).get("fix") or "")[:1000]) in done_today \
+                    or run_block(t, "registry", live, tools):
                 continue
             code, _, extra = self.run_task(t["id"], t["title"], auto=True)
             if code == 200:

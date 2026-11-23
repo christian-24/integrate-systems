@@ -8639,6 +8639,16 @@ function closeChecked(id){
 }
 /* Do poprawy: najpierw poprawka:, potem stan do zrobienia */
 function sendFix(t,text){
+  /* zadanie agenta: uwagi idą tą samą drogą co „Wyślij i wykonaj” — zapis pod zadaniem i od razu uruchomienie agenta */
+  if((t.executor==='claude'||t.executor==='codex')&&t.kind!=='publikacja'&&LIVE){
+    if(DR)DR.form='';render(true);
+    enqueue(async()=>{
+      const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:true});
+      if(!x.ok&&x.status!==202){if(x.status!==401)say(failMsg(x,'Nie wysłano uwag do poprawki.'));return}
+      const st=x.data&&x.data.status;say((st&&st.text)||'Wysłano do poprawy.',8000);await load(true);
+    });
+    return;
+  }
   const ref=refOf(t),ch={state:'todo',needsYou:''};if(t.blocked)ch.blocked='';
   t.detail.fix=text;Object.assign(t,ch);t.needs=[];if(DR)DR.form='';derive(D);render(true);
   if(!LIVE){say(PRV);return}

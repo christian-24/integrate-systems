@@ -308,6 +308,25 @@ class Automat(Baza):
         self.assertTrue(self.row("Auto bez daty").startswith("- [ ]"))
         self.assertTrue(self.row("Zadanie A").startswith("- [ ]"))
 
+    def test_nowa_poprawka_rusza_drugi_raz_dzis(self):
+        """„Do poprawy” po dzisiejszym uruchomieniu: Automat bierze zadanie jeszcze raz, ale tylko raz na tę poprawkę."""
+        open(os.path.join(self.notes, TODAY + ".md"), "w").close()
+        self.manager.set_automat(True)
+        first = self.manager.tick(at(10))
+        self.assertEqual([self.manager.get(r)["title"] for r in first], ["Auto dziś"])
+        self.wait(first[0])
+        self.assertEqual(self.manager.tick(at(11)), [])
+        t = next(x for x in self.manager.load_projects()[0]["tasks"] if x["title"] == "Auto dziś")
+        projekt.update_task(self.folder, "ZADANIA.md", t["line"], "Auto dziś", {"state": "todo"})
+        projekt.set_detail(self.folder, "ZADANIA.md", t["line"], "Auto dziś", "poprawka", "mniej o ERP, więcej o integracjach")
+        again = self.manager.tick(at(12))
+        self.assertEqual([self.manager.get(r)["title"] for r in again], ["Auto dziś"])
+        self.assertEqual(self.manager.get(again[0])["fix"], "mniej o ERP, więcej o integracjach")
+        self.wait(again[0])
+        t = next(x for x in self.manager.load_projects()[0]["tasks"] if x["title"] == "Auto dziś")
+        projekt.update_task(self.folder, "ZADANIA.md", t["line"], "Auto dziś", {"state": "todo"})
+        self.assertEqual(self.manager.tick(at(13)), [])                    # ta sama poprawka nie rusza trzeci raz
+
     def test_raport_pm_raz_dziennie(self):
         self.manager.set_automat(True)
         with open(os.path.join(self.folder, "ZADANIA.md"), "w", encoding="utf-8") as f:
