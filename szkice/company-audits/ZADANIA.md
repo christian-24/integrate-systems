@@ -141,7 +141,7 @@ termin: 2026-12-18
   zostało: „Podłącz dysk z kopią PC do Maca” miało termin 20.11 i nadal czeka; bez niego nie ruszy wybór 10 firm (21.11) ani wysyłka wiadomości (25.11). Terminów nie zmieniałem.
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude
   cel: Uzupełnić według standard/STANDARD.md: Zadania (5 braków), README (4 braki), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.
-- [~] Przygotuj projekt wizytówek Oprogramowani do weryfikacji | kto: claude | gdzie: chmura | kiedy: 2026-11-23
+- [ ] Przygotuj projekt wizytówek Oprogramowani do weryfikacji | kto: claude | gdzie: chmura | kiedy: 2026-11-23
   cel: gotowy projekt wizytówek marki Oprogramowani (przód i tył), który właściciel sam zweryfikuje przed drukiem
   gotowe gdy: w repozytorium projektu jest folder wizytowki/ z plikiem do druku (PDF, 90×50 mm, przód i tył) i podglądem do obejrzenia; wygląd spójny ze stroną oprogramowani.com; danych kontaktowych agent nie wymyśla: bierze je z plików projektu, a brakujące wypisuje w wynik:; nic nie zamówione ani nie wysłane do drukarni
   materiał: strona-www/BRIEF_strona_www.md
