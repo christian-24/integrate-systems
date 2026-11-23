@@ -38,6 +38,10 @@ Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.
 Agent może dopisać pod pytaniem swoją rekomendację: wcięty wiersz `   propozycja: …` (w danych `proposal`).
 Propozycja nie jest odpowiedzią: pytanie czeka na Twoją `Odpowiedź:`.
+Pytanie z wyborem ma pod sobą 2–4 wcięte wiersze `   opcja: …` (w danych `options`, lista tekstów w kolejności;
+bez opcji `[]`): krótkie, wzajemnie wykluczające się odpowiedzi; `propozycja:` wskazuje wtedy jedną z nich.
+Wybór opcji w panelu zapisuje `Odpowiedź:` równą tekstowi opcji (jak każda odpowiedź; opcja równa propozycji
+działa jak jej przyjęcie).
 Gdy propozycja zmienia zadania, pod nią stoją wcięte wiersze `   skutek: …` (w danych `effects`, lista tekstów),
 po jednym na operację w `ZADANIA.md` tego projektu:
 
@@ -62,6 +66,8 @@ zakłada zadanie agenta „Zastosuj odpowiedź na pytanie N” (`kto: claude`, `
 ## Pytania do właściciela
 1. Czy wstrzymać posty do potwierdzenia DPA?
    termin: 2026-11-21
+   opcja: wstrzymać post 2 do potwierdzenia DPA
+   opcja: publikować bez zmian
    propozycja: wstrzymać post 2 do potwierdzenia DPA
    skutek: po: potwierdź DPA → opublikuj post 2
    skutek: kiedy: 2026-11-23 → opublikuj post 2
@@ -183,6 +189,7 @@ Braki zgłaszane przy `KARTA.md` z pytań bez odpowiedzi:
 | Brak | Reguła |
 |---|---|
 | zły wiersz `skutek:` | operacja spoza listy albo zły zapis (brak strzałki, zła data, stan inny niż zrobione/wstrzymane) |
+| zła liczba opcji | pod pytaniem bez odpowiedzi jest jeden wiersz `opcja:` albo więcej niż 4 |
 | propozycja bez skutku | propozycja zawiera „wstrzymać”, „przesunąć”, „zamknąć” albo „dodać” (także formy „wstrzymaj”, „przesuń”, „zamknij”, „dodaj”), a pod pytaniem nie ma `skutek:` |
 
 ## Kampania
@@ -293,7 +300,8 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 Agent czyta szczegóły zadania (cel, gotowe gdy, materiały, kroki), odhacza wykonane kroki, a na koniec dopisuje pod
 swoim wierszem `wynik:`, gdy trzeba `decyzja:` i `zostało:`; może dopisać jeden wiersz `następne:`. Przy wierszu
 `poprawka:` poprawia pracę według niego (i według znaczników pod nim) i dopisuje `zmiany:`. Pytania do Ciebie dopisuje do sekcji „Pytania do właściciela” w `KARTA.md`
-(z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia, i z `   propozycja:`, gdy ma rekomendację).
+(z `   termin:`, gdy odpowiedź jest potrzebna do konkretnego dnia, z 2–3 wierszami `   opcja:`, gdy to pytanie
+z wyborem, i z `   propozycja:`, gdy ma rekomendację; przy opcjach propozycja wskazuje jedną z nich).
 Propozycja, która zmienia zadania (wstrzymać, przesunąć, zamknąć, dodać, kolejność), zawsze ma wiersze `   skutek:`
 z operacjami z sekcji o pytaniach. Wiersza `gotowe gdy:` agent nie łagodzi: nie dopisuje „albo w zostało:”;
 warunek niespełniony kończy zadanie stanem `[!]`.

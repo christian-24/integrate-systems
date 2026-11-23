@@ -1417,6 +1417,8 @@ QUESTION_DUE = re.compile(r"^\s+termin\s*:\s*(\d{4}-\d\d-\d\d|[+-]\d+)\s*$", re.
 QUESTION_DUE_TEXT = re.compile(r"\bdo\s+(\d{4}-\d\d-\d\d)\b")
 PROPOSAL = re.compile(r"^\s+propozycja\s*:\s*(.*?)\s*$", re.I)
 EFFECT = re.compile(r"^\s+skutek\s*:\s*(.*?)\s*$", re.I)
+OPTION = re.compile(r"^\s+opcja\s*:\s*(.*?)\s*$", re.I)
+OPTIONS_MAX = 4             # tyle opcji pod pytaniem panel pokazuje; więcej albo jedna to brak karty
 EFFECT_ARROW = re.compile(r"\s*(?:→|->)\s*")
 EFFECT_STATE = {"zrobione": "done", "zrobiony": "done", "wstrzymane": "blocked", "wstrzymany": "blocked"}
 # Propozycja, która zmienia zadania (heurystyka): bez „skutek:” panel nie wykona jej po przyjęciu.
@@ -1425,10 +1427,11 @@ PROPOSAL_CHANGES = re.compile(r"\b(wstrzyma[ćjnł]|przesu[nń]|zamkn|doda[ćjn]
 
 def parse_questions(sections):
     """Pytania z sekcji „Pytania do właściciela” w KARTA.md: wiersz „1. pytanie” albo „- pytanie”,
-    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD”, „propozycja: …” (rekomendacja agenta), „skutek: …”
-    (operacja na ZADANIA.md wykonywana po przyjęciu propozycji, apply_effects) i „Odpowiedź: …”.
-    Termin może też stać w treści („… do RRRR-MM-DD”). Zwraca [{n, text, answer, date, proposal, effects, line}];
-    date to "RRRR-MM-DD" albo "", proposal to tekst albo "", effects lista tekstów operacji.
+    pod nim opcjonalnie wcięte wiersze „termin: RRRR-MM-DD”, „opcja: …” (odpowiedzi do wyboru, 2–4), „propozycja: …”
+    (rekomendacja agenta), „skutek: …” (operacja na ZADANIA.md wykonywana po przyjęciu propozycji, apply_effects)
+    i „Odpowiedź: …”. Termin może też stać w treści („… do RRRR-MM-DD”).
+    Zwraca [{n, text, answer, date, proposal, options, effects, line}]; date to "RRRR-MM-DD" albo "", proposal to
+    tekst albo "", options lista tekstów opcji w kolejności (bez opcji []), effects lista tekstów operacji.
     """
     sec = section(sections, QUESTIONS_TITLE)
     out = []
@@ -1438,18 +1441,22 @@ def parse_questions(sections):
         due = QUESTION_DUE.match(line)
         prop = PROPOSAL.match(line)
         eff = EFFECT.match(line)
+        opt = OPTION.match(line)
         if a and out:
             out[-1]["answer"] = a.group(1).strip()
         elif eff and out:
             if eff.group(1):
                 out[-1]["effects"].append(eff.group(1))
+        elif opt and out:
+            if opt.group(1):
+                out[-1]["options"].append(opt.group(1))
         elif due and out:
             out[-1]["date"] = due.group(1)
         elif prop and out:
             out[-1]["proposal"] = (out[-1]["proposal"] + " " + prop.group(1)).strip()
         elif m and PLACEHOLDER not in line:
             out.append({"n": len(out) + 1, "text": m.group(2).strip(), "answer": "", "date": "", "proposal": "",
-                        "effects": [], "line": no})
+                        "options": [], "effects": [], "line": no})
         elif line.startswith((" ", "\t")) and line.strip() and out and not out[-1]["answer"]:
             out[-1]["text"] += " " + line.strip()
     for q in out:
@@ -1525,11 +1532,14 @@ def parse_effect(text):
 
 
 def question_gaps(questions):
-    """Braki karty z pytań bez odpowiedzi: zły wiersz „skutek:”, propozycja zmieniająca zadania bez „skutek:”."""
-    bad, missing = [], []
+    """Braki karty z pytań bez odpowiedzi: zły wiersz „skutek:”, propozycja zmieniająca zadania bez „skutek:”,
+    liczba wierszy „opcja:” inna niż 2–OPTIONS_MAX."""
+    bad, missing, options = [], [], []
     for q in questions:
         if q.get("answer"):
             continue
+        if q.get("options") and not 2 <= len(q["options"]) <= OPTIONS_MAX:
+            options.append("pytanie %d" % q["n"])
         for e in q.get("effects") or []:
             try:
                 parse_effect(e)
@@ -1542,6 +1552,8 @@ def question_gaps(questions):
         gaps.append("zły wiersz „skutek:”: %d (%s)" % (len(bad), _examples(bad)))
     if missing:
         gaps.append("propozycja zmienia zadania, a nie ma „skutek:”: %d (%s)" % (len(missing), _examples(missing)))
+    if options:
+        gaps.append("pytanie z jedną opcją albo z więcej niż %d: %d (%s)" % (OPTIONS_MAX, len(options), _examples(options)))
     return gaps
 
 
