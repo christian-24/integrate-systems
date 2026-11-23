@@ -87,3 +87,6 @@ Projekt to działalność konsultingowo-wdrożeniowa dla firm meblarskich zatrud
    termin: 2026-11-28
    propozycja: przyjąć wszystkie trzy założenia (a, b, c); agenci już według nich pracują (DECYZJE.md, 2026-11-21)
    Odpowiedź: przyjąć wszystkie trzy założenia (a, b, c); agenci już według nich pracują (DECYZJE.md, 2026-11-21)
+9. Wizytówki: czy ma powstać także imienna wizytówka Pawła? Jeśli tak, podaj nazwisko, rolę do wpisania pod nazwiskiem i numer telefonu (własny czy wspólny 663 206 373). W plikach tych danych nie ma. Gotowe są dwa warianty: imienna Krystiana Stryjakiewicza i firmowa bez nazwiska (wizytowki/podglad.png).
+   termin: 2026-11-30
+   propozycja: na razie bez wizytówki Pawła; Paweł rozdaje wersję firmową bez nazwiska, a imienną dorobimy, gdy poda dane

@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-23: Wizytówki Oprogramowani: wygląd i źródło danych
+- Kontekst: zadanie „Przygotuj projekt wizytówek Oprogramowani do weryfikacji”. Wskazany brief (strona-www/BRIEF_strona_www.md, maj 2026) opisuje dawny kierunek sprzed marki: kremowe tło, terakota, krój Fraunces. Obecna strona oprogramowani.com wygląda inaczej (Inter, biel i ciemne tło, czerwień #d93425, znak O·PRO·GRAMOWANI), a warunek zadania to spójność ze stroną. W plikach tego repozytorium dane kontaktowe są puste (`_data/firma.json`: „[DO USTALENIA]”).
+- Decyzja: wygląd wizytówek wzięty z kodu obecnej strony (repozytorium oprogramowani-onepager), a nie z briefu. Dane kontaktowe też stamtąd: 663 206 373, kontakt@oprogramowani.com, Krystian Stryjakiewicz, rola „Procesy i rozmowa z klientem”. Powstały dwa warianty: imienna Krystiana i firmowa bez nazwiska. Wizytówki Pawła nie ma, bo w plikach brakuje jego nazwiska i numeru. Każdy wariant ma plik 90×50 mm i wersję ze spadami 3 mm.
+- Skutki: do zmiany wystarczy poprawić teksty w wizytowki/zrodla/wizytowka.js i złożyć pliki ponownie. Druk dopiero po weryfikacji właściciela.
+- Kto: agent
+
 ## 2026-11-21: Założenia robocze w miejsce luk „Do uzupełnienia” w karcie
 - Kontekst: w karcie są trzy luki „Do uzupełnienia” (szkolenia z AI w ofercie; czy pilotaż u klienta 1 i zarejestrowana firma są warunkami ukończenia; termin końcowy, budżet, konta i usługi). To sprawy zakresu i pieniędzy, więc rozstrzyga je właściciel, ale agenci potrzebują ustaleń do bieżącej pracy.
 - Decyzja: do czasu odpowiedzi właściciela (pytanie 8 w KARTA.md) agenci przyjmują: szkolenia z AI są poza ofertą; ukończenie to pierwszy płacący klient i opisany case, a pilotaż u klienta 1 i rejestracja firmy nie są warunkami; termin roboczy to koniec etapu „Walidacja rynku” (2026-12-18); budżet 0 zł poza kwotami z karty, każdy wydatek i każde nowe konto albo usługa wymaga zgody.
