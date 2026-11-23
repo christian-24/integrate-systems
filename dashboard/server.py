@@ -446,9 +446,15 @@ def _inside(base, path):
         return False
 
 
-def project_file(pid, rel):
-    """Ścieżka pliku materiału albo (None, komunikat). Tylko .md i .txt wewnątrz folderu projektu albo folderu
-    jego karty (KARTA.md może być dowiązaniem do szkice/); porównanie po realpath."""
+# wynik pracy agenta do obejrzenia w zadaniu (GET /api/plik/surowy): obrazy i PDF, bez SVG i HTML (skrypty)
+ASSET_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
+               ".pdf": "application/pdf"}
+ASSET_MAX = 15 * 1024 * 1024
+
+
+def project_file(pid, rel, types=FILE_TYPES, max_size=FILE_MAX):
+    """Ścieżka pliku materiału albo (None, komunikat). Tylko pliki o rozszerzeniach z types (domyślnie .md i .txt)
+    wewnątrz folderu projektu albo folderu jego karty (KARTA.md może być dowiązaniem do szkice/); porównanie po realpath."""
     rel = str(rel or "").strip().replace("\\", "/")
     if not rel or "\x00" in rel or os.path.isabs(rel) or rel.startswith("~"):
         return None, "Nie ma takiego pliku."
@@ -466,10 +472,11 @@ def project_file(pid, rel):
         if not any(_inside(b, path) for b in bases):
             continue
         if os.path.isfile(path):
-            if not path.lower().endswith(FILE_TYPES):
-                return None, "Panel pokazuje tylko pliki .md i .txt."
-            if os.path.getsize(path) > FILE_MAX:
-                return None, "Plik jest większy niż 200 KB."
+            if not path.lower().endswith(tuple(types)):
+                return None, ("Panel pokazuje tylko pliki .md i .txt." if types == FILE_TYPES
+                              else "Panel pokazuje tylko obrazy PNG, JPG, WEBP i pliki PDF.")
+            if os.path.getsize(path) > max_size:
+                return None, "Plik jest większy niż %d %s." % ((200, "KB") if max_size == FILE_MAX else (max_size >> 20, "MB"))
             return path, ""
     return None, "Nie ma takiego pliku."
 
@@ -499,6 +506,28 @@ def file_section(text, anchor):
                 end = next((j for j, d, _ in heads[n + 1:] if d <= depth), len(lines))
                 return title, "\n".join(lines[i:end]).strip()
     return None
+
+
+def read_project_asset(query):
+    """GET /api/plik/surowy: (kod, bajty | komunikat, typ). Obraz albo PDF z folderu projektu (karty), a gdy go tam
+    nie ma i podano branch=agent/…, z nie scalonej gałęzi agenta."""
+    q = parse_qs(query)
+    pid, rel, branch = ((q.get(k) or [""])[0] for k in ("project", "path", "branch"))
+    ctype = ASSET_TYPES.get(os.path.splitext(str(rel).lower())[1])
+    if not ctype:
+        return 404, "Panel pokazuje tylko obrazy PNG, JPG, WEBP i pliki PDF.", ""
+    path, error = project_file(pid, rel, ASSET_TYPES, ASSET_MAX)
+    if path:
+        try:
+            with open(path, "rb") as f:
+                return 200, f.read(), ctype
+        except OSError:
+            return 404, "Nie udało się odczytać pliku.", ""
+    if branch and error == "Nie ma takiego pliku.":
+        data, error = get_agents().branch_blob(pid, branch, rel, tuple(ASSET_TYPES), ASSET_MAX)
+        if data is not None:
+            return 200, data, ctype
+    return 404, error, ""
 
 
 def read_project_file(query):
@@ -3495,6 +3524,12 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_agents().chat_get((parse_qs(url.query).get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/plik/surowy":            # obraz albo PDF z wyniku zadania (podgląd w szufladzie)
+            code, body, ctype = read_project_asset(url.query)
+            if code != 200:
+                return self._send(code, body, "text/plain; charset=utf-8")
+            return self._send(200, body, ctype, [("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff"),
+                                                 ("Content-Disposition", "inline")])
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")

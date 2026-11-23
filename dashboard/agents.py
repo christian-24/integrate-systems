@@ -2027,6 +2027,39 @@ class Manager:
             return None, (409, "Nie ma gałęzi %s." % rec["branch"])
         return (rec, top), None
 
+    def branch_blob(self, project, branch, rel, types, max_size):
+        """GET /api/plik/surowy z branch=: (bajty | None, błąd) obrazu albo PDF z gałęzi agent/… w folderze projektu."""
+        branch, rel = str(branch), str(rel or "").strip().replace("\\", "/")
+        if not self.projekt.BRANCH.match(branch) or ".." in branch:
+            return None, "Gałąź agenta ma postać agent/nazwa."
+        if not rel.lower().endswith(tuple(types)):
+            return None, "Panel pokazuje tylko obrazy PNG, JPG, WEBP i pliki PDF."
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(project)
+        top = self._git_top(folder) if folder else ""
+        if not top:
+            return None, "Nie ma takiego pliku."
+        base = os.path.relpath(os.path.realpath(folder), top).replace(os.sep, "/")
+        path = posixpath.normpath(posixpath.join("" if base == "." else base, rel))
+        if rel.startswith("/") or path == ".." or path.startswith("../") or "\x00" in rel:
+            return None, "Nie ma takiego pliku."
+        spec = "refs/heads/%s:%s" % (branch, path)
+        code, size, _ = git_run(top, ["cat-file", "-s", spec], timeout=15)
+        if code != 0 or not size.strip().isdigit():
+            return None, "Nie ma takiego pliku w folderze ani na gałęzi %s." % branch
+        if int(size.strip()) > max_size:
+            return None, "Plik jest większy niż %d MB." % (max_size >> 20)
+        env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0")
+        try:
+            p = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull, "cat-file", "blob", spec], cwd=top,
+                               stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                               timeout=60, env=env, **NO_WINDOW)
+        except (OSError, subprocess.SubprocessError):
+            return None, "Nie udało się odczytać pliku z gałęzi %s." % branch
+        if p.returncode != 0:
+            return None, "Nie udało się odczytać pliku z gałęzi %s." % branch
+        return p.stdout, ""
+
     def branch_file(self, project, branch, rel):
         """GET /api/plik z branch=: (tekst | None, błąd) pliku .md/.txt z gałęzi agent/… w folderze projektu."""
         branch, rel = str(branch), str(rel or "").strip().replace("\\", "/")

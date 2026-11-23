@@ -425,6 +425,58 @@ class Api(Serwer):
                              ("marketing/formy.md", "agent/nie-ma")):
             self.assertEqual(plik(path, branch)[0], 404, (path, branch))
 
+    def test_obraz_i_pdf_z_wyniku(self):
+        """/api/plik/surowy: obraz i PDF z folderu albo z nie scalonej gałęzi agenta; bez SVG, HTML i ścieżek poza projektem."""
+        def git(*args):
+            subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"] + list(args),
+                           cwd=self.folder, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        png = b"\x89PNG\r\n\x1a\n" + bytes(range(256)) * 4
+        os.makedirs(os.path.join(self.folder, "wizytowki"))
+        with open(os.path.join(self.folder, "wizytowki", "stary.png"), "wb") as f:
+            f.write(png)
+        for name in ("x.svg", "x.html"):
+            with open(os.path.join(self.folder, "wizytowki", name), "w") as f:
+                f.write("<script>alert(1)</script>")
+        git("init", "-q", "-b", "master")
+        git("add", "-A")
+        git("commit", "-q", "-m", "start")
+        git("checkout", "-q", "-b", "agent/2026-11-23-wizytowki")
+        with open(os.path.join(self.folder, "wizytowki", "podglad.png"), "wb") as f:
+            f.write(png)
+        with open(os.path.join(self.folder, "wizytowki", "druk.pdf"), "wb") as f:
+            f.write(b"%PDF-1.4 test")
+        git("add", "-A")
+        git("commit", "-q", "-m", "wizytowki")
+        git("checkout", "-q", "master")
+        from urllib.parse import urlencode
+
+        def get(path, branch=""):
+            q = {"project": "projekt-testowy", "path": path}
+            if branch:
+                q["branch"] = branch
+            import http.client
+            conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=15)
+            try:
+                conn.request("GET", "/api/plik/surowy?" + urlencode(q))
+                resp = conn.getresponse()
+                return resp.status, dict(resp.getheaders()), resp.read()
+            finally:
+                conn.close()
+        status, headers, body = get("wizytowki/stary.png")
+        self.assertEqual((status, body), (200, png))
+        self.assertIn("image/png", headers.get("Content-Type", ""))
+        self.assertEqual(headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(get("wizytowki/podglad.png")[0], 404)                          # tylko na gałęzi
+        status, _, body = get("wizytowki/podglad.png", "agent/2026-11-23-wizytowki")
+        self.assertEqual((status, body), (200, png))                                     # bajty bez zmian
+        status, headers, body = get("wizytowki/druk.pdf", "agent/2026-11-23-wizytowki")
+        self.assertEqual((status, body), (200, b"%PDF-1.4 test"))
+        self.assertIn("application/pdf", headers.get("Content-Type", ""))
+        for path, branch in (("wizytowki/x.svg", ""), ("wizytowki/x.html", ""), ("../poza.png", ""),
+                             ("wizytowki/podglad.png", "master"), ("wizytowki/podglad.png", "agent/../master"),
+                             ("ZADANIA.md", "")):
+            self.assertEqual(get(path, branch)[0], 404, (path, branch))
+
     def test_zapis_szczegolow(self):
         t = next(x for x in self.data()["tasks"] if x["title"] == "Sprawdź ofertę")
         ok = self.post("/api/task/detail", {"id": t["id"], "title": t["title"], "key": "wynik", "value": "gotowe"})

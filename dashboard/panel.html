@@ -898,6 +898,11 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .notes{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2)}
 .mats{display:flex;flex-wrap:wrap;gap:6px}
 .rd{display:grid;gap:8px;min-width:0;grid-template-columns:minmax(0,1fr)}
+.rd-imgs{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr))}
+.rd-img{display:grid;gap:4px;color:var(--ink-2);font-size:13px;text-decoration:none;min-width:0}
+.rd-img img{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;background:var(--sunk);border:1px solid var(--line);border-radius:6px}
+.rd-img span{overflow-wrap:anywhere}
+.rd-pdf{display:flex;flex-wrap:wrap;gap:6px}
 .rd .sub{margin:0}
 .rdx{max-height:70vh}
 .rd .mat .mh:last-child{border-bottom:0}
@@ -5871,7 +5876,10 @@ function planBlock(t){
   return h+editBlock(t)+'</div>';
 }
 /* materiały: „p” z wierszy materiał:, „w” pliki .md/.txt wymienione w wyniku agenta; DR.mat = miejsce|projekt|ścieżka#kotwica */
-const matList=(t,loc)=>loc==='w'?resFiles(t):(t.detail?t.detail.refs:[]);
+const matList=(t,loc)=>loc==='w'?resFiles(t).filter(isTxt):(t.detail?t.detail.refs:[]);
+/* wynik zadania: tekst (.md/.txt) w panelu, obraz pokazany od razu, PDF jako przycisk (GET /api/plik/surowy) */
+const isTxt=r=>/\.(md|txt)$/i.test(r.path),isImg=r=>/\.(png|jpe?g|webp)$/i.test(r.path),isPdf=r=>/\.pdf$/i.test(r.path);
+const assetUrl=(t,r)=>'/api/plik/surowy?project='+encodeURIComponent(t.project)+'&path='+encodeURIComponent(r.path)+(readBranch(t)?'&branch='+encodeURIComponent(readBranch(t)):'');
 function matButtons(t,loc){
   const L=matList(t,loc),cur=DR&&DR.mat?L.find(r=>loc+'|'+matKey(t,r)===DR.mat)||null:null;
   return '<div class="mats">'+L.map((r,i)=>'<button class="btn sec sm" data-mat="'+loc+':'+i+'" data-k="mat:'+loc+':'+i+'" aria-pressed="'+(cur===r)+'" title="'+esc(r.path+(r.anchor?'#'+r.anchor:''))+'">'+esc(refLabel(r))+'</button>').join('')+'</div>'+
@@ -5882,7 +5890,7 @@ function resFiles(t){
   const d=t.detail;if(!d)return [];
   const txt=[d.result,d.left].filter(Boolean).join('\n'),out=[],seen={};
   d.refs.forEach(r=>{seen[r.path+'#'+r.anchor]=1});
-  const re=/(^|[\s(„"'`:])((?:[\w.\-]+\/)*[\w\-][\w.\-]*\.(?:md|txt))(?:#([\w\-]+))?(?=$|[\s),.;:"'`”])/gi;
+  const re=/(^|[\s(„"'`:])((?:[\w.\-]+\/)*[\w\-][\w.\-]*\.(?:md|txt|png|jpe?g|webp|pdf))(?:#([\w\-]+))?(?=$|[\s),.;:"'`”])/gi;
   let m;
   while((m=re.exec(txt))){
     const path=m[2].replace(/^\.\//,''),anchor=m[3]||'',k=path+'#'+anchor;
@@ -6097,7 +6105,7 @@ const RO={};
 const READ_MAX=3;
 function readBranch(t){const r=lastGitRun(t)||branchRun(t);return r&&r.branch&&!(r.merged||A.merged[r.id])?r.branch:''}
 function readItem(t,r,i){
-  const k=matKey(t,r),m=MV[k],ok=!!(m&&m.ok),many=resFiles(t).length>READ_MAX,open=RO[k]!=null?RO[k]:!many;
+  const k=matKey(t,r),m=MV[k],ok=!!(m&&m.ok),many=resFiles(t).filter(isTxt).length>READ_MAX,open=RO[k]!=null?RO[k]:!many;
   let body='';
   if(open){
     if(!LIVE)body='<p class="mdx muted">Podgląd pliku działa w panelu na serwerze.</p>';
@@ -6112,12 +6120,17 @@ function readItem(t,r,i){
 }
 function readBlock(t){
   const L=resFiles(t);if(!L.length)return '';
-  return '<div class="rd"><div class="sub">Do przeczytania'+(L.length>1?' · '+L.length+' '+pl(L.length,'plik','pliki','plików'):'')+'</div>'+
-    L.map((r,i)=>'<div class="mat" data-rdk="'+esc(matKey(t,r))+'" data-rdi="'+i+'">'+readItem(t,r,i)+'</div>').join('')+'</div>';
+  const im=L.filter(isImg),pf=L.filter(isPdf),tx=L.map((r,i)=>[r,i]).filter(x=>isTxt(x[0])),nm=r=>r.path.split('/').pop();
+  let h='<div class="rd"><div class="sub">'+(im.length||pf.length?'Wynik do obejrzenia':'Do przeczytania')+(L.length>1?' · '+L.length+' '+pl(L.length,'plik','pliki','plików'):'')+'</div>';
+  if(im.length)h+=!LIVE?'<p class="note">Podgląd obrazów działa w panelu na serwerze.</p>':
+    '<div class="rd-imgs">'+im.slice(0,6).map(r=>'<a class="rd-img" href="'+esc(assetUrl(t,r))+'" target="_blank" rel="noopener" title="Otwórz w pełnym rozmiarze: '+esc(r.path)+'">'+
+      '<img src="'+esc(assetUrl(t,r))+'" alt="'+esc(nm(r))+'" loading="lazy"><span>'+esc(nm(r))+'</span></a>').join('')+'</div>';
+  if(pf.length)h+='<div class="rd-pdf">'+pf.map(r=>'<a class="btn sec sm" href="'+esc(assetUrl(t,r))+'" target="_blank" rel="noopener" title="'+esc(r.path)+'">Otwórz PDF: '+esc(nm(r).replace(/\.pdf$/i,''))+'</a>').join('')+'</div>';
+  return h+tx.map(([r,i])=>'<div class="mat" data-rdk="'+esc(matKey(t,r))+'" data-rdi="'+i+'">'+readItem(t,r,i)+'</div>').join('')+'</div>';
 }
 function toggleRead(i){
   if(!DR||DR.kind!=='task')return;const t=findTask(DR.ref,true),L=t&&t.detail?resFiles(t):[],r=L[+i];if(!r)return;
-  const k=matKey(t,r),open=RO[k]!=null?RO[k]:L.length<=READ_MAX;RO[k]=!open;if(RO[k]&&MV[k]&&!MV[k].ok)delete MV[k];
+  const k=matKey(t,r),open=RO[k]!=null?RO[k]:L.filter(isTxt).length<=READ_MAX;RO[k]=!open;if(RO[k]&&MV[k]&&!MV[k].ok)delete MV[k];
   renderDrawer(true);focusK('rd:'+i);
 }
 async function copyRead(i){
@@ -6139,10 +6152,11 @@ async function copyMat(){
 /* wynik pracy agenta; decyzja i reszta trafiają do pola odbioru, gdy ono jest widoczne */
 function wynBlock(t,d,decIn,leftIn,own,readUp){
   if(!hasWyn(d))return '';
-  const rf=readUp?[]:resFiles(t);
+  const all=readUp?[]:resFiles(t),rf=all.filter(isTxt),ra=all.filter(r=>!isTxt(r));
   return '<div class="dbox wyn"><h3>'+(own?'Wynik':'Wynik agenta')+'</h3>'+(d.result?'<p>'+esc(d.result)+'</p>':'')+(!decIn&&d.decision?'<p><b>Do zatwierdzenia:</b> '+esc(d.decision)+'</p>':'')+
     (!leftIn&&d.left?'<p class="warn">Zostało: '+esc(d.left)+'</p>':'')+(d.next?'<p><b>Następne:</b> '+nextText(d.next)+'</p>':'')+
-    (rf.length?'<div class="sub">Pliki z wyniku</div>'+matButtons(t,'w'):'')+'</div>';
+    (rf.length||ra.length?'<div class="sub">Pliki z wyniku</div>'+(rf.length?matButtons(t,'w'):'')+
+      (ra.length?'<div class="mats">'+ra.map(r=>'<a class="btn sec sm" href="'+esc(assetUrl(t,r))+'" target="_blank" rel="noopener">'+esc(r.path.split('/').pop())+'</a>').join('')+'</div>':''):'')+'</div>';
 }
 const nextText=n=>esc(n.title)+(n.executor?' · '+esc(WHO[n.executor].n):'')+(isDay(n.date)?' · '+ddl(n.date):'');
 /* zadanie kto: ty z warunkiem „gotowe gdy”: przy „Zrobione” najpierw pole na wynik */
@@ -7253,7 +7267,7 @@ function yourMove(t){
       (x?'w zadaniu <button class="lk" data-task="'+esc(x.id)+'">'+esc(x.title)+'</button> ('+esc(ddl(x.date))+')'+(x.waits.length?', gdy będzie zrobione: '+esc(x.waits.join('; ')):''):'sam w dniu posta')+'.'}
   const L=(t.unlocksL||[]).filter(u=>!u.done);
   const n=resFiles(t).length;
-  return (n?'Przeczytaj '+(n>1?'pliki':'plik')+' wyżej.':'')+(L.length?(n?' ':'')+'Po odbiorze ruszy: '+esc(L.map(u=>u.title).join('; '))+'.':'');
+  return (n?'Sprawdź wynik wyżej.':'')+(L.length?(n?' ':'')+'Po odbiorze ruszy: '+esc(L.map(u=>u.title).join('; '))+'.':'');
 }
 /* „Udostępnij”: systemowe menu udostępniania z grafiką albo filmem i tekstem; publikujesz i planujesz w aplikacji */
 const canShare=()=>!!(navigator.share&&navigator.canShare&&LIVE);
