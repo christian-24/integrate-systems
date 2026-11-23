@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-24: Przegląd drogi zamówienia: kształt arkusza i notatki
+- Kontekst: zadanie „Przygotuj arkusz i wzór notatki bezpłatnego przeglądu drogi zamówienia” nie miało warunku „gotowe gdy”; zakres wzięty z marketing/formy-grudzien.md (forma A: arkusz 8 pytań, jednostronicowa notatka, zdanie do wiadomości, wpis na LinkedIn).
+- Decyzja: (1) droga zamówienia ma sześć stałych przystanków: zamówienie przychodzi, zapis w biurze, materiał i stany, hala, wysyłka, faktura; nazwy da się zmienić w notatce; (2) jedyna liczba w notatce to godziny przepisywania w tygodniu: zamówienia w tygodniu × minuty ręcznego przepisywania na zamówienie ÷ 60, do pół godziny, z liczb rozmówcy; złotówek nie ma; (3) notatkę wypełnia właściciel w przeglądarce na swoim komputerze i sam zapisuje PDF, bo to dane klienta i nie mogą przechodzić przez agenta w chmurze; (4) notatka kończy się zdaniem „Co dalej” o audycie procesów, bez ceny i bez czasu trwania audytu; (5) podpis i kontakt jak na wizytówce (Krystian Stryjakiewicz, 663 206 373, kontakt@oprogramowani.com); (6) pliki leżą w repozytorium w przeglad-zamowienia/.
+- Skutki: teksty i układ zmienia się w przeglad-zamowienia/zrodla/ i składa ponownie do PDF. Po pierwszych rozmowach pytania i przystanki warto poprawić według tego, co faktycznie padło.
+- Kto: agent
+
 ## 2026-11-23: Wizytówka Oprogramowani: jeden wariant, format 89×59 mm
 - Kontekst: trzecia poprawka właściciela: „tylko 1”, tekst „Łączymy…” z drugiego wariantu, „godzina na nas” zamienić na „8 lat doświadczenia”, format 89×59 mm do wgrania na stronie drukarni. Poprawka nie mówi, gdzie ma stanąć zdanie „Łączymy…” ani czym jest 89×59 mm.
 - Decyzja: zostaje tylko wizytówka imienna Krystiana. Zdanie „Łączymy programy i automatyzujemy powtarzalne zadania” stoi pod nazwiskiem w miejscu roli „Procesy i rozmowa z klientem” (tam stało w wersji firmowej). Format 89×59 mm przyjęty jako wizytówka 85×55 mm ze spadem 2 mm z każdej strony; tekst 6 mm od linii cięcia. Hasło na przodzie bez zmian („Mniej ręcznej pracy w firmie.”), bo zwrot „Ty zajmujesz się firmą” zniknął już po drugiej poprawce. Plik 90×50 mm zostaje obok, bo wymaga go warunek zadania.

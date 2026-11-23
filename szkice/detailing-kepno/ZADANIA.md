@@ -6,7 +6,7 @@
 termin: 2027-01-15
 
 - [x] Przygotuj analizę rynku Kępna dla Shield & Silent (15.11.2026)
-- [ ] Przygotuj listę poprawek cennika i strony shieldnsilent.pl | kto: claude | gdzie: chmura | kiedy: 2026-11-24
+- [~] Przygotuj listę poprawek cennika i strony shieldnsilent.pl | kto: claude | gdzie: chmura | kiedy: 2026-11-24
   cel: strona gotowa na pierwszą weryfikację przez klientów z Kępna
   gotowe gdy: plik faza-0/poprawki-strony.md: niespójne ceny między podstronami (z adresami), brak opinii i liczby realizacji, social media, rok założenia, dwa pakiety poniżej 1 500 zł
   materiał: analiza-rynku-kepno-shieldnsilent.md#2
