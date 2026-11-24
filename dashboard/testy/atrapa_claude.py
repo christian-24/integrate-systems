@@ -30,13 +30,22 @@ Stała sesja asystenta (argumenty `--input-format stream-json`): czyta wiersze {
   Wiadomość ze słowem „karty” zwraca blok ```karty``` (CARDS), „zła karta” blok z kartami do odrzucenia.
   Tryby: login (wynik z błędem 401), czat-wolno (kawałki tekstu co 0,3 s), wolno (bez odpowiedzi).
   Każda wiadomość to wiersz w dzienniku z polem pid procesu.
+Zadanie z wejściem stream-json (argumenty `--input-format stream-json` i `acceptEdits`): polecenie to pierwsza
+  wiadomość ze stdin, potem jak wyżej; po zdarzeniu result atrapa czeka (do 60 s) na koniec wejścia i zapisuje
+  w pliku ATRAPA_EOF_PLIK „eof” albo „otwarty”. Tryby: na-zywo (po Read czeka do 15 s na wiadomość, zapisuje ją w dzienniku
+  {"live": …} i odpowiada „Uwzględniam wiadomość: …” po wyniku narzędzia), ignoruje (czeka na wiadomość, ale kończy
+  bez nowej tury), po-wyniku (jak ok, a po result proces żyje jeszcze 2 s), odmowa-w-trakcie (wynik narzędzia
+  z odmową), dlugi-tekst (wypowiedź ponad 6000 znaków), zrzuty (PNG w .zrzuty/, czeka do 15 s na wiadomość).
+  ATRAPA_CZEKA_PLIK: plik tworzony, gdy atrapa czeka na wiadomość.
 Każde wywołanie dopisuje wiersz JSON do pliku z ATRAPA_DZIENNIK (argumenty, katalog, prompt, zmienne środowiska).
 """
 import json
 import os
+import queue
 import re
 import subprocess
 import sys
+import threading
 import time
 
 SESSION = "atrapa-0001"
@@ -149,7 +158,11 @@ def tool(name, data):
                      "usage": {"input_tokens": 3, "output_tokens": 40}}})
 
 
+RESULT = []      # zdarzenie result już wysłane (zadanie stream-json czeka potem na koniec wejścia)
+
+
 def result(text, error=False, status=None, denials=()):
+    RESULT.append(1)
     out({"type": "result", "subtype": "success", "is_error": error, "api_error_status": status, "duration_ms": 1200,
          "num_turns": 3, "result": text, "session_id": SESSION, "total_cost_usd": 0.0421,
          "usage": {"input_tokens": 12, "cache_creation_input_tokens": 3100, "cache_read_input_tokens": 9000,
@@ -279,8 +292,53 @@ def main(argv):
                           "subscriptionType": "max"}))
         return 0
     if "--input-format" in argv and argv[argv.index("--input-format") + 1] == "stream-json":
+        if "acceptEdits" in argv:
+            return task_stream(argv)
         return stream(argv)
-    prompt = sys.stdin.read()
+    return task(argv, sys.stdin.read())
+
+
+def task_stream(argv):
+    """Zadanie z wejściem stream-json: polecenie to pierwsza wiadomość, stdin zostaje otwarty. Wiadomości w trakcie
+    (tryby na-zywo, ignoruje) trafiają do dziennika; po zdarzeniu result atrapa czeka na koniec wejścia jak CLI."""
+    inbox = queue.Queue()
+
+    def reader():
+        for raw in sys.stdin:
+            try:
+                msg = json.loads(raw)
+            except ValueError:
+                continue
+            inbox.put(str(((msg.get("message") or {}).get("content")) or ""))
+        inbox.put(None)
+    threading.Thread(target=reader, daemon=True).start()
+    try:
+        prompt = inbox.get(timeout=20)
+    except queue.Empty:
+        return 4
+    if prompt is None:
+        return 4
+    code = task(argv, prompt, inbox)
+    if not RESULT:
+        return code                          # błąd bez wyniku: CLI kończy się samo
+    if mode() == "po-wyniku":
+        time.sleep(2)                        # proces jeszcze żyje po result: test wysyła wtedy wiadomość
+    end = time.time() + 60
+    eof = False
+    while time.time() < end:
+        try:
+            if inbox.get(timeout=0.2) is None:
+                eof = True
+                break
+        except queue.Empty:
+            continue
+    if os.environ.get("ATRAPA_EOF_PLIK"):
+        with open(os.environ["ATRAPA_EOF_PLIK"], "a", encoding="utf-8") as f:
+            f.write("eof\n" if eof else "otwarty\n")
+    return code
+
+
+def task(argv, prompt, inbox=None):
     how = mode()
     seen = ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "PANEL_TOKEN", "PANEL_NTFY_URL", "CLAUDECODE",
             "CLAUDE_CODE_ENTRYPOINT", "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CONFIG_DIR")
@@ -319,6 +377,43 @@ def main(argv):
         result(body)
         return 0
     tool("Read", {"file_path": os.path.join(os.getcwd(), "ZADANIA.md")})
+    if how in ("na-zywo", "ignoruje") and inbox is not None:
+        signal_file = os.environ.get("ATRAPA_CZEKA_PLIK")       # test widzi, że agent pracuje i czeka na wiadomość
+        if signal_file:
+            open(signal_file, "w").close()
+        try:
+            live = inbox.get(timeout=15)
+        except queue.Empty:
+            live = ""
+        journal({"live": live, "pid": os.getpid()})
+        if how == "na-zywo" and live:
+            out({"type": "user", "message": {"role": "user", "content": [
+                {"type": "tool_result", "tool_use_id": "t1", "content": "ZADANIA.md"}]}})
+            out({"type": "assistant", "session_id": SESSION, "message": {"role": "assistant", "content": [
+                {"type": "text", "text": "Uwzględniam wiadomość: " + live}], "usage": {"output_tokens": 5}}})
+    if how == "odmowa-w-trakcie":
+        tool("Bash", {"command": "npm publish"})
+        out({"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "t1", "is_error": True, "content": "This command requires approval"}]}})
+    if how == "dlugi-tekst":
+        out({"type": "assistant", "session_id": SESSION, "message": {"role": "assistant", "content": [
+            {"type": "text", "text": "Początek. " + "x" * 6000}], "usage": {"output_tokens": 5}}})
+    if how == "zrzuty":
+        os.makedirs(".zrzuty", exist_ok=True)
+        png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+        for name in ("telefon.png", "komputer.png"):
+            with open(os.path.join(".zrzuty", name), "wb") as f:
+                f.write(png)
+        with open(os.path.join(".zrzuty", "notatka.txt"), "w") as f:
+            f.write("nie obraz")
+        signal_file = os.environ.get("ATRAPA_CZEKA_PLIK")
+        if signal_file:
+            open(signal_file, "w").close()
+        if inbox is not None:
+            try:
+                inbox.get(timeout=15)            # test ogląda zrzuty, potem wysyła wiadomość
+            except queue.Empty:
+                pass
     if how == "wolno":
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
         pid_file = os.environ.get("ATRAPA_PID_PLIK")

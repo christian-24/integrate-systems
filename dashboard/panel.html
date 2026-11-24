@@ -758,6 +758,23 @@ body.ed-open{overflow:hidden}
 .stp li:first-child{border-top:0}
 .stp .t{color:var(--ink-3);font-variant-numeric:tabular-nums}
 .stp .s{overflow-wrap:anywhere}
+/* przebieg uruchomienia na żywo (GET /api/agent/przebieg): wypowiedzi, narzędzia, odmowy, wiadomości właściciela */
+.lv-box{display:grid;gap:6px;min-width:0}
+.lv-list{list-style:none;margin:0;padding:6px 8px;font-size:13px;max-height:min(46vh,420px);overflow:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--sunk)}
+.lv-list:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lv-list li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;padding:4px 0;border-top:1px solid var(--line)}
+.lv-list li:first-child{border-top:0}
+.lv-t{color:var(--ink-3);font-variant-numeric:tabular-nums}
+.lv-w{color:var(--ink-3);min-width:62px}
+.lv-x{overflow-wrap:anywhere;white-space:pre-wrap;min-width:0}
+.lv-agent .lv-x{color:var(--ink)}
+.lv-narzedzie .lv-x,.lv-panel .lv-x{color:var(--ink-2);font-size:12.5px}
+.lv-list .lv-odmowa{background:var(--l-red-bg)}.lv-odmowa .lv-w,.lv-odmowa .lv-x{color:var(--l-red)}
+.lv-ty .lv-w{color:var(--accent)}.lv-ty .lv-x{font-weight:600}
+.lv-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3)}
+.lv-shots{display:flex;gap:8px;flex-wrap:wrap}
+.lv-shots figure{margin:0;display:grid;gap:2px;font-size:12px;color:var(--ink-3)}
+.lv-shots img{display:block;max-height:180px;max-width:min(100%,260px);border:1px solid var(--line);border-radius:6px;background:var(--sunk)}
 .note{font-size:13px;color:var(--ink-3)}
 .hint{border:1px dashed var(--line-2);border-radius:8px;padding:12px 16px;color:var(--ink-2);background:var(--surface)}
 
@@ -5342,6 +5359,8 @@ function wwNoteHtml(n){
     (what?'<p><b>'+esc(what)+'</b></p>':'')+(n.text?'<p>'+esc(n.text)+'</p>':'')+
     (n.selector?'<p><button type="button" class="linkbtn" data-wwshow="'+esc(n.selector)+'" data-wwnv="'+esc(n.view||'')+'">Pokaż element'+(n.elementText?': '+esc(n.elementText.slice(0,60)):'')+'</button></p>':'')+
     (n.state==='pracuje'&&n.error?'<p class="note">'+esc(n.error)+'</p>':n.error?'<p class="ww-err">'+esc(n.error)+'</p>':'')+
+    (n.forwarded&&n.state!=='zrobione'&&n.state!=='nie wyszło'?'<p class="note">'+esc(n.forwarded)+'</p>':'')+
+    ((n.state==='pracuje'||n.state==='czeka')&&n.runId?'<p><button type="button" class="linkbtn" data-run="'+esc(n.runId)+'">Podgląd pracy agenta</button></p>':'')+
     (n.result?'<details><summary class="note">Odpowiedź agenta</summary><p class="note">'+esc(n.result)+'</p></details>':'')+'</li>';
 }
 function wwPaint(pid){
@@ -5356,6 +5375,7 @@ function wwPaint(pid){
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
     '<p class="note">Opisz zmianę. Możesz też kliknąć „Wskaż” i element w podglądzie.</p>');
   const L=d?d.notes||[]:[];
+  const sb=q('form[data-wwform] button[type=submit]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Wyślij do pracującego agenta':'Wyślij agentowi';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
   setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
@@ -5378,7 +5398,7 @@ async function wwSend(f){
   if(!x.ok){say(x.error||'Nie wysłano uwagi.');return}
   ta.value='';s.sel=null;if(s.pick){s.pick=false;wwPost(pid,{pw:'wskaz',on:false})}wwPost(pid,{pw:'czysc'});
   const n=x.data&&x.data.note;
-  say(n&&n.error?n.error:'Wysłano agentowi. Podgląd odświeży się po jego pracy.');
+  say(x.data&&x.data.forwarded?'Agent strony już pracuje: '+x.data.forwarded:n&&n.error?n.error:'Wysłano agentowi. Podgląd odświeży się po jego pracy.');
   if(s.d&&n)s.d.notes=[n].concat(s.d.notes||[]);wwPaint(pid);load();wwLoad(pid);
 }
 async function wwConcept(f){
@@ -6111,6 +6131,46 @@ function logoutAll(){
   enqueue(async()=>{const r=await post('/api/session/logout-all',{});A.busy.lo=false;
     if(r.ok)say('Wylogowano wszystkie urządzenia.');else if(r.status!==401)say(r.status===404&&!r.error?'Serwer nie obsługuje jeszcze wylogowania wszystkich urządzeń.':failMsg(r,'Nie wylogowano urządzeń.'))});
 }
+/* ---------- przebieg uruchomienia na żywo (GET /api/agent/przebieg, AGENCI.md „Podgląd pracy na żywo”) ----------
+   Jeden stały element na uruchomienie (LV[id].el): przerysowanie szuflady wstawia go w miejsce [data-lv], więc lista
+   nie traci przewijania. Przewijanie przyklejone do dołu, dopóki właściciel nie przewinie w górę; „Najnowsze” wraca. */
+const LV={},LVW={agent:'Agent',narzedzie:'Narzędzie',odmowa:'Brak zgody',ty:'Ty',panel:'Panel'};
+const lvPh=id=>LIVE?'<div data-lv="'+esc(id)+'"></div>':'';
+function lvItem(x){const k=LVW[x.k]?x.k:'panel';
+  return '<li class="lv-'+k+'"><span class="lv-t">'+esc(x.t||'')+'</span><span class="lv-w">'+LVW[k]+'</span><span class="lv-x">'+esc(x.text||'')+'</span></li>'}
+function lvShots(S,id){return S.shots.map(x=>{const u='/api/agent/zrzut?id='+encodeURIComponent(id)+'&plik='+encodeURIComponent(x.name)+'&v='+x.v;
+  return '<figure><a href="'+u+'" target="_blank" rel="noopener"><img src="'+u+'" alt="Zrzut '+esc(x.name)+'" loading="lazy"></a><figcaption>'+esc(x.name.replace(/\.png$/,''))+' · '+esc(String(x.at||'').slice(11,16))+'</figcaption></figure>'}).join('')}
+function lvMake(id){
+  const S=LV[id]||(LV[id]={items:[],next:0,shots:[],stick:true,top:0,tm:null,state:'',busy:false,el:null});
+  if(S.el)return S;
+  const el=document.createElement('section');el.className='lv-box';el.setAttribute('aria-label','Przebieg pracy agenta');
+  el.innerHTML='<div class="lv-bar"><b>Przebieg</b><span data-lvst></span><button type="button" class="btn sec sm" data-lvdown hidden>Najnowsze</button></div>'+
+    '<ol class="lv-list" tabindex="0" role="log" aria-live="polite" aria-label="Przebieg pracy agenta. Strzałki przewijają, End: najnowsze."></ol><div class="lv-shots"></div>';
+  const L=el.querySelector('.lv-list'),dn=el.querySelector('[data-lvdown]');
+  L.addEventListener('scroll',()=>{S.stick=L.scrollHeight-L.scrollTop-L.clientHeight<24;S.top=L.scrollTop;dn.hidden=S.stick});
+  dn.addEventListener('click',()=>{S.stick=true;L.scrollTop=L.scrollHeight;dn.hidden=true;L.focus()});
+  S.el=el;return S;
+}
+function lvPaint(id){const S=LV[id];if(!S||!S.el)return;const L=S.el.querySelector('.lv-list');
+  const live=S.state==='running'||S.state==='queued';
+  S.el.querySelector('[data-lvst]').textContent=live?'odświeża się co 3 s':S.items.length?'':'brak wpisów';
+  setHtml(S.el.querySelector('.lv-shots'),lvShots(S,id));
+  if(S.stick)L.scrollTop=L.scrollHeight;else L.scrollTop=S.top}
+async function lvLoad(id){const S=LV[id];if(!S||S.busy)return;S.busy=true;clearTimeout(S.tm);S.tm=null;
+  try{const r=await fetch('/api/agent/przebieg?id='+encodeURIComponent(id)+'&od='+S.next,{cache:'no-store'});
+    if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){const L=S.el.querySelector('.lv-list'),fresh=(j.items||[]).filter(x=>x.n>S.next);
+      if(fresh.length){L.insertAdjacentHTML('beforeend',fresh.map(lvItem).join(''));S.items=S.items.concat(fresh).slice(-200);
+        while(L.children.length>200)L.removeChild(L.firstChild)}
+      S.next=Math.max(S.next,j.next||0);S.state=j.state||'';S.shots=Array.isArray(j.shots)?j.shots:[];S.takes=!!j.takesMsg;lvPaint(id)}}
+  catch(e){}finally{S.busy=false}
+  if((S.state==='running'||S.state==='queued')&&S.el&&document.body.contains(S.el))S.tm=setTimeout(()=>lvLoad(id),3000);
+}
+/* po każdym przerysowaniu: stały element w miejscu [data-lv], wczytanie przy pierwszym pokazaniu i wznowienie odświeżania */
+function lvMount(){document.querySelectorAll('[data-lv]').forEach(ph=>{const id=ph.dataset.lv,S=lvMake(id);
+  if(ph!==S.el){ph.replaceWith(S.el);lvPaint(id)}
+  if(!S.tm&&!S.busy&&(!S.state||S.state==='running'||S.state==='queued'))lvLoad(id)})}
 function runHtml(r){
   const t=taskOfRun(r),d=fmtDur(runDur(r)),pn=r.projectName||(r.project?projName(r.project):'');
   const bad=r.state==='error'||r.state==='limit'||r.state==='timeout'||r.state==='login';
@@ -6133,7 +6193,8 @@ function runHtml(r){
   h+='<dl>'+rows.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl>';
   if(r.kind==='task'&&!isAct(r))h+=chgBlock(r);
   if(r.result)h+='<h3>Wynik</h3><pre class="res">'+esc(r.result)+'</pre>';
-  if(r.steps.length)h+='<h3>Kroki</h3><ul class="stp">'+r.steps.slice().reverse().map(x=>'<li><span class="t">'+esc(x.t)+'</span><span class="s">'+nwStep(x.text)+'</span></li>').join('')+'</ul>';
+  if(LIVE&&(isAct(r)||r.logN))h+=lvPh(r.id);
+  else if(r.steps.length)h+='<h3>Kroki</h3><ul class="stp">'+r.steps.slice().reverse().map(x=>'<li><span class="t">'+esc(x.t)+'</span><span class="s">'+nwStep(x.text)+'</span></li>').join('')+'</ul>';
   if(r.denials.length)h+='<h3>Czego agent nie mógł zrobić</h3><ul class="stp">'+r.denials.map(x=>'<li><span class="t">brak zgody</span><span class="s">'+esc(x)+'</span></li>').join('')+'</ul>';
   const tx=[['Uruchomione',r.auto?'samodzielnie':'ręcznie']];
   if(r.model)tx.push(['Model',esc(r.model)]);
@@ -6351,6 +6412,9 @@ function taskHtml(t){
   if(readUp)mv=readBlock(t)+mv;            /* najpierw treść, potem decyzja i przyciski */
   h+=mv;
   if(t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
+  {const r=D.agents?runOf(t):null;
+    if(r&&isAct(r))h+='<div class="dbox lv-wrap"><h3>'+(r.state==='running'?'Agent pracuje':'Agent w kolejce')+'</h3>'+lvPh(r.id)+
+      '<div class="row"><button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="lvstop">Zatrzymaj</button></div></div>'}
   h+=chatBox(t);
   /* 2. Szczegóły zwinięte */
   h+='<details class="dmore" id="dmore"'+(DR&&DR.more?' open':'')+'><summary>Szczegóły zadania</summary>';
@@ -6396,11 +6460,18 @@ function chatBox(t){
   let c=CH[t.id];
   if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
   const ag=t.executor==='claude'||t.executor==='codex';
-  let h='<details class="dbox chat dr-chat"'+(c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
+  const run=ag&&t.kind!=='publikacja'&&D.agents?runOf(t):null,live=!!run&&isAct(run);
+  let h='<details class="dbox chat dr-chat"'+(live||c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(live?(run.tool==='codex'?'Poprawka dla agenta (Codex)':'Napisz do pracującego agenta'):ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
   if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id)).join('')+'</div>';
   if(c.pending)h+='<p class="note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>';
   if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
   const dis=c.pending||c.exec?' aria-disabled="true"':'';
+  if(live){const cx=run.tool==='codex';
+    h+='<form class="dform" data-chat="'+esc(t.id)+'" data-live="1"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Wiadomość do pracującego agenta" placeholder="Np. nagłówek ma być granatowy"></textarea>'+
+      '<div class="row"><button class="btn sm"'+dis+'>'+(cx?'Zapisz poprawkę':'Wyślij do agenta')+'</button><button type="button" class="btn sec sm" data-chatask="'+esc(t.id)+'"'+dis+'>Tylko zapytaj</button>'+
+      '<span class="note">'+(cx?'Codex nie przyjmuje wiadomości w trakcie pracy: polecenie trafi pod zadanie (poprawka:), potem możesz zatrzymać i uruchomić je z poprawką.':
+        run.state==='queued'?'Agent czeka w kolejce: polecenie trafi pod zadanie i do jego polecenia startowego.':'Agent pracuje: Enter wysyła mu wiadomość, uwzględni ją przy następnym kroku. Polecenie zostaje też pod zadaniem (poprawka:).')+'</span></div></form></details>';
+    return h}
   h+='<form class="dform" data-chat="'+esc(t.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Pytanie albo polecenie do zadania" placeholder="Np. po co to zadanie? Albo polecenie dla agenta i „Wyślij i wykonaj”."></textarea>'+
     '<div class="row"><button class="btn sm"'+dis+'>Wyślij</button>'+(ag&&t.kind!=='publikacja'?'<button type="button" class="btn sec sm" data-chatexec="'+esc(t.id)+'"'+dis+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta">Wyślij i wykonaj</button>':'')+
     '<span class="note">Wyślij: Claude odpowiada, niczego nie zmienia.'+(ag?' Wyślij i wykonaj (albo „zrób to” na końcu): agent wykonuje polecenie.':'')+'</span></div></form></details>';
@@ -6411,7 +6482,8 @@ const chatText=x=>'<div>'+String(x||'').split('\n').map(l=>/^\s*(Propozycja|Zmie
 const PNL={'w kolejce':'yellow','w toku':'blue','do odbioru':'purple','zrobione':'green'};
 function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|limit|wymaga|przekroczony)/.test(l)?'red':'grey');
   return '<div class="cm pn"><b>Panel</b><div>'+esc(m.text||'')+(l?'<span class="lz '+c+'">'+esc(l)+'</span>':'')+
-    (m.taskId&&m.taskId!==here?'<button type="button" class="lk" data-task="'+esc(m.taskId)+'">Szczegóły</button>':'')+'</div></div>'}
+    (m.taskId&&m.taskId!==here?'<button type="button" class="lk" data-task="'+esc(m.taskId)+'">Szczegóły</button>':'')+
+    (m.restart&&(m.live==='running'||m.live==='queued')?'<div class="row"><button type="button" class="btn sec sm" data-restart="'+esc(m.restart)+'">Zatrzymaj i uruchom z poprawką</button></div>':'')+'</div></div>'}
 const chatMsg=(m,here)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>';
 /* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
 const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
@@ -6428,13 +6500,14 @@ async function loadChat(id){
 }
 /* exec: „Wyślij i wykonaj” (albo „zrób to” na końcu): serwer zapisuje polecenie pod zadaniem i uruchamia agenta, odpowiedź od razu */
 const CH_EXEC=/(^|[\s,.;:!?—–-])(zrób to|zrob to|wykonaj( to)?)[\s.!]*$/i;
-async function sendChat(f,exec){
+async function sendChat(f,exec,ask){
   const id=f.dataset.chat,t=D.tasks.find(x=>x.id===id),ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim();
+  if(!ask&&f.dataset.live==='1')exec=true;      /* agent pracuje: wiadomość do niego (serwer: live_message) */
   if(!t)return;if(!text){if(exec){say('Napisz polecenie dla agenta.');ta.focus()}return}
   const c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
   if(c.pending||c.exec){say('Czekam jeszcze na odpowiedź.');return}
   if(!LIVE){say(PRV);return}
-  exec=!!exec||CH_EXEC.test(text);
+  exec=!ask&&(!!exec||CH_EXEC.test(text));
   ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.error='';if(exec)c.exec=true;else c.pending=true;if(DR)DR.chat=1;renderDrawer(true);
   const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:exec});
   c.exec=false;
@@ -8583,8 +8656,9 @@ function renderDrawer(force){
   else{const r=runById(DR.id);if(!r){closeDrawer();return}html=runHtml(r)}
   if(!host.firstChild)host.innerHTML='<div class="scrim" data-close="1"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle"><div id="dbody"></div></aside>';
   const a=document.activeElement,typing=a&&host.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
-  if(!force&&typing){if(t)setHtml($('#dag'),agentBlock(t));return}
+  if(!force&&typing){if(t)setHtml($('#dag'),agentBlock(t));lvMount();return}
   setHtml($('#dbody'),html);
+  lvMount();
 }
 
 
@@ -10338,6 +10412,11 @@ function runTask(id){
   A.starting[t.id]=1;render();
   agentPost('/api/agent/run',{id:t.id,title:t.title},'Nie uruchomiono zadania.');
 }
+/* „Zatrzymaj i uruchom z poprawką” (Codex): poprawka jest już pod zadaniem, serwer uruchamia zadanie po zatrzymaniu */
+function restartRun(id){
+  if(!LIVE){say(PRV);return}
+  agentPost('/api/agent/restart',{id:id},'Nie zatrzymano.',()=>{say('Zatrzymano. Zadanie uruchomi się ponownie z poprawką.');load()});
+}
 function stopRun(id){
   const r=runById(id);if(!r||!isAct(r))return;
   if(!LIVE){simEnd(r,'stopped');say(PRV);render();return}
@@ -10672,6 +10751,8 @@ document.addEventListener('click',async ev=>{
     rowAct(el,()=>actTask(id,k))}return}
   if(el=qq('[data-run]')){openDrawer('run',el.dataset.run);return}
   if(el=qq('[data-chatexec]')){const f=el.closest('form[data-chat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendChat(f,true);return}
+  if(el=qq('[data-chatask]')){const f=el.closest('form[data-chat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendChat(f,false,true);return}
+  if(el=qq('[data-restart]')){restartRun(el.dataset.restart);return}
   if(el=qq('[data-task]')){openDrawer('task',el.dataset.task);return}
   if(el=qq('[data-state]')){if(DR&&DR.kind==='task'){const k=el.dataset.state,t=findTask(DR.ref,true);
     if(t&&k==='done'&&(needsResult(t)||needsCount(t)))openForm(t.id,'done');else patchTask(DR.id,{state:k})}return}
