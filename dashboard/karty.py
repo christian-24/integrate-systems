@@ -26,7 +26,7 @@ QUERY_KEYS = {"zrodlo", "filtr", "grupuj", "miara", "sortuj", "limit"}
 FILTER_KEYS = {"projekt", "stan", "kto", "czeka", "od", "do", "szukaj", "kanal", "etap"}
 STATES = ("otwarte", "zrobione", "do zrobienia", "w toku", "zablokowane", "do odbioru", "po terminie",
           "aktywne", "wstrzymane", "backlog", "zakończone")
-WHO = ("ty", "claude", "codex", "agenci", "dla-ciebie")
+WHO = ("ty", "claude", "codex", "agent", "agenci", "dla-ciebie")
 WAITS = ("zgoda", "odbiór", "dowolne")
 GROUPS = ("projekt", "stan", "kto", "dzien", "tydzien", "etap", "kanal")
 MEASURES = ("liczba", "minuty", "wartosc")
@@ -465,7 +465,7 @@ Typy:
 Zapytanie: {"zrodlo": zadania|publikacje|etapy|projekty|kampanie|zasoby, "filtr": {…}, "grupuj": …, "miara": …,
 "sortuj": …, "limit": 1–50}
 - filtr: projekt (id albo nazwa, może być lista), stan (otwarte, zrobione, do zrobienia, w toku, zablokowane,
-  do odbioru, po terminie; projekty: aktywne, wstrzymane, backlog, zakończone), kto (ty, claude, codex, agenci,
+  do odbioru, po terminie; projekty: aktywne, wstrzymane, backlog, zakończone), kto (ty, claude, codex, agent, agenci,
   dla-ciebie = Twoje albo czekające na Ciebie), czeka (zgoda, odbiór, dowolne), od / do (dziś, jutro, wczoraj, +N, -N,
   RRRR-MM-DD; pozycje bez daty odpadają), szukaj (fragment tytułu), kanal (np. instagram), etap (fragment nazwy)
 - grupuj: projekt, stan, kto, dzien, tydzien, etap, kanal

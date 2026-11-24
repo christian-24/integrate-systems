@@ -22,13 +22,15 @@
  "loginWeb": false,
  "login": {"active": false},
  "maxParallel": 2,
- "usage": {"five": null, "seven": null, "at": "", "budget": 0.2, "reserve": 0.8},
+ "usage": {"five": null, "codexFive": null, "seven": null, "at": "", "budget": 0.2, "reserve": 0.8},
  "canRunTasks": true,
  "today": {
   "runs": 5,
   "tokens": 96400,
   "costUsd": 1.87
  },
+ "development": [],
+ "nextTasks": [],
  "runs": [
   {
    "id": "przyklad-5",

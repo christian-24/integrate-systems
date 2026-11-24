@@ -28,6 +28,7 @@ import uuid
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
+import agent_progress
 import asystent  # noqa: E402  (stała sesja asystenta)
 import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
@@ -50,7 +51,8 @@ PM_TOOLS = "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Wr
 TASK_TOOLS = ",".join([
     "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git switch -c:*)", "Bash(git checkout -b:*)",
     "Bash(git add:*)", "Bash(git commit:*)", "Bash(python3 -m pytest:*)", "Bash(pytest:*)",
-    "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep"])
+    "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep",
+    "TodoWrite", "TaskCreate", "TaskUpdate", "TaskList", "TaskGet"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
 # Rozmowa o zadaniu (AGENCI.md, „Rozmowa o zadaniu”): tylko odczyt plików, bez powłoki, zapisu i sieci.
 CHAT_TOOLS = "Read,Grep,Glob,LS"
@@ -334,6 +336,42 @@ def click_url(link):
         query = "&".join(k + "=" + urllib.parse.quote(v, safe="") for k, _, v in (x.partition("=") for x in query.split("&")))
     return base + "/" + urllib.parse.quote(view, safe="#") + (("?" + query) if sep else "")
 
+AGENT_EXECUTORS = ("agent", "claude", "codex")
+
+
+def pick_agent(task, code_repo, usage, reserve, available):
+    """Wybór wykonawcy i powodu zapisywanego przy uruchomieniu."""
+    executor = task.get("executor")
+    if executor != "agent":
+        return ("codex" if executor == "codex" else "claude"), ""
+    title = task.get("title", "")
+    writing = re.match(r"(?i)^(przeanalizuj|opisz|spisz|raport|analiza|przygotuj post)\b", title) or re.match(
+        r"(?i)^(napisz|przygotuj|uzupełnij|zaktualizuj)\s+(raport|notatkę|opis|dokumentację|instrukcję|tekst|post)\b",
+        title)
+    code_words = re.search(r"(?i)\b(kod|testy|skrypt|repozytorium|implementac\w*|zaimplementuj|refaktoryzac\w*)\b", title)
+    coding = title.startswith((strona.SITE_TASK, strona.CONCEPT_TASK)) or (
+        code_repo and not writing and (task.get("machine") or code_words))
+    primary, other = ("codex", "claude") if coding else ("claude", "codex")
+    percent = usage.get(primary)
+    if percent is not None and percent >= reserve and available.get(other) and (usage.get(other) or 0) < reserve:
+        return other, "limit %s %d%%" % (primary.capitalize(), round(percent * 100))
+    if not available.get(primary) and available.get(other):
+        return other, "%s niedostępny" % primary.capitalize()
+    return primary, "zmiana kodu" if coding else "pisanie, analiza lub raport"
+
+
+def task_outcome(task):
+    if not task:
+        return "unknown"
+    if task.get("state") == "done":
+        return "done"
+    if task.get("state") == "blocked" or task.get("blocked"):
+        return "blocked"
+    if "odbiór" in needs_of(task):
+        return "review"
+    return "unknown"
+
+
 class Manager:
     """Kolejka i przebieg uruchomień jednego węzła."""
 
@@ -357,6 +395,9 @@ class Manager:
         self.run_budget = max(0.02, min(1.0, _int(get("PANEL_RUN_BUDGET_PROC"), 20) / 100.0))   # jedno uruchomienie
         self.auto_reserve = max(0.1, min(1.0, _int(get("PANEL_AUTOMAT_DO_PROC"), 80) / 100.0))  # Automat do tylu %
         self._usage = {"five": None, "seven": None, "at": 0.0, "resetsAt": None}
+        self._codex_usage = {"five": None, "at": 0, "resetsAt": None}
+        development_dir = get("PANEL_ROZWOJ_DIR", "/home/agent/rozwoj" if self.machine == "cloud" else "")
+        self.orders = agent_progress.Orders(development_dir.strip())
         self.model = (get("PANEL_AGENT_MODEL") or "").strip()
         self.pm_model = (get("PANEL_PM_MODEL") or "").strip()
         # Stały rytm postów: "projekt=dni,projekt=dni". Automat zakłada zadanie „Przygotować post na …”.
@@ -565,6 +606,11 @@ class Manager:
                 self._save(rec)
                 self._interrupted.append(rec)
             self._runs[rec["id"]] = rec
+            read_at, amount, reset = rec.get("limitReadAt"), rec.get("limitNow"), rec.get("limitReset")
+            if rec.get("tool") == "codex" and isinstance(read_at, (int, float)) and isinstance(amount, (int, float)) \
+                    and read_at > self._codex_usage["at"]:
+                self._codex_usage.update(five=amount, at=read_at,
+                                         resetsAt=reset if isinstance(reset, (int, float)) else None)
         try:
             with open(os.path.join(self.runs_dir, "stan.json"), encoding="utf-8") as f:
                 saved = json.load(f)
@@ -663,6 +709,28 @@ class Manager:
             return any(r["project"] == project and r["state"] in LIVE for r in self._runs.values())
 
     # ---------- reguły ----------
+    def choose_task_tool(self, task, project, folder):
+        if task.get("executor") != "agent":
+            return pick_agent(task, False, {}, self.auto_reserve, {})
+        usage = self.usage_state()
+        known = {"claude": 1 if self.limit_until() else usage["five"], "codex": usage["codexFive"]}
+        tools = {tool: self.tool_found(tool) for tool in ("claude", "codex")}
+        with self._lock:
+            for tool in tools:
+                info = self._tools[tool]
+                if (info.get("found") and not info.get("loggedIn")) or (
+                        tool == "claude" and self._state["needsLogin"]):
+                    tools[tool] = False
+        code_repo = bool(project.get("github") or (folder and self._git_top(folder)))
+        return pick_agent(task, code_repo, known, self.auto_reserve, tools)
+
+    def auto_task_ready(self, task, project, folder, claude_paused):
+        tool, _ = self.choose_task_tool(task, project, folder)
+        if tool == "claude":
+            return not claude_paused
+        used = self.usage_state()["codexFive"]
+        return used is None or used < self.auto_reserve
+
     def limit_until(self):
         """Aktywny limit jako tekst ISO albo None (miniony limit jest zdejmowany)."""
         with self._lock:
@@ -788,10 +856,13 @@ class Manager:
         return 200, "", {}
 
     # ---------- dane dla /api/data ----------
-    def snapshot(self):
+    def snapshot(self, data=None, index=None):
         self.refresh_tools()
         today = datetime.date.today().isoformat()
         limit = self.limit_until()
+        orders = self.orders.snapshot()
+        tasks = {(t["project"], t["file"], t["title"]): t for t in (data or {}).get("tasks", [])}
+        upcoming = self.next_tasks(data, index) if data and index else []
         with self._lock:
             # przebieg (log) idzie osobno: GET /api/agent/przebieg; w /api/data tylko liczba wierszy
             runs = [dict({k: v for k, v in r.items() if k != "log"}, steps=list(r.get("steps") or []),
@@ -799,6 +870,23 @@ class Manager:
                          takesMsg=bool(r["state"] == "running" and (self._priv.get(r["id"]) or {}).get("stream")
                                    and not (self._priv.get(r["id"]) or {}).get("ended")))
                     for r in reversed(list(self._runs.values()))]
+            seen = set()
+            for r in runs:
+                key = (r.get("project"), r.get("file"), r.get("title"))
+                task = tasks.get(key)
+                if r["state"] == "running":
+                    log = self._runs[r["id"]].get("log") or []
+                    r["recent"] = [entry["text"][:300] for entry in log if entry.get("k") in
+                                   ("agent", "narzedzie", "panel", "odmowa")][-3:]
+                    r["plan"] = [dict(step) for step in r.get("plan") or [] if step.get("text")] or (
+                        (task or {}).get("detail") or {}).get("steps", [])
+                if r["kind"] == "task" and r["state"] == "done":
+                    if not r.get("outcome"):
+                        r["outcome"] = task_outcome(task) if key not in seen else "unknown"
+                    elif r.get("outcome") == "review" and key not in seen and task and task["state"] == "done":
+                        r["outcome"] = "done"
+                if r["kind"] == "task":
+                    seen.add(key)
             todays = [r for r in runs if (r.get("queuedAt") or "")[:10] == today]
             return {"machine": self.machine,
                     "tools": {k: dict(v) for k, v in self._tools.items()},
@@ -811,7 +899,9 @@ class Manager:
                     "today": {"runs": len(todays),
                               "tokens": sum((r.get("tokensIn") or 0) + (r.get("tokensOut") or 0) for r in todays),
                               "costUsd": round(sum(r.get("costUsd") or 0 for r in todays), 2)},
-                    "runs": runs[:SHOWN]}
+                    "runs": list({r["id"]: r for r in runs[:SHOWN] + [r for r in runs if r["state"] in LIVE]}.values()),
+                    "development": orders,
+                    "nextTasks": upcoming}
 
     def get(self, rid):
         with self._lock:
@@ -928,6 +1018,8 @@ class Manager:
             "bez spraw technicznych: gdzie leży plik, commit, gałąź, git); po pracy z wierszem `poprawka:` także "
             "`  zmiany: …`: 2–3 krótkie zmiany rozdzielone „; ”, a przy każdej uwadze i znaczniku „zrobione” albo "
             "powód (np. `  zmiany: tło granatowe; logo większe; znacznik 1: zrobione; znacznik 2: bez zmian, bo …`).",
+            "- W nowym zadaniu użyj `kto: agent`, gdy wybór narzędzia ma należeć do panelu. Nie zmieniaj pola kto "
+            "bieżącego zadania. Nie uruchamiaj innych agentów ani nie używaj ogólnego Bash.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
         ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
@@ -1006,8 +1098,6 @@ class Manager:
             if block:
                 return 409, block, {}
             folder = index[task["project"]]
-            tool = "codex" if task["executor"] == "codex" else "claude"
-            path = self.tool_path(tool)
             first_steps = []
             ok, note = self.ensure_copy(next((p for p in data["projects"] if p["id"] == task["project"]), {}), folder)
             if not ok:
@@ -1022,7 +1112,22 @@ class Manager:
                     task, data, index = self._find_task(key=(task["project"], task["file"], title))
                     if not task or self.run_block(task, data["projectsSource"]):
                         return 409, CONFLICT, {}
-            changes = {"state": "doing", "executor": tool}
+            project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
+            tool, reason = self.choose_task_tool(task, project, folder)
+            if auto:
+                used = self.usage_state()["codexFive" if tool == "codex" else "five"]
+                if used is not None and used >= self.auto_reserve:
+                    return 409, "Wykonawca osiągnął próg limitu Automatu.", {}
+            path = self.tool_path(tool)
+            if not path:
+                return 409, "Brak polecenia %s" % tool, {}
+            if task.get("executor") == "agent" and tool == "claude" and (self._state["needsLogin"] or self.limit_until()):
+                return 409, "Claude jest niedostępny, a Codex nie może przejąć zadania.", {}
+            if task["executor"] == "agent" and self._tools[tool].get("found") and not self._tools[tool].get("loggedIn"):
+                return 409, "%s wymaga logowania." % tool.capitalize(), {}
+            changes = {"state": "doing"}
+            if task.get("executor") != "agent":
+                changes["executor"] = tool
             if self.machine in ("pc", "mac", "cloud"):
                 changes["machine"] = self.machine
             try:
@@ -1034,11 +1139,11 @@ class Manager:
                 return 400, "Nie udało się zapisać zmiany.", {}
             if not ok:
                 return 409, CONFLICT, {}
-            project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
             stage = next((s["title"] for s in data["stages"] if s["id"] == task.get("stage")), "")
             rec = self._new("task", tool, title, auto, task["project"], project.get("name", task["project"]),
                             task["id"], task["file"])
             rec["steps"] = first_steps
+            rec["choiceReason"] = reason
             rec["fix"] = str((task.get("detail") or {}).get("fix") or "")[:1000]   # Automat: nowa poprawka = nowe uruchomienie
             rec["pins"] = [dict(p) for p in (task.get("detail") or {}).get("pins") or [] if isinstance(p, dict)]
             priv = {"folder": folder, "client": project.get("client") is True,
@@ -1046,7 +1151,7 @@ class Manager:
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
                              "line": task["line"], "title": title, "stage": stage,
                              "detail": with_answers(task, data["tasks"]),
-                             "site": self.site.task_site(project, title) if tool == "claude" else None},
+                             "site": self.site.task_site(project, title)},
                     "resume": self._resume_branches(task)}
             self._task_command(priv)
             self._enqueue(rec, priv)
@@ -1079,6 +1184,8 @@ class Manager:
                                   git=info, site_rules=self.site.rules(site, cwd) if site else ())
         if t["tool"] == "codex":
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
+                                          "-c", "sandbox_workspace_write.network_access=false",
+                                          "-c", "features.multi_agent=false", "-c", "features.multi_agent_v2=false",
                                           "-C", cwd] + (extra if git else []) + ["-"]
         else:
             render = self.render_command()
@@ -1323,7 +1430,7 @@ class Manager:
         why = ""
         if task.get("kind") == "publikacja":
             why = "publikację wykonujesz samodzielnie."
-        elif task.get("executor") not in ("claude", "codex"):
+        elif task.get("executor") not in AGENT_EXECUTORS:
             why = "to zadanie nie jest dla agenta (kto: %s). Zmień wykonawcę w szczegółach." % (task.get("executor") or "brak")
         elif key in self._live_keys():
             code, err, live = self.live_message(self._live_keys()[key], text, pins)
@@ -1529,6 +1636,9 @@ class Manager:
             since = max(0, int(since or 0))
         except (TypeError, ValueError):
             since = 0
+        if agent_progress.ORDER.fullmatch(str(rid)):
+            result = self.orders.live_log(str(rid), since)
+            return (200, "", result) if result else (404, "Nie ma takiego zlecenia.", {})
         with self._lock:
             rec = self._runs.get(str(rid))
             if not rec:
@@ -1641,9 +1751,8 @@ class Manager:
         block = self.run_block(task, data["projectsSource"], live)
         if block:
             return no(block[0].lower() + block[1:].rstrip(".") + ".")
-        if task.get("executor") not in ("claude", "codex"):
-            return no("zadanie nie ma wykonawcy agenta (kto: claude albo codex).")
-        tool = "codex" if task["executor"] == "codex" else "claude"
+        if task.get("executor") not in AGENT_EXECUTORS:
+            return no("zadanie nie ma wykonawcy agenta (kto: agent, claude albo codex).")
         today = datetime.date.today().isoformat()
         with self._lock:
             automat, login = self._state["automat"], self._state["needsLogin"]
@@ -1652,10 +1761,10 @@ class Manager:
             if automat and task.get("date") and str(task["date"])[:10] <= today:
                 return " Ma datę dziś: Automat uruchomi je %s." % when
             return " Uruchom je potem w szczegółach zadania."
-        if login and tool == "claude":
+        if login and task.get("executor") == "claude":
             return no("Claude wymaga logowania (Agenci → Zaloguj)." + later("po zalogowaniu"))
         limit = self.limit_until()
-        if limit:
+        if limit and task.get("executor") == "claude":
             return no("limit subskrypcji do %s." % limit[11:16] + later("po odnowieniu limitu"))
         code, err, extra = self.run_task(task["id"], title)
         if code != 200:
@@ -1734,7 +1843,7 @@ class Manager:
         """Zasady rozmowy o projekcie i asystenta: prośba o pracę = zadanie agenta i wiersz „Uruchom:”."""
         return [
             "- Gdy właściciel prosi o wykonanie pracy (zrób, przygotuj, napisz, napraw, sprawdź…), nie robisz jej sam: "
-            "dopisz w ZADANIA.md projektu zadanie agenta `- [ ] <Tytuł od czasownika> | kto: claude | kiedy: %s` "
+            "dopisz w ZADANIA.md projektu zadanie agenta `- [ ] <Tytuł od czasownika> | kto: agent | kiedy: %s` "
             "(w etapie, którego dotyczy, inaczej w „## Do rozplanowania”) z wciętymi o 2 spacje wierszami "
             "`  cel: …` i `  gotowe gdy: …` z prośby. Pasujące otwarte zadanie agenta wykorzystaj zamiast "
             "zakładać nowe. Potem na samym końcu odpowiedzi dodaj wiersz `Uruchom: %s<dokładny tytuł zadania>`; "
@@ -3035,13 +3144,19 @@ class Manager:
         path = self.tool_path("claude")
         if not path:
             return 409, "Brak polecenia claude", {}
+        if self.load_projects()[0]["projectsSource"] != "registry":
+            return 409, "Raport PM wymaga projektów z rejestru lub zbieracza.", {}
+        registry = (self.env.get("PANEL_REGISTRY") or "").strip()
+        command = "python3 standard/pm.py --tylko-rejestr"
+        if registry:
+            command += " --rejestr " + shlex.quote(os.path.abspath(os.path.expanduser(registry)))
         with self._lock:
             if any(r["kind"] == "pm" and r["state"] in LIVE for r in self._runs.values()):
                 return 409, "Raport PM już trwa.", {}
             rec = self._new("pm", "claude", "Raport PM", auto)
-            prompt = ("Przygotuj raport według standard/PM.md: uruchom `python3 standard/pm.py` i zapisz notatkę do "
-                      "raporty/%s.md (nadpisz wcześniejszą z tego dnia). Odpowiedz raportem.\n"
-                      % datetime.date.today().isoformat())
+            prompt = ("Przygotuj raport według standard/PM.md: uruchom `%s`. Jeżeli polecenie zgłosi błąd, podaj jego "
+                      "przyczynę. Po udanym odczycie zapisz notatkę do raporty/%s.md (nadpisz wcześniejszą z tego dnia). "
+                      "Odpowiedz raportem.\n" % (command, datetime.date.today().isoformat()))
             args = self._claude_args(path, self.pm_model, ["--agent", "pm", "--allowedTools", PM_TOOLS,
                                                            "--disallowedTools", RUN_DENY, "--strict-mcp-config"])
             self._enqueue(rec, {"args": args, "cwd": self.root, "prompt": prompt})
@@ -3968,6 +4083,12 @@ class Manager:
                     st["tail"].append(_short(line, 200))
                     continue
                 try:
+                    with self._lock:
+                        plan = list(rec.get("plan") or [])
+                        agent_progress.update_plan(plan, ev)
+                        agent_progress.task_creates(priv.setdefault("planCreates", {}), plan, ev)
+                        if plan or "plan" in rec:
+                            rec["plan"] = plan
                     parse(rec, ev, st, priv["cwd"])
                 except Exception:  # nieznany kształt zdarzenia nie może przerwać uruchomienia
                     pass
@@ -4116,6 +4237,26 @@ class Manager:
     def _on_codex(self, rec, ev, st, cwd):
         """Strumień `codex exec --json`: nowy układ (item.*, turn.*) i starszy (msg)."""
         kind = ev.get("type")
+        sample = agent_progress.codex_limit(ev)
+        now = time.time()
+        priv = self._priv.get(rec["id"]) or {}
+        thread = priv.get("thread")
+        if not sample and thread and (kind in ("turn.completed", "turn.failed") or
+                                      now - priv.get("limitCheckedAt", 0) >= 5):
+            priv["limitCheckedAt"] = now
+            sample = agent_progress.codex_session_limit(grafiki.codex_home(self.env, self.agent_user), thread,
+                                                        priv.get("t0") or now)
+        if sample:
+            used, reset = sample
+            if reset is not None and reset > 1e12:
+                reset /= 1000
+            if not reset or reset > now:
+                with self._lock:
+                    self._codex_usage.update(five=used, at=now, resetsAt=reset)
+                    if rec.get("limitStart") is None or used < rec["limitStart"] or (
+                            reset and rec.get("limitReset") and reset != rec["limitReset"]):
+                        rec["limitStart"] = used
+                    rec.update(limitNow=used, limitReset=reset, limitReadAt=now)
         msg = ev.get("msg") if isinstance(ev.get("msg"), dict) else None
         if msg:                                             # starszy układ
             kind, ev = msg.get("type"), msg
@@ -4208,9 +4349,18 @@ class Manager:
         """Ostatnie znane zużycie limitów subskrypcji dla panelu: {"five","seven","at","resetsAt","budget","reserve"}."""
         with self._lock:
             u = dict(self._usage)
-        stale = not u["at"] or time.time() - u["at"] > 5 * 3600
+            cx = dict(self._codex_usage)
+        now = time.time()
+        try:
+            reset = float(u["resetsAt"] or 0)
+            if reset > 1e12:
+                reset /= 1000
+        except (TypeError, ValueError):
+            reset = 0
+        stale = not u["at"] or now >= (reset or u["at"] + 5 * 3600)
         return {"five": None if stale else u["five"], "seven": None if stale else u["seven"],
                 "at": now_iso(datetime.datetime.fromtimestamp(u["at"])) if u["at"] else "",
+                "codexFive": cx["five"] if cx["at"] and now < (cx["resetsAt"] or cx["at"] + 5 * 3600) else None,
                 "budget": self.run_budget, "reserve": self.auto_reserve}
 
     def _conclude(self, rec, st, code):
@@ -4262,6 +4412,12 @@ class Manager:
             priv["finishing"] = True
         if rec["kind"] == "task":                      # wiersz zadania przed ogłoszeniem stanu końcowego
             self._close_task(rec, state, priv.get("git"))
+        if rec["kind"] == "task" and state == "done":
+            try:
+                task, _, _ = self._find_task(key=(rec["project"], rec["file"], rec["title"]))
+                rec["outcome"] = task_outcome(task)
+            except (OSError, ValueError):
+                rec["outcome"] = "unknown"
         if rec["kind"] == "grafika":
             state, error, result = self._graphic_done(rec, priv, state, error, result)
         if rec["kind"] == "plan" and state == "done":
@@ -4281,7 +4437,7 @@ class Manager:
                     self._state["needsLogin"] = True
                 elif state == "done":
                     self._state["needsLogin"] = False
-            if state == "limit":
+            if state == "limit" and rec["tool"] == "claude":
                 self._state["limitUntil"] = limit_until
             elif state == "done" and rec["tool"] == "claude":
                 self._state["limitUntil"] = None
@@ -4404,29 +4560,60 @@ class Manager:
             self._send_ntfy("Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj.", "#agenci")
 
     # ---------- Automat ----------
+    def _auto_candidates(self, data, index, now):
+        if data["projectsSource"] != "registry":
+            return
+        today = now.date().isoformat()
+        night = now.hour >= 22 or now.hour < 6
+        live = self._live_keys()
+        tools = {tool: self.tool_found(tool) for tool in ("claude", "codex")}
+        projects = {p["id"]: p for p in data["projects"]}
+        five = self.usage_state()["five"]
+        with self._lock:
+            login = self._state["needsLogin"]
+            done_today = {(r["project"], r["file"], r["title"], r.get("fix") or "") for r in self._runs.values()
+                          if r["kind"] == "task" and (r.get("queuedAt") or "")[:10] == today}
+        paused = login or self.limit_until() or (five is not None and five >= self.auto_reserve)
+        for t in data["tasks"]:
+            if t["state"] != "todo" or t["executor"] not in AGENT_EXECUTORS:
+                continue
+            if t["machine"] != self.machine and not (not t["machine"] and self.default_node):
+                continue
+            if not t["date"] or t["date"][:10] > today:
+                continue
+            if (t["slot"] == "noc" and not night) or (t["slot"] == "dzień" and night):
+                continue
+            key = (t["project"], t["file"], t["title"], str((t.get("detail") or {}).get("fix") or "")[:1000])
+            project = projects.get(t["project"], {})
+            if key not in done_today and not run_block(t, "registry", live, tools) and self.auto_task_ready(
+                    t, project, index.get(t["project"]), paused):
+                yield t, project
+
+    def next_tasks(self, data, index):
+        with self._lock:
+            if not self._state["automat"]:
+                return []
+        return [{"title": t["title"], "taskId": t["id"], "projectName": p.get("name", t["project"])}
+                for t, p in self._auto_candidates(data, index, datetime.datetime.now())][:20]
+
     def tick(self, now=None):
         """Jeden obieg Automatu. Zwraca listę id nowych uruchomień."""
         started = []
-        with self._lock:
-            if not self._state["automat"] or self._state["needsLogin"]:
-                return started
-        if self.limit_until():
-            return started
-        five = self.usage_state()["five"]
-        if five is not None and five >= self.auto_reserve:     # zostaw resztę limitu 5 godzin dla właściciela
-            return started
         now = now or datetime.datetime.now()
         today = now.date().isoformat()
         with self._lock:
-            todays = [r for r in self._runs.values() if (r.get("queuedAt") or "")[:10] == today]
-            # raz dziennie: liczy się próba Automatu albo raport udany lub trwający; ręczny, przerwany nie blokuje
+            if not self._state["automat"]:
+                return started
+            login = self._state["needsLogin"]
             pm_today = any(r["kind"] == "pm" and (r["auto"] or r["state"] in LIVE or r["state"] == "done")
-                           for r in todays)
-            # raz dziennie na zadanie, chyba że po uruchomieniu doszła nowa poprawka (uwagi z „Do poprawy”)
-            done_today = {(r["project"], r["file"], r["title"], r.get("fix") or "") for r in todays if r["kind"] == "task"}
+                           and (r.get("queuedAt") or "")[:10] == today for r in self._runs.values())
             free = self.max_parallel - sum(1 for r in self._runs.values() if r["state"] in LIVE)
-        if now.hour >= self.pm_hour and not pm_today and \
-                not os.path.exists(os.path.join(self.notes_dir, today + ".md")):
+        five = self.usage_state()["five"]
+        paused = login or self.limit_until() or (five is not None and five >= self.auto_reserve)
+        if free <= 0:
+            return started
+        if not paused and now.hour >= self.pm_hour and not pm_today and not os.path.exists(
+                os.path.join(self.notes_dir, today + ".md")):
             code, _, extra = self.run_pm(auto=True)
             if code == 200:
                 started.append(extra["id"])
@@ -4436,32 +4623,19 @@ class Manager:
         data, index = self.load_projects()
         if data["projectsSource"] != "registry":
             return started
-        added = self._plan_posts(data, index, now.date())
-        added = self._plan_rhythm(data, index, now.date()) or added
-        added = self._plan_scripts(data, index, now.date()) or added
-        if added:
-            data, index = self.load_projects()
-        night = now.hour >= 22 or now.hour < 6
-        live = self._live_keys()
-        tools = {"claude": self.tool_found("claude"), "codex": self.tool_found("codex")}
-        for t in data["tasks"]:
-            if free <= 0:
-                break
-            if t["state"] != "todo" or t["executor"] not in ("claude", "codex"):
-                continue
-            if t["machine"] != self.machine and not (not t["machine"] and self.default_node):
-                continue
-            if not t["date"] or t["date"][:10] > today:
-                continue
-            if (t["slot"] == "noc" and not night) or (t["slot"] == "dzień" and night):
-                continue
-            if (t["project"], t["file"], t["title"], str((t.get("detail") or {}).get("fix") or "")[:1000]) in done_today \
-                    or run_block(t, "registry", live, tools):
-                continue
+        if not paused:
+            added = self._plan_posts(data, index, now.date())
+            added = self._plan_rhythm(data, index, now.date()) or added
+            added = self._plan_scripts(data, index, now.date()) or added
+            if added:
+                data, index = self.load_projects()
+        for t, _ in self._auto_candidates(data, index, now):
             code, _, extra = self.run_task(t["id"], t["title"], auto=True)
             if code == 200:
                 started.append(extra["id"])
                 free -= 1
+                if free <= 0:
+                    break
         return started
 
 
@@ -4626,7 +4800,10 @@ def run_block(task, source, live, tools, sample_ok=False):
     if waiting:
         return _short("Czeka na: " + ", ".join(waiting), 200)
     tool = "codex" if task.get("executor") == "codex" else "claude"
-    if not tools.get(tool):
+    if task.get("executor") == "agent":
+        if not any(tools.values()):
+            return "Brak polecenia Claude i Codex"
+    elif not tools.get(tool):
         return "Brak polecenia %s" % tool
     if (task.get("project"), task.get("file"), task.get("title")) in live:
         return "W toku"
