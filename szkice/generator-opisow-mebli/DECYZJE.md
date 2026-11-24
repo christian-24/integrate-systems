@@ -3,6 +3,12 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-24: Filmy na grudzień: 6 publikacji, podział 3 panel, 2 AI, 1 właściciel
+- Kontekst: karta ma pole „nagrywa: panel 50, ai 40, ty 10”, a harmonogram kampanii (kampanie/staly-rytm.md) kończył się na 27.11 i nie miał filmów na grudzień. Realne okno według marketing/formy-grudzien.md to 1–18.12 (po 20.12 sprzedawcy nie odpisują), decyzja go/no-go 23.12.
+- Decyzja: 6 filmów w dniach 3, 7, 10, 12, 15 i 17.12 (dwa na tydzień, poza dniami innych publikacji właściciela: 1, 4, 8 i 18.12). Przy 6 filmach podział 50/40/10 daje 3 panel, 2 AI, 1 właściciel. Kolejność (panel, AI, panel, AI, ty, panel) jest taka, w jakiej panel sam przydziela sposób kolejnym filmom. Tematy z planu 10 kont (slot B), form grudniowych (C, D, B) i gotowych draftów LinkedIn. Film nagrywany telefonem to mierzenie prawdziwego mebla, bo tylko tam potrzebna jest prawdziwa rzecz.
+- Skutki: właściciel ma 6 publikacji po 15 min i jedno nagranie telefonem (ok. 30 min, 14.12). Sposób wpisany w wierszu to propozycja; gdy panel przydzieli inaczej, zmienia się tylko sposób wykonania, temat zostaje. Odwracalne: wiersz można usunąć albo przesunąć przed przygotowaniem scenariusza.
+- Kto: agent
+
 ## 2026-11-21: Porządki: odpowiedź „z 4” w pytaniu 8 bez dopytywania
 - Kontekst: na pytanie 8 w KARTA.md (ilu kontaktów na LinkedIn, w tym z branży meblowej) właściciel odpowiedział „z 4”. Odpowiedź jest niejednoznaczna, a od liczby zależał tylko szacunek 2–4 kont z postów i moment uruchomienia rezerwy.
 - Decyzja: czytam ją jako około 4 kontakty z branży meblowej i nie zadaję pytania ponownie. Postów nie liczę jako źródła kont w prognozie na 30.11; rezerwa (partia 4) rusza według punktu 7 planu, czyli przy mniej niż 4 kontach Free 25.11, bez przyspieszania.
