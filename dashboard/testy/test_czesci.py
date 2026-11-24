@@ -171,7 +171,7 @@ class Widok(unittest.TestCase):
 
     def run_view(self, body):
         code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "wwSites", "partSw", "kpN",
-                                                         "ghLine", "driveLine", "codeBox", "pjChatOf", "dockHtml"])
+                                                         "ghLine", "drWhere", "driveLine", "codeBox", "pjChatOf", "dockHtml"])
         js = """let LIVE=true;const PF={more:{}},GHS={},DRV={x:{connected:true,mounted:true,files:3,folder:'1AbCdEfGhIjK'}},A={busy:{}};
 const D={projectsSource:'registry'},loaded=[];
 const ghLoad=id=>loaded.push(id),loadDrive=()=>{},loadPChat=id=>loaded.push('chat:'+id);
@@ -221,13 +221,15 @@ out.cz=codeBox(part);LIVE=false;out.off=codeBox(part);""")
         self.assertIn("zgodne z GitHubem", zw)
         self.assertIn("2 commity do wysłania", zw)
         self.assertIn("brak pola github:", zw)
-        self.assertIn("połączony: <a href=\"https://drive.google.com/drive/folders/1AbCdEfGhIjK\"", zw)
+        self.assertIn("<a href=\"https://drive.google.com/drive/folders/1AbCdEfGhIjK\"", zw)
+        self.assertEqual(zw.count("<dt>Google Drive"), 2)                 # folder Drive na każdą część
         self.assertIn("3 pozycje", zw)
         self.assertIn('aria-expanded="true"', rw)
         self.assertIn(">Zwiń<", rw)
         self.assertIn("GH:x", rw)
         self.assertIn("GH:s", rw)
         self.assertIn("DRV:x", rw)
+        self.assertIn("DRV:s", rw)
         self.assertEqual(o["ld2"], ["x", "s"])
         self.assertEqual(o["cz"].count("<dt>GitHub"), 1)                  # wybrana część: tylko jej repozytorium
         self.assertIn("GH:s", o["cz"])
