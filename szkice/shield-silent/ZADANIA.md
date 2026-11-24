@@ -26,7 +26,7 @@ termin: 2026-11-22
 - [x] Śledzenie: konwersja „połączenie z reklamy” | kto: ty | kiedy: 2026-11-22
   wynik: zamknięte przy porządkach 2026-11-21 (połączone z zadaniem „Konto Google Ads i program Google Ads Editor”)
 - [ ] Wybrać 1 istniejący film z Instagrama o wygłuszaniu (najlepiej z dźwiękiem przed i po) do reklamy Meta | kto: ty | kiedy: 2026-11-22 | czas: 10
-- [ ] Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry | kto: ty | kiedy: 2026-11-19 | czas: 90
+- [x] Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry | kto: ty | kiedy: 2026-11-19 | czas: 90
   cel: Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry. Szczegóły: Plan-filmow-do-28-stycznia.md, sekcja 1
 - [ ] Usunąć „Piława” z opisów na Instagramie | kto: ty | kiedy: 2026-11-22 | czas: 10
 - [ ] Google: włączyć Wygłuszanie 18 zł + Detailing 10 zł. Ceny w reklamach (drzwi od 1 590 zł, pakiet 2 790 zł,… | kto: ty | kiedy: 2026-11-19 | czas: 10
