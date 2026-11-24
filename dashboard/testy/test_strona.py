@@ -113,8 +113,8 @@ class Karta(Strona):
         self.assertEqual(status, 409)
         with open(os.path.join(os.path.dirname(TESTY), "panel.html"), encoding="utf-8") as f:
             html = f.read()
-        self.assertIn("const ptabsOf=p=>p&&p.site?", html)      # zakładka Strona tylko przy polu strona:
-        self.assertIn("if(p&&tab==='strona'&&!p.site)tab='plan';", html)
+        self.assertIn("const ptabsOf=p=>wwSites(p).length?", html)   # zakładka Strona tylko przy polu strona: (także części)
+        self.assertIn("if(p&&tab==='strona'&&!wwSites(p).length)tab='plan';", html)
         self.assertNotIn("PTABS.filter(", html)                  # nawigacja projektu idzie przez ptabsOf
 
 
@@ -169,6 +169,9 @@ class Serwowanie(Strona):
             self.assertEqual((status, headers["Content-Type"]), (200, ctype), rel)
         status, headers, _ = self.request("GET", self.url.rstrip("/"))
         self.assertEqual((status, headers["Location"]), (303, self.url))
+        # podstrona bez „/” na końcu (adres z routera strony): przekierowanie, żeby względne „../assets” trafiały
+        status, headers, _ = self.request("GET", self.url + "assets")
+        self.assertEqual((status, headers["Location"]), (303, self.url + "assets/"))
 
     def test_sciezki_poza_folderem(self):
         for rel in ("../stan.json", "%2e%2e/stan.json", "assets/..%2f..%2fstan.json", "sekret.txt", "..%5cstan.json",

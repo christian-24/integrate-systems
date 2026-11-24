@@ -572,7 +572,13 @@ spacja, gdy fokus nie jest w polu ani na przycisku (przytrzymaj albo naciśnij d
 ### Podgląd strony (zakładka „Strona”)
 
 Projekt z polem karty `- strona: folder` (opcjonalnie `strona build:`, `strona wynik:`; `standard/STANDARD.md`) ma
-w panelu zakładkę „Strona”. Kod: `dashboard/strona.py` (`Manager.site`).
+w panelu zakładkę „Strona”; projekt główny ma ją też w „Całość”, gdy strona jest w jego części. Kod:
+`dashboard/strona.py` (`Manager.site`).
+
+Drogi do zakładki: zadanie właściciela o ocenie strony (tytuł z „zakładce Strona” albo „podgląd strony”, albo
+`materiał:` w folderze strony) ma w szczegółach i na liście spraw przycisk „Otwórz podgląd”. Rozmowy o projekcie
+i Asystent dostają w poleceniu adresy zakładki (`[Otwórz podgląd](#p-<główny>-strona?cz=<część>)`); panel zamienia
+taki zapis i słowa „zakładka Strona” w odpowiedzi na link.
 
 1. **Budowanie podglądu.** Panel uruchamia polecenie budowania w folderze strony w folderze projektu (domyślnie
    `npm ci && npm run build -- --base=./`). Przy `PANEL_AGENT_USER` jako agent: `sudo -n -u agent --
@@ -586,6 +592,8 @@ w panelu zakładkę „Strona”. Kod: `dashboard/strona.py` (`Manager.site`).
    `Content-Security-Policy: sandbox allow-scripts allow-forms allow-popups` (strona nie ma dostępu do ciasteczek
    i API panelu, także otwarta w nowej karcie), `Referrer-Policy: no-referrer` i `Access-Control-Allow-Origin: *`
    (moduły JS i czcionki z dokumentu w piaskownicy). Ścieżki z `..` albo `\`, dowiązania i pliki poza wynikiem: 404.
+   Folder bez `/` na końcu (np. `/pl/prywatnosc` z routera strony) przekierowuje na adres z `/`, żeby względne
+   adresy zasobów (`../assets/…`) trafiały.
    Do HTML panel dopisuje w `<head>` skrypt trybu „Wskaż” (postMessage do panelu; panel przyjmuje wiadomości tylko
    z ramki zakładki).
 3. **Uwaga.** „Wyślij agentowi” (`/api/strona/uwaga`) dopisuje do „Do rozplanowania” zadanie

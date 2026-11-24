@@ -85,6 +85,9 @@ się nie przenosi. W panelu:
   „Strona WWW”); projekt główny traci nawias z tytułu („Oprogramowani (integracje ERP ↔ sprzedaż)” → nazwa
   „Oprogramowani”, część główna „Integracje ERP ↔ sprzedaż”); bez nawiasu część główna to „Główna część”;
 - stary adres części (`#p-<część>…`) przechodzi na `#p-<główny>…?cz=<część>`;
+- przełącznik części pod nazwą projektu ma wygląd zakładek („Część: Całość · … · Strona WWW”); „Całość” ma zakładkę
+  Strona, gdy którakolwiek część ma `strona:` (podgląd tej części; przy kilku częściach ze stroną wybór części
+  w zakładce);
 - raport PM (`standard/pm.py`) liczy sprawy jak dotąd i podpisuje je „Projekt · Część”; lista projektów, następny
   krok i braki dokumentów liczone dla całości (`parts` w `projects`);
 - dane: część ma `partOf` i `partLabel`, projekt główny `parts` (`[{id, label}]`) i `partLabel`; `cardName` to tytuł

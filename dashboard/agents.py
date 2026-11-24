@@ -137,7 +137,7 @@ RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
 # „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
 EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
 # wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
-CHAT_RULES_V = "4"
+CHAT_RULES_V = "5"
 PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
 
 
@@ -1862,8 +1862,33 @@ class Manager:
             "takie zadanie czeka na zgodę właściciela w panelu.",
         ]
 
-    def project_chat_prompt(self, project, folder, cards, text, parts=()):
-        """parts: [(nazwa części, folder karty części)] projektu z częściami (pole karty „część projektu:”)."""
+    @staticmethod
+    def site_links(data, ids=None):
+        """[(nazwa, adres zakładki Strona w panelu)] projektów z polem karty strona: (ids: tylko te projekty).
+        Część: #p-<główny>-strona?cz=<część>; projekt główny z częściami: ?cz=<jego id>; bez części: #p-<id>-strona."""
+        projects = data.get("projects") or []
+        heads = {x.get("partOf") for x in projects if x.get("partOf")}
+        out = []
+        for p in projects:
+            if not p.get("site") or (ids is not None and p["id"] not in ids):
+                continue
+            pid, top = p["id"], p.get("partOf") or ""
+            href = ("#p-%s-strona?cz=%s" % (top, pid) if top else
+                    "#p-%s-strona?cz=%s" % (pid, pid) if pid in heads else "#p-%s-strona" % pid)
+            out.append((p.get("name") or pid, href))
+        return out
+
+    @staticmethod
+    def site_rule(links):
+        """Zasada o podglądzie strony: link do zakładki zamiast opisu drogi w panelu."""
+        if not links:
+            return []
+        return ["- Podgląd strony (zakładka Strona w panelu): nie opisuj drogi do niego. Podaj link w postaci "
+                "[Otwórz podgląd](adres), adres z listy: " + "; ".join("%s: %s" % x for x in links) + "."]
+
+    def project_chat_prompt(self, project, folder, cards, text, parts=(), sites=()):
+        """parts: [(nazwa części, folder karty części)] projektu z częściami (pole karty „część projektu:”);
+        sites: site_links projektu i jego części."""
         name = project.get("name") or project.get("id")
         today = datetime.date.today()
         lines = ["Rozmawiasz z właścicielem o projekcie „%s” (id %s). Dziś jest %s (%s)." % (
@@ -1888,7 +1913,7 @@ class Manager:
                  "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
                  "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
                  "- Po każdej zmianie napisz na końcu wiersz zaczynający się od „Zmieniono:” z plikiem i zadaniem.",
-                 ] + self.run_rules("%s | " % project.get("id"), today) + [
+                 ] + self.site_rule(list(sites)) + self.run_rules("%s | " % project.get("id"), today) + [
                  "- Nie zmieniasz KARTA.md, kodu ani innych plików i nie uruchamiasz poleceń.",
                  "- Nigdy nie proś o hasła, klucze ani tokeny.",
                  "", "Wiadomość właściciela:", text]
@@ -1941,7 +1966,8 @@ class Manager:
             allow, deny, cards = self.project_chat_tools(folder)
             parts = [(x.get("partLabel") or x["id"], os.path.dirname(os.path.realpath(os.path.join(index[x["id"]], "KARTA.md"))))
                      for x in data["projects"] if x.get("partOf") == pid and x["id"] in index]
-            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text, parts)
+            sites = self.site_links(data, {x["id"] for x in data["projects"] if x["id"] == pid or x.get("partOf") == pid})
+            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text, parts, sites)
             args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
             if self.model:
                 args += ["--model", self.model]
@@ -2116,7 +2142,7 @@ class Manager:
                   "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela i tylko ZADANIA.md, DECYZJE.md i kampanie/ projektów, "
                   "w formacie ze STANDARD.md. Wierszy nie usuwasz; anulowane: [x] i wcięty wiersz `wynik: anulowane`.",
                   "- Po zmianie dopisz przed wierszami działań wiersz „Zmieniono: <projekt>: <zadanie>”.",
-                  ] + self.run_rules("<id projektu> | ", today) + [
+                  ] + self.site_rule(self.site_links(data)) + self.run_rules("<id projektu> | ", today) + [
                   "- Nie zmieniasz kart, kodu ani innych plików, nie uruchamiasz poleceń, nie prosisz o hasła ani klucze.",
                   "- Każda kolejna wiadomość zaczyna się od [ekran: …] (co właściciel ma teraz przed sobą); gdy dane się "
                   "zmienią, dostaniesz też nowe fakty.",
