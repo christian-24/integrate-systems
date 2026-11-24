@@ -27,6 +27,7 @@ chgrp projekty "$mnt" && chmod 2750 "$mnt"
 install -d -m 750 "$ENVD"
 printf 'MNT=%s\n' "$mnt" > "$ENVD/$pid.env"
 systemctl enable "drive@$pid.service" >/dev/null 2>&1
+systemctl reset-failed "drive@$pid.service" >/dev/null 2>&1 || true
 systemctl restart "drive@$pid.service"
 for _ in $(seq 1 20); do mountpoint -q "$mnt" && { echo "zamontowano"; exit 0; }; sleep 1; done
 echo "montowanie nieudane (journalctl -u drive@$pid)"; exit 1

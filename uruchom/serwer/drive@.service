@@ -1,9 +1,14 @@
-# Google Drive projektu %i tylko do odczytu (rclone) w szkice/<karta>/media/drive. Włącza i wyłącza go
+# Google Drive projektu %i tylko do odczytu (rclone) w szkice/<karta>/media/drive. drive-%i to wpis rclone: alias
+# na folder konta Google (gdrive-<konto>,root_folder_id=…) albo starszy wpis drive z własnym tokenem. Włącza i wyłącza go
 # /usr/local/bin/drive-wlacz (przycisk „Połącz Google Drive” w panelu). Instaluje uruchom/serwer/zainstaluj-drive.sh.
 [Unit]
 Description=Google Drive projektu %i tylko do odczytu (rclone)
 After=network-online.target
 Wants=network-online.target
+# błąd (np. cofnięty dostęp Google) nie zapętla restartów: najwyżej 5 startów w 10 min, potem stan failed;
+# drive-wlacz (przycisk w panelu) zeruje licznik przed ponownym montowaniem
+StartLimitIntervalSec=600
+StartLimitBurst=5
 
 [Service]
 Type=simple

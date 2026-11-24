@@ -59,11 +59,18 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   (np. „Strona WWW”); wybrana część pokazuje tylko swoje i swoje zakładki (np. Strona).
 - Plan: decyzje, najbliższe 7 dni i sekcja **Kod i pliki**: na wierzchu po jednym wierszu GitHub (gałąź, „zgodne
   z GitHubem” albo „N commitów do wysłania”, „brak pola github:”; przy projekcie z częściami wiersz na każde
-  repozytorium części) i Google Drive („połączony: folder na Dysku, N pozycji” albo „niepołączony”). „Szczegóły”
-  rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera, gałęzie i pliki; dla
-  Drive połączenie, pliki, odłączenie. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
-  i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji. Nazwy folderu Drive panel nie zna (zapisuje
-  tylko jego identyfikator), dlatego wiersz pokazuje link „folder na Dysku”.
+  repozytorium części) i Google Drive na projekt i każdą część (ścieżka folderu z kontem, N pozycji, albo „bez
+  folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
+  gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
+  folderu”), „Zmień folder”, „Odłącz”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
+  i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
+- **Google Drive** (Serwer → Google Drive, albo „Kod i pliki”, gdy żadne konto nie jest połączone): jedno logowanie
+  na konto Google (można połączyć kilka, każde z nazwą nadaną przy łączeniu), tylko do odczytu. Z wbudowanym
+  klientem rclone po zalogowaniu wkleja się raz adres strony, która się nie otwiera („Wklej ze schowka” albo
+  wklejenie w pole od razu łączy); z własnym klientem OAuth (INSTALACJA.md, „Google Drive”) Google wraca do panelu.
+  Folder projektu montuje się w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`), agent dostaje tę ścieżkę
+  w instrukcji zadania. Połączenia sprzed kont (osobne logowanie na folder) działają dalej; „Zmień folder” przenosi
+  je na konto.
 - **Rozmowa**: przycisk w prawym dolnym rogu każdej strony projektu rozwija okno czatu (na komputerze 380×520 px,
   na telefonie arkusz od dołu na całą szerokość); „Zwiń” albo Esc je zwija. Rozmowa dotyczy bieżącego projektu:
   przy projekcie z częściami całości (rozmowa projektu głównego, zna pliki części) albo wybranej części (jej własna
