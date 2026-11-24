@@ -279,6 +279,8 @@ def _command(path):
 
 def describe_tool(name, data, cwd=""):
     """Czynność agenta w jednym wierszu: 'Edit: src/api.py', 'Bash: npm test'."""
+    if name in ("TodoWrite", "TaskCreate", "TaskUpdate"):
+        return {"TodoWrite": "Aktualizuje listę kroków", "TaskCreate": "Dodaje krok", "TaskUpdate": "Aktualizuje krok"}[name]
     detail = ""
     if isinstance(data, dict):
         for key in ("file_path", "path", "notebook_path"):
@@ -292,7 +294,7 @@ def describe_tool(name, data, cwd=""):
                         detail = os.path.basename(detail)
                 break
         else:
-            for key in ("command", "pattern", "url", "query", "description", "prompt"):
+            for key in ("description", "command", "pattern", "url", "query", "prompt"):
                 if data.get(key):
                     detail = str(data[key]).strip().split("\n")[0]
                     break
@@ -404,9 +406,11 @@ class Manager:
         self.run_budget = max(0.02, min(1.0, _int(get("PANEL_RUN_BUDGET_PROC"), 20) / 100.0))   # jedno uruchomienie
         self.auto_reserve = max(0.1, min(1.0, _int(get("PANEL_AUTOMAT_DO_PROC"), 80) / 100.0))  # Automat do tylu %
         self._usage = {"five": None, "seven": None, "at": 0.0, "resetsAt": None}
-        self._codex_usage = {"five": None, "at": 0, "resetsAt": None}
+        self._codex_usage = {"five": None, "seven": None, "at": 0, "resetsAt": None}
+        self._session_limits_at = 0
+        self._limit_reader_lock = threading.Lock()
         development_dir = get("PANEL_ROZWOJ_DIR", "/home/agent/rozwoj" if self.machine == "cloud" else "")
-        self.orders = agent_progress.Orders(development_dir.strip())
+        self.orders = agent_progress.Orders(development_dir.strip(), describe_tool)
         self.model = (get("PANEL_AGENT_MODEL") or "").strip()
         self.pm_model = (get("PANEL_PM_MODEL") or "").strip()
         # Stały rytm postów: "projekt=dni,projekt=dni". Automat zakłada zadanie „Przygotować post na …”.
@@ -430,13 +434,14 @@ class Manager:
         self._queue = []
         self._priv = {}                       # id -> dane robocze, których nie pokazujemy (folder, prompt, proces)
         self._state = {"automat": False, "needsLogin": False, "limitUntil": None, "since": {}, "marks": {},
-                       "sessionKey": "", "rytmDone": []}
+                       "sessionKey": "", "rytmDone": [], "decisions": {}}
         self._shot_dirs = {}                  # id uruchomienia zadania strony -> katalog .zrzuty/ (GET /api/agent/zrzut)
         self._seen_marks = {}                 # klucz zadania -> stan z ostatniego track_marks (zmiany widziane na żywo)
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
         self._tools_read = False              # stan narzędzi odczytany choć raz (grafiki: „Codex niezalogowany”)
         self._tools_busy = False
+        self._tools_ready = threading.Event()
         self._login = None          # logowanie przez panel (serwer bez okna): proces, adres, stan
         self._cx_login = None       # logowanie Codex kodem urządzenia (serwer bez okna): proces, adres, kod
         self.login_web = (get("PANEL_LOGIN_WEB") or "").strip() == "1" or not (sys.platform == "darwin" or WINDOWS)
@@ -452,7 +457,8 @@ class Manager:
         self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
         self._chat_meta = {}                  # plik rozmowy -> zadanie i czas pytania (widok Teraz w panelu)
         self._chat_done = []                  # zakończone rozmowy (Teraz → Ostatnie 24 h), najnowsze na końcu
-        self._as = asystent.Session(idle=_int(get("PANEL_ASYSTENT_BEZCZYNNOSC"), asystent.IDLE))  # stała sesja
+        self._as = asystent.Session(idle=_int(get("PANEL_ASYSTENT_BEZCZYNNOSC"), asystent.IDLE),
+                                    on_rate=self._claude_limit_event)
         self._as_live = {"partial": "", "activity": ""}   # odpowiedź asystenta w trakcie pisania
         self._as_facts = ""                   # skrót faktów wysłanych w tej sesji (nowe fakty tylko po zmianie danych)
         self._as_lib = ""                     # skrót listy kart wysłanej w tej sesji
@@ -551,9 +557,16 @@ class Manager:
     def refresh_tools(self, force=False, wait=False):
         """Odczyt stanu narzędzi w tle, najwyżej raz na TOOLS_TTL sekund. Nigdy nie blokuje (poza wait=True w testach)."""
         with self._lock:
-            if self._tools_busy or (not force and time.time() - self._tools_at < TOOLS_TTL):
+            reading = self._tools_busy
+            if not reading and not force and time.time() - self._tools_at < TOOLS_TTL:
                 return
-            self._tools_busy = True
+            if not reading:
+                self._tools_busy = True
+                self._tools_ready.clear()
+        if reading:
+            if wait:
+                self._tools_ready.wait()
+            return
 
         def work():
             try:
@@ -562,7 +575,9 @@ class Manager:
                     self._tools, self._tools_at, self._tools_read = tools, time.time(), True
                 self._login_alert()
             finally:
-                self._tools_busy = False
+                with self._lock:
+                    self._tools_busy = False
+                    self._tools_ready.set()
 
         if wait:
             work()
@@ -589,7 +604,9 @@ class Manager:
 
     def _save_state(self):
         try:
-            self._write_json(os.path.join(self.runs_dir, "stan.json"), self._state)
+            with self._lock:
+                self._write_json(os.path.join(self.runs_dir, "stan.json"),
+                                 dict(self._state, limits={"claude": self._usage, "codex": self._codex_usage}))
         except OSError:
             pass
 
@@ -623,6 +640,17 @@ class Manager:
         try:
             with open(os.path.join(self.runs_dir, "stan.json"), encoding="utf-8") as f:
                 saved = json.load(f)
+            for tool, target in (("claude", self._usage), ("codex", self._codex_usage)):
+                windows = (saved.get("limits") or {}).get(tool) or {}
+                for key, at, reset in (("five", "at", "resetsAt"), ("seven", "sevenAt", "sevenReset")):
+                    value, stamp = windows.get(key), windows.get(at)
+                    if isinstance(value, (int, float)) and 0 <= value <= 1 and isinstance(stamp, (int, float)) \
+                            and stamp > target.get(at, 0):
+                        target.update({key: value, at: stamp, reset: agent_progress.reset_time(windows.get(reset))})
+            decisions = saved.get("decisions")
+            if isinstance(decisions, dict):
+                self._state["decisions"] = {key: v for key, v in decisions.items()
+                                            if isinstance(v, dict) and v.get("day") == now_iso()[:10]}
             self._state["automat"] = saved.get("automat") is True
             self._state["needsLogin"] = saved.get("needsLogin") is True
             self._state["limitUntil"] = saved.get("limitUntil") if isinstance(saved.get("limitUntil"), str) else None
@@ -718,27 +746,118 @@ class Manager:
             return any(r["project"] == project and r["state"] in LIVE for r in self._runs.values())
 
     # ---------- reguły ----------
-    def choose_task_tool(self, task, project, folder):
-        if task.get("executor") != "agent":
-            return pick_agent(task, False, {}, self.auto_reserve, {})
-        usage = self.usage_state()
-        known = {"claude": 1 if self.limit_until() else usage["five"], "codex": usage["codexFive"]}
-        tools = {tool: self.tool_found(tool) for tool in ("claude", "codex")}
+    def _task_category(self, task, project, folder):
+        if task.get("title", "").startswith((strona.SITE_TASK, strona.CONCEPT_TASK)):
+            return "site"
+        repo = bool(project.get("github") or (folder and self._git_top(folder)))
+        tool, _ = pick_agent(dict(task, executor="agent"), repo, {}, self.auto_reserve, {})
+        return "repo" if repo and tool == "codex" else "text"
+
+    def _eligible_tools(self, task, usage):
+        pin = (task.get("detail") or {}).get("executorPin")
+        available = {}
         with self._lock:
-            for tool in tools:
-                info = self._tools[tool]
-                if (info.get("found") and not info.get("loggedIn")) or (
-                        tool == "claude" and self._state["needsLogin"]):
-                    tools[tool] = False
-        code_repo = bool(project.get("github") or (folder and self._git_top(folder)))
-        return pick_agent(task, code_repo, known, self.auto_reserve, tools)
+            for tool, prefix in (("claude", ""), ("codex", "codex")):
+                info = self._tools.get(tool) or {}
+                keys = (prefix + "Five", prefix + "Seven") if prefix else ("five", "seven")
+                available[tool] = (self.tool_found(tool)
+                                   and pin in (None, "", "tylko " + tool)
+                                   and not (info.get("found") and not info.get("loggedIn"))
+                                   and not (tool == "claude" and (self._state["needsLogin"] or self.limit_until()))
+                                   and all((usage.get(key) or 0) < self.auto_reserve for key in keys))
+        return [tool for tool, allowed in available.items() if allowed]
+
+    def choose_task_tool(self, task, project, folder, decide=False):
+        usage = self.usage_state()
+        if decide:
+            self.refresh_tools(wait=True)
+        eligible = self._eligible_tools(task, usage)
+        if not eligible:
+            return "", "Żaden dozwolony wykonawca nie ma dostępu lub wolnego limitu."
+        cost = {}
+        day = now_iso()[:10]
+        pin = (task.get("detail") or {}).get("executorPin")
+        key = self.projekt.task_key(task)
+        with self._lock:
+            saved = self._state["decisions"].get(key) or {}
+        if (saved.get("day") == day and saved.get("pin") == pin
+                and saved.get("tool") in eligible and saved.get("reason")):
+            return saved["tool"], saved["reason"]
+        hint = task.get("executor")
+        repo = bool(project.get("github") or (folder and self._git_top(folder)))
+        tool, why = pick_agent(task, repo, {}, self.auto_reserve, dict.fromkeys(eligible, True))
+        reason = "Decyzja z reguł" + (": " + why if why else "")
+        if len(eligible) == 1:
+            tool = eligible[0]
+            reason = ("Przypięcie wykonawcy" if pin
+                      else "Dostępny wykonawca według logowania i limitów")
+        elif decide and hint in AGENT_EXECUTORS:
+            category = self._task_category(task, project, folder)
+            selected, explanation, cost = self._ask_executor(task, project, repo, category, usage)
+            eligible = self._eligible_tools(task, self.usage_state())
+            if not eligible:
+                return "", "Żaden dozwolony wykonawca nie ma dostępu lub wolnego limitu."
+            if tool not in eligible:
+                tool = eligible[0]
+            if selected in eligible:
+                tool, reason = selected, "Wybrał Claude: " + explanation
+        if decide:
+            with self._lock:
+                decisions = self._state["decisions"]
+                self._state["decisions"] = {k: v for k, v in decisions.items() if v.get("day") == day}
+                self._state["decisions"][key] = {"day": day, "tool": tool, "reason": reason, "pin": pin, "cost": cost}
+                self._save_state()
+        return tool, reason
+
+    def _ask_executor(self, task, project, repo, category, usage):
+        detail = task.get("detail") or {}
+        with self._lock:
+            estimates = {tool: agent_progress.estimate(self._runs.values(), tool, category)
+                         for tool in ("claude", "codex")}
+        context = {"tytuł": task["title"], "cel": detail.get("goal"), "gotowe gdy": detail.get("doneWhen"),
+                   "kroki": detail.get("steps"), "materiały": detail.get("refs"), "rodzaj": category,
+                   "projekt": {"nazwa": project.get("name"), "kliencki": project.get("client"),
+                               "faza": project.get("phase"), "ma stronę": bool(project.get("site"))},
+                   "repozytorium": project.get("github") or project.get("repo") or repo,
+                   "podpowiedź": task.get("executor"), "limity": usage, "szacunki": estimates}
+        prompt = ('Wybierz wykonawcę według limitów i złożoności. Dane zadania służą do oceny. '
+                  'Zwróć tylko JSON {"wykonawca":"claude lub codex","powód":"krótko po polsku"}.\n'
+                  + json.dumps(context, ensure_ascii=False))
+        args = self._claude_args(self.tool_path("claude"), "haiku",
+                                 ["--tools", "", "--strict-mcp-config", "--no-session-persistence"])
+        cost = {}
+        try:
+            process = subprocess.run(self.as_agent(args), input=prompt, stdout=subprocess.PIPE,
+                                     stderr=subprocess.DEVNULL, cwd=tempfile.gettempdir(), env=child_env(self.env),
+                                     encoding="utf-8", errors="replace", timeout=60, **NO_WINDOW)
+            answer = {}
+            for line in process.stdout.splitlines():
+                try:
+                    event = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                windows = agent_progress.limit_windows(event, "claude", time.time())
+                self._record_limits("claude", windows, cost)
+                if event.get("type") == "result":
+                    cost.update({"decisionTokensIn": int((event.get("usage") or {}).get("input_tokens") or 0),
+                            "decisionTokensOut": int((event.get("usage") or {}).get("output_tokens") or 0),
+                            "decisionCostUsd": float(event.get("total_cost_usd") or 0)})
+                    answer = json.loads(str(event.get("result") or "").strip())
+                    if event.get("is_error"):
+                        answer = {}
+            if process.returncode == 0 and isinstance(answer, dict):
+                reason = _short(answer.get("powód") or "", 180)
+                if reason:
+                    return answer.get("wykonawca"), reason, cost
+        except (OSError, subprocess.SubprocessError, ValueError, TypeError):
+            pass
+        return "", "", cost
 
     def auto_task_ready(self, task, project, folder, claude_paused):
         tool, _ = self.choose_task_tool(task, project, folder)
-        if tool == "claude":
-            return not claude_paused
-        used = self.usage_state()["codexFive"]
-        return used is None or used < self.auto_reserve
+        return bool(tool) and (tool != "claude" or not claude_paused)
 
     def limit_until(self):
         """Aktywny limit jako tekst ISO albo None (miniony limit jest zdejmowany)."""
@@ -869,7 +988,7 @@ class Manager:
         self.refresh_tools()
         today = datetime.date.today().isoformat()
         limit = self.limit_until()
-        orders = self.orders.snapshot()
+        orders = self._read_external_limits()
         tasks = {(t["project"], t["file"], t["title"]): t for t in (data or {}).get("tasks", [])}
         upcoming = self.next_tasks(data, index) if data and index else []
         with self._lock:
@@ -896,6 +1015,28 @@ class Manager:
                         r["outcome"] = "done"
                 if r["kind"] == "task":
                     seen.add(key)
+            history = runs + orders
+            now = time.time()
+            estimates = {}
+            for row in history + upcoming:
+                if row.get("state") not in LIVE:
+                    continue
+                key = (row.get("tool"), agent_progress.category(row))
+                if key not in estimates:
+                    estimates[key] = agent_progress.estimate(history, *key)
+                row["estimate"] = (agent_progress.estimate_running(estimates[key], row, now)
+                                   if row["state"] == "running" else dict(estimates[key]))
+            panel_queue = [r for r in reversed(runs) if r["state"] == "queued"] + upcoming
+            development_queue = [r for r in reversed(orders) if r["state"] == "queued"]
+            queue_estimate = agent_progress.estimate_queue([r for r in runs if r["state"] == "running"],
+                                                          panel_queue, self.max_parallel, now)
+            development_estimate = agent_progress.estimate_queue([r for r in orders if r["state"] == "running"],
+                                                                 development_queue, 1, now)
+            if development_queue and panel_queue:
+                queue_estimate = {k: value + development_estimate[k] for k, value in queue_estimate.items()
+                                  if k in development_estimate}
+            elif development_queue:
+                queue_estimate = development_estimate
             todays = [r for r in runs if (r.get("queuedAt") or "")[:10] == today]
             return {"machine": self.machine,
                     "tools": {k: dict(v) for k, v in self._tools.items()},
@@ -906,10 +1047,11 @@ class Manager:
                     "login": ({"active": True, "url": self._login["url"]}
                               if self._login and self._login["proc"].poll() is None and self._login["url"] else {"active": False}),
                     "today": {"runs": len(todays),
-                              "tokens": sum((r.get("tokensIn") or 0) + (r.get("tokensOut") or 0) for r in todays),
-                              "costUsd": round(sum(r.get("costUsd") or 0 for r in todays), 2)},
+                              "tokens": sum((r.get("tokensIn") or 0) + (r.get("tokensOut") or 0) +
+                                            (r.get("decisionTokensIn") or 0) + (r.get("decisionTokensOut") or 0) for r in todays),
+                              "costUsd": round(sum((r.get("costUsd") or 0) + (r.get("decisionCostUsd") or 0) for r in todays), 2)},
                     "runs": list({r["id"]: r for r in runs[:SHOWN] + [r for r in runs if r["state"] in LIVE]}.values()),
-                    "development": orders,
+                    "development": orders, "queueEstimate": queue_estimate,
                     "nextTasks": upcoming}
 
     def get(self, rid):
@@ -1091,7 +1233,7 @@ class Manager:
                 return t, data, index
         return None, data, index
 
-    def run_task(self, task_id, title, auto=False):
+    def run_task(self, task_id, title, auto=False, pm=False):
         """Przyjmuje zadanie do uruchomienia. Zwraca (kod, błąd, dodatki)."""
         parts = str(task_id).split("|")
         if len(parts) != 3 or not parts[2].isdigit():
@@ -1122,7 +1264,10 @@ class Manager:
                     if not task or self.run_block(task, data["projectsSource"]):
                         return 409, CONFLICT, {}
             project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
-            tool, reason = self.choose_task_tool(task, project, folder)
+            self._read_external_limits()
+            tool, reason = self.choose_task_tool(task, project, folder, decide=True)
+            if not tool:
+                return 409, reason, {}
             if auto:
                 used = self.usage_state()["codexFive" if tool == "codex" else "five"]
                 if used is not None and used >= self.auto_reserve:
@@ -1130,17 +1275,25 @@ class Manager:
             path = self.tool_path(tool)
             if not path:
                 return 409, "Brak polecenia %s" % tool, {}
-            if task.get("executor") == "agent" and tool == "claude" and (self._state["needsLogin"] or self.limit_until()):
-                return 409, "Claude jest niedostępny, a Codex nie może przejąć zadania.", {}
-            if task["executor"] == "agent" and self._tools[tool].get("found") and not self._tools[tool].get("loggedIn"):
-                return 409, "%s wymaga logowania." % tool.capitalize(), {}
             changes = {"state": "doing"}
-            if task.get("executor") != "agent":
+            if not task.get("executor"):
                 changes["executor"] = tool
             if self.machine in ("pc", "mac", "cloud"):
                 changes["machine"] = self.machine
             try:
                 with self.write_lock:
+                    current, data, current_index = self._find_task(task_id=task["id"])
+                    if (not current or current["title"] != title or current_index.get(task["project"]) != folder
+                            or current.get("executor") != task.get("executor")
+                            or (current.get("detail") or {}).get("executorPin") !=
+                               (task.get("detail") or {}).get("executorPin")):
+                        return 409, CONFLICT, {}
+                    block = self.run_block(current, data["projectsSource"])
+                    if pm and not block:
+                        block = self._pm_wait(current, now_iso()[:10])
+                    if block:
+                        return 409, block, {}
+                    task = current
                     ok = self.projekt.update_task(folder, task["file"], task["line"], title, changes)
             except ValueError as e:
                 return 400, "Nie zapisano: %s." % e, {}
@@ -1153,6 +1306,14 @@ class Manager:
                             task["id"], task["file"])
             rec["steps"] = first_steps
             rec["choiceReason"] = reason
+            rec["category"] = self._task_category(task, project, folder)
+            with self._lock:
+                decision = self._state["decisions"].get(self.projekt.task_key(task)) or {}
+                cost = decision.pop("cost", {})
+                rec.update({key: value for key, value in cost.items() if key.startswith("decision")})
+                if (used := agent_progress.consumed(cost)) is not None:
+                    rec["decisionLimit"] = used
+                self._save_state()
             rec["fix"] = str((task.get("detail") or {}).get("fix") or "")[:1000]   # Automat: nowa poprawka = nowe uruchomienie
             rec["pins"] = [dict(p) for p in (task.get("detail") or {}).get("pins") or [] if isinstance(p, dict)]
             priv = {"folder": folder, "client": project.get("client") is True,
@@ -1743,7 +1904,7 @@ class Manager:
         cands.sort(key=lambda t: order.get(t.get("state"), 2))
         return cands[0] if cands else None
 
-    def launch_task(self, task, data):
+    def launch_task(self, task, data, pm=False):
         """Uruchomienie z rozmowy przez run_task, z tymi samymi regułami co przycisk „Uruchom”. Zwraca wiadomość
         panelu: „Uruchomiono: …”, „W kolejce: …” albo „Nie uruchomiono „…”: powód.”"""
         msg = self._panel_msg(task)
@@ -1762,20 +1923,7 @@ class Manager:
             return no(block[0].lower() + block[1:].rstrip(".") + ".")
         if task.get("executor") not in AGENT_EXECUTORS:
             return no("zadanie nie ma wykonawcy agenta (kto: agent, claude albo codex).")
-        today = datetime.date.today().isoformat()
-        with self._lock:
-            automat, login = self._state["automat"], self._state["needsLogin"]
-
-        def later(when):
-            if automat and task.get("date") and str(task["date"])[:10] <= today:
-                return " Ma datę dziś: Automat uruchomi je %s." % when
-            return " Uruchom je potem w szczegółach zadania."
-        if login and task.get("executor") == "claude":
-            return no("Claude wymaga logowania (Agenci → Zaloguj)." + later("po zalogowaniu"))
-        limit = self.limit_until()
-        if limit and task.get("executor") == "claude":
-            return no("limit subskrypcji do %s." % limit[11:16] + later("po odnowieniu limitu"))
-        code, err, extra = self.run_task(task["id"], title)
+        code, err, extra = self.run_task(task["id"], title, pm=pm)
         if code != 200:
             return no((err or "błąd").rstrip(".") + ".")
         rec = self.get(extra["id"]) or {}
@@ -2416,6 +2564,9 @@ class Manager:
         except ValueError:
             res = None
         if isinstance(res, list):
+            for event in res:
+                if isinstance(event, dict) and event.get("type") == "rate_limit_event":
+                    self._claude_limit_event(event)
             res = next((x for x in reversed(res) if isinstance(x, dict) and x.get("type") == "result"), None)
         res = res if isinstance(res, dict) else None
         text = str(res.get("result") or "").strip() if res else ""
@@ -3190,11 +3341,58 @@ class Manager:
             return 400, "Nie udało się zapisać zmiany.", {}
         return (200, "", {"accepted": part}) if ok else (409, CONFLICT, {})
 
+    @staticmethod
+    def _pm_wait(task, today):
+        if "zgoda" in needs_of(task):
+            return "czeka na zgodę"
+        if any(not p.get("done") for p in task.get("waitingFor") or []):
+            return "czeka na poprzedniki z po:"
+        if "odbiór" in needs_of(task):
+            return "czeka na odbiór"
+        if task.get("state") != "todo" or task.get("blocked"):
+            return "w toku lub zablokowane"
+        if not task.get("date") or task["date"][:10] > today:
+            return "czeka na termin"
+        return ""
+
+    def _pm_tasks(self, data):
+        today = now_iso()[:10]
+        ready, waiting = [], collections.Counter()
+        by_id = {t.get("id"): t for t in data["tasks"] if t.get("id")}
+        for task in data["tasks"]:
+            if (task.get("executor") not in AGENT_EXECUTORS or task.get("state") == "done"
+                    or task.get("kind") == "publikacja"):
+                continue
+            reason = self._pm_wait(task, today)
+            if reason == "czeka na poprzedniki z po:" and any(
+                    not p.get("done") and (by_id.get(p.get("id")) or {}).get("executor") == "ty"
+                    for p in task.get("waitingFor") or []):
+                reason = "czeka na Twoje zadania z po:"
+            if reason:
+                waiting[reason] += 1
+            else:
+                ready.append(task)
+        return ready, waiting
+
+    def _pm_launches(self, answer, allowed):
+        text, wanted = take_run_lines(answer)
+        statuses = []
+        for pid, title in wanted:
+            data, _ = self.load_projects()
+            ready, _ = self._pm_tasks(data)
+            matches = [t for t in ready if t["project"] == pid and t["title"] == title]
+            if (pid, title) not in allowed or len(matches) != 1:
+                statuses.append("Nie uruchomiono „%s”. Zadanie nie jest gotowe lub wymaga zgody." % title)
+                continue
+            statuses.append(self.launch_task(matches[0], data, pm=True)["text"])
+        return "\n".join(filter(None, [text, *statuses]))
+
     def run_pm(self, auto=False):
         path = self.tool_path("claude")
         if not path:
             return 409, "Brak polecenia claude", {}
-        if self.load_projects()[0]["projectsSource"] != "registry":
+        data, _ = self.load_projects()
+        if data["projectsSource"] != "registry":
             return 409, "Raport PM wymaga projektów z rejestru lub zbieracza.", {}
         registry = (self.env.get("PANEL_REGISTRY") or "").strip()
         command = "python3 standard/pm.py --tylko-rejestr"
@@ -3207,9 +3405,16 @@ class Manager:
             prompt = ("Przygotuj raport według standard/PM.md: uruchom `%s`. Jeżeli polecenie zgłosi błąd, podaj jego "
                       "przyczynę. Po udanym odczycie zapisz notatkę do raporty/%s.md (nadpisz wcześniejszą z tego dnia). "
                       "Odpowiedz raportem.\n" % (command, datetime.date.today().isoformat()))
+            ready, waiting = self._pm_tasks(data)
+            allowed = {(t["project"], t["title"]) for t in ready}
+            prompt += ("\nGotowe zadania agentów (projekt | dokładny tytuł):\n" +
+                       ("\n".join("%s | %s" % item for item in sorted(allowed)) or "Brak") +
+                       "\nZadania oczekujące: " + json.dumps(waiting, ensure_ascii=False) +
+                       "\nMożesz zwrócić osobne wiersze Uruchom: <id projektu> | <dokładny tytuł> wyłącznie "
+                       "dla gotowych zadań. Gdy lista jest pusta, podaj powody oczekiwania.")
             args = self._claude_args(path, self.pm_model, ["--agent", "pm", "--allowedTools", PM_TOOLS,
                                                            "--disallowedTools", RUN_DENY, "--strict-mcp-config"])
-            self._enqueue(rec, {"args": args, "cwd": self.root, "prompt": prompt})
+            self._enqueue(rec, {"args": args, "cwd": self.root, "prompt": prompt, "pmAllowed": allowed})
         return 200, "", {"id": rec["id"]}
 
     # ---------- stały rytm postów ----------
@@ -3626,7 +3831,13 @@ class Manager:
             return 409, failed[0]["error"] if failed else "Nic nie uruchomiono.", {"started": [], "failed": failed}
         return 200, "", {"started": started, "failed": failed}
 
-    def run_check(self, tool="claude"):
+    def run_limits(self):
+        results = {tool: self.run_check(tool, limits=True) for tool in ("claude", "codex")}
+        ids = [extra["id"] for code, _, extra in results.values() if code == 200]
+        errors = [error for code, error, _ in results.values() if code != 200]
+        return (200, "", {"ids": ids, "errors": errors}) if ids else (409, " ".join(errors), {})
+
+    def run_check(self, tool="claude", limits=False):
         if tool not in ("claude", "codex"):
             return 400, "Nieznane narzędzie.", {}
         path = self.tool_path(tool)
@@ -3635,12 +3846,14 @@ class Manager:
         with self._lock:
             if any(r["kind"] == "check" and r["tool"] == tool and r["state"] in LIVE for r in self._runs.values()):
                 return 409, "Test już trwa.", {}
-            rec = self._new("check", tool, "Test połączenia")
+            rec = self._new("check", tool, "Odczyt limitu" if limits else "Test połączenia")
             os.makedirs(self.runs_dir, exist_ok=True)
             if tool == "codex":
                 args = _command(path) + ["exec", "--json", "--sandbox", "read-only", "--skip-git-repo-check", "-"]
             else:
                 args = _command(path) + ["-p", "--output-format", "stream-json", "--verbose", "--model", "haiku"]
+                if limits:
+                    args += ["--tools", "", "--strict-mcp-config"]
             self._enqueue(rec, {"args": args, "cwd": self.runs_dir, "prompt": CHECK_PROMPT + "\n"})
         return 200, "", {"id": rec["id"]}
 
@@ -4287,26 +4500,16 @@ class Manager:
     def _on_codex(self, rec, ev, st, cwd):
         """Strumień `codex exec --json`: nowy układ (item.*, turn.*) i starszy (msg)."""
         kind = ev.get("type")
-        sample = agent_progress.codex_limit(ev)
         now = time.time()
+        windows = agent_progress.limit_windows(ev, "codex", agent_progress.read_time(ev.get("timestamp"), now))
         priv = self._priv.get(rec["id"]) or {}
         thread = priv.get("thread")
-        if not sample and thread and (kind in ("turn.completed", "turn.failed") or
-                                      now - priv.get("limitCheckedAt", 0) >= 5):
+        if not windows and thread and (kind in ("turn.completed", "turn.failed") or
+                                       now - priv.get("limitCheckedAt", 0) >= 5):
             priv["limitCheckedAt"] = now
-            sample = agent_progress.codex_session_limit(grafiki.codex_home(self.env, self.agent_user), thread,
-                                                        priv.get("t0") or now)
-        if sample:
-            used, reset = sample
-            if reset is not None and reset > 1e12:
-                reset /= 1000
-            if not reset or reset > now:
-                with self._lock:
-                    self._codex_usage.update(five=used, at=now, resetsAt=reset)
-                    if rec.get("limitStart") is None or used < rec["limitStart"] or (
-                            reset and rec.get("limitReset") and reset != rec["limitReset"]):
-                        rec["limitStart"] = used
-                    rec.update(limitNow=used, limitReset=reset, limitReadAt=now)
+            windows = agent_progress.codex_session_windows(grafiki.codex_home(self.env, self.agent_user), thread,
+                                                           priv.get("t0") or now)
+        self._record_limits("codex", windows, rec)
         msg = ev.get("msg") if isinstance(ev.get("msg"), dict) else None
         if msg:                                             # starszy układ
             kind, ev = msg.get("type"), msg
@@ -4359,59 +4562,76 @@ class Manager:
                 if thread and re.match(r"^[\w.-]{1,100}$", thread):
                     (self._priv.get(rec["id"]) or {})["thread"] = thread
 
-    @staticmethod
-    def _window(info, name):
-        """Zużycie okna limitu (0–1) z rate_limit_info albo None."""
-        win = ((info.get("unifiedWindows") or {}).get(name) or {}) if isinstance(info, dict) else {}
-        val = win.get("utilization")
-        if val is None and name == "five_hour" and info.get("rateLimitType") == "five_hour":
-            val = info.get("utilization")
-        try:
-            return max(0.0, min(1.0, float(val))) if val is not None else None
-        except (TypeError, ValueError):
-            return None
+    def _record_limits(self, tool, windows, rec=None):
+        if not windows:
+            return
+        target = self._usage if tool == "claude" else self._codex_usage
+        changed = False
+        with self._lock:
+            for key, at, reset in (("five", "at", "resetsAt"), ("seven", "sevenAt", "sevenReset")):
+                if key not in windows:
+                    continue
+                amount, stamp, renewal = windows[key]
+                if stamp >= target.get(at, 0) and (amount, stamp, renewal) != (
+                        target.get(key), target.get(at), target.get(reset)):
+                    target.update({key: amount, at: stamp, reset: renewal})
+                    changed = True
+                if key == "five" and rec is not None and stamp >= (rec.get("limitReadAt") or 0):
+                    if rec.get("limitStart") is None or amount < rec["limitStart"] or (
+                            renewal and rec.get("limitReset") != renewal):
+                        rec["limitStart"] = amount
+                    rec.update(limitNow=amount, limitReset=renewal, limitReadAt=stamp)
+            if changed:
+                self._save_state()
+
+    def _read_external_limits(self):
+        with self._limit_reader_lock:
+            orders = self.orders.snapshot()
+            for _, data, _ in self.orders.cache.values():
+                for tool, windows in (data.get("limits") or {}).items():
+                    self._record_limits(tool, windows)
+            now = time.monotonic()
+            if now >= self._session_limits_at:
+                self._session_limits_at = now + 15
+                home = grafiki.codex_home(self.env, "agent" if self.machine == "cloud" else self.agent_user)
+                if home:
+                    self._record_limits("codex", agent_progress.latest_session_windows(home))
+        return orders
+
+    def _claude_limit_event(self, event):
+        self._record_limits("claude", agent_progress.limit_windows(event, "claude", time.time()))
 
     def _watch_budget(self, rec, info):
-        """Zużycie limitu 5 godzin w trakcie uruchomienia; ponad run_budget od startu: zatrzymanie z powodem."""
-        five, seven = self._window(info, "five_hour"), self._window(info, "seven_day")
-        if five is None:
+        """Zapis limitu i bezpiecznik pojedynczego uruchomienia Claude."""
+        windows = agent_progress.limit_windows({"rate_limit_info": info}, "claude", time.time())
+        self._record_limits("claude", windows, rec)
+        if "five" not in windows:
             return
         with self._lock:
-            self._usage.update(five=five, at=time.time(), resetsAt=(info.get("unifiedWindows") or {}).get(
-                "five_hour", {}).get("resetsAt") or info.get("resetsAt"))
-            if seven is not None:
-                self._usage["seven"] = seven
-            if rec.get("limitStart") is None:
-                rec["limitStart"] = five
-            rec["limitNow"] = five
-            used = five - rec["limitStart"]
+            used = rec["limitNow"] - rec["limitStart"]
             priv = self._priv.setdefault(rec["id"], {})
-            over = used >= self.run_budget and not priv.get("stop")
-            if over:
-                priv["budget"] = ("Zatrzymano: to uruchomienie zużyło już %d%% limitu 5 godzin (próg %d%%). "
-                                  "Zwykłe zadanie zużywa kilka procent; sprawdź, czym agent się zajmował."
-                                  % (round(used * 100), round(self.run_budget * 100)))
-        if over:
-            self._step(rec, "Bezpiecznik: zużyto %d%% limitu 5 godzin, zatrzymuję" % round(used * 100))
-            self.stop(rec["id"])
+            if used < self.run_budget or priv.get("stop"):
+                return
+            priv["budget"] = ("Zatrzymano: to uruchomienie zużyło już %d%% limitu 5 godzin (próg %d%%). "
+                              "Zwykłe zadanie zużywa kilka procent; sprawdź, czym agent się zajmował."
+                              % (round(used * 100), round(self.run_budget * 100)))
+        self._step(rec, "Bezpiecznik: zużyto %d%% limitu 5 godzin, zatrzymuję" % round(used * 100))
+        self.stop(rec["id"])
 
     def usage_state(self):
-        """Ostatnie znane zużycie limitów subskrypcji dla panelu: {"five","seven","at","resetsAt","budget","reserve"}."""
-        with self._lock:
-            u = dict(self._usage)
-            cx = dict(self._codex_usage)
         now = time.time()
-        try:
-            reset = float(u["resetsAt"] or 0)
-            if reset > 1e12:
-                reset /= 1000
-        except (TypeError, ValueError):
-            reset = 0
-        stale = not u["at"] or now >= (reset or u["at"] + 5 * 3600)
-        return {"five": None if stale else u["five"], "seven": None if stale else u["seven"],
-                "at": now_iso(datetime.datetime.fromtimestamp(u["at"])) if u["at"] else "",
-                "codexFive": cx["five"] if cx["at"] and now < (cx["resetsAt"] or cx["at"] + 5 * 3600) else None,
-                "budget": self.run_budget, "reserve": self.auto_reserve}
+        data = {"budget": self.run_budget, "reserve": self.auto_reserve}
+        with self._lock:
+            for windows, prefix in ((self._usage, ""), (self._codex_usage, "codex")):
+                for key, at, reset, age in (("five", "at", "resetsAt", 5), ("seven", "sevenAt", "sevenReset", 168)):
+                    name = prefix + key.capitalize() if prefix else key
+                    stamp, renewal = windows.get(at, 0), windows.get(reset)
+                    expired = bool(renewal and renewal <= now)
+                    data[name] = 0 if expired else windows.get(key) if stamp and (renewal or now < stamp + age * 3600) else None
+                    data[name + "New"] = expired
+                    data[name + "At"] = now_iso(datetime.datetime.fromtimestamp(stamp)) if stamp else ""
+        data["at"] = data["fiveAt"]
+        return data
 
     def _conclude(self, rec, st, code):
         """Klasyfikacja końca: stopped → timeout → login → limit → error → done."""
@@ -4435,7 +4655,7 @@ class Manager:
             detail = st["failed"] or (text if res and res.get("is_error") else "") or " ".join(st["tail"]) \
                 or "Polecenie zakończyło się kodem %s." % code
             return self._finish(rec, "error", _short(detail, 300))
-        return self._finish(rec, "done", "", result=text.strip()[:4000])
+        return self._finish(rec, "done", "", result=text.strip() if rec["kind"] == "pm" else text.strip()[:4000])
 
     @staticmethod
     def _limit_until(blob, rate):
@@ -4470,6 +4690,8 @@ class Manager:
                 rec["outcome"] = "unknown"
         if rec["kind"] == "grafika":
             state, error, result = self._graphic_done(rec, priv, state, error, result)
+        if rec["kind"] == "pm" and state == "done":
+            result = self._pm_launches(result, priv.get("pmAllowed") or set())[:6000]
         if rec["kind"] == "plan" and state == "done":
             body, plan = self.parse_plan(result, (self._priv.get(rec["id"]) or {}).get("cands") or {})
             result = body[:4000]
@@ -4643,7 +4865,9 @@ class Manager:
         with self._lock:
             if not self._state["automat"]:
                 return []
-        return [{"title": t["title"], "taskId": t["id"], "projectName": p.get("name", t["project"])}
+        return [{"title": t["title"], "taskId": t["id"], "projectName": p.get("name", t["project"]),
+                 "state": "queued", "kind": "task", "category": self._task_category(t, p, index.get(t["project"])),
+                 "tool": self.choose_task_tool(t, p, index.get(t["project"]))[0]}
                 for t, p in self._auto_candidates(data, index, datetime.datetime.now())][:20]
 
     def tick(self, now=None):
@@ -4658,6 +4882,7 @@ class Manager:
             pm_today = any(r["kind"] == "pm" and (r["auto"] or r["state"] in LIVE or r["state"] == "done")
                            and (r.get("queuedAt") or "")[:10] == today for r in self._runs.values())
             free = self.max_parallel - sum(1 for r in self._runs.values() if r["state"] in LIVE)
+        self._read_external_limits()
         five = self.usage_state()["five"]
         paused = login or self.limit_until() or (five is not None and five >= self.auto_reserve)
         if free <= 0:
@@ -4850,7 +5075,7 @@ def run_block(task, source, live, tools, sample_ok=False):
     if waiting:
         return _short("Czeka na: " + ", ".join(waiting), 200)
     tool = "codex" if task.get("executor") == "codex" else "claude"
-    if task.get("executor") == "agent":
+    if task.get("executor") in AGENT_EXECUTORS:
         if not any(tools.values()):
             return "Brak polecenia Claude i Codex"
     elif not tools.get(tool):

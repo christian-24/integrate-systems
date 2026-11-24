@@ -149,6 +149,7 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 
 | Klucz | Znaczenie | Kto pisze |
 |---|---|---|
+| `wykonawca: tylko claude` albo `wykonawca: tylko codex` | przypięcie narzędzia przed startem zadania agenta | właściciel |
 | `cel:` | co ma powstać lub się zmienić, jedno zdanie | właściciel, PM |
 | `gotowe gdy:` | sprawdzalny warunek ukończenia | właściciel, PM |
 | `materiał:` | ścieżka względem folderu projektu, opcjonalnie `#5` (sekcja `## 5.`) albo `#Nagłówek`; może wystąpić kilka razy | właściciel, PM |
@@ -310,7 +311,7 @@ Panel uruchamia agenta dla jednego zadania; pełny opis w `dashboard/AGENCI.md`.
 
 | Chwila | Wiersz zadania |
 |---|---|
-| start | stan `[~]`, `kto:` narzędzie, `gdzie:` komputer, na którym działa panel |
+| start | stan `[~]`, `gdzie:` komputer panelu, wybrane narzędzie w widoku uruchomienia |
 | koniec, agent skończył | `[x]` |
 | koniec, praca do przeglądu | `[~]` i `wymaga: odbiór` (panel dopisuje pole, gdy agent zostawił samo `[~]`) |
 | koniec, agent nie może iść dalej albo „gotowe gdy” nie jest spełnione | `[!]` i `blokada: powód` (bez `wymaga: odbiór`) |
@@ -336,7 +337,9 @@ które mają `po:` na tym zadaniu.
 
 Zadanie nie startuje, gdy jest zrobione, ma `kto: ty` albo `zgoda` w polu `wymaga`, jest publikacją w kampanii,
 ma niezrobionego poprzednika z `po:`, już pracuje albo należy do projektów przykładowych.
-Zadanie bez pola `kto` uruchamia Claude. Automat bierze zadanie bez `gdzie:` na serwerze (węzeł domyślny).
+Przy `kto: agent`, `kto: claude` i `kto: codex` panel wybiera dostępne narzędzie. Nazwy w polu `kto:` są
+podpowiedzią dla Claude, który podejmuje decyzję. Przypięcie w szczegółach obowiązuje również przy braku logowania
+lub wyczerpaniu limitu przypiętego narzędzia. Wówczas zadanie czeka. Automat bierze zadanie bez `gdzie:` na serwerze (węzeł domyślny).
 
 ## Polecenia
 

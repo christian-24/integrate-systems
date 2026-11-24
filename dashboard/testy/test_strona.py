@@ -213,7 +213,7 @@ class Uwagi(Strona):
         self.assertEqual(note["state"], "zrobione", note)
         with open(os.path.join(self.folder, "ZADANIA.md"), encoding="utf-8") as f:
             text = f.read()
-        self.assertIn("- [x] %s | kto: claude | gdzie: mac | kiedy: %s" % (title, TODAY), text)
+        self.assertIn("- [x] %s | kto: agent | gdzie: mac | kiedy: %s" % (title, TODAY), text)
         self.assertIn("Element: #tytul, tekst „Witaj”", text)
         self.assertIn("widok telefon (390 px)", text)
         call = self.calls()[-1]

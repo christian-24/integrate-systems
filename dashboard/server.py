@@ -368,7 +368,7 @@ def update_task(body):
     return (200, "") if ok else CONFLICT
 
 
-DETAIL_KEYS = ("cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
+DETAIL_KEYS = ("wykonawca", "cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
                "wyświetlenia", "kliknięcia", "konta", "link", "gałąź", "pyta", "odpowiedź", "zmiany")
 DETAIL_ALIASES = {"nastepne": "następne", "wyswietlenia": "wyświetlenia", "klikniecia": "kliknięcia",
                   "material": "materiał", "zostalo": "zostało", "galaz": "gałąź", "odpowiedz": "odpowiedź"}
@@ -1930,6 +1930,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/asystent/glos/start": lambda b: get_agents().voice_warm(),
           "/api/agent/pm": lambda b: get_agents().run_pm(),
           "/api/wdroz": lambda b: start_deploy(b),
+          "/api/agent/limity": lambda b: get_agents().run_limits(),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
           "/api/agent/restart": lambda b: get_agents().restart_run(b.get("id", "")),

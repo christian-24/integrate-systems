@@ -23,8 +23,9 @@ TOOL_LABEL = {"Read": "Czytam pliki projektu", "Grep": "Szukam w plikach", "Glob
 
 
 class Session:
-    def __init__(self, idle=IDLE):
+    def __init__(self, idle=IDLE, on_rate=None):
         self.idle = idle
+        self.on_rate = on_rate
         self.key = ""
         self.resumed = False          # proces wystartował z --resume (wygasła sesja: błąd przy pierwszej wiadomości)
         self._proc = None
@@ -51,6 +52,13 @@ class Session:
         def out_reader():
             try:
                 for line in proc.stdout:
+                    if self.on_rate and '"rate_limit_event"' in line:
+                        try:
+                            event = json.loads(line)
+                            if isinstance(event, dict) and event.get("type") == "rate_limit_event":
+                                self.on_rate(event)
+                        except (TypeError, ValueError, AttributeError):
+                            pass
                     events.put(line)
             except (OSError, ValueError):
                 pass

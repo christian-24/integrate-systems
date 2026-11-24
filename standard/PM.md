@@ -51,3 +51,11 @@ zadanie właściciela, nie decyzja.
 - Zgody nie udzielasz w imieniu właściciela.
 - Proponujesz zmianę zadań przez pytanie w karcie tylko na polecenie właściciela; wtedy pod `propozycja:` dopisujesz
   wiersze `skutek:` w formacie ze `standard/STANDARD.md` (sekcja o pytaniach).
+
+## Uruchamianie zadań z raportu w panelu
+
+Panel przekazuje gotowe zadania agentów z datą najpóźniej dziś i z wykonanymi poprzednikami z `po:`.
+Dla wybranych pozycji dopisz po raporcie osobne wiersze `Uruchom: <id projektu> | <dokładny tytuł>`.
+Panel sprawdza gotowość ponownie, wybiera wykonawcę i pokazuje stan uruchomienia. Zadania `kto: ty` oraz zadania
+z `wymaga: zgoda` pozostają po stronie właściciela. Gdy lista gotowych zadań jest pusta, podaj liczby oraz przyczyny
+oczekiwania, korzystając z danych przekazanych przez panel.

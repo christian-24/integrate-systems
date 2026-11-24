@@ -304,7 +304,17 @@ def main(argv):
         if "acceptEdits" in argv:
             return task_stream(argv)
         return stream(argv)
-    return task(argv, sys.stdin.read())
+    prompt = sys.stdin.read()
+    if "--no-session-persistence" in argv and prompt.startswith("Wybierz wykonawcę"):
+        if mode() == "decyzja-codex":
+            result = {"wykonawca": "codex", "powód": "Zmiana kodu i wolny limit"}
+            out({"type": "result", "result": json.dumps(result), "usage": {"input_tokens": 42, "output_tokens": 9}})
+            return 0
+        if mode() in ("strona", "zrzuty"):
+            out({"type": "result", "result": json.dumps({"wykonawca": "claude", "powód": "Praca nad stroną"})})
+            return 0
+        return 1
+    return task(argv, prompt)
 
 
 def task_stream(argv):
