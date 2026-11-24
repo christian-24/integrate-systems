@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-25: Film „Auto klienta (archiwum 2)” z drugiej realizacji
+- Kontekst: środowy film ma pokazać efekt z archiwum, a właściciel przygotowuje materiał sam telefonem 1 grudnia.
+- Decyzja: wybrać drugie auto z wiarygodną parą przed i po. Same zdjęcia wystarczą do pionowego filmu. Gdy brakuje pary, użyć zapasu Z1 z Cuprą studia, jeśli jest dostępny.
+- Skutki: montaż da się oprzeć na archiwum, a ewentualna dogrywka w studiu jest oznaczona na ekranie.
+- Kto: agent
+
 ## 2026-11-23: Film „Zdjąłem boczek z drzwi Cupry” – lektor, plansza końcowa i uczciwość porównania
 - Kontekst: plan filmów (pkt 6, Pn 30) podaje cztery kroki na 10 s, bez planszy końcowej. Haczyk ma 9 słów (zasada: max 7 na raz). Puk po lewej jest w gołą blachę, a po prawej w założony boczek, więc to nie jest równe porównanie. Nie wiadomo, co fabryka dała pod boczkiem tej Cupry.
 - Decyzja: haczyk podzielony na dwa napisy i dwa zdania lektora (przed zdjęciem boczka i na odsłoniętych drzwiach). Dodana plansza „Napisz model auta” (11–13 s), jak w PUK #1 i #2. Boczek jest przygotowany przed nagraniem (śruby, większość klipsów, wtyczki), żeby przed kamerą odszedł jednym ruchem. Scenariusz każe pokazać to, co naprawdę jest w drzwiach, i zakazuje zdań „fabryka nie dała nic”; na zarzut o nierównym puku jest gotowa odpowiedź z odesłaniem do przypiętego puk-puk. Dodane zapasowe ujęcia gołych drzwi na 14 gru.
