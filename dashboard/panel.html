@@ -9355,7 +9355,7 @@ function riskCard(p,i){
   else if(p.pst==='risk'&&p.cur)h+='<p>Etap „'+esc(p.cur.title)+'” ('+ddl(p.cur.date)+') ma więcej otwartych zadań niż dni do terminu.</p>';
   bl.forEach(t=>{const n=t.blockedSince?diff(T(),t.blockedSince):null,w=F.waitsOf(t);
     h+='<div class="as-blk"><div class="as-lock" aria-hidden="true">'+I.lock+'</div><div>'+(n!=null?'<b>'+n+' '+pl(n,'dzień','dni','dni')+'</b>':'<b>blokada</b>')+'<span>'+esc(t.title)+(w.length?' · czeka na: '+esc(w.join(', ')):'')+'</span></div></div>'});
-  if(mine.length)h+='<p>Twoja część: '+mine.map(t=>esc(t.title)+(t.date?' ('+dueTxt(t.date)+')':'')).join(', ')+'.</p>'+
+  if(mine.length)h+='<p>Twoja część: '+mine.slice(0,3).map(t=>esc(t.title)+(t.date?' ('+dueTxt(t.date)+')':'')).join(', ')+(mine.length>3?' i '+(mine.length-3)+' '+pl(mine.length-3,'inne','inne','innych'):'')+'.</p>'+
     '<button type="button" class="as-act" data-asact="task" data-id="'+esc(mine[0].id)+'">'+I.open+'Otwórz zadanie</button>';
   return h+'</div>'}
 function scRisks(){
