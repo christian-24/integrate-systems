@@ -60,3 +60,23 @@ katalog. Pusta wartość wyłącza odczyt. Na Macu i PC katalog trzeba wskazać 
   jako tekst. Po 15 minutach bez zapisu i bez zdarzenia końca stan jest nieznany.
 - Panel musi mieć prawo odczytu tych plików i dostępu do katalogu. Odczytuje ostatnie 2 MiB logu.
   Jeśli w logu brakuje daty startu, karta podaje czas od pierwszej obserwacji logu.
+
+## Zmiany wyglądu: obowiązkowo na dużym zestawie
+
+Dane przykładowe (`dashboard/przyklad`, 3 projekty) są za małe, żeby ocenić wygląd. Każdą zmianę wyglądu sprawdzasz
+też na zestawie w skali produkcji (`dashboard/przyklad-duzy/zbuduj.py`: 10 projektów, 44 sprawy dla Ciebie, w tym
+30 po terminie, tytuły ponad 100 znaków, nazwy z nawiasami, 12 publikacji w tygodniu, pytania z opcjami, zgody,
+odbiory). Dane są syntetyczne, daty liczone od dziś.
+
+```
+python3 dashboard/przyklad-duzy/zbuduj.py /tmp/duzy
+PANEL_REGISTRY=/tmp/duzy/projekty.json PANEL_HOST=127.0.0.1 PANEL_PORT=4803 PANEL_TOKEN= python3 dashboard/server.py
+```
+
+- Zrzuty Playwright (`/home/agent/narzedzia/pw/bin/python`) zmienionych widoków w 390 i 1440 px, w obu motywach;
+  porównaj z poprzednimi (ta sama nazwa z `-przed` / `-po`). Panel zatrzymaj po sprawdzeniu.
+- `dashboard/testy/test_asystent_duzy.py` (z renderem, bez `PANEL_TESTY_BEZ_RENDERU`) pilnuje na tym zestawie: liczb
+  spraw z jednego źródła (`projekt.owner_counts` = `pm.py` = `/api/data` = menu = karta = listy panelu), kart domyślnych
+  bez duplikatów, startu scen bez listy, braku poziomego przewijania 390–1920 px i błędów JS.
+- Odpowiedź modelu z długim akapitem pokazuje atrapa Claude (`dashboard/testy/atrapa_claude.py`, wiadomość
+  z „długa odpowiedź”), np. `PANEL_CLAUDE=dashboard/testy/atrapa_claude.py`.

@@ -137,7 +137,7 @@ RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
 # „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
 EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
 # wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
-CHAT_RULES_V = "3"
+CHAT_RULES_V = "4"
 PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
 
 
@@ -337,6 +337,15 @@ def click_url(link):
     return base + "/" + urllib.parse.quote(view, safe="#") + (("?" + query) if sep else "")
 
 AGENT_EXECUTORS = ("agent", "claude", "codex")
+
+
+def projekt_counts(data, today):
+    """Liczby spraw właściciela (projekt.owner_counts) z danych load_projects, gdy nie ma odpowiedzi /api/data."""
+    std = os.path.join(ROOT, "standard")
+    if std not in sys.path:
+        sys.path.insert(0, std)
+    import projekt  # noqa: E402  (ten sam moduł, którego używa serwer)
+    return projekt.owner_counts(data["projects"], data.get("stages") or [], data["tasks"], today)
 
 
 def pick_agent(task, code_repo, usage, reserve, available):
@@ -2021,7 +2030,7 @@ class Manager:
             return 500, "Nie udało się zapisać biblioteki kart.", {}
 
     @staticmethod
-    def assistant_facts(data, today):
+    def assistant_facts(data, today, counts=None):
         """Krótkie fakty dla asystenta (bez czytania plików przy pytaniu „co mam zrobić”): Twoje sprawy na 7 dni,
         publikacje na 7 dni, po terminie, postęp projektów. Przy sprawach id zadania (działanie „Otwórz:”)."""
         names = {p["id"]: p.get("name") or p["id"] for p in data["projects"]}
@@ -2050,10 +2059,15 @@ class Manager:
                 done = sum(1 for t in ts if t.get("state") == "done")
                 prog.append("- %s: %d%% (%d z %d zadań)" % (names[pid], round(100 * done / len(ts)), done, len(ts)))
         by_date = lambda x: x.split(" | ")[2]  # noqa: E731
-        out = ["Postęp projektów:"] + (sorted(prog) or ["- brak"])
-        out += ["", "Twoje sprawy (kto: ty albo czeka na Ciebie) do %s:" % week] + (sorted(mine, key=by_date)[:40] or ["- brak"])
+        c = counts or projekt_counts(data, today)
+        out = ["Liczby spraw (te same co w panelu; podawaj tylko je, z tymi podpisami, nie licz sam):",
+               "- sprawy dla Ciebie na dziś: %d, w tym po terminie: %d" % (c["youToday"], c["youLate"]),
+               "- sprawy dla Ciebie w ciągu 7 dni: %d, później: %d" % (c["youWeek"], c["youLater"]),
+               "- wszystkie zadania po terminie (także agentów): %d" % c["late"], ""]
+        out += ["Postęp projektów:"] + (sorted(prog) or ["- brak"])
+        out += ["", "Twoje sprawy (kto: ty albo czeka na Ciebie) do %s, bez po terminie:" % week] + (sorted(mine, key=by_date)[:40] or ["- brak"])
         out += ["", "Publikacje do %s:" % week] + (sorted(pubs, key=by_date)[:20] or ["- brak"])
-        out += ["", "Po terminie:"] + (late[:30] or ["- brak"])
+        out += ["", "Po terminie (wszystkie, także agentów; pokazano %d z %d):" % (min(len(late), 30), len(late))] + (late[:30] or ["- brak"])
         return "\n".join(out)
 
     @staticmethod
@@ -2074,9 +2088,10 @@ class Manager:
         today = datetime.date.today()
         lines = ["Jesteś asystentem właściciela w panelu projektów. Dziś jest %s (%s)." % (today.isoformat(), PL_DAYS[today.weekday()]),
                  "Właściciel często mówi głosem; tekst pochodzi wtedy z rozpoznawania mowy i może przekręcać nazwy: "
-                 "dopasuj je do nazw projektów i zadań. Odpowiedź czyta na ekranie: bardzo krótko (1–3 zdania), "
-                 "bez tabel i nagłówków; szczegóły pokazujesz jako karty.",
-                 "", self.assistant_facts(data, today), "", "Projekty (pliki kart):"]
+                 "dopasuj je do nazw projektów i zadań. Odpowiedź czyta na ekranie: najpierw jedno zdanie odpowiedzi, "
+                 "potem najwyżej 5 krótkich punktów („- …”), bez tabel, nagłówków i akapitów. Najwyżej jedna liczba "
+                 "w zdaniu; listy i zestawienia liczb pokazujesz jako karty, nie w tekście.",
+                 "", self.assistant_facts(data, today, self._counts()), "", "Projekty (pliki kart):"]
         for p in data["projects"]:
             folder = index.get(p["id"])
             if folder:
@@ -2109,6 +2124,15 @@ class Manager:
                   "", self._assistant_library(), "",
                   self._assistant_screen(data, view, opened), "", "Wiadomość właściciela:", text]
         return "\n".join(lines) + "\n"
+
+    def _counts(self):
+        """Liczby spraw z ostatniej odpowiedzi /api/data (serwer ustawia counts_hook); bez niej None (liczy facts)."""
+        hook = getattr(self, "counts_hook", None)
+        try:
+            c = hook() if hook else None
+        except Exception:  # noqa: BLE001  (fakty rozmowy nie mogą jej przerwać)
+            c = None
+        return c if isinstance(c, dict) and all(k in c for k in self.projekt.OWNER_COUNT_KEYS) else None
 
     def _assistant_library(self):
         return "Karty gotowe (id, typ, tytuł):\n" + "\n".join(self.cards.summary())
@@ -2183,7 +2207,7 @@ class Manager:
         """Wątek jednej wiadomości: stała sesja (start albo wznowienie przy potrzebie), odpowiedź z kawałkami tekstu."""
         answer, error, dropped = "", "", False
         try:
-            facts = self.assistant_facts(data, datetime.date.today())
+            facts = self.assistant_facts(data, datetime.date.today(), self._counts())
             stamp = hashlib.sha1(facts.encode("utf-8")).hexdigest()
             lib = self._assistant_library()
             lib_stamp = hashlib.sha1(lib.encode("utf-8")).hexdigest()

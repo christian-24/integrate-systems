@@ -212,7 +212,7 @@ a.stat:hover{border-color:var(--line-2);background:var(--hover)}
 .rows .rmeta{font-weight:400}
 .rows .s{font-size:12px;color:var(--ink-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:2px}
 .rows .r{text-align:right;font-size:13px;white-space:nowrap;display:grid;gap:4px;justify-items:end}
-.rows .r.late{color:var(--l-red);font-weight:650}
+.rows .r.late .rmeta{color:var(--l-red)}
 .rows a{color:inherit;text-decoration:none}
 .rows a:hover .t{color:var(--accent);text-decoration:underline}
 .empty{padding:12px 16px 16px;color:var(--ink-3)}
@@ -2060,9 +2060,35 @@ details.mk-done{padding:0}
 @media (prefers-reduced-motion:reduce){.as-dot,.as-wait i,.as-ms .cm.as-live::after{animation:none}}
 @media (max-width:820px){}
 /* strona Asystent: płótno kart (siatka) i rozmowa (z boku od 1100 px, niżej przyklejona na dole) */
-.ap-cv{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;align-items:start}
-.ap-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px 10px;min-width:0;display:flex;flex-direction:column;gap:8px}
-.ap-card.ap-wide{grid-column:1/-1}.ap-card.ap-new{border-color:var(--accent)}
+/* płótno kart: najwyżej 2 kolumny, karty szerokie na cały rząd, wąskie parami (apCards), wysokość rzędu wspólna: bez dziur */
+.ap-cv{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,max(320px,calc(50% - 8px))),1fr));grid-auto-flow:row dense;gap:16px;align-items:stretch}
+.ap-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0;display:flex;flex-direction:column;gap:8px;container-type:inline-size}
+.ap-card.ap-wide{grid-column:1/-1}
+.ap-hd h2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ap-src{cursor:help}
+.ap-sum{display:flex;flex-wrap:wrap;gap:2px 16px;margin:0;color:var(--ink-3);font-size:var(--fs-md)}
+.ap-sum b{color:var(--ink);font-weight:650}
+.ap-late,.ap-late b,.ap-sum .ap-late b{color:var(--l-red)}
+.ap-more{margin:0}
+.ap-cl2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ap-today{margin:0}
+.ap-today .lk.t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@container (max-width:560px){
+  .ap-today li{grid-template-columns:minmax(0,1fr)}
+  .ap-today .r{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;text-align:left;gap:6px 8px;white-space:normal}
+  .ap-today .ty-dt{display:flex;flex-wrap:wrap;gap:0 8px;justify-items:start}
+  .ap-today .ty-rel{display:inline}
+  .ap-today .ty-acts{justify-content:flex-start;flex-wrap:nowrap;margin-left:0}
+}
+.ap-add{position:relative}
+.ap-add>summary{list-style:none;cursor:pointer}.ap-add>summary::-webkit-details-marker{display:none}
+.ap-add>ul{position:absolute;right:0;top:calc(100% + 6px);z-index:15;width:min(380px,calc(100vw - 32px));max-height:min(60vh,520px);overflow:auto;list-style:none;margin:0;padding:6px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-2)}
+.ap-opt{display:flex;gap:10px;align-items:flex-start;width:100%;min-height:44px;padding:8px;border:0;border-radius:var(--r);background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer}
+.ap-opt:hover{background:var(--hover)}
+.ap-ck{flex:none;width:20px;height:20px;border:1px solid var(--line-2);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent);margin-top:1px}
+.ap-opt[aria-pressed="true"] .ap-ck{border-color:var(--accent);background:var(--accent-soft)}
+.drawer.dr-wide{width:min(760px,100%)}
 .ap-hd{display:flex;align-items:center;gap:4px}.ap-hd h2{margin:0;font-size:var(--fs-lg);flex:1;min-width:0;overflow-wrap:anywhere}
 .ap-ib{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:var(--r);background:none;color:var(--ink-3);cursor:pointer;flex:none}
 .ap-ib:hover{background:var(--hover);color:var(--ink)}.ap-ib[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft)}
@@ -2078,7 +2104,11 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ap-rt{font-weight:600;overflow-wrap:anywhere;color:var(--ink)}.ap-rt small{display:block;font-weight:400;color:var(--ink-3);font-size:var(--fs-xs)}
 .ap-rm{font-size:var(--fs-sm);color:var(--ink-3)}.ap-rm.red{color:var(--l-red)}
 .ap-news li{padding:8px 0;display:grid;gap:2px}.ap-news a{font-weight:600;color:var(--accent)}.ap-news p{margin:2px 0 0;font-size:var(--fs-sm);color:var(--ink-2)}
-.ap-gl li,.ap-pp li{display:grid;grid-template-columns:minmax(0,1fr) minmax(60px,40%) 52px;gap:10px;align-items:center;padding:6px 0}
+.ap-gl li{display:grid;grid-template-columns:minmax(0,1fr) minmax(60px,40%) 52px;gap:10px;align-items:center;padding:6px 0}
+.ap-pp li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 0}
+.ap-pn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ap-pp .ap-gb{grid-column:1/-1}
+.ap-pf{grid-column:1/-1;color:var(--ink-3);font-size:var(--fs-xs);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ap-gk{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-gb{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden}.ap-gb i{display:block;height:100%;background:var(--accent);border-radius:4px}
 .ap-gv{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
@@ -2096,8 +2126,14 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ap-lk{background:none;border:0;padding:0;font:inherit;color:var(--accent);text-align:left;cursor:pointer}
 .ap-wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .ap-wd{background:var(--sunk);border-radius:var(--r);padding:6px;min-width:0}.ap-wd.ap-today{outline:2px solid var(--accent);outline-offset:-2px}
+.ap-td{color:var(--accent);font-weight:650}
+/* tydzień w wąskiej karcie albo oknie (poniżej ok. 900 px): lista według dni zamiast kolumn */
+@container (max-width:860px){
+  .ap-wk{grid-template-columns:minmax(0,1fr);gap:4px}.ap-wd{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start}.ap-wd h3{margin:2px 0 0}
+  .ap-wd.ap-wd0{padding:4px 6px}
+}
 .ap-wd h3{margin:0 0 4px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-2)}.ap-wd ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}
-.ap-chip{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:4px 6px;font:inherit;font-size:var(--fs-xs);color:var(--ink);cursor:pointer;overflow-wrap:anywhere}
+.ap-chip{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:4px 6px;font:inherit;font-size:var(--fs-xs);color:var(--ink);cursor:pointer;overflow-wrap:break-word}
 .ap-chip:hover{border-color:var(--accent)}
 .ap-lib{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px}.ap-lib summary{cursor:pointer;color:var(--ink-2);padding:4px 0}
 .ap-lib ul{list-style:none;margin:6px 0 0;padding:0}.ap-lib li{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}.ap-lib li .ap-rt{flex:1;min-width:0}
@@ -2120,8 +2156,6 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 @media (max-width:820px){
   .ap-dock{left:0;bottom:calc(57px + env(safe-area-inset-bottom,0px))}
   body.ap-on .content{padding-bottom:calc(330px + env(safe-area-inset-bottom,0px))}
-  .ap-wk{grid-template-columns:minmax(0,1fr);gap:4px}.ap-wd{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;align-items:start}.ap-wd h3{margin:2px 0 0}
-  .ap-wd.ap-wd0{padding:4px 6px}
   .ap-big{font-size:34px}
 }
 @media print{.ap-dock{display:none}}
@@ -2340,19 +2374,13 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
 .as-home h2{margin:0;font-size:clamp(24px,3.2vw,34px);font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .as-home p{margin:0;color:var(--ink-3);font-size:var(--fs-lg)}
 .as-sc.as-play .as-home{opacity:0;pointer-events:none;visibility:hidden}
-/* początek strony Asystent: sprawy na dziś (3 najważniejsze), notatka PM, „Pokaż” (startHtml) */
-.as-home:has(.as-start>*){justify-content:safe center;overflow-y:auto;padding:16px 0}
-.as-home:has(.as-start>*) .as-orb{width:min(96px,24vw,14vh);height:min(96px,24vw,14vh)}
-.as-start{width:min(680px,100%);text-align:left;display:flex;flex-direction:column;gap:12px}
+/* początek strony Asystent: jeden cichy wiersz pod datą (startHtml), klik uruchamia sceny „Dziś” */
 .as-start:empty{display:none}
-.as-st1{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
-.as-st1 h3{margin:0 0 6px;font-size:var(--fs-md);display:flex;gap:8px;align-items:baseline}
-.as-st1 h3 .num{color:var(--accent)}
-.as-st1 .rows{margin:0}
-.as-st1 .pmn{max-height:220px;overflow:auto}
-.as-home .as-start p{font-size:var(--fs-sm)}
+.as-today{min-height:44px;padding:0 14px;border:0;background:none;color:var(--ink-3);font:inherit;font-size:var(--fs-md);cursor:pointer;border-radius:var(--r-pill)}
+.as-today b{color:var(--ink-2);font-weight:600}
+.as-today .as-late{color:var(--l-red)}
+.as-today:hover{color:var(--ink-2);background:var(--hover)}
 .ap-quick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
-.as-start .ap-quick{margin:0;justify-content:center}
 .ap-zt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
 .ap-panel .ty-sum{margin:0 0 8px}
 .srv-sh{display:grid;grid-template-columns:1fr auto;align-items:end;gap:2px 16px;margin:24px 0 12px}
@@ -2369,6 +2397,7 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
 .as-paused{display:inline-block;margin-left:8px;font-size:var(--fs-xs);color:var(--ink-3);border:1px solid var(--line);border-radius:var(--r-pill);padding:0 8px;vertical-align:1px}
 /* scena */
 .as-stage{position:absolute;inset:0;z-index:1}
+.as-sc:not(.as-play) .as-stage{pointer-events:none}   /* start: wiersz „Dziś dla Ciebie” pod warstwą scen ma być klikalny */
 .as-scene{position:absolute;inset:0;display:flex;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
   padding:calc(var(--as-top-h) + var(--as-cap-h) + 24px) var(--as-r) calc(var(--as-dock-h) + 16px) var(--as-l)}
 .as-scene::-webkit-scrollbar{display:none}
@@ -2529,6 +2558,8 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
 .as-rrow:first-child{border-top:0}
 .as-rn{flex:1;min-width:0;overflow-wrap:anywhere}.as-rv{font-weight:600;text-align:right}.as-rv.as-muted{color:var(--ink-3);font-weight:400}
 /* plan dnia */
+.as-blocks .as-blrest{background:var(--line-2)}
+.as-rest .as-rmore{display:block}
 .as-blocks{display:flex;height:60px;border-radius:14px;overflow:hidden;margin-top:clamp(20px,4vh,32px);gap:3px}
 .as-blocks div{flex:var(--m);min-width:10px;background:var(--pc);display:flex;align-items:center;padding:0 8px;white-space:nowrap;overflow:hidden;
   animation:as-blk .7s cubic-bezier(.34,1.2,.5,1) both;animation-delay:calc(var(--d)*110ms + .3s);transform-origin:left}
@@ -2578,6 +2609,9 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
 .as-q{margin:6px 0 0;color:var(--ink-3)}
 .as-txt{font-size:clamp(17px,2vw,21px);line-height:1.5}
 .as-txt p{margin:0}
+.as-lead{font-size:clamp(19px,2.2vw,24px);line-height:1.4;font-weight:550}
+.as-pts{margin:12px 0 0;padding-left:22px;display:grid;gap:6px;font-size:var(--fs-lg);color:var(--ink-2)}
+.as-full{margin-top:12px;font-size:var(--fs-md);color:var(--ink-2)}.as-full summary{cursor:pointer;color:var(--ink-3);min-height:32px}
 .as-ans .ap-cv{margin-top:4px}
 .as-anc .ap-ib{width:44px;height:44px}
 /* dół: sterowanie scen, podpowiedzi i pole rozmowy (istniejący dok .ap-dock, z mikrofonem) */
@@ -3237,24 +3271,26 @@ function dateR(k,cls){if(!isDay(k))return '<div class="r">—</div>';const d=dTo
 const ACTB=t=>t.needsYou==='zgoda'?['ok','Zatwierdź']:t.needsYou==='odbiór'?['accept','Odbierz']:isFilmTask(t)?['done','Obejrzane']:t.kind==='publikacja'?['done','Opublikowane']:['done','Zrobione'];
 const shortT=(s,n)=>s.length>n?s.slice(0,n-1).trim()+'…':s;
 const waitLz=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="ty-wait" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na:</span> '+esc(shortT(t.waits[0],48))+(t.waits.length>1?' <span class="muted">i '+(t.waits.length-1)+' '+pl(t.waits.length-1,'inne','inne','innych')+'</span>':'')+'</span>':'';
-/* Twoje sprawy (zadania kto: ty i z wymaga, pytania bez odpowiedzi) tylko z aktywnych projektów, w trzech grupach:
-   youToday: termin do dziś, zgody i odbiory bez przyszłego terminu, pytania z terminem do dziś albo bez terminu;
-   youWeek: termin w najbliższych 7 dniach od dziś (także zadania, które czekają na inne); youLater: reszta.
-   Zadanie, które czeka na niezrobione zadania (po:), nie trafia do Dziś.
-   checked: otwarte zadania, które kontrola serwera („sprawdza:”) uznała za zrobione; poza Dziś, do zamknięcia. */
+/* Twoje sprawy (zadania kto: ty i z wymaga, pytania bez odpowiedzi) z projektów poza wstrzymanymi i backlogiem, w trzech
+   grupach. Reguła jak projekt.owner_counts (serwer, pm.py): liczby D.youToday, D.youLate, D.youWeek, D.youLater są
+   długościami tych list (test_asystent_duzy). youToday: po terminie (data przed dziś albo etap po terminie) albo z datą
+   dziś, bez zadań czekających na niezrobione zadania (po:); youWeek: data najpóźniej za 7 dni (także czekające);
+   youLater: później albo bez daty. checked: otwarte zadania, które kontrola serwera („sprawdza:”) uznała za zrobione;
+   poza listami, do zamknięcia. */
 const NOWR=x=>x.late?0:x.need==='zgoda'?1:x.need==='odbiór'?2:x.q?4:3;
 const isChecked=t=>t.state!=='done'&&!!t.check&&t.check.ok===true;
 function youState(){
   const f=facts();if(f.ys)return f.ys;
-  const endW=addK(D.todayKey,6),on=p=>!!p&&p.state==='active';
+  const endW=addK(D.todayKey,7),on=p=>!!p&&p.state!=='paused'&&p.state!=='backlog';
   const youToday=[],youWeek=[],youLater=[],checked=[];
   const put=(x,now)=>{if(now)youToday.push(x);else if(x.d&&x.d<=endW)youWeek.push(x);else youLater.push(x)};
   f.open.forEach(t=>{if(!on(P(t.project)))return;
     if(isChecked(t)){checked.push(t);return}
     if(!needsMe(t))return;
-    const d=isDay(t.date)?t.date:'',due=!!d&&d<=D.todayKey;
-    put({t:t,late:isLate(t),need:t.needsYou||'',d:d,min:+t.minutes||0,uc:t.unlockCount||0},!t.waits.length&&(t.needsYou?(due||!d):(t.executor==='ty'&&due)))});
-  f.qs.forEach(q=>{if(!on(q.p))return;const d=q.date||'';put({q:q,late:!!d&&d<D.todayKey,need:'',d:d,min:0,uc:0},!d||d<=D.todayKey)});
+    /* rodzaj sprawy jak projekt.owner_needs: „wymaga: zgoda” przy kto: ty to zwykłe zadanie właściciela */
+    const d=isDay(t.date)?t.date:'',late=lateT(t),need=(Array.isArray(t.ownerNeeds)?t.ownerNeeds[0]:t.needsYou)||'';
+    put({t:t,late:late,need:need,d:d,min:+t.minutes||0,uc:t.unlockCount||0},(late||(!!d&&d<=D.todayKey))&&!t.waits.length)});
+  f.qs.forEach(q=>{if(!on(q.p))return;const d=q.date||'';put({q:q,late:!!d&&d<D.todayKey,need:'',d:d,min:0,uc:0},!!d&&d<=D.todayKey)});
   /* kolejność: termin (po terminie najpierw), potem ile zadań odblokowuje, potem priorytet projektu (1 najważniejszy), potem rodzaj sprawy */
   const prOf=x=>{const p=x.q?x.q.p:P(x.t.project);return p?p.priority:3};
   const by=(a,b)=>(a.d||'9999').localeCompare(b.d||'9999')||(b.uc-a.uc)||prOf(a)-prOf(b)||NOWR(a)-NOWR(b);
@@ -3346,7 +3382,8 @@ let tyIdN=0;
    2 wiersze; brak warunku jako szary znacznik; minuty i data w kolumnie .r; przyciski w .ty-acts */
 function todayRow(x,o){
   o=o&&typeof o==='object'?o:{};
-  const pv=o.prio!==false,ty=o.ctx==='ty',late=x.late?'<span class="lz red">po terminie</span>':'';
+  /* „po terminie N dni” stoi przy dacie (na czerwono); znacznik tylko dla etapu po terminie bez zaległej daty */
+  const pv=o.prio!==false,ty=o.ctx==='ty',late=x.late&&!(x.d&&x.d<D.todayKey)?'<span class="lz red">etap po terminie</span>':'';
   const tid=ty?'ty-t-'+(++tyIdN):'',idA=tid?' id="'+tid+'"':'';
   if(x.q){const p=x.q.p,k=qKey(x.q),pr=x.q.proposal&&canMeta(p);
     if(ty){const ne=x.q.effects&&x.q.effects.length?x.q.effects.length:0,cf=A.qpConf===k,pid=tid+'-p',eid=tid+'-e';
@@ -4153,7 +4190,8 @@ function tyFold(L,o,keyOf,min,sumOf){
 /* karta Asystenta „Sprawy dla Ciebie” (dawny widok Dla Ciebie): liczba spraw, filtr, Decyzje, Dziś, 7 dni, Później, Do zamknięcia */
 function tyBody(){
   const ys=youState(),n=youTotal(ys),su=x=>pl(x,'sprawa','sprawy','spraw');tyIdN=0;
-  const head='<p class="ap-cmp ty-sum"><b class="num">'+n+'</b> '+su(n)+': decyzje, dziś i najbliższe 7 dni</p>'+overBlock(ys);
+  /* liczby z jednego źródła (te same co menu, start Asystenta i raport PM), każda z podpisem */
+  const head=apSum()+overBlock(ys);
   if(!n&&!ys.youLater.length&&!ys.checked.length)return '<p class="ap-empty">Nic nie czeka na Ciebie.</p>';
   const all=ys.youToday.concat(ys.youWeek,ys.youLater),near=ys.youToday.concat(ys.youWeek),F=tyFlt();
   if(F.p!=='all'&&!P(F.p))F.p='all';
@@ -6875,6 +6913,7 @@ function openDrawer(kind,id){
   const opener=document.activeElement;
   if(kind==='task'){const t=D.tasks.find(x=>x.id===id);if(!t)return;DR={kind:'task',id:id,ref:refOf(t),opener:opener,mat:''}}
   else if(kind==='q'){if(!qOf(id))return;DR={kind:'q',id:id,opener:opener}}
+  else if(kind==='card'){if(!apDef(id,null)&&!apCards().some(x=>x.c.id===id))return;DR={kind:'card',id:id,opener:opener}}
   else{if(!runById(id))return;DR={kind:'run',id:id,opener:opener}}
   renderDrawer(true);
   const n=$('#drawer .x');if(n)n.focus();
@@ -8578,10 +8617,14 @@ function renderDrawer(force){
   let html,t=null;
   if(DR.kind==='task'){t=findTask(DR.ref,true);if(!t){closeDrawer();return}DR.id=t.id;DR.ref=refOf(t);html=taskHtml(t)}
   else if(DR.kind==='q'){const o=qOf(DR.id);if(!o){closeDrawer();return}html=qHtml(o)}
+  else if(DR.kind==='card'){const c=apCards().map(x=>x.c).find(x=>x.id===DR.id)||apDef(DR.id,null);if(!c){closeDrawer();return}
+    let b;try{b=apBody(c,true)}catch(e){console.error(e);b=apEmpty('Nie udało się policzyć tej karty.')}
+    html='<div class="dhead"><span class="muted">Karta</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">'+esc(c.tytul)+'</h2><div class="ap-full">'+b+'</div>'}
   else{const r=runById(DR.id);if(!r){closeDrawer();return}html=runHtml(r)}
   if(!host.firstChild)host.innerHTML='<div class="scrim" data-close="1"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle"><div id="dbody"></div></aside>';
   const a=document.activeElement,typing=a&&host.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
   if(!force&&typing){if(t)setHtml($('#dag'),agentBlock(t));lvMount();return}
+  const dw=$('#drawer');if(dw)dw.classList.toggle('dr-wide',DR.kind==='card');
   setHtml($('#dbody'),html);
   lvMount();
 }
@@ -8849,35 +8892,51 @@ function kqRun(q,data,today){
 /* karty wbudowane: te same co karty.STARTERS (test_plotno pilnuje zgodności); serwer podaje je też w /api/asystent/karty */
 /*apStart:start*/
 const AP_START=[
- {"id":"sprawy-dzis","typ":"panel","widok":"sprawy-dzis","tytul":"Dziś dla Ciebie","opis":"Liczba spraw na dziś i 3 najważniejsze, z przyciskami"},
+ {"id":"sprawy-dzis","typ":"panel","widok":"sprawy-dzis","tytul":"Sprawy dla Ciebie","rozmiar":"szeroka","opis":"Sprawy na dziś (w tym po terminie) z przyciskami Jutro, Zrobione, Odpowiedz, Zatwierdź, Obejrzyj; pełna lista w szufladzie"},
+ {"id":"publikacje-tygodnia","typ":"tydzien","tytul":"Publikacje w tym tygodniu","rozmiar":"szeroka","opis":"Publikacje od dziś przez 7 dni, dziś wyróżniony","zapytanie":{"zrodlo":"publikacje","filtr":{"od":"dziś","do":"+6"}}},
+ {"id":"postep-projektow","typ":"postep","tytul":"Postęp projektów","opis":"Zrobione zadania w aktywnych projektach"},
  {"id":"raport-pm","typ":"panel","widok":"raport","tytul":"Notatka PM","rozmiar":"szeroka","opis":"Notatka kierownika projektów z raporty/ i przycisk raportu PM"},
- {"id":"sprawy","typ":"panel","widok":"sprawy","tytul":"Sprawy dla Ciebie","rozmiar":"szeroka","opis":"Pytania, zgody, odbiory i Twoje zadania: dziś, 7 dni, później; odpowiedź, zgoda, odbiór, filtr"},
+ {"id":"sprawy","typ":"panel","widok":"sprawy","tytul":"Sprawy dla Ciebie: pełna lista","rozmiar":"szeroka","opis":"Pytania, zgody, odbiory i Twoje zadania: dziś, 7 dni, później; filtr rodzaju i projektu"},
  {"id":"terminy","typ":"panel","widok":"terminy","tytul":"Terminy","rozmiar":"szeroka","opis":"Etapy, zadania i publikacje od najpilniejszych, z filtrem projektu i rodzaju"},
  {"id":"blokady","typ":"panel","widok":"blokady","tytul":"Blokady","rozmiar":"szeroka","opis":"Co wstrzymuje ile zadań, zablokowane zadania i zależności do poprawy"},
  {"id":"wskazniki","typ":"panel","widok":"wskazniki","tytul":"Wskaźniki","rozmiar":"szeroka","opis":"Postęp, tempo i przepływ pracy, porównanie projektów"},
- {"id":"zadania","typ":"panel","widok":"zadania","tytul":"Zadania","rozmiar":"szeroka","opis":"Zadania ze wszystkich projektów z filtrem projektu i stanu"},
- {"id":"dzis-dla-ciebie","typ":"lista","tytul":"Twoje sprawy do dziś","opis":"Twoje otwarte sprawy na dziś i po terminie","zapytanie":{"zrodlo":"zadania","filtr":{"kto":"dla-ciebie","stan":"otwarte","do":"dziś"},"sortuj":"data","limit":8}},
- {"id":"po-terminie","typ":"liczba","tytul":"Po terminie","opis":"Otwarte zadania i publikacje po terminie","zapytanie":{"zrodlo":"zadania","filtr":{"stan":"po terminie"}},"porownaj":{"etykieta":"w tym Twoje","zapytanie":{"zrodlo":"zadania","filtr":{"stan":"po terminie","kto":"dla-ciebie"}}}},
- {"id":"postep-projektow","typ":"postep","tytul":"Postęp projektów","opis":"Zrobione zadania w aktywnych projektach"},
- {"id":"publikacje-tygodnia","typ":"tydzien","tytul":"Publikacje w tym tygodniu","rozmiar":"szeroka","opis":"Publikacje od dziś przez 7 dni","zapytanie":{"zrodlo":"publikacje","filtr":{"od":"dziś","do":"+6"}}}
+ {"id":"zadania","typ":"panel","widok":"zadania","tytul":"Zadania","rozmiar":"szeroka","opis":"Zadania ze wszystkich projektów z filtrem projektu i stanu"}
 ];
 /*apStart:end*/
-/* karty na pustym płótnie (karty.START): sprawy na dziś i notatka PM; pozostałe wbudowane po „Pokaż” albo na prośbę */
-const AP_START_IDS=['sprawy-dzis','raport-pm'];
-/* szybkie „Pokaż” (strona startowa i płótno): karty z dawnych widoków */
-const AP_QUICK=[['sprawy','Sprawy dla Ciebie'],['terminy','Terminy'],['blokady','Blokady'],['wskazniki','Wskaźniki'],['zadania','Zadania'],['raport-pm','Raport PM']];
-const apQuick=cur=>'<div class="ap-quick" role="group" aria-label="Pokaż kartę"><span class="muted">Pokaż:</span>'+AP_QUICK.map(([id,n])=>
-  '<button type="button" class="chip" data-apshow="'+id+'" data-k="apshow:'+id+'"'+(cur?' aria-pressed="'+(cur.indexOf(id)>=0)+'"':'')+'>'+esc(n)+'</button>').join('')+'</div>';
+/* karty na pustym płótnie (karty.START); pozostałe wbudowane przez „Dodaj kartę” albo na prośbę w rozmowie */
+const AP_START_IDS=['sprawy-dzis','publikacje-tygodnia','postep-projektow','raport-pm'];
+/* jedna karta na jedną treść: dawne i podobne karty płótno pokazuje jako kartę wbudowaną (karty.ALIASES) */
+const AP_ALIAS={'sprawy':'sprawy-dzis','dzis-dla-ciebie':'sprawy-dzis','po-terminie':'sprawy-dzis'};
+function apCanon(c){if(!c)return '';if(AP_ALIAS[c.id])return AP_ALIAS[c.id];
+  const q=c.zapytanie,f=q&&q.filtr||{};
+  if(c.typ==='panel'&&c.widok==='sprawy')return 'sprawy-dzis';
+  if(q&&!q.grupuj&&(c.typ==='lista'||c.typ==='tabela'||c.typ==='tydzien')){
+    if(q.zrodlo==='publikacje')return 'publikacje-tygodnia';
+    if(q.zrodlo==='zadania'&&f.kto==='dla-ciebie')return 'sprawy-dzis'}
+  return c.id}
+/* „Dodaj kartę”: lista kart wbudowanych z zaznaczeniem tych, które są na płótnie (klik dodaje albo zdejmuje) */
+function apAdd(on){const L=AS.lib.wbudowane.filter(c=>!AP_ALIAS[c.id]).concat(AS.lib.karty.filter(c=>apCanon(c)===c.id));
+  return '<details class="ap-add" data-pvdet="ap-add"'+(PF.more['ap-add']?' open':'')+'><summary class="btn sec sm">Dodaj kartę</summary><ul role="list">'+
+    L.map(c=>{const sel=on.indexOf(c.id)>=0;return '<li><button type="button" class="ap-opt" data-apshow="'+esc(c.id)+'" data-k="apshow:'+esc(c.id)+'" aria-pressed="'+sel+'">'+
+      '<span class="ap-ck" aria-hidden="true">'+(sel?'✓':'')+'</span><span class="ap-rt">'+esc(c.tytul)+'<small>'+esc(c.opis||'')+'</small></span></button></li>'}).join('')+'</ul></details>'}
 /* karta „panel”: fragment panelu z przyciskami (dawne widoki); widok z karty (karty.PANEL_VIEWS) */
 const AP_PANEL={'sprawy-dzis':apToday,sprawy:()=>tyBody(),terminy:()=>tmBody(),blokady:()=>bkBody(),wskazniki:()=>wkBody(),zadania:apZadania,raport:()=>pmBody(false)};
-/* Dziś dla Ciebie: liczba spraw na dziś i 3 najważniejsze (po terminie, potem więcej odblokowanych zadań, potem priorytet
-   projektu, jak w raporcie PM), z tymi samymi przyciskami co w „Sprawy dla Ciebie” */
+/* Sprawy dla Ciebie: liczby (te same co menu i raport PM) i najwyżej 5 spraw na dziś (po terminie, potem więcej odblokowanych
+   zadań, potem priorytet projektu, jak w raporcie PM) z przyciskami; „i N więcej” otwiera pełną listę w szufladzie */
 function apTodayL(){const ys=youState(),prO=x=>{const p=x.q?x.q.p:P(x.t.project);return p?p.priority:3};
   return {ys:ys,L:ys.youToday.slice().sort((a,b)=>(a.d||'9999').localeCompare(b.d||'9999')||((b.uc||0)-(a.uc||0))||prO(a)-prO(b))}}
-function apToday(){const o=apTodayL(),L=o.L,n=L.length,all=youTotal(o.ys);
-  return '<p class="ap-big">'+n+'<small> '+pl(n,'sprawa na dziś','sprawy na dziś','spraw na dziś')+'</small></p>'+
-    (n?'<ul class="rows ap-today">'+L.slice(0,3).map(x=>todayRow(x,{prio:false})).join('')+'</ul>':'<p class="ap-empty">Na dziś nic nie czeka na Ciebie.</p>')+overBlock(o.ys)+
-    '<p class="ap-cmp"><button type="button" class="linkbtn" data-apshow="sprawy">Wszystkie sprawy dla Ciebie ('+all+')</button></p>'}
+const AP_MAX=5;
+function apSum(){const c=youCnt(),ys=youState();
+  /* data-lists: długości list panelu (test_asystent_duzy porównuje je z liczbami serwera) */
+  return '<p class="ap-sum" data-lists="'+[ys.youToday.length,ys.youToday.filter(x=>x.late).length,ys.youWeek.length,ys.youLater.length].join(',')+'"><span>Dziś <b class="num">'+c.today+'</b></span>'+(c.late?'<span class="ap-late">w tym <b class="num">'+c.late+'</b> po terminie</span>':'')+
+    '<span>7 dni <b class="num">'+c.week+'</b></span><span>później <b class="num">'+c.later+'</b></span></p>'}
+function apToday(full){const o=apTodayL(),L=o.L,n=L.length;tyIdN=0;
+  if(full)return tyBody();
+  return apSum()+(n?'<ul class="rows ap-today">'+L.slice(0,AP_MAX).map(x=>todayRow(x,{prio:false,ctx:'ty',grp:'dzis'})).join('')+'</ul>':'<p class="ap-empty">Na dziś nic nie czeka na Ciebie.</p>')+
+    apMore(n-AP_MAX,'sprawy-dzis','na dziś',n>AP_MAX?'':'Pełna lista: 7 dni i później')}
+/* „i N więcej”: pełna treść karty w szufladzie (openDrawer('card')); bez nadwyżki opcjonalny odnośnik do pełnej listy */
+const apMore=(n,id,what,alt)=>n>0?'<p class="ap-more"><button type="button" class="linkbtn" data-apfull="'+esc(id)+'" data-k="apfull:'+esc(id)+'">i '+n+' więcej'+(what?' '+what:'')+'</button></p>':
+  alt?'<p class="ap-more"><button type="button" class="linkbtn" data-apfull="'+esc(id)+'" data-k="apfull:'+esc(id)+'">'+esc(alt)+'</button></p>':'';
 /* Zadania ze wszystkich projektów (dawna Tablica): filtr projektu i stanu (PF.apZ), wiersz otwiera szczegóły zadania */
 const AP_ZST=[['otwarte','Otwarte'],['do zrobienia','Do zrobienia'],['w toku','W toku'],['do odbioru','Do odbioru'],['zablokowane','Zablokowane'],['po terminie','Po terminie'],['zrobione','Zrobione'],['','Wszystkie']];
 function apZadania(){
@@ -8890,14 +8949,16 @@ function apZadania(){
     (r.rows.length?'<ul class="ap-ls">'+r.rows.map(apTaskRow).join('')+'</ul>'+(r.total>r.rows.length?'<p class="ap-rm">Pokazano '+r.rows.length+' z '+r.total+'. Zawęź filtrem projektu albo stanu.</p>':''):apEmpty('Brak zadań dla tego filtra.'))}
 /* „Pokaż”: tryb Sceny — scena z kartą; tryb Karty — karta na górze płótna (PF.apShow, pamiętane na urządzeniu) */
 function apShowCard(id){
-  const c=AS.lib.wbudowane.find(x=>x.id===id)||AP_START.find(x=>x.id===id);if(!c)return;
+  const c=AS.lib.wbudowane.find(x=>x.id===id)||AP_START.find(x=>x.id===id)||AS.lib.karty.find(x=>x.id===id);if(!c)return;
   if(asMode()==='sceny'){ASC.showCard(id);return}
+  id=AP_ALIAS[id]||id;
   PF.apShow=[id].concat(PF.apShow.filter(x=>x!==id)).slice(0,12);savePF();
   if(CUR&&CUR.v==='asystent'){render(true);const n=document.querySelector('#view .ap-card[data-cid="'+CSS.escape(id)+'"]');if(n){n.scrollIntoView({block:'start'});const h=n.querySelector('h2');if(h){h.tabIndex=-1;h.focus({preventScroll:true})}}}}
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-apshow]');if(!b)return;ev.preventDefault();
   const id=b.dataset.apshow;if(CUR&&CUR.v!=='asystent'){location.hash='#asystent?k='+id;return}
-  if(asMode()==='karty'&&b.getAttribute('aria-pressed')==='true'){PF.apShow=PF.apShow.filter(x=>x!==id);savePF();render(true);focusK('apshow:'+id);return}
-  apShowCard(id)});
+  if(asMode()==='karty'&&b.getAttribute('aria-pressed')==='true'){apRemove(id);focusK('apshow:'+id);return}
+  apShowCard(id);if(asMode()==='karty')focusK('apshow:'+id)});
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-apfull]');if(!b)return;ev.preventDefault();openDrawer('card',b.dataset.apfull)});
 const AP_SUG=['Co mam dziś zrobić?','Pokaż moje minuty na ten tydzień','Co nowego w mojej branży?'];
 const AP_PIN='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 2.5h4l-.5 4 2 2v1h-7v-1l2-2zM8 9.5v4"/></svg>';
 const AP_X='<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
@@ -8920,28 +8981,39 @@ function apCards(){
     (m.cards.pokaz||[]).forEach((c,i)=>{const prev=ses[c.id];ses[c.id]={c:c.typ?c:(prev&&prev.c.typ?prev.c:c),at:at,n:mi*100-i,mi:mi,gone:false}});
     (m.cards.usun||[]).forEach(id=>{if(ses[id])ses[id].gone=true})});
   const hid=id=>{const h=AS.lib.ukryte[id];return h!=null&&(!ses[id]||String(ses[id].at)<=String(h))};
-  const pins=AS.lib.przypiete,out=[],seen={};
-  const add=(id,pin)=>{if(seen[id])return;const c=apDef(id,ses);if(!c||!c.typ)return;seen[id]=1;out.push({c:c,pin:pin,fresh:!!ses[id]&&ses[id].mi===last})};
+  const pins=AS.lib.przypiete,out=[],seen={},pinned=k=>pins.some(x=>x===k||apCanon(apDef(x,ses)||{id:x})===k);
+  /* duplikaty (dawne id, karty z tym samym zapytaniem) trafiają na jedną kartę wbudowaną */
+  const add=(id,pin)=>{let c=apDef(id,ses)||(AP_ALIAS[id]?apDef(AP_ALIAS[id],null):null);if(!c||!c.typ)return;const k=apCanon(c);if(k!==c.id)c=apDef(k,null)||c;
+    if(seen[c.id])return;seen[c.id]=1;out.push({c:c,pin:pin||pinned(c.id),fresh:!!ses[id]&&ses[id].mi===last})};
   PF.apShow.forEach(id=>{if(pins.indexOf(id)<0)add(id,false)});
   Object.keys(ses).filter(id=>!ses[id].gone&&!hid(id)&&pins.indexOf(id)<0).sort((a,b)=>ses[b].n-ses[a].n).forEach(id=>add(id,false));
   pins.forEach(id=>add(id,true));
   AS.lib.start.forEach(id=>{if(!hid(id)&&!(ses[id]&&ses[id].gone))add(id,false)});
+  /* siatka bez dziur: przy nieparzystej liczbie wąskich kart ostatnia wąska zajmuje cały rząd */
+  const nar=out.filter(x=>!apWide(x.c));if(nar.length%2)nar[nar.length-1].wide=true;
   return out}
+const apWide=c=>c.rozmiar==='szeroka'||c.typ==='tydzien'||c.typ==='panel';
+/* zdjęcie karty z płótna: pokazana przez „Dodaj kartę” znika od razu, pozostałe zapisują „ukryte” na serwerze */
+function apRemove(id){if(PF.apShow.indexOf(id)>=0){PF.apShow=PF.apShow.filter(x=>x!==id);savePF();render(true);return}
+  const P=AS.lib.przypiete.filter(x=>x!==id&&apCanon(apDef(x,null)||{id:x})!==id);
+  if(P.length!==AS.lib.przypiete.length)apPost({przypiete:P},'Nie udało się odpiąć karty.').then(ok=>{if(ok)apPost({ukryj:id},'Nie udało się zdjąć karty.')});
+  else apPost({ukryj:id},'Nie udało się zdjąć karty.')}
 const apRun=q=>kqRun(q,D,D.todayKey);
 const apNum=n=>(Math.round(n*10)/10).toLocaleString('pl-PL');
 const apDate=k=>/^\d{4}-\d\d-\d\d$/.test(k)?ddl(k):esc(k);
 const apShort=k=>/^\d{4}-\d\d-\d\d$/.test(k)?dd(k):esc(k);
 function apTaskRow(r){
-  const late=r.open&&r.data&&r.data<D.todayKey,meta=[r.projekt,r.data?(late?'po terminie · ':'')+ddl(r.data):'',r.czeka?'czeka na Ciebie: '+r.czeka:''].filter(Boolean).join(' · ');
-  const inner='<span class="ap-rt">'+esc(r.tytul)+'</span><span class="ap-rm'+(late?' red':'')+'">'+esc(meta)+'</span>';
+  const late=r.open&&r.data&&r.data<D.todayKey,n=late?diff(D.todayKey,r.data):0;
+  const meta=[esc(pShort({name:r.projekt})),r.data?ddl(r.data):'',late?'<span class="ap-late">po terminie '+n+' '+pl(n,'dzień','dni','dni')+'</span>':'',r.czeka?'czeka na Ciebie: '+esc(r.czeka):''].filter(Boolean).join(' · ');
+  const inner='<span class="ap-rt ap-cl2" title="'+esc(r.tytul)+'">'+esc(r.tytul)+'</span><span class="ap-rm">'+meta+'</span>';
   return r.typ==='zadanie'?'<li><button type="button" class="ap-row" data-aptask="'+esc(r.id)+'">'+inner+'</button></li>':'<li class="ap-row">'+inner+'</li>'}
 function apGroups(gr,unit){const mx=Math.max(1,...gr.map(g=>g.wartosc));
   return '<ul class="ap-gl">'+gr.map(g=>'<li><span class="ap-gk">'+apDate(g.klucz)+'</span><span class="ap-gb" aria-hidden="true"><i style="width:'+Math.round(100*g.wartosc/mx)+'%"></i></span><span class="ap-gv">'+apNum(g.wartosc)+(unit||'')+'</span></li>').join('')+'</ul>'}
 const apUnit=q=>q&&q.miara==='minuty'?' min':q&&q.miara==='wartosc'&&q.zrodlo==='zasoby'?'%':'';
 const apEmpty=t=>'<p class="ap-empty">'+esc(t||'Brak pozycji.')+'</p>';
-function apBody(c){
-  const q=c.zapytanie,d=c.dane||null;
-  if(c.typ==='panel')return AP_PANEL[c.widok]?AP_PANEL[c.widok]():apEmpty('Nieznany widok karty.');
+function apBody(c,full){
+  const q=c.zapytanie,d=c.dane||null,cut=L=>full?L:L.slice(0,AP_MAX),more=n=>full?'':apMore(n-AP_MAX,c.id,'');
+  if(c.typ==='panel')return AP_PANEL[c.widok]?AP_PANEL[c.widok](full):apEmpty('Nieznany widok karty.');
   if(c.typ==='notatka')return '<p class="ap-note">'+esc(d.tekst).replace(/\n/g,'<br>')+'</p>';
   if(c.typ==='news')return '<ul class="ap-news">'+d.pozycje.map(x=>'<li><a href="'+esc(x.link)+'" target="_blank" rel="noopener noreferrer">'+esc(x.tytul)+'</a>'+
     '<span class="ap-rm">'+esc([x.zrodlo,x.data].filter(Boolean).join(' · '))+'</span>'+(x.opis?'<p>'+esc(x.opis)+'</p>':'')+'</li>').join('')+'</ul>';
@@ -8950,14 +9022,18 @@ function apBody(c){
     let h='<p class="ap-big">'+apNum(v)+'<small>'+esc(u)+'</small></p>';
     if(c.porownaj){const w=apRun(c.porownaj.zapytanie).value;h+='<p class="ap-cmp">'+esc(c.porownaj.etykieta)+': <b>'+apNum(w)+'</b>'+esc(apUnit(c.porownaj.zapytanie))+'</p>'}
     return h}
+  /* postęp: nazwa w jednym wierszu (pełna w podpowiedzi), pod nią faza i etap, pasek na całą szerokość */
   if(c.typ==='postep'){const r=apRun(Object.assign({zrodlo:'projekty'},q||{},{zrodlo:'projekty',sortuj:(q&&q.sortuj)||'projekt',limit:(q&&q.limit)||20}));
-    return r.rows.length?'<ul class="ap-pp">'+r.rows.map(p=>'<li><span class="ap-rt">'+esc(p.tytul)+'<small>'+esc(p.etap||'bez etapu')+'</small></span><span class="ap-gb" aria-hidden="true"><i style="width:'+p.postep+'%"></i></span><span class="ap-gv" title="'+p.done+' z '+p.total+' zadań">'+p.postep+'%</span></li>').join('')+'</ul>':apEmpty('Brak aktywnych projektów.')}
+    const ph=p=>{const x=D.projects.find(y=>y.name===p.tytul);return x&&PHASES[PHI[x.phase]]?PHASES[PHI[x.phase]][1]:''};
+    return r.rows.length?'<ul class="ap-pp">'+cut(r.rows).map(p=>'<li><span class="ap-pn" title="'+esc(p.tytul)+'">'+esc(p.tytul)+'</span><span class="ap-gv" title="'+p.done+' z '+p.total+' zadań">'+p.postep+'%</span>'+
+      '<span class="ap-gb" aria-hidden="true"><i style="width:'+p.postep+'%"></i></span><small class="ap-pf">'+esc([ph(p),p.etap||'bez etapu'].filter(Boolean).join(' · '))+'</small></li>').join('')+'</ul>'+more(r.rows.length):apEmpty('Brak aktywnych projektów.')}
   if(c.typ==='tydzien'){const f=(q&&q.filtr)||{},a=kqDay(f.od||'dziś',D.todayKey)||D.todayKey,b=kqAdd(a,6);
     const r=apRun(Object.assign({},q,{filtr:Object.assign({},f,{od:a,do:b}),sortuj:'data',limit:50})),days=[];
     for(let i=0;i<7;i++)days.push(kqAdd(a,i));
-    return '<div class="ap-wk">'+days.map(k=>{const L=r.rows.filter(x=>x.data===k);
-      return '<div class="ap-wd'+(L.length?'':' ap-wd0')+(k===D.todayKey?' ap-today':'')+'"><h3>'+esc(DN[fromKey(k).getDay()])+' '+esc(dd(k))+'</h3>'+
-        (L.length?'<ul>'+L.map(x=>'<li><button type="button" class="ap-chip" data-aptask="'+esc(x.id)+'" title="'+esc(x.projekt)+'">'+esc(x.tytul)+'</button></li>').join('')+'</ul>':'<span class="ap-rm">—</span>')+'</div>'}).join('')+'</div>'}
+    /* tydzień: kolumny dni (poniżej ok. 900 px lista według dni, CSS); wpis do 2 wierszy, pełny tytuł i projekt w podpowiedzi */
+    return '<div class="ap-wk">'+days.map(k=>{const L=r.rows.filter(x=>x.data===k),td=k===D.todayKey;
+      return '<div class="ap-wd'+(L.length?'':' ap-wd0')+(td?' ap-today':'')+'"><h3>'+esc(DN[fromKey(k).getDay()])+' '+esc(dd(k))+(td?' <span class="ap-td">dziś</span>':'')+'</h3>'+
+        (L.length?'<ul>'+L.map(x=>'<li><button type="button" class="ap-chip" data-aptask="'+esc(x.id)+'" title="'+esc(x.tytul+' · '+x.projekt)+'"><span class="ap-cl2">'+esc(x.tytul)+'</span></button></li>').join('')+'</ul>':'<span class="ap-rm">—</span>')+'</div>'}).join('')+'</div>'}
   if(c.typ==='wykres'){
     const pts=d?d.punkty.map(p=>({klucz:p.etykieta,wartosc:p.wartosc})):apRun(q).groups,u=d?'':apUnit(q);
     if(!pts.length)return apEmpty();
@@ -8971,9 +9047,9 @@ function apBody(c){
     return apGroups(pts,u)}
   const r=d?null:apRun(q);
   if(c.typ==='lista'){
-    if(d)return '<ul class="ap-ls">'+d.pozycje.map(x=>'<li class="ap-row">'+(x.link?'<a class="ap-rt" href="'+esc(x.link)+'" target="_blank" rel="noopener noreferrer">'+esc(x.tekst)+'</a>':'<span class="ap-rt">'+esc(x.tekst)+'</span>')+(x.opis?'<span class="ap-rm">'+esc(x.opis)+'</span>':'')+'</li>').join('')+'</ul>';
+    if(d)return '<ul class="ap-ls">'+cut(d.pozycje).map(x=>'<li class="ap-row">'+(x.link?'<a class="ap-rt" href="'+esc(x.link)+'" target="_blank" rel="noopener noreferrer">'+esc(x.tekst)+'</a>':'<span class="ap-rt">'+esc(x.tekst)+'</span>')+(x.opis?'<span class="ap-rm">'+esc(x.opis)+'</span>':'')+'</li>').join('')+'</ul>'+more(d.pozycje.length);
     if(r.groups)return r.groups.length?apGroups(r.groups,apUnit(q)):apEmpty();
-    return r.rows.length?'<ul class="ap-ls">'+r.rows.map(apTaskRow).join('')+'</ul>'+(r.total>r.rows.length?'<p class="ap-rm">i '+(r.total-r.rows.length)+' więcej</p>':''):apEmpty('Nic do zrobienia.')}
+    return r.rows.length?'<ul class="ap-ls">'+cut(r.rows).map(apTaskRow).join('')+'</ul>'+(full?(r.total>r.rows.length?'<p class="ap-rm">Pokazano '+r.rows.length+' z '+r.total+'.</p>':''):more(r.total)):apEmpty('Nic do zrobienia.')}
   if(c.typ==='tabela'){
     let cols,rows;
     if(d){cols=d.kolumny;rows=d.wiersze.map(w=>w.map(x=>typeof x==='number'?apNum(x):esc(x)))}
@@ -8988,17 +9064,20 @@ function apBody(c){
     return '<div class="ap-tw"><table class="ap-tb"><thead><tr>'+cols.map(x=>'<th scope="col">'+esc(x)+'</th>').join('')+'</tr></thead><tbody>'+
       rows.map(w=>'<tr>'+w.map(x=>'<td>'+x+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
   return apEmpty()}
+const AP_INFO='<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.9h.01"/></svg>';
 function apCard(x){const c=x.c;let body;
   try{body=apBody(c)}catch(e){console.error(e);body=apEmpty('Nie udało się policzyć tej karty.')}
-  const src=c.dane?(c.typ==='news'?'Z internetu, przez asystenta':'Od asystenta'+(c.zrodlo?': '+c.zrodlo:'')):c.zrodlo||(c.typ==='panel'?'':'Dane panelu, na bieżąco');
-  return '<article class="ap-card'+(c.rozmiar==='szeroka'||c.typ==='tydzien'?' ap-wide':'')+(c.typ==='panel'?' ap-panel':'')+(x.fresh?' ap-new':'')+'" data-cid="'+esc(c.id)+'"><div class="ap-hd"><h2>'+esc(c.tytul)+'</h2>'+
+  /* źródło raz, w podpowiedzi ikony (dane panelu są na bieżąco; karty od asystenta mówią, skąd są) */
+  const src=c.dane?(c.typ==='news'?'Z internetu, przez asystenta':'Od asystenta'+(c.zrodlo?': '+c.zrodlo:'')):c.zrodlo||'Dane panelu, na bieżąco';
+  return '<article class="ap-card'+(apWide(c)||x.wide?' ap-wide':'')+(c.typ==='panel'?' ap-panel':'')+'" data-cid="'+esc(c.id)+'"><div class="ap-hd"><h2>'+esc(c.tytul)+'</h2>'+
+    '<span class="ap-ib ap-src" tabindex="0" role="img" title="'+esc(src)+'" aria-label="Źródło: '+esc(src)+'">'+AP_INFO+'</span>'+
     '<button type="button" class="ap-ib" data-appin="'+esc(c.id)+'" aria-pressed="'+x.pin+'" title="'+(x.pin?'Odepnij':'Przypnij: karta zostanie na płótnie')+'" aria-label="'+(x.pin?'Odepnij':'Przypnij')+' kartę '+esc(c.tytul)+'">'+AP_PIN+'</button>'+
     '<button type="button" class="ap-ib" data-apx="'+esc(c.id)+'" title="Zdejmij z płótna" aria-label="Zdejmij kartę '+esc(c.tytul)+'">'+AP_X+'</button></div>'+
-    body+(src?'<p class="ap-src">'+esc(src)+'</p>':'')+'</article>'}
+    body+'</article>'}
 function vAsystent(){
   if(asMode()==='sceny')return ASC.shell();
   const L=apCards(),lib=AS.lib.karty;
-  let h='<div class="as-kh"><h1 class="as-kt">Asystent</h1>'+asModeSw('karty')+'</div>'+apQuick(PF.apShow)+'<div class="ap-cv">'+L.map(apCard).join('')+'</div>';
+  let h='<div class="as-kh"><h1 class="as-kt">Asystent</h1>'+apAdd(L.map(x=>x.c.id))+asModeSw('karty')+'</div><div class="ap-cv">'+L.map(apCard).join('')+'</div>';
   if(!L.length)h+='<p class="ap-empty">Płótno jest puste. Zapytaj asystenta, a odpowie kartami.</p>';
   if(lib.length)h+='<details class="ap-lib" data-pvdet="ap-lib"'+(PF.more['ap-lib']?' open':'')+'><summary>Zapisane karty ('+lib.length+')</summary><ul>'+
     lib.map(c=>{const on=AS.lib.przypiete.indexOf(c.id)>=0;return '<li><span class="ap-rt">'+esc(c.tytul)+'<small>'+esc(c.opis||c.typ)+'</small></span>'+
@@ -9013,17 +9092,14 @@ async function apPost(body,fail){
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-appin],[data-apx],[data-apdel],[data-aptask]');if(!b)return;
   ev.preventDefault();
   if(b.dataset.aptask!=null){const t=D&&D.tasks.find(x=>x.id===b.dataset.aptask);if(t)openDrawer('task',t.id);else say('To zadanie zniknęło z listy.');return}
-  if(b.dataset.appin!=null){const id=b.dataset.appin,P=AS.lib.przypiete.slice(),i=P.indexOf(id);
-    if(i>=0)P.splice(i,1);else{P.push(id);const c=apDef(id,null)||apCards().map(x=>x.c).find(c=>c.id===id);
+  if(b.dataset.appin!=null){const id=b.dataset.appin;let P=AS.lib.przypiete.slice();const i=P.indexOf(id),al=P.filter(x=>x!==id&&apCanon(apDef(x,null)||{id:x})===id);
+    if(i>=0||al.length)P=P.filter(x=>x!==id&&al.indexOf(x)<0);else{P.push(id);const c=apDef(id,null)||apCards().map(x=>x.c).find(c=>c.id===id);
       /* karta z rozmowy, której nie ma w bibliotece: przypięcie ją zapisuje */
       if(c&&!AS.lib.karty.some(k=>k.id===id)&&!AS.lib.wbudowane.some(k=>k.id===id)){
         if(c.dane){say('Tej karty nie da się przypiąć: dane podał asystent i się zestarzeją.');return}
         apPost({zapisz:c},'Nie udało się zapisać karty.').then(ok=>{if(ok)apPost({przypiete:P},'Nie udało się przypiąć karty.')});return}}
     apPost({przypiete:P},'Nie udało się zmienić przypięcia.');return}
-  if(b.dataset.apx!=null){const id=b.dataset.apx;
-    /* karta pokazana przyciskiem „Pokaż”: znika z płótna od razu (bez zapisu na serwerze) */
-    if(PF.apShow.indexOf(id)>=0){PF.apShow=PF.apShow.filter(x=>x!==id);savePF();render(true);return}
-    apPost({ukryj:id},'Nie udało się zdjąć karty.');return}
+  if(b.dataset.apx!=null){apRemove(b.dataset.apx);return}
   if(b.dataset.apdel!=null){apPost({usun:b.dataset.apdel},'Nie udało się usunąć karty.')}
 });
 
@@ -9101,7 +9177,9 @@ const dueTxt=k=>!k?'':k<T()?'po terminie':k===T()?'dziś':ddl(k);
 const CH_STATUS=['Przejdźmy przez decyzje','Co się zmieniło?','Na czym mam się dziś skupić?'];
 const CH_TODAY=['Jaki jest stan projektów?','Przejdźmy przez decyzje','Przegląd projektów'];
 const CH_REV=['Dalej','Wróć','Jaki jest stan projektów?'];
-const HOME_CHIPS=['Jaki jest stan projektów?','Co się zmieniło?','Przejdźmy przez decyzje','Na czym mam się dziś skupić?','Przegląd projektów'];
+/* najwyżej 4 podpowiedzi w jednym rzędzie (setChips obcina dłuższe listy); „Przegląd projektów” jest w scenach stanu */
+const HOME_CHIPS=['Jaki jest stan projektów?','Co się zmieniło?','Przejdźmy przez decyzje','Na czym mam się dziś skupić?'];
+const CHIPS_MAX=4;
 
 /* ----- sceny: key, html(), lines() [{f: id elementów do wskazania, t: podpis}], tint, tr, chips, wait ----- */
 function scOverview(){
@@ -9243,10 +9321,11 @@ function scRecap(L){
 
 /* plan dnia */
 function todayScenes(){
-  const L=F.today(),sum=L.reduce((s,x)=>s+(x.min||0),0),unk=L.filter(x=>!x.min).length,uc=L.reduce((s,x)=>s+x.uc,0),lim=D.dayMinutes||120;
+  const L=F.today(),sum=L.reduce((s,x)=>s+(x.min||0),0),unk=L.filter(x=>!x.min).length,uc=L.reduce((s,x)=>s+x.uc,0),lim=D.dayMinutes||120,mv=overPlan(youState()).move.length;
   const busy=new Set(L.map(x=>x.p.id)),free=F.active().filter(p=>!busy.has(p.id)&&!F.blocked(p).length&&p.pst!=='late');
   const why=x=>[x.date&&x.date<T()?['red','po terminie']:null,x.uc?['blue','odblokuje '+x.uc]:null,x.kind!=='zadanie'?['purple',x.kind]:null].filter(Boolean);
-  const top=L.slice(0,3),rest=L.slice(3);
+  /* duży dzień: najwyżej 12 bloków (reszta jednym szarym blokiem) i najwyżej 5 spraw pod kartami, potem „i N więcej” */
+  const top=L.slice(0,3),restAll=L.slice(3),rest=restAll.slice(0,5),BL=L.slice(0,12),blR=L.slice(12),blRm=blR.reduce((s,x)=>s+(x.min||10),0);
   const open=x=>x.t?'<button type="button" class="as-act" data-asact="task" data-id="'+esc(x.t.id)+'">'+I.open+'Otwórz zadanie</button>':
     '<button type="button" class="as-act" data-asact="q" data-id="'+esc(x.p.id+':'+x.q.n)+'">'+I.open+'Odpowiedz</button>';
   return [
@@ -9254,16 +9333,19 @@ function todayScenes(){
       html:()=>'<div class="as-in as-hero"><div class="as-gen" style="--d:0"><span class="as-eb">Plan na dziś</span></div><div class="as-hn as-sm'+(!sum&&L.length?' as-unk':'')+' as-fx" id="asth">'+(sum?dur(sum):L.length?'czas nieznany':'0')+'</div>'+
         '<div class="as-ht as-gen" style="--d:2">'+L.length+' '+pl(L.length,'sprawa','sprawy','spraw')+(uc?', odblokują '+uc+' '+pl(uc,'zadanie','zadania','zadań'):'')+'</div>'+
         (unk&&sum?'<p class="as-sub as-gen" style="--d:3;margin:10px auto 0">'+unk+' bez podanego czasu</p>':'')+
-        (sum>lim?'<p class="as-gen as-capw" style="--d:4">'+spill(['yellow','o '+dur(sum-lim)+' ponad Twój dzień ('+dur(lim)+')'])+'</p>':'')+'</div>',
+        (sum>lim?'<p class="as-gen as-capw" style="--d:4">'+spill(['yellow','o '+dur(sum-lim)+' ponad Twój dzień ('+dur(lim)+')'])+'</p>'+
+          (mv?'<button type="button" class="as-act as-gen" style="--d:5" data-ag="defer" data-k="defer">'+I.open+'Przesuń '+mv+' '+pl(mv,'zadanie','zadania','zadań')+' na jutro</button>':''):'')+'</div>',
       lines:()=>[{f:['asth'],t:L.length?'Na dziś masz '+L.length+' '+pl(L.length,'sprawę','sprawy','spraw')+', '+(sum?dur(sum)+(unk?' (i '+unk+' bez podanego czasu)':''):'czas nieznany')+(uc?'. Odblokują '+uc+' '+pl(uc,'zadanie','zadania','zadań')+'.':'.'):'Na dziś nic nie czeka po Twojej stronie.'}]
         .concat(sum>lim?[{f:['asth'],t:'To '+dur(sum-lim)+' ponad Twój dzień. Najmniej pilne może poczekać do jutra.'}]:[])},
     {key:'t-blocks',tint:tint('c2','c1'),tr:'rise',chips:CH_TODAY,
       html:()=>'<div class="as-in">'+head('Kolejność',!L.length?'Nic na dziś':top.length===3?'Najpierw te trzy':'W tej kolejności')+
-        (L.length?'<div class="as-blocks" role="img" aria-label="'+esc(L.map(x=>x.title+' '+(x.min?dur(x.min):'czas nieznany')).join(', '))+'">'+L.map((x,k)=>'<div style="--m:'+(x.min||10)+';'+pc(x.p)+';--d:'+k+'" title="'+esc(x.title)+'">'+(x.min&&x.min>=20?'<span>'+x.min+' min</span>':'')+'</div>').join('')+'</div>':'')+
+        (L.length?'<div class="as-blocks" role="img" aria-label="'+esc(L.map(x=>x.title+' '+(x.min?dur(x.min):'czas nieznany')).join(', '))+'">'+BL.map((x,k)=>'<div style="--m:'+(x.min||10)+';'+pc(x.p)+';--d:'+k+'" title="'+esc(x.title)+'">'+(x.min&&x.min>=20?'<span>'+x.min+' min</span>':'')+'</div>').join('')+
+          (blR.length?'<div class="as-blrest" style="--m:'+Math.min(blRm,BL.reduce((s,x)=>s+(x.min||10),0))+';--d:12" title="'+esc('i '+blR.length+' więcej')+'"><span>+'+blR.length+'</span></div>':'')+'</div>':'')+
         '<div class="as-tcards">'+top.map((x,k)=>'<div class="as-card as-tcard as-fx as-gen" id="astb'+k+'" style="--d:'+(k+3)+';'+pc(x.p)+'"><span class="as-eb">'+(k+1)+' · '+esc(x.p.name)+' · '+(x.min?dur(x.min):'czas nieznany')+'</span><b>'+esc(x.title)+'</b>'+(x.why?'<p>'+esc(x.why)+'</p>':'')+'<div class="as-why2">'+why(x).map(spill).join('')+'</div>'+open(x)+'</div>').join('')+'</div>'+
-        (rest.length?'<ul class="as-rest as-fx as-gen" id="astr" style="--d:7">'+rest.map(x=>'<li><span>'+esc(x.title)+' <span class="as-pn">· '+esc(x.p.name)+'</span></span><span class="as-m">'+(x.min?dur(x.min):'czas nieznany')+'</span></li>').join('')+'</ul>':'')+'</div>',
+        (rest.length?'<ul class="as-rest as-fx as-gen" id="astr" style="--d:7">'+rest.map(x=>'<li><span>'+esc(x.title)+' <span class="as-pn">· '+esc(x.p.name)+'</span></span><span class="as-m">'+(x.min?dur(x.min):'czas nieznany')+'</span></li>').join('')+
+          (restAll.length>rest.length?'<li class="as-rmore"><button type="button" class="linkbtn" data-apfull="sprawy-dzis">i '+(restAll.length-rest.length)+' więcej: pełna lista</button></li>':'')+'</ul>':'')+'</div>',
       lines:()=>!L.length?[{f:[],t:'Na dziś nic nie czeka.'}]:top.map((x,k)=>({f:['astb'+k],t:(k===0?'Najpierw ':k===1?'Potem ':'Następnie ')+low(x.title)+' ('+x.p.name+')'+(x.date&&x.date<T()?', bo jest po terminie.':x.uc?', bo odblokuje '+x.uc+' '+pl(x.uc,'zadanie','zadania','zadań')+'.':'.')}))
-        .concat(rest.length?[{f:['astr'],t:'Na koniec '+rest.length+' '+pl(rest.length,'sprawa','sprawy','spraw')+', razem '+dur(rest.reduce((s,x)=>s+(x.min||0),0))+'.'}]:[])},
+        .concat(restAll.length?[{f:['astr'],t:'Potem '+restAll.length+' '+pl(restAll.length,'sprawa','sprawy','spraw')+', razem '+dur(restAll.reduce((s,x)=>s+(x.min||0),0))+'.'}]:[])},
     {key:'t-chill',tint:tint('c3','c7'),tr:'rise',chips:CH_TODAY,
       html:()=>'<div class="as-in" style="text-align:center">'+head('Spokojnie',free.length?'To dziś może poczekać':'Dziś wszystko potrzebuje uwagi')+
         '<div class="as-chill as-fx" id="astc">'+free.map((p,k)=>'<div class="as-gen" style="--d:'+(k+1)+'">'+ring(p)+'<span>'+esc(p.name)+'<br><small>'+esc(p.cur?p.cur.title+(isDay(p.cur.date)?' · '+ddl(p.cur.date):''):'')+'</small></span></div>').join('')+'</div></div>',
@@ -9302,13 +9384,21 @@ function projectScenes(p,i,n,decs){
 /* odpowiedź modelu: tekst i karty z cards.pokaz (apCard, przypinanie jak na płótnie) */
 function ansCards(m){const c=m&&m.cards||{};return (c.pokaz||[]).map(x=>x&&x.typ?x:x?apDef(x.id,null):null).filter(x=>x&&x.typ)}
 const ansCardsHtml=m=>ansCards(m).map(c=>apCard({c:c,pin:AS.lib.przypiete.indexOf(c.id)>=0,fresh:false})).join('');
+/* odpowiedź na ekranie: jedno zdanie, potem najwyżej 5 punktów; dłuższy tekst zwinięty w „Cała odpowiedź” */
+const PT=/^\s*(?:[-*•]|\d+[.)])\s+/;
+function ansParts(txt){const L=String(txt||'').split('\n').map(x=>x.trim()).filter(Boolean),items=L.filter(x=>PT.test(x)).map(x=>x.replace(PT,''));
+  const prose=L.filter(x=>!PT.test(x)).join(' '),fm=/^.*?[.!?](?=\s|$)/.exec(prose),lead=(fm?fm[0]:prose).trim(),rest=prose.slice(lead.length).trim();
+  return {lead:lead||items[0]||'',items:(lead?items:items.slice(1)).slice(0,5),more:items.length>(lead?5:6)||!!rest}}
+function ansHtml(txt){const a=ansParts(txt);
+  return '<p class="as-lead">'+mdInl(a.lead)+'</p>'+(a.items.length?'<ul class="as-pts">'+a.items.map(x=>'<li>'+mdInl(x)+'</li>').join('')+'</ul>':'')+
+    (a.more?'<details class="as-full"><summary>Cała odpowiedź</summary>'+chatText(txt)+'</details>':'')}
 function scAnswer(q,m,err){
   const txt=m?asClean(m.text):'',n=ansCards(m).length;
-  const fm=/^[^\n]*?[.!?](?=\s|$)|^[^\n]+/.exec(txt.trim()),first=fm?fm[0].trim():'';
+  const first=ansParts(txt).lead;
   return {key:'answer',m:m,tint:tint('accent','c7'),wait:'yes',chips:['Jaki jest stan projektów?','Na czym mam się dziś skupić?','Zamknij'],
     html:()=>'<div class="as-in"><div class="as-ans"><div class="as-gen" style="--d:0"><span class="as-eb">Odpowiedź</span><p class="as-q">'+esc('„'+q+'”')+'</p></div>'+
       (err?'<p class="warn as-fx as-gen" id="asan-t" style="--d:1">'+esc(err)+'</p>':
-      '<div class="as-txt as-fx as-gen" id="asan-t" style="--d:1">'+(txt?chatText(txt):'<p>'+(n?'Odpowiedź jest na '+(n===1?'karcie':'kartach')+' poniżej.':'Brak treści odpowiedzi.')+'</p>')+'</div>')+
+      '<div class="as-txt as-fx as-gen" id="asan-t" style="--d:1">'+(txt?ansHtml(txt):'<p>'+(n?'Odpowiedź jest na '+(n===1?'karcie':'kartach')+' poniżej.':'Brak treści odpowiedzi.')+'</p>')+'</div>')+
       (n?'<div class="ap-cv as-anc as-fx as-gen" id="asan-c" style="--d:2">'+ansCardsHtml(m)+'</div>':'')+'</div></div>',
     lines:()=>err?[{f:['asan-t'],t:err}]:[{f:['asan-t'],t:first.length>180?first.slice(0,177)+'…':first||'Odpowiedź gotowa.'}]
       .concat(n?[{f:['asan-c'],t:n===1?'Szczegóły na karcie. Możesz ją przypiąć do płótna kart.':'Szczegóły na kartach ('+n+'). Możesz je przypiąć do płótna kart.'}]:[])}}
@@ -9328,7 +9418,7 @@ function measure(){
   r.style.top=top+'px';r.style.left=left+'px';r.style.bottom=bot+'px';
   r.style.setProperty('--as-cap-h',playing()&&E.cap?E.cap.offsetHeight+'px':'0px');
   if(E.dk)r.style.setProperty('--as-dock-h',E.dk.offsetHeight+'px')}
-function setChips(a){if(E.chips)E.chips.innerHTML=a.map((c,i)=>'<button type="button" class="as-sug" style="--d:'+i+'">'+esc(c)+'</button>').join('')}
+function setChips(a){if(E.chips)E.chips.innerHTML=a.slice(0,CHIPS_MAX).map((c,i)=>'<button type="button" class="as-sug" style="--d:'+i+'">'+esc(c)+'</button>').join('')}
 function setTint(t){if(t&&E.root){E.root.style.setProperty('--as-t1',t[0]);E.root.style.setProperty('--as-t2',t[1])}}
 function stopTimers(){cancelAnimationFrame(SP.raf);clearTimeout(SP.timer);clearTimeout(SP.wt)}
 /* podpis: słowa pojawiają się w tempie czytania; czytnik dostaje całe zdanie raz */
@@ -9466,11 +9556,12 @@ function handle(raw){raw=String(raw||'').trim();const t=norm(raw).replace(/[?!.]
 /* pytanie z innego widoku (Start: data-asq): najpierw strona Asystent, potem polecenie */
 function ask(text){if(asScOn()&&E.root){handle(text);return}cmd=String(text||'');location.hash='#asystent'}
 
-/* początek strony (pusta rozmowa): sprawy dla Ciebie na dziś (liczba i 3 najważniejsze), notatka PM, „Pokaż” */
-function startHtml(){const o=apTodayL(),L=o.L,n=L.length,all=youTotal(o.ys);
-  return '<div class="as-st1"><h3>Dziś dla Ciebie <span class="num">'+n+'</span></h3>'+(n?'<ul class="rows ap-today">'+L.slice(0,3).map(x=>todayRow(x,{prio:false})).join('')+'</ul>':'<p class="ap-empty">Na dziś nic nie czeka na Ciebie.</p>')+overBlock(o.ys)+
-    (all>Math.min(n,3)?'<p class="ap-cmp"><button type="button" class="linkbtn" data-apshow="sprawy">Wszystkie sprawy dla Ciebie ('+all+')</button></p>':'')+'</div>'+
-    '<div class="as-st1"><h3>Notatka PM</h3>'+pmBody(true)+'</div>'+apQuick(null)}
+/* początek strony (pusta rozmowa): kula, pytanie, data i jeden cichy wiersz z liczbą spraw na dziś (te same liczby co menu
+   i raport PM); klik uruchamia sceny „Dziś”, gdzie jest też przekroczenie planu dnia. Listy są w scenach i w kartach. */
+function startHtml(){const c=youCnt();
+  if(!c.today)return '<button type="button" class="as-today" data-asc="today">Na dziś nic nie czeka po Twojej stronie</button>';
+  return '<button type="button" class="as-today" data-asc="today" title="Pokaż plan na dziś">Dziś dla Ciebie: <b class="num">'+c.today+'</b> '+pl(c.today,'sprawa','sprawy','spraw')+
+    (c.late?' · <span class="as-late">w tym <b class="num">'+c.late+'</b> po terminie</span>':'')+'</button>'}
 function startSync(){const b=E.root&&E.root.querySelector('.as-start');if(b&&!playing())setHtml(b,startHtml())}
 /* stan rozmowy z modelem (wołane z asRender): wysłane pytanie → oczekiwanie, koniec → scena odpowiedzi */
 function sync(){
@@ -9522,6 +9613,7 @@ document.addEventListener('click',ev=>{const t=ev.target;if(!t||!t.closest)retur
   const s=t.closest('.as-sug');if(s){handle(s.textContent);return}
   const c=t.closest('[data-asc]');
   if(c){const a=c.dataset.asc;if(a==='prev')prev();else if(a==='next')next();else if(a==='pause')togglePause();else if(a==='close')home();
+    else if(a==='today')startToday();
     else if(a==='seg'){const i=+c.dataset.i;showScene(i,i<SP.i?'back':'slide')}return}
   const b=t.closest('[data-asact]');if(!b)return;const a=b.dataset.asact;
   if(a==='opt')choose(+b.dataset.i);else if(a==='skip')skipDec();
@@ -10068,10 +10160,16 @@ const VICON={asystent:'you',marketing:'film',media:'photo',agenci:'agent',koszty
 /* Blokady: ta sama nazwa liczby co w h1 Blokad (bkYouCntT), w title i dla czytnika */
 const navCnt=(c,cl,unit,ttl)=>c?'<span class="count '+(cl||'')+'"'+(ttl?' title="'+esc(ttl)+'"':'')+'><span class="sr-only">, </span>'+(ttl?'<span aria-hidden="true">'+c+'</span><span class="sr-only">'+esc(ttl)+'</span>':c+'<span class="sr-only"> '+unit+'</span>')+'</span>':'';
 const NAVU={asystent:'spraw dla Ciebie',agenci:'w toku'};
+/* liczby spraw właściciela: z serwera (projekt.owner_counts), a bez nich (starszy serwer, podgląd) długości list youState */
+function youCnt(){const ys=youState(),n=v=>typeof v==='number'?v:null;
+  return {today:n(D.youToday)??ys.youToday.length,late:n(D.youLate)??ys.youToday.filter(x=>x.late).length,
+    week:n(D.youWeek)??ys.youWeek.length,later:n(D.youLater)??ys.youLater.length}}
+const youCntT=c=>'Sprawy dla Ciebie na dziś: '+c.today+(c.late?', w tym po terminie: '+c.late:'');
 function renderSide(r){
-  /* licznik przy Asystencie: sprawy dla Ciebie (dziś i 7 dni, z decyzjami), ten sam co w karcie „Sprawy dla Ciebie” */
-  const you=youTotal(youState()),ag=runs().filter(isAct).length,C={asystent:[you],agenci:[ag,'blue']};
-  const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],''):'';
+  /* licznik przy Asystencie: sprawy dla Ciebie na dziś, w tym po terminie (D.youToday z serwera: ta sama liczba na starcie
+     Asystenta, w karcie spraw, w raporcie PM i w faktach rozmowy) */
+  const you=youCnt(),ag=runs().filter(isAct).length,C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']};
+  const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],C[h][2]||''):'';
   const nvA=h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+cnt(h)+'</a>';
   setHtml($('#nav'),MAINV.map(nvA).join(''));
   const L=D.projects.filter(p=>!q||(p.name+' '+p.alias+' '+p.description).toLowerCase().indexOf(q)>=0);
@@ -10079,7 +10177,7 @@ function renderSide(r){
   const inBar=BNAV.indexOf(r.v)>=0,shortN={};
   /* odznaka „Więcej”: kropka bez liczby (liczby są przy pozycjach arkusza), dla czytnika lista tych liczb */
   const moreN=VIEWS.filter(v=>BNAV.indexOf(v)<0&&C[v]&&C[v][0]).map(v=>VNAME[v]+' '+C[v][0]).join(', ');
-  const bnl=h=>esc(VNAME[h]+(C[h]&&C[h][0]?', '+C[h][0]+' '+NAVU[h]:''));
+  const bnl=h=>esc(VNAME[h]+(C[h]&&C[h][0]?', '+(C[h][2]||C[h][0]+' '+NAVU[h]):''));
   setHtml($('#bnav'),BNAV.map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'" title="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bn-l" aria-hidden="true">'+(shortN[h]||VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
     '<button type="button" data-bnmore="1" data-k="bnmore" aria-haspopup="true" aria-expanded="'+!!A.bnMore+'" aria-controls="bnsheet"'+(!inBar?' aria-current="page"':'')+'>'+
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg><span class="bn-l">Więcej</span>'+(moreN?'<i class="bn-dot" aria-hidden="true"></i><span class="sr-only">, w pozostałych widokach: '+esc(moreN)+'</span>':'')+'</button>');
@@ -10091,12 +10189,13 @@ function renderSide(r){
       '<div class="bs-foot"><button type="button" class="btn sec" data-bnref="1" data-k="bnref">Odśwież</button><button type="button" class="btn sec" data-bntheme="1" data-k="bntheme">'+themeL()+'</button></div>')}
   $('#pcount').textContent=D.projects.length;
   setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted side-empty">Brak wyników</p>');
-  const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='asystent'&&you?' ('+you+')':'')]);
+  const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='asystent'&&you.today?' ('+you.today+')':'')]);
   const curH=r.v==='projekt'?phref(topP(r.p)):'#'+r.v,ms=$('#mnav');
   if(document.activeElement!==ms)setHtml(ms,opts.map(([h,n])=>'<option value="'+esc(h)+'"'+(h===curH?' selected':'')+'>'+esc(n)+'</option>').join('')+
     '<optgroup label="Projekty">'+D.projects.map(p=>'<option value="'+esc(phref(p))+'"'+(phref(p)===curH?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'</optgroup>');
 }
 function renderCrumbs(r){
+  if(r.v==='asystent'){setHtml($('#crumbs'),'');return}       /* jeden nagłówek: h1 strony */
   const c=['<a href="#asystent">Asystent</a>'];
   if(r.v==='projekt'){c.push('<a href="'+phref(r.p)+'">'+esc(r.p.name)+'</a>');c.push(esc(ptabsOf(r.p).find(x=>x[0]===r.tab)[1]))}
   else if(r.v!=='asystent')c.push(esc(VNAME[r.v]));

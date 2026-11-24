@@ -329,12 +329,12 @@ def facts(today=None, runs_dir=None):
                                    "gaps": x["gaps"]} for m in members[p["id"]] for x in m["docs"]
                                   if x["status"] != "ok"]})
     pubs = [t for t in open_tasks if t["kind"] == "publikacja" and is_day(t["date"]) and t["date"] <= week]
-    counts = {"you": len(you) + len(questions), "late": sum(1 for t in open_tasks if late(t)),
+    counts = {"you": len(you) + len(questions),
               "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),
               "blocked": sum(1 for t in open_tasks if t["state"] == "blocked"),
               "noNextStep": len(no_next), "stagesNoDate": len(no_date), "noSlack": len(no_slack),
               "overCapacity": 1 if capacity["over"] else 0, "toClose": len(to_close)}
-    counts.update(projekt.owner_counts(d["projects"], d["stages"], d["tasks"], today))
+    counts.update(projekt.owner_counts(d["projects"], d["stages"], d["tasks"], today))   # youToday… i late: jedno źródło z panelem
     return {
         "today": key, "source": d["source"], "dayMinutes": limit,
         "counts": counts,
@@ -402,9 +402,9 @@ def text(f):
     c = f["counts"]
     out = ["Raport PM · %s, %d %s %d%s" % (DNI[today.weekday()], today.day, MD[today.month - 1], today.year,
                                           " · projekty przykładowe" if f["source"] == "sample" else ""),
-           "Wymaga Ciebie %d (dziś %d, 7 dni %d, później %d) · Po terminie %d · Zagrożone etapy %d · Zablokowane %d"
+           "Wymaga Ciebie %d (dziś %d, w tym po terminie %d, 7 dni %d, później %d) · Po terminie wszystkie %d · Zagrożone etapy %d · Zablokowane %d"
            " · Bez następnego kroku %d · Etapy bez terminu %d · Bez zapasu %d%s"
-           % (c["you"], c["youToday"], c["youWeek"], c["youLater"], c["late"], c["risk"], c["blocked"],
+           % (c["you"], c["youToday"], c["youLate"], c["youWeek"], c["youLater"], c["late"], c["risk"], c["blocked"],
               c["noNextStep"], c["stagesNoDate"], c["noSlack"],
               " · Do zamknięcia %d" % c["toClose"] if c.get("toClose") else "")]
 

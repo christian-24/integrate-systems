@@ -39,7 +39,7 @@ class Menu(unittest.TestCase):
         names = re.search(r"^const VNAME=\{(.*?)\};", self.html, re.M).group(1)
         self.assertEqual(re.findall(r"(\w+):'", names), ["asystent", "marketing", "media", "agenci", "koszty", "odbior"])
         # licznik spraw dla Ciebie stoi przy Asystencie
-        self.assertIn("C={asystent:[you],agenci:[ag,'blue']}", self.html)
+        self.assertIn("C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']}", self.html)
 
     def test_kod_widokow_usuniety(self):
         for fn in ("vStart", "vPrzeglad", "vWskazniki", "vTy", "vTablica", "vTerminy", "vBlokady", "vProjekty",
@@ -112,7 +112,7 @@ class Karty(unittest.TestCase):
         ids = [c["id"] for c in karty.STARTERS]
         for i in ("sprawy-dzis", "raport-pm", "sprawy", "terminy", "blokady", "wskazniki", "zadania"):
             self.assertIn(i, ids)
-        self.assertEqual(karty.START, ("sprawy-dzis", "raport-pm"))
+        self.assertEqual(karty.START, ("sprawy-dzis", "publikacje-tygodnia", "postep-projektow", "raport-pm"))
         self.assertEqual(set(karty.PANEL_VIEWS), {"sprawy-dzis", "sprawy", "terminy", "blokady", "wskazniki", "zadania", "raport"})
         ok = karty.card({"id": "t", "typ": "panel", "widok": "terminy", "tytul": "Terminy"})
         self.assertEqual(ok["widok"], "terminy")
@@ -160,7 +160,7 @@ with sync_playwright() as p:
         pg = b.new_page(viewport={"width": w, "height": 900})
         pg.on("pageerror", lambda e: errs.append(str(e)))
         r = out[str(w)] = {}
-        pg.goto(U + "#asystent"); pg.wait_for_selector(".as-start .as-st1")
+        pg.goto(U + "#asystent"); pg.wait_for_selector(".as-start .as-today")
         r["start"] = pg.locator(".as-start").inner_text()
         r["nav"] = pg.evaluate("[...document.querySelectorAll('#nav a')].map(a=>a.getAttribute('href'))")
         r["badge"] = pg.locator("#nav a[href='#asystent'] .count").inner_text() if w > 900 else ""
@@ -228,12 +228,11 @@ class Przegladarka(Serwer):
         for w, o in res["out"].items():
             if w not in ("1440", "390"):
                 continue
-            self.assertIn("Dziś dla Ciebie", o["start"])
-            self.assertIn("Krok z notatki PM", o["start"])                    # notatka PM na starcie (część „Proponuję”)
-            self.assertNotIn("Punkt testowy", o["start"])
+            self.assertIn("Dziś dla Ciebie", o["start"])                     # start scen: jeden wiersz z liczbą spraw
+            self.assertNotIn("Krok z notatki PM", o["start"])                 # notatka PM w karcie raport-pm
             if w == "1440":
                 self.assertEqual(o["nav"][:5], ["#asystent", "#marketing", "#media", "#agenci", "#koszty"])
-                self.assertRegex(o["badge"], r"\d+\s+spraw")
+                self.assertRegex(o["badge"], r"\d+\s*Sprawy dla Ciebie na dziś")
             c = o["cards"]
             for k in c:
                 self.assertEqual(c[k][0], "#asystent", k)                    # stary adres → Asystent

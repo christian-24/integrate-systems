@@ -298,14 +298,21 @@ def extract(text):
 
 
 # ---------- karty wbudowane ----------
-# START: karty na pustym płótnie (sprawy na dziś i notatka PM); pozostałe wbudowane model podaje samym id.
+# START: karty na pustym płótnie; pozostałe wbudowane model podaje samym id, a właściciel dodaje przyciskiem „Dodaj kartę”.
+# Ta sama lista jest w panel.html (AP_START, test_plotno pilnuje zgodności).
 STARTERS = [
-    {"id": "sprawy-dzis", "typ": "panel", "widok": "sprawy-dzis", "tytul": "Dziś dla Ciebie",
-     "opis": "Liczba spraw na dziś i 3 najważniejsze, z przyciskami"},
+    {"id": "sprawy-dzis", "typ": "panel", "widok": "sprawy-dzis", "tytul": "Sprawy dla Ciebie", "rozmiar": "szeroka",
+     "opis": "Sprawy na dziś (w tym po terminie) z przyciskami Jutro, Zrobione, Odpowiedz, Zatwierdź, Obejrzyj; "
+             "pełna lista w szufladzie"},
+    {"id": "publikacje-tygodnia", "typ": "tydzien", "tytul": "Publikacje w tym tygodniu", "rozmiar": "szeroka",
+     "opis": "Publikacje od dziś przez 7 dni, dziś wyróżniony",
+     "zapytanie": {"zrodlo": "publikacje", "filtr": {"od": "dziś", "do": "+6"}}},
+    {"id": "postep-projektow", "typ": "postep", "tytul": "Postęp projektów",
+     "opis": "Zrobione zadania w aktywnych projektach"},
     {"id": "raport-pm", "typ": "panel", "widok": "raport", "tytul": "Notatka PM", "rozmiar": "szeroka",
      "opis": "Notatka kierownika projektów z raporty/ i przycisk raportu PM"},
-    {"id": "sprawy", "typ": "panel", "widok": "sprawy", "tytul": "Sprawy dla Ciebie", "rozmiar": "szeroka",
-     "opis": "Pytania, zgody, odbiory i Twoje zadania: dziś, 7 dni, później; odpowiedź, zgoda, odbiór, filtr"},
+    {"id": "sprawy", "typ": "panel", "widok": "sprawy", "tytul": "Sprawy dla Ciebie: pełna lista", "rozmiar": "szeroka",
+     "opis": "Pytania, zgody, odbiory i Twoje zadania: dziś, 7 dni, później; filtr rodzaju i projektu"},
     {"id": "terminy", "typ": "panel", "widok": "terminy", "tytul": "Terminy", "rozmiar": "szeroka",
      "opis": "Etapy, zadania i publikacje od najpilniejszych, z filtrem projektu i rodzaju"},
     {"id": "blokady", "typ": "panel", "widok": "blokady", "tytul": "Blokady", "rozmiar": "szeroka",
@@ -314,21 +321,10 @@ STARTERS = [
      "opis": "Postęp, tempo i przepływ pracy, porównanie projektów"},
     {"id": "zadania", "typ": "panel", "widok": "zadania", "tytul": "Zadania", "rozmiar": "szeroka",
      "opis": "Zadania ze wszystkich projektów z filtrem projektu i stanu"},
-    {"id": "dzis-dla-ciebie", "typ": "lista", "tytul": "Twoje sprawy do dziś",
-     "opis": "Twoje otwarte sprawy na dziś i po terminie",
-     "zapytanie": {"zrodlo": "zadania", "filtr": {"kto": "dla-ciebie", "stan": "otwarte", "do": "dziś"},
-                   "sortuj": "data", "limit": 8}},
-    {"id": "po-terminie", "typ": "liczba", "tytul": "Po terminie", "opis": "Otwarte zadania i publikacje po terminie",
-     "zapytanie": {"zrodlo": "zadania", "filtr": {"stan": "po terminie"}},
-     "porownaj": {"etykieta": "w tym Twoje", "zapytanie": {"zrodlo": "zadania",
-                                                         "filtr": {"stan": "po terminie", "kto": "dla-ciebie"}}}},
-    {"id": "postep-projektow", "typ": "postep", "tytul": "Postęp projektów",
-     "opis": "Zrobione zadania w aktywnych projektach"},
-    {"id": "publikacje-tygodnia", "typ": "tydzien", "tytul": "Publikacje w tym tygodniu", "rozmiar": "szeroka",
-     "opis": "Publikacje od dziś przez 7 dni",
-     "zapytanie": {"zrodlo": "publikacje", "filtr": {"od": "dziś", "do": "+6"}}},
 ]
-START = ("sprawy-dzis", "raport-pm")
+START = ("sprawy-dzis", "publikacje-tygodnia", "postep-projektow", "raport-pm")
+# dawne karty wbudowane: płótno pokazuje je jako jedną kartę (panel.html, AP_ALIAS); id są zajęte w bibliotece
+ALIASES = {"sprawy": "sprawy-dzis", "dzis-dla-ciebie": "sprawy-dzis", "po-terminie": "sprawy-dzis"}
 
 
 # ---------- biblioteka: zapisane karty i układ płótna ----------
@@ -398,7 +394,7 @@ class Library:
             return 200, "", []
         with self.lock:
             data = self._read()
-            builtin = {s["id"] for s in STARTERS}
+            builtin = {s["id"] for s in STARTERS} | set(ALIASES)
             for c in keep:
                 if c["id"] in builtin:
                     raise Bad("%s: id karty wbudowanej" % c["id"])
@@ -476,8 +472,10 @@ Przykłady:
 - {"id": "minuty-tydzien", "typ": "wykres", "rodzaj": "slupki", "tytul": "Twoje minuty w 7 dni", "zapytanie": {"zrodlo": "zadania", "filtr": {"kto": "ty", "od": "dziś", "do": "+6"}, "grupuj": "dzien", "miara": "minuty"}}
 - {"id": "otwarte-wg-projektu", "typ": "tabela", "tytul": "Otwarte zadania", "kolumny": ["tytul", "projekt", "data"], "zapytanie": {"zrodlo": "zadania", "filtr": {"stan": "otwarte"}, "sortuj": "data", "limit": 15}}
 Widoków Start, Dla Ciebie, Przegląd, Wskaźniki, Tablica, Terminy, Blokady i Projekty w panelu już nie ma: to, co
-pokazywały, pokazujesz Ty kartami z tych samych danych. Sprawy dla Ciebie (pytania, zgody, odbiory, Twoje zadania):
-{"id": "sprawy"}; na dziś krótko: {"id": "sprawy-dzis"}; terminy etapów, zadań i publikacji: {"id": "terminy"}; co
+pokazywały, pokazujesz Ty kartami z tych samych danych. Sprawy dla Ciebie (pytania, zgody, odbiory, Twoje zadania
+z przyciskami): {"id": "sprawy-dzis"}, pełna lista: {"id": "sprawy"}; publikacje: {"id": "publikacje-tygodnia"};
+postęp projektów: {"id": "postep-projektow"}; nie twórz kart, które powtarzają te karty (np. „publikacje na dziś”:
+pokaż publikacje-tygodnia, dziś jest w niej wyróżniony); terminy etapów, zadań i publikacji: {"id": "terminy"}; co
 wstrzymuje ile zadań: {"id": "blokady"}; postęp, tempo, przepływ: {"id": "wskazniki"}; zadania ze wszystkich
 projektów z filtrem projektu i stanu: {"id": "zadania"}; raport i notatka PM: {"id": "raport-pm"}. Węższe pytania
 (np. terminy jednego projektu) odpowiadaj kartą z zapytaniem. Rejestr projektów, Księga i dodawanie projektu są

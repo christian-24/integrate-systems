@@ -28,7 +28,13 @@ class Fakty(unittest.TestCase):
         f = agents.Manager.assistant_facts(data, today)
         self.assertIn("Alfa: 25% (1 z 4 zadań)", f)
         self.assertIn("Alfa | Nagraj film | 2026-11-23", f)
-        self.assertIn("Alfa | Stare | 2026-11-20", f.split("Po terminie:")[1])
+        self.assertIn("Alfa | Stare | 2026-11-20", f.split("Po terminie (")[1])
+        # liczby z projekt.owner_counts (jedno źródło z panelem i pm.py), z podpisami
+        self.assertIn("- sprawy dla Ciebie na dziś: 0, w tym po terminie: 0", f)
+        self.assertIn("- sprawy dla Ciebie w ciągu 7 dni: 1, później: 1", f)
+        self.assertIn("- wszystkie zadania po terminie (także agentów): 1", f)
+        given = {"youToday": 37, "youLate": 30, "youWeek": 4, "youLater": 3, "late": 32}
+        self.assertIn("na dziś: 37, w tym po terminie: 30", agents.Manager.assistant_facts(data, today, given))
         self.assertNotIn("Daleko", f)
         self.assertNotIn("Wstrzymany", f)
 
@@ -41,7 +47,7 @@ class Fakty(unittest.TestCase):
                            "state": "todo", "date": "2026-11-24", "kind": "publikacja"}]}
         f = agents.Manager.assistant_facts(data, today)
         self.assertIn("Alfa | Zatwierdź | 2026-11-23 | czeka na: zgoda | id: a|ZADANIA.md|5", f)
-        pubs = f.split("Publikacje do")[1].split("Po terminie:")[0]
+        pubs = f.split("Publikacje do")[1].split("Po terminie (")[0]
         self.assertIn("Opublikuj film | 2026-11-24 | id: a|kampanie/k.md|9", pubs)
         self.assertNotIn("Opublikuj film", f.split("Publikacje do")[0])
 
