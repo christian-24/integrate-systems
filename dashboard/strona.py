@@ -216,6 +216,8 @@ class Site:
             return 404, b"Nie znaleziono", "text/plain; charset=utf-8", SERVE_HEADERS
         fpath = os.path.join(root, *names)
         if os.path.isdir(fpath):
+            if names and not rest.endswith("/"):   # /pl/prywatnosc → /pl/prywatnosc/: inaczej „../” w stronie wskazuje obok
+                return 303, b"", "text/plain; charset=utf-8", SERVE_HEADERS + [("Location", path + "/")]
             fpath = os.path.join(fpath, "index.html")
         elif not os.path.exists(fpath) and not os.path.splitext(fpath)[1] and os.path.isfile(fpath + ".html"):
             fpath += ".html"
