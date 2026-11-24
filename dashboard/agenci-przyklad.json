@@ -31,6 +31,7 @@
  },
  "development": [],
  "nextTasks": [],
+ "queueEstimate": {},
  "runs": [
   {
    "id": "przyklad-5",

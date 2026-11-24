@@ -444,9 +444,9 @@ class Site:
         return title
 
     def _task(self, pid, folder, title, detail):
-        """Zadanie `kto: claude | kiedy: dziś` w „Do rozplanowania” i uruchomienie. (kod, błąd, id uruchomienia)."""
+        """Zadanie `kto: agent | kiedy: dziś` w „Do rozplanowania” i uruchomienie. (kod, błąd, id uruchomienia)."""
         with self.m.write_lock:
-            self.m._add_task(folder, pid, title, {"executor": "claude",
+            self.m._add_task(folder, pid, title, {"executor": "agent",
                                                    "date": datetime.date.today().isoformat()}, detail)
         task = next((t for t in self.m.load_projects()[0]["tasks"] if t["project"] == pid and t["title"] == title),
                     None)

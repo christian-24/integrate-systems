@@ -3,6 +3,7 @@ i asystenta, „Wyślij i wykonaj” w rozmowie o zadaniu, stan uruchomienia w h
 import http.client
 import json
 import os
+import time
 import re
 import subprocess
 import sys
@@ -120,17 +121,15 @@ class Uruchamianie(Baza):
 
     def test_logowanie_i_limit(self):
         self.manager._state["needsLogin"] = True
-        self.manager._state["automat"] = True
         msg = self.launch("Uruchom: Auto dziś")[0]
-        self.assertEqual(msg["text"], "Nie uruchomiono „Auto dziś”: Claude wymaga logowania (Agenci → Zaloguj). "
-                                      "Ma datę dziś: Automat uruchomi je po zalogowaniu.")
+        self.assertEqual(msg["text"], "Uruchomiono: Auto dziś")
+        self.assertEqual(self.wait(msg["runId"])["tool"], "codex")
         self.manager._state["needsLogin"] = False
         self.manager._state["limitUntil"] = "2999-01-01T13:45:00"
-        self.manager._state["automat"] = False
+        self.manager._record_limits("codex", {"five": (0.9, time.time(), time.time() + 60)})
         msg = self.launch("Uruchom: Zadanie A")[0]
-        self.assertEqual(msg["text"], "Nie uruchomiono „Zadanie A”: limit subskrypcji do 13:45. "
-                                      "Uruchom je potem w szczegółach zadania.")
-        self.assertEqual(self.task_runs(), [])
+        self.assertIn("Żaden dozwolony wykonawca", msg["text"])
+        self.assertEqual(len(self.task_runs()), 1)
 
     def test_asystent_projekt_z_nazwy(self):
         self.set_mode("wolno")

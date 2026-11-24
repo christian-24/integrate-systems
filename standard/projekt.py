@@ -290,17 +290,17 @@ def known_check(key):
 
 
 # ---------- szczegóły zadania: wcięte wiersze bezpośrednio pod wierszem zadania ----------
-DETAIL_KEYS = {"cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "material": "refs", "materiały": "refs",
+DETAIL_KEYS = {"wykonawca": "executorPin", "cel": "goal", "gotowe gdy": "doneWhen", "materiał": "refs", "material": "refs", "materiały": "refs",
                "materialy": "refs", "wynik": "result", "decyzja": "decision", "zostało": "left", "zostalo": "left",
                "poprawka": "fix", "następne": "next", "nastepne": "next",
                "wyświetlenia": "views", "wyswietlenia": "views", "kliknięcia": "clicks", "klikniecia": "clicks",
                "konta": "accounts", "link": "link", "gałąź": "branch", "galaz": "branch", "pyta": "asks",
                "odpowiedź": "answers", "odpowiedz": "answers", "zaplanowane": "scheduled", "zmiany": "changes"}
-DETAIL_OUT = {"goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
+DETAIL_OUT = {"executorPin": "wykonawca", "goal": "cel", "doneWhen": "gotowe gdy", "refs": "materiał", "result": "wynik", "decision": "decyzja",
               "left": "zostało", "fix": "poprawka", "next": "następne", "views": "wyświetlenia",
               "clicks": "kliknięcia", "accounts": "konta", "link": "link", "branch": "gałąź", "asks": "pyta",
               "answers": "odpowiedź", "scheduled": "zaplanowane", "changes": "zmiany"}
-DETAIL_ORDER = ["goal", "doneWhen", "refs", "branch", "asks", "answers", "scheduled", "steps", "views", "clicks", "accounts", "link", "result", "decision",
+DETAIL_ORDER = ["executorPin", "goal", "doneWhen", "refs", "branch", "asks", "answers", "scheduled", "steps", "views", "clicks", "accounts", "link", "result", "decision",
                 "left", "changes", "fix", "next"]   # kroki i notatki: "steps"; znaczniki („- znacznik …”) stoją pod poprawką
 # Wyniki publikacji (wiersze kampanii): liczby całkowite i adres. W szczegółach publikacji zawsze obecne
 # (None / ""), w zadaniach ZADANIA.md tylko wtedy, gdy wiersz jest zapisany.
@@ -463,6 +463,11 @@ def parse_detail(lines):
                 d["notes"].append(s)
         elif key == "refs":
             d["refs"] += [ref_of(v) for v in re.split(r",\s+", value) if v.strip()]
+        elif key == "executorPin":
+            if value.strip() in ("tylko claude", "tylko codex"):
+                d.setdefault(key, value.strip())
+            else:
+                d["notes"].append(s)
         elif key == "next":
             d["next"] = d["next"] or value
         elif key == "branch":                 # gałąź agenta do przejrzenia i scalenia w panelu
@@ -1408,7 +1413,11 @@ def set_detail(root, file_rel, line_no, title, key, value, pins=None):
         raise ValueError("wartość to tekst")
     if sum(len(v) for v in raw) > 2000:
         raise ValueError("wartość: najwyżej 2000 znaków")
-    if field == "next":
+    if field == "executorPin":
+        values = [v.strip() for v in raw[:1] if v.strip()]
+        if values and values[0] not in ("tylko claude", "tylko codex"):
+            raise ValueError("wykonawca: tylko claude albo tylko codex")
+    elif field == "next":
         values = [next_value(v) for v in raw[:1] if v.strip()]
     elif field in PUB_COUNTS:
         values = [v.strip() for v in raw[:1] if v.strip()]

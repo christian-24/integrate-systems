@@ -113,6 +113,7 @@ class Zadanie(Baza):
             self.assertTrue(json.load(f)["needsLogin"])
         self.assertTrue(self.new_manager().snapshot()["needsLogin"])      # znacznik przeżywa restart
         self.manager.set_automat(True)
+        self.manager._tools["codex"].update(found=True, loggedIn=False)
         self.assertEqual(self.manager.tick(at(10)), [])                    # Automat czeka na logowanie
         self.set_mode("ok")
         code, _, extra = self.manager.run_check("claude")
@@ -129,6 +130,7 @@ class Zadanie(Baza):
         self.assertTrue(115 < minutes < 121, minutes)
         self.assertTrue(self.row("Zadanie A").startswith("- [ ] Zadanie A"))
         self.manager.set_automat(True)
+        self.manager._record_limits("codex", {"five": (.9, time.time(), time.time() + 60)})
         self.assertEqual(self.manager.tick(at(10)), [])                    # Automat czeka do odnowienia
 
     def test_limit_ze_zdarzenia(self):
@@ -170,7 +172,7 @@ class Zadanie(Baza):
         self.set_mode("wolno")
         first = self.run_task("Zadanie A", m)[2]["id"]
         second = self.run_task("Zadanie B", m)[2]["id"]
-        self.wait(first, ("running",), manager=m)
+        self.wait_for(lambda: m.get(first)["activity"].startswith("Bash"))
         self.assertEqual(m.get(second)["state"], "queued")
         self.assertTrue(self.row("Zadanie B").startswith("- [~] Zadanie B"))
         snap = m.snapshot()
@@ -237,7 +239,7 @@ class Reguly(Baza):
     def test_brak_polecenia(self):
         m = self.new_manager(PANEL_CODEX=os.path.join(self.tmp, "nie-ma-codex"),
                              PANEL_CLAUDE=os.path.join(self.tmp, "nie-ma-claude"))
-        self.assertEqual(self.run_task("Zadanie C", m)[:2], (409, "Brak polecenia codex"))
+        self.assertEqual(self.run_task("Zadanie C", m)[:2], (409, "Brak polecenia Claude i Codex"))
         self.assertEqual(self.run_task("Zadanie B", m)[:2], (409, "Brak polecenia claude"))
         self.assertEqual(m.run_pm()[:2], (409, "Brak polecenia claude"))
         self.assertEqual(m.run_check("codex")[:2], (409, "Brak polecenia codex"))
@@ -254,7 +256,7 @@ class Reguly(Baza):
         self.assertEqual(block(state="done", executor="ty"), "Zrobione")
         self.assertEqual(block(executor="ty", needsYou="zgoda"), "Zadanie po Twojej stronie")
         self.assertEqual(block(needsYou="zgoda", executor="codex"), "Czeka na Twoją zgodę")
-        self.assertEqual(block(executor="codex", live={("p", "ZADANIA.md", "T")}), "Brak polecenia codex")
+        self.assertEqual(block(executor="codex", live={("p", "ZADANIA.md", "T")}), "W toku")
         self.assertEqual(block(live={("p", "ZADANIA.md", "T")}), "W toku")
         self.assertEqual(block(state="doing", needsYou="odbiór"), "")
 
@@ -358,6 +360,7 @@ class Automat(Baza):
         open(os.path.join(self.notes, TODAY + ".md"), "w").close()
         self.manager.set_automat(True)
         self.manager._usage["five"] = 0.85
+        self.manager._record_limits("codex", {"five": (.9, time.time(), time.time() + 60)})
         self.assertEqual(self.manager.tick(at(10)), [])                    # rezerwa dla właściciela
         self.manager._usage["five"] = 0.40
         self.assertEqual(len(self.manager.tick(at(10))), 1)

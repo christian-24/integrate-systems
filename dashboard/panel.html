@@ -1112,6 +1112,12 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .nw-idle{margin:0;padding:0 16px 14px;color:var(--ink-2);font-size:13.5px}
 .nw-idle .linkbtn,.nw-idle a{margin-left:4px}
 .nw-sub{display:flex;justify-content:space-between;align-items:center;gap:4px 8px;flex-wrap:wrap;margin:0;padding:10px 16px 2px;border-top:1px solid var(--line);font-size:13.5px;font-weight:650;color:var(--ink)}
+#ag-view .nw-sub{min-height:48px;padding:4px 16px;border-top:0}
+#ag-view .ag-plan>details{padding:0}
+#ag-view .ag-plan summary{list-style:none;cursor:pointer}
+#ag-view .ag-plan summary::before{content:none}
+#ag-view .ag-plan summary .nw-car::before{content:'▸'}
+#ag-view .ag-plan details[open] summary .nw-car::before{content:'▾'}
 .nw-sub small{font-size:12px;font-weight:500;color:var(--ink-3)}
 .nw-sub small a{color:var(--ink-3)}
 .nw-tog{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
@@ -1635,7 +1641,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 #abar .ahint{padding-top:8px}
 .ag-tools .ag-st{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .ag-tools>summary small,.prx-stdall>summary small,.rs-det>summary small,.prx-cdet>summary small{font-weight:500;color:var(--ink-3);font-size:var(--fs-sm)}
-.ag-srvl{margin:-6px 0 16px;padding:0 4px;font-size:13.5px;color:var(--ink-2);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .pub-sum{padding:4px 16px 14px}
 .rs-det{border-top:1px solid var(--line);padding-top:12px!important}
 .rs-det .tw{margin:0 -16px}
@@ -1983,7 +1988,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
   white-space:normal;overflow-wrap:anywhere}
 #ag-view .ag-usetop summary,#ag-view .ag-rdet summary{cursor:pointer;color:var(--ink);font-size:var(--fs-sm)}
 #ag-view .ag-usetop li>*{min-width:0}
-#ag-view .ag-srvl{margin:0 0 16px;padding:0;display:block}
 .ag-now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
 .ag-now-card{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
 .ag-now-card h3{margin:0 0 4px;font-size:var(--fs-md)}
@@ -3137,13 +3141,36 @@ function normAgents(a){
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
     maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
-    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[]};
+    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[],queueEstimate:a.queueEstimate||{}};
 }
 /* zużycie limitów subskrypcji (agents.usage: ułamki 0–1 albo null) i bezpiecznik jednego uruchomienia */
 const frac=v=>v==null||v===''||!Number.isFinite(+v)?null:Math.max(0,Math.min(1,+v));
-const normUsage=u=>{u=u&&typeof u==='object'?u:{};return {five:frac(u.five),codexFive:frac(u.codexFive),seven:frac(u.seven),budget:frac(u.budget)||0.2,reserve:frac(u.reserve)||0.8}};
+const normUsage=u=>{u=u&&typeof u==='object'?u:{};return {...u,five:frac(u.five),codexFive:frac(u.codexFive),
+  seven:frac(u.seven),codexSeven:frac(u.codexSeven),budget:frac(u.budget)||0.2,reserve:frac(u.reserve)||0.8}};
 /* ile punktów procentowych limitu 5 godzin zużyło uruchomienie (null: brak odczytu) */
 const runUse=r=>r.limitStart!=null&&r.limitNow!=null?Math.max(0,Math.round(100*(r.limitNow-r.limitStart))):null;
+const minutes=s=>Math.round(s/60)+' min';
+const estimatePercent=n=>Math.round(n*100)+'%';
+const tokenText=n=>Math.round(n).toLocaleString('pl-PL')+' tokenów';
+const estimateTime=n=>new Date(n*1000).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+function estimateHtml(r){
+  const e=r.estimate||{},n=e.examples||0;
+  const tip='Szacunek z '+n+' '+pl(n,'zlecenia','zleceń','zleceń');
+  if(e.seconds==null)return '<p class="muted" title="'+esc(tip)+'">Brak danych do szacunku</p>';
+  const running=r.state==='running',used=runUse(r),tokens=(r.tokensIn||0)+(r.tokensOut||0)+
+    (r.decisionTokensIn||0)+(r.decisionTokensOut||0);
+  const parts=[running?'ok. '+minutes(e.elapsed)+' z ~'+minutes(e.seconds):
+    (e.start!=null?'ruszy ok. '+estimateTime(e.start)+', ':'')+'potrwa ~'+minutes(e.seconds)+
+    (e.end!=null?', koniec ok. '+estimateTime(e.end):''),
+    e.limit==null?'':(running&&used!=null?'zużyte '+used+'% z ':'')+'~'+estimatePercent(e.limit)+' limitu 5 h',
+    e.tokens==null?'':(running&&tokens?Math.round(tokens).toLocaleString('pl-PL')+' z ':'')+'~'+tokenText(e.tokens)];
+  return '<p class="muted" title="'+esc(tip)+'">Szacunek · '+parts.filter(Boolean).join(' · ')+'</p>';
+}
+function queueEstimateHtml(e){
+  const parts=[e.seconds==null?'':'~'+minutes(e.seconds),e.limit==null?'':'~'+estimatePercent(e.limit)+' limitu 5 h',
+    e.tokens==null?'':'~'+tokenText(e.tokens)].filter(Boolean);
+  return '<p class="muted">Cała kolejka · '+(parts.length?'szacunek '+parts.join(' · '):'brak danych do szacunku')+'</p>';
+}
 /* uruchomienie z /api/data (agents.runs i activity.runs) */
 function normRun(r){
   r=r&&typeof r==='object'?r:{};
@@ -3738,7 +3765,10 @@ function planBox(){
     }
   }
   /* zwinięty w Agentach; otwarty, gdy dzisiejszy plan jest w toku albo gotowy */
-  return pvFold('pv-plan','Plan dnia',no?'niedostępny':'do zatwierdzenia',h+'</div>','Plan układany z Twoich zadań; uruchamiasz to, co zaznaczysz',!!live);
+  const count=r&&r.plan?(r.plan.agents||[]).length+(r.plan.you||[]).length:0;
+  return '<details data-pvdet="pv-plan"'+(live||PF.more['pv-plan']?' open':'')+'><summary class="nw-sub">'+
+    '<span class="nw-tog"><span class="nw-car" aria-hidden="true"></span>Plan dnia</span><small>'+
+    count+' '+pl(count,'zadanie','zadania','zadań')+'</small></summary>'+h+'</div></details>';
 }
 function askPlan(text){
   text=String(text||'').replace(/\s+/g,' ').trim();
@@ -5769,8 +5799,13 @@ function agBarHtml(){
   if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
-  h+='<p class="ag-limit"><span>Claude · limit 5 h: <b>'+pct(u.five)+'</b>'+
-    (u.seven==null?'':' · tygodniowy: '+pct(u.seven))+'</span><span>Codex · limit 5 h: <b>'+pct(u.codexFive)+'</b></span></p>';
+  const windowLabel=k=>pct(u[k])+(u[k+'New']?' (nowe okno)':'')+
+    (u[k+'At']?(u[k]==null?' od ':' · odczyt ')+esc(hhmm(new Date(u[k+'At']))):'');
+  h+='<div class="ag-limit"><span>Claude · limit 5 h: <b>'+windowLabel('five')+'</b> · tygodniowy: '+windowLabel('seven')+
+    '</span><span>Codex · limit 5 h: <b>'+windowLabel('codexFive')+'</b>'+
+    (u.codexSevenAt||u.codexSeven!=null?' · tygodniowy: '+windowLabel('codexSeven'):'')+'</span>'+
+    (a.tools.claude.found||a.tools.codex.found?'<button class="btn sec sm" data-ag="limity"'+(ck?' disabled':'')+
+    '>Odczytaj limity</button>':'')+'</div>';
   if(u.five!=null)h+='<p class="ahint">Bezpiecznik Claude zatrzymuje uruchomienie po zużyciu '+pct(u.budget)+
     ' limitu 5 h. Automat pomija wykonawcę od '+pct(u.reserve)+' limitu.</p>';
   if(limitT())h+='<p class="ahint">'+limitHint()+'</p>';
@@ -5828,8 +5863,8 @@ function agentsNow(a){
       '<p>'+(r.activity?'Ostatnia czynność: '+esc(r.activity):'Czeka na pierwsze zdarzenie')+'</p>';
     const u=runUse(r),recent=r.recent||[];
     return '<article class="ag-now-card"><h3>'+esc(r.title)+'</h3><p class="muted">'+
-      [TOOL[r.tool]||'Agent',(r.machine||a.machine)==='pc'?'PC':MACH[r.machine||a.machine]||'',r.projectName||'',r.observedStart?'od obserwacji '+fmtDur(runDur(r)):fmtDur(runDur(r))].filter(Boolean).map(esc).join(' · ')+
-      '</p>'+progress+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+      [(TOOL[r.tool]||'Agent')+(r.choiceReason?' · '+r.choiceReason:''),(r.machine||a.machine)==='pc'?'PC':MACH[r.machine||a.machine]||'',r.projectName||'',r.observedStart?'od obserwacji '+fmtDur(runDur(r)):fmtDur(runDur(r))].filter(Boolean).map(esc).join(' · ')+
+      '</p>'+estimateHtml(r)+progress+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
       '<p class="muted">Zużycie w tym uruchomieniu: '+(u==null?'brak odczytu':u+'% limitu 5 h')+'</p>'+
       '<div class="row"><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="live:'+esc(r.id)+'">Przebieg na żywo</button>'+
       (!LIVE||r.kind==='development'?'':'<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop:'+esc(r.id)+'">Zatrzymaj</button>')+
@@ -5840,7 +5875,7 @@ function agentsNow(a){
     '<h3 class="ag-gh">W kolejce</h3>'+(queue.length?'<ul class="ag-queue">'+queue.map(r=>'<li>'+
       (r.id?'<button class="lk" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button>':
         '<button class="lk" data-task="'+esc(r.taskId)+'">'+esc(r.title)+'</button>')+
-      (r.projectName?' <span class="muted">· '+esc(r.projectName)+'</span>':'')+'</li>').join('')+'</ul>':
+      (r.projectName?' <span class="muted">· '+esc(r.projectName)+'</span>':'')+estimateHtml(r)+'</li>').join('')+'</ul>'+queueEstimateHtml(a.queueEstimate):
       '<p class="muted">Kolejka jest pusta.</p>')+'</div></section>';
 }
 function runRow(r,g){
@@ -5891,10 +5926,14 @@ function vAgenci(){
   const a=D.agents;
   let h='<div id="ag-view"><div class="pagehead"><div class="ph-main"><h1>Agenci</h1><p>Agenci (Claude, Codex) wykonują zadania z projektów. Tu widać, kto pracuje teraz, plan dnia i co zrobili.</p></div></div>';
   if(!a)return h+'<section class="panel" id="abar">'+agBarHtml()+'</section></div>';
-  h+=agentsNow(a)+'<section class="panel" id="abar" aria-label="Ustawienia agentów">'+agBarHtml()+'</section>'+srvLine()+cdxBox();
+  h+=agentsNow(a)+'<section class="panel" id="abar" aria-label="Ustawienia agentów">'+agBarHtml()+'</section>'+cdxBox();
   /* z dawnego Przeglądu: plan dnia, zaplanowane publikacje i ostatnie 24 h (praca w toku i kolejka są w Teraz wyżej) */
   if(LIVE||a){const pb=planBox();if(pb)h+='<section class="panel ag-plan">'+pb+'</section>'}
-  try{const pp=nwPlanPanel(true),dn=nwDone().length?nwDonePanel():'';if(pp||dn)h+='<section class="panel nw-panel" aria-label="Publikacje i ostatnie 24 h"><div id="nw-body">'+pp+dn+'</div></section>'}
+  try{
+    const pp=nwPlanPanel(true);
+    if(pp)h+='<section class="panel nw-panel" aria-label="Zaplanowane publikacje">'+pp+'</section>';
+    h+='<section class="panel nw-panel" aria-label="Ostatnie 24 h">'+nwDonePanel()+'</section>';
+  }
   catch(e){console.error(e);h+='<section class="panel nw-panel"><p class="nw-note nw-bad">Nie udało się pokazać ostatnich 24 h ('+esc(String(e&&e.message||e))+').</p></section>'}
   const L=a.runs.concat(a.development).sort((x,y)=>String(y.startedAt||y.queuedAt).localeCompare(String(x.startedAt||x.queuedAt)));
   const isToday=r=>String(r.endedAt||r.startedAt||r.queuedAt||'').slice(0,10)===key(new Date());
@@ -5924,12 +5963,6 @@ function srvPanel(o){
     '<div class="pad">'+srvBar(true)+'</div></section>';
 }
 const SRV_LV={ok:['green','w normie'],warn:['yellow','do sprawdzenia'],bad:['red','problem']};
-/* Agenci: stan serwera jednym wierszem z odsyłaczem; szczegóły i sesje urządzeń są w widoku Serwer */
-function srvLine(){
-  const v=D.server?srvItems():null;if(!v||v.lvl==='ok')return '';
-  return '<p class="ag-srvl">Sprawdź stan serwera ('+v.items.filter(x=>x.dot!=='ok').map(x=>esc(x.label)).join(', ')+
-    '). <a href="#koszty">Otwórz widok Serwer</a></p>';
-}
 const eur=n=>(+n||0).toFixed(2).replace('.',',')+' €';
 const pln=n=>D.costs&&D.costs.eurPln?' <span class="muted">≈ '+Math.round(n*D.costs.eurPln)+' zł</span>':'';
 const CKIND={serwer:'serwer',kopie:'kopie zapasowe',adres:'adres IP',dysk:'dysk'};
@@ -10656,6 +10689,12 @@ function agentAct(el){
   else if(a==='stop')stopRun(id);
   else if(a==='pm')runPm();
   else if(a==='check')runCheck();
+  else if(a==='limity'){
+    if(!LIVE){say(PRV);return}
+    agentPost('/api/agent/limity',{},'Nie uruchomiono odczytu limitów.',r=>{
+      if(r.data.errors&&r.data.errors.length)say(r.data.errors.join(' '));
+    });
+  }
   else if(a==='automat')setAutomat();
   else if(a==='copy')copyCmd();
   else if(a==='login')openLogin();
