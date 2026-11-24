@@ -896,7 +896,24 @@ def script_info(pid, day):
                      "post": os.path.basename(folder) if folder else "",
                      "postReady": bool(folder) and os.path.isfile(os.path.join(folder, "post.md")),
                      "filmOwner": bool(proj.get("filmOwner")), "title": scenariusz.pub_title(pub),
+                     "way": film_way(proj, day, scenariusz.parse(text) if text is not None else None),
                      "task": pub["id"], "recDay": scenariusz.rec_day(day)}
+
+
+def film_way(proj, day, script=None):
+    """Kto robi film: ty (nagrywasz), ai (robisz w AI), panel (studio). Z pliku scenariusza, z podziału karty
+    zapisanego przez Automat (stan.json filmWays) albo z karty."""
+    if script and script.get("way"):
+        return script["way"]
+    try:
+        way = (get_agents()._state.get("filmWays") or {}).get("%s|%s" % (proj["id"], day))
+    except Exception:
+        way = None
+    if way in scenariusz.WAYS:
+        return way
+    mix = proj.get("filmMix") or {}
+    return "ty" if proj.get("filmOwner") and (len(mix) <= 1 or "ty" in mix) and not mix.get("ai") else \
+        (max(mix, key=mix.get) if mix else "panel")
 
 
 def _script_run(title, pid):

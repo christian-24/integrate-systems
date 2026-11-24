@@ -6,6 +6,7 @@
 - priorytet: 2
 - stan: aktywny
 - maszyna: chmura
+- nagrywa: ai 50, ty 30, panel 20
 - repozytorium: serwer `~/projekty/company-audits` i `~/projekty/asystent-useme` (GitHub, po migracji D13); strona `oprogramowani-onepager` na GitHubie; wcześniej PC `C:\Users\Guest\Desktop\CompanyAudits`
 - założono: 2026-05-17
 

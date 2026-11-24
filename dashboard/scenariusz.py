@@ -10,6 +10,7 @@ Układ pliku:
     - stan: propozycja | do realizacji | nagrane
     - publikacja: RRRR-MM-DD
     - nagranie: RRRR-MM-DD
+    - sposób: ty | ai | panel     (kto robi film: nagrywasz telefonem, robisz w narzędziu AI, nagrywa panel)
 
     ## Po co
     ## Co nagrać          (wiersze `- [ ] opis ujęcia | 5 s`)
@@ -36,6 +37,16 @@ FIX_TASK = "Popraw scenariusz nagrania na "
 REC_TASK = "Nagraj według scenariusza na "        # nie „Nagraj film …”: to nazwa filmów, które nagrywa panel
 AGENT_TASK = "Zrób film według scenariusza na "
 REC_MINUTES = 30                                    # czas właściciela na nagranie, gdy scenariusz nie podaje długości
+WAYS = {"ty": "nagrywasz sam", "ai": "robisz w AI", "panel": "nagrywa panel"}
+
+
+def pick_way(mix, used):
+    """Sposób dla następnego filmu wg podziału karty (mix: {sposób: %}) i dotychczasowych scenariuszy (used: {sposób: ile}):
+    ten, któremu najwięcej brakuje do swojego udziału; remis: kolejność ty, ai, panel."""
+    if not mix:
+        return "ty"
+    total = sum(used.get(k, 0) for k in mix) + 1
+    return max(mix, key=lambda k: (mix[k] / 100.0 - used.get(k, 0) / total, -list(WAYS).index(k)))
 
 SHOT = re.compile(r"^\s*[-*]\s+\[( |x|X)\]\s+(.+?)\s*$")
 SECONDS = re.compile(r"^(\d{1,4})\s*(s|sek\.?|sekund[ay]?)$", re.I)
@@ -62,7 +73,7 @@ def shot_of(text):
 def parse(text):
     """Tekst scenariusza -> {"title", "state", "publication", "recording", "sections": {nazwa: tekst},
     "shots": [{"text", "seconds", "done"}], "seconds", "errors": [...]}. Błędy nie przerywają odczytu."""
-    out = {"title": "", "state": "", "publication": "", "recording": "", "sections": {}, "shots": [],
+    out = {"title": "", "state": "", "publication": "", "recording": "", "way": "", "sections": {}, "shots": [],
            "seconds": 0, "errors": []}
     name, head = None, True
     for raw in (text or "").replace("\r\n", "\n").split("\n"):
@@ -84,6 +95,8 @@ def parse(text):
                     out["publication"] = value
                 elif key == "nagranie":
                     out["recording"] = value
+                elif key in ("sposób", "sposob"):
+                    out["way"] = value.strip().lower() if value.strip().lower() in WAYS else ""
             continue
         if name is None:
             continue

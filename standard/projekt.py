@@ -818,7 +818,7 @@ def read_project(path, pid=None, decision=None):
                "book": [dict(d, gaps=list(d["gaps"])) for d in docs], "bookOk": docs_ok, "bookTotal": len(docs),
                "client": fields["client"], "threshold": fields["threshold"], "alias": fields["alias"],
                "priority": fields["priority"], "instagram": fields["instagram"], "facebook": fields["facebook"],
-               "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"],
+               "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"], "filmMix": fields["filmMix"],
                "site": fields["site"], "github": fields["github"], "githubBranch": fields["githubBranch"],
                "questions": questions, "partOfRaw": fields["partOf"]}
     link_after(tasks)
@@ -1006,10 +1006,11 @@ def card_fields(meta, decision=None):
         if pages[key] and not PAGE_NAME.match(pages[key]):
             errors.append("%s: %s (nazwa strony albo profilu, do 100 znaków)" % (key, raw[:40]))
             pages[key] = ""
-    raw = meta.get("nagrywa", "").strip().lower()       # kto nagrywa filmy projektu: ty (scenariusz nagrania) albo panel
-    film_owner = raw in ("ty", "właściciel", "wlasciciel")
-    if raw and not film_owner and raw not in ("panel", "agent"):
-        errors.append("nagrywa: %s (dozwolone: ty, panel)" % meta["nagrywa"])
+    raw = meta.get("nagrywa", "").strip().lower()       # kto robi filmy projektu: ty, ai, panel albo podział „ty 20, ai 30, panel 50”
+    film_mix = film_mix_of(raw)
+    if raw and not film_mix:
+        errors.append("nagrywa: %s (ty, ai, panel albo podział, np. „panel 50, ai 40, ty 10”)" % meta["nagrywa"])
+    film_owner = bool(film_mix.get("ty") or film_mix.get("ai"))     # właściciel robi część filmów: scenariusze
     site = site_fields(meta, errors)
     raw = meta.get("github", "").strip()             # repozytorium projektu na GitHubie: właściciel/repozytorium
     github = github_repo(raw)
@@ -1025,7 +1026,7 @@ def card_fields(meta, decision=None):
         errors.append("część projektu: %s (folder projektu głównego, np. company-audits)" % raw[:60])
     return {"partOf": part_of, "github": github, "githubBranch": github_branch, "state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
             "priority": priority, "instagram": instagram.lower(), "facebook": pages["facebook"],
-            "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "site": site, "errors": errors}
+            "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "filmMix": film_mix, "site": site, "errors": errors}
 
 
 GITHUB_REPO = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}/[A-Za-z0-9_.-]{1,100}$")
@@ -1145,6 +1146,33 @@ def owner_counts(projects, stages, tasks, today):
     for day, late in items:
         out["youToday" if late or (day and day <= key) else "youWeek" if day and day <= week else "youLater"] += 1
     return out
+
+
+FILM_WAYS = ("ty", "ai", "panel")
+FILM_ALIAS = {"właściciel": "ty", "wlasciciel": "ty", "agent": "panel", "studio": "panel"}
+
+
+def film_mix_of(raw):
+    """Pole karty `nagrywa:` -> {"ty"|"ai"|"panel": procent} (suma 100) albo {} przy błędzie.
+    „ty” = {"ty": 100}; „panel 50, ai 40, ty 10” = podział filmów projektu."""
+    raw = str(raw or "").strip().lower()
+    if not raw:
+        return {}
+    out = {}
+    for part in re.split(r"[,;/]+", raw):
+        m = re.match(r"^\s*([a-ząćęłńóśźż]+)\s*(?:(\d{1,3})\s*%?)?\s*$", part)
+        if not m:
+            return {}
+        way = FILM_ALIAS.get(m.group(1), m.group(1))
+        if way not in FILM_WAYS or way in out:
+            return {}
+        out[way] = int(m.group(2)) if m.group(2) else None
+    if len(out) == 1:
+        return {next(iter(out)): 100}
+    if any(v is None for v in out.values()) or not sum(out.values()):
+        return {}
+    total = sum(out.values())
+    return {k: round(100 * v / total) for k, v in out.items() if v}
 
 
 def describe():

@@ -8553,9 +8553,13 @@ function scNext(d,busy){
   if(!d||!d.ok)return '';
   if(busy==='prep')return 'Agent czyta plan kampanii i pisze scenariusz. Pojawi się tutaj za kilka minut.';
   if(busy)return 'Agent poprawia scenariusz według Twojej uwagi.';
-  if(!d.exists)return d.filmOwner?'Ten film nagrywasz sam. Agent przygotuje scenariusz: co nagrać, jak i po co.':'Agent przygotuje scenariusz filmu.';
+  const way=d.way==='ai'||d.way==='panel'?d.way:(d.filmOwner?'ty':'panel');
+  if(!d.exists)return way==='ai'?'Ten film robisz w AI. Agent przygotuje gotowe polecenia do skopiowania, tekst lektora i napisy.':
+    way==='ty'?'Ten film nagrywasz sam. Agent przygotuje scenariusz: co nagrać, jak i po co.':'Ten film nagrywa panel. Nic nie musisz nagrywać.';
   const st=d.script.state,rd=ddl(d.recDay);
-  if(st==='do realizacji')return d.filmOwner?'Nagranie '+rd+'. Odhaczaj ujęcia przy nagrywaniu, potem kliknij Nagrane.':'Film robi agent według scenariusza.';
+  if(st==='do realizacji')return way==='ai'?'Zrób film w AI '+rd+': kopiuj polecenia scen do narzędzia, odhaczaj je, potem kliknij Nagrane.':
+    d.filmOwner?'Nagranie '+rd+'. Odhaczaj ujęcia przy nagrywaniu, potem kliknij Nagrane.':'Film robi agent według scenariusza.';
+  if(st==='propozycja')return (way==='ai'?'Film robisz w AI (polecenia do skopiowania). ':way==='ty'?'Film nagrywasz sam. ':'')+'Przeczytaj. Napisz po prawej, co zmienić, albo wyślij scenariusz do realizacji.';
   if(st==='nagrane')return d.postReady?'Nagrane. Dodaj film w edytorze posta (menu ⋯, Otwórz post).':'Nagrane. Film dodasz w edytorze posta, gdy agent przygotuje post.';
   return 'Przeczytaj. Napisz po prawej, co zmienić, albo wyślij scenariusz do realizacji.';
 }
