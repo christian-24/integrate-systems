@@ -21,15 +21,18 @@ termin: 2027-01-15
   wynik: treść wizytówki do wklejenia w faza-0/wizytowka-google.md: nazwa, 4 kategorie, opis w dwóch wersjach (698 i 742 znaki), 17 usług z cenami (wygłuszanie pierwsze, pakiety dla firm netto), obszar działania z 12 gmin (Kępno, Ostrzeszów, Syców i okolice), pozostałe pola i kolejność publikacji; nic nie opublikowane
   decyzja: czy wizytówka ma mieć nazwę „Shield & Silent” bez dopisku „Kępno” (zalecam: dopisanie miasta, w którym firma nie ma lokalu, grozi zawieszeniem wizytówki przez Google) i czy opis ma obiecywać odbiór aut z regionu Kępna (wersja A) czy dojazd klienta do Piławy (wersja B); ostatecznie zatwierdza Shield & Silent
   zostało: nie sprawdzono, czy Shield & Silent ma już wizytówkę w Piławie (wtedy trzeba ją rozszerzyć o obszar Kępna zamiast zakładać drugą); ceny pochodzą z analizy z 15.11.2026, strona nie była dziś otwierana; polskie nazwy kategorii trzeba potwierdzić na liście w panelu Google; cena zestawu drzwi i nadkola 2 790 zł i zakres pełnego wygłuszania do potwierdzenia; brakuje telefonu, godzin i roku założenia
-- [ ] Przygotuj kampanię Google Ads na wygłuszanie i PPF (1 500 zł/mies.) | kto: claude | gdzie: chmura | kiedy: 2026-11-25
+- [x] Przygotuj kampanię Google Ads na wygłuszanie i PPF (1 500 zł/mies.) | kto: claude | gdzie: chmura | kiedy: 2026-11-25
   cel: gotowa do wklejenia kampania testowa na 4–6 tygodni
   gotowe gdy: plik faza-0/kampania-ads.md: frazy z dopasowaniem, wykluczenia, 3 reklamy elastyczne, obszar, budżet dzienny, sposób liczenia zapytań; nic nie uruchomione
   materiał: analiza-rynku-kepno-shieldnsilent.md#8
+  wynik: faza-0/kampania-ads.md — ustawienia testu, 20 fraz z dopasowaniem, 23 wykluczenia, 3 reklamy elastyczne, budżet 49,34 zł dziennie i zasady liczenia zapytań. Kampanii nie uruchomiono.
+  zostało: przed zatwierdzonym startem sprawdzić odbiór formularza, pomiar i dane kontaktowe studia.
 - [ ] Ustal z Shield & Silent start Fazy 0 i budżet | kto: ty | kiedy: 2026-11-28 | czas: 30 | po: Przygotuj listę poprawek, Przygotuj kampanię Google Ads
   cel: zgoda na test popytu i data startu
   gotowe gdy: data startu i budżet w DECYZJE.md
   materiał: faza-0/
   materiał: faza-0/poprawki-strony.md
+  materiał: faza-0/kampania-ads.md
 - [ ] Zmierz zapytania z Kępna przez 4–6 tygodni | kto: ty | kiedy: 2027-01-10 | czas: 20 | po: Ustal z Shield & Silent start Fazy 0
   cel: liczba zapytań i zleceń z regionu Kępna
   gotowe gdy: liczba zapytań i zleceń tygodniowo w notatce pod zadaniem

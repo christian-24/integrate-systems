@@ -1,5 +1,11 @@
 # Decyzje: Detailing Kępno (Shield & Silent)
 
+## 2026-11-25: Ustawienia kampanii testowej Google Ads
+- Kontekst: Faza 0 mierzy popyt na wygłuszanie i PPF w Kępnie, Ostrzeszowie i Sycowie przy budżecie 1 500 zł miesięcznie.
+- Decyzja: jedna kampania w wyszukiwarce z dwiema grupami i wspólnym budżetem 49,34 zł dziennie. Reklamy podają Piławę jako miejsce realizacji. Wynik testu opiera się na unikalnych, kwalifikowanych zapytaniach.
+- Skutki: ustawienia i teksty są gotowe w `faza-0/kampania-ads.md`. Start i budżet całego testu podlegają odrębnej zgodzie.
+- Kto: agent
+
 ## 2026-11-24: Wizytówka Google jako firma z obszarem działania, bez „Kępno” w nazwie
 - Kontekst: zadanie „Przygotuj opis wizytówki Google „Shield & Silent Kępno””. Shield & Silent nie ma lokalu w Kępnie, a zasady Google wymagają prawdziwej nazwy firmy i nie pozwalają podawać adresu, pod którym firma nie działa.
 - Decyzja: szkic w `faza-0/wizytowka-google.md` zakłada wizytówkę firmy obsługującej obszar (12 gmin wokół Kępna, Ostrzeszowa i Sycowa), z zalecaną nazwą „Shield & Silent”; wariant „Shield & Silent Kępno” opisany jako ryzykowny. Kategorii „Myjnia samochodowa” nie proponuję, żeby test mierzył popyt na wygłuszanie i PPF. Opis ma dwie wersje: z odbiorem aut i z dojazdem klienta do Piławy.
