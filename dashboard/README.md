@@ -28,9 +28,48 @@ Układ i kontrakt: `PULPIT.md`. Panel boczny: widoki i lista projektów z wyszuk
 | Terminy | `#terminy` | po terminie, ten tydzień, następny, później; kalendarz, wolne okna dziś i jutro, eksport ICS |
 | Agenci | `#agenci` | logowanie, limit, Automat, Raport PM, Test połączenia, uruchomienia |
 | Projekty | `#projekty` | dodawanie i usuwanie projektów, zgodność ze standardem |
-| Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing |
+| Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing; projekt z częściami: `#p-<id>?cz=<id części>` |
 
 Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie agenta.
+
+### Strona projektu
+
+- Pod tytułem: faza, postęp, etap, stan GitHuba; przy projekcie z częściami przełącznik „Całość · <część główna> ·
+  <części>” (domyślnie Całość). Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części
+  (np. „Strona WWW”); wybrana część pokazuje tylko swoje i swoje zakładki (np. Strona).
+- Plan: decyzje, najbliższe 7 dni i sekcja **Kod i pliki**: na wierzchu po jednym wierszu GitHub (gałąź, „zgodne
+  z GitHubem” albo „N commitów do wysłania”, „brak pola github:”; przy projekcie z częściami wiersz na każde
+  repozytorium części) i Google Drive („połączony: folder na Dysku, N pozycji” albo „niepołączony”). „Szczegóły”
+  rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera, gałęzie i pliki; dla
+  Drive połączenie, pliki, odłączenie. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
+  i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji. Nazwy folderu Drive panel nie zna (zapisuje
+  tylko jego identyfikator), dlatego wiersz pokazuje link „folder na Dysku”.
+- **Rozmowa**: przycisk w prawym dolnym rogu każdej strony projektu rozwija okno czatu (na komputerze 380×520 px,
+  na telefonie arkusz od dołu na całą szerokość); „Zwiń” albo Esc je zwija. Rozmowa dotyczy bieżącego projektu:
+  przy projekcie z częściami całości (rozmowa projektu głównego, zna pliki części) albo wybranej części (jej własna
+  rozmowa); nagłówek okna to mówi. Część główna i Całość mają tę samą rozmowę (folder projektu głównego). Okno
+  zachowuje historię, na zwiniętym przycisku widać „czeka na odpowiedź” i „nowa odpowiedź”. Prośba o pracę zakłada
+  i uruchamia zadanie agenta jak dotąd (`POST /api/project/chat`). Treść strony ma odstęp na dole, żeby przycisk
+  niczego nie zasłaniał.
+
+### Projekt z częściami
+
+Projekt, który ma kilka folderów i repozytoriów (np. integracje i strona WWW), to w panelu jeden projekt. Karta
+części ma wiersz `- część projektu: <projekt główny>` (folder projektu głównego, np. `company-audits`; pasuje też
+nazwa folderu jego karty). Część dalej ma swój folder, repozytorium, `ZADANIA.md`, agentów i zakładkę Strona; nic
+się nie przenosi. W panelu:
+
+- listy projektów (menu, Start, Przegląd, Projekty, wybór projektu w filtrach, Terminy, Dla Ciebie) mają jeden wpis;
+  filtr projektu obejmuje części; zadania i terminy części mają nazwę „Projekt · Część”;
+- nazwa części to tytuł jej karty bez nazwy projektu głównego („Oprogramowani – strona WWW” albo „Strona WWW” →
+  „Strona WWW”); projekt główny traci nawias z tytułu („Oprogramowani (integracje ERP ↔ sprzedaż)” → nazwa
+  „Oprogramowani”, część główna „Integracje ERP ↔ sprzedaż”); bez nawiasu część główna to „Główna część”;
+- stary adres części (`#p-<część>…`) przechodzi na `#p-<główny>…?cz=<część>`;
+- raport PM (`standard/pm.py`) liczy sprawy jak dotąd i podpisuje je „Projekt · Część”; lista projektów, następny
+  krok i braki dokumentów liczone dla całości (`parts` w `projects`);
+- dane: część ma `partOf` i `partLabel`, projekt główny `parts` (`[{id, label}]`) i `partLabel`; `cardName` to tytuł
+  z karty. Wskazanie na nieistniejący projekt, na siebie albo na inną część jest brakiem karty, a projekt zostaje
+  zwykłym projektem.
 
 ## Klawisze
 
@@ -213,6 +252,7 @@ Wiersze pod tytułem `KARTA.md`, obok `- stan:`:
 | `- faza:` | pomysł, księga, budowa, wdrożenie, marketing, utrzymanie | faza wyliczona |
 | `- instagram:` | nazwa profilu, np. `@marka` (litery, cyfry, `.` i `_`) | bez sprawdzania profilu przy udostępnianiu |
 | `- klient:` | tak, nie | decyzja zbieracza, inaczej tak |
+| `- część projektu:` | folder projektu głównego, np. `company-audits` | samodzielny projekt |
 | `- próg:` | lekka, pełna | pełna dla projektu klienta, lekka dla własnego |
 | `- stan:` | aktywny, wstrzymany, zakończony, backlog | decyzja zbieracza, inaczej aktywny |
 

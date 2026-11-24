@@ -40,6 +40,12 @@ wysyła gałęzie na GitHub, usuwa kopię do kosza, gdy nic lokalnego nie zginie
 agenta albo budowaniem podglądu (opis w `dashboard/AGENCI.md`, „Kopia projektu i GitHub”). Karta i zadania zostają
 w IntegrateSystems (dowiązania w folderze projektu). Wartość, która nie jest `właściciel/repozytorium`, jest brakiem
 karty. Pole `- repozytorium:` zostaje wolnym opisem.
+`- część projektu: <projekt główny>`: ten projekt jest częścią innego (np. strona WWW projektu z integracjami).
+Wartość to folder projektu głównego (np. `company-audits`; pasuje też nazwa folderu jego karty). Część zachowuje
+swój folder, repozytorium, `ZADANIA.md` i agentów; panel i raport PM pokazują ją jako jeden projekt z projektem
+głównym, a jej zadania podpisują „Projekt · Część”. Nazwa części to tytuł jej karty (np. `# Strona WWW`; przedrostek
+z nazwą projektu głównego panel pomija). Wskazanie na nieistniejący projekt, na siebie albo na inną część jest
+brakiem karty (`partOf`, `partLabel`, `parts` w danych projektu; opis w `dashboard/README.md`, „Projekt z częściami”).
 
 Karta może mieć sekcję `## Pytania do właściciela` (lista `1. pytanie`, pod pytaniem `   Odpowiedź: …`); panel pokazuje ją jako sprawy do Ciebie.
 Termin odpowiedzi: wcięty wiersz `   termin: RRRR-MM-DD` pod pytaniem albo „do RRRR-MM-DD” w treści pytania.

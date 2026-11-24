@@ -62,6 +62,7 @@ def load(today):
         out["projects"].append(d["project"])
         for k in ("stages", "tasks", "campaigns"):
             out[k] += d[k]
+    projekt.link_parts(out["projects"], out["roots"])     # część projektu: nazwa „Główny · Część”
     for item in out["stages"] + out["tasks"]:
         item["date"] = day(item["date"])
     for t in out["tasks"]:
@@ -252,8 +253,14 @@ def facts(today=None, runs_dir=None):
     decisions = sorted(items, key=lambda x: (x[0]["priority"], x[0]["date"] or "9999", x[0]["title"]))
     top = [b for b, _ in sorted(decisions, key=lambda x: importance(x[0], x[1], key))[:TOP]]
     active = {p["id"] for p in d["projects"] if p.get("state") == "active"}
-    no_next = [p for p in d["projects"] if p["id"] in active and not any(
-        t["project"] == p["id"] and is_day(t["date"]) and t["date"] <= week for t in open_tasks)]
+    # projekt z częściami to jeden projekt: następny krok, lista projektów i braki liczone dla całości
+    group = {p["id"]: p.get("partOf") or p["id"] for p in d["projects"]}
+    members = {}
+    for p in d["projects"]:
+        members.setdefault(group[p["id"]], []).append(p)
+    no_next = [p for p in d["projects"] if not p.get("partOf") and any(m["id"] in active for m in members[p["id"]])
+               and not any(group.get(t["project"]) == p["id"] and is_day(t["date"]) and t["date"] <= week
+                           for t in open_tasks)]
     no_date = [s for s in d["stages"] if s["project"] in active and not is_day(s["date"])
                and not projekt.stage_done(s, d["tasks"])]
 
@@ -305,14 +312,21 @@ def facts(today=None, runs_dir=None):
 
     projects = []
     for p in d["projects"]:
-        mine = [t for t in d["tasks"] if t["project"] == p["id"] and t["kind"] != "publikacja"]
-        st = [s for s in d["stages"] if s["project"] == p["id"]]
+        if p.get("partOf"):
+            continue
+        ids = {m["id"] for m in members[p["id"]]}
+        mine = [t for t in d["tasks"] if t["project"] in ids and t["kind"] != "publikacja"]
+        st = [s for s in d["stages"] if s["project"] in ids]
         upcoming = sorted((s for s in st if s["state"] not in ("", "done")), key=lambda s: s["date"])
         worst = min((s["state"] for s in st), key=WORST.index, default="")
         projects.append({"id": p["id"], "name": p["name"], "priority": prio[p["id"]], "done": sum(1 for t in mine if t["state"] == "done"),
                          "total": len(mine), "state": worst, "next": stage_brief(upcoming[0]) if upcoming else None,
-                         "docsOk": p["docsOk"], "docsTotal": p["docsTotal"],
-                         "gaps": [{"file": x["file"], "gaps": x["gaps"]} for x in p["docs"] if x["status"] != "ok"]})
+                         "docsOk": sum(m["docsOk"] for m in members[p["id"]]),
+                         "docsTotal": sum(m["docsTotal"] for m in members[p["id"]]),
+                         "parts": [m["partLabel"] for m in members[p["id"]] if m.get("partOf")],
+                         "gaps": [{"file": (m["partLabel"] + ": " if m.get("partOf") else "") + x["file"],
+                                   "gaps": x["gaps"]} for m in members[p["id"]] for x in m["docs"]
+                                  if x["status"] != "ok"]})
     pubs = [t for t in open_tasks if t["kind"] == "publikacja" and is_day(t["date"]) and t["date"] <= week]
     counts = {"you": len(you) + len(questions), "late": sum(1 for t in open_tasks if late(t)),
               "risk": sum(1 for s in d["stages"] if s["state"] == "risk"),

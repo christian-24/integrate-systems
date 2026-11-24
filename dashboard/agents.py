@@ -1739,7 +1739,8 @@ class Manager:
             "takie zadanie czeka na zgodę właściciela w panelu.",
         ]
 
-    def project_chat_prompt(self, project, folder, cards, text):
+    def project_chat_prompt(self, project, folder, cards, text, parts=()):
+        """parts: [(nazwa części, folder karty części)] projektu z częściami (pole karty „część projektu:”)."""
         name = project.get("name") or project.get("id")
         today = datetime.date.today()
         lines = ["Rozmawiasz z właścicielem o projekcie „%s” (id %s). Dziś jest %s (%s)." % (
@@ -1751,6 +1752,10 @@ class Manager:
                  "- decyzje: %s" % os.path.join(cards, "DECYZJE.md"),
                  "- format wierszy: %s" % os.path.normpath(os.path.join(cards, "..", "..", "standard", "STANDARD.md")),
                  "- dokumenty projektu: %s" % folder,
+                 ] + ([
+                 "", "Projekt ma części z osobnymi plikami (tu możesz je czytać; zmiany w nich właściciel zleca "
+                 "w rozmowie o danej części):"] + ["- %s: %s" % (n, os.path.join(c, "ZADANIA.md")) for n, c in parts]
+                 if parts else []) + [
                  "", "Zasady:",
                  "- Rozmawiacie o zadaniach, postępie, terminach i o tym, co właściciel ma zrobić w najbliższych dniach "
                  "(zadania z „kto: ty”, filmy do nagrania dzień przed publikacją, publikacje). Krótko, prostym językiem po polsku.",
@@ -1811,7 +1816,9 @@ class Manager:
             self._chat_save()
         try:
             allow, deny, cards = self.project_chat_tools(folder)
-            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text)
+            parts = [(x.get("partLabel") or x["id"], os.path.dirname(os.path.realpath(os.path.join(index[x["id"]], "KARTA.md"))))
+                     for x in data["projects"] if x.get("partOf") == pid and x["id"] in index]
+            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text, parts)
             args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
             if self.model:
                 args += ["--model", self.model]
