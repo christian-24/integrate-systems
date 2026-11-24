@@ -1,5 +1,6 @@
-# Oprogramowani – strona WWW
+# Strona WWW
 
+- część projektu: company-audits
 - faza: budowa
 - klient: tak
 - próg: pełna

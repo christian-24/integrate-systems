@@ -91,12 +91,12 @@ class Wyglad(unittest.TestCase):
         self.assertNotIn("text-transform", rule)
         self.assertNotIn("letter-spacing", rule)
 
-    def test_jedna_nazwa_widoku_dla_ciebie(self):
+    def test_jedna_nazwa_spraw_dla_ciebie(self):
         self.assertNotIn("Wymaga Ciebie", self.html)
-        self.assertIn("ty:'Dla Ciebie'", self.html)
+        self.assertIn('"tytul":"Sprawy dla Ciebie"', self.html)
 
-    def test_okruszek_prowadzi_do_startu(self):
-        self.assertIn("""<a href="#start">Start</a>""", self.html)
+    def test_okruszek_prowadzi_do_asystenta(self):
+        self.assertIn("""<a href="#asystent">Asystent</a>""", self.html)
 
     def test_przejdz_do_tresci(self):
         self.assertIn('class="sk-skip"', self.html)

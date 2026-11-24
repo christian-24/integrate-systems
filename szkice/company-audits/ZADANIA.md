@@ -155,3 +155,6 @@ termin: 2026-12-18
   poprawka: no spoko a dasz to jako jpg abym wkleił w stronę ?
   zmiany: obrazy wizytówki na stronę (przód, tył i oba obok siebie): zrobione, ale w PNG; JPG: niezrobione, bo nie mam uprawnień do zamiany PNG na JPG; projekt wizytówki i pliki do druku: bez zmian
   następne: Usuń zwrot „Ty zajmujesz się firmą” z nagłówka strony oprogramowani.com i dopasuj hasło do wizytówki | kto: claude | kiedy: 2026-11-25
+- [ ] Zaplanuj filmy na grudzień według podziału z karty | kto: claude | kiedy: 2026-11-24
+  cel: dopisz do harmonogramu kampanii projektu 4–6 publikacji z filmem na grudzień (tytuł ze słowem „film”, kanał np. reels, linkedin), tematy z kampanii i dokumentów marketingu; podział filmów jak w polu karty „nagrywa: ai 50, ty 30, panel 20” (panel nagrywa ekran strony, AI: film z gotowych poleceń, Ty: nagranie telefonem tam, gdzie trzeba pokazać prawdziwą rzecz)
+  gotowe gdy: w kampanii są nowe wiersze publikacji z filmem z datami w grudniu, kto: ty, każda z kanałem; scenariuszy nie zakładasz (panel przygotuje je sam 7 dni przed publikacją według podziału)

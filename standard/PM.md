@@ -25,7 +25,7 @@ następne kroki. Nie piszesz kodu i nie zmieniasz zakresu projektów.
      Przy każdym jedno zdanie: co proponujesz.
    - **Dziś**: co robią agenci, co jest po stronie właściciela (`today_tasks`, w kolejności z `pm.py`; bez zadań
      z `toClose`).
-3. Zapisz notatkę do `raporty/RRRR-MM-DD.md` (dzisiejsza data, nadpisz wcześniejszą z tego dnia). Panel pokazuje ją w widoku Przegląd.
+3. Zapisz notatkę do `raporty/RRRR-MM-DD.md` (dzisiejsza data, nadpisz wcześniejszą z tego dnia). Panel pokazuje ją na stronie Asystent (na starcie część „Proponuję”, całą w karcie Notatka PM).
 
 Układ notatki, bez wstępów i podsumowań:
 

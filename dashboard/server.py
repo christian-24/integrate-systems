@@ -896,7 +896,24 @@ def script_info(pid, day):
                      "post": os.path.basename(folder) if folder else "",
                      "postReady": bool(folder) and os.path.isfile(os.path.join(folder, "post.md")),
                      "filmOwner": bool(proj.get("filmOwner")), "title": scenariusz.pub_title(pub),
+                     "way": film_way(proj, day, scenariusz.parse(text) if text is not None else None),
                      "task": pub["id"], "recDay": scenariusz.rec_day(day)}
+
+
+def film_way(proj, day, script=None):
+    """Kto robi film: ty (nagrywasz), ai (robisz w AI), panel (studio). Z pliku scenariusza, z podziału karty
+    zapisanego przez Automat (stan.json filmWays) albo z karty."""
+    if script and script.get("way"):
+        return script["way"]
+    try:
+        way = (get_agents()._state.get("filmWays") or {}).get("%s|%s" % (proj["id"], day))
+    except Exception:
+        way = None
+    if way in scenariusz.WAYS:
+        return way
+    mix = proj.get("filmMix") or {}
+    return "ty" if proj.get("filmOwner") and (len(mix) <= 1 or "ty" in mix) and not mix.get("ai") else \
+        (max(mix, key=mix.get) if mix else "panel")
 
 
 def _script_run(title, pid):
@@ -1520,7 +1537,7 @@ FILM_TASK = re.compile(r"^(?:nagra[jć]|obejrzyj)\s+film", re.I)    # „Obejrzy
 
 
 def film_link(task, tasks, index):
-    """Folder posta, którego film robi zadanie „Nagraj film …” (jedno źródło dla panelu: Dziś, Blokady, szuflada):
+    """Folder posta, którego film robi zadanie „Nagraj film …” (jedno źródło dla panelu: sprawy dla Ciebie, Blokady, szuflada):
     materiał: w posty/<post>/ albo publikacja z kanałem, która czeka na to zadanie (po:), z postem na swój dzień.
     None: zadanie nie jest powiązane z postem."""
     if not FILM_TASK.match(task.get("title") or "") or task.get("channel"):
@@ -2027,7 +2044,7 @@ def connect_calendar():
         threading.Thread(target=work, daemon=True).start()
 
 
-# ---------- „Teraz” w Przeglądzie: filmy, rozmowy o zadaniach, zamknięte zadania, zakończone uruchomienia ----------
+# ---------- „Teraz” w Agentach: filmy, rozmowy o zadaniach, zamknięte zadania, zakończone uruchomienia ----------
 ACTIVITY_TTL = 5                      # s: foldery postów czytane najwyżej co tyle (panel pyta co 3 s, gdy coś trwa)
 RECENT_HOURS = 24                     # „Ostatnio zrobione”
 CLOSED_KEEP = 100
