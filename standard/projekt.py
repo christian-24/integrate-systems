@@ -820,7 +820,7 @@ def read_project(path, pid=None, decision=None):
                "priority": fields["priority"], "instagram": fields["instagram"], "facebook": fields["facebook"],
                "linkedin": fields["linkedin"], "tiktok": fields["tiktok"], "filmOwner": fields["filmOwner"],
                "site": fields["site"], "github": fields["github"], "githubBranch": fields["githubBranch"],
-               "questions": questions}
+               "questions": questions, "partOfRaw": fields["partOf"]}
     link_after(tasks)
     project["nextStep"] = next_step(tasks)
     if fields["phase"]:
@@ -829,6 +829,80 @@ def read_project(path, pid=None, decision=None):
         project["phase"] = compute_phase(project["state"], karta_doc, stages, tasks, campaigns)
         project["phaseSource"] = "wyliczona"
     return {"project": project, "stages": stages, "tasks": tasks, "campaigns": campaigns}
+
+
+PART_SEP = " · "
+
+
+def _cap(text):
+    return text[:1].upper() + text[1:]
+
+
+def link_parts(projects, folders=None):
+    """Projekty z częściami (pole karty „- część projektu: <projekt główny>”): zmienia listę projektów na miejscu.
+
+    Projekt główny wskazujemy po id (folder projektu), po nazwie folderu projektu albo folderu jego karty (folders:
+    {id: folder}). Część dostaje "partOf" (id głównego), "partLabel" (nazwa części: tytuł karty bez nazwy projektu
+    głównego) i "name" w postaci „Główny · Część”; projekt główny "parts" [{"id", "label"}], "partLabel" (nazwa jego
+    własnej części: tekst w nawiasie tytułu, np. „Oprogramowani (integracje ERP)” → „Integracje ERP”, inaczej
+    „Główna część”) i "name" bez nawiasu. "cardName": tytuł z karty bez zmian. Projekt bez głównego, wskazanie
+    na siebie albo na inną część: zwykły projekt i błąd w brakach karty. Zwraca {id części: id głównego}.
+    """
+    folders = folders or {}
+    by_id = {p["id"]: p for p in projects}
+    names = {}
+    for pid, folder in folders.items():
+        for path in (folder, os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))):
+            names.setdefault(slug(os.path.basename(path.rstrip(os.sep))), pid)
+    out = {}
+    for p in projects:
+        p["cardName"] = p.get("cardName") or p["name"]
+        p.setdefault("partOf", "")
+        p.setdefault("parts", [])
+        ref = p.pop("partOfRaw", "") or ""
+        if not ref:
+            continue
+        main = ref if ref in by_id else names.get(ref, "")
+        if main and main != p["id"]:
+            out[p["id"]] = main
+        else:
+            err = "część projektu: %s (%s)" % (ref, "wskazuje ten sam projekt" if main else "nie ma takiego projektu")
+            _card_gap(p, err)
+    for pid, main in list(out.items()):
+        if main in out:                                  # część części: bez zagnieżdżania
+            _card_gap(by_id[pid], "część projektu: %s jest częścią innego projektu" % main)
+            del out[pid]
+    for pid, main in out.items():
+        part, head = by_id[pid], by_id[main]
+        m = re.match(r"^(.+?)\s*\((.+)\)\s*$", head["cardName"])
+        base = m.group(1).strip() if m else head["cardName"]
+        if not head["parts"]:
+            head["name"] = base
+            head["partLabel"] = _cap(m.group(2).strip()) if m else "Główna część"
+        label = part["cardName"]
+        for pre in (base, head["cardName"]):
+            mm = re.match(r"^%s\s*[–—:·-]\s*(.+)$" % re.escape(pre), label)
+            if mm:
+                label = mm.group(1).strip()
+                break
+        part["partOf"], part["partLabel"] = main, _cap(label)
+        part["name"] = base + PART_SEP + part["partLabel"]
+        head["parts"].append({"id": pid, "label": part["partLabel"]})
+    return out
+
+
+def _card_gap(p, err):
+    for key in ("docs", "book"):
+        for d in p.get(key) or []:
+            if d.get("key") == "karta":
+                if err not in d["gaps"]:
+                    d["gaps"].append(err)
+                if d["status"] == "ok":
+                    d["status"] = "gaps"
+                    if key == "docs":
+                        p["docsOk"] -= 1
+                    else:
+                        p["bookOk"] -= 1
 
 
 def date_key(value, today=None):
@@ -945,7 +1019,11 @@ def card_fields(meta, decision=None):
     github_branch = raw if GIT_BRANCH.match(raw) and not raw.endswith((".", "/", ".lock")) else ""
     if raw and not github_branch:
         errors.append("github gałąź: %s (nazwa gałęzi bez spacji)" % raw[:60])
-    return {"github": github, "githubBranch": github_branch, "state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
+    raw = meta.get("część projektu", meta.get("czesc projektu", "")).strip().strip("`").strip()
+    part_of = slug(raw) if re.search(r"[A-Za-z0-9]", raw) else ""   # projekt główny, którego ten jest częścią
+    if raw and not part_of:
+        errors.append("część projektu: %s (folder projektu głównego, np. company-audits)" % raw[:60])
+    return {"partOf": part_of, "github": github, "githubBranch": github_branch, "state": state, "phase": phase, "client": client, "threshold": threshold, "alias": alias,
             "priority": priority, "instagram": instagram.lower(), "facebook": pages["facebook"],
             "linkedin": pages["linkedin"], "tiktok": tiktok.lower(), "filmOwner": film_owner, "site": site, "errors": errors}
 

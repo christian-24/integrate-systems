@@ -35,16 +35,17 @@ class PoleWDanych(Baza):
         return server.build_data()["projects"][0]["git"]
 
     def test_brak_repo(self):
-        self.assertEqual(self.project(), {"repo": False, "remote": "", "url": "", "host": "", "unpushed": 0})
+        self.assertEqual(self.project(), {"repo": False, "remote": "", "url": "", "host": "", "unpushed": 0,
+                                          "branch": ""})
 
     def test_repo_z_github_i_niewypchniete(self):
-        self.git("init", "-q")
+        self.git("init", "-q", "-b", "glowna")
         self.git("remote", "add", "origin", "https://x:ghp_TAJNY@github.com/firma/repo.git")
         self.git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "a")
         server._git_state["value"].pop(self.folder, None)
         g = self.project()
         self.assertEqual(g, {"repo": True, "remote": "github", "url": "https://github.com/firma/repo",
-                             "host": "github.com", "unpushed": 1})
+                             "host": "github.com", "unpushed": 1, "branch": "glowna"})
 
 
 if __name__ == "__main__":

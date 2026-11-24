@@ -6,6 +6,8 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /podglad               ta sama strona z samymi danymi przykładowymi
   GET  /wejscie               strona hasła dla połączeń spoza tego komputera (POST: pole haslo)
   GET  /api/data              projekty, etapy, zadania, kampanie, kalendarz i blok agents
+                              (projekt z częściami, pole karty „część projektu:”: partOf, partLabel, parts;
+                              git: repo, remote, url, host, unpushed, branch)
   POST /api/task/update       zmienia pola zadania w ZADANIA.md albo w pliku kampanii
   POST /api/task/state        zmienia sam stan zadania (z "count": wynik licznika do kampanii)
   POST /api/task/count        dopisuje wynik licznika zadania do kampanii projektu („Wyniki i wnioski”)
@@ -194,7 +196,8 @@ def short_path(path):
 
 
 def load_projects(resolve=True):
-    """Czyta wszystkie projekty w standardzie. Zwraca (dane dla strony, {id projektu: folder})."""
+    """Czyta wszystkie projekty w standardzie. Zwraca (dane dla strony, {id projektu: folder}).
+    Części projektu (pole karty „część projektu:”) zostają osobnymi projektami z partOf (projekt.link_parts)."""
     source, folders = project_folders()
     out = {"projects": [], "stages": [], "tasks": [], "campaigns": [], "projectsSource": source}
     index = {}
@@ -209,6 +212,7 @@ def load_projects(resolve=True):
         out["projects"].append(d["project"])
         for k in ("stages", "tasks", "campaigns"):
             out[k] += d[k]
+    projekt.link_parts(out["projects"], index)
     if resolve:
         for item in out["stages"] + out["tasks"]:
             item["date"] = resolve_date(item["date"])
@@ -2571,17 +2575,30 @@ def git_link(raw):
     return "inny", "", host
 
 
-def _origin_url(folder):
-    """remote.origin.url z .git/config bez wołania gita (działa też przy innym właścicielu folderu)."""
+def _git_dirs(folder):
+    """(katalog .git kopii, wspólny katalog .git) bez wołania gita; worktree i submoduł mają plik .git z „gitdir:”."""
     gitdir = os.path.join(folder, ".git")
-    if os.path.isfile(gitdir):                         # worktree albo submoduł: "gitdir: …"
+    if os.path.isfile(gitdir):
         line = (projekt.read(gitdir) or "").strip()
         if not line.startswith("gitdir:"):
-            return ""
+            return "", ""
         gitdir = os.path.normpath(os.path.join(folder, line[7:].strip()))
         common = (projekt.read(os.path.join(gitdir, "commondir")) or "").strip()
-        if common:
-            gitdir = os.path.normpath(os.path.join(gitdir, common))
+        return gitdir, os.path.normpath(os.path.join(gitdir, common)) if common else gitdir
+    return gitdir, gitdir
+
+
+def _head_branch(folder):
+    """Bieżąca gałąź z .git/HEAD (bez wołania gita); "" przy odłączonym HEAD albo bez repozytorium."""
+    head = (projekt.read(os.path.join(_git_dirs(folder)[0], "HEAD")) or "").strip() if _git_dirs(folder)[0] else ""
+    return head[16:] if head.startswith("ref: refs/heads/") else ""
+
+
+def _origin_url(folder):
+    """remote.origin.url z .git/config bez wołania gita (działa też przy innym właścicielu folderu)."""
+    gitdir = _git_dirs(folder)[1]
+    if not gitdir:
+        return ""
     section = False
     for line in (projekt.read(os.path.join(gitdir, "config")) or "").splitlines():
         s = line.strip()
@@ -2598,13 +2615,14 @@ def project_git(folder):
     """{repo, remote, url, host, unpushed}: folder projektu jako repozytorium git (własne .git, nie folder
     nadrzędny). unpushed: commity gałęzi lokalnych, których nie ma w żadnej gałęzi zdalnej (bez git fetch)."""
     if not os.path.exists(os.path.join(folder, ".git")):
-        return {"repo": False, "remote": "", "url": "", "host": "", "unpushed": 0}
+        return {"repo": False, "remote": "", "url": "", "host": "", "unpushed": 0, "branch": ""}
     remote, url, host = git_link(_origin_url(folder))
     unpushed = 0
     if remote:
         code, n = _git_out(folder, "rev-list", "--count", "--branches", "--not", "--remotes", timeout=3)
         unpushed = int(n) if code == 0 and n.isdigit() else 0
-    return {"repo": True, "remote": remote, "url": url, "host": host, "unpushed": unpushed}
+    return {"repo": True, "remote": remote, "url": url, "host": host, "unpushed": unpushed,
+            "branch": _head_branch(folder)}
 
 
 GIT_TTL = 120                         # s: stan git projektów odświeżany w tle, /api/data bierze ostatni wynik
