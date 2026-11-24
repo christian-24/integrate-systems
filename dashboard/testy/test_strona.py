@@ -219,7 +219,9 @@ class Uwagi(Strona):
         self.assertIn(" 390 ", call["prompt"])
         self.assertIn("nie pushuj", call["prompt"])
         tools = call["argv"][call["argv"].index("--allowedTools") + 1]
-        self.assertIn("Bash(npm run build:*)", tools)
+        self.assertNotIn("Bash(npm", tools)            # budowanie z karty bez npm: bez reguł npm i bez ogólnego Bash
+        self.assertNotIn("zbuduj.py", tools)
+        self.assertIn("panel nie dał do niego uprawnienia", call["prompt"])
         self.assertIn("zrzut-strony.py:*)", tools)
         status, _, page = self.request("GET", self.info()["url"])
         self.assertIn("Zmiana agenta", page)                     # podgląd zbudowany po pracy agenta

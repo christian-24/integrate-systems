@@ -136,7 +136,8 @@ Po restarcie serwera uruchomienia `queued` i `running` dostają stan `stopped`.
 
 ### Polecenia
 
-Prompt idzie przez stdin (bez problemów z cudzysłowami na Windows). Katalog roboczy: folder projektu, a dla zadania
+Prompt idzie przez stdin (bez problemów z cudzysłowami na Windows). Zadanie Claude dostaje go jako pierwszą wiadomość
+`--input-format stream-json` i stdin zostaje otwarty do zdarzenia `result` (niżej, „Praca na żywo”). Katalog roboczy: folder projektu, a dla zadania
 w repozytorium git katalog roboczy gałęzi uruchomienia (niżej). Przy `PANEL_AGENT_USER` każde polecenie agenta
 (zadanie, raport PM, plan, test połączenia, odczyt stanu logowania, logowanie przez panel) ma przedrostek
 `["sudo", "-n", "-u", PANEL_AGENT_USER, "--"]`; bez zmiennej jak dotąd. Test połączenia i plan dnia działają wtedy
@@ -144,7 +145,7 @@ w katalogu tymczasowym systemu (agent nie musi mieć dostępu do `uruchomienia/`
 
 | Rodzaj | Polecenie |
 |---|---|
-| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M] [--add-dir <folder karty>] --allowedTools "<lista>"`; w gałęzi uruchomienia `--add-dir` dla folderów `KARTA.md`, `ZADANIA.md`, `DECYZJE.md` i pliku zadania |
+| task, Claude | `claude -p --output-format stream-json --verbose --permission-mode acceptEdits [--model M] --input-format stream-json [--add-dir <folder karty>] --allowedTools "<lista>"`; w gałęzi uruchomienia `--add-dir` dla folderów `KARTA.md`, `ZADANIA.md`, `DECYZJE.md` i pliku zadania |
 | pm | w folderze IntegrateSystems: jak wyżej oraz `--agent pm --allowedTools "Bash(python3 standard/pm.py:*),Bash(python standard/pm.py:*),Read,Write,Edit,Glob,Grep"` |
 | check | `claude -p --output-format stream-json --verbose --model haiku`, prompt „Odpowiedz jednym słowem: ok” |
 | task, Codex | `codex exec --json --sandbox workspace-write --skip-git-repo-check -C <folder> -`; w gałęzi uruchomienia `-C <katalog roboczy> --add-dir <folder> … -` |
@@ -228,6 +229,11 @@ repozytorium to nie jest sam folder IntegrateSystems:
    `branch`, `base`, `baseCommit`, `changes`, `commits` i usuwa katalog roboczy. Gałąź zostaje. Gdy agent przełączył
    katalog na własną gałąź, rekord wskazuje tę gałąź.
 4. Uruchomienie przerwane restartem serwera: to samo przy starcie serwera.
+5. **Ponowne uruchomienie zadania** (np. `[!]` → `[ ]` z `poprawka:`) zaczyna od gałęzi poprzedniej pracy: najpierw
+   gałąź z pola `gałąź:` zadania, potem gałęzie wcześniejszych uruchomień tego zadania (najnowsze najpierw). Bierze
+   pierwszą, która istnieje i ma commity spoza bieżącego `HEAD` (`git worktree add <katalog> <gałąź>`, bez nowej
+   gałęzi); `baseCommit` to punkt rozejścia (`git merge-base`), więc `changes` obejmuje całą gałąź. Prompt mówi
+   agentowi, że gałąź ma już jego wcześniejszą pracę. Gałąź scalona albo bez commitów: nowa gałąź jak w punkcie 1.
 
 Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty) i bez podpisywania commitów.
 Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w folderze projektu, krok w rekordzie to opisuje.
@@ -431,8 +437,9 @@ kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie 
   robi „zrób to”, „wykonaj” albo „wykonaj to” na końcu wiadomości (`EXEC_END`). `POST /api/task/chat` z
   `"execute": true`: bez modelu rozmowy panel zapisuje wiadomość pod zadaniem jako `poprawka:` (najwyżej 1000 znaków),
   zadanie `[x]`, `[~]` albo `[!]` wraca do `[ ]` (zdejmuje `blokada:` i `wymaga: odbiór`, `wymaga: zgoda` zostaje),
-  potem `run_task`. Odpowiedź 200 `{"status": wiadomość panelu}`. Zadanie właściciela, publikacja i zadanie, nad którym
-  agent już pracuje: plik bez zmian, tylko komunikat.
+  potem `run_task`. Odpowiedź 200 `{"status": wiadomość panelu}`. Zadanie właściciela i publikacja: plik bez zmian,
+  tylko komunikat. Zadanie, nad którym agent pracuje albo czeka w kolejce: wiadomość do tego uruchomienia
+  („Praca na żywo” niżej).
 - **Rozmowa o projekcie** i **Asystent.** Prośba o pracę („zrób”, „przygotuj”, „napraw”…) to zadanie agenta w
   `ZADANIA.md` (`- [ ] Tytuł | kto: claude | kiedy: <dziś>` z `cel:` i `gotowe gdy:`; pasujące otwarte zadanie zamiast
   nowego) i na końcu odpowiedzi wiersz działania `Uruchom: <id projektu> | <dokładny tytuł>` (`take_run_lines`,
@@ -447,6 +454,44 @@ kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie 
   błąd…), liczone przy każdym odczycie; panel odświeża rozmowę co 5 s, dopóki coś jest w kolejce albo w toku.
 - Zasady promptów rozmów mają wersję (`CHAT_RULES_V`); rozmowa zapisana z inną wersją zaczyna nową sesję z pełnym
   promptem, żeby dostała nowe zasady.
+
+### Praca na żywo (wiadomość w trakcie, podgląd przebiegu)
+
+**Wiadomość do pracującego agenta** (`Manager.live_message`). W rozmowie o zadaniu, gdy agent pracuje albo czeka
+w kolejce, formularz ma „Wyślij do agenta” (Enter; „Tylko zapytaj” pyta jak dotąd, bez zmian). Droga jest ta sama co
+„Wyślij i wykonaj” (`POST /api/task/chat` z `"execute": true`); panel:
+
+1. zawsze dopisuje polecenie do wiersza `poprawka:` zadania (`stara / nowa`, najwyżej 1500 znaków, znaczniki
+   zostają), żeby następne uruchomienie też je znało; rekord dostaje nowe `fix` (Automat nie powtarza przez to
+   tego uruchomienia);
+2. **Claude w toku:** zapisuje na stdin wiersz `{"type":"user","message":{"role":"user","content":"…"}}`. Claude
+   Code dołącza go do bieżącej tury przy następnym kroku (sprawdzone na CLI 2.1: jedno zdarzenie `result`, agent
+   uwzględnił wiadomość). Wiadomość panelu: „Przekazano agentowi.”; w przebiegu wiersz „Ty: …”. Wiadomość wysłana
+   przed startem procesu idzie zaraz po poleceniu;
+3. **po zdarzeniu `result`** panel zamyka stdin (CLI kończy pracę). Wiadomość, której agent nie odczytał (po jej
+   wysłaniu nie było już wyniku narzędzia i kolejnej odpowiedzi), dostaje 20 s (`GRACE`) na nową turę; bez niej
+   i dla wiadomości wysłanej już po `result`: „Agent skończył, polecenie zapisane jako poprawka. Zadanie uruchomi się
+   ponownie z tym poleceniem.” Po zakończeniu panel robi to samo co „Wyślij i wykonaj” (przy zadaniu strony po
+   scaleniu i podglądzie). Po „Zatrzymaj” bez ponownego uruchomienia;
+4. **zadanie w kolejce:** polecenie trafia do polecenia startowego („polecenie dołączone do zadania”);
+5. **Codex** (`codex exec` nie przyjmuje wejścia w trakcie): tylko zapis poprawki i przycisk „Zatrzymaj i uruchom
+   z poprawką” (`POST /api/agent/restart {"id"}`: zatrzymanie, potem `launch_task`).
+
+Czaty bez zmian. „Zatrzymaj”, limit czasu i bezpiecznik zużycia działają jak dotąd (zabijają grupę procesów).
+
+**Uwaga z zakładki Strona** („Wyślij agentowi”) przy uruchomieniu zadania strony tego projektu w kolejce albo w toku
+idzie tą samą drogą do tego uruchomienia (tekst „Uwaga do strony: … (podstrona, widok, element)”), bez nowego
+zadania; uwaga dostaje tytuł tego zadania i jego wynik.
+
+**Podgląd przebiegu.** Rekord uruchomienia ma pole `log` (ostatnie 200 wierszy `{"n", "t", "k", "text"}`; `k`: `agent`
+pełna wypowiedź do 4000 znaków, `narzedzie` z krótkim argumentem, `odmowa` (wynik narzędzia z odmową uprawnień
+i `permission_denials` z wyniku), `ty`, `panel`) i licznik `logN`. Rekord zapisuje się w trakcie najrzadziej co 10 s;
+osobnych plików logów nie ma. `/api/data` ma tylko `logN` i `takesMsg` (agent przyjmie wiadomość na stdin).
+`GET /api/agent/przebieg?id=&od=<n>` oddaje wiersze o numerze większym niż `n`, stan i najnowsze zrzuty strony;
+`GET /api/agent/zrzut?id=&plik=telefon.png` oddaje PNG z `.zrzuty/` katalogu roboczego tego uruchomienia (nazwa
+`[\w.-]+.png`, bez dowiązań, bez wyjścia poza katalog, sygnatura PNG, do 15 MB). W szczegółach zadania (blok „Agent
+pracuje”) i w podglądzie uruchomienia lista odświeża się co 3 s; przewijanie przyklejone do dołu, dopóki właściciel
+nie przewinie w górę („Najnowsze” wraca); lista ma fokus z klawiatury (strzałki, End).
 
 ### Odbiór pracy (wersje wyniku, znaczniki)
 
@@ -547,8 +592,15 @@ w panelu zakładkę „Strona”. Kod: `dashboard/strona.py` (`Manager.site`).
    oraz: kod w folderze strony; budowanie (`npm ci --prefix …`, `npm run build --prefix … -- --base=./` albo
    polecenie z karty); zrzuty ekranu `zrzut-strony.py <wynik> 390|1440 <katalog roboczy>/.zrzuty/….png`, obejrzane
    narzędziem Read i porównane z celem (najwyżej 3 rundy); bez publikacji, wdrożenia i push; koniec `[x]` bez
-   `wymaga: odbiór` (ocena w podglądzie) albo `[!]`. `--allowedTools` dostaje dodatkowo `Bash(npm ci:*)`,
-   `Bash(npm install:*)`, `Bash(npm run build:*)` i `Bash(<polecenie zrzutu>:*)`. Polecenie zrzutu: `PANEL_ZRZUT`
+   `wymaga: odbiór` (ocena w podglądzie) albo `[!]`. `--allowedTools` dostaje dodatkowo `Bash(<polecenie zrzutu>:*)`
+   i reguły budowania: bez `strona build:` `Bash(npm ci)`, `Bash(npm install)`, `Bash(npm run build)` z wariantami
+   `:*`; z `strona build:` (`strona.build_rules`) każdy człon `npm ci`, `npm install` i `npm run <skrypt>` (także
+   z `--prefix folder` i `-- --base=./`) dostaje regułę dokładną i z `:*`, np. `npm ci && npm run build:panel` →
+   `Bash(npm ci)`, `Bash(npm ci:*)`, `Bash(npm run build:panel)`, `Bash(npm run build:panel:*)`. Claude Code sprawdza
+   każdy człon `&&` osobno (sprawdzone na CLI 2.1: `cd <folder strony> && npm ci && npm run build:panel` przechodzi,
+   `npm run build` przy regule `build:panel` nie; stara reguła `Bash(npm run build:*)` nie przepuszczała
+   `npm run build:panel`). Inne człony (`cd`, `npx`, potoki, zmienne, `npm install <pakiet>`) nie dostają reguł;
+   polecenie dla agenta podaje dokładnie dozwolone polecenia i każe pominięte opisać w `zostało:`. Polecenie zrzutu: `PANEL_ZRZUT`
    albo przy `PANEL_AGENT_USER` `/home/agent/narzedzia/pw/bin/python /usr/local/lib/integrate/zrzut-strony.py`
    (Python agenta z Playwright), bez niego `uruchom/serwer/zrzut-strony.py` (Python filmu albo `python3`).
    `.git/info/exclude` repozytorium dostaje `.zrzuty/`, `node_modules/` i `/<folder strony>/<wynik>/`, więc te
@@ -626,3 +678,8 @@ Podgląd strony (pola karty, budowanie atrapą bez Node.js, `/podglad/`, uwaga �
 koncepcja, zrzut-strony.py pomijany bez Playwright): `testy/test_strona.py` (atrapa w trybach `strona`,
 `strona-bez-zmian`). `GET /api/strona?project=`: `site`, `build` (`state` ok|building|error, `at`, `error`, `log`,
 `version`), `url` (pusty bez podglądu), `notes`, `docs`, `widths`.
+Praca na żywo (wiadomość na stdin, zamknięcie stdin po `result`, wiadomość po `result` jako poprawka i ponowne
+uruchomienie, Zatrzymaj, bezpiecznik, kolejka, Codex i „Zatrzymaj i uruchom z poprawką”, przebieg i jego limity,
+zrzuty bez wyjścia poza `.zrzuty/`, uwaga strony do pracującego agenta, reguły z `strona build:`, start od gałęzi
+poprzedniego uruchomienia i z pola `gałąź:`): `testy/test_na_zywo.py` (atrapa w trybach `na-zywo`, `ignoruje`,
+`po-wyniku`, `odmowa-w-trakcie`, `dlugi-tekst`, `zrzuty`, `wolno`).

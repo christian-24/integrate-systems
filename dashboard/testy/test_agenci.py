@@ -61,7 +61,8 @@ class Zadanie(Baza):
         self.assertEqual(rec["state"], "done")
         call = self.calls()[-1]
         self.assertEqual(call["argv"], ["-p", "--output-format", "stream-json", "--verbose",
-                                        "--permission-mode", "acceptEdits", "--allowedTools", agents.TASK_TOOLS,
+                                        "--permission-mode", "acceptEdits", "--input-format", "stream-json",
+                                        "--allowedTools", agents.TASK_TOOLS,
                                         "--disallowedTools", agents.RUN_DENY, "--strict-mcp-config"])
         tools = agents.TASK_TOOLS.split(",")                             # bez push i bez sieci
         self.assertIn("Bash(git commit:*)", tools)

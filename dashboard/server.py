@@ -19,6 +19,9 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/pm          uruchamia raport PM
   POST /api/agent/check       test połączenia z Claude Code albo Codex
   POST /api/agent/stop        zatrzymuje uruchomienie albo zdejmuje je z kolejki
+  POST /api/agent/restart     „Zatrzymaj i uruchom z poprawką”: zatrzymuje zadanie i uruchamia je ponownie
+  GET  /api/agent/przebieg    przebieg uruchomienia na żywo (?id=&od=numer ostatniego wiersza) i zrzuty strony
+  GET  /api/agent/zrzut       zrzut PNG z .zrzuty/ katalogu roboczego uruchomienia (?id=&plik=telefon.png)
   POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików);
                               "execute": true („Wyślij i wykonaj”): polecenie pod zadaniem (poprawka:) i uruchomienie agenta
   GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
@@ -1896,6 +1899,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/wdroz": lambda b: start_deploy(b),
           "/api/agent/check": lambda b: get_agents().run_check(b.get("tool", "claude")),
           "/api/agent/stop": lambda b: get_agents().stop(b.get("id", "")),
+          "/api/agent/restart": lambda b: get_agents().restart_run(b.get("id", "")),
           "/api/film/nagraj": record_film,
           "/api/film/konto": film_account,
           "/api/post/popraw": fix_post,
@@ -3648,6 +3652,18 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, data_cached(), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if path == "/api/agent/przebieg":          # przebieg uruchomienia na żywo (wiersze po numerze od=)
+            qs = parse_qs(url.query)
+            code, err, extra = get_agents().run_log((qs.get("id") or [""])[0], (qs.get("od") or ["0"])[0])
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8", [("Cache-Control", "no-store")])
+        if path == "/api/agent/zrzut":             # zrzut PNG z .zrzuty/ katalogu roboczego uruchomienia strony
+            qs = parse_qs(url.query)
+            code, body = get_agents().shot_file((qs.get("id") or [""])[0], (qs.get("plik") or [""])[0])
+            if code != 200:
+                return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+            return self._send(200, body, "image/png", [("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff"),
+                                                       ("Content-Disposition", "inline")])
         if path == "/api/agent/diff":
             qs = parse_qs(url.query)
             code, text = get_agents().diff((qs.get("id") or [""])[0], (qs.get("project") or [""])[0],

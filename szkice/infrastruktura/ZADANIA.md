@@ -104,18 +104,59 @@
 ## Etap: Konektory agentów
 termin: 2026-12-05
 
-- [ ] Sprawdź konektory konta Claude w agentach na serwerze | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
+- [x] Sprawdź konektory konta Claude w agentach na serwerze | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
   cel: wiadomo, czy konektory z claude.ai (Google Drive, Notion) działają w uruchomieniach agentów na serwerze i w sesji „Rozwój panelu”, czy potrzebna jest własna konfiguracja (MCP, rclone)
   gotowe gdy: w szczegółach zadania: co działa, jak ograniczyć konektor do jednego projektu, czy da się wymusić tylko odczyt
-- [ ] Zaproponuj konektory dla każdego projektu | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
+  Co działa (stan 2026-11-24, z kodu panelu, konfiguracji konta agenta i dokumentacji Claude Code):
+  - Uruchomienia z panelu (zadania, raport PM, rozmowy, Asystent): konektorów konta nie ma. Panel od 2026-11-23 startuje je z `--strict-mcp-config` (`dashboard/agents.py`); to uruchomienie też nie dostało żadnego narzędzia konektora.
+  - Sesja „Rozwój panelu” (Remote Control, logowanie konta agenta): Claude Code sam pobiera konektory z claude.ai, bez ograniczeń. Na koncie były dotąd łączone: Claude Docs, PubMed, Atlassian, Three.js 3D Viewer, Canva. Google Drive i Notion nie były łączone, więc dziś nie działają nigdzie.
+  - Konektory konta wymagają logowania subskrypcji (`claude auth login`). Z tokenem z `claude setup-token` (`CLAUDE_CODE_OAUTH_TOKEN`) nie ładują się wcale.
+  - Google Drive przez rclone jest już w repozytorium (`dashboard/drive.py`, `uruchom/serwer/drive@.service`): osobne połączenie na projekt, montowane w `media/drive` karty. Żaden projekt nie ma jeszcze połączenia.
+  Ograniczenie do jednego projektu:
+  - Konektor konta jest wspólny dla całego konta; claude.ai nie przypisuje go do folderu. Po stronie serwera da się go tylko wyłączać: wszystkie (`disableClaudeAiConnectors: true` w `.claude/settings.json` projektu albo `ENABLE_CLAUDEAI_MCP_SERVERS=false`), pojedynczo (`deniedMcpServers` z nazwą, np. `claude.ai Notion`).
+  - Pewna droga: własna konfiguracja na projekt. Panel zostawia `--strict-mcp-config` i dokłada `--mcp-config <plik projektu>` tylko tam, gdzie karta ma wpis. Projekt bez wpisu nie ma konektora (to jest test z zadania „Dodaj pole konektorów do karty i panelu”).
+  - Drive: rclone już działa na projekt (`drive-<projekt>`, `root_folder_id` = jeden folder).
+  Tylko odczyt:
+  - Drive: tak, twardo. rclone loguje z zakresem `drive.readonly` i montuje z `--read-only`; token leży u użytkownika `panel`, agent go nie czyta.
+  - Notion: tak, twardo, ale tylko przez własną integrację Notion (uprawnienie „Read content”, udostępnione wybrane strony) podaną w `--mcp-config`. Konektor Notion z claude.ai ma pełny dostęp konta do odczytu i zapisu.
+  - Konektor konta: tylko miękko, regułami Claude Code. `--allowedTools` z nazwami narzędzi odczytu (`mcp__claude_ai_<konektor>__<narzędzie>`) i `--disallowedTools` dla zapisu; zabronione wygrywa z dozwolonym, a w uruchomieniu bez okna narzędzie spoza listy jest odrzucane. Token konektora dalej pozwala na zapis, a zakresu do folderu nie ma.
+  wynik: Ustalenia powyżej. Konektory konta nie działają w uruchomieniach z panelu (celowo wyłączone), działają tylko w sesji „Rozwój panelu”; Google Drive i Notion nie są podłączone na koncie. Zalecenie zapisane w DECYZJE.md: własna konfiguracja na projekt (Drive przez rclone tylko do odczytu, Notion przez własną integrację tylko do odczytu), bez konektorów konta. Bez zmian w kodzie.
+  zostało: Nie sprawdzono na żywo listy konektorów w sesji „Rozwój panelu” (polecenie `claude mcp list` poza uprawnieniami zadania); lista łączonych konektorów pochodzi z pliku konfiguracji konta. Sesja „Rozwój panelu” ma dziś dostęp do wszystkich konektorów konta (m.in. Atlassian, Canva) bez ograniczeń.
+  następne: Wyłącz konektory konta w sesji „Rozwój panelu” | kto: claude | kiedy: 2026-11-28
+- [x] Zaproponuj konektory dla każdego projektu | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | czas: 30
   cel: lista projekt → konektor → do czego → odczyt albo zapis, na podstawie kart, zadań i rozmów
   gotowe gdy: lista w szczegółach zadania, gotowa do zatwierdzenia przez właściciela
+  Propozycja (stan 2026-11-24, z kart i zadań 11 projektów z rejestru panelu). Zasada: konektor dostaje projekt, którego agent regularnie potrzebuje plików albo danych spoza repozytorium i nie da się ich tanio wkleić; domyślnie tylko odczyt, jeden folder. Repozytoria z GitHuba agenci mają już w folderze projektu, to nie jest konektor.
+  Dostaje konektor:
+  - Shield & Silent – marketing → Google Drive, jeden folder ze zdjęciami prac i filmami studia → scenariusze i montaż 3 filmów tygodniowo, zdjęcia do wizytówki Google, landing page i reklam → odczyt. Kto: agenci zadań i rozmów tego projektu oraz studio filmów; raport PM i Asystent nie. W folderze tylko materiały do publikacji, bez danych klientów studia (karta: nazwiska i telefony poza repozytorium).
+  Bez konektora:
+  - Detailing Kępno → brak. Faza 0 nie ruszyła (start i budżet do ustalenia 28.11); na razie same teksty. Gdy ruszy wizytówka „Shield & Silent Kępno”, wystarczy ten sam folder Drive tylko do odczytu.
+  - Opisarnia → brak. Stripe, Sentry i baza produkcyjna mają dane klientów i pieniądze; liczby do pomiaru podajesz z zapytania w metryki.md, statystyki LinkedIn, Facebooka i Instagrama ręcznie (Twoja odpowiedź 12 w karcie). Publikacja i wysyłka są po Twojej stronie.
+  - Oprogramowani (company-audits) → brak. Karta: dane klientów nie trafiają do usług zewnętrznych; materiały leżą w repozytorium.
+  - Oprogramowani – strona WWW → brak. Wszystko w repozytorium, podgląd w zakładce Strona.
+  - NaulikApp → brak. Play Console nie ma gotowego konektora, a publikacja w sklepie wymaga Twojej zgody; kroki w Play Console robisz sam.
+  - Warsztat → brak. Wstrzymany; serwer MCP w repozytorium to część produktu, nie konektor konta.
+  - Szukanie auta → brak. Poziom swobody 1, logowanie na portale tylko za zgodą.
+  - Testy zlecone (TestNow) → brak. Praca na Macu, agent nie działa na koncie platformy.
+  - Analiza surowicy płodowej → brak. Źródła są w `zalaczniki/`; pisma wysyłasz sam.
+  - Infrastruktura → brak. Konfigurację serwera, DNS i kont zmieniasz tylko Ty albo agent po zgodzie.
+  - Raport PM, Asystent, sesja „Rozwój panelu” → brak; czytają pliki projektów.
+  Rozważone i odrzucone:
+  - Google Ads i Meta Ads (Shield & Silent, Kępno), odczyt wyników na kontrole 6.12, 3.01 i 28.01: dostęp do interfejsu Google Ads wymaga osobnego wniosku do Google, konto należy do studia, a kontrole są trzy. Taniej: wklejasz liczby albo eksport CSV przy kontroli. Wrócić po kontroli 1, jeśli przepisywanie okaże się uciążliwe.
+  - Notion: żaden projekt go dziś nie używa; w księdze jest planowany dopiero jako lustro do odczytu w etapie 3.
+  - Gmail, kalendarz, LinkedIn, Facebook z zapisem: wysyłka i publikacja wymagają Twojej zgody w każdej karcie, więc agent przygotowuje szkice w plikach.
+  - Konektory konta (Canva, Atlassian, PubMed): żaden projekt ich nie potrzebuje; zostają wyłączone.
+  Uwaga do logowania Drive: zgoda Google obejmuje odczyt całego dysku konta, a do jednego folderu zawęża ją dopiero serwer. Jeśli folder leży na koncie studia, najlepiej zalogować konto, które widzi tylko ten folder.
+  wynik: Lista powyżej: jeden konektor, Google Drive tylko do odczytu dla Shield & Silent – marketing (jeden folder ze zdjęciami i filmami); pozostałe 10 projektów oraz raport PM, Asystent i „Rozwój panelu” bez konektorów, z powodem przy każdym. Zatwierdzasz ją w zadaniu „Zatwierdź konektory projektów”. Bez zmian w kodzie, bez gałęzi i commita (zmiana tylko w ZADANIA.md).
+  zostało: Nie czytano rozmów z folderów `rozmowy/` projektów (leżą poza kopią dostępną agentowi); lista opiera się na kartach i zadaniach. Nie wiadomo, na czyim koncie Google leży folder Shield & Silent (Twoim czy studia).
 - [ ] Zatwierdź konektory projektów | kto: ty | kiedy: 2026-11-26 | czas: 10 | po: Zaproponuj konektory dla każdego projektu
   cel: decyzja właściciela, które projekty i jacy agenci dostają który konektor
+  materiał: ZADANIA.md
   pyta: Lista zatwierdzona (tak albo co zmienić); Link do folderu Shield & Silent na Google Drive
 - [ ] Dodaj pole konektorów do karty i panelu | kto: claude | gdzie: chmura | kiedy: 2026-11-28 | po: Sprawdź konektory konta Claude w agentach na serwerze, Zatwierdź konektory projektów
   cel: agent dostaje tylko konektory wpisane w karcie projektu; panel pokazuje je przy projekcie
   gotowe gdy: STANDARD.md opisuje pole; panel pokazuje konektory projektu; test: agent w projekcie bez wpisu nie ma dostępu do konektora
+  materiał: DECYZJE.md
 - [ ] Zaloguj Google dla Drive Shield & Silent | kto: ty | kiedy: 2026-11-30 | czas: 5 | po: Dodaj pole konektorów do karty i panelu
   cel: dostęp tylko do odczytu do folderu Shield & Silent; link do logowania przygotowuje Claude, logujesz się sam na stronie Google
 - [ ] Podłącz Drive Shield & Silent tylko do odczytu | kto: claude | gdzie: chmura | kiedy: 2026-12-01 | po: Zaloguj Google dla Drive Shield & Silent

@@ -15,6 +15,7 @@ import re
 import shlex
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -74,6 +75,15 @@ DENIED = {"rejected", "denied", "blocked", "exceeded"}
 AGENT_DIR = ".agent"        # katalogi robocze uruchomień: <repozytorium>/.agent/<id uruchomienia>
 DIFF_MAX = 200 * 1024       # GET /api/agent/diff: najwyżej tyle bajtów tekstu
 CHANGES_MAX = 200           # tyle plików trafia do pola changes rekordu
+# Przebieg uruchomienia na żywo (pole log rekordu, GET /api/agent/przebieg): bez osobnych plików na serwerze.
+LOG_KEEP = 200              # wierszy przebiegu w rekordzie
+LOG_TEXT = 4000             # znaków jednej wypowiedzi agenta albo wiadomości właściciela
+LOG_SAVE = 10               # s: najrzadziej tyle między zapisami rekordu w trakcie pracy
+FIX_MAX = 1500              # znaków wiersza poprawka: po dopisaniu wiadomości z pracy agenta
+SHOT_NAME = re.compile(r"^[\w.-]{1,80}\.png$")
+SHOT_MAX = 15 * 1024 * 1024
+SHOTS_SHOWN = 6
+DENY_RE = re.compile(r"requires approval|permission|haven't granted|not allowed|denied", re.I)
 GIT_NAME, GIT_EMAIL = "Panel projektów", "panel@localhost"     # gdy repozytorium nie ma user.email
 # Ścieżki plików w wierszu wynik: (materiał dla następników z po:).
 RESULT_PATH = re.compile(r"(?<![\w./-])(/?(?:[\w.-]+/)*[\w-][\w.-]*\.(?:md|txt|csv|json|html|svg|png|jpe?g|pdf|ya?ml))"
@@ -256,6 +266,10 @@ def child_env(base=None):
     return env
 
 
+def stat_regular(st):
+    return stat.S_ISREG(st.st_mode)
+
+
 def _command(path):
     """Atrapy testowe to skrypty .py: uruchamiamy je bieżącym interpreterem (działa także na Windows)."""
     return [sys.executable, path] if path.lower().endswith(".py") else [path]
@@ -365,6 +379,7 @@ class Manager:
         self._priv = {}                       # id -> dane robocze, których nie pokazujemy (folder, prompt, proces)
         self._state = {"automat": False, "needsLogin": False, "limitUntil": None, "since": {}, "marks": {},
                        "sessionKey": "", "rytmDone": []}
+        self._shot_dirs = {}                  # id uruchomienia zadania strony -> katalog .zrzuty/ (GET /api/agent/zrzut)
         self._seen_marks = {}                 # klucz zadania -> stan z ostatniego track_marks (zmiany widziane na żywo)
         self._tools = {"claude": self._tool_blank(), "codex": self._tool_blank()}
         self._tools_at = 0.0
@@ -581,6 +596,7 @@ class Manager:
             extra = len(self._runs) - KEEP
             for rid in [r for r, rec in self._runs.items() if rec["state"] not in LIVE][:max(0, extra)]:
                 del self._runs[rid]
+                self._shot_dirs.pop(rid, None)
                 self._remove_files(rid)
 
     # ---------- wątek Automatu ----------
@@ -772,7 +788,11 @@ class Manager:
         today = datetime.date.today().isoformat()
         limit = self.limit_until()
         with self._lock:
-            runs = [dict(r, steps=list(r.get("steps") or []), denials=list(r.get("denials") or []))
+            # przebieg (log) idzie osobno: GET /api/agent/przebieg; w /api/data tylko liczba wierszy
+            runs = [dict({k: v for k, v in r.items() if k != "log"}, steps=list(r.get("steps") or []),
+                         denials=list(r.get("denials") or []), logN=int(r.get("logN") or 0),
+                         takesMsg=bool(r["state"] == "running" and (self._priv.get(r["id"]) or {}).get("stream")
+                                   and not (self._priv.get(r["id"]) or {}).get("ended")))
                     for r in reversed(list(self._runs.values()))]
             todays = [r for r in runs if (r.get("queuedAt") or "")[:10] == today]
             return {"machine": self.machine,
@@ -873,6 +893,9 @@ class Manager:
                 "- Plik zadania i kartę zmieniaj wyłącznie pod tymi ścieżkami (kopii w katalogu roboczym nie zmieniaj): "
                 "zadanie %s, karta %s. Folder posty/ leży obok karty: %s." % (git["file"], git["card"], git["cards"]),
                 "- W wierszu `wynik:` podaj ścieżki powstałych plików względem folderu projektu."]
+            if git.get("resumed"):
+                git_rules.append("- Ta gałąź ma już commity z poprzedniej pracy nad tym zadaniem: zacznij od nich "
+                                 "(`git log`), nie rób tej pracy od nowa.")
         else:
             git_rules = [
                 "- Pracę w repozytorium git zapisz na nowej gałęzi `agent/%s-krotka-nazwa` (`git switch -c`) jednym "
@@ -1018,7 +1041,8 @@ class Manager:
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
                              "line": task["line"], "title": title, "stage": stage,
                              "detail": with_answers(task, data["tasks"]),
-                             "site": self.site.task_site(project, title) if tool == "claude" else None}}
+                             "site": self.site.task_site(project, title) if tool == "claude" else None},
+                    "resume": self._resume_branches(task)}
             self._task_command(priv)
             self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
@@ -1041,7 +1065,8 @@ class Manager:
             extra = [x for d in self._standard_dirs(folder, t["file"]) for x in ("--add-dir", d)]
             info = {"branch": git["branch"], "cwd": cwd, "file": os.path.join(folder, t["file"]),
                     "card": os.path.join(folder, "KARTA.md"),
-                    "cards": os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))}
+                    "cards": os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))),
+                    "resumed": bool(git.get("resumed"))}
         else:
             cwd, extra, info = folder, _card_dirs(folder), None
         site = t.get("site")
@@ -1054,8 +1079,11 @@ class Manager:
             render = self.render_command()
             tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
                              (self.site.tools(site) if site else []))
-            args = self._claude_args(t["path"], self.model, extra + ["--allowedTools", tools, "--disallowedTools", RUN_DENY,
-                                                                     "--strict-mcp-config"])
+            # wejście stream-json: stdin zostaje otwarty do zdarzenia result, więc właściciel może pisać do agenta
+            # w trakcie pracy (live_order); po result panel zamyka stdin i CLI kończy pracę
+            args = self._claude_args(t["path"], self.model, ["--input-format", "stream-json"] + extra +
+                                     ["--allowedTools", tools, "--disallowedTools", RUN_DENY, "--strict-mcp-config"])
+            priv["stream"] = True
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
     # ---------- rozmowa o zadaniu ----------
@@ -1293,9 +1321,12 @@ class Manager:
         elif task.get("executor") not in ("claude", "codex"):
             why = "to zadanie nie jest dla agenta (kto: %s). Zmień wykonawcę w szczegółach." % (task.get("executor") or "brak")
         elif key in self._live_keys():
-            msg.update(runId=self._live_keys()[key],
-                       text="Agent już pracuje nad tym zadaniem. Polecenie wyślij po zakończeniu.")
-            return msg
+            code, err, live = self.live_message(self._live_keys()[key], text, pins)
+            if code == 200:
+                return live
+            if code != 409:                         # 409: uruchomienie właśnie się skończyło, zwykła droga niżej
+                msg["text"] = "Nie przekazano polecenia: %s" % err
+                return msg
         if why:
             msg["text"] = "Nie uruchomiono „%s”: %s" % (task["title"], why)
             return msg
@@ -1329,6 +1360,232 @@ class Manager:
     def _panel_msg(task):
         return {"role": PANEL_ROLE, "at": now_iso(), "project": task.get("project", ""), "file": task.get("file", ""),
                 "title": task.get("title", ""), "runId": "", "text": ""}
+
+    # ---------- wiadomość do pracującego agenta (AGENCI.md, „Wiadomość w trakcie pracy”) ----------
+    def _append_fix(self, task, folder, text, pins=None):
+        """Dopisuje polecenie do wiersza `poprawka:` zadania (następne uruchomienie też je zna). Zwraca nową
+        treść poprawki albo '' (wiersz zmienił się w pliku)."""
+        d = task.get("detail") or {}
+        old = str(d.get("fix") or "").strip()
+        new = text if not old or old == text or old.endswith(" / " + text) else "%s / %s" % (old, text)
+        if len(new) > FIX_MAX:
+            new = "…" + new[-(FIX_MAX - 1):]
+        keep = pins or [dict(p) for p in d.get("pins") or [] if isinstance(p, dict)] or None
+        try:
+            with self.write_lock:
+                try:
+                    ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "poprawka", new,
+                                                 pins=keep)
+                except ValueError:
+                    ok = self.projekt.set_detail(folder, task["file"], task["line"], task["title"], "poprawka", new)
+        except (ValueError, OSError):
+            ok = False
+        return new if ok else ""
+
+    def _stdin_send(self, priv, text):
+        """Wiadomość użytkownika na otwarte wejście stream-json procesu. False, gdy wejście jest już zamknięte."""
+        line = json.dumps({"type": "user", "message": {"role": "user", "content": text}}, ensure_ascii=False)
+        with priv.setdefault("stdinLock", threading.Lock()):
+            proc = priv.get("proc")
+            if priv.get("closed") or proc is None or proc.stdin is None or proc.poll() is not None:
+                return False
+            try:
+                proc.stdin.write(line + "\n")
+                proc.stdin.flush()
+                return True
+            except (OSError, ValueError):
+                return False
+
+    def _stdin_close(self, priv):
+        with priv.setdefault("stdinLock", threading.Lock()):
+            priv["closed"] = True
+            proc = priv.get("proc")
+            if proc is not None and proc.stdin is not None:
+                try:
+                    proc.stdin.close()
+                except (OSError, ValueError):
+                    pass
+
+    def live_message(self, rid, text, pins=None):
+        """Polecenie właściciela dla uruchomienia zadania w kolejce albo w toku. Zawsze dopisuje je do `poprawka:`
+        zadania; Claude w toku dostaje je na stdin (agent uwzględnia je przy następnym kroku), zadanie w kolejce ma je
+        w poleceniu startowym, Codex (bez wejścia w trakcie) i Claude po zdarzeniu result dostają je po zakończeniu
+        (Codex: przycisk „Zatrzymaj i uruchom z poprawką”, Claude: ponowne uruchomienie jak „Wyślij i wykonaj”).
+        Zwraca (200, "", wiadomość panelu) albo (404|409, błąd, {})."""
+        text = str(text or "").strip()[:CHAT_MAX]
+        if not text:
+            return 400, "Napisz polecenie.", {}
+        with self._lock:
+            rec = self._runs.get(str(rid))
+            if not rec or rec.get("kind") != "task":
+                return 404, "Nie ma takiego uruchomienia.", {}
+            if rec["state"] not in LIVE:
+                return 409, "Uruchomienie już się zakończyło.", {}
+        key = (rec["project"], rec["file"], rec["title"])
+        task, _, index = self._find_task(key=key)
+        msg = self._panel_msg(task or {"project": key[0], "file": key[1], "title": key[2]})
+        msg["runId"] = rec["id"]
+        if not task or task["project"] not in index:
+            msg["text"] = "Nie zapisano polecenia: nie ma już tego zadania."
+            return 200, "", msg
+        saved = self._append_fix(task, index[task["project"]], text, pins)
+        with self._lock:
+            priv = self._priv.get(rec["id"])
+            if rec["state"] not in LIVE or priv is None:
+                mode = "gone"
+            elif rec["state"] == "queued":
+                mode = "queued"
+            elif rec["tool"] != "claude" or not priv.get("stream"):
+                mode = "codex"
+            elif priv.get("ended") or priv.get("closed"):
+                mode = "after"
+            elif not priv.get("open"):
+                mode = "early"
+                priv.setdefault("early", []).append(text)
+            else:
+                mode = "send"
+            if saved:
+                rec["fix"] = saved[:1000]       # Automat: ta poprawka jest już w tym uruchomieniu
+            if mode == "queued" and saved:
+                t = priv["task"]
+                t["detail"] = dict(t.get("detail") or {}, fix=saved)
+                self._task_command(priv)
+        if mode == "send" and not self._stdin_send(priv, text):
+            mode = "after"
+        if mode == "after":
+            with self._lock:
+                if rec["state"] in LIVE and self._priv.get(rec["id"]) is priv:
+                    priv.setdefault("after", []).append({"text": text, "pins": pins})
+                else:
+                    mode = "gone"
+        if mode == "gone":
+            return 409, "Uruchomienie już się zakończyło.", {}
+        if mode in ("send", "early"):
+            with self._lock:
+                priv.setdefault("msgs", []).append({"text": text, "seen": False, "tr": False})
+            self._log(rec, "ty", text, save=True)
+            self._step(rec, "Ty: " + text, log=False)
+            msg["text"] = "Przekazano agentowi."
+            msg["delivered"] = True
+        elif mode == "after":
+            self._log(rec, "ty", text, save=True)
+            self._log(rec, "panel", "Agent skończył, polecenie zapisane jako poprawka: uruchomię zadanie ponownie.")
+            msg["text"] = "Agent skończył, polecenie zapisane jako poprawka. Zadanie uruchomi się ponownie z tym poleceniem."
+        elif mode == "queued":
+            msg["text"] = "Zadanie czeka w kolejce: polecenie dołączone do zadania (poprawka)."
+        else:
+            msg["text"] = ("Codex nie przyjmuje wiadomości w trakcie pracy. Polecenie zapisane jako poprawka: "
+                           "zatrzymaj i uruchom z poprawką albo poczekaj na koniec pracy.")
+            msg["restart"] = rec["id"]
+        if not saved:
+            msg["text"] += " Nie zapisano go pod zadaniem (wiersz zmienił się w pliku)."
+        return 200, "", msg
+
+    def _relaunch(self, rec, after, restart):
+        """Po zakończeniu uruchomienia: polecenia, które przyszły po zdarzeniu result (ponowne uruchomienie jak
+        „Wyślij i wykonaj”), albo „Zatrzymaj i uruchom z poprawką” (Codex). Wynik trafia do rozmowy o zadaniu."""
+        title = rec["title"]
+        end = time.time() + 1800
+        while title in getattr(self.site, "_finishing", ()) and time.time() < end:
+            time.sleep(1)                     # zadanie strony: najpierw scalenie i podgląd po tamtym uruchomieniu
+        task, data, index = self._find_task(key=(rec["project"], rec["file"], title))
+        if not task:
+            return
+        if after:
+            text = " / ".join(a["text"] for a in after)[:1000]
+            pins = next((a["pins"] for a in reversed(after) if a.get("pins")), None)
+            msg = self._execute_order(task, index, text, pins)
+        else:
+            msg = self.launch_task(task, data)
+        file = self._chat_file(task)
+        with self._chat_lock:
+            chat = self._chat_read(file)
+            chat["messages"].append(msg)
+            try:
+                self._chat_write(file, chat)
+            except OSError:
+                pass
+
+    def restart_run(self, rid):
+        """„Zatrzymaj i uruchom z poprawką”: zatrzymuje uruchomienie zadania, po zakończeniu uruchamia je ponownie
+        (poprawka jest już pod zadaniem)."""
+        with self._lock:
+            rec = self._runs.get(str(rid))
+            if not rec or rec.get("kind") != "task":
+                return 404, "Nie ma takiego uruchomienia.", {}
+            if rec["state"] not in LIVE:
+                return 409, "Uruchomienie już się zakończyło.", {}
+            self._priv.setdefault(rec["id"], {})["restart"] = True
+        return self.stop(rid)
+
+    def run_log(self, rid, since=0):
+        """GET /api/agent/przebieg: wiersze przebiegu po numerze `since`, stan i najnowsze zrzuty strony."""
+        try:
+            since = max(0, int(since or 0))
+        except (TypeError, ValueError):
+            since = 0
+        with self._lock:
+            rec = self._runs.get(str(rid))
+            if not rec:
+                return 404, "Nie ma takiego uruchomienia.", {}
+            priv = self._priv.get(rec["id"]) or {}
+            items = [dict(x) for x in rec.get("log") or [] if int(x.get("n") or 0) > since]
+            out = {"items": items, "next": int(rec.get("logN") or 0), "state": rec["state"],
+                   "activity": rec.get("activity") or "", "tool": rec.get("tool") or "",
+                   "takesMsg": bool(rec["state"] == "running" and priv.get("stream") and not priv.get("ended"))}
+        out["shots"] = self.shots(rid)
+        return 200, "", out
+
+    def _shot_dir(self, rid):
+        with self._lock:
+            return self._shot_dirs.get(str(rid)) or ""
+
+    def shots(self, rid):
+        """Najnowsze zrzuty PNG z katalogu .zrzuty/ uruchomienia zadania strony: [{"name", "at", "v"}]."""
+        base = self._shot_dir(rid)
+        if not base or os.path.islink(base) or not os.path.isdir(base):
+            return []
+        out = []
+        try:
+            names = os.listdir(base)
+        except OSError:
+            return []
+        for name in names:
+            if not SHOT_NAME.match(name):
+                continue
+            path = os.path.join(base, name)
+            try:
+                st = os.lstat(path)
+            except OSError:
+                continue
+            if not stat_regular(st):
+                continue
+            out.append({"name": name, "at": now_iso(datetime.datetime.fromtimestamp(st.st_mtime)),
+                        "v": int(st.st_mtime)})
+        out.sort(key=lambda x: x["v"], reverse=True)
+        return out[:SHOTS_SHOWN]
+
+    def shot_file(self, rid, name):
+        """(200, bajty) zrzutu PNG z .zrzuty/ uruchomienia albo (404, ''). Bez dowiązań i wyjścia poza katalog."""
+        base = self._shot_dir(rid)
+        name = str(name or "")
+        if not base or not SHOT_NAME.match(name) or os.path.islink(base):
+            return 404, b""
+        path = os.path.join(base, name)
+        real = os.path.realpath(path)
+        if os.path.dirname(real) != os.path.realpath(base):
+            return 404, b""
+        try:
+            st = os.lstat(path)
+            if not stat_regular(st) or st.st_size > SHOT_MAX:
+                return 404, b""
+            with open(path, "rb") as f:
+                data = f.read(SHOT_MAX + 1)
+        except OSError:
+            return 404, b""
+        if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return 404, b""
+        return 200, data
 
     def chat_launches(self, answer, pid=""):
         """Wiersze „Uruchom:” z odpowiedzi rozmowy: (odpowiedź bez nich, [wiadomość panelu na każde zadanie]).
@@ -2055,9 +2312,40 @@ class Manager:
         except OSError:
             pass
 
+    def _resume_branches(self, task):
+        """Gałęzie, od których może zacząć ponowne uruchomienie zadania (np. po blokadzie z `poprawka:`): pole
+        `gałąź:` zadania, potem gałęzie poprzednich uruchomień tego zadania, najnowsze najpierw. Sprawdza je
+        _worktree_open (gałąź musi istnieć i mieć commity spoza bieżącej gałęzi projektu)."""
+        out = []
+        b = str((task.get("detail") or {}).get("branch") or "").strip()
+        if b:
+            out.append(b)
+        key = (task["project"], task["file"], task["title"])
+        with self._lock:
+            for r in reversed(list(self._runs.values())):
+                if r.get("kind") == "task" and (r.get("project"), r.get("file"), r.get("title")) == key \
+                        and r.get("branch") and r["branch"] not in out and r.get("state") not in LIVE:
+                    out.append(r["branch"])
+        return [x for x in out if re.match(r"^agent/[\w./-]{1,150}$", x) and ".." not in x][:5]
+
+    def _resume_pick(self, top, head, cands):
+        """(gałąź, baza) pierwszej gałęzi z listy, która istnieje i ma commity spoza HEAD; albo ("", "")."""
+        for name in cands:
+            if git_run(top, ["rev-parse", "--verify", "-q", "refs/heads/%s^{commit}" % name], timeout=15)[0] != 0:
+                continue
+            code, out, _ = git_run(top, ["rev-list", "--count", "%s..%s" % (head, name)], timeout=15)
+            if code != 0 or not out.strip().isdigit() or int(out.strip()) == 0:
+                continue                         # już scalona albo pusta: zwykły start od HEAD
+            code, base, _ = git_run(top, ["merge-base", head, name], timeout=15)
+            if code == 0 and base.strip():
+                return name, base.strip()
+        return "", ""
+
     def _worktree_open(self, rec, priv):
         """Przed startem zadania w repozytorium git: nowa gałąź agent/RRRR-MM-DD-nazwa od bieżącego HEAD w katalogu
-        <repozytorium>/.agent/<id>. Bez repozytorium (albo przy błędzie git) praca w folderze projektu jak dotąd."""
+        <repozytorium>/.agent/<id>. Bez repozytorium (albo przy błędzie git) praca w folderze projektu jak dotąd.
+        Ponowne uruchomienie zadania, którego poprzednia gałąź ma niescalone commity (pole `gałąź:` albo gałąź
+        poprzedniego uruchomienia), pracuje dalej na tamtej gałęzi."""
         folder = priv["folder"]
         top = self._git_top(folder)
         if not top:
@@ -2072,23 +2360,39 @@ class Manager:
                 return self._step(rec, "git: folder projektu poza repozytorium, praca w folderze projektu")
             code, cur, _ = git_run(top, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
             base = cur.strip() if code == 0 and cur.strip() else head
-            branch = self._branch_name(top, rec["title"])
             wt = os.path.join(top, AGENT_DIR, rec["id"])
             try:
                 os.makedirs(os.path.join(top, AGENT_DIR), exist_ok=True)
             except OSError:
                 return self._step(rec, "git: nie utworzono katalogu %s, praca w folderze projektu" % AGENT_DIR)
             self._exclude_agent_dir(top)
-            code, _, err = git_run(top, ["worktree", "add", "-q", "-b", branch, wt, head], timeout=300)
-            if code != 0:
-                return self._step(rec, "git: nie utworzono katalogu roboczego (%s), praca w folderze projektu"
-                                  % _short(err, 80))
-        git = {"top": top, "rel": rel, "worktree": wt, "branch": branch, "base": base, "baseCommit": head}
+            resumed, fork = self._resume_pick(top, head, priv.get("resume") or [])
+            if resumed:
+                code, _, err = git_run(top, ["worktree", "add", "-q", wt, resumed], timeout=300)
+                if code == 0:
+                    branch, start = resumed, fork
+                else:
+                    self._step(rec, "git: nie otwarto gałęzi %s (%s), zaczynam od %s" % (resumed, _short(err, 60), base))
+                    resumed = ""
+            if not resumed:
+                branch, start = self._branch_name(top, rec["title"]), head
+                code, _, err = git_run(top, ["worktree", "add", "-q", "-b", branch, wt, head], timeout=300)
+                if code != 0:
+                    return self._step(rec, "git: nie utworzono katalogu roboczego (%s), praca w folderze projektu"
+                                      % _short(err, 80))
+        # baseCommit: punkt rozejścia z bieżącą gałęzią projektu (przy wznowieniu zmiany całej gałęzi agenta)
+        git = {"top": top, "rel": rel, "worktree": wt, "branch": branch, "base": base, "baseCommit": start,
+               "resumed": bool(resumed)}
         priv["git"] = git
         with self._lock:
-            rec.update(branch=branch, base=base, baseCommit=head, changes=[], commits=0)
+            rec.update(branch=branch, base=base, baseCommit=start, changes=[], commits=0)
+            if resumed:
+                rec["resumed"] = True
             self._save(rec)
-        self._step(rec, "Gałąź %s od %s" % (branch, base if base != head else head[:8]))
+        if resumed:
+            self._step(rec, "Dalej na gałęzi %s (poprzednia praca nad tym zadaniem)" % branch)
+        else:
+            self._step(rec, "Gałąź %s od %s" % (branch, base if base != head else head[:8]))
         self._task_command(priv, git)
 
     def _worktree_info(self, rec):
@@ -3491,13 +3795,35 @@ class Manager:
                 self._save(rec)
                 threading.Thread(target=self._execute, args=(rec,), daemon=True).start()
 
-    def _step(self, rec, text):
+    def _step(self, rec, text, log=True):
+        """Krok uruchomienia (activity i ostatnie 30 kroków). log: także wiersz przebiegu („panel”)."""
         text = _short(text, 120)
         if not text:
             return
         with self._lock:
             rec["activity"] = text
             rec["steps"] = (rec["steps"] + [{"t": time.strftime("%H:%M:%S"), "text": text}])[-30:]
+        if log:
+            self._log(rec, "panel", text)
+
+    def _log(self, rec, kind, text, save=False):
+        """Wiersz przebiegu na żywo w rekordzie (pole log, ostatnie LOG_KEEP): agent (wypowiedź), narzędzie, odmowa,
+        ty (wiadomość właściciela), panel. Rekord zapisuje się najrzadziej co LOG_SAVE s (bez osobnych plików)."""
+        text = str(text or "").strip()
+        if not text:
+            return
+        if len(text) > LOG_TEXT:
+            text = text[:LOG_TEXT].rstrip() + "…"
+        with self._lock:
+            n = int(rec.get("logN") or 0) + 1
+            rec["logN"] = n
+            rec["log"] = (list(rec.get("log") or []) + [{"n": n, "t": time.strftime("%H:%M:%S"), "k": kind,
+                                                         "text": text}])[-LOG_KEEP:]
+            priv = self._priv.get(rec["id"])
+            now = time.time()
+            if priv is not None and (save or now - priv.get("logSaved", 0) >= LOG_SAVE):
+                priv["logSaved"] = now
+                self._save(rec)
 
     def _kill(self, proc):
         if proc.poll() is not None:
@@ -3553,6 +3879,9 @@ class Manager:
             cwd = priv["cwd"]
             if self.agent_user and rec["kind"] in ("check", "plan"):
                 cwd = tempfile.gettempdir()     # agent nie musi mieć dostępu do katalogu uruchomień
+            if (priv.get("task") or {}).get("site"):
+                with self._lock:                # zrzuty strony tego uruchomienia (podgląd na żywo)
+                    self._shot_dirs[rec["id"]] = os.path.join(priv["cwd"], ".zrzuty")
             try:
                 proc = subprocess.Popen(self.as_agent(priv["args"]), cwd=cwd, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE,
@@ -3569,14 +3898,24 @@ class Manager:
             timer = threading.Timer(priv.get("limit") or self.timeout, self._on_timeout, [rec])
             timer.daemon = True
             timer.start()
-            try:
-                proc.stdin.write(priv["prompt"])
-            except (OSError, ValueError):      # proces skończył się, zanim przeczytał polecenie
-                pass
-            try:
-                proc.stdin.close()
-            except (OSError, ValueError):
-                pass
+            if priv.get("stream"):
+                # zadanie Claude: polecenie jako pierwsza wiadomość stream-json, stdin otwarty do zdarzenia result
+                # (live_message); wiadomości wysłane przed startem procesu idą zaraz po poleceniu
+                self._stdin_send(priv, priv["prompt"])
+                with self._lock:
+                    priv["open"] = True
+                    early = priv.pop("early", [])
+                for text in early:
+                    self._stdin_send(priv, text)
+            else:
+                try:
+                    proc.stdin.write(priv["prompt"])
+                except (OSError, ValueError):      # proces skończył się, zanim przeczytał polecenie
+                    pass
+                try:
+                    proc.stdin.close()
+                except (OSError, ValueError):
+                    pass
             parse = self._on_codex if rec["tool"] == "codex" else self._on_claude
             for line in proc.stdout:
                 out.write(line)
@@ -3603,6 +3942,11 @@ class Manager:
         finally:
             if timer:
                 timer.cancel()
+            grace = priv.get("grace")
+            if grace:
+                grace.cancel()
+            with self._lock:
+                priv["closed"] = True
             for stream in (out, proc.stdout if proc else None, proc.stdin if proc else None):
                 if stream:
                     try:
@@ -3610,8 +3954,33 @@ class Manager:
                     except OSError:
                         pass
 
+    def _grace_end(self, rec, priv):
+        """Po zdarzeniu result: wiadomości, których agent nie zdążył odczytać (brak nowej tury w GRACE s), zostają
+        poleceniem na ponowne uruchomienie; wejście się zamyka i CLI kończy pracę."""
+        with self._lock:
+            if not priv.get("ended"):
+                return
+            unseen = [m for m in priv.get("msgs") or [] if not m["seen"]]
+            for m in unseen:
+                m["seen"] = True
+            if unseen:
+                priv.setdefault("after", []).extend({"text": m["text"], "pins": None} for m in unseen)
+        if unseen:
+            self._log(rec, "panel", "Agent skończył przed odczytaniem wiadomości: zapisana jako poprawka, "
+                                    "zadanie uruchomi się ponownie.")
+        self._stdin_close(priv)
+
+    GRACE = 20                  # s: tyle panel czeka po result na nową turę z nieodczytaną wiadomością
+
     def _on_claude(self, rec, ev, st, cwd):
         kind = ev.get("type")
+        priv = self._priv.get(rec["id"]) or {}
+        if priv.get("ended") and kind in ("assistant", "user", "stream_event"):
+            with self._lock:                    # nowa tura po result: agent czyta wiadomość wysłaną pod koniec
+                priv["ended"] = False
+                grace = priv.pop("grace", None)
+            if grace:
+                grace.cancel()
         if kind == "system":
             if ev.get("subtype") == "init":
                 with self._lock:
@@ -3626,12 +3995,40 @@ class Manager:
                 if not isinstance(block, dict):
                     continue
                 if block.get("type") == "tool_use":
-                    self._step(rec, describe_tool(block.get("name", "?"), block.get("input"), cwd))
+                    desc = describe_tool(block.get("name", "?"), block.get("input"), cwd)
+                    self._step(rec, desc, log=False)
+                    self._log(rec, "narzedzie", desc)
+                    with self._lock:
+                        tools = priv.setdefault("tools", {})
+                        if len(tools) < 500:
+                            tools[str(block.get("id") or "")] = desc
                 elif block.get("type") == "text" and str(block.get("text") or "").strip():
-                    self._step(rec, str(block["text"]).strip().split("\n")[0])
+                    self._step(rec, str(block["text"]).strip().split("\n")[0], log=False)
+                    self._log(rec, "agent", block["text"])
             usage = msg.get("usage") or {}
             with self._lock:
                 rec["tokensOut"] += int(usage.get("output_tokens") or 0)
+                for m in priv.get("msgs") or []:    # odpowiedź po wyniku narzędzia: agent widział wiadomość
+                    if m["tr"]:
+                        m["seen"] = True
+        elif kind == "user":
+            msg = ev.get("message") or {}
+            blocks = msg.get("content") if isinstance(msg.get("content"), list) else []
+            for block in blocks:
+                if not isinstance(block, dict) or block.get("type") != "tool_result":
+                    continue
+                with self._lock:
+                    for m in priv.get("msgs") or []:
+                        m["tr"] = True
+                body = block.get("content")
+                if isinstance(body, list):
+                    body = " ".join(str(x.get("text") or "") for x in body if isinstance(x, dict))
+                body = str(body or "")
+                if block.get("is_error") and DENY_RE.search(body):
+                    with self._lock:
+                        desc = (priv.get("tools") or {}).get(str(block.get("tool_use_id") or ""), "")
+                        priv.setdefault("denied", set()).add(desc)
+                    self._log(rec, "odmowa", desc or _short(body, 200))
         elif kind == "rate_limit_event":
             info = ev.get("rate_limit_info") or {}
             st["rate"] = info
@@ -3651,7 +4048,33 @@ class Manager:
                 rec["tokensIn"] = int(usage.get("input_tokens") or 0) + int(usage.get("cache_creation_input_tokens") or 0)
                 rec["tokensOut"] = int(usage.get("output_tokens") or 0)
                 rec["denials"] = denials[:10]
+                fresh = [d for d in denials if d not in (priv.get("denied") or set())]
+            for d in fresh[:10]:
+                self._log(rec, "odmowa", d)
             st["status"] = ev.get("api_error_status") or st["status"]
+            if priv.get("stream"):
+                # koniec tury: panel zamyka wejście (CLI kończy pracę); nieodczytana wiadomość dostaje GRACE s
+                with self._lock:
+                    priv["ended"] = True
+                    unseen = any(not m["seen"] for m in priv.get("msgs") or [])
+                    if unseen:
+                        timer = threading.Timer(self.GRACE, self._grace_end, [rec, priv])
+                        timer.daemon = True
+                        priv["grace"] = timer
+                if unseen:
+                    timer.start()
+                else:
+                    self._stdin_close(priv)
+
+    def _say(self, rec, text):
+        """Wypowiedź agenta: pierwszy wiersz jako krok, pełny tekst w przebiegu."""
+        self._step(rec, str(text or "").strip().split("\n")[0], log=False)
+        self._log(rec, "agent", text)
+
+    def _did(self, rec, desc):
+        """Wywołanie narzędzia: krok i wiersz przebiegu (krótki argument)."""
+        self._step(rec, desc, log=False)
+        self._log(rec, "narzedzie", _short(desc, 120))
 
     def _on_codex(self, rec, ev, st, cwd):
         """Strumień `codex exec --json`: nowy układ (item.*, turn.*) i starszy (msg)."""
@@ -3661,10 +4084,10 @@ class Manager:
             kind, ev = msg.get("type"), msg
             if kind == "agent_message":
                 st["last"] = str(ev.get("message") or "")
-                self._step(rec, st["last"].strip().split("\n")[0])
+                self._say(rec, st["last"])
             elif kind == "exec_command_begin":
                 cmd = ev.get("command")
-                self._step(rec, "Bash: %s" % (" ".join(cmd) if isinstance(cmd, list) else cmd))
+                self._did(rec, "Bash: %s" % (" ".join(cmd) if isinstance(cmd, list) else cmd))
             elif kind == "task_complete":
                 st["last"] = str(ev.get("last_agent_message") or st["last"])
                 st["result"] = {"is_error": False}
@@ -3681,13 +4104,13 @@ class Manager:
             what = item.get("type")
             if what == "agent_message" and kind == "item.completed":
                 st["last"] = str(item.get("text") or "")
-                self._step(rec, st["last"].strip().split("\n")[0])
+                self._say(rec, st["last"])
             elif what == "command_execution" and kind == "item.started":
-                self._step(rec, "Bash: %s" % item.get("command", ""))
+                self._did(rec, "Bash: %s" % item.get("command", ""))
             elif what == "file_change" and kind == "item.completed":
                 for ch in item.get("changes") or []:
                     if isinstance(ch, dict) and ch.get("path"):
-                        self._step(rec, describe_tool("Edit", {"file_path": ch["path"]}, cwd))
+                        self._did(rec, describe_tool("Edit", {"file_path": ch["path"]}, cwd))
             elif what == "error":
                 st["failed"] = str(item.get("message") or item.get("text") or "")
         elif kind == "turn.completed":
@@ -3827,12 +4250,19 @@ class Manager:
                 self._state["limitUntil"] = None
             self._save_state()
             self._save(rec)
+        after = list(priv.get("after") or [])
+        if priv.get("grace"):                 # koniec w czasie oczekiwania na nową turę: nieodczytane wiadomości
+            priv["grace"].cancel()
+            after += [{"text": m["text"], "pins": None} for m in priv.get("msgs") or [] if not m["seen"]]
+        restart = bool(priv.get("restart")) and state == "stopped"
         if state != "stopped" and rec["kind"] != "check":
             self._notify(rec, priv)
         try:
             self.site.after_run(dict(rec))
         except Exception as e:
             log("Podgląd strony po uruchomieniu: %s" % e)
+        if rec["kind"] == "task" and (restart or (after and state != "stopped")):     # po after_run (_finishing)
+            threading.Thread(target=self._relaunch, args=(dict(rec), after, restart), daemon=True).start()
         self._login_alert()
         self.refresh_tools(force=True)
         self._pump()

@@ -394,7 +394,7 @@ class Site:
 
     def _note_view(self, note, runs):
         n = {k: note.get(k) for k in ("id", "kind", "at", "text", "page", "view", "selector", "elementText", "title",
-                                      "path", "doneAt")}
+                                      "path", "doneAt", "forwarded")}
         rec = runs.get(note.get("title"))
         n["runId"] = rec["id"] if rec else ""
         if note.get("outcome"):
@@ -470,11 +470,14 @@ class Site:
         if not page.startswith("/"):
             page = "/" + page
         selector, el_text = _clean(body.get("selector"), 300), _clean(body.get("elementText"), 200)
-        data, _ = self.m.load_projects(resolve=False)
-        title = self._title(data, pid, SITE_TASK + _short(text, 70))
         where = "Podstrona %s, widok %s (%d px)." % (page, view, WIDTH[view])
         if selector:
             where += " Element: %s%s." % (selector, ", tekst „%s”" % _short(el_text, 150) if el_text else "")
+        live = self.live_run(pid)
+        if live:            # agent strony tego projektu pracuje: uwaga idzie do niego (jak „Wyślij do agenta”)
+            return self._forward(pid, live, text, page, view, selector, el_text, where)
+        data, _ = self.m.load_projects(resolve=False)
+        title = self._title(data, pid, SITE_TASK + _short(text, 70))
         detail = {"cel": _short("Zmień stronę według uwagi właściciela: „%s”. %s" % (text, where), 1000),
                   "gotowe gdy": "zmianę z uwagi widać na zrzucie ekranu zbudowanej strony (widok %s, %d px), "
                                 "strona się buduje" % (view, WIDTH[view])}
@@ -486,6 +489,29 @@ class Site:
             note["startError"] = "Zadanie czeka w Zadaniach: %s" % err
             self._update(pid, note={"id": note["id"], "startError": note["startError"]})
         return 200, "", {"note": self._note_view(note, self._runs(pid)), "runId": rid}
+
+    def live_run(self, pid):
+        """Uruchomienie zadania strony tego projektu w kolejce albo w toku (najnowsze) albo None."""
+        with self.m._lock:
+            runs = [dict(r) for r in self.m._runs.values() if r.get("project") == pid and r.get("kind") == "task"
+                    and r.get("state") in ("queued", "running")
+                    and str(r.get("title", "")).startswith((SITE_TASK, CONCEPT_TASK))]
+        return runs[-1] if runs else None
+
+    def _forward(self, pid, rec, text, page, view, selector, el_text, where):
+        """Uwaga z zakładki Strona do pracującego agenta: ta sama droga co wiadomość z rozmowy o zadaniu
+        (Manager.live_order). Uwaga trafia na listę z tytułem tego zadania i dzieli jego wynik."""
+        order = "Uwaga do strony: %s (%s)" % (text, where.rstrip("."))
+        code, err, msg = self.m.live_message(rec["id"], order)
+        if code != 200:
+            return code, err, {}
+        note = {"id": uuid.uuid4().hex[:12], "kind": "uwaga", "at": now_iso(), "text": text, "page": page,
+                "view": view, "selector": selector, "elementText": el_text, "title": rec["title"],
+                "forwarded": msg.get("text", "")}
+        self._update(pid, note=note)
+        view_note = self._note_view(note, self._runs(pid))
+        view_note["error"] = view_note.get("error") or msg.get("text", "")
+        return 200, "", {"note": view_note, "runId": rec["id"], "forwarded": msg.get("text", "")}
 
     def concept(self, body):
         """POST /api/strona/koncepcja: {project, path, text}: nowa wersja strony według dokumentów koncepcji."""
@@ -547,22 +573,33 @@ class Site:
         return dict(site, shot=self.shot_command())
 
     def tools(self, site):
-        return ["Bash(npm ci:*)", "Bash(npm install:*)", "Bash(npm run build:*)", "Bash(%s:*)" % site["shot"]]
+        rules = build_rules(site["build"])[0] if site.get("customBuild") else list(DEFAULT_BUILD_RULES)
+        return rules + ["Bash(%s:*)" % site["shot"]]
 
     @staticmethod
     def rules(site, cwd):
         sdir = os.path.normpath(os.path.join(cwd, site["dir"]))
         out = os.path.join(sdir, site["out"])
         shots = os.path.join(cwd, ".zrzuty")
+        skipped = []
         if site.get("customBuild"):
-            build = "w folderze strony poleceniem z karty: `%s`" % site["build"]
+            _, cmds, skipped = build_rules(site["build"])
+            if cmds:
+                build = "w folderze strony (`cd %s`) poleceniem z karty: `%s`. Masz uprawnienie dokładnie do tych " \
+                        "poleceń (każde osobno albo połączone `&&`, także z `--prefix %s`): %s" \
+                        % (sdir, " && ".join(cmds), sdir, ", ".join("`%s`" % c for c in cmds))
+            else:
+                build = "poleceniem z karty `%s`; panel nie dał do niego uprawnienia (tylko `npm ci`, " \
+                        "`npm install` i `npm run <skrypt>`), więc wpisz to w `zostało:`" % site["build"]
         else:
             build = "`npm ci --prefix %s` (gdy nie ma node_modules), potem `npm run build --prefix %s -- --base=./`" \
                     % (sdir, sdir)
+        more = ["- Tych członów polecenia budowania z karty nie uruchamiaj (brak uprawnienia): %s. Opisz je "
+                "w `zostało:`." % ", ".join("`%s`" % s for s in skipped)] if skipped else []
         return [
             "- Zadanie strony WWW. Folder strony: %s. Kod zmieniaj w tym folderze (inne pliki tylko, gdy wymaga "
             "tego uwaga)." % sdir,
-            "- Po zmianie zbuduj stronę: %s. Wynik: %s." % (build, out),
+            "- Po zmianie zbuduj stronę: %s. Wynik: %s." % (build, out)] + more + [
             "- Zrób zrzuty ekranu zbudowanej strony: `%s %s 390 %s/telefon.png` i `%s %s 1440 %s/komputer.png` "
             "(inna podstrona: dopisz `--sciezka /podstrona`). Każdy zrzut obejrzyj narzędziem Read (to obraz) "
             "i porównaj z celem zadania. Gdy wynik nie odpowiada celowi, popraw kod, zbuduj i zrób zrzuty jeszcze "
@@ -608,8 +645,9 @@ class Site:
             self.request_build(p["id"])
 
     def _outcome(self, pid, title, state, error=""):
-        note = self._find_note(pid, title)
-        if note:
+        """Wynik uruchomienia dla uwag tego zadania: pierwszej i przekazanych agentowi w trakcie pracy."""
+        notes = [n for n in self._read(pid)["notes"] if n.get("title") == title and not n.get("outcome")]
+        for note in notes or [n for n in [self._find_note(pid, title)] if n]:
             self._update(pid, note={"id": note["id"], "outcome": state, "error": _short(error, 300),
                                     "doneAt": now_iso()})
 
@@ -651,6 +689,51 @@ class Site:
             except (ValueError, OSError):
                 pass
         self._outcome(pid, title, "zrobione")
+
+
+# Domyślne budowanie (karta bez `strona build:`): npm ci i npm run build z --prefix (Site.rules).
+DEFAULT_BUILD_RULES = ("Bash(npm ci)", "Bash(npm ci:*)", "Bash(npm install)", "Bash(npm install:*)",
+                       "Bash(npm run build)", "Bash(npm run build:*)")
+NPM_SCRIPT = re.compile(r"^[A-Za-z0-9][\w:.@/+-]{0,80}$")
+SHELL_META = re.compile(r"[|&;<>()$`\\\"'*?\[\]{}~!#\n]")
+
+
+def build_rules(command):
+    """Reguły uprawnień dla polecenia `strona build:` z karty: ([reguły Bash(…)], [dozwolone człony], [pominięte]).
+
+    Claude Code sprawdza każdy człon połączony `&&` (także `||`, `;`) osobno, więc każdy człon `npm ci`,
+    `npm install` i `npm run <skrypt>` dostaje własne reguły: dokładną (`Bash(npm run build:panel)`) i z dalszymi
+    argumentami (`Bash(npm run build:panel:*)`, np. `--prefix folder -- --base=./`). Reguła `Bash(npm run build:*)`
+    nie przepuszcza `npm run build:panel`. Inne człony (cd, rm, npx, potoki, zmienne) są pomijane: bez ogólnego Bash."""
+    rules, cmds, skipped = [], [], []
+    for part in re.split(r"&&|\|\||;", str(command or "")):
+        part = " ".join(part.split())
+        if not part:
+            continue
+        words = part.split(" ")
+        head = None
+        if not SHELL_META.search(part) and words[0] == "npm":
+            rest, i = [], 1
+            while i < len(words):                 # --prefix folder / --prefix=folder przed poleceniem npm
+                if words[i] == "--prefix" and i + 1 < len(words):
+                    i += 2
+                    continue
+                if words[i].startswith("--prefix="):
+                    i += 1
+                    continue
+                rest = words[i:]
+                break
+            if rest[:1] in (["ci"], ["install"]) and (len(rest) == 1 or rest[1].startswith("-")):
+                head = "npm " + rest[0]
+            elif rest[:1] in (["run"], ["run-script"]) and len(rest) > 1 and NPM_SCRIPT.match(rest[1]):
+                head = "npm run " + rest[1]
+        if not head:
+            skipped.append(part)
+            continue
+        if head not in cmds:
+            cmds.append(head)
+            rules += ["Bash(%s)" % head, "Bash(%s:*)" % head]
+    return rules, cmds, skipped
 
 
 def with_kill(proc):

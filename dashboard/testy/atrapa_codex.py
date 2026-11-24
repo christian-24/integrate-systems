@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Atrapa polecenia `codex` do testów: strumień `codex exec --json`.
 
-Tryb jak w atrapa_claude.py (ATRAPA_TRYB_PLIK / ATRAPA_TRYB): ok, zostaw, blad, login; niezalogowany (login status).
+Tryb jak w atrapa_claude.py (ATRAPA_TRYB_PLIK / ATRAPA_TRYB): ok, zostaw, blad, login, wolno (czeka do zatrzymania); niezalogowany (login status).
 Zlecenie grafiki (polecenie „Przygotuj grafikę do posta”): ok zapisuje wariant-<n>.png w bieżącym folderze,
 grafika-sesja zostawia obraz tylko w $CODEX_HOME/generated_images/<wątek>/ (jak Codex bez kopiowania),
 grafika-pusta nie zapisuje nic, grafika-proporcje zapisuje obraz dwa razy szerszy niż wejściowy, grafika-generuje
@@ -50,6 +50,11 @@ def main(argv):
     if how == "login":
         out({"type": "error", "message": "401 Unauthorized: not logged in. Run codex login."})
         return 1
+    if how == "wolno":                       # pracuje do zatrzymania (wiadomość w trakcie, „Zatrzymaj i uruchom”)
+        out({"type": "item.started", "item": {"id": "i1", "type": "command_execution", "command": "sleep 120"}})
+        import time
+        time.sleep(120)
+        return 0
     if how == "blad":
         out({"type": "turn.failed", "error": {"message": "Nie udało się wykonać polecenia."}})
         return 1
