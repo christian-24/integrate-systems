@@ -26,7 +26,10 @@ w podglądzie posta (`instagram` w danych projektu, bez @). Tak samo, opcjonalni
 bez @), `- facebook: Nazwa strony` i `- linkedin: Nazwa strony albo profilu` (nazwa jak na ekranie, do 100 znaków).
 Rozszerzenie Chrome sprawdza je przy „Udostępnij na …” (`facebook`, `linkedin`, `tiktok` w danych projektu).
 `- nagrywa: ty`: filmy projektu nagrywa właściciel według scenariusza nagrania (sekcja „Scenariusz nagrania”);
-`panel` albo brak pola: film robi panel ze scenariusza filmu (`filmOwner` w danych projektu).
+`panel` albo brak pola: film robi panel ze scenariusza filmu (`filmOwner` w danych projektu). `- nagrywa: ai`: filmy
+robi właściciel w narzędziu AI według gotowych poleceń. Podział, np. `- nagrywa: panel 50, ai 40, ty 10`: Automat
+przydziela każdemu filmowi sposób tak, żeby trzymać ten podział (`filmMix` w danych projektu; wybór zapisany w panelu).
+Film „panel” robi studio panelu, filmy „ty” i „ai” dostają scenariusz.
 `- strona: site`: projekt ma stronę WWW w tym folderze (względem folderu projektu, `.` to sam folder). Panel pokazuje
 wtedy zakładkę „Strona”: podgląd, uwagi do agenta i zlecenie według koncepcji (`site` w danych projektu; opis
 w `dashboard/AGENCI.md`, „Podgląd strony”). Opcjonalnie `- strona build: polecenie` (domyślnie
@@ -229,6 +232,8 @@ licznika (`resultManual`: sam ręczny wynik, `counterMetric`: nazwa licznika alb
 Film, który nagrywa właściciel (karta z `- nagrywa: ty`), ma scenariusz w pliku `scenariusz.md` w folderze posta
 `posty/<dzień publikacji>-<nazwa>/` obok `KARTA.md`. Filmem jest publikacja ze słowem „film” (wideo, reel)
 w tytule albo z kanałem Reels, TikTok, YouTube. Dzień nagrania: dzień przed publikacją, najwcześniej dziś.
+Pole `- sposób:` mówi, kto robi film: `ty` (nagrywasz telefonem; „Co nagrać” to ujęcia), `ai` (robisz w narzędziu AI;
+„Co nagrać” to gotowe polecenia scen do skopiowania, a ujęcia z prawdziwym produktem są oznaczone „nagraj telefonem”).
 
 ```
 # Scenariusz nagrania: Miernik w akcji
@@ -236,6 +241,7 @@ w tytule albo z kanałem Reels, TikTok, YouTube. Dzień nagrania: dzień przed p
 - stan: propozycja
 - publikacja: 2026-11-25
 - nagranie: 2026-11-24
+- sposób: ty
 
 ## Po co
 Cel filmu i dla kogo.

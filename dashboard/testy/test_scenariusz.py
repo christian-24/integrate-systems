@@ -72,7 +72,23 @@ class Format(unittest.TestCase):
         self.assertTrue(projekt.card_fields({"nagrywa": "ty"})["filmOwner"])
         self.assertFalse(projekt.card_fields({"nagrywa": "panel"})["filmOwner"])
         self.assertFalse(projekt.card_fields({})["filmOwner"])
-        self.assertEqual(projekt.card_fields({"nagrywa": "ktoś"})["errors"], ["nagrywa: ktoś (dozwolone: ty, panel)"])
+        self.assertEqual(projekt.card_fields({"nagrywa": "ktoś"})["errors"],
+                         ["nagrywa: ktoś (ty, ai, panel albo podział, np. „panel 50, ai 40, ty 10”)"])
+        f = projekt.card_fields({"nagrywa": "panel 50, ai 40, ty 10"})
+        self.assertEqual((f["filmOwner"], f["filmMix"]), (True, {"panel": 50, "ai": 40, "ty": 10}))
+        self.assertTrue(projekt.card_fields({"nagrywa": "ai"})["filmOwner"])
+        self.assertEqual(projekt.card_fields({"nagrywa": "ty"})["filmMix"], {"ty": 100})
+
+    def test_podzial_sposobow(self):
+        mix, used, seq = {"panel": 50, "ai": 40, "ty": 10}, {}, []
+        for _ in range(10):
+            w = scenariusz.pick_way(mix, used)
+            seq.append(w)
+            used[w] = used.get(w, 0) + 1
+        self.assertEqual((seq.count("panel"), seq.count("ai"), seq.count("ty")), (5, 4, 1))
+        self.assertEqual(scenariusz.pick_way({}, {}), "ty")
+        self.assertEqual(scenariusz.parse("# Scenariusz nagrania: x\n\n- stan: propozycja\n- sposób: AI\n")["way"], "ai")
+        self.assertEqual(scenariusz.parse("# Scenariusz nagrania: x\n\n- sposób: kto\n")["way"], "")
 
 
 class Trasy(Serwer):
@@ -209,6 +225,25 @@ class Trasy(Serwer):
         self.assertFalse(self.manager._plan_scripts(data, index, TODAY))            # drugi raz nic
         far = TODAY - datetime.timedelta(days=8)                                   # publikacja poza 7 dniami
         self.assertFalse(self.manager._plan_scripts(data, index, far))
+        self.assertEqual(self.manager._state["filmWays"]["%s|%s" % (self.pid, DAY)], "ty")
+        self.assertIn("„- sposób: ty”", prep[0]["detail"]["doneWhen"])
+        self.assertEqual(self.info()["way"], "ty")
+
+    def test_automat_film_ai_i_panel(self):
+        """Podział karty: film „panel” nie dostaje scenariusza, film „ai” dostaje scenariusz z poleceniami dla AI."""
+        data, index = server.load_projects()
+        for p in data["projects"]:
+            p["filmOwner"], p["filmMix"] = True, {"panel": 100}
+        self.assertFalse(self.manager._plan_scripts(data, index, TODAY))
+        self.assertEqual(self.tasks(scenariusz.PREP_TASK), [])
+        self.assertEqual(self.manager._state["filmWays"]["%s|%s" % (self.pid, DAY)], "panel")
+        self.manager._state["filmWays"] = {}
+        for p in data["projects"]:
+            p["filmMix"] = {"ai": 100}
+        self.assertTrue(self.manager._plan_scripts(data, index, TODAY))
+        prep = self.tasks(scenariusz.PREP_TASK)
+        self.assertIn("narzędziu AI", prep[0]["detail"]["goal"])
+        self.assertIn("„- sposób: ai”", prep[0]["detail"]["doneWhen"])
 
 
 class TrasyBezNagraniaWlasciciela(Trasy):

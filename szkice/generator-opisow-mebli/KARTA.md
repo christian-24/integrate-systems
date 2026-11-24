@@ -6,6 +6,7 @@
 - priorytet: 1
 - stan: aktywny
 - maszyna: chmura
+- nagrywa: panel 50, ai 40, ty 10
 - repozytorium: serwer `~/projekty/generator-opisow-mebli` (GitHub, po migracji D13); wcześniej PC `C:\Users\Guest\Desktop\generator-opisow-mebli`
 
 Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`). Od 21.06: 101 commitów na master (PR #60–#134),

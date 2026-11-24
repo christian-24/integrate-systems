@@ -583,6 +583,9 @@ class Manager:
             self._state["sessionKey"] = key if isinstance(key, str) and re.match(r"^[0-9a-f]{32,128}$", key) else ""
             done = saved.get("rytmDone")
             self._state["rytmDone"] = [x for x in done if isinstance(x, str)][-RYTM_KEEP:] if isinstance(done, list) else []
+            ways = saved.get("filmWays")
+            self._state["filmWays"] = {k: v for k, v in list(ways.items())[-400:] if isinstance(k, str)
+                                       and v in scenariusz.WAYS} if isinstance(ways, dict) else {}
         except (OSError, ValueError, AttributeError):
             pass
 
@@ -3145,23 +3148,36 @@ class Manager:
                 "materiał": [RYTM_FILE] + refs}
 
     # ---------- scenariusz nagrania (scenariusz.py, STANDARD.md „Scenariusz nagrania”) ----------
-    def script_detail(self, folder, pub, rel, rec_day):
+    def script_detail(self, folder, pub, rel, rec_day, way="ty"):
         """Szczegóły zadania „Przygotuj scenariusz nagrania na …”: cel, gotowe gdy (układ pliku), materiał.
-        pub: publikacja z kampanii, rel: posty/<folder posta> względem karty, rec_day: dzień nagrania."""
+        pub: publikacja z kampanii, rel: posty/<folder posta> względem karty, rec_day: dzień nagrania,
+        way: ty (nagrywasz telefonem) albo ai (robisz w narzędziu AI według gotowych poleceń)."""
         day = str(pub.get("date") or "")[:10]
         title = scenariusz.pub_title(pub)
         channel = pub.get("channel") or ""
         refs = [pub["file"]] if pub.get("file") else []
         refs += [r for r in self.marketing_refs(folder) + self.film_plan_refs(folder) if r not in refs]
-        return {"cel": "scenariusz nagrania filmu do publikacji „%s” z %s%s: co nagrać, jak i po co; właściciel "
-                       "nagrywa sam telefonem %s, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan "
-                       "filmów i dokumenty projektu)" % (title, day, " (%s)" % channel if channel else "", rec_day),
+        where = " (%s)" % channel if channel else ""
+        if way == "ai":
+            goal = ("scenariusz filmu do publikacji „%s” z %s%s, który właściciel zrobi %s w narzędziu AI do wideo "
+                    "(np. CapCut, Runway, Kling): dla każdej sceny gotowe polecenie do skopiowania (co widać, ruch "
+                    "kamery, styl, długość), tekst lektora i napisy, muzyka; bez prawdziwych ludzi i bez udawania "
+                    "prawdziwego produktu — ujęcia, które muszą pokazać prawdziwy produkt albo ekran, oznacz "
+                    "„nagraj telefonem” albo „zrzut ekranu” (przeczytaj kampanię, plan filmów i dokumenty projektu)"
+                    % (title, day, where, rec_day))
+            shots, how = "„- [ ] polecenie dla AI | 5 s”", "narzędzie, format pionowy albo poziomy, styl i spójność scen"
+        else:
+            goal = ("scenariusz nagrania filmu do publikacji „%s” z %s%s: co nagrać, jak i po co; właściciel "
+                    "nagrywa sam telefonem %s, więc pisz praktycznie i konkretnie (przeczytaj kampanię, plan "
+                    "filmów i dokumenty projektu)" % (title, day, where, rec_day))
+            shots, how = "„- [ ] opis ujęcia | 5 s”", "miejsce, światło, kadr, telefon pionowo albo poziomo, rekwizyty"
+        return {"cel": goal,
                 "gotowe gdy": "obok KARTA.md jest plik %s/%s w układzie: „# Scenariusz nagrania: <tytuł>”, pola "
-                              "„- stan: propozycja”, „- publikacja: %s”, „- nagranie: %s”, sekcje ## Po co (cel, dla "
-                              "kogo), ## Co nagrać (wiersze „- [ ] opis ujęcia | 5 s”), ## Jak (miejsce, światło, "
-                              "kadr, telefon pionowo albo poziomo, rekwizyty), ## Co powiedzieć (tekst albo punkty), "
-                              "## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md "
-                              "i zadania nagrania bez zmian" % (rel, scenariusz.FILE, day, rec_day),
+                              "„- stan: propozycja”, „- publikacja: %s”, „- nagranie: %s”, „- sposób: %s”, sekcje "
+                              "## Po co (cel, dla kogo), ## Co nagrać (wiersze %s), ## Jak (%s), ## Co powiedzieć "
+                              "(tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja "
+                              "wypełniona; post.md i zadania nagrania bez zmian"
+                              % (rel, scenariusz.FILE, day, rec_day, way, shots, how),
                 "materiał": refs}
 
     @staticmethod
@@ -3185,8 +3201,10 @@ class Manager:
         True, gdy coś dodano."""
         added = False
         horizon = (today + datetime.timedelta(days=SCRIPT_AHEAD)).isoformat()
-        owners = {p["id"] for p in data["projects"]
+        owners = {p["id"]: p.get("filmMix") or {"ty": 100} for p in data["projects"]
                   if p.get("filmOwner") and p.get("state") not in self.projekt.QUIET_STATES}
+        with self._lock:
+            ways = self._state.setdefault("filmWays", {})      # „projekt|dzień” -> ty | ai | panel (podział karty)
         for pid in sorted(owners):
             folder = index.get(pid)
             if not folder:
@@ -3204,6 +3222,18 @@ class Manager:
                 post = scenariusz.post_dir(cards, day)
                 if post and os.path.isfile(os.path.join(post, scenariusz.FILE)):
                     continue
+                key = "%s|%s" % (pid, day)
+                with self._lock:
+                    way = ways.get(key)
+                    if way not in scenariusz.WAYS:
+                        used = {}
+                        for k, w in ways.items():
+                            if k.startswith(pid + "|"):
+                                used[w] = used.get(w, 0) + 1
+                        way = ways[key] = scenariusz.pick_way(owners[pid], used)
+                        self._save_state()
+                if way == "panel":
+                    continue                    # ten film nagrywa panel (studio), bez scenariusza dla właściciela
                 try:
                     with self.write_lock:
                         post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(t))
@@ -3212,7 +3242,7 @@ class Manager:
                         self._add_task(folder, pid, title,
                                        {"executor": "claude", "machine": self.machine, "date": today.isoformat()},
                                        self.script_detail(folder, t, "posty/" + os.path.basename(post),
-                                                          scenariusz.rec_day(day, today)))
+                                                          scenariusz.rec_day(day, today), way))
                     titles.add(title)
                     added = True
                 except (ValueError, OSError, StopIteration) as e:
