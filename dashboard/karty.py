@@ -12,11 +12,14 @@ import re
 import threading
 import uuid
 
-TYPES = ("liczba", "lista", "tabela", "wykres", "postep", "tydzien", "notatka", "news")
+TYPES = ("liczba", "lista", "tabela", "wykres", "postep", "tydzien", "notatka", "news", "panel")
 COMMON = {"id", "typ", "tytul", "opis", "zrodlo", "rozmiar", "zapisz"}
 TYPE_KEYS = {"liczba": {"zapytanie", "dane", "porownaj"}, "lista": {"zapytanie", "dane"},
              "tabela": {"zapytanie", "dane", "kolumny"}, "wykres": {"zapytanie", "dane", "rodzaj"},
-             "postep": {"zapytanie"}, "tydzien": {"zapytanie"}, "notatka": {"dane"}, "news": {"dane"}}
+             "postep": {"zapytanie"}, "tydzien": {"zapytanie"}, "notatka": {"dane"}, "news": {"dane"},
+             "panel": {"widok"}}
+# karta „panel”: fragment panelu z przyciskami (dawne widoki Dla Ciebie, Terminy, Blokady, Wskaźniki, Tablica, raport PM)
+PANEL_VIEWS = ("sprawy-dzis", "sprawy", "terminy", "blokady", "wskazniki", "zadania", "raport")
 NEED_DATA = {"liczba", "lista", "tabela", "wykres", "tydzien", "notatka", "news"}   # zapytanie albo dane
 SOURCES = ("zadania", "publikacje", "etapy", "projekty", "kampanie", "zasoby")
 QUERY_KEYS = {"zrodlo", "filtr", "grupuj", "miara", "sortuj", "limit"}
@@ -241,6 +244,8 @@ def card(c):
                 raise Bad("porownaj.zapytanie: wymagane")
             out["porownaj"] = {"etykieta": _text(c["porownaj"].get("etykieta", "porównanie"), "porownaj.etykieta", 40),
                                "zapytanie": query(c["porownaj"]["zapytanie"], "porownaj.zapytanie")}
+        if typ == "panel":
+            out["widok"] = _choice(PANEL_VIEWS, "widok")(c.get("widok"))
         if "rodzaj" in c:
             out["rodzaj"] = _choice(CHARTS, "rodzaj")(c["rodzaj"])
         if "kolumny" in c:
@@ -292,9 +297,24 @@ def extract(text):
     return clean, ops
 
 
-# ---------- karty wbudowane (puste płótno) ----------
+# ---------- karty wbudowane ----------
+# START: karty na pustym płótnie (sprawy na dziś i notatka PM); pozostałe wbudowane model podaje samym id.
 STARTERS = [
-    {"id": "dzis-dla-ciebie", "typ": "lista", "tytul": "Dziś dla Ciebie",
+    {"id": "sprawy-dzis", "typ": "panel", "widok": "sprawy-dzis", "tytul": "Dziś dla Ciebie",
+     "opis": "Liczba spraw na dziś i 3 najważniejsze, z przyciskami"},
+    {"id": "raport-pm", "typ": "panel", "widok": "raport", "tytul": "Notatka PM", "rozmiar": "szeroka",
+     "opis": "Notatka kierownika projektów z raporty/ i przycisk raportu PM"},
+    {"id": "sprawy", "typ": "panel", "widok": "sprawy", "tytul": "Sprawy dla Ciebie", "rozmiar": "szeroka",
+     "opis": "Pytania, zgody, odbiory i Twoje zadania: dziś, 7 dni, później; odpowiedź, zgoda, odbiór, filtr"},
+    {"id": "terminy", "typ": "panel", "widok": "terminy", "tytul": "Terminy", "rozmiar": "szeroka",
+     "opis": "Etapy, zadania i publikacje od najpilniejszych, z filtrem projektu i rodzaju"},
+    {"id": "blokady", "typ": "panel", "widok": "blokady", "tytul": "Blokady", "rozmiar": "szeroka",
+     "opis": "Co wstrzymuje ile zadań, zablokowane zadania i zależności do poprawy"},
+    {"id": "wskazniki", "typ": "panel", "widok": "wskazniki", "tytul": "Wskaźniki", "rozmiar": "szeroka",
+     "opis": "Postęp, tempo i przepływ pracy, porównanie projektów"},
+    {"id": "zadania", "typ": "panel", "widok": "zadania", "tytul": "Zadania", "rozmiar": "szeroka",
+     "opis": "Zadania ze wszystkich projektów z filtrem projektu i stanu"},
+    {"id": "dzis-dla-ciebie", "typ": "lista", "tytul": "Twoje sprawy do dziś",
      "opis": "Twoje otwarte sprawy na dziś i po terminie",
      "zapytanie": {"zrodlo": "zadania", "filtr": {"kto": "dla-ciebie", "stan": "otwarte", "do": "dziś"},
                    "sortuj": "data", "limit": 8}},
@@ -308,6 +328,7 @@ STARTERS = [
      "opis": "Publikacje od dziś przez 7 dni",
      "zapytanie": {"zrodlo": "publikacje", "filtr": {"od": "dziś", "do": "+6"}}},
 ]
+START = ("sprawy-dzis", "raport-pm")
 
 
 # ---------- biblioteka: zapisane karty i układ płótna ----------
@@ -439,6 +460,8 @@ Typy:
 - tydzien: 7 dni od filtr.od (domyślnie dziś) z zadaniami albo publikacjami z zapytania
 - notatka: dane: {"tekst": "…"} (zwykły tekst)
 - news: dane: {"pozycje": [{"tytul": "…", "zrodlo": "nazwa serwisu", "data": "RRRR-MM-DD", "link": "https://…", "opis": "…"}]}
+- panel: fragment panelu z przyciskami (odpowiedź na pytanie, zgoda, odbiór, zamknięcie, filtry); "widok": sprawy-dzis,
+  sprawy, terminy, blokady, wskazniki, zadania, raport. Gotowe karty tego typu podajesz samym id (lista niżej).
 Zapytanie: {"zrodlo": zadania|publikacje|etapy|projekty|kampanie|zasoby, "filtr": {…}, "grupuj": …, "miara": …,
 "sortuj": …, "limit": 1–50}
 - filtr: projekt (id albo nazwa, może być lista), stan (otwarte, zrobione, do zrobienia, w toku, zablokowane,
@@ -452,6 +475,13 @@ Przykłady:
 - {"id": "zgody-czekaja", "typ": "liczba", "tytul": "Zgody czekają", "zapytanie": {"zrodlo": "zadania", "filtr": {"czeka": "zgoda", "stan": "otwarte"}}}
 - {"id": "minuty-tydzien", "typ": "wykres", "rodzaj": "slupki", "tytul": "Twoje minuty w 7 dni", "zapytanie": {"zrodlo": "zadania", "filtr": {"kto": "ty", "od": "dziś", "do": "+6"}, "grupuj": "dzien", "miara": "minuty"}}
 - {"id": "otwarte-wg-projektu", "typ": "tabela", "tytul": "Otwarte zadania", "kolumny": ["tytul", "projekt", "data"], "zapytanie": {"zrodlo": "zadania", "filtr": {"stan": "otwarte"}, "sortuj": "data", "limit": 15}}
+Widoków Start, Dla Ciebie, Przegląd, Wskaźniki, Tablica, Terminy, Blokady i Projekty w panelu już nie ma: to, co
+pokazywały, pokazujesz Ty kartami z tych samych danych. Sprawy dla Ciebie (pytania, zgody, odbiory, Twoje zadania):
+{"id": "sprawy"}; na dziś krótko: {"id": "sprawy-dzis"}; terminy etapów, zadań i publikacji: {"id": "terminy"}; co
+wstrzymuje ile zadań: {"id": "blokady"}; postęp, tempo, przepływ: {"id": "wskazniki"}; zadania ze wszystkich
+projektów z filtrem projektu i stanu: {"id": "zadania"}; raport i notatka PM: {"id": "raport-pm"}. Węższe pytania
+(np. terminy jednego projektu) odpowiadaj kartą z zapytaniem. Rejestr projektów, Księga i dodawanie projektu są
+w widoku Serwer (#koszty), Teraz i plan dnia w Agentach (#agenci).
 Biblioteka: najpierw użyj gotowej karty z listy niżej, podając samo {"id": "…"}. Gdy żadna nie pasuje, opisz nową
 z zapytaniem i dodaj "zapisz": true (panel zapamięta ją do następnego razu; karty z danymi wprost się nie zapisują).
 Ten sam id w "pokaz" podmienia kartę. "usun" zdejmuje kartę z płótna. Przypina i usuwa z biblioteki właściciel.

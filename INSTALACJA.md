@@ -152,7 +152,7 @@ Telefon łączy się z panelem na PC przez Tailscale. Bez hasła panel odrzuca p
 
 4. Uruchom ponownie `uruchom\windows-zainstaluj.ps1`. Gdy zapora Windows zapyta o dostęp dla Pythona, zezwól.
 5. Na iPhonie otwórz `http://nazwa-pc:4801/wejscie` i wpisz hasło. Stronę możesz dodać do ekranu początkowego.
-6. Terminy w Kalendarzu iOS: w panelu, zakładka Kalendarz, skopiuj adres subskrypcji (`/terminy.ics?k=…`),
+6. Terminy w Kalendarzu iOS: w panelu, Serwer → Połączenie z kalendarzem, skopiuj adres subskrypcji (`/terminy.ics?k=…`),
    potem Ustawienia → Aplikacje → Kalendarz → Konta kalendarzy → Dodaj konto → Inne → Dodaj subskrybowany kalendarz.
 
 Adres subskrypcji zawiera klucz: traktuj go jak hasło. Zmiana `PANEL_TOKEN` unieważnia zalogowane urządzenia i ten adres.
@@ -160,7 +160,7 @@ iPhone widzi panel tylko przy włączonym Tailscale.
 
 ## Projekty
 
-- Z panelu: widok Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Z terminala, nowy projekt:
 
   ```bash

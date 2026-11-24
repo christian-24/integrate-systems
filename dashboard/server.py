@@ -1537,7 +1537,7 @@ FILM_TASK = re.compile(r"^(?:nagra[jć]|obejrzyj)\s+film", re.I)    # „Obejrzy
 
 
 def film_link(task, tasks, index):
-    """Folder posta, którego film robi zadanie „Nagraj film …” (jedno źródło dla panelu: Dziś, Blokady, szuflada):
+    """Folder posta, którego film robi zadanie „Nagraj film …” (jedno źródło dla panelu: sprawy dla Ciebie, Blokady, szuflada):
     materiał: w posty/<post>/ albo publikacja z kanałem, która czeka na to zadanie (po:), z postem na swój dzień.
     None: zadanie nie jest powiązane z postem."""
     if not FILM_TASK.match(task.get("title") or "") or task.get("channel"):
@@ -2044,7 +2044,7 @@ def connect_calendar():
         threading.Thread(target=work, daemon=True).start()
 
 
-# ---------- „Teraz” w Przeglądzie: filmy, rozmowy o zadaniach, zamknięte zadania, zakończone uruchomienia ----------
+# ---------- „Teraz” w Agentach: filmy, rozmowy o zadaniach, zamknięte zadania, zakończone uruchomienia ----------
 ACTIVITY_TTL = 5                      # s: foldery postów czytane najwyżej co tyle (panel pyta co 3 s, gdy coś trwa)
 RECENT_HOURS = 24                     # „Ostatnio zrobione”
 CLOSED_KEEP = 100
