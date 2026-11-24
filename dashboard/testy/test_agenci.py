@@ -204,6 +204,8 @@ class Zadanie(Baza):
         self.assertIn("Edit: ZADANIA.md", [s["text"] for s in rec["steps"]])
         call = self.calls()[-1]
         self.assertEqual(call["argv"], ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
+                                        "-c", "sandbox_workspace_write.network_access=false",
+                                        "-c", "features.multi_agent=false", "-c", "features.multi_agent_v2=false",
                                         "-C", self.folder, "-"])
         self.assertEqual(call["env"], [])
         self.assertIn("AGENTS.md", call["prompt"])

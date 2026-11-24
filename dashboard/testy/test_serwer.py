@@ -74,7 +74,8 @@ class Dane(Serwer):
         data = self.data()
         block = data["agents"]
         self.assertEqual(set(block), set(sample))
-        self.assertEqual(set(block["runs"][0]), set(sample["runs"][0]))
+        self.assertEqual(set(block["runs"][0]), set(sample["runs"][0]) | {"choiceReason", "outcome"})
+        self.assertEqual(block["runs"][0]["outcome"], "done")
         self.assertEqual(set(block["today"]), set(sample["today"]))
         self.assertEqual({k: set(v) for k, v in block["tools"].items()}, {k: set(v) for k, v in sample["tools"].items()})
         self.assertEqual((block["machine"], block["automat"], block["maxParallel"], block["canRunTasks"],
