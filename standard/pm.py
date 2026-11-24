@@ -12,6 +12,7 @@ Stan kontroli serwera (pole „sprawdza:” zadań, lista „do zamknięcia”) 
 (domyślnie /home/panel/.zdrowie-stan); bez niego pomijane są kontrole serwera, kontrole „plik <ścieżka>” zostają.
 Tylko odczyt. Tylko biblioteka standardowa Pythona.
 """
+import argparse
 import datetime
 import glob
 import json
@@ -481,5 +482,14 @@ def text(f):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--rejestr")
+    parser.add_argument("--tylko-rejestr", action="store_true")
+    args = parser.parse_args()
+    if args.rejestr:
+        projekt.REGISTRY = os.path.abspath(os.path.expanduser(args.rejestr))
     data = facts()
-    print(json.dumps(data, ensure_ascii=False, indent=1) if "--json" in sys.argv[1:] else text(data))
+    if args.tylko_rejestr and data["source"] != "registry":
+        parser.exit(1, "Raport PM: brak projektów w rejestrze lub zbieraczu.\n")
+    print(json.dumps(data, ensure_ascii=False, indent=1) if args.json else text(data))

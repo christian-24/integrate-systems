@@ -98,7 +98,7 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | Element | Wartości |
 |---|---|
 | stan | `[ ]` do zrobienia, `[~]` w toku, `[!]` zablokowane, `[x]` zrobione |
-| `kto` | claude, codex, ty |
+| `kto` | agent (panel wybiera Claude lub Codex), claude, codex, ty |
 | `gdzie` | pc, mac, chmura |
 | `kiedy` | data RRRR-MM-DD |
 | `pora` | dzień, noc |
@@ -191,7 +191,7 @@ liczą się otwarte zadania z `ZADANIA.md` (bez publikacji):
 | tytuł nie zaczyna się od czasownika | pierwsze słowo to rzeczownik odczasownikowy („Wdrożenie…”, „Przygotowanie…”) |
 | Twoje zadanie bez kroków i materiału | `kto: ty`, `kiedy` najpóźniej za 7 dni (także po terminie), bez kroków i bez `materiał:` |
 | Twoje zadanie bez `czas` | `kto: ty` bez pola `czas` |
-| zadanie agenta bez `kiedy` | `kto: claude` albo `codex` w aktywnym projekcie, bez `kiedy`, poza sekcją „Do rozplanowania” |
+| zadanie agenta bez `kiedy` | `kto: agent`, `claude` albo `codex` w aktywnym projekcie, bez `kiedy`, poza sekcją „Do rozplanowania” |
 | `wynik:` bez odbioru | stan `[ ]`, jest `wynik:`, nie ma `wymaga` (praca zrobiona, a zadanie wisi: zamknij albo daj do odbioru) |
 | kampania bez celu liczbowego | kampania w stanie „w toku” bez pola `cel liczbowy` z liczbą |
 | `sprawdza:` z nieznanym kluczem | klucz spoza listy kontroli serwera i nie `plik <ścieżka>` |

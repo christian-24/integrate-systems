@@ -2060,6 +2060,37 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 /* poprawki UI runda 3: D */
 .bk-howw .bk-how>summary{font-weight:400;color:var(--ink-3);font-size:var(--fs-sm)}
 .bk-lgp{margin:0 0 6px;padding:0 16px;font-size:var(--fs-sm);color:var(--ink-3)}
+/* Agenci: jednakowe wcięcia i kolumny historii w każdym wierszu. */
+#ag-now .ag-body,#ag-runs .ag-body{padding:0 16px 16px;min-width:0}
+#ag-view .panel{min-width:0;margin-bottom:14px;overflow-wrap:anywhere}
+#ag-view .ag-errf{text-decoration:none}
+#ag-view .panel h2{flex-wrap:wrap}
+#ag-view .ag-ac{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#ag-view .ag-ac button{min-height:36px;white-space:normal}
+#ag-view .ag-tools summary small{min-width:0}
+#ag-view .ag-gh{font-size:var(--fs-sm);margin:16px 0 4px;color:var(--ink-2)}
+#ag-view .ag-gh button{padding:4px 0;font:inherit;color:inherit}
+#ag-view .ag-gh .nw-car{font-size:16px;color:var(--ink);margin-right:6px}
+#ag-view .ag-runs>li{display:grid;grid-template-columns:minmax(0,1fr) clamp(100px,16vw,144px);gap:8px;
+  align-items:start;padding:10px 0}
+#ag-view .ag-runs>li>.ag-rm{grid-row:auto;grid-column:auto;min-width:0}
+#ag-view .ag-runs>li>.wh{grid-row:auto;grid-column:auto;display:grid;justify-items:start;gap:4px;text-align:left;white-space:normal}
+#ag-view .ag-runs .t{white-space:normal;text-align:left;overflow-wrap:anywhere;max-width:100%}
+#ag-view .ag-rm>.s{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  white-space:normal;overflow-wrap:anywhere}
+#ag-view .ag-usetop summary,#ag-view .ag-rdet summary{cursor:pointer;color:var(--ink);font-size:var(--fs-sm)}
+#ag-view .ag-usetop li>*{min-width:0}
+#ag-view .ag-srvl{margin:0 0 16px;padding:0;display:block}
+.ag-now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
+.ag-now-card{border:1px solid var(--line);border-radius:10px;padding:12px;min-width:0}
+.ag-now-card h3{margin:0 0 4px;font-size:var(--fs-md)}
+.ag-now-card p{margin:6px 0}
+.ag-now-card progress{width:100%;accent-color:var(--accent)}
+.ag-now-card ol{margin:6px 0;padding-left:20px}
+.ag-now-card .row{gap:8px;flex-wrap:wrap}
+.ag-queue{margin:6px 0 0;padding-left:20px}
+.ag-limit{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0;padding:8px 16px;color:var(--ink-2)}
+#ag-view .ag-body .ahint{padding:0;margin:8px 0}
 .ag-none{padding-top:8px}
 .tm-blk{font-size:var(--fs-sm);color:var(--ink-3)}
 .navlk.inl{display:inline;min-height:0;padding:0}
@@ -2768,7 +2799,7 @@ function resolveRel(v,today){
 
 const PHASES=[['pomysl','Pomysł'],['ksiega','Księga'],['budowa','Budowa'],['wdrozenie','Wdrożenie'],['marketing','Marketing'],['utrzymanie','Utrzymanie']];
 const PHI={};PHASES.forEach((x,i)=>PHI[x[0]]=i);
-const WHO={claude:{n:'Claude',c:'var(--who-claude)',i:'C'},codex:{n:'Codex',c:'var(--who-codex)',i:'X'},ty:{n:'Ty',c:'var(--who-ty)',i:'Ty'},'':{n:'Nieprzypisane',c:'var(--who-none)',i:'–'}};
+const WHO={agent:{n:'Agent',c:'var(--who-none)',i:'A'},claude:{n:'Claude',c:'var(--who-claude)',i:'C'},codex:{n:'Codex',c:'var(--who-codex)',i:'X'},ty:{n:'Ty',c:'var(--who-ty)',i:'Ty'},'':{n:'Nieprzypisane',c:'var(--who-none)',i:'–'}};
 const COLS=[['todo','Do zrobienia'],['wip','W toku'],['rev','Do odbioru'],['done','Zrobione']];
 const ST={ok:['out','w normie'],risk:['yellow','zagrożony'],late:['red','po terminie'],you:['purple','czeka na Ciebie'],done:['grey','zrobione'],none:['out','bez terminu'],
   backlog:['grey','backlog'],paused:['grey','wstrzymany'],finished:['grey','zakończony']};
@@ -2928,7 +2959,7 @@ const hasStats=s=>!!(s&&(s.views||s.clicks||s.accounts||s.link));
 /* następne: "Tytuł | kto: … | kiedy: …" albo {title, executor, date} */
 function parseNext(v){
   if(v==null||v==='')return null;
-  const who=x=>{x=String(x||'').trim().toLowerCase();return x==='claude'||x==='codex'||x==='ty'?x:''};
+  const who=x=>{x=String(x||'').trim().toLowerCase();return x==='claude'||x==='codex'||x==='agent'||x==='ty'?x:''};
   if(typeof v==='object'){const t=typeof v.title==='string'?v.title.trim():'';return t?{title:t,executor:who(v.executor||v.kto),date:isDay(v.date||v.kiedy)?(v.date||v.kiedy):''}:null}
   const parts=String(v).split('|'),o={title:parts[0].trim(),executor:'',date:''};
   parts.slice(1).forEach(x=>{const m=/^\s*(kto|kiedy)\s*:\s*(.*?)\s*$/i.exec(x);if(!m)return;if(m[1].toLowerCase()==='kto')o.executor=who(m[2]);else if(isDay(m[2]))o.date=m[2]});
@@ -3138,7 +3169,7 @@ const RS={queued:['grey','w kolejce','off'],running:['blue','pracuje','run'],don
   unknown:['grey','stan nieznany','off']};
 const lzR=s=>{const x=RS[s]||RS.error;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
 const TOOL={claude:'Claude',codex:'Codex'};
-const KIND={task:'Zadanie',pm:'Raport PM',check:'Test połączenia',plan:'Plan dnia',grafika:'Grafika (Codex)'};
+const KIND={development:'Zlecenie rozwoju',task:'Zadanie',pm:'Raport PM',check:'Test połączenia',plan:'Plan dnia',grafika:'Grafika (Codex)'};
 const PRV='Podgląd: bez zapisu i bez uruchamiania';
 const A={busy:{pm:false,check:false,add:false,plan:false,go:false,merge:'',defer:false},starting:{},confirm:'',sig:'',fullAt:0,psel:{},mconf:'',merged:{},diff:{}};
 const isoL=d=>key(d)+'T'+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
@@ -3151,17 +3182,17 @@ function normAgents(a){
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
     maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
-    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun)};
+    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[]};
 }
 /* zużycie limitów subskrypcji (agents.usage: ułamki 0–1 albo null) i bezpiecznik jednego uruchomienia */
 const frac=v=>v==null||v===''||!Number.isFinite(+v)?null:Math.max(0,Math.min(1,+v));
-const normUsage=u=>{u=u&&typeof u==='object'?u:{};return {five:frac(u.five),seven:frac(u.seven),budget:frac(u.budget)||0.2,reserve:frac(u.reserve)||0.8}};
+const normUsage=u=>{u=u&&typeof u==='object'?u:{};return {five:frac(u.five),codexFive:frac(u.codexFive),seven:frac(u.seven),budget:frac(u.budget)||0.2,reserve:frac(u.reserve)||0.8}};
 /* ile punktów procentowych limitu 5 godzin zużyło uruchomienie (null: brak odczytu) */
 const runUse=r=>r.limitStart!=null&&r.limitNow!=null?Math.max(0,Math.round(100*(r.limitNow-r.limitStart))):null;
 /* uruchomienie z /api/data (agents.runs i activity.runs) */
 function normRun(r){
   r=r&&typeof r==='object'?r:{};
-  return Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:'claude',state:RS[r.state]&&r.state!=='unknown'?r.state:r.state?'unknown':'error',
+  return Object.assign({},r,{id:String(r.id||''),kind:KIND[r.kind]?r.kind:'task',tool:TOOL[r.tool]?r.tool:r.kind==='development'?'':'claude',state:RS[r.state]&&r.state!=='unknown'?r.state:r.state?'unknown':'error',
       title:r.title||KIND[r.kind]||'',queuedAt:absT(r.queuedAt),startedAt:absT(r.startedAt),endedAt:absT(r.endedAt),
       limitStart:frac(r.limitStart),limitNow:frac(r.limitNow),
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[],
@@ -3173,7 +3204,7 @@ function normRun(r){
 const runs=()=>D&&D.agents?D.agents.runs:[];
 const isAct=r=>r.state==='queued'||r.state==='running';
 const anyActive=()=>runs().some(isAct);
-const runById=id=>runs().find(r=>r.id===id)||(D&&D.activity?D.activity.runs.find(r=>r.id===id):null);
+const runById=id=>runs().find(r=>r.id===id)||(D&&D.agents&&D.agents.development.find(r=>r.id===id))||(D&&D.activity?D.activity.runs.find(r=>r.id===id):null);
 const runOf=t=>t.runId?runById(t.runId):null;
 const sameTask=(r,t)=>(r.taskId===t.id&&r.title===t.title)||(r.project===t.project&&r.file===t.file&&r.title===t.title);
 const taskOfRun=r=>r.kind!=='task'?null:(D.tasks.find(t=>t.runId===r.id)||D.tasks.find(t=>sameTask(r,t))||null);
@@ -3183,7 +3214,7 @@ const blockOf=t=>A.starting[t.id]?'Uruchamianie':LIVE?(t.runBlock||''):prvBlock(
 function prvBlock(t){
   const k=toolOf(t);
   return isFilmTask(t)?'Film nagrywa panel; Ty go oglądasz':t.kind==='publikacja'?'Publikację wykonujesz samodzielnie':t.state==='done'?'Zrobione':t.executor==='ty'?'Zadanie po Twojej stronie':t.needsYou==='zgoda'?'Czeka na Twoją zgodę':
-    !D.agents.tools[k].found?'Brak polecenia '+k:t.runId?'W toku':'';
+    !(t.executor==='agent'?Object.values(D.agents.tools).some(x=>x.found):D.agents.tools[k].found)?'Brak polecenia '+k:t.runId?'W toku':'';
 }
 const tOf=iso=>{const d=iso?new Date(iso):null;return d&&!isNaN(d)?d:null};
 const hhmm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
@@ -4238,7 +4269,7 @@ const nwDot=dot=>'<i class="dot '+dot+' nw-hdot" aria-hidden="true"></i>';
 function pvToday(ys){
   const dN=ys.youToday.filter(tyIsDec).length,tN=ys.youToday.filter(x=>!tyIsDec(x)).length,op=overPlan(ys),a=D.agents;
   /* agenci: ich zadania bez Twojej decyzji (zgoda, odbiór), z terminem dziś albo w toku — tak jak „Dziś” w Terminach */
-  const ag=D.tasks.filter(t=>(t.executor==='claude'||t.executor==='codex')&&t.state!=='done'&&!t.needsYou&&(t.state==='doing'||String(t.date||'').slice(0,10)===D.todayKey)).length;
+  const ag=D.tasks.filter(t=>(['agent','claude','codex'].includes(t.executor))&&t.state!=='done'&&!t.needsYou&&(t.state==='doing'||String(t.date||'').slice(0,10)===D.todayKey)).length;
   let run=0;try{run=nwNow().filter(x=>!x.q).length}catch(e){}
   const agT=!a?'agenci niedostępni':'agenci: '+(run?run+' '+pl(run,'pracuje','pracują','pracuje')+' teraz':ag?ag+' '+pl(ag,'zadanie','zadania','zadań')+' na dziś':'nic na dziś');
   /* zero bez odnośnika: nie ma dokąd prowadzić */
@@ -4863,7 +4894,7 @@ const bkClaudeWait=t=>{if(t.executor==='codex')return '';const a=D.agents||{},li
 function bkAct(n){
   const t=n.t;if(t.waits.length||t.state==='blocked'||t.state==='done'||bkWork()[t.id])return '';
   if(needsMe(t)){const a=ACTB(t),ed=pubEd(t,a);return '<button class="btn sec sm bk-act" '+(ed?'data-medit="'+esc(ed)+'"':'data-act="'+a[0]+'" data-id="'+esc(t.id)+'"')+' data-k="bka:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button>'}
-  if((t.executor==='claude'||t.executor==='codex')&&t.kind!=='publikacja'&&!blockOf(t)){
+  if((['agent','claude','codex'].includes(t.executor))&&t.kind!=='publikacja'&&!blockOf(t)){
     const cw=bkClaudeWait(t);
     if(cw)return '<span class="bk-wait" title="Uruchomienie teraz czekałoby w kolejce">'+esc(cw)+'<span class="bk-sr">: uruchomienie teraz czekałoby w kolejce</span></span>';
     return '<button class="btn sec sm bk-act" data-ag="run" data-id="'+esc(t.id)+'" data-k="bka:'+esc(t.id)+'" aria-label="'+esc('Uruchom: '+t.title)+'">Uruchom</button>'}
@@ -5225,7 +5256,7 @@ function planDec(p){
   return ys.youToday.concat(ys.youWeek,ys.youLater).filter(of);
 }
 function planView(p){
-  const T=D.todayKey,end=addK(T,6),day={},isAg=t=>t.executor==='claude'||t.executor==='codex';
+  const T=D.todayKey,end=addK(T,6),day={},isAg=t=>['agent','claude','codex'].includes(t.executor);
   const dec=planDec(p),decT={};dec.forEach(x=>{if(x.t)decT[x.t.id]=1});
   const put=(k,kind,t)=>{(day[k]||(day[k]=[])).push({kind:kind,t:t})};
   D.tasks.filter(t=>inP(p,t.project)&&t.state!=='done'&&!decT[t.id]).forEach(t=>{
@@ -5945,14 +5976,12 @@ function agBarHtml(){
   /* najpierw jedno zdanie (kto pracuje, co czeka na Ciebie), potem akcje; stan narzędzi zwinięty w „Narzędzia”.
      Bez claude albo bez logowania przyciski raportu i testu znikają: zostaje zdanie z powodem (baner logowania ma własną akcję) */
   const ck=A.busy.check||runs().some(r=>r.kind==='check'&&isAct(r)),no=!a.tools.claude.found,lg=lgNeed();
-  const act=runs().filter(isAct).length,ys=youState(),wait=ys.youToday.concat(ys.youWeek).filter(x=>x.t&&(x.t.executor==='claude'||x.t.executor==='codex')).length;
+  const ys=youState(),wait=ys.youToday.concat(ys.youWeek).filter(x=>x.t&&(['agent','claude','codex'].includes(x.t.executor))).length;
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
-  /* hierarchia: stan (ciemny, większy) z samodzielnym uruchamianiem w jednym wierszu; pod nim jedno zdanie, co dalej */
-  const swOn=a.canRunTasks&&!no,auS='samodzielne uruchamianie '+(a.automat?'włączone':'wyłączone');
-  h+='<p class="ag-sum">'+(act?'<b>'+act+'</b> '+pl(act,'agent pracuje','agenci pracują','agentów pracuje'):'Agenci teraz nie pracują')+(swOn?'':' · '+auS)+'.</p>';
+  const swOn=a.canRunTasks&&Object.values(a.tools).some(t=>t.found);
   if(wait)h+='<p class="ag-wait">'+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Twoją decyzję w najbliższych 7 dniach. <a class="navlk inl" href="#ty">Dla Ciebie →</a></p>';
   if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <a class="navlk inl" href="#projekty">Projekty →</a></p>';
-  else if(no)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
+  else if(no&&!a.tools.codex.found)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
   /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
   const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+
@@ -5960,7 +5989,12 @@ function agBarHtml(){
     (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
   if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
-  if(limitT())h+='<p class="ahint">'+limitHint()+(a.automat?' · samodzielne uruchamianie czeka':'')+'</p>';
+  const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
+  h+='<p class="ag-limit"><span>Claude · limit 5 h: <b>'+pct(u.five)+'</b>'+
+    (u.seven==null?'':' · tygodniowy: '+pct(u.seven))+'</span><span>Codex · limit 5 h: <b>'+pct(u.codexFive)+'</b></span></p>';
+  if(u.five!=null)h+='<p class="ahint">Bezpiecznik Claude zatrzymuje uruchomienie po zużyciu '+pct(u.budget)+
+    ' limitu 5 h. Automat pomija wykonawcę od '+pct(u.reserve)+' limitu.</p>';
+  if(limitT())h+='<p class="ahint">'+limitHint()+'</p>';
   const tc=toolState('claude'),tx=toolState('codex'),to=!!(A.agDet&&A.agDet.tools);
   const TSH={ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'},tsh=(n,x)=>n+': '+(TSH[x.dot]||x.dot);
   h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia <small>· '+(tc.dot==='off'&&tx.dot==='off'?'czy Claude i Codex są zainstalowane':esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx)))+'</small></summary>'+
@@ -5979,33 +6013,75 @@ function runShort(r){
   return nwStep(shortT(raw,90));
 }
 /* wiersz uruchomienia: tytuł pierwszy, stan i czas po prawej (telefon: pod tytułem); g = scalone kolejne o tym samym tytule i stanie */
-/* Agenci: zużycie limitu subskrypcji teraz, bezpiecznik i uruchomienia, które zużyły najwięcej (ostatnie 7 dni) */
-function usageBox(a,L){
-  const u=a.usage,wk=Date.now()-7*864e5,top=L.filter(r=>runUse(r)!=null&&(+tOf(r.startedAt||r.queuedAt)||0)>=wk).sort((x,y)=>runUse(y)-runUse(x)).slice(0,5);
-  if(u.five==null&&!top.length)return '';
-  let h='<div class="ag-use">'+(u.five!=null?'<p class="ahint">Zużycie limitu 5 godzin: <b class="num'+(u.five>=u.reserve?' ag-hot':'')+'">'+Math.round(100*u.five)+'%</b>'+(u.seven!=null?' · tygodniowego: <span class="num">'+Math.round(100*u.seven)+'%</span>':'')+'</p>':'')+
-    '<p class="note">Bezpiecznik: uruchomienie, które zużyje '+Math.round(100*u.budget)+'% limitu 5 godzin, jest zatrzymywane. Automat nie rusza powyżej '+Math.round(100*u.reserve)+'%.</p>';
-  if(top.length)h+='<details class="ag-usetop"><summary>Najwięcej zużyły (7 dni)</summary><ul class="rows">'+top.map(r=>'<li><button class="lk t" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button><span class="num'+(runUse(r)>=10?' ag-hot':'')+'">'+runUse(r)+'%</span></li>').join('')+'</ul></details>';
-  return h+'</div>';
+function usageBox(L){
+  const wk=Date.now()-7*864e5,top=L.filter(r=>runUse(r)!=null&&(+tOf(r.startedAt||r.queuedAt)||0)>=wk)
+    .sort((x,y)=>runUse(y)-runUse(x)).slice(0,5);
+  if(!top.length)return '';
+  return '<details class="ag-usetop" data-agdet="usage"'+(A.agDet&&A.agDet.usage?' open':'')+
+    '><summary>Najwięcej zużyły (7 dni)</summary><ul class="rows">'+top.map(r=>
+      '<li><button class="lk t" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button><span class="num">'+runUse(r)+
+      '% limitu 5 h</span></li>').join('')+'</ul></details>';
+}
+const historyState=r=>r.state==='done'?(r.outcome||'done'):r.state;
+function runOutcome(r){
+  const outcomes={done:['green','zrobione'],review:['yellow','do odbioru'],blocked:['red','blokada'],
+    unknown:['grey','wynik nieznany'],timeout:['red','błąd'],login:['red','blokada'],limit:['red','blokada']};
+  const x=outcomes[historyState(r)];
+  return x?'<span class="lz '+x[0]+'">'+x[1]+'</span>':lzRs(r.state);
+}
+function orderResult(r){
+  return r.hasResult?'<a href="/api/agent/zlecenie-wynik?id='+encodeURIComponent(r.id)+'">Otwórz wynik</a>':'';
+}
+function agentsNow(a){
+  const active=a.runs.concat(a.development).filter(r=>r.state==='running');
+  const queue=a.runs.slice().reverse().filter(r=>r.state==='queued').concat(
+    a.development.slice().reverse().filter(r=>r.state==='queued'),a.nextTasks);
+  const cards=active.map(r=>{
+    const steps=r.plan||[],done=steps.filter(s=>s.done).length;
+    let i=steps.findIndex(s=>s.active&&!s.done);
+    if(i<0)i=steps.findIndex(s=>!s.done);
+    const progress=steps.length?'<p>'+(i<0?'Kroki ukończone: '+done+' z '+steps.length:
+      'Krok '+(i+1)+' z '+steps.length+': '+esc(steps[i].text))+'</p>'+
+      '<progress aria-label="Ukończone kroki" max="'+steps.length+'" value="'+done+'"></progress>'+
+      '<p class="muted">Ukończone: '+done+' z '+steps.length+' · pozostało: '+(steps.length-done)+'</p>'+
+      '<details data-agdet="'+esc('plan:'+r.id)+'"'+(A.agDet&&A.agDet['plan:'+r.id]?' open':'')+
+      '><summary>Kroki</summary><ol>'+steps.map(s=>'<li>'+esc(s.text)+(s.done?' · zrobione':s.active?' · w toku':'')+'</li>').join('')+'</ol></details>':
+      '<p>'+(r.activity?'Ostatnia czynność: '+esc(r.activity):'Czeka na pierwsze zdarzenie')+'</p>';
+    const u=runUse(r),recent=r.recent||[];
+    return '<article class="ag-now-card"><h3>'+esc(r.title)+'</h3><p class="muted">'+
+      [TOOL[r.tool]||'Agent',(r.machine||a.machine)==='pc'?'PC':MACH[r.machine||a.machine]||'',r.projectName||'',r.observedStart?'od obserwacji '+fmtDur(runDur(r)):fmtDur(runDur(r))].filter(Boolean).map(esc).join(' · ')+
+      '</p>'+progress+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+      '<p class="muted">Zużycie w tym uruchomieniu: '+(u==null?'brak odczytu':u+'% limitu 5 h')+'</p>'+
+      '<div class="row"><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="live:'+esc(r.id)+'">Przebieg na żywo</button>'+
+      (!LIVE||r.kind==='development'?'':'<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop:'+esc(r.id)+'">Zatrzymaj</button>')+
+      '</div></article>';
+  });
+  return '<section class="panel" id="ag-now"><h2>Teraz</h2><div class="ag-body">'+
+    (cards.length?'<div class="ag-now-grid">'+cards.join('')+'</div>':'<p class="muted">Brak widocznych uruchomień w toku.</p>')+
+    '<h3 class="ag-gh">W kolejce</h3>'+(queue.length?'<ul class="ag-queue">'+queue.map(r=>'<li>'+
+      (r.id?'<button class="lk" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button>':
+        '<button class="lk" data-task="'+esc(r.taskId)+'">'+esc(r.title)+'</button>')+
+      (r.projectName?' <span class="muted">· '+esc(r.projectName)+'</span>':'')+'</li>').join('')+'</ul>':
+      '<p class="muted">Kolejka jest pusta.</p>')+'</div></section>';
 }
 function runRow(r,g){
   const m=[],d=fmtDur(runDur(r)),pn=r.projectName||(r.project?projName(r.project):'');
-  m.push(pn?esc(pn):KSH[r.kind]||KIND[r.kind]);m.push(TOOL[r.tool]);if(r.auto)m.push('samodzielnie');
-  if(r.state==='running'&&r.activity)m.push(nwStep(r.activity));else if(!isAct(r)){const w=runShort(r);if(w)m.push(w)}
+  m.push(pn?esc(pn):KSH[r.kind]||KIND[r.kind]);if(r.tool)m.push(esc(TOOL[r.tool]+(r.choiceReason?': '+r.choiceReason:'')));if(r.auto)m.push('samodzielnie');
+  if((r.state==='running'||r.state==='unknown')&&r.activity)m.push(nwStep(r.activity));else if(!isAct(r)){const w=runShort(r);if(w)m.push(w)}
   if(keyWarn(r))m.push('<span class="lz yellow">klucz API</span>');
   const u=runUse(r);if(u!=null)m.push(u>=10?'<span class="lz red" title="Zużycie limitu 5 godzin przez to uruchomienie">limit 5 h: '+u+'%</span>':'limit 5 h: '+u+'%');
   let wh=esc(whenT(r.startedAt||r.queuedAt))+(d?' · '+d:''),det='';
   if(g){const o=g[g.length-1],k='rg:'+o.id,op=!!(A.agDet&&A.agDet[k]);
     wh=esc(whenT(o.startedAt||o.queuedAt))+' – '+esc(whenT(r.startedAt||r.queuedAt));
     det='<details class="ag-rdet" data-agdet="'+esc(k)+'"'+(op?' open':'')+'><summary>Pojedynczo ('+g.length+')</summary><ul class="rows runs ag-runs ag-sub">'+g.map(x=>runRow(x)).join('')+'</ul></details>'}
-  return '<li><div class="ag-rm"><button class="lk t" data-run="'+esc(r.id)+'" data-k="'+(g?'rg:':'r:')+esc(r.id)+'">'+esc(r.title)+(g?' <span class="ag-x">×'+g.length+'</span>':'')+'</button><div class="s">'+m.join(' · ')+'</div>'+det+'</div>'+
-    '<span class="wh">'+lzRs(r.state)+'<span>'+wh+'</span></span></li>';
+  return '<li><div class="ag-rm"><button class="lk t" data-run="'+esc(r.id)+'" data-k="'+(g?'rg:':'r:')+esc(r.id)+'">'+esc(r.title)+(g?' <span class="ag-x">×'+g.length+'</span>':'')+'</button><div class="s">'+m.join(' · ')+'</div>'+orderResult(r)+det+'</div>'+
+    '<span class="wh">'+runOutcome(r)+'<span>'+wh+'</span></span></li>';
 }
 /* grupa uruchomień: kolejne o tym samym tytule i stanie w jednym wierszu „Tytuł ×N” */
 function runGroup(id,name,R,coll){
   if(!R.length)return '';
   const open=!coll||!!A.runOld,M=[];
-  R.forEach(r=>{const l=M[M.length-1];if(l&&l[0].title===r.title&&l[0].state===r.state)l.push(r);else M.push([r])});
+  R.forEach(r=>{const l=M[M.length-1];if(l&&l[0].title===r.title&&historyState(l[0])===historyState(r)&&l[0].kind!=='development'&&r.kind!=='development')l.push(r);else M.push([r])});
   const cnt=' <span class="num">('+R.length+')</span>';
   return '<h3 class="ag-gh">'+(coll?'<button class="nw-tog" data-agold="1" data-k="agold" aria-expanded="'+open+'"'+(open?' aria-controls="ag-g-'+id+'"':'')+'><span class="nw-car" aria-hidden="true">'+(open?'▾':'▸')+'</span>'+name+cnt+'</button>':name+cnt)+'</h3>'+
     (open?'<ul class="rows runs ag-runs" id="ag-g-'+id+'">'+M.map(g=>g.length>1?runRow(g[0],g):runRow(g[0])).join('')+'</ul>':'');
@@ -6034,24 +6110,21 @@ document.addEventListener('click',async ev=>{const b=ev.target.closest&&ev.targe
   render(true)});
 function vAgenci(){
   const a=D.agents;
-  let h='<div class="pagehead"><div class="ph-main"><h1>Agenci</h1><p>Agenci (Claude, Codex) wykonują zadania z Tablicy. Tu widać, kto pracuje i co zrobił.</p></div></div><section class="panel" id="abar" aria-label="Stan agentów">'+agBarHtml()+'</section>'+srvLine();
-  h+=cdxBox();
-  if(a&&!a.runs.length)h=h.replace('</section>','<p class="ahint ag-none">Uruchomienia pojawią się tutaj, gdy agent zacznie zadanie.</p></section>');
-  else if(a){
-    const L=a.runs,act=L.filter(isAct).length,td=runsToday(),n=a.today.runs,tdI={};td.forEach(r=>{tdI[r.id]=1});
-    const isErr=r=>r.state==='error'||r.state==='timeout',er=td.filter(isErr).length,fe=!!A.runErr&&er>0;
-    const F=fe?L.filter(isErr):L;
-    /* nagłówek: tylko liczby różne od zera; zużycie (tokeny, równowartość) tylko, gdy coś zużyto */
-    h+='<section class="panel" id="ag-runs"><h2>Uruchomienia <small title="'+esc('Najwyżej '+(a.maxParallel||1)+' naraz')+'">'+(n?'<span>Dziś '+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+'</span>':'')+(act?'<span class="lz blue">'+act+' w toku</span>':'')+
-      (er?'<span class="lz red">'+er+' '+pl(er,'błąd','błędy','błędów')+' dziś</span>':'')+'</small></h2>'+
-      usageBox(a,L)+
-      (a.today.tokens?'<p class="ahint" title="Równowartość w cenniku API; przy subskrypcji nie jest pobierana">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+'</p>':'')+
-      (er?'<p class="ahint"><button class="chip ag-errf" data-agerr="1" data-k="agerr" aria-pressed="'+fe+'">Pokaż błędy ('+er+')</button></p>':'');
-    h+=L.length?runGroup('act','W toku',F.filter(isAct))+runGroup('today','Dziś',F.filter(r=>!isAct(r)&&tdI[r.id]))+runGroup('old','Wcześniej',F.filter(r=>!isAct(r)&&!tdI[r.id]),true):
-      '<p class="empty">Brak uruchomień.'+(a.canRunTasks&&a.tools.claude.found?' Otwórz zadanie agenta na <a href="#tablica">Tablicy</a> i kliknij „Uruchom agenta”.':'')+'</p>';
-    h+='</section>';
-  }
-  return h;
+  let h='<div id="ag-view"><div class="pagehead"><div class="ph-main"><h1>Agenci</h1></div></div>';
+  if(!a)return h+'<section class="panel" id="abar">'+agBarHtml()+'</section></div>';
+  h+=agentsNow(a)+'<section class="panel" id="abar" aria-label="Ustawienia agentów">'+agBarHtml()+'</section>'+srvLine()+cdxBox();
+  const L=a.runs.concat(a.development).sort((x,y)=>String(y.startedAt||y.queuedAt).localeCompare(String(x.startedAt||x.queuedAt)));
+  const isToday=r=>String(r.endedAt||r.startedAt||r.queuedAt||'').slice(0,10)===key(new Date());
+  const isErr=r=>r.state==='error'||r.state==='timeout',er=L.filter(r=>isToday(r)&&isErr(r)).length;
+  const fe=!!A.runErr&&er>0,F=fe?L.filter(isErr):L;
+  h+='<section class="panel" id="ag-runs"><h2>Uruchomienia</h2><div class="ag-body">'+
+    (a.today.tokens?'<p class="ahint">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+' według cen API</p>':'')+
+    (er?'<p class="ahint"><button class="chip ag-errf" data-agerr="1" data-k="agerr" aria-pressed="'+fe+'">Pokaż błędy ('+er+')</button></p>':'');
+  h+=runGroup('act','W toku',F.filter(r=>r.state==='running'))+
+    runGroup('today','Dziś',F.filter(r=>!isAct(r)&&isToday(r)))+
+    runGroup('old','Wcześniej',F.filter(r=>!isAct(r)&&!isToday(r)),true);
+  if(!L.some(r=>r.state!=='queued'))h+='<p class="muted">Brak uruchomień.</p>';
+  return h+usageBox(L)+'</div></section></div>';
 }
 /* serwer: stan z kontroli zdrowia i kopii; wylogowanie wszystkich urządzeń (nowy klucz sesji, sesje i tak wygasają po 30 dniach) */
 function srvPanel(o){
@@ -6070,8 +6143,9 @@ function srvPanel(o){
 const SRV_LV={ok:['green','w normie'],warn:['yellow','do sprawdzenia'],bad:['red','problem']};
 /* Agenci: stan serwera jednym wierszem z odsyłaczem; szczegóły i sesje urządzeń są w widoku Serwer */
 function srvLine(){
-  const v=D.server?srvItems():null;if(!v)return '';
-  return '<p class="ag-srvl">Serwer: <span class="lz '+SRV_LV[v.lvl][0]+'">'+SRV_LV[v.lvl][1]+'</span> <a href="#koszty">Serwer →</a></p>';
+  const v=D.server?srvItems():null;if(!v||v.lvl==='ok')return '';
+  return '<p class="ag-srvl">Sprawdź stan serwera ('+v.items.filter(x=>x.dot!=='ok').map(x=>esc(x.label)).join(', ')+
+    '). <a href="#koszty">Otwórz widok Serwer</a></p>';
 }
 const eur=n=>(+n||0).toFixed(2).replace('.',',')+' €';
 const pln=n=>D.costs&&D.costs.eurPln?' <span class="muted">≈ '+Math.round(n*D.costs.eurPln)+' zł</span>':'';
@@ -6323,13 +6397,13 @@ function runHtml(r){
   const bad=r.state==='error'||r.state==='limit'||r.state==='timeout'||r.state==='login';
   let h='<div class="dhead"><span class="muted">'+KIND[r.kind]+'</span><button class="x" data-close="1">Zamknij</button></div><h2 id="dtitle">'+esc(r.title)+'</h2>'+
     '<p class="muted">'+[pn?esc(pn):'',TOOL[r.tool],esc(MACH[r.machine]||r.machine||''),r.auto?'uruchomione samodzielnie':''].filter(Boolean).join(' · ')+'</p>';
-  h+='<div class="abox'+(bad?' bad':'')+'"><div>'+lzR(r.state)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>';
-  if(r.state==='running'&&r.activity)h+='<p class="act">'+nwStep(r.activity)+'</p>';
+  h+='<div class="abox'+(bad?' bad':'')+'"><div>'+runOutcome(r)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>';
+  if((r.state==='running'||r.state==='unknown')&&r.activity)h+='<p class="act">'+nwStep(r.activity)+'</p>';
   if(r.error)h+='<p class="act">'+esc(r.error)+'</p>';
   if(r.state==='login')h+='<div class="lg-body">'+loginHint('copy2')+'</div>';
   if(r.state==='limit'&&limitT())h+='<p class="act">'+limitHint()+'</p>';
   const b=[];
-  if(isAct(r))b.push('<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop">Zatrzymaj</button>');
+  if(isAct(r)&&r.kind!=='development')b.push('<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop">Zatrzymaj</button>');
   if(t)b.push('<button class="btn sec sm" data-task="'+esc(t.id)+'" data-k="task">Otwórz zadanie</button>');
   if(b.length)h+='<div class="row">'+b.join('')+'</div>';
   h+='</div>';
@@ -6339,6 +6413,8 @@ function runHtml(r){
   if(r.endedAt)rows.push(['Koniec',esc(whenT(r.endedAt))]);
   h+='<dl>'+rows.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl>';
   if(r.kind==='task'&&!isAct(r))h+=chgBlock(r);
+  if(r.hasResult)h+='<p>'+orderResult(r)+'</p>';
+  if(r.choiceReason)h+='<p class="muted">'+esc(TOOL[r.tool]+': '+r.choiceReason)+'</p>';
   if(r.result)h+='<h3>Wynik</h3><pre class="res">'+esc(r.result)+'</pre>';
   if(LIVE&&(isAct(r)||r.logN))h+=lvPh(r.id);
   else if(r.steps.length)h+='<h3>Kroki</h3><ul class="stp">'+r.steps.slice().reverse().map(x=>'<li><span class="t">'+esc(x.t)+'</span><span class="s">'+nwStep(x.text)+'</span></li>').join('')+'</ul>';
@@ -6507,7 +6583,7 @@ function agentBlock(t){
     return '<div class="abox"><div>'+TOOL[r.tool]+': '+lzR(r.state)+(d?' <span class="muted">· '+d+'</span>':'')+'</div>'+((r.activity||ls)?'<p class="act">'+(ls?esc(ls.t)+' · ':'')+nwStep(r.activity||ls.text)+'</p>':'')+
       '<div class="row"><button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop">Zatrzymaj</button><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="open">Podgląd uruchomienia</button></div></div>'}
   const why=blockOf(t),last=lastRunOf(t);
-  return '<div class="abox"><div class="row"><button class="btn sm" data-ag="run" data-id="'+esc(t.id)+'" data-k="run"'+(!why?'':A.starting[t.id]?' aria-disabled="true"':' disabled')+' title="Skrót: r">Uruchom agenta: '+TOOL[toolOf(t)]+'</button>'+(why?'<span class="rsn">'+esc(why)+'</span>':'')+'</div>'+
+  return '<div class="abox"><div class="row"><button class="btn sm" data-ag="run" data-id="'+esc(t.id)+'" data-k="run"'+(!why?'':A.starting[t.id]?' aria-disabled="true"':' disabled')+' title="Skrót: r">Uruchom agenta'+(t.executor==='agent'?'':': '+TOOL[toolOf(t)])+'</button>'+(why?'<span class="rsn">'+esc(why)+'</span>':'')+'</div>'+
     (last?'<p class="act">Ostatnio: <button class="lk" data-run="'+esc(last.id)+'" data-k="last">'+RS[last.state][1]+' · '+esc(whenT(last.endedAt||last.startedAt||last.queuedAt))+'</button></p>':'')+'</div>';
 }
 /* jedna linia pod tytułem szuflady: termin, etap albo kampania, stan pracy agenta */
@@ -6548,7 +6624,7 @@ function taskHtml(t){
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
-  if(d.fix&&!od&&t.state!=='done'&&(t.executor==='claude'||t.executor==='codex')&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
+  if(d.fix&&!od&&t.state!=='done'&&(['agent','claude','codex'].includes(t.executor))&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
     mv+='<p class="note"><a href="'+esc(odHref(t.id))+'" data-k="od:drl">Postęp poprawki na stronie odbioru</a></p>';
   /* film posta na górze (także gdy zadanie czeka na poprzednie): rodzaj, szablon, długość, kto nagra. W każdym
      zadaniu z postem (film, publikacja, „Przygotować post”) cały film z „Co poprawić” jest na wierzchu, nie w szczegółach */
@@ -6580,7 +6656,7 @@ function taskHtml(t){
   if(t.state==='blocked')h+='<dt>Blokada</dt><dd><input class="fi" data-f="blocked" maxlength="120" placeholder="powód" value="'+esc(t.blocked||'')+'" aria-label="Powód blokady"></dd>';
   h+='<dt>Projekt</dt><dd>'+(p?'<a href="'+phref(p)+'">'+esc(p.name)+'</a>':'—')+'</dd>';
   h+='<dt>'+(c?'Kampania':'Etap')+'</dt><dd>'+(c?esc(c.name):s?esc(s.title)+(isDay(s.date)?' <span class="muted">· termin '+dd(s.date)+'</span> '+lz(s.st):''):INBOX)+'</dd>';
-  h+='<dt>Wykonawca</dt><dd><select class="fi" data-f="executor" aria-label="Wykonawca">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],t.executor||'')+'</select></dd>';
+  h+='<dt>Wykonawca</dt><dd><select class="fi" data-f="executor" aria-label="Wykonawca">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['agent','Agent (wybór panelu)'],['ty','Ty']],t.executor||'')+'</select></dd>';
   h+='<dt>Gdzie</dt><dd><select class="fi" data-f="machine" aria-label="Gdzie">'+opt([['','–'],['cloud','serwer (chmura)'],['mac','Mac'],['pc','Windows']],t.machine||'')+'</select></dd>';
   h+='<dt>Termin</dt><dd><div class="row">'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" aria-hidden="true" data-f="date" value="'+(isDay(t.date)?t.date:'')+'" aria-label="Termin">',t.date,'Termin')+'<button class="seg" data-dq="0">dziś</button><button class="seg" data-dq="1">jutro</button><button class="seg" data-dq="" aria-label="Usuń termin" title="Usuń termin">×</button></div>'+(lateT(t)?'<span class="lz red">po terminie</span>':'')+'</dd>';
   h+='<dt>Pora</dt><dd><select class="fi" data-f="slot" aria-label="Pora">'+opt([['','–'],['dzień','dzień'],['noc','noc']],t.slot||'')+'</select></dd>';
@@ -6606,7 +6682,7 @@ function chatBox(t){
   if(!LIVE)return '';
   let c=CH[t.id];
   if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
-  const ag=t.executor==='claude'||t.executor==='codex';
+  const ag=['agent','claude','codex'].includes(t.executor);
   const run=ag&&t.kind!=='publikacja'&&D.agents?runOf(t):null,live=!!run&&isAct(run);
   let h='<details class="dbox chat dr-chat"'+(live||c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(live?(run.tool==='codex'?'Poprawka dla agenta (Codex)':'Napisz do pracującego agenta'):ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
   if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id)).join('')+'</div>';
@@ -6979,7 +7055,7 @@ function accBox(t,d,db,dec){
   dec=d.left?'<p class="dcap">Agent nie zrobił: '+esc(d.left)+'</p>':'';
   if(dForm(t,'accept'))h+='<form class="dform" data-dform="accept"><p class="dcap">Nowe zadanie po odbiorze'+(d.next?' (propozycja agenta)':'')+'</p>'+
     '<label class="fl"><span>Tytuł</span><input class="fi" data-fv="title" data-k="fv:title" maxlength="120" value="'+esc(fvv('title'))+'" autocomplete="off"></label>'+
-    '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['ty','Ty']],fvv('executor'))+'</select></label>'+
+    '<div class="row"><label class="fl"><span>Kto</span><select class="fi" data-fv="executor" data-k="fv:executor">'+opt([['','–'],['claude','Claude Code'],['codex','Codex'],['agent','Agent (wybór panelu)'],['ty','Ty']],fvv('executor'))+'</select></label>'+
     '<div class="fl"><span>Kiedy</span>'+dpk('<input class="fi dpk-i" type="date" tabindex="-1" aria-hidden="true" data-fv="date" value="'+esc(fvv('date'))+'" aria-label="Kiedy">',fvv('date'),'Kiedy','fv:date')+'</div></div>'+
     '<label class="fl"><span>Cel</span><textarea class="fi" rows="2" maxlength="300" data-fv="goal" data-k="fv:goal">'+esc(fvv('goal'))+'</textarea></label>'+
     (needsCount(t)?countField(t):'')+
@@ -9009,7 +9085,7 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&!ev.shiftKey&&ev.t
 /* silnik zapytań kart: liczy z danych panelu (D), więc liczby są zawsze aktualne; bez zależności od reszty skryptu */
 /*karty:start*/
 const KQ_COL={todo:'do zrobienia',wip:'w toku',rev:'do odbioru',blocked:'zablokowane',done:'zrobione'};
-const KQ_WHO={ty:'Ty',claude:'Claude',codex:'Codex','':'Nieprzypisane'};
+const KQ_WHO={agent:'Agent',ty:'Ty',claude:'Claude',codex:'Codex','':'Nieprzypisane'};
 const KQ_PST={active:'aktywne',paused:'wstrzymane',backlog:'backlog',done:'zakończone'};
 function kqKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function kqAdd(k,n){const a=k.split('-').map(Number);return kqKey(new Date(a[0],a[1]-1,a[2]+n))}
@@ -9050,7 +9126,7 @@ function kqRows(q,data,today){
   if(st.length)rows=rows.filter(r=>st.some(s=>s==='otwarte'?r.open:s==='zrobione'?!r.open||r.col==='done':s==='po terminie'?r.open&&!!r.data&&r.data<today:
     s==='aktywne'||s==='wstrzymane'||s==='backlog'||s==='zakończone'?r.stan===s:r.stan===s));
   const who=kqList(f.kto);
-  if(who.length)rows=rows.filter(r=>who.some(w=>w==='agenci'?r.kto==='claude'||r.kto==='codex':w==='dla-ciebie'?r.kto==='ty'||!!r.czeka:r.kto===w));
+  if(who.length)rows=rows.filter(r=>who.some(w=>w==='agenci'?['agent','claude','codex'].includes(r.kto):w==='dla-ciebie'?r.kto==='ty'||!!r.czeka:r.kto===w));
   if(f.czeka)rows=rows.filter(r=>f.czeka==='dowolne'?!!r.czeka:r.czeka===f.czeka);
   const od=f.od?kqDay(f.od,today):'',dok=f.do?kqDay(f.do,today):'';
   if(od||dok)rows=rows.filter(r=>/^\d{4}-\d\d-\d\d$/.test(r.data)&&(!od||r.data>=od)&&(!dok||r.data<=dok));
@@ -10331,7 +10407,6 @@ function render(force){
   odAfter(r.v==='odbior');
   renderDock(r);
   if(r.v==='projekt'){pjGo();if(r.tab==='strona')wwMount(r.p)}
-  else if(r.v==='agenci')setHtml($('#abar'),agBarHtml());
   renderDrawer(force);
   if(ED.cur)edActs();
   deepLink();
@@ -10458,7 +10533,7 @@ function closeChecked(id){
 /* Do poprawy: najpierw poprawka:, potem stan do zrobienia */
 function sendFix(t,text){
   /* zadanie agenta: uwagi idą tą samą drogą co „Wyślij i wykonaj” — zapis pod zadaniem i od razu uruchomienie agenta */
-  if((t.executor==='claude'||t.executor==='codex')&&t.kind!=='publikacja'&&LIVE){
+  if((['agent','claude','codex'].includes(t.executor))&&t.kind!=='publikacja'&&LIVE){
     if(DR)DR.form='';render(true);
     enqueue(async()=>{
       const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:true});
@@ -10756,7 +10831,7 @@ async function load(force){
       if(pd&&pd.rec&&(pd.rec.state==='running'||pd.rec.state==='queued'||D.tasks.some(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0&&t.state!=='done'))){delete PD[k];loadPost(c.pid,c.day)}}
   }catch(e){console.error(e)}
   finally{
-    if(arm){let busy=0;try{busy=D?nwBusy():0}catch(e){}
+    if(arm){let busy=0;try{busy=D?(route().v==='agenci'&&!document.hidden?2:nwBusy()):0}catch(e){}
       timer=setTimeout(load,D&&D.cal&&D.cal.connecting?2000:busy===2?3000:D&&(editing()||pending)?15000:busy===1?20000:60000)}
   }
 }
@@ -11083,6 +11158,7 @@ document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||!c.
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';A.bnMore=false;
   const a=document.activeElement,lost=!a||a===document.body||!document.contains(a)||!!(a.closest&&a.closest('#view,#bnsheet'));
   render(true);window.scrollTo(0,0);
+  if(LIVE&&D&&route().v==='agenci')load();
   /* Marketing: przy wejściu jedno przewinięcie do dzisiejszego dnia, gdy jest poniżej pierwszego ekranu (nie przy celu z mkDay) */
   if(route().v==='marketing'&&!A.mweek&&!A.mkGo){const n=$('#view .tl-day.tl-now');if(n&&n.getBoundingClientRect().top>innerHeight-60)n.scrollIntoView({block:'start'})}
   A.mkGo='';

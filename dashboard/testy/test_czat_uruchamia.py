@@ -83,7 +83,7 @@ class Uruchamianie(Baza):
         self.assertEqual((last["live"], last["label"]), ("done", "zrobione"))   # stan aktualizuje się sam
         prompt = [c for c in self.calls() if "json" in c["argv"]][0]["prompt"]
         self.assertIn("Uruchom: %s | <dokładny tytuł zadania>" % self.pid, prompt)
-        self.assertIn("kto: claude | kiedy: %s" % TODAY, prompt)
+        self.assertIn("kto: agent | kiedy: %s" % TODAY, prompt)
 
     def test_rozmowa_bez_prosby_nie_uruchamia(self):
         self.manager.project_chat_send(self.pid, "Co mam zrobić jutro?")
@@ -109,7 +109,7 @@ class Uruchamianie(Baza):
         cases = {"Zgoda agenta": "Nie uruchomiono „Zgoda agenta”: czeka na Twoją zgodę.",
                  "Zadanie E": "Nie uruchomiono „Zadanie E”: czeka na Twoją zgodę.",
                  "Zadanie D": "Nie uruchomiono „Zadanie D”: zadanie po Twojej stronie.",
-                 "Zadanie B": "Nie uruchomiono „Zadanie B”: zadanie nie ma wykonawcy agenta (kto: claude albo codex).",
+                 "Zadanie B": "Nie uruchomiono „Zadanie B”: zadanie nie ma wykonawcy agenta (kto: agent, claude albo codex).",
                  "Nie ma takiego": "Nie uruchomiono „Nie ma takiego”: nie ma takiego zadania w ZADANIA.md."}
         for title, text in cases.items():
             msg = self.launch("Uruchom: %s | %s" % (self.pid, title))[0]

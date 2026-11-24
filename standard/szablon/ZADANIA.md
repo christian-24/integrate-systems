@@ -3,7 +3,7 @@
 > Jedyna lista zadań projektu. Czyta ją panel i agenci.
 > Wiersz: `- [ ] Tytuł | kto: claude | gdzie: pc | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda | po: fragment tytułu`
 > Stany: `[ ]` do zrobienia, `[~]` w toku, `[!]` zablokowane (dodaj `blokada: powód`), `[x]` zrobione.
-> Pola są opcjonalne. kto: claude, codex, ty. gdzie: pc, mac, chmura. pora: dzień, noc. czas: minuty Twojej pracy. wymaga: zgoda, odbiór.
+> Pola są opcjonalne. kto: agent, claude, codex, ty. gdzie: pc, mac, chmura. pora: dzień, noc. czas: minuty Twojej pracy. wymaga: zgoda, odbiór.
 > Etap to nagłówek `## Etap: nazwa` i wiersz `termin: RRRR-MM-DD` pod nim. Etap bez otwartych zadań jest zamknięty.
 > Tytuł zaczyna się od czasownika w trybie rozkazującym („Wyślij”, „Przygotuj”), najwyżej 120 znaków.
 > Szczegóły: wiersze wcięte o 2 spacje pod zadaniem: `cel:`, `gotowe gdy:`, `materiał:` (ścieżka, opcjonalnie `#5`),

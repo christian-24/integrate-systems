@@ -295,7 +295,7 @@ Zadanie bez pola `kto` uruchamia Claude.
 ### Automat
 
 Wyłączony domyślnie; stan w `stan.json`. Co 60 s bierze zadania, które spełniają wszystko:
-`runBlock` pusty (w tym poprzednicy z `po:` zrobieni), stan `[ ]`, `kto: claude` albo `kto: codex`, `gdzie:` równe
+`runBlock` pusty (w tym poprzednicy z `po:` zrobieni), stan `[ ]`, `kto: agent`, `kto: claude` albo `kto: codex`, `gdzie:` równe
 temu węzłowi albo brak `gdzie:` na węźle domyślnym, `kiedy:` ustawione i nie później niż dziś (przeszła data też),
 `pora` zgodna (noc 22:00–6:00, dzień 6:00–22:00, brak pola: zawsze), brak dzisiejszego uruchomienia tego zadania,
 brak aktywnego limitu i znacznika logowania. Raz dziennie po `PANEL_PM_HOUR` uruchamia raport PM, gdy nie ma `raporty/<dziś>.md`.
@@ -433,7 +433,7 @@ Każda rozmowa może od razu uruchomić pracę agenta. Uruchamia zawsze serwer p
 „Uruchom”: `runBlock`, logowanie, limit, `PANEL_AGENTS_MAX`), nigdy model. Zadania z `wymaga: zgoda` czekają na
 kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie mają powłoki.
 
-- **Rozmowa o zadaniu.** Obok „Wyślij” przycisk „Wyślij i wykonaj” (tylko przy zadaniu `kto: claude|codex`); to samo
+- **Rozmowa o zadaniu.** Obok „Wyślij” przycisk „Wyślij i wykonaj” (tylko przy zadaniu `kto: agent|claude|codex`); to samo
   robi „zrób to”, „wykonaj” albo „wykonaj to” na końcu wiadomości (`EXEC_END`). `POST /api/task/chat` z
   `"execute": true`: bez modelu rozmowy panel zapisuje wiadomość pod zadaniem jako `poprawka:` (najwyżej 1000 znaków),
   zadanie `[x]`, `[~]` albo `[!]` wraca do `[ ]` (zdejmuje `blokada:` i `wymaga: odbiór`, `wymaga: zgoda` zostaje),
@@ -683,3 +683,23 @@ uruchomienie, Zatrzymaj, bezpiecznik, kolejka, Codex i „Zatrzymaj i uruchom z 
 zrzuty bez wyjścia poza `.zrzuty/`, uwaga strony do pracującego agenta, reguły z `strona build:`, start od gałęzi
 poprzedniego uruchomienia i z pola `gałąź:`): `testy/test_na_zywo.py` (atrapa w trybach `na-zywo`, `ignoruje`,
 `po-wyniku`, `odmowa-w-trakcie`, `dlugi-tekst`, `zrzuty`, `wolno`).
+
+## Widok Agenci i wybór wykonawcy
+
+„Teraz” odświeża się co 3 sekundy. Karta pokazuje zadanie, projekt, komputer, upływ czasu,
+trzy ostatnie wpisy i zużycie limitu 5 h, gdy strumień je podaje. Postęp pochodzi z listy Claude
+(`TodoWrite`, `TaskCreate`, `TaskUpdate`) lub planu Codex (`todo_list`, zdarzenia planu). Gdy planu
+brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność. Pasek liczy ukończone kroki.
+„Przebieg na żywo” otwiera szczegóły uruchomienia. Pod kartami widać uruchomienia w kolejce, zadania
+gotowe dla włączonego Automatu oraz zlecenia rozwoju czekające na start (patrz `ROZWOJ.md`).
+
+`kto: agent` pozostawia wybór panelowi. Zadania strony i zadania kodowe w repozytorium wybierają
+Codex. Pisanie, analiza i raporty wybierają Claude. Gdy użycie limitu osiągnie próg Automatu
+(domyślnie 80%) lub narzędzie jest niedostępne, panel może użyć drugiego. Powód jest w historii
+uruchomienia, a wiersz zadania zachowuje `kto: agent`. Wprost przypisane zadania używają wskazanego
+narzędzia. Pole `gdzie:` określa węzeł wykonania.
+
+Limit 5 h Codex pochodzi z `rate_limits` dla okna 300 minut w strumieniu lub z `token_count` w pliku sesji
+tego uruchomienia pod `PANEL_CODEX_HOME/sessions/`. Odczyt pliku wymaga praw dostępu panelu. Same liczniki
+tokenów nie dają wartości tego limitu. Kwota obok tokenów jest równowartością
+według cen API. Raport PM uruchamiany z panelu wymaga rejestru lub zbieracza z projektami.

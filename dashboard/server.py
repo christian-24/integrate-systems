@@ -2820,7 +2820,7 @@ def build_data():
     for t in out["tasks"]:
         t["ownerNeeds"] = projekt.owner_needs(t)
     out.update(projekt.owner_counts(out["projects"], out["stages"], out["tasks"], today))
-    out["agents"] = manager.snapshot()
+    out["agents"] = manager.snapshot(out, index)
     out["agents"]["canRunTasks"] = out["projectsSource"] == "registry"
     out["history"] = project_history(out)
     out["server"] = server_state()
@@ -3670,6 +3670,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, data_cached(), "application/json; charset=utf-8")
         if path == "/terminy.ics":
             return self._send(200, build_ics(), "text/calendar; charset=utf-8")
+        if path == "/api/agent/zlecenie-wynik":
+            name = (parse_qs(url.query).get("id") or [""])[0]
+            body = get_agents().orders.result(name)
+            return self._send(200 if body is not None else 404, body if body is not None else "Nie znaleziono wyniku.",
+                              "text/plain; charset=utf-8", [("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff")])
         if path == "/api/agent/przebieg":          # przebieg uruchomienia na żywo (wiersze po numerze od=)
             qs = parse_qs(url.query)
             code, err, extra = get_agents().run_log((qs.get("id") or [""])[0], (qs.get("od") or ["0"])[0])

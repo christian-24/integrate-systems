@@ -51,7 +51,7 @@ CAMPAIGN_META = ["stan", "cel", "kanały", "start", "koniec"]
 
 STATE = {" ": "todo", "~": "doing", "!": "blocked", "x": "done", "X": "done"}
 CHAR = {"todo": " ", "doing": "~", "blocked": "!", "done": "x"}
-WHO = {"claude": "claude", "claude code": "claude", "codex": "codex", "ty": "ty", "ja": "ty"}
+WHO = {"agent": "agent", "claude": "claude", "claude code": "claude", "codex": "codex", "ty": "ty", "ja": "ty"}
 WHERE = {"pc": "pc", "windows": "pc", "mac": "mac", "chmura": "cloud", "cloud": "cloud"}
 SLOT = {"dzień": "dzień", "dzien": "dzień", "noc": "noc"}
 NEEDS = {"zgoda": "zgoda", "odbiór": "odbiór", "odbior": "odbiór"}
@@ -215,7 +215,7 @@ def parse_task(line):
             bad = "pole „%s” bez wartości" % p
         elif k == "kto":
             t["executor"] = WHO.get(v.lower(), "")
-            bad = None if t["executor"] else "kto: %s (dozwolone: claude, codex, ty)" % v
+            bad = None if t["executor"] else "kto: %s (dozwolone: agent, claude, codex, ty)" % v
         elif k == "gdzie":
             t["machine"] = WHERE.get(v.lower(), "")
             bad = None if t["machine"] else "gdzie: %s (dozwolone: pc, mac, chmura)" % v
@@ -525,7 +525,7 @@ def task_gaps(stages, tasks, today=None, active=True, campaigns=()):
     bare = [t["title"] for t in owner if date_key(t["date"], today) and date_key(t["date"], today) <= soon
             and not t["detail"]["steps"] and not t["detail"]["refs"]]
     no_time = [t["title"] for t in owner if not t["minutes"]]
-    agent_no_date = [t["title"] for t in open_ if active and t["executor"] in ("claude", "codex")
+    agent_no_date = [t["title"] for t in open_ if active and t["executor"] in ("agent", "claude", "codex")
                      and not t["date"] and t.get("group") != INBOX]
     left_result = [t["title"] for t in open_ if t["state"] == "todo" and t["detail"]["result"]
                    and not t.get("needs") and not t.get("needsYou")]
@@ -1193,7 +1193,7 @@ def set_state(root, file_rel, line_no, title, state):
 WHERE_OUT = {"pc": "pc", "mac": "mac", "cloud": "chmura"}
 CAMPAIGN_STATE_OUT = {"plan": "plan", "active": "w toku", "done": "zakończona", "paused": "wstrzymana"}
 KNOWN = {"kto", "gdzie", "kiedy", "pora", "czas", "wymaga", "blokada", "kanał", "kanal", "po"}
-ALLOWED = {"state": set(CHAR), "executor": {"", "claude", "codex", "ty"}, "machine": {"", "pc", "mac", "cloud"},
+ALLOWED = {"state": set(CHAR), "executor": {"", "agent", "claude", "codex", "ty"}, "machine": {"", "pc", "mac", "cloud"},
            "slot": {"", "dzień", "noc"}, "needsYou": {"", "zgoda", "odbiór"}}
 
 

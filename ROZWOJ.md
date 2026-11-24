@@ -47,3 +47,16 @@ Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj
 
 Pamięć z rozmów na Macu: `~/.claude/projects/-home-agent-rozwoj-IntegrateSystems/memory/` (użytkownik `agent`).
 Rozmowy z Maca (bez obrazów, klucze zamaskowane): `/home/agent/rozwoj/rozmowy-mac/`.
+
+## Zlecenia w widoku Agenci
+
+Panel na serwerze czyta katalog `/home/agent/rozwoj`. Ustaw `PANEL_ROZWOJ_DIR`, aby wskazać inny
+katalog. Pusta wartość wyłącza odczyt. Na Macu i PC katalog trzeba wskazać jawnie.
+
+- Nazwij plik `ZLECENIE-nazwa.md` i wpisz tytuł w pierwszym wierszu. Sam plik `.md` oznacza kolejkę.
+- Gdy zlecenie rusza, panel rozpoznaje odpowiadający mu `ZLECENIE-nazwa.log` ze zdarzeniami JSON
+  Claude lub Codex (po jednym na wiersz). Odczytuje istniejące pliki i sam nie zapisuje tam logów.
+- Zdarzenie końca lub plik `ZLECENIE-nazwa.wynik.md` przenosi zlecenie do historii. Wynik otwiera się
+  jako tekst. Po 15 minutach bez zapisu i bez zdarzenia końca stan jest nieznany.
+- Panel musi mieć prawo odczytu tych plików i dostępu do katalogu. Odczytuje ostatnie 2 MiB logu.
+  Jeśli w logu brakuje daty startu, karta podaje czas od pierwszej obserwacji logu.
