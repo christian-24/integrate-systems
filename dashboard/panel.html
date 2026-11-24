@@ -1775,10 +1775,11 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pj-ft{font-size:var(--fs-lg);font-weight:650}
 .pj-fold .chat{padding-top:0}
 /* części projektu: przełącznik pod tytułem, etykieta części przy zadaniach i etapach w widoku całości */
-.pj-parts{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
-.pj-parts a{padding:4px 12px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2);text-decoration:none;font-size:var(--fs-sm);min-height:32px;display:inline-flex;align-items:center}
-.pj-parts a:hover{background:var(--hover)}
-.pj-parts a[aria-current="page"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:600}
+.pj-parts{margin:8px 0 2px;align-items:center}
+.pj-parts a{display:inline-flex;align-items:center;min-height:40px}
+.pj-pl{color:var(--ink-3);font-size:var(--fs-sm);font-weight:600;padding:8px 4px 8px 0}
+.ww-pick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+.ww-pick>span{color:var(--ink-2);font-size:var(--fs-sm)}
 .ptag{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);white-space:nowrap;vertical-align:1px}
 /* Kod i pliki: wiersze stanu, „Szczegóły” rozwija działania */
 .pj-code{padding:14px 16px}
@@ -1825,8 +1826,10 @@ body.pjd-on #view{padding-bottom:96px}
 p.kv2{margin:0;display:block}
 p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
 @media (max-width:620px){
-  .ptabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ptabs,.pj-parts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
   .ptabs a{padding:8px 4px;white-space:nowrap;justify-content:center;text-align:center}
+  .pj-parts a{padding:8px 4px;justify-content:center;text-align:center;overflow-wrap:anywhere}
+  .pj-pl{grid-column:1/-1;padding:0}
   .pj-ov>summary{min-height:40px}
   .pj-gap>summary{display:inline;min-height:0}
   .pj-tabd,.pj-sum{font-size:13px}
@@ -2766,9 +2769,17 @@ const BNAV=['asystent','marketing','media','agenci'];
 const MAINV=VIEWS;
 const PTABS=[['plan','Plan'],['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga']];
 const PTMAIN=3;
-/* zakładka Strona tylko w projektach z polem karty strona: (p.site), jako trzecia główna */
-const ptabsOf=p=>p&&p.site?PTABS.slice(0,2).concat([['strona','Strona']],PTABS.slice(2)):PTABS;
-const ptMain=p=>p&&p.site?PTMAIN+1:PTMAIN;
+/* strony (pole karty strona:) widoczne z widoku p: „Całość” projektu z częściami ma strony swoich części (własnej części
+   projektu głównego i części z polem strona:); część i projekt bez części: tylko własną */
+const wwSites=p=>!p?[]:p.partsL&&p.partsL.length&&p.own&&!p.isOwn?[p.own].concat(p.partsL).filter(x=>x.site):p.site?[p]:[];
+/* zakładka Strona w projektach z którąkolwiek stroną (także „Całość”), jako trzecia główna */
+const ptabsOf=p=>wwSites(p).length?PTABS.slice(0,2).concat([['strona','Strona']],PTABS.slice(2)):PTABS;
+const ptMain=p=>wwSites(p).length?PTMAIN+1:PTMAIN;
+/* wybrana strona w „Całość” przy kilku częściach ze stroną (WWC[id projektu głównego] = id części) */
+const WWC={};
+const wwCur=p=>{const L=wwSites(p);return L.find(x=>x.id===WWC[p.id])||L[0]||null};
+/* adres zakładki Strona: wprost do części ze stroną */
+const wwHref=x=>phref(x,'strona');
 const lz=k=>{const s=ST[k]||ST.none;return '<span class="lz '+s[0]+'">'+s[1]+'</span>'};
 const lzT=s=>{const x=TS[s]||TS.todo;return '<span class="lz '+x[0]+'">'+x[1]+'</span>'};
 
@@ -3432,11 +3443,11 @@ function todayRow(x,o){
     return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t"'+idA+' data-task="'+id+'" data-k="tt:'+id+'">'+esc(t.title)+'</button><div class="s">'+(o.tag||'')+pvPrS(p)+late+(x.need?need:'')+kind+(x.need?'':need)+unlLz(t)+run+
       (eff?'':tyWait(t))+prioLz(p,pv)+'</div>'+
       (eff||see?'<div class="gw ty-eff1">'+esc(eff)+(eff&&see?' ':'')+see+'</div>':x.need?'':nsT?'<div class="gw ty-clamp" title="'+esc(ns)+'">następny krok: '+mdInl(nsT)+'</div>':doneLine(x).replace('class="gw','class="gw ty-clamp'))+'</div>'+
-      tyDate(x,o.grp)+'<div class="ty-acts">'+tmr+btn+'</div></div></li>'}
+      tyDate(x,o.grp)+'<div class="ty-acts">'+wwBtn(t,'')+tmr+btn+'</div></div></li>'}
   return '<li title="'+esc(rowTip(x,p,pv))+'"><div><button class="lk t" data-task="'+id+'" data-k="tt:'+id+'">'+esc(t.title)+'</button><div class="s">'+(o.tag||'')+pvPrS(p)+prioLz(p,pv)+
     run+kind+need+late+unlLz(t)+(eff?'':waitLz(t))+(x.min?'<span class="num">'+x.min+' min</span>':'')+'</div>'+
     (eff||see?'<div class="gw">'+esc(eff)+(eff&&see?' ':'')+see+'</div>':x.need?'':helpL(x,nsT))+'</div>'+
-    (x.d?dateR(x.d):'<div class="r"><span class="muted">bez terminu</span>')+(tmr?'<span class="pv-acts">'+tmr+btn+'</span>':btn)+'</div></li>'}
+    (x.d?dateR(x.d):'<div class="r"><span class="muted">bez terminu</span>')+(tmr||wwTask(t)?'<span class="pv-acts">'+wwBtn(t,'')+tmr+btn+'</span>':btn)+'</div></li>'}
 /* plan dnia ponad pojemność (dayMinutes): od końca listy Twoje zadania (bez zgód i odbiorów), najpierw te nie po terminie */
 function overPlan(ys){
   const L=ys.youToday,m=L.reduce((s,x)=>s+x.min,0),cap=D.dayMinutes||120,over=m-cap;
@@ -4965,12 +4976,12 @@ function vProjekt(p,tab){
     '<nav class="tabs ptabs" aria-label="Widoki projektu">'+ptabsOf(p).filter((x,i)=>i<ptMain(p)||x[0]===tab).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+
     '<details class="pt-more"><summary>Więcej</summary>'+ptabsOf(p).slice(ptMain(p)).filter(x=>x[0]!==tab).map(([k,n])=>'<a href="'+phref(p,k)+'">'+n+'</a>').join('')+'</details></nav>'+body;
 }
-/* przełącznik części projektu („Całość · Integracje · Strona WWW”); bez części pusty. Zakładka, której część nie ma
-   (Strona), przechodzi na Plan */
+/* przełącznik części projektu („Całość · Integracje · Strona WWW”) w wyglądzie zakładek; bez części pusty. Zakładka,
+   której część nie ma (Strona), przechodzi na Plan */
 function partSw(p,tab){
   const t=topP(p);if(!t.partsL||!t.partsL.length||!t.own)return '';
   const L=[[t,'Całość'],[t.own,t.partLabel]].concat(t.partsL.map(x=>[x,x.partLabel]));
-  return '<nav class="pj-parts" aria-label="Części projektu">'+L.map(([x,n])=>'<a href="'+phref(x,tab==='strona'&&!x.site?'plan':tab)+'" data-k="cz:'+esc(x.isOwn?'*':x.id)+'"'+(x===p?' aria-current="page"':'')+'>'+esc(n)+'</a>').join('')+'</nav>';
+  return '<nav class="tabs pj-parts" aria-label="Części projektu"><span class="pj-pl">Część:</span>'+L.map(([x,n])=>'<a href="'+phref(x,tab==='strona'&&!wwSites(x).length?'plan':tab)+'" data-k="cz:'+esc(x.isOwn?'*':x.id)+'"'+(x===p?' aria-current="page"':'')+'>'+esc(n)+'</a>').join('')+'</nav>';
 }
 /* ---------- Plan projektu: najbliższe 7 dni ----------
    Dzień: Twoje zadania (po terminie trafiają na dziś), filmy do nagrania (dzień przed publikacją, najwcześniej dziś),
@@ -5145,7 +5156,7 @@ function dockHtml(r){
   let h='<section class="pjd-win chat" id="pchat" role="dialog" aria-modal="false" aria-labelledby="pjd-h"><div class="pjd-top"><h2 id="pjd-h">Rozmowa <small>'+esc(g.label)+'</small></h2>'+
     '<button type="button" class="btn sec sm" data-pjd="close" data-k="pjd:close" aria-expanded="true" aria-controls="pchat" title="Zwiń (Esc)">Zwiń</button></div>';
   if(!LIVE)return h+'<div class="pjd-msgs"><p class="empty">Rozmowa działa w panelu na serwerze.</p></div></section>';
-  h+='<div class="pjd-msgs cms" data-pjdm tabindex="0" aria-label="Wiadomości">'+(c.messages.length?c.messages.slice(-30).map(m=>chatMsg(m,'')).join(''):
+  h+='<div class="pjd-msgs cms" data-pjdm tabindex="0" aria-label="Wiadomości">'+(c.messages.length?c.messages.slice(-30).map(m=>chatMsg(m,'',r.p)).join(''):
     '<p class="empty">'+(c.loading?'Wczytuję rozmowę…':'Zapytaj o zadania i terminy albo poproś o pracę.')+'</p>')+'</div>';
   if(c.pending)h+='<p class="note pjd-st" role="status">Czeka na odpowiedź. Claude czyta pliki projektu (do ok. 2 min).</p>';
   if(c.error)h+='<p class="warn pjd-st">'+esc(c.error)+'</p>';
@@ -5205,8 +5216,48 @@ const WWV={};
 function wwSt(pid){return WWV[pid]||(WWV[pid]={d:null,err:'',view:innerWidth<760?'telefon':'komputer',pick:false,sel:null,page:'/',tm:null})}
 function wwView(p){
   if(!LIVE)return '<p class="empty">Podgląd strony działa w panelu na serwerze.</p>';
-  return '<div class="ww-root" data-ww="'+esc(p.id)+'"></div>';
+  const L=wwSites(p),c=wwCur(p);if(!c)return '<p class="empty">Projekt nie ma strony.</p>';
+  /* „Całość”: podgląd strony części; przy kilku częściach ze stroną wybór części */
+  const pick=L.length>1?'<div class="ww-pick" role="group" aria-label="Strona której części"><span>Strona części:</span>'+L.map(x=>'<button type="button" class="seg" data-wwpart="'+esc(x.id)+'" data-wwtop="'+esc(p.id)+'" data-k="wwp:'+esc(x.id)+'" aria-pressed="'+(x===c)+'">'+esc(x.partLabel||x.name)+'</button>').join('')+'</div>':
+    c!==p&&c.partLabel?'<p class="note">Strona części <a href="'+wwHref(c)+'">'+esc(c.partLabel)+'</a>.</p>':'';
+  return pick+'<div class="ww-root" data-ww="'+esc(c.id)+'"></div>';
 }
+/* zadanie właściciela o ocenie strony: tytuł z „zakładce Strona” (albo „podgląd strony”) albo materiał: w folderze
+   strony projektu; zwraca widok ze stroną (własny projekt zadania, a bez strony jedyną stronę projektu głównego) */
+const WWT=/zakład(?:ce|kę|ka|ki|ką)\s+[„"]?strona\b|podgląd(?:zie|u)?\s+(?:nowej\s+)?strony/i;
+function wwTask(t){
+  if(!t||!(t.executor==='ty'||t.needsYou))return null;
+  const p=P(t.project);if(!p)return null;
+  const me=p.partsL&&p.partsL.length?p.own:p,L=wwSites(topP(p));if(!L.length)return null;
+  const nd=x=>String(x||'').replace(/\\/g,'/').replace(/^\.\//,'').replace(/\/+$/,'').toLowerCase();
+  if(me&&me.site){const dir=nd(me.site.dir);
+    if(dir&&((t.detail&&t.detail.refs)||[]).some(r=>{const x=nd(r.path);return x===dir||x.indexOf(dir+'/')===0}))return me}
+  if(!WWT.test(t.title))return null;
+  return me&&me.site?me:L.length===1?L[0]:null;
+}
+const wwBtn=(t,cls)=>{const x=wwTask(t);return x?'<a class="btn sec sm'+(cls||'')+'" href="'+esc(wwHref(x))+'" data-k="wwgo:'+esc(t.id)+'" aria-label="'+esc('Otwórz podgląd strony: '+(x.partLabel||x.name))+'">Otwórz podgląd</a>':''};
+/* link do zakładki Strona dla odpowiedzi czatu: p = projekt rozmowy (część albo całość), bez p (Asystent) projekt
+   wskazany nazwą w odpowiedzi albo jedyna strona w panelu; '' gdy nie wiadomo, o którą stronę chodzi */
+function wwHrefFor(text,p){
+  if(!D||!D.projects)return '';
+  if(p&&!(p.partsL&&p.partsL.length)&&p.site)return wwHref(p);
+  const L=[];(p?[topP(p)]:D.projects).forEach(t=>wwSites(t).forEach(x=>L.push(x)));
+  if(L.length<2)return L.length?wwHref(L[0]):'';
+  const lo=String(text||'').toLowerCase(),has=n=>!!n&&lo.indexOf(String(n).toLowerCase())>=0;
+  const byPart=L.filter(x=>x.partOf&&has(x.partLabel));if(byPart.length===1)return wwHref(byPart[0]);
+  const tops=[...new Set((p?L:L.filter(x=>has(topP(x).name)||has(topP(x).alias))).map(x=>topP(x)))];
+  if(tops.length!==1)return '';
+  const own=L.filter(x=>topP(x)===tops[0]);return own.length===1?wwHref(own[0]):phref(tops[0],'strona');
+}
+/* w HTML odpowiedzi (już po esc): [tekst](#adres) panelu jako link, a „zakładka Strona” jako link do podglądu */
+function wwLinks(h,text,p){
+  h=h.replace(/\[([^\]]+)\]\((#[\w\-?=&;.%]+)\)/g,'<a href="$2">$1</a>');
+  if(!WWT.test(text||''))return h;
+  const u=wwHrefFor(text,p);if(!u)return h;
+  return h.split(/(<a\b[^>]*>[\s\S]*?<\/a>)/).map((x,i)=>i%2?x:x.replace(new RegExp(WWT.source,'gi'),m=>'<a href="'+esc(u)+'" data-k="wwlink">'+m+'</a>')).join('');
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwpart]');if(!b)return;ev.preventDefault();
+  WWC[b.dataset.wwtop]=b.dataset.wwpart;render(true)});
 const wwAgo=iso=>{const d=tOf(iso);if(!d)return '';const m=Math.round((Date.now()-d.getTime())/60000);return m<1?'przed chwilą':m<60?m+' min temu':m<1440?Math.round(m/60)+' h temu':whenT(iso)};
 function wwRoot(pid){return document.querySelector('.ww-root[data-ww="'+CSS.escape(pid)+'"]')}
 function wwMount(p){
@@ -5245,7 +5296,7 @@ async function wwLoad(pid){
     if(r.ok&&j.ok!==false){const was=s.d;s.d=j;s.err='';
       if(was&&(was.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka')&&!(j.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'))load()}
     else s.err=String(j.error||'Podgląd jest niedostępny.')}catch(e){s.err='Brak połączenia z serwerem.'}
-  const q=CUR;if(!(q&&q.v==='projekt'&&q.p&&q.p.id===pid&&q.tab==='strona'))return;
+  const q=CUR,qc=q&&q.v==='projekt'&&q.p&&q.tab==='strona'&&wwCur(q.p);if(!(qc&&qc.id===pid))return;
   wwPaint(pid);
   const live=s.d&&(s.d.build.state==='building'||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
   s.tm=setTimeout(()=>wwLoad(pid),live?4000:30000);
@@ -5332,7 +5383,7 @@ addEventListener('message',e=>{
   if(d.pw==='wybrano'){s.sel={sel:String(d.sel||'').slice(0,300),text:String(d.text||'').slice(0,300),tag:String(d.tag||'').slice(0,20),page:String(d.page||'/').slice(0,200)};
     s.pick=false;wwPost(pid,{pw:'wskaz',on:false});wwPaint(pid);const ta=root.querySelector('[data-wwform] textarea');if(ta)ta.focus()}
 });
-addEventListener('resize',()=>{const r=CUR;if(r&&r.v==='projekt'&&r.tab==='strona')wwFit(r.p.id)});
+addEventListener('resize',()=>{const r=CUR,c=r&&r.v==='projekt'&&r.tab==='strona'&&wwCur(r.p);if(c)wwFit(c.id)});
 function projBoard(p){
   const L=D.tasks.filter(t=>inP(p,t.project)&&t.kind!=='publikacja');
   const opts=p.stagesL.map(s=>'<option value="s:'+esc(s.id)+'"'+(p.cur===s?' selected':'')+'>Etap: '+esc(s.title)+'</option>').join('')+'<option value="i:"'+(p.cur?'':' selected')+'>'+INBOX+'</option>';
@@ -6356,7 +6407,7 @@ function taskHtml(t){
   else if(!mine){const dw=doWhat(t),sm=D.agents&&!D.agents.canRunTasks;
     mv='<div class="move-box">'+(sm?'<b>Zadanie dla agenta ('+esc(WHO[t.executor].n)+').</b> W projektach przykładowych agenci nie pracują.':'<b>Robi to agent ('+esc(WHO[t.executor].n)+').</b> Nic nie musisz robić.')+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+'</div>'}
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
-  else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
+  else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row">'+wwBtn(t,'')+'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
   if(d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
   if(d.fix&&!od&&t.state!=='done'&&(['agent','claude','codex'].includes(t.executor))&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
     mv+='<p class="note"><a href="'+esc(odHref(t.id))+'" data-k="od:drl">Postęp poprawki na stronie odbioru</a></p>';
@@ -6368,6 +6419,8 @@ function taskHtml(t){
   const readUp=t.state!=='done'&&!od&&!!t.detail&&resFiles(t).length>0;
   if(readUp)mv=readBlock(t)+mv;            /* najpierw treść, potem decyzja i przyciski */
   h+=mv;
+  /* zadanie o ocenie strony: „Otwórz podgląd” w ramce ruchu (wyżej) albo pod nią */
+  {const wb=wwBtn(t,'');if(wb&&mv.indexOf('data-k="wwgo:')<0)h+='<div class="row ww-go">'+wb+'</div>'}
   if(t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
   {const r=D.agents?runOf(t):null;
     if(r&&isAct(r))h+='<div class="dbox lv-wrap"><h3>'+(r.state==='running'?'Agent pracuje':'Agent w kolejce')+'</h3>'+lvPh(r.id)+
@@ -6419,7 +6472,7 @@ function chatBox(t){
   const ag=['agent','claude','codex'].includes(t.executor);
   const run=ag&&t.kind!=='publikacja'&&D.agents?runOf(t):null,live=!!run&&isAct(run);
   let h='<details class="dbox chat dr-chat"'+(live||c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(live?(run.tool==='codex'?'Poprawka dla agenta (Codex)':'Napisz do pracującego agenta'):ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
-  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id)).join('')+'</div>';
+  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id,P(t.project))).join('')+'</div>';
   if(c.pending)h+='<p class="note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>';
   if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
   const dis=c.pending||c.exec?' aria-disabled="true"':'';
@@ -6434,14 +6487,16 @@ function chatBox(t){
     '<span class="note">Wyślij: Claude odpowiada, niczego nie zmienia.'+(ag?' Wyślij i wykonaj (albo „zrób to” na końcu): agent wykonuje polecenie.':'')+'</span></div></form></details>';
   return h;
 }
-const chatText=x=>'<div>'+String(x||'').split('\n').map(l=>/^\s*(Propozycja|Zmieniono):/i.test(l)?'<p class="prop">'+esc(l)+'</p>':esc(l)).join('<br>')+'</div>';
+/* lk: odpowiedź modelu ({p: projekt rozmowy albo null w Asystencie}): linki do zakładki Strona (wwLinks) */
+const chatText=(x,lk)=>{const h='<div>'+String(x||'').split('\n').map(l=>/^\s*(Propozycja|Zmieniono):/i.test(l)?'<p class="prop">'+esc(l)+'</p>':esc(l)).join('<br>')+'</div>';
+  return lk?wwLinks(h,x,lk.p):h};
 /* wiadomość panelu w rozmowie: stan uruchomienia agenta (agents.panel_view: text, label, live, taskId); here: id otwartego zadania */
 const PNL={'w kolejce':'yellow','w toku':'blue','do odbioru':'purple','zrobione':'green'};
 function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|limit|wymaga|przekroczony)/.test(l)?'red':'grey');
   return '<div class="cm pn"><b>Panel</b><div>'+esc(m.text||'')+(l?'<span class="lz '+c+'">'+esc(l)+'</span>':'')+
     (m.taskId&&m.taskId!==here?'<button type="button" class="lk" data-task="'+esc(m.taskId)+'">Szczegóły</button>':'')+
     (m.restart&&(m.live==='running'||m.live==='queued')?'<div class="row"><button type="button" class="btn sec sm" data-restart="'+esc(m.restart)+'">Zatrzymaj i uruchom z poprawką</button></div>':'')+'</div></div>'}
-const chatMsg=(m,here)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text)+'</div>';
+const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
 /* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
 const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
 async function loadChat(id){
@@ -8677,9 +8732,9 @@ function asMsgs(){let h='';
     (AS.voice?'Mów: przycisk Mów albo przytrzymaj spację. ':'')+'Zadania zmienia tylko na Twoją prośbę.</p>';
   h+=AS.messages.map(m=>{if(m.role==='ty')return '<div class="cm me">'+chatText(m.text)+'</div>';if(m.role==='panel')return pnMsg(m,'');
     const c=m.cards||{},t=asClean(m.text),n=(c.pokaz||[]).length,bad=c.bledy||[];
-    return '<div class="cm ai">'+chatText(t||(n?(n===1?'Karta na płótnie.':'Karty na płótnie: '+n+'.'):''))+'</div>'+
+    return '<div class="cm ai">'+chatText(t||(n?(n===1?'Karta na płótnie.':'Karty na płótnie: '+n+'.'):''),{p:null})+'</div>'+
       (bad.length?'<p class="ap-bad" title="'+esc(bad.join('; '))+'">Panel nie pokazał '+(bad.length===1?'jednej karty':bad.length+' kart')+' z tej odpowiedzi (opis spoza katalogu).</p>':'')}).join('');
-  if(AS.pending&&asClean(AS.partial))h+='<div class="cm ai as-live">'+chatText(asClean(AS.partial))+'</div>';
+  if(AS.pending&&asClean(AS.partial))h+='<div class="cm ai as-live">'+chatText(asClean(AS.partial),{p:null})+'</div>';
   if(AS.error)h+='<p class="warn">'+esc(AS.error)+'</p>';
   return h}
 const AS_MICI='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>';
@@ -9389,9 +9444,9 @@ const PT=/^\s*(?:[-*•]|\d+[.)])\s+/;
 function ansParts(txt){const L=String(txt||'').split('\n').map(x=>x.trim()).filter(Boolean),items=L.filter(x=>PT.test(x)).map(x=>x.replace(PT,''));
   const prose=L.filter(x=>!PT.test(x)).join(' '),fm=/^.*?[.!?](?=\s|$)/.exec(prose),lead=(fm?fm[0]:prose).trim(),rest=prose.slice(lead.length).trim();
   return {lead:lead||items[0]||'',items:(lead?items:items.slice(1)).slice(0,5),more:items.length>(lead?5:6)||!!rest}}
-function ansHtml(txt){const a=ansParts(txt);
-  return '<p class="as-lead">'+mdInl(a.lead)+'</p>'+(a.items.length?'<ul class="as-pts">'+a.items.map(x=>'<li>'+mdInl(x)+'</li>').join('')+'</ul>':'')+
-    (a.more?'<details class="as-full"><summary>Cała odpowiedź</summary>'+chatText(txt)+'</details>':'')}
+function ansHtml(txt){const a=ansParts(txt),L=x=>wwLinks(mdInl(x),x,null);
+  return '<p class="as-lead">'+L(a.lead)+'</p>'+(a.items.length?'<ul class="as-pts">'+a.items.map(x=>'<li>'+L(x)+'</li>').join('')+'</ul>':'')+
+    (a.more?'<details class="as-full"><summary>Cała odpowiedź</summary>'+chatText(txt,{p:null})+'</details>':'')}
 function scAnswer(q,m,err){
   const txt=m?asClean(m.text):'',n=ansCards(m).length;
   const first=ansParts(txt).lead;
@@ -10141,10 +10196,10 @@ function route(){
   if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='plan';
     if(!p){const m=/^(.*)-(plan|tablica|wskazniki|etapy|ksiega|marketing|strona)$/.exec(rest);if(m){p=P(m[1]);tab=m[2]}}
     /* część projektu: stary adres (#p-<część>…) przechodzi na stronę projektu głównego z wybraną częścią */
-    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!p.site?'plan':tab))}catch(e){}}
+    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!wwSites(p).length?'plan':tab))}catch(e){}}
     else if(p&&p.partsL&&p.partsL.length){const m=/(?:^|&)cz=([^&]*)/.exec(qs),cz=m?m[1]:'';
       if(cz&&cz===p.id&&p.own)p=p.own;else if(cz)p=p.partsL.find(x=>x.id===cz)||p}
-    if(p&&tab==='strona'&&!p.site)tab='plan';
+    if(p&&tab==='strona'&&!wwSites(p).length)tab='plan';
     if(p)return {v:'projekt',p:p,tab:tab}}
   return {v:VIEWS.indexOf(h)>=0?h:'asystent'};
 }
@@ -10269,7 +10324,7 @@ function render(force){
     const n=document.getElementById('srv-'+r.go);if(n){n.scrollIntoView({block:'start'});n.focus({preventScroll:true})}}
   odAfter(r.v==='odbior');
   renderDock(r);
-  if(r.v==='projekt'){pjGo();if(r.tab==='strona')wwMount(r.p)}
+  if(r.v==='projekt'){pjGo();if(r.tab==='strona'&&wwCur(r.p))wwMount(wwCur(r.p))}
   renderDrawer(force);
   if(ED.cur)edActs();
   deepLink();

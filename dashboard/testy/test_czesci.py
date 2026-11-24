@@ -144,6 +144,21 @@ class Dane(ZCzesciami):
                                                   [("Strona WWW", self.part)])
         self.assertIn("„Oprogramowani”", prompt)
         self.assertIn("- Strona WWW: %s" % os.path.join(self.part, "ZADANIA.md"), prompt)
+        self.assertNotIn("[Otwórz podgląd]", prompt)                     # bez stron: bez zasady o podglądzie
+
+    def test_rozmowy_podaja_adres_podgladu(self):
+        """Rozmowa o projekcie i Asystent dostają adres zakładki Strona części, nie opis drogi w panelu."""
+        data, index = server.load_projects()
+        links = self.manager.site_links(data)
+        self.assertEqual(links, [("Oprogramowani · Strona WWW", "#p-projekt-testowy-strona?cz=oprogramowani-onepager")])
+        p = next(x for x in data["projects"] if x["id"] == "projekt-testowy")
+        prompt = self.manager.project_chat_prompt(p, self.folder, self.folder, "Gdzie zobaczę stronę?",
+                                                  [("Strona WWW", self.part)], links)
+        self.assertIn("[Otwórz podgląd](adres)", prompt)
+        self.assertIn("#p-projekt-testowy-strona?cz=oprogramowani-onepager", prompt)
+        self.assertIn("#p-projekt-testowy-strona?cz=oprogramowani-onepager",
+                      self.manager.assistant_prompt(data, index, "Gdzie zobaczę stronę?", "#asystent"))
+        self.assertEqual(self.manager.site_links(data, {"projekt-testowy"}), [])     # inny projekt: bez adresu
 
 
 def d_all(f):
@@ -155,7 +170,7 @@ class Widok(unittest.TestCase):
     """Funkcje strony projektu z panel.html w node: adresy części, przełącznik, „Kod i pliki”, okno rozmowy."""
 
     def run_view(self, body):
-        code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "partSw", "kpN",
+        code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "wwSites", "partSw", "kpN",
                                                          "ghLine", "driveLine", "codeBox", "pjChatOf", "dockHtml"])
         js = """let LIVE=true;const PF={more:{}},GHS={},DRV={x:{connected:true,mounted:true,files:3,folder:'1AbCdEfGhIjK'}},A={busy:{}};
 const D={projectsSource:'registry'},loaded=[];
@@ -186,7 +201,8 @@ out.tag=ptag(top,'s');out.tagOwn=ptag(top,'x');out.tagPart=ptag(part,'s');""")
         self.assertEqual(o["top"], "#p-x-tablica")
         self.assertEqual(o["part"], "#p-x-strona?cz=s")                 # część: adres projektu głównego
         self.assertEqual(o["own"], "#p-x?cz=x")
-        self.assertEqual(o["sw"], [["#p-x", "Całość"], ["#p-x?cz=x", "Integracje"], ["#p-x-strona?cz=s", "Strona WWW"]])
+        # „Całość” ma zakładkę Strona (strona części), część bez strony przechodzi na Plan
+        self.assertEqual(o["sw"], [["#p-x-strona", "Całość"], ["#p-x?cz=x", "Integracje"], ["#p-x-strona?cz=s", "Strona WWW"]])
         self.assertEqual(o["cur"], "Strona WWW")
         self.assertEqual(o["none"], "")
         self.assertIn("Strona WWW", o["tag"])
@@ -243,6 +259,90 @@ out.inny=dockHtml({v:'start'});""")
         self.assertEqual(o["inny"], "")                                   # tylko na stronie projektu
 
 
+@unittest.skipUnless(NODE, "brak node")
+class Podglad(unittest.TestCase):
+    """Zakładka Strona w „Całość”, przycisk „Otwórz podgląd” przy zadaniu oceny strony i link w odpowiedzi czatu (node)."""
+
+    def run_js(self, body):
+        code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pid2", "phref", "topP", "PTABS", "PTMAIN", "wwSites", "ptabsOf",
+                                                         "ptMain", "WWC", "wwCur", "wwHref", "wwView", "partSw", "WWT", "wwTask",
+                                                         "wwBtn", "wwHrefFor", "wwLinks", "chatText", "chatMsg"])
+        js = """let LIVE=true;const pnMsg=()=>'',document={addEventListener(){}};
+const top={id:'x',name:'Oprogramowani',partOf:'',partLabel:'Integracje'};
+const part={id:'s',name:'Oprogramowani · Strona WWW',partOf:'x',partLabel:'Strona WWW',site:{dir:'site'},partsL:[]};
+const inny={id:'y',name:'Sklep',partOf:'',partsL:[],site:{dir:'www'}};
+top.partsL=[part];top.own=Object.assign({},top,{isOwn:true,partsL:[],own:null,name:'Oprogramowani · Integracje'});
+const by={x:top,s:part,y:inny};const P=id=>by[id]||null;
+const D={projects:[top]};
+const out={};
+%s
+%s
+JSON.stringify(out);
+""" % (code, body)
+        lines = js.rstrip().split("\n")
+        lines[-1] = "console.log(" + lines[-1].rstrip(";") + ");"
+        r = subprocess.run([NODE, "-"], input="\n".join(lines), capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return json.loads(r.stdout)
+
+    def test_zakladka_strona_w_calosci(self):
+        o = self.run_js("""const T=p=>ptabsOf(p).map(x=>x[0]);out.top=T(top);out.own=T(top.own);out.part=T(part);out.main=ptMain(top);
+out.view=wwView(top);out.sw=partSw(top,'strona');
+const s2={id:'s2',name:'Oprogramowani · Sklep',partOf:'x',partLabel:'Sklep',site:{dir:'sklep'},partsL:[]};by.s2=s2;top.partsL=[part,s2];
+out.two=wwView(top);WWC.x='s2';out.two2=wwView(top);LIVE=false;out.off=wwView(top);""")
+        self.assertEqual(o["top"][:3], ["plan", "tablica", "strona"])           # „Całość”: Strona jako trzecia główna
+        self.assertEqual(o["main"], 4)
+        self.assertNotIn("strona", o["own"])                                     # część bez strony: bez zakładki
+        self.assertIn("strona", o["part"])
+        self.assertIn('data-ww="s"', o["view"])                                  # podgląd części ze stroną
+        self.assertIn('href="#p-x-strona?cz=s"', o["view"])
+        self.assertIn('class="tabs pj-parts"', o["sw"])                          # przełącznik w wyglądzie zakładek
+        self.assertIn('href="#p-x-strona"', o["sw"])                             # „Całość” zostaje na zakładce Strona
+        self.assertIn('href="#p-x?cz=x"', o["sw"])                               # część bez strony: Plan
+        self.assertEqual(o["two"].count("data-wwpart="), 2)                      # dwie części ze stroną: wybór
+        self.assertIn('data-ww="s"', o["two"])
+        self.assertIn('data-ww="s2"', o["two2"])
+        self.assertIn('data-wwpart="s2" data-wwtop="x" data-k="wwp:s2" aria-pressed="true"', o["two2"])
+        self.assertNotIn("data-ww=", o["off"])
+
+    def test_przycisk_otworz_podglad(self):
+        o = self.run_js("""const t=(id,project,title,executor,refs)=>({id:id,project:project,title:title,executor:executor||'ty',detail:{refs:refs||[]}});
+out.tytul=wwBtn(t('a','s','Oceń nową stronę w zakładce Strona'));
+out.calosc=wwBtn(t('b','x','Obejrzyj podgląd strony i daj uwagi'));
+out.mat=wwBtn(t('c','s','Przejrzyj i zatwierdź',null,[{path:'./site/'}]));
+out.matIn=wwBtn(t('d','s','Przejrzyj',null,[{path:'site/src/App.tsx'}]));
+out.inny=wwBtn(t('e','s','Zapłać fakturę',null,[{path:'docs/site.md'}]));
+out.agent=wwBtn(t('f','s','Popraw stronę w zakładce Strona','claude'));
+out.zgoda=wwBtn(Object.assign(t('g','s','Zatwierdź podgląd strony','claude'),{needsYou:'zgoda'}));
+out.bez=wwBtn(t('h','y','Oceń stronę w zakładce Strona'));by.y.site=null;out.bez2=wwBtn(t('i','y','Oceń stronę w zakładce Strona'));""")
+        for k in ("tytul", "calosc", "mat", "matIn", "zgoda"):
+            with self.subTest(k):
+                self.assertIn('href="#p-x-strona?cz=s"', o[k])
+                self.assertIn(">Otwórz podgląd</a>", o[k])
+        self.assertEqual((o["inny"], o["agent"]), ("", ""))                      # inne zadania i zadania agentów: bez
+        self.assertIn('href="#p-y-strona"', o["bez"])                            # projekt bez części
+        self.assertEqual(o["bez2"], "")
+
+    def test_link_w_odpowiedzi_czatu(self):
+        o = self.run_js("""const txt='Nową stronę zobaczysz w zakładce Strona przy części Strona WWW.';
+out.pj=chatMsg({role:'claude',text:txt},'',top);out.cz=chatMsg({role:'claude',text:txt},'',part);
+out.as=chatText(txt,{p:null});out.ty=chatMsg({role:'ty',text:txt},'',top);
+out.md=chatText('Gotowe: [Otwórz podgląd](#p-x-strona?cz=s).',{p:null});
+out.xss=chatText('[a](javascript:alert(1)) [b](#p-x" onclick="x)',{p:null});
+D.projects=[top,inny];out.dwa=chatText('Podgląd jest w zakładce Strona.',{p:null});
+out.sklep=chatText('Stronę Sklep zobaczysz w zakładce Strona.',{p:null});out.wiele=chatText(txt,{p:null});""")
+        link = '<a href="#p-x-strona?cz=s" data-k="wwlink">zakładce Strona</a>'
+        for k in ("pj", "cz", "as", "wiele"):
+            with self.subTest(k):
+                self.assertIn(link, o[k])
+        self.assertNotIn("<a ", o["ty"])                                         # wiadomość właściciela bez linków
+        self.assertIn('<a href="#p-x-strona?cz=s">Otwórz podgląd</a>', o["md"])
+        self.assertNotIn("<a ", o["xss"])                                        # tylko adresy panelu (#…)
+        self.assertNotIn("<a ", o["dwa"])                                        # nie wiadomo, która strona: bez linku
+        self.assertIn('<a href="#p-y-strona" data-k="wwlink">zakładce Strona</a>', o["sklep"])
+
+
+@unittest.skipUnless(NODE, "brak node")
 class Kod(unittest.TestCase):
     """Strona projektu bez sekcji rozmowy i osobnej sekcji Google Drive; Esc zwija rozmowę; Serwer bez działań."""
 
@@ -280,6 +380,9 @@ with sync_playwright() as p:
         r["redirect"] = pg.evaluate("location.hash")
         r["cur"] = pg.locator(".pj-parts a[aria-current]").inner_text()
         r["tabs"] = pg.locator(".ptabs > a").all_inner_texts()
+        pg.goto(U + "#p-projekt-testowy-strona"); pg.wait_for_selector(".ww-root")
+        r["calosc"] = [pg.evaluate("location.hash"), pg.locator(".ptabs > a[aria-current]").inner_text(),
+                       pg.locator(".pj-parts a[aria-current]").inner_text(), pg.locator(".ww-root").get_attribute("data-ww")]
         pg.goto(U + "#p-projekt-testowy"); pg.wait_for_selector(".pj-parts"); pg.wait_for_timeout(500)
         r["list"] = pg.locator("#plist a .nm").all_inner_texts()
         r["tag"] = pg.locator("#pplan .ptag").all_inner_texts()
@@ -330,6 +433,7 @@ class Strona(ZCzesciami):
                 self.assertEqual(o["redirect"], "#p-projekt-testowy-strona?cz=oprogramowani-onepager")
                 self.assertEqual(o["cur"], "Strona WWW")
                 self.assertIn("Strona", o["tabs"])
+                self.assertEqual(o["calosc"], ["#p-projekt-testowy-strona", "Strona", "Całość", "oprogramowani-onepager"])
                 self.assertEqual(o["list"], ["Oprogramowani"])
                 self.assertIn("Strona WWW", o["tag"])
                 self.assertEqual((o["det"], o["det2"]), (True, False))
