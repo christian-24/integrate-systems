@@ -100,7 +100,7 @@ class Biblioteka(unittest.TestCase):
         self.assertEqual(list(lib["karty"]), ["q"])
         self.assertNotIn("zapisz", lib["karty"]["q"])
         self.assertIn("- q (liczba): Q", self.lib.summary())
-        self.assertIn("- dzis-dla-ciebie (lista, wbudowana): Dziś dla Ciebie · Twoje otwarte sprawy na dziś i po terminie",
+        self.assertIn("- dzis-dla-ciebie (lista, wbudowana): Twoje sprawy do dziś · Twoje otwarte sprawy na dziś i po terminie",
                       self.lib.summary())
         with self.assertRaises(karty.Bad):
             self.lib.save([{"id": "postep-projektow", "typ": "postep", "tytul": "X"}])  # id karty wbudowanej
@@ -200,6 +200,7 @@ class Trasy(Serwer):
         lib = json.loads(text)
         self.assertEqual((status, [c["id"] for c in lib["karty"]]), (200, ["moje"]))
         self.assertEqual(lib["wbudowane"], karty.STARTERS)
+        self.assertEqual(lib["start"], ["sprawy-dzis", "raport-pm"])
         self.assertEqual(self.post("/api/asystent/karty", {"przypiete": ["moje", "postep-projektow"]})[0], 200)
         self.assertEqual(self.post("/api/asystent/karty", {"ukryj": "postep-projektow"})[0], 200)
         lib = json.loads(self.request("GET", "/api/asystent/karty")[2])

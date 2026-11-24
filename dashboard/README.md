@@ -17,18 +17,38 @@ Ustawienia: zmienne środowiska albo `panel.env` (wzór: `panel.env.przyklad`).
 
 ## Widoki
 
-Układ i kontrakt: `PULPIT.md`. Panel boczny: widoki i lista projektów z wyszukiwarką; na wąskim ekranie lista rozwijana.
+Układ i kontrakt: `PULPIT.md`. Menu: Asystent (z liczbą spraw dla Ciebie), Marketing, Media, Agenci, Serwer, pod nimi
+lista projektów z wyszukiwarką; na telefonie dolny pasek (Asystent, Marketing, Media, Agenci, „Więcej”: Serwer i projekty).
 
 | Widok | Adres | Do czego |
 |---|---|---|
-| Przegląd | `#przeglad` | stan systemu, 4 liczby, tabela projektów (opis, faza, stan, postęp, najbliższy termin, księga), notatka PM, ryzyka, wymaga Ciebie, terminy 7 dni |
-| Wskaźniki | `#wskazniki` | postęp, tempo, praca w toku, zaległe, etapy w terminie; wykresy z historii; cały portfel albo jeden projekt |
-| Wymaga Ciebie | `#ty` | zgody, odbiory i Twoje zadania |
-| Tablica | `#tablica` | Kanban wszystkich projektów: do zrobienia, w toku, do odbioru, zrobione |
-| Terminy | `#terminy` | po terminie, ten tydzień, następny, później; kalendarz, wolne okna dziś i jutro, eksport ICS |
-| Agenci | `#agenci` | logowanie, limit, Automat, Raport PM, Test połączenia, uruchomienia |
-| Projekty | `#projekty` | dodawanie i usuwanie projektów, zgodność ze standardem |
+| Asystent | `#asystent` | strona startowa: sprawy dla Ciebie na dziś (liczba i 3 najważniejsze, z przyciskami), notatka PM, „Pokaż” kart; rozmowa głosem i tekstem, odpowiedzi jako karty |
+| Marketing | `#marketing` | tydzień postów i filmów, kampanie w toku z „Wpisz wynik”, kanały publikacji, studio filmów |
+| Media | `#media` | zdjęcia i filmy ze wszystkich projektów |
+| Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, publikacje, ostatnie 24 h), plan dnia, uruchomienia |
+| Serwer | `#koszty` | stan i zasoby, kopie na GitHubie, kalendarz (połączenie, subskrypcja ICS), Projekty (rejestr, dodanie i usunięcie, Księga projektów), koszty, rozwój panelu, sesje |
 | Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing; projekt z częściami: `#p-<id>?cz=<id części>` |
+| Odbiór pracy | `#odbior?z=<id zadania>` | wersje wyniku, porównanie, Akceptuję, Popraw |
+
+Dawne widoki Start, Dla Ciebie, Przegląd, Wskaźniki, Tablica, Terminy, Blokady i Projekty (usunięte 2026-11-24) pokazuje
+Asystent kartami z tych samych danych i z tymi samymi przyciskami (typ karty `panel`, `karty.PANEL_VIEWS`):
+
+| Karta (id) | Dawniej | Co pokazuje i co można zrobić |
+|---|---|---|
+| `sprawy-dzis` (na starcie) | Przegląd → Decyzje, Dziś | liczba spraw na dziś, 3 najważniejsze (termin, odblokowane, priorytet), Zatwierdź, Odbierz, Odpowiedz, Zrobione, „Ponad plan” z „Przesuń na jutro” |
+| `raport-pm` (na starcie: część „Proponuję”) | Przegląd → Podsumowanie PM | notatka z `raporty/`, „Raport PM”, stan ostatniego raportu |
+| `sprawy` | Dla Ciebie | filtr rodzaju i projektu, Decyzje, Dziś, 7 dni, Później, Do zamknięcia (Zamknij), czekające na inne |
+| `terminy` | Terminy, Przegląd → Ryzyka, Terminy 7 dni | filtr projektu, rodzaju i kalendarzy, po terminie i zagrożone, dziś, jutro, 7 dni, później, wolne okna dziś i jutro |
+| `blokady` | Blokady | co wstrzymuje ile zadań, do zrobienia najpierw, zablokowane, mapa, zależności do poprawy (Usuń warunek, Dodaj zadanie) |
+| `wskazniki` | Wskaźniki, Start | postęp, tempo, przepływ, porównanie projektów; wybór projektu otwiera wskaźniki projektu |
+| `zadania` | Tablica | zadania ze wszystkich projektów z filtrem projektu i stanu; wiersz otwiera szczegóły zadania |
+
+„Pokaż” na stronie Asystent (i polecenia „sprawy”, „terminy”, „blokady”, „wskaźniki”, „zadania”, „raport PM”) pokazuje
+kartę bez pytania modelu: w trybie Sceny jako odpowiedź, w trybie Karty na górze płótna (`PF.apShow`). Stare adresy
+(`#start`, `#ty`, `#przeglad`, `#wskazniki`, `#tablica`, `#terminy`, `#blokady`, `#projekty`, także z `?p=` i `?z=`)
+prowadzą do Asystenta z pasującą kartą; `#asystent?k=<id karty>` robi to samo z odnośników panelu,
+`#koszty?k=projekty|kalendarz` przewija Serwer do sekcji. Naprawa brakującego poprzednika (pole `po:`) jest też
+w szczegółach zadania.
 
 Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie agenta.
 
@@ -59,7 +79,7 @@ części ma wiersz `- część projektu: <projekt główny>` (folder projektu g�
 nazwa folderu jego karty). Część dalej ma swój folder, repozytorium, `ZADANIA.md`, agentów i zakładkę Strona; nic
 się nie przenosi. W panelu:
 
-- listy projektów (menu, Start, Przegląd, Projekty, wybór projektu w filtrach, Terminy, Dla Ciebie) mają jeden wpis;
+- listy projektów (menu, Serwer → Projekty, wybór projektu w filtrach kart Asystenta) mają jeden wpis;
   filtr projektu obejmuje części; zadania i terminy części mają nazwę „Projekt · Część”;
 - nazwa części to tytuł jej karty bez nazwy projektu głównego („Oprogramowani – strona WWW” albo „Strona WWW” →
   „Strona WWW”); projekt główny traci nawias z tytułu („Oprogramowani (integracje ERP ↔ sprzedaż)” → nazwa
@@ -76,7 +96,7 @@ się nie przenosi. W panelu:
 | Klawisz | Działanie |
 |---|---|
 | `/` | szukaj projektu |
-| `g` potem `p` `w` `t` `d` `a` | przegląd, wskaźniki, tablica, terminy, agenci |
+| `g` potem `s` `m` `e` `a` `k` | Asystent, Marketing, Media, Agenci, Serwer |
 | `r` | w otwartej szufladzie: uruchom agenta |
 | Esc | zamknij szufladę |
 
@@ -200,7 +220,7 @@ Test renderowania na serwerze: `dashboard/testy/render_na_serwerze.sh panel@<adr
 
 ## Koszty Hetzner
 
-Widok Koszty (`#koszty`, w menu) i wiersz w Przeglądzie: ten miesiąc, łącznie od założenia, pełny
+Widok Serwer (`#koszty`, w menu): ten miesiąc, łącznie od założenia, pełny
 miesiąc; tabela na serwer (z kopiami i adresem IP) i lista pozycji. Szacunek z cennika API Hetzner Cloud (godziny × stawka,
 najwyżej cena miesięczna, brutto, EUR; kurs z NBP), odczyt co 6 h w tle (`koszty.py`). Usuniętych serwerów API nie
 pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzner) w `/etc/integrate/hetzner.tokeny`
@@ -208,14 +228,15 @@ pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzn
 
 ## PM
 
-- `python3 ../standard/pm.py` liczy raport z plików; widok Przegląd liczy to samo.
+- `python3 ../standard/pm.py` liczy raport z plików; karty Asystenta (sprawy, terminy, blokady) liczą to samo.
 - Agent `pm` (`.claude/agents/pm.md`) i polecenie `/raport` w Claude Code, rola w `../standard/PM.md`
-  (Codex czyta ją przez `../AGENTS.md`). Z panelu: „Raport PM” w widoku Przegląd albo Agenci.
-- Notatka PM trafia do `../raporty/RRRR-MM-DD.md`; panel pokazuje najnowszą.
+  (Codex czyta ją przez `../AGENTS.md`). Z panelu: „Raport PM” w karcie Notatka PM na stronie Asystent albo w Agentach.
+- Notatka PM trafia do `../raporty/RRRR-MM-DD.md`; panel pokazuje najnowszą na stronie Asystent (start: część
+  „Proponuję”, karta `raport-pm`: cała).
 
 ### Co dziś robimy
 
-Okno na górze widoku Przegląd. Piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
+Sekcja „Plan dnia” w Agentach. Piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
 dostaje listę otwartych zadań wszystkich projektów i układa plan: najwyżej 6 zadań dla agentów i 5 dla Ciebie.
 Zadania dla agentów są zaznaczone; „Uruchom zaznaczone” uruchamia je jak „Uruchom agenta” (te same reguły i kolejka).
 Plan bierze tylko zadania z kart: id spoza listy i zadania, których agent nie może wykonać, są odrzucane.
@@ -224,7 +245,7 @@ Plan z dzisiejszego dnia zostaje widoczny do następnego.
 ## Projekty
 
 - Rejestr `../projekty.json`, osobny na każdym komputerze. Dopóki go nie ma, panel pokazuje trzy projekty przykładowe z `przyklad/`.
-- Z panelu: widok Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Nowy projekt z terminala: `python3 ../standard/projekt.py nowy <folder> --nazwa "Nazwa" --rejestruj`
 - Istniejący folder z terminala: `python3 ../standard/projekt.py dodaj <folder>`
 - Na projektach przykładowych zadań nie da się uruchomić; raport PM i test połączenia działają.
@@ -318,7 +339,7 @@ plik poza tymi folderami, dowiązanie wychodzące na zewnątrz, inny typ pliku, 
 ### Pytania do właściciela
 
 Sekcja `## Pytania do właściciela` w `KARTA.md`: wiersze `1. pytanie` albo `- pytanie`, pod pytaniem wcięty wiersz `   Odpowiedź: …`.
-Panel pokazuje pytania bez odpowiedzi w Przeglądzie, w widoku Wymaga Ciebie i w księdze projektu. Odpowiedź z panelu
+Panel pokazuje pytania bez odpowiedzi na stronie Asystent (sprawy dla Ciebie), w decyzjach projektu i w księdze projektu. Odpowiedź z panelu
 (`/api/question/answer` `{id, n, answer}`) zapisuje albo zmienia ten wiersz; pusta odpowiedź go usuwa.
 
 Pod propozycją mogą stać wcięte wiersze `   skutek: <operacja>` (w danych pytania `effects`: lista tekstów operacji):

@@ -300,12 +300,12 @@ class Agent(Wspolne):
         self.wait(self.run_task("Przygotuj listę firm z partii 2", m)[2]["id"], manager=m)
         self.assertEqual(sent, ["Zadanie w projekcie Projekt testowy: wymaga logowania",
                                 "Claude wymaga logowania. Zaloguj się w panelu: Agenci, Zaloguj."])
-        self.assertTrue(links[0].startswith("#ty?z=projekt-testowy|"), links[0])     # link do zadania
+        self.assertTrue(links[0].startswith("#asystent?z=projekt-testowy|"), links[0])     # link do zadania
         old = os.environ.get("PANEL_PUBLIC_URL")
         os.environ["PANEL_PUBLIC_URL"] = "https://panel.example/"
         try:
-            self.assertEqual(agents.click_url("#ty?z=opis|kampanie/jesień.md|4"),
-                             "https://panel.example/#ty?z=opis%7Ckampanie%2Fjesie%C5%84.md%7C4")
+            self.assertEqual(agents.click_url("#asystent?z=opis|kampanie/jesień.md|4"),
+                             "https://panel.example/#asystent?z=opis%7Ckampanie%2Fjesie%C5%84.md%7C4")
             self.assertEqual(agents.click_url("#agenci"), "https://panel.example/#agenci")
             self.assertEqual(agents.click_url(""), "")
             os.environ["PANEL_PUBLIC_URL"] = ""
@@ -315,7 +315,7 @@ class Agent(Wspolne):
                 os.environ.pop("PANEL_PUBLIC_URL", None)
             else:
                 os.environ["PANEL_PUBLIC_URL"] = old
-        self.assertEqual(agents.notify_link({"kind": "pm", "id": "r1"}), "#przeglad")
+        self.assertEqual(agents.notify_link({"kind": "pm", "id": "r1"}), "#asystent")
         self.assertEqual(agents.notify_link({"kind": "chat", "id": "r1"}), "#agenci?u=r1")
 
 
