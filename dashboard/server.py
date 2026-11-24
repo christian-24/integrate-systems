@@ -1880,7 +1880,19 @@ def get_agents():
         if _agents is None:
             _agents = agents.Manager(load_projects, _write_lock, projekt)
             _agents.site.secret = _derive("panel-podglad").encode("ascii")   # adresy podglądu trwają po restarcie
+            _agents.counts_hook = cached_counts
         return _agents
+
+
+def cached_counts():
+    """Liczby spraw z ostatniej odpowiedzi /api/data (te same, które widzi panel) albo None, gdy jeszcze jej nie ma."""
+    with _data_lock:
+        body = _data_cache["body"]
+    try:
+        d = json.loads(body) if body else None
+    except ValueError:
+        d = None
+    return {k: d[k] for k in projekt.OWNER_COUNT_KEYS if k in d} if isinstance(d, dict) else None
 
 
 # Wiadomość w rozmowie o zadaniu: 2000 znaków w JSON z \uXXXX (np. polskie litery, emoji) przekracza 4 KB.

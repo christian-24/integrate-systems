@@ -282,8 +282,8 @@ Zadania wokół scenariusza (w „Do rozplanowania”, tytuł z dniem publikacji
 |---|---|
 | wymaga Ciebie | otwarte zadanie z `kto: ty` albo z polem `wymaga`, oraz pytanie bez odpowiedzi; bez projektów o stanie wstrzymany i backlog |
 | zgoda na zadaniu właściciela | `wymaga: zgoda` przy `kto: ty` nie jest decyzją, tylko zwykłym zadaniem właściciela |
-| dziś / 7 dni / później | `youToday`: data najpóźniej dziś albo etap po terminie; `youWeek`: data w ciągu 7 dni; `youLater`: później albo bez daty |
-| po terminie | otwarte zadanie z datą wcześniejszą niż dziś albo w etapie po terminie |
+| dziś / 7 dni / później | `youToday`: po terminie (data przed dziś albo etap po terminie) albo data dziś, bez zadań czekających na niezrobionego poprzednika z `po:` i bez zadań do zamknięcia; `youLate`: ile z nich jest po terminie; `youWeek`: data w ciągu 7 dni (także czekające na poprzednika); `youLater`: później albo bez daty. Te same liczby pokazuje panel (menu Asystent, start, karty) i dostaje rozmowa z asystentem |
+| po terminie | otwarte zadanie z datą wcześniejszą niż dziś albo w etapie po terminie (`late`: wszystkie, także agentów) |
 | zablokowane | zadanie w stanie `[!]` |
 | stan etapu | pierwsza pasująca: zrobione → po terminie → czeka na Ciebie (wszystkie otwarte zadania wymagają Ciebie) → zagrożony (otwartych zadań więcej niż dni do terminu) → w normie |
 | bez następnego kroku | aktywny projekt bez otwartego zadania z datą najpóźniej za 7 dni |

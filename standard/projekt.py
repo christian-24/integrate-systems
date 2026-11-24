@@ -1130,21 +1130,50 @@ def state_flags(task, since, live, today):
     return (status == "doing" and not live and age > STALLED_DAYS), (status == "review" and age > REVIEW_DAYS)
 
 
+OWNER_COUNT_KEYS = ("youToday", "youLate", "youWeek", "youLater", "late")
+
+
 def owner_counts(projects, stages, tasks, today):
-    """Liczniki spraw właściciela w projektach poza QUIET_STATES: zadania for_owner i pytania bez odpowiedzi.
-    youToday: z datą najpóźniej dziś albo w etapie po terminie; youWeek: w ciągu 7 dni; youLater: później albo bez daty."""
+    """Liczniki spraw właściciela: jedno źródło dla raportu PM (pm.py), panelu (menu, Asystent, karty) i rozmowy
+    z asystentem. Panel dzieli sprawy na listy tą samą regułą (youState w panel.html; test_asystent_duzy pilnuje zgodności).
+
+    Sprawy: zadania for_owner i pytania bez odpowiedzi, w projektach poza QUIET_STATES; bez zadań, których kontrola
+    („sprawdza:”) potwierdziła wykonanie (lista „do zamknięcia”).
+    youToday: po terminie (data przed dziś albo etap po terminie) albo z datą dziś, o ile zadanie nie czeka na
+    niezrobionego poprzednika z `po:`; youLate: ile z youToday jest po terminie; youWeek: data najpóźniej za 7 dni
+    (także czekające na poprzednika); youLater: później albo bez daty.
+    late: wszystkie otwarte zadania i publikacje po terminie (także agentów i projektów wstrzymanych)."""
     key = today.isoformat()
     week = (today + datetime.timedelta(days=7)).isoformat()
     quiet = {p["id"] for p in projects if p.get("state") in QUIET_STATES}
     late_stages = {s["id"] for s in stages if re.match(r"^\d{4}-\d\d-\d\d$", s.get("date") or "")
                    and s["date"] < key and not stage_done(s, tasks)}
-    items = [(date_key(t.get("date"), today), t.get("stage") in late_stages) for t in tasks
-             if t.get("project") not in quiet and for_owner(t)]
-    items += [(date_key(q.get("date"), today), False) for p in projects if p["id"] not in quiet
-              for q in p.get("questions") or [] if not q.get("answer")]
-    out = {"youToday": 0, "youWeek": 0, "youLater": 0}
-    for day, late in items:
-        out["youToday" if late or (day and day <= key) else "youWeek" if day and day <= week else "youLater"] += 1
+
+    def is_late(t):
+        day = date_key(t.get("date"), today)
+        return bool(day and day < key) or t.get("stage") in late_stages
+    items = []
+    for t in tasks:
+        check = t.get("check")
+        if t.get("project") in quiet or not for_owner(t) or (isinstance(check, dict) and check.get("ok") is True):
+            continue
+        day, late = date_key(t.get("date"), today), is_late(t)
+        items.append((day, late, (late or bool(day and day <= key)) and not waiting_titles(t)))
+    for p in projects:
+        if p["id"] in quiet:
+            continue
+        for q in p.get("questions") or []:
+            if not q.get("answer"):
+                day = date_key(q.get("date"), today)
+                items.append((day, bool(day and day < key), bool(day and day <= key)))
+    out = {"youToday": 0, "youLate": 0, "youWeek": 0, "youLater": 0,
+           "late": sum(1 for t in tasks if t.get("state") != "done" and is_late(t))}
+    for day, late, now in items:
+        if now:
+            out["youToday"] += 1
+            out["youLate"] += late
+        else:
+            out["youWeek" if day and day <= week else "youLater"] += 1
     return out
 
 
