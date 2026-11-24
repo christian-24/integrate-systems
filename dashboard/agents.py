@@ -316,6 +316,24 @@ def _card_dirs(folder):
     return [x for d in dirs for x in ("--add-dir", d)]
 
 
+def drive_dir(folder):
+    """Zamontowany Google Drive projektu (szkice/<karta>/media/drive, tylko do odczytu) albo ''."""
+    try:
+        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+    except (OSError, TypeError, ValueError):
+        return ""
+    mnt = os.path.join(cards, "media", "drive")
+    return mnt if os.path.ismount(mnt) else ""
+
+
+def drive_rules(mnt):
+    """Zasada zadania z folderem Google Drive projektu."""
+    if not mnt:
+        return []
+    return ["- Pliki projektu z Google Drive są w %s (tylko do odczytu, kopia folderu z Drive). Czytaj z nich i kopiuj "
+            "potrzebne pliki do folderu projektu; nic tam nie zapisuj ani nie usuwaj." % mnt]
+
+
 def notify_link(rec):
     """Adres w panelu dla powiadomienia o uruchomieniu: zadanie otwiera szczegóły zadania na stronie Asystent,
     raport PM stronę Asystent (notatka PM na starcie), plan dnia Agentów, reszta szczegóły uruchomienia w Agentach."""
@@ -1119,7 +1137,7 @@ class Manager:
             out += ["  " + projekt_pin_line(p) for p in pins]
         return out
 
-    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=()):
+    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=(), drive=""):
         """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia.
         site_rules: zasady zadania strony WWW (strona.Site.rules)."""
         rules = "AGENTS.md" if tool == "codex" else "CLAUDE.md"
@@ -1173,7 +1191,7 @@ class Manager:
             "bieżącego zadania. Nie uruchamiaj innych agentów ani nie używaj ogólnego Bash.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
+        ] + git_rules + drive_rules(drive) + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
             + self.render_rules() + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
@@ -1350,8 +1368,11 @@ class Manager:
         else:
             cwd, extra, info = folder, _card_dirs(folder), None
         site = t.get("site")
+        mnt = drive_dir(folder)
+        if mnt and mnt not in extra:
+            extra = extra + ["--add-dir", mnt]       # odczyt plików z Drive (Claude czyta tylko w podanych folderach)
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
-                                  git=info, site_rules=self.site.rules(site, cwd) if site else ())
+                                  git=info, site_rules=self.site.rules(site, cwd) if site else (), drive=mnt)
         if t["tool"] == "codex":
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-c", "sandbox_workspace_write.network_access=false",

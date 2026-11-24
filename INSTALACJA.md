@@ -178,6 +178,48 @@ Między komputerami pliki przenosi git: repozytorium projektu sklonowane na obu.
 że przed uruchomieniem zadania panel robi `git pull --ff-only` (tylko gdy repozytorium jest czyste).
 Panel nie wysyła zmian (`git push`); robisz to samodzielnie.
 
+## Google Drive
+
+Serwer → Google Drive → „Połącz Google Drive”: logowanie Google (wybór konta), dostęp tylko do odczytu
+(`drive.readonly`), jedno połączenie na całe konto. Folder dla projektu albo części wybierasz potem z listy
+w „Kod i pliki”; panel montuje go w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`).
+
+Bez dodatkowej konfiguracji panel używa klienta OAuth wbudowanego w rclone. Google odsyła wtedy przeglądarkę na
+`http://127.0.0.1:53682/…`, a tej strony na telefonie i Macu nie da się otworzyć: adres z paska wklejasz raz na
+konto (pole w panelu, „Wklej ze schowka” albo wklejenie w pole od razu łączy).
+
+### Własny klient OAuth (bez wklejania adresu)
+
+1. https://console.cloud.google.com → nowy projekt (np. „Panel”) → „APIs & Services” → włącz **Google Drive API**.
+2. „Google Auth Platform” (ekran zgody): typ **External** (konto prywatne) albo **Internal** (Google Workspace:
+   bez limitu 7 dni i bez weryfikacji). Nazwa aplikacji i e-mail. Zakres (Data access):
+   `https://www.googleapis.com/auth/drive.readonly`. W „Audience” dodaj swoje konta Google jako użytkowników testowych.
+3. „Clients” → „Create client” → **Web application** → „Authorized redirect URIs”:
+   `https://2-29-181-133.sslip.io/api/drive/powrot`. Skopiuj Client ID i Client secret.
+4. Na serwerze (jako root) zapisz plik, którego panel nie wypisuje:
+
+   ```bash
+   sudo install -d -m 700 -o panel -g panel /home/panel/.config/integrate
+   sudo -u panel nano /home/panel/.config/integrate/google-oauth.json
+   sudo chmod 600 /home/panel/.config/integrate/google-oauth.json
+   ```
+
+   Zawartość:
+
+   ```json
+   {"client_id": "….apps.googleusercontent.com", "client_secret": "…",
+    "redirect_uri": "https://2-29-181-133.sslip.io/api/drive/powrot"}
+   ```
+
+   Inna ścieżka: `PANEL_GOOGLE_OAUTH` w środowisku panelu. Restart panelu nie jest potrzebny.
+5. Serwer → Google Drive → „Połącz Google Drive” → wybór konta → Google wraca do panelu: „Google Drive połączony”.
+
+Tryb **Testing** (External, aplikacja nieopublikowana): Google unieważnia dostęp po 7 dniach, więc konto trzeba
+łączyć co tydzień. Żeby tego uniknąć: „Audience” → „Publish app” (In production). `drive.readonly` to zakres
+zastrzeżony: bez weryfikacji Google pokazuje przy logowaniu ostrzeżenie „Google hasn't verified this app”
+(„Advanced” → „Go to …”), limit 100 użytkowników; dla własnych kont to wystarcza. Konta połączone wcześniej przez
+klienta rclone działają dalej (bez limitu 7 dni). Usunięcie pliku przywraca łączenie z wklejaniem adresu.
+
 ## Uprawnienia agentów
 
 | Narzędzie | Tryb | Co wolno bez pytania |

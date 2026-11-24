@@ -42,6 +42,10 @@ Mały serwer, tylko biblioteka standardowa Pythona:
                                POST /api/asystent/glos/start wczytuje model mowy w tle
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
+  GET  /api/drive/konta       połączone konta Google (jedno logowanie na konto), logowanie w toku
+  GET  /api/drive/foldery     foldery konta (?account=, odswiez=1) do wyboru folderu projektu
+  GET  /api/drive/powrot      powrót z Google przy własnym kliencie OAuth (bez sesji, chroni jednorazowy state)
+  POST /api/drive/konto/start|finish|anuluj|usun   łączenie konta Google; /api/drive/wybierz: folder dla projektu
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
@@ -67,6 +71,7 @@ import glob
 import errno
 import hashlib
 import hmac
+import html
 import io
 import json
 import os
@@ -1922,6 +1927,13 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/drive/montuj": lambda b: get_drive().mount(b.get("project", "")),
           "/api/drive/anuluj": lambda b: get_drive().cancel(b.get("project", "")),
           "/api/drive/odlacz": lambda b: get_drive().disconnect(b.get("project", "")),
+          "/api/drive/konto/start": lambda b: get_drive().start_account(b.get("label", ""),
+                                                                         b.get("account", "")),
+          "/api/drive/konto/finish": lambda b: get_drive().finish_account(b.get("url", "")),
+          "/api/drive/konto/anuluj": lambda b: get_drive().cancel_account(),
+          "/api/drive/konto/usun": lambda b: get_drive().remove_account(b.get("account", "")),
+          "/api/drive/wybierz": lambda b: get_drive().choose(b.get("project", ""), b.get("account", ""),
+                                                             b.get("folder", ""), b.get("path", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
           "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
                                                                  b.get("open", "")),
@@ -3033,13 +3045,20 @@ def start_deploy(body):
     return 200, ""
 
 
+DRIVE_BACK_PAGE = ('<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" '
+                   'content="width=device-width,initial-scale=1"><title>Google Drive</title></head><body '
+                   'style="font:16px system-ui,sans-serif;padding:24px"><p>%s</p><p><a href="/#koszty?k=drive">Panel</a></p>'
+                   '</body></html>')
 _drive = {"obj": None}
 
 
 def get_drive():
     """Połączenia Google Drive projektów (drive.py); jedno na proces."""
     if _drive["obj"] is None:
-        _drive["obj"] = drive.Drive(card_dir)
+        env = os.environ.get       # PANEL_RCLONE*, PANEL_DRIVE_*: atrapa i osobne pliki (testy, zrzuty)
+        helper = env("PANEL_DRIVE_HELPER")
+        _drive["obj"] = drive.Drive(card_dir, rclone=env("PANEL_RCLONE"), conf=env("PANEL_RCLONE_CONF"),
+                                    data_dir=env("PANEL_DRIVE_DIR"), helper=helper.split() if helper else None)
     return _drive["obj"]
 
 
@@ -3582,6 +3601,8 @@ class Handler(BaseHTTPRequestHandler):
                 return True
             self._send(401, "Wymagane hasło.", "text/plain; charset=utf-8")
             return False
+        if self.command == "GET" and path == "/api/drive/powrot":    # powrót z Google: jednorazowy state logowania
+            return True
         if self.command in ("GET", "OPTIONS") and path.startswith("/udostepnij/"):   # pakiet: token w ścieżce
             return True
         if path == "/terminy.ics":
@@ -3729,6 +3750,15 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_drive().status((parse_qs(url.query).get("project") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path in ("/api/drive/konta", "/api/drive/foldery"):
+            q = parse_qs(url.query)
+            code, err, extra = get_drive().accounts() if path == "/api/drive/konta" else \
+                get_drive().folders((q.get("account") or [""])[0], (q.get("odswiez") or [""])[0] == "1")
+            return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
+                              "application/json; charset=utf-8")
+        if path == "/api/drive/powrot":         # powrót z Google (własny klient OAuth); bez sesji: chroni state
+            code, text = get_drive().oauth_back(url.query)
+            return self._send(code, DRIVE_BACK_PAGE % (html.escape(text)), "text/html; charset=utf-8")
         if path == "/api/asystent/karty":
             code, err, extra = get_agents().assistant_cards_get()
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),

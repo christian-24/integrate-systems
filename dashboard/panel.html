@@ -709,6 +709,14 @@ body.ed-open{overflow:hidden}
 .mk-rl{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}
 .dv{display:grid;gap:10px}
 .dv-st{margin:0;padding-left:20px;display:grid;gap:6px;font-size:13.5px}
+.drt{list-style:none;margin:0;padding:0;display:grid;gap:2px;max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.drt li{display:flex;align-items:center;gap:6px;padding:4px 6px 4px calc(6px + var(--d,0)*16px);min-width:0}
+.drt li:nth-child(odd){background:var(--sunk)}
+.drt-t{flex:0 0 26px;width:26px;min-height:30px;background:none;border:0;color:inherit;cursor:pointer;font-size:14px;padding:0}
+.drt-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}
+.dr-q{flex-wrap:nowrap}.dr-q .fi{flex:1;min-width:0}
+.dr-acc{display:flex;gap:8px;align-items:center;font-size:13.5px}.dr-acc .fi{width:auto}
+.dra-lg{display:grid;gap:8px}
 .dv p{margin:0}
 .dv-c{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .dv-c li{display:flex;gap:10px;align-items:baseline;font-size:13px;min-width:0}
@@ -5080,51 +5088,145 @@ function planView(p){
   if(nd)h+='<p class="note ds-pad">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Zadania</a></p>';
   return h+'</section>';
 }
-/* Google Drive projektu tylko do odczytu (GET/POST /api/drive…): link folderu → logowanie Google → wklejenie
-   adresu powrotu (http://127.0.0.1:53682/…, strona się nie otwiera) → montowanie w media/drive projektu */
-const DRV={};
+/* Google Drive tylko do odczytu: jedno połączenie na konto Google (Serwer albo „Kod i pliki”), potem folder z listy
+   folderów konta dla projektu albo części (GET /api/drive/konta, /api/drive/foldery, POST /api/drive/wybierz).
+   Z wbudowanym klientem rclone Google wraca na http://127.0.0.1:53682/… (strona się nie otwiera): adres wkleja się
+   raz na konto. Z własnym klientem OAuth (ownClient) Google wraca do panelu i nic nie trzeba wklejać. */
+const DRV={},DRA={loading:false,done:false},DRF={};
 async function loadDrive(pid){
   const d=DRV[pid]||(DRV[pid]={});
   try{const r=await fetch('/api/drive?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
     const j=await r.json().catch(()=>({}));
     if(r.ok&&j.ok!==false){Object.assign(d,j,{err:''});if(!j.login)d.loginUrl=''}else d.err=String(j.error||'Nie odczytano stanu Drive.')}catch(e){d.err='Brak połączenia z serwerem.'}
-  d.loading=false;const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)render();
+  d.loading=false;drvRe();
+}
+function drvRe(){const q=CUR;if(q&&(q.v==='projekt'||q.v==='koszty'))render(true)}
+async function loadDrA(){
+  if(DRA.loading)return;DRA.loading=true;
+  try{const r=await fetch('/api/drive/konta',{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){Object.assign(DRA,{available:j.available!==false,ownClient:!!j.ownClient,accounts:Array.isArray(j.accounts)?j.accounts:[],login:j.login||null,err:''})}
+    else DRA.err=String(j.error||'Nie odczytano kont Google.')}catch(e){DRA.err='Brak połączenia z serwerem.'}
+  DRA.loading=false;DRA.done=true;drvRe();
+}
+const drA=()=>{if(!DRA.done&&!DRA.loading)loadDrA();return DRA};
+async function loadDrF(acc,refresh){
+  const f=DRF[acc]||(DRF[acc]={});if(f.loading)return;f.loading=true;f.err='';drvRe();
+  try{const r=await fetch('/api/drive/foldery?account='+encodeURIComponent(acc)+(refresh?'&odswiez=1':''),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){f.list=Array.isArray(j.folders)?j.folders:[];f.truncated=!!j.truncated;
+      const k={};f.list.forEach(x=>{const i=x.path.lastIndexOf('/'),par=i<0?'':x.path.slice(0,i);(k[par]||(k[par]=[])).push(x)});f.kids=k}
+    else f.err=String(j.error||'Nie odczytano folderów.')}catch(e){f.err='Brak połączenia z serwerem.'}
+  f.loading=false;drvRe();
+}
+/* powrót z logowania Google w innej karcie: stan kont od nowa */
+window.addEventListener('focus',()=>{if(DRA.login&&LIVE)loadDrA()});
+/* konta Google: lista, łączenie (nazwa konta → logowanie → przy kliencie rclone jedno pole na adres) */
+function drAccBox(compact){
+  const a=drA();
+  if(a.loading&&!a.done)return '<p class="note" role="status">Sprawdzam konta Google…</p>';
+  let h=a.err?'<p class="warn">'+esc(a.err)+'</p>':'';
+  if(a.available===false)return h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
+  const L=a.accounts||[],busy=!!A.busy['dra'],lg=a.login;
+  if(L.length&&!compact)h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
+    (x.connected?(x.projects.length?'foldery w '+kpN(x.projects.length,'projekcie','projektach','projektach'):'bez folderów w projektach'):'<span class="kp-warn">połączenie zniknęło z serwera, połącz ponownie</span>')+'</div></div>'+
+    '<div class="r"><button type="button" class="btn sec sm" data-dra="ponow" data-acc="'+esc(x.id)+'" data-k="dra-p:'+esc(x.id)+'"'+(busy||lg?' aria-disabled="true"':'')+'>Połącz ponownie</button>'+(x.projects.length?'':'<button type="button" class="btn sec sm" data-dra="usun" data-acc="'+esc(x.id)+'" data-k="dra-u:'+esc(x.id)+'"'+(busy?' aria-disabled="true"':'')+'>Odłącz konto</button>')+'</div></li>').join('')+'</ul>';
+  if(lg){
+    h+='<div class="dra-lg"><p><b>Łączenie: '+esc(lg.label)+'</b></p><ol class="dv-st"><li><a class="btn sm" href="'+esc(lg.url)+'" target="_blank" rel="noopener" data-k="dra-go">Zaloguj się w Google</a> Wybierz konto i zatwierdź dostęp tylko do odczytu.</li>'+
+      (lg.mode==='own'?'<li>Po zatwierdzeniu Google wróci do panelu. Ta strona odświeży się sama.</li></ol><div class="row">':
+      '<li>Potem zobaczysz stronę, która się nie otwiera: tak ma być. Skopiuj adres z paska przeglądarki i wklej go tutaj.</li></ol>'+
+      '<form class="dform" data-drafin="1"><input class="fi" name="url" autocomplete="off" inputmode="url" spellcheck="false" placeholder="Wklej adres z paska przeglądarki" aria-label="Adres strony po zalogowaniu">'+
+      '<div class="row">'+(navigator.clipboard&&navigator.clipboard.readText?'<button type="button" class="btn sm" data-dra="schowek" data-k="dra-clip"'+(busy?' aria-disabled="true"':'')+'>Wklej ze schowka</button>':'')+
+      '<button class="btn sm'+(navigator.clipboard&&navigator.clipboard.readText?' sec':'')+'"'+(busy?' aria-disabled="true"':'')+'>Połącz</button>')+
+      '<button type="button" class="btn sec sm" data-dra="anuluj" data-k="dra-a">Anuluj</button></div>'+(lg.mode==='own'?'':'</form>')+'</div>';
+  }else{
+    h+='<form class="dform" data-drastart="1">'+(L.length||!compact?'<input class="fi" name="label" autocomplete="off" maxlength="60" placeholder="Nazwa konta, np. Firma albo Prywatne" aria-label="Nazwa konta Google">':'')+
+      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+' data-k="dra-start">'+(L.length?'Połącz kolejne konto':'Połącz Google Drive')+'</button></div></form>'+
+      (L.length?'':'<p class="note">Jedno logowanie na całe konto Google. Potem w każdym projekcie wybierasz folder z listy.</p>');
+  }
+  return h;
+}
+async function draAct(path,body,okMsg){
+  if(A.busy['dra'])return;A.busy['dra']=true;render(true);
+  const x=await post(path,body||{});A.busy['dra']=false;
+  if(x.ok){if(okMsg)say(okMsg)}else if(x.status!==401)say(failMsg(x,'Nie udało się.'));
+  await loadDrA();
+  if(x.ok&&x.data&&x.data.loginUrl&&x.data.mode==='own'){try{window.open(x.data.loginUrl,'_blank','noopener')}catch(e){}}
+  return x;
+}
+/* Serwer: konta Google Drive */
+function drvPanel(){
+  if(!LIVE)return '';
+  return '<section class="panel" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>konta tylko do odczytu</small></h2><div class="pad dv">'+drAccBox(false)+
+    '<p class="note">Folder dla projektu wybierasz na stronie projektu, w sekcji „Kod i pliki”.</p></div></section>';
 }
 /* zwinięta sekcja pod treścią Planu (stan w PF.more['pj-drive']); w podsumowaniu stan połączenia */
 const pjFold=(k,id,title,small,body,open)=>'<details class="panel pj-fold" id="'+id+'" data-pvdet="'+k+'"'+(open||PF.more[k]?' open':'')+'><summary><span class="pj-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
+/* wybór folderu z konta: drzewo (rozwijanie) i wyszukiwanie po nazwie; link do folderu jako druga droga */
+const drKey=pid=>{const a=drA(),L=(a.accounts||[]).filter(x=>x.connected),P0=A.drp&&A.drp[pid]||{};
+  return {acc:L.some(x=>x.id===P0.acc)?P0.acc:(L[0]?L[0].id:''),L:L,q:P0.q||'',open:P0.open||{}}};
+function drList(pid){
+  const k=drKey(pid),f=DRF[k.acc];if(!k.acc)return '';
+  if(!f||(!f.list&&!f.loading&&!f.err)){loadDrF(k.acc);return '<p class="note" role="status">Wczytuję foldery…</p>'}
+  if(f.loading&&!f.list)return '<p class="note" role="status">Wczytuję foldery…</p>';
+  if(f.err)return '<p class="warn">'+esc(f.err)+'</p><div class="row">'+(/ponownie\./.test(f.err)?'<button type="button" class="btn sm" data-dra="ponow" data-acc="'+esc(k.acc)+'" data-k="dra-p:'+esc(k.acc)+'">Połącz konto ponownie</button>':'')+
+    '<button type="button" class="btn sec sm" data-drf="odswiez" data-pid="'+esc(pid)+'" data-k="drf-r">Spróbuj ponownie</button></div>';
+  const row=(x,depth,tog)=>{const nm=x.path.slice(x.path.lastIndexOf('/')+1),kids=(f.kids[x.path]||[]).length;
+    return '<li style="--d:'+depth+'">'+(tog&&kids?'<button type="button" class="drt-t" data-drt="'+esc(x.path)+'" data-pid="'+esc(pid)+'" aria-expanded="'+!!k.open[x.path]+'" aria-label="'+(k.open[x.path]?'Zwiń':'Rozwiń')+' '+esc(nm)+'" data-k="drt:'+esc(x.path)+'">'+(k.open[x.path]?'▾':'▸')+'</button>':'<span class="drt-t"></span>')+
+      '<span class="drt-n">'+(tog?esc(nm):esc(x.path))+'</span><button type="button" class="btn sec sm" data-drw="'+esc(x.id)+'" data-pid="'+esc(pid)+'" data-path="'+esc(x.path)+'" data-k="drw:'+esc(x.id)+'">Wybierz</button></li>'};
+  let out=[],more=0;const LIM=300;
+  if(k.q){const q=k.q.toLowerCase(),m=f.list.filter(x=>x.path.slice(x.path.lastIndexOf('/')+1).toLowerCase().includes(q));
+    more=Math.max(0,m.length-60);out=m.slice(0,60).map(x=>row(x,0,false));
+    if(!m.length)return '<p class="muted">Brak folderu o tej nazwie.</p>'}
+  else{const walk=(par,depth)=>{(f.kids[par]||[]).forEach(x=>{if(out.length>=LIM){more++;return}out.push(row(x,depth,true));if(k.open[x.path])walk(x.path,depth+1)})};walk('',0);
+    if(!f.list.length)return '<p class="muted">Na tym koncie nie ma folderów.</p>'}
+  return '<ul class="drt">'+out.join('')+'</ul>'+(more?'<p class="note">… i '+more+' więcej. Zawęź wyszukiwanie.</p>':'')+(f.truncated?'<p class="note">Lista skrócona do 5000 folderów.</p>':'');
+}
+function drPicker(p){
+  const k=drKey(p.id);
+  if(!k.L.length||drA().login)return drAccBox(true);
+  let h=k.L.length>1?'<label class="dr-acc">Konto <select class="fi" data-dracc="'+esc(p.id)+'">'+k.L.map(x=>'<option value="'+esc(x.id)+'"'+(x.id===k.acc?' selected':'')+'>'+esc(x.label)+'</option>').join('')+'</select></label>':
+    '<p class="note">Konto: '+esc(k.L[0].label)+'</p>';
+  h+='<div class="row dr-q"><input class="fi" type="search" data-drq="'+esc(p.id)+'" value="'+esc(k.q)+'" placeholder="Szukaj folderu, np. Marketing" aria-label="Szukaj folderu na Google Drive" autocomplete="off">'+
+    '<button type="button" class="btn sec sm" data-drf="odswiez" data-pid="'+esc(p.id)+'" data-k="drf-o" title="Wczytaj listę folderów od nowa">Odśwież</button></div>'+
+    '<div id="drl-'+esc(p.id)+'" class="drl">'+drList(p.id)+'</div>'+
+    '<details class="ds-det"><summary>Albo wklej link do folderu</summary><form class="dform" data-drlink="'+esc(p.id)+'"><input class="fi" name="link" autocomplete="off" inputmode="url" placeholder="https://drive.google.com/drive/folders/…" aria-label="Link do folderu na Google Drive">'+
+    '<div class="row"><button class="btn sm">Wybierz z linku</button></div></form></details>';
+  return h;
+}
 function driveBody(p){
   if(!LIVE)return '<p class="empty">Google Drive działa w panelu na serwerze.</p>';
   let d=DRV[p.id];if(!d){d=DRV[p.id]={loading:true};loadDrive(p.id)}
   const box=x=>'<div class="dv">'+x+'</div>';
-  let h='<p class="note">Panel tylko czyta wskazany folder; pliki będą w Media.</p>';
+  let h='<p class="note">Panel i agenci tylko czytają wybrany folder; pliki są w Media.</p>';
   if(d.loading)return box(h+'<p class="note" role="status">Sprawdzam połączenie…</p>');
   if(d.err)h+='<p class="warn">'+esc(d.err)+'</p>';
   if(d.available===false)return box(h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>');
-  const busy=!!A.busy['drv:'+p.id];
-  if(d.connected){
-    h+='<p><span class="lz '+(d.mounted?'green':'yellow')+'">'+(d.mounted?'połączony':'połączony, pliki niewidoczne')+'</span>'+
-      (d.mounted?' '+(d.files!=null?d.files+' '+pl(d.files,'pozycja','pozycje','pozycji')+' w folderze · ':'')+'<a href="#media" data-drvmedia="'+esc(p.id)+'">Media</a>':'')+'</p>'+
+  const busy=!!A.busy['drv:'+p.id],chg=!!(A.drc&&A.drc[p.id]);
+  if(d.connected&&!chg){
+    h+='<p><span class="lz '+(d.mounted?'green':'yellow')+'">'+(d.mounted?'połączony':'połączony, pliki niewidoczne')+'</span> '+drWhere(d)+
+      (d.mounted?' · '+(d.files!=null?d.files+' '+pl(d.files,'pozycja','pozycje','pozycji')+' · ':'')+'<a href="#media" data-drvmedia="'+esc(p.id)+'">Media</a>':'')+'</p>'+
+      (d.legacy?'<p class="note">Połączenie z osobnym logowaniem dla tego folderu. „Zmień folder” przenosi je na konto Google.</p>':'')+
       '<div class="row">'+(d.mounted?'':'<button type="button" class="btn sm" data-drv="montuj" data-pid="'+esc(p.id)+'" data-k="drv-m"'+(busy?' aria-disabled="true"':'')+'>Pokaż pliki ponownie</button>')+
+      '<button type="button" class="btn sec sm" data-drc="1" data-pid="'+esc(p.id)+'" data-k="drc">Zmień folder</button>'+
       '<button type="button" class="btn sec sm" data-drv="odlacz" data-pid="'+esc(p.id)+'" data-k="drv-o"'+(busy?' aria-disabled="true"':'')+'>Odłącz</button></div>';
-  }else if(d.loginUrl){
-    h+='<ol class="dv-st"><li><a class="btn sm" href="'+esc(d.loginUrl)+'" target="_blank" rel="noopener">Zaloguj się w Google</a> i zatwierdź dostęp tylko do odczytu.</li>'+
-      '<li>Potem strona się nie otworzy: tak ma być. Skopiuj cały adres z paska przeglądarki i wklej tutaj.</li></ol>'+
-      '<form class="dform" data-drvfin="'+esc(p.id)+'"><input class="fi" name="url" autocomplete="off" inputmode="url" placeholder="http://127.0.0.1:53682/?state=…" aria-label="Adres po zalogowaniu">'+
-      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz</button><button type="button" class="btn sec sm" data-drv="anuluj" data-pid="'+esc(p.id)+'" data-k="drv-a">Anuluj</button></div></form>';
   }else{
-    h+='<form class="dform" data-drvstart="'+esc(p.id)+'"><input class="fi" name="link" autocomplete="off" inputmode="url" placeholder="Link do folderu Google Drive" aria-label="Link do folderu na Google Drive">'+
-      '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+'>Połącz Google Drive</button></div></form>';
+    if(chg)h+='<div class="row"><button type="button" class="btn sec sm" data-drc="0" data-pid="'+esc(p.id)+'" data-k="drc0">Anuluj zmianę</button></div>';
+    h+=drPicker(p);
   }
   return box(h);
 }
+const drWhere=d=>{const nm=d.path?'<b>'+esc(d.path)+'</b>':'folder z linku',
+  lk=/^[A-Za-z0-9_-]{10,}$/.test(d.folder||'')?'<a href="https://drive.google.com/drive/folders/'+esc(d.folder)+'" target="_blank" rel="noopener">'+nm+'</a>':nm;
+  return lk+(d.accountLabel?' <span class="muted">('+esc(d.accountLabel)+')</span>':'')};
 async function driveAct(pid,path,body,okMsg){
   if(A.busy['drv:'+pid])return;
   A.busy['drv:'+pid]=true;render(true);
   const x=await post(path,Object.assign({project:pid},body||{}));
   A.busy['drv:'+pid]=false;
   const d=DRV[pid]||(DRV[pid]={});
-  if(x.ok){if(x.data&&x.data.loginUrl)d.loginUrl=x.data.loginUrl;if(okMsg)say(okMsg)}else if(x.status!==401)say(failMsg(x,'Nie udało się.'));
-  await loadDrive(pid);
+  if(x.ok){if(x.data&&x.data.loginUrl)d.loginUrl=x.data.loginUrl;if(okMsg)say(okMsg);if(A.drc)delete A.drc[pid]}else if(x.status!==401)say(failMsg(x,'Nie udało się.'));
+  await loadDrive(pid);if(x.ok)loadDrA();
 }
 const PJC={};
 /* ---------- Kod i pliki: GitHub (każde repozytorium projektu i jego części) i Google Drive ----------
@@ -5145,9 +5247,8 @@ function driveLine(p){
   let d=DRV[p.id];if(!d){d=DRV[p.id]={loading:true};loadDrive(p.id)}
   if(d.loading)return '<span class="muted">sprawdzam…</span>';
   if(d.available===false)return '<span class="muted">brak narzędzia na serwerze</span>';
-  if(!d.connected)return 'niepołączony';
-  const f=/^[A-Za-z0-9_-]{10,}$/.test(d.folder||'')?'<a href="https://drive.google.com/drive/folders/'+esc(d.folder)+'" target="_blank" rel="noopener">folder na Dysku</a>':'folder na Dysku';
-  return 'połączony: '+f+(d.files!=null?', '+kpN(d.files,'pozycja','pozycje','pozycji'):'')+(d.mounted?'':' · <span class="kp-warn">pliki niewidoczne</span>');
+  if(!d.connected)return 'bez folderu';
+  return drWhere(d)+(d.files!=null?', '+kpN(d.files,'pozycja','pozycje','pozycji'):'')+(d.mounted?'':' · <span class="kp-warn">pliki niewidoczne</span>');
 }
 function codeBox(p){
   const t=topP(p),own=p.isOwn?P(p.id):p,repos=p===t&&t.partsL.length?[t].concat(t.partsL):[own],multi=repos.length>1;
@@ -5155,12 +5256,12 @@ function codeBox(p){
   const lab=x=>multi?' <span class="ptag">'+esc(x.partLabel||t.partLabel)+'</span>':'';
   let h='<section class="panel pj-code" id="pcode" aria-labelledby="pcode-h"><div class="kp-h"><h2 id="pcode-h">Kod i pliki</h2>'+
     '<button type="button" class="btn sec sm" data-pjcode="1" data-k="pjcode" aria-expanded="'+op+'" aria-controls="pcode-det">'+(op?'Zwiń':'Szczegóły')+'</button></div>'+
-    '<dl class="kp">'+repos.map(x=>'<dt>GitHub'+lab(x)+'</dt><dd>'+ghLine(x)+'</dd>').join('')+'<dt>Google Drive</dt><dd>'+driveLine(p)+'</dd></dl>';
+    '<dl class="kp">'+repos.map(x=>'<dt>GitHub'+lab(x)+'</dt><dd>'+ghLine(x)+'</dd>').join('')+repos.map(x=>'<dt>Google Drive'+lab(x)+'</dt><dd>'+driveLine(x)+'</dd>').join('')+'</dl>';
   h+='<div class="kp-det" id="pcode-det"'+(op?'':' hidden')+'>';
   if(op){
     h+=repos.map(x=>{if(reg&&GHS[x.id]===undefined)ghLoad(x.id,false);
       return '<h3 class="kp-sh">GitHub'+lab(x)+'</h3>'+(reg?ghBody(x):'<p class="note">Stan kopii i wysyłanie na GitHub działają w panelu na serwerze, przy projektach z rejestru.</p>')}).join('')+
-      '<h3 class="kp-sh">Google Drive</h3>'+driveBody(p);
+      repos.map(x=>'<h3 class="kp-sh">Google Drive'+lab(x)+'</h3>'+driveBody(x)).join('');
   }
   return h+'</div></section>';
 }
@@ -6129,7 +6230,7 @@ function vKoszty(){
   const k=D.costs,v=D.server?srvItems():null;
   let h='<div class="pagehead"><div class="ph-main"><h1>Serwer</h1><p>Stan serwera, na którym działają panel i agenci.'+(v&&v.lvl!=='ok'?' <b>'+({warn:'Do sprawdzenia.',bad:'Jest problem.'}[v.lvl])+'</b>':'')+'</p></div></div>';
   /* kalendarz (połączenie i subskrypcja ICS) i rejestr projektów: dawniej w Terminach i w widoku Projekty */
-  h+=srvPanel()+resPanel()+ghPanel()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>'+prjPanel();
+  h+=srvPanel()+resPanel()+ghPanel()+drvPanel()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>'+prjPanel();
   const tail=devPanel()+srvPanel('ses');
   if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>'+tail;
   if(k.configured&&!k.loading){
@@ -10918,6 +11019,18 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-drv]')){if(el.getAttribute('aria-disabled')==='true')return;const a=el.dataset.drv,pid=el.dataset.pid;
     if(a==='odlacz'&&!confirm('Odłączyć Google Drive od projektu? Pliki z Drive znikną z panelu (na Drive zostają).'))return;
     driveAct(pid,'/api/drive/'+a,{},a==='odlacz'?'Drive odłączony.':a==='montuj'?'Pliki z Drive widoczne.':'');return}
+  if(el=qq('[data-dra]')){if(el.getAttribute('aria-disabled')==='true')return;const a=el.dataset.dra;
+    if(a==='anuluj'){draAct('/api/drive/konto/anuluj');return}
+    if(a==='ponow'){draAct('/api/drive/konto/start',{account:el.dataset.acc});return}
+    if(a==='usun'){if(confirm('Odłączyć konto Google od panelu? Pliki na Drive zostają.'))draAct('/api/drive/konto/usun',{account:el.dataset.acc},'Konto odłączone.');return}
+    if(a==='schowek'){navigator.clipboard.readText().then(t=>{t=(t||'').trim();const f=el.closest('form'),i=f&&f.elements.url;if(i)i.value=t;
+      if(t)draAct('/api/drive/konto/finish',{url:t},'Google Drive połączony.');else say('Schowek jest pusty. Skopiuj adres z paska przeglądarki.')}).catch(()=>say('Brak dostępu do schowka. Wklej adres w pole.'));return}
+    return}
+  if(el=qq('[data-drt]')){const pid=el.dataset.pid,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={}),o=P0.open||(P0.open={}),k=el.dataset.drt;o[k]=!o[k];
+    const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);focusK('drt:'+k);return}
+  if(el=qq('[data-drw]')){const pid=el.dataset.pid,k=drKey(pid);driveAct(pid,'/api/drive/wybierz',{account:k.acc,folder:el.dataset.drw,path:el.dataset.path},'Folder wybrany: '+el.dataset.path+'.');return}
+  if(el=qq('[data-drf]')){const k=drKey(el.dataset.pid);if(k.acc)loadDrF(k.acc,true);return}
+  if(el=qq('[data-drc]')){(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   if(el=qq('[data-pjd]')){pjdSet(el.dataset.pjd==='open');return}
   if(el=qq('[data-pjcode]')){PF.more['pj-code']=!PF.more['pj-code'];savePF();render(true);focusK('pjcode');return}
@@ -11007,6 +11120,9 @@ document.addEventListener('submit',ev=>{
   if(f.dataset.pchat!=null){ev.preventDefault();sendPChat(f);return}
   if(f.dataset.wwform!=null){wwSend(f);return}
   if(f.dataset.wwcon!=null){wwConcept(f);return}
+  if(f.dataset.drastart!=null){draAct('/api/drive/konto/start',{label:f.elements.label?(f.elements.label.value||'').trim():''});return}
+  if(f.dataset.drafin!=null){const v=(f.elements.url.value||'').trim();if(v)draAct('/api/drive/konto/finish',{url:v},'Google Drive połączony.');return}
+  if(f.dataset.drlink!=null){const v=(f.elements.link.value||'').trim(),pid=f.dataset.drlink,k=drKey(pid);if(v)driveAct(pid,'/api/drive/wybierz',{account:k.acc,folder:v},'Folder wybrany.');return}
   if(f.dataset.drvstart!=null){const v=(f.elements.link.value||'').trim();if(v)driveAct(f.dataset.drvstart,'/api/drive/start',{link:v});return}
   if(f.dataset.drvfin!=null){const v=(f.elements.url.value||'').trim();if(v)driveAct(f.dataset.drvfin,'/api/drive/finish',{url:v},'Google Drive połączony.');return}
   if(f.dataset.fixpost!=null){ev.preventDefault();sendFixPost(f);return}
@@ -11026,6 +11142,8 @@ document.addEventListener('submit',ev=>{
 });
 document.addEventListener('input',ev=>{
   if(ev.target.dataset&&ev.target.dataset.edtxt!=null){edInput(ev.target);return}
+  if(ev.target.dataset&&ev.target.dataset.drq!=null){const pid=ev.target.dataset.drq,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={});P0.q=ev.target.value.trim();
+    const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);return}
   if(ev.target.dataset&&ev.target.dataset.qd!=null){QD[ev.target.dataset.qd]=ev.target.value;return}
   if(ev.target.dataset&&ev.target.dataset.fval!=null){(A.fVal||(A.fVal={}))[ev.target.dataset.fval]=ev.target.value;
     const f=ev.target.closest('form'),pv=f&&f.querySelector('[data-stuprev="'+CSS.escape(ev.target.dataset.fval)+'"]');if(pv)pv.innerHTML=stuPrev(ev.target.value,stuAcc(f.dataset.fset||''));return}
@@ -11107,6 +11225,11 @@ document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dat
 try{const mq=matchMedia('(max-width:620px)'),fn=()=>render(true);if(mq.addEventListener)mq.addEventListener('change',fn);else if(mq.addListener)mq.addListener(fn)}catch(e){}
 document.addEventListener('toggle',ev=>{const d=ev.target;if(!d||!d.dataset||!/^gh:/.test(d.dataset.agdet||'')||!d.open)return;
   const pid=d.dataset.agdet.slice(3);(A.agDet||(A.agDet={}))[d.dataset.agdet]=true;if(GHS[pid]===undefined){ghLoad(pid,false);render(true)}},true);
+document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||c.dataset.dracc==null)return;
+  const pid=c.dataset.dracc,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={});P0.acc=c.value;P0.open={};render(true)});
+/* adres po zalogowaniu wklejony w pole: od razu „Połącz” */
+document.addEventListener('paste',ev=>{const i=ev.target;if(!i||!i.form||i.form.dataset.drafin==null)return;
+  setTimeout(()=>{const v=(i.value||'').trim();if(/^https?:\/\/(127\.0\.0\.1|localhost):\d+\/\?/.test(v))i.form.requestSubmit()},0)});
 document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||!c.dataset.ghb)return;
   const S=GHSEL[c.dataset.ghb]||(GHSEL[c.dataset.ghb]=new Set());if(c.checked)S.add(c.value);else S.delete(c.value)});
 window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';A.bnMore=false;
