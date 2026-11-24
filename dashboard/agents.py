@@ -135,7 +135,7 @@ RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
 # „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
 EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
 # wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
-CHAT_RULES_V = "2"
+CHAT_RULES_V = "3"
 PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
 
 
@@ -313,12 +313,14 @@ def _card_dirs(folder):
 
 
 def notify_link(rec):
-    """Adres w panelu dla powiadomienia o uruchomieniu: zadanie otwiera szczegóły zadania, raport PM i plan dnia
-    Przegląd, reszta szczegóły uruchomienia w Agentach."""
+    """Adres w panelu dla powiadomienia o uruchomieniu: zadanie otwiera szczegóły zadania na stronie Asystent,
+    raport PM stronę Asystent (notatka PM na starcie), plan dnia Agentów, reszta szczegóły uruchomienia w Agentach."""
     if rec.get("kind") == "task" and rec.get("taskId"):
-        return "#ty?z=" + str(rec["taskId"])
-    if rec.get("kind") in ("pm", "plan"):
-        return "#przeglad"
+        return "#asystent?z=" + str(rec["taskId"])
+    if rec.get("kind") == "pm":
+        return "#asystent"
+    if rec.get("kind") == "plan":
+        return "#agenci"
     return "#agenci?u=" + str(rec.get("id") or "") if rec.get("id") else "#agenci"
 
 
@@ -1837,11 +1839,9 @@ class Manager:
     ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
     ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
-    ASSIST_VIEWS = (("#start", "Start: postęp projektów"), ("#ty", "Dla Ciebie: Twoje sprawy, zgody, odbiory"),
-                    ("#marketing", "Marketing: publikacje i nagrania"), ("#terminy", "Terminy: kalendarz"),
-                    ("#tablica", "Tablica zadań"), ("#agenci", "Agenci: uruchomienia"), ("#blokady", "Blokady"),
-                    ("#wskazniki", "Wskaźniki"), ("#projekty", "Lista projektów"), ("#przeglad", "Przegląd i raport PM"),
-                    ("#media", "Media"), ("#koszty", "Serwer i koszty"))
+    ASSIST_VIEWS = (("#asystent", "Asystent: ta strona, karty"), ("#marketing", "Marketing: publikacje i nagrania"),
+                    ("#media", "Media"), ("#agenci", "Agenci: Teraz, plan dnia, uruchomienia"),
+                    ("#koszty", "Serwer: stan, kalendarz, projekty i Księga, koszty"))
 
     def assistant_get(self):
         """Historia rozmowy z asystentem: (kod, błąd, {"messages", "pending", "error", "partial", "activity", "voice"}).
@@ -1875,7 +1875,7 @@ class Manager:
         """GET /api/asystent/karty: biblioteka, karty wbudowane i układ płótna."""
         lib = self.cards.read()
         return 200, "", {"karty": sorted(lib["karty"].values(), key=lambda c: c["id"]), "wbudowane": karty.STARTERS,
-                         "przypiete": lib["przypiete"], "ukryte": lib["ukryte"]}
+                         "start": list(karty.START), "przypiete": lib["przypiete"], "ukryte": lib["ukryte"]}
 
     def assistant_cards_post(self, body):
         """POST /api/asystent/karty: {"zapisz": karta} | {"usun": id} | {"przypiete": [id]} | {"ukryj": id} |
@@ -1956,7 +1956,7 @@ class Manager:
 
     def _assistant_screen(self, data, view, opened):
         shown = self._assistant_open(data, opened)
-        return "[ekran: %s%s]" % (view or "#start", "; otwarte: " + shown if shown else "")
+        return "[ekran: %s%s]" % (view or "#asystent", "; otwarte: " + shown if shown else "")
 
     def assistant_prompt(self, data, index, text, view, opened=""):
         today = datetime.date.today()
@@ -4342,7 +4342,7 @@ class Manager:
         self._send_ntfy(body, notify_link(rec))
 
     def _send_ntfy(self, body, link=""):
-        """Powiadomienie ntfy; link (np. "#ty?z=<id zadania>") otwiera się po stuknięciu (nagłówek Click),
+        """Powiadomienie ntfy; link (np. "#asystent?z=<id zadania>") otwiera się po stuknięciu (nagłówek Click),
         gdy PANEL_PUBLIC_URL jest ustawiony."""
         if not self.ntfy_url:
             return

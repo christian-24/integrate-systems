@@ -542,9 +542,14 @@ zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły` (w przeg
 (na serwerze, „Uruchamianie z rozmów”).
 
 Strona Asystent (`#asystent`, pierwsza w menu) to płótno kart i rozmowa (z boku od 1100 px, niżej przyklejona na dole).
-Inne widoki nie mają okna asystenta; pytania ze Startu i spacja przechodzą na tę stronę. Model nie pisze HTML: kończy
+Inne widoki nie mają okna asystenta; spacja przechodzi na tę stronę. Strona jest startowa: przy pustej rozmowie pokazuje
+sprawy dla Ciebie na dziś (liczba i 3 najważniejsze) i notatkę PM. Treść dawnych widoków Start, Dla Ciebie, Przegląd,
+Wskaźniki, Tablica, Terminy, Blokady i Projekty to karty wbudowane typu `panel` (`sprawy-dzis`, `sprawy`, `terminy`,
+`blokady`, `wskazniki`, `zadania`, `raport-pm`; `karty.STARTERS`, na pustym płótnie `karty.START`): fragmenty panelu
+z tymi samymi przyciskami (odpowiedź na pytanie, zgoda, odbiór, Zrobione, Zamknij, filtry). Model wie, że to jego dane
+(`karty.PROMPT`), i podaje je samym id; „Pokaż” i stare adresy pokazują je bez modelu. Model nie pisze HTML: kończy
 odpowiedź blokiem ```` ```karty ```` z JSON `{"pokaz": [karta…], "usun": [id…]}`. Katalog typów (liczba, lista, tabela,
-wykres, postep, tydzien, notatka, news), język zapytań i opis dla modelu: `dashboard/karty.py` (`PROMPT`). Panel
+wykres, postep, tydzien, notatka, news, panel), język zapytań i opis dla modelu: `dashboard/karty.py` (`PROMPT`). Panel
 sprawdza blok (`karty.extract`: nieznany typ, nieznane pole, HTML, link inny niż http(s) odrzucają kartę) i oddaje
 karty w `GET /api/asystent` (`messages[].cards`: `pokaz`, `usun`, `bledy`). Karta z `zapytanie` jest liczona w
 przeglądarce z `/api/data` (`kqRun` w panel.html), więc liczby są aktualne; `dane` wprost tylko dla newsów i notatek.
