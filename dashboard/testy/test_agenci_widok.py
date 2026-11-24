@@ -102,7 +102,7 @@ class Routing(Baza):
         code, msg, extra = self.run_task("Strona: popraw menu")
         self.assertEqual(code, 200, msg)
         run = self.wait(extra["id"])
-        self.assertEqual((run["tool"], run["choiceReason"]), ("codex", "zmiana kodu"))
+        self.assertEqual((run["tool"], run["choiceReason"]), ("codex", "Decyzja z reguł: zmiana kodu"))
         self.assertIn("kto: agent", self.row("Strona: popraw menu"))
 
 

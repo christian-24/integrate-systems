@@ -87,6 +87,14 @@ class Galaz(Repo):
         self.assertEqual(self.task("Opisz wnioski z analizy")["detail"]["refs"],
                          [{"path": "notatki/analiza.md", "anchor": ""}])
 
+    def test_panel_zatwierdza_plik_po_codex(self):
+        rec = self.run_done("Zadanie C")
+        self.assertEqual(rec["tool"], "codex")
+        self.assertTrue(rec["branch"].startswith("agent/"))
+        self.assertEqual(rec["commits"], 1)
+        self.assertIn("Zmiana wykonana", self.git("show", rec["branch"] + ":wynik-codex.txt"))
+        self.assertEqual(self.git("rev-parse", "HEAD"), self.head)
+
     def test_agent_sam_zatwierdza(self):
         rec = self.run_done("Zadanie A", mode="commit")
         self.assertEqual(rec["commits"], 1)

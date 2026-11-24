@@ -61,6 +61,9 @@ def main(argv):
     if "Przygotuj grafikę do posta" in prompt:
         return graphic(prompt, how, argv)
     out({"type": "item.started", "item": {"id": "i1", "type": "command_execution", "command": "ls", "status": "in_progress"}})
+    if how == "plik":
+        with open("wynik-codex.txt", "w", encoding="utf-8") as stream:
+            stream.write("Zmiana wykonana bez dostępu do zapisu .git.\n")
     edited = "" if how == "zostaw" else atrapa_claude.edit_row(prompt, "x")
     if edited:
         out({"type": "item.completed", "item": {"id": "i2", "type": "file_change",

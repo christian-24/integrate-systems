@@ -341,10 +341,8 @@ z `zgoda` w polu `wymaga` (`kind: publikacja`, `agent: false`) jako sprawy dla w
 - Bezpiecznik zużycia (od 2026-11-23, po zadaniu „wizytówki”, które przez 33 własnych pomocników zużyło cały limit
   5 godzin): każde `rate_limit_event` niesie zużycie okien limitu (`unifiedWindows.five_hour.utilization`, 0–1). Rekord
   uruchomienia ma `limitStart` (pierwszy odczyt) i `limitNow` (ostatni). Gdy `limitNow − limitStart` ≥ `PANEL_RUN_BUDGET_PROC`
-  (domyślnie 20 punktów procentowych), panel zatrzymuje uruchomienie (stan `stopped`, `error` z powodem). Automat nie uruchamia
-  nowych zadań, gdy ostatnio odczytane zużycie limitu 5 godzin ≥ `PANEL_AUTOMAT_DO_PROC` (domyślnie 80%), żeby zostawić resztę
-  właścicielowi. `/api/data` → `agents.usage`: `{"five","seven","at","budget","reserve"}` (ułamki; `null`, gdy brak odczytu
-  z ostatnich 5 godzin). Zadania, raport PM, rozmowy i Asystent mają `--disallowedTools` z pomocnikami, przepływami
+  (domyślnie 20 punktów procentowych), panel zatrzymuje uruchomienie (stan `stopped`, `error` z powodem). Przy wyborze wykonawcy panel pomija narzędzie, gdy odczytane zużycie dowolnego okna osiąga
+  `PANEL_AUTOMAT_DO_PROC` (domyślnie 80%). `/api/data` → `agents.usage` podaje ułamki i czasy odczytu obu okien. Zadania, raport PM, rozmowy i Asystent mają `--disallowedTools` z pomocnikami, przepływami
   i harmonogramem (`RUN_DENY`), a zadania i raport PM także `--strict-mcp-config` (bez konektorów konta).
 
 ## `/api/data`
@@ -708,13 +706,18 @@ brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność. 
 „Przebieg na żywo” otwiera szczegóły uruchomienia. Pod kartami widać uruchomienia w kolejce, zadania
 gotowe dla włączonego Automatu oraz zlecenia rozwoju czekające na start (patrz `ROZWOJ.md`).
 
-`kto: agent` pozostawia wybór panelowi. Zadania strony i zadania kodowe w repozytorium wybierają
-Codex. Pisanie, analiza i raporty wybierają Claude. Gdy użycie limitu osiągnie próg Automatu
-(domyślnie 80%) lub narzędzie jest niedostępne, panel może użyć drugiego. Powód jest w historii
-uruchomienia, a wiersz zadania zachowuje `kto: agent`. Wprost przypisane zadania używają wskazanego
-narzędzia. Pole `gdzie:` określa węzeł wykonania.
+`kto: agent`, `kto: claude` i `kto: codex` wskazują zadanie agenta. Panel pyta Claude Haiku o wykonawcę,
+gdy oba narzędzia są zalogowane i poniżej progu Automatu. `wykonawca: tylko claude` lub `wykonawca: tylko codex`
+przypina narzędzie. Po błędzie decyzji panel stosuje reguły lokalne. Decyzja i powód są zapisywane przy
+uruchomieniu. Panel pamięta decyzję do końca dnia i przy ponowieniu sprawdza dostępność narzędzia.
 
-Limit 5 h Codex pochodzi z `rate_limits` dla okna 300 minut w strumieniu lub z `token_count` w pliku sesji
-tego uruchomienia pod `PANEL_CODEX_HOME/sessions/`. Odczyt pliku wymaga praw dostępu panelu. Same liczniki
-tokenów nie dają wartości tego limitu. Kwota obok tokenów jest równowartością
-według cen API. Raport PM uruchamiany z panelu wymaga rejestru lub zbieracza z projektami.
+Ostatnie odczyty okna 5 h i tygodnia trafiają do istniejącego `stan.json` wraz z czasem odczytu i odnowienia.
+Źródła obejmują zdarzenia uruchomień panelu, logi zleceń rozwoju i pola limitów w sesjach Codex. Na serwerze
+panel sprawdza najnowszą sesję konta `agent`. Katalog można wskazać przez `PANEL_CODEX_HOME`.
+„Odczytaj limity” uruchamia krótkie próby obu narzędzi po kliknięciu. Po odnowieniu okna panel pokazuje
+0% do następnego odczytu.
+
+Szacunki czasu, tokenów i zużycia 5 h to mediany zakończonych uruchomień tego samego narzędzia i rodzaju.
+Każda wielkość wymaga przynajmniej trzech odczytów. Ukończone kroki pozwalają skorygować szacunek trwającej pracy.
+Godziny w kolejce uwzględniają przewidywany koniec uruchomień w toku oraz liczbę równoległych prac.
+Raport PM korzysta z rejestru lub zbieracza i może uruchomić gotowe zadania agentów zgodnie ze standardem PM.
