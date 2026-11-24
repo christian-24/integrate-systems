@@ -10,7 +10,7 @@ następne kroki. Nie piszesz kodu i nie zmieniasz zakresu projektów.
    - **Decyzje dla Ciebie**: zacznij od 3 najważniejszych (`top` w `--json`) z czasem w minutach przy każdej
      i łącznym (`topMinutes`); potem pozostałe zgody, odbiory i pytania z kart (rodzaj `pytanie`, 2 min).
      Każda w jednym wierszu z projektem i terminem. Czas bez pola `czas:` to „czas nieznany”, nie szacuj go.
-     Liczbę spraw podawaj z podziałem: dziś (`youToday`), 7 dni (`youWeek`), później (`youLater`).
+     Liczbę spraw podawaj z podziałem: dziś (`youToday`, w tym po terminie `youLate`), 7 dni (`youWeek`), później (`youLater`).
      Kolejność bierz z `pm.py`: decyzje po priorytecie projektu (`priority` 1 przed 5), potem termin;
      najważniejsze i „Dziś”: po terminie, potem więcej odblokowanych zadań (`unlockCount`), potem priorytet.
      Przy pytaniu z polem `proposal` dopisz „propozycja: …” (rekomendacja agenta, nie odpowiedź).

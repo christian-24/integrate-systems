@@ -100,8 +100,10 @@ class Biblioteka(unittest.TestCase):
         self.assertEqual(list(lib["karty"]), ["q"])
         self.assertNotIn("zapisz", lib["karty"]["q"])
         self.assertIn("- q (liczba): Q", self.lib.summary())
-        self.assertIn("- dzis-dla-ciebie (lista, wbudowana): Twoje sprawy do dziś · Twoje otwarte sprawy na dziś i po terminie",
-                      self.lib.summary())
+        self.assertIn("- publikacje-tygodnia (tydzien, wbudowana): Publikacje w tym tygodniu · Publikacje od dziś przez 7 dni, "
+                      "dziś wyróżniony", self.lib.summary())
+        with self.assertRaises(karty.Bad):
+            self.lib.save([{"id": "dzis-dla-ciebie", "typ": "postep", "tytul": "X"}])  # dawne id (alias) zajęte
         with self.assertRaises(karty.Bad):
             self.lib.save([{"id": "postep-projektow", "typ": "postep", "tytul": "X"}])  # id karty wbudowanej
         self.lib.layout(pins=["q", "postep-projektow", "q"])
@@ -200,7 +202,7 @@ class Trasy(Serwer):
         lib = json.loads(text)
         self.assertEqual((status, [c["id"] for c in lib["karty"]]), (200, ["moje"]))
         self.assertEqual(lib["wbudowane"], karty.STARTERS)
-        self.assertEqual(lib["start"], ["sprawy-dzis", "raport-pm"])
+        self.assertEqual(lib["start"], ["sprawy-dzis", "publikacje-tygodnia", "postep-projektow", "raport-pm"])
         self.assertEqual(self.post("/api/asystent/karty", {"przypiete": ["moje", "postep-projektow"]})[0], 200)
         self.assertEqual(self.post("/api/asystent/karty", {"ukryj": "postep-projektow"})[0], 200)
         lib = json.loads(self.request("GET", "/api/asystent/karty")[2])
@@ -245,7 +247,7 @@ class AtrapaZKartami(Baza):
         self.assertEqual(last["cards"]["bledy"], [])
         self.assertEqual(len(last["cards"]["pokaz"]), 7)
         first = self.prompts()[0]
-        for part in ("```karty", "Karty gotowe", "- dzis-dla-ciebie (lista, wbudowana)", "Na tej stronie nie używaj „Pokaż:”",
+        for part in ("```karty", "Karty gotowe", "- sprawy-dzis (panel, wbudowana)", "Na tej stronie nie używaj „Pokaż:”",
                      "[ekran: #asystent]"):
             self.assertIn(part, first)
         lib = self.manager.cards.read()["karty"]

@@ -27,7 +27,8 @@ Stała sesja asystenta (argumenty `--input-format stream-json`): czyta wiersze {
   „Odpowiedź atrapy <n>: <40 znaków ostatniego wiersza wiadomości>”, n to numer wiadomości w tym procesie. Wiadomość
   ze słowem „narzędzie” dodaje blok tool_use (Read); działania z wiadomości („Pokaż: #ty; Otwórz: …”) wracają
   na końcu odpowiedzi (próby panelu w przeglądarce). `--resume wygasla`: błąd „No conversation found”, kod 1.
-  Wiadomość ze słowem „karty” zwraca blok ```karty``` (CARDS), „zła karta” blok z kartami do odrzucenia.
+  Wiadomość ze słowem „karty” zwraca blok ```karty``` (CARDS), „zła karta” blok z kartami do odrzucenia,
+  „długa odpowiedź” akapit z wieloma liczbami (LONG_ANSWER, jak odpowiedzi z produkcji; zrzuty wyglądu).
   Tryby: login (wynik z błędem 401), czat-wolno (kawałki tekstu co 0,3 s), wolno (bez odpowiedzi).
   Każda wiadomość to wiersz w dzienniku z polem pid procesu.
 Zadanie z wejściem stream-json (argumenty `--input-format stream-json` i `acceptEdits`): polecenie to pierwsza
@@ -212,6 +213,12 @@ CARDS = {"pokaz": [
 BAD_CARDS = {"pokaz": [{"id": "zly-typ", "typ": "iframe", "tytul": "X"},
                        {"id": "html", "typ": "notatka", "tytul": "<b>X</b>", "dane": {"tekst": "x"}},
                        {"id": "dobra", "typ": "liczba", "tytul": "Dobra", "zapytanie": {"zrodlo": "zadania"}}]}
+# „długa odpowiedź”: akapit z wieloma liczbami, jak odpowiedzi modelu na produkcji (zrzuty przed i po zmianie wyglądu)
+LONG_ANSWER = ("Na dziś masz 7 spraw, a 31 jest po terminie, w tym 28 Twoich zadań i 2 zgody; najstarsze czeka od 25 dni. "
+               "W projekcie Shield & Silent (market research) zalegają 3 zadania na 135 minut, w Sklepie z częściami 3 zadania "
+               "i zgoda na cennik, a w Aplikacji mobilnej 3 zadania na 120 minut. Twój dzień ma 120 minut, a zaplanowane sprawy "
+               "zajmują 1 815 minut, więc 1 695 minut trzeba przesunąć. W tym tygodniu jest 12 publikacji, z czego 2 dziś. "
+               "Proponuję zacząć od zgód, bo odblokują 4 zadania agentów, potem odpowiedzieć na 2 pytania, a resztę przesunąć na jutro.")
 
 
 def stream(argv):
@@ -243,6 +250,8 @@ def stream(argv):
         acts = re.findall(r"(?:Pokaż|Otwórz|Przewiń|Zamknij|Uruchom): [^;]*", last)   # działania z wiadomości wracają w odpowiedzi
         if acts:
             answer = "Odpowiedź atrapy %d." % n + "".join("\n" + a.strip() for a in acts)
+        if "długa odpowiedź" in last:
+            answer = LONG_ANSWER
         if "zła karta" in last:
             answer = "Odpowiedź atrapy %d." % n + "\n```karty\n" + json.dumps(BAD_CARDS, ensure_ascii=False) + "\n```"
         elif "karty" in last:

@@ -535,7 +535,9 @@ Strona odbioru w panelu (`#odbior?z=<taskId>`) pokazuje wynik zadania w wersjach
 rozpoznawanie mowy). Asystent to jeden długo żyjący proces `claude -p --input-format stream-json --output-format
 stream-json --verbose --include-partial-messages` (`dashboard/asystent.py`, jako `PANEL_AGENT_USER` jak zadania, te same
 narzędzia: odczyt i edycja tylko `ZADANIA.md`, `DECYZJE.md`, `kampanie/`). Pierwsza wiadomość niesie fakty
-(`assistant_facts`, z id zadań) i opis sterowania; kolejne tylko `[ekran: #adres; otwarte: …]` i nowe fakty, gdy dane
+(`assistant_facts`, z id zadań; na początku liczby spraw z ostatniej odpowiedzi `/api/data`, czyli `projekt.owner_counts`,
+te same co w menu, na starcie Asystenta i w raporcie PM, z podpisami) i opis sterowania; odpowiedź to jedno zdanie i najwyżej
+5 punktów, liczby i listy jako karty; kolejne tylko `[ekran: #adres; otwarte: …]` i nowe fakty, gdy dane
 się zmieniły. Po restarcie panelu albo bezczynności proces startuje z `--resume`; nieznana sesja zaczyna rozmowę od nowa.
 Odpowiedź może kończyć się wierszami działań, które panel wykonuje po kolei i ukrywa: `Pokaż: #adres`, `Otwórz: <id
 zadania albo tytuł>`, `Przewiń: <nagłówek>`, `Zamknij: szczegóły` (w przeglądarce) i `Uruchom: <id projektu> | <tytuł>`
