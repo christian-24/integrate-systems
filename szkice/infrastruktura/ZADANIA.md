@@ -153,7 +153,7 @@ termin: 2026-12-05
   cel: decyzja właściciela, które projekty i jacy agenci dostają który konektor
   materiał: ZADANIA.md
   pyta: Lista zatwierdzona (tak albo co zmienić); Link do folderu Shield & Silent na Google Drive
-- [ ] Dodaj pole konektorów do karty i panelu | kto: claude | gdzie: chmura | kiedy: 2026-11-28 | po: Sprawdź konektory konta Claude w agentach na serwerze, Zatwierdź konektory projektów
+- [ ] Dodaj pole konektorów do karty i panelu | kto: agent | gdzie: chmura | kiedy: 2026-11-28 | po: Sprawdź konektory konta Claude w agentach na serwerze, Zatwierdź konektory projektów
   cel: agent dostaje tylko konektory wpisane w karcie projektu; panel pokazuje je przy projekcie
   gotowe gdy: STANDARD.md opisuje pole; panel pokazuje konektory projektu; test: agent w projekcie bez wpisu nie ma dostępu do konektora
   materiał: DECYZJE.md

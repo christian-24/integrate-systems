@@ -33,13 +33,13 @@
   cel: warunki, które strona obiecuje klientom
   materiał: site/src/dane.js
   pyta: Zaliczka w procentach (0 = bez zaliczki); Termin płatności faktury w dniach; Gwarancja w dniach po odbiorze; Stawka opieki po wdrożeniu w zł za godzinę; Czas reakcji na awarię w dniach roboczych; Godziny prac przy projektach; Godziny odbierania telefonu; Zasada bezpłatnej rozmowy jednym zdaniem; Górna cena integracji ERP w zł; Górna cena końca przepisywania w zł; Górna cena małego automatu w zł; Obniżka ceny etapu za tydzień opóźnienia w procentach; Po ilu tygodniach opóźnienia klient może odstąpić; Subiekt GT czy Subiekt nexo; Platformy sklepów, z którymi łączycie
-- [ ] Strona: wpisz dane firmy i przygotuj wersję do publikacji | kto: claude | gdzie: chmura | kiedy: 2026-11-25 | po: Oceń nową stronę, prawo i RODO, warunki współpracy
+- [ ] Strona: wpisz dane firmy i przygotuj wersję do publikacji | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | po: Oceń nową stronę, prawo i RODO, warunki współpracy
   cel: dane z odpowiedzi właściciela są w site/src/dane.js i w tekstach strony
   gotowe gdy: produkcyjne `npm run build` przechodzi bez błędu; zrzuty 390 i 1440 px nie mają [UZUPEŁNIJ] w polach wymaganych; każda wpisana wartość pochodzi z odpowiedzi właściciela, nic nie jest wymyślone
   materiał: site/src/dane.js
   - [ ] Wpisz odpowiedzi do site/src/dane.js; pola bez odpowiedzi zostaw puste i wypisz w zostało:
   - [ ] Zbuduj wersję produkcyjną i roboczą, zrób zrzuty, obejrzyj je
-- [ ] Strona: sprawdź stronę pięcioma audytami i popraw | kto: claude | gdzie: chmura | kiedy: 2026-11-26 | po: wpisz dane firmy
+- [ ] Strona: sprawdź stronę pięcioma audytami i popraw | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | po: wpisz dane firmy
   cel: strona gotowa do publikacji w ocenie pięciu audytorów: klient, krytyczny klient, prawnik, projektant interfejsu, specjalista od konwersji
   gotowe gdy: w wynik: ocena każdego audytora (1–10) z jednym powodem; poprawione wszystko, co nie wymaga danych właściciela; reszta w zostało:
   - [ ] Oceń stronę z perspektywy każdego audytora na zrzutach 390 i 1440 px
