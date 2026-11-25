@@ -9,6 +9,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import unittest
 
 from test_asystent_duzy import PW, Duzy
@@ -218,9 +219,108 @@ def add_site_part(big):
         json.dump(reg, f)
 
 
+GLOS_UI = r"""
+import re, sys
+from playwright.sync_api import expect, sync_playwright
+
+fake = '''Object.defineProperty(navigator.mediaDevices,'getUserMedia',{
+  configurable:true,value:async()=>({getTracks:()=>[{stop(){window.trackStopped=true}}]})
+});
+window.MediaRecorder=class {
+  static isTypeSupported(type){return type==='audio/mp4'}
+  constructor(stream,opts){this.mimeType=opts.mimeType;this.state='inactive'}
+  start(){this.state='recording'}
+  stop(){
+    this.state='inactive';
+    const data=new Blob([new Uint8Array([0,0,0,32,102,116,121,112]),new Uint8Array(900),'|Zmień nagłówek.']);
+    setTimeout(()=>{this.ondataavailable({data});this.onstop()},0);
+  }
+};'''
+with sync_playwright() as p:
+    browser = p.chromium.launch()
+    device = dict(p.devices["iPhone 15"])
+    device.pop("default_browser_type")
+    ctx = browser.new_context(**device)
+    ctx.add_init_script(fake)
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.goto(sys.argv[1] + "#p-firmowa-strona?cz=firmowa-onepager")
+    page.get_by_role("button", name="Wskaż", exact=True).tap()
+    page.frame_locator("[title='Podgląd strony']").get_by_role("heading", name="Nowa strona").tap()
+    dock = page.locator("#pjdock")
+    expect(dock.locator(".pjd-chip")).to_contain_text("Nowa strona")
+    mic = dock.get_by_role("button", name="Mów", exact=True)
+    assert mic.bounding_box()["height"] >= 44
+    mic.tap()
+    stop = dock.get_by_role("button", name="Stop", exact=True)
+    expect(stop).to_be_visible()
+    page.wait_for_timeout(650)
+    with page.expect_response(lambda r: "/api/asystent/glos?draft=1" in r.url) as response:
+        stop.tap()
+    assert response.value.ok
+    assert page.evaluate("window.trackStopped")
+    field = dock.locator("textarea")
+    expect(field).to_have_value("Zmień nagłówek.")
+    field.fill("Zmień nagłówek na zielony.")
+    with page.expect_response(lambda r: "/api/project/chat?" in r.url) as loaded, \
+         page.expect_response(lambda r: r.url.endswith("/api/project/chat") and r.request.method=="POST") as sent:
+        field.press("Enter")
+    loaded.value.finished()
+    assert sent.value.ok, sent.value.text()
+    body = sent.value.request.post_data_json
+    assert body["spoken"] and body["attach"]["elementText"]=="Nowa strona", body
+    expect(page.locator("[data-wwnotes]")).to_contain_text("Zmień nagłówek na zielony.")
+    page.reload()
+    opener = dock.get_by_role("button", name="Rozmowa", exact=True)
+    if opener.is_visible():
+        opener.tap()
+    expect(dock.locator(".cm.me")).to_contain_text("Zmień nagłówek na zielony.")
+    expect(dock.locator(".cm.me small").filter(has_text="mówione")).to_have_text(re.compile(r"mówione · \d\d:\d\d"))
+    page.evaluate('''Object.defineProperty(navigator.mediaDevices,'getUserMedia',{
+      value:async()=>{throw new DOMException('','NotAllowedError')}
+    })''')
+    mic.tap()
+    expect(page.locator("#toast")).to_contain_text("Zezwól przeglądarce na mikrofon")
+    page.evaluate("Object.defineProperty(navigator.mediaDevices,'getUserMedia',{value:undefined})")
+    mic.tap()
+    expect(page.locator("#toast")).to_contain_text("Przeglądarka nie udostępnia mikrofonu")
+    assert not errors, errors
+
+    desktop = browser.new_context()
+    desktop.add_init_script(fake)
+    page = desktop.new_page()
+    page.goto(sys.argv[1] + "#asystent")
+    mic = page.locator(".ap-dock").get_by_role("button", name="Mów", exact=True)
+    expect(mic).to_be_visible()
+    box = mic.bounding_box()
+    page.mouse.move(box["x"] + box["width"]/2, box["y"] + box["height"]/2)
+    page.mouse.down()
+    page.wait_for_timeout(700)
+    with page.expect_response(lambda r: "/api/asystent/glos?view=" in r.url) as sent:
+        page.mouse.up()
+    assert sent.value.status == 202, sent.value.text()
+    expect(page.locator("#asms .cm.me")).to_contain_text("Zmień nagłówek.")
+    browser.close()
+"""
+
+
 @unittest.skipUnless(PW and not os.environ.get("PANEL_TESTY_BEZ_RENDERU"), "brak Playwright albo PANEL_TESTY_BEZ_RENDERU")
 class Iphone15(Duzy):
     """Chromium z emulacją iPhone 15 (393x659 widoczne, dotyk) na dużym zestawie z częścią ze stroną."""
+
+    def test_mow_w_zakladce_strona(self):
+        add_site_part(self.big)
+        server.data_invalidate()
+        server._agents = self.manager = self.new_manager(PANEL_GLOS_PYTHON=sys.executable, GLOS_ATRAPA="1")
+        self.manager.site.build_api("firmowa-onepager")
+        self.wait_for(lambda: self.manager.site.info("firmowa-onepager")[2].get("url"), timeout=20)
+        env = dict(os.environ)
+        if not env.get("PLAYWRIGHT_BROWSERS_PATH") and os.path.isdir("/opt/ms-playwright"):
+            env["PLAYWRIGHT_BROWSERS_PATH"] = "/opt/ms-playwright"
+        r = subprocess.run([PW, "-c", GLOS_UI, "http://127.0.0.1:%d/" % self.port], capture_output=True, text=True,
+                           timeout=60, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr[-3000:])
 
     def test_uklad_393(self):
         add_site_part(self.big)

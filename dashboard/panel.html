@@ -1839,6 +1839,7 @@ body.pjd-on #view{padding-bottom:96px}
 .pjd-f .row{display:flex;align-items:center;gap:10px}
 .pjd-f .note{margin:0;font-size:var(--fs-xs)}
 .pjd-f .row{flex-wrap:wrap}
+.pjd-f .as-mic{min-width:44px;min-height:44px;touch-action:manipulation}
 .pjd-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .pjd-chip{display:flex;align-items:center;gap:2px;width:100%;min-width:0;padding:2px 0 2px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:var(--fs-xs);line-height:1.35}
 .pjd-chip>span{flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
@@ -5477,22 +5478,26 @@ function dockHtml(r){
     (att?'<span class="pjd-chip"><span>Załącznik: '+esc(attLabel(att))+'</span><button type="button" class="pjd-x" data-pjdatt="0" data-k="pjd:attx" aria-label="Usuń załącznik">×</button></span>':'');
   const dis=c.pending&&!att?' aria-disabled="true"':'';
   h+='<form class="pjd-f" data-pchat="'+esc(g.id)+'">'+(chips?'<div class="pjd-chips">'+chips+'</div>':'')+
-    '<textarea class="fi" rows="2" maxlength="2000" data-cq data-k="pjd:ta" aria-label="'+esc((att?'Uwaga do strony: ':'Wiadomość: ')+g.label)+'" placeholder="'+
+    '<textarea class="fi" rows="2" maxlength="'+(att?1000:2000)+'" data-cq data-k="pjd:ta" aria-label="'+esc((att?'Uwaga do strony: ':'Wiadomość: ')+g.label)+'" placeholder="'+
       (att?'Co zmienić? Np. większy nagłówek, inny kolor przycisku':t?(live?'Np. pytanie albo polecenie dla pracującego agenta':'Np. po co to zadanie? Albo polecenie dla agenta'):'Np. co mam zrobić jutro?')+'"></textarea>'+
-    '<div class="row"><button class="btn sm" data-k="pjd:send"'+dis+'>'+(att?'Wyślij uwagę':'Wyślij')+'</button>'+
+    '<div class="row">'+voiceButton(g.id)+'<button class="btn sm" data-k="pjd:send"'+dis+'>'+(att?'Wyślij uwagę':'Wyślij')+'</button>'+
     (ag&&!att?'<button type="button" class="btn sec sm" data-pjdx="1" data-k="pjd:exec"'+(c.exec?' aria-disabled="true"':'')+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta albo przekazuje je pracującemu agentowi">'+(cx?'Zapisz poprawkę':live?'Wyślij do agenta':'Wyślij i wykonaj')+'</button>':'')+
-    '<span class="note">'+(att?'Uwaga trafi do agenta strony (zadanie albo pracujący agent).':ag?(live?'Agent pracuje: „Wyślij do agenta” przekazuje mu polecenie.':'„Wyślij i wykonaj”: agent wykonuje polecenie.'):'Prośba o pracę zakłada zadanie agenta i je uruchamia.')+'</span></div></form>';
+    (VOICE?.pid===g.id?'<span class="note" role="status">'+({start:'Włączam mikrofon…',rec:'Słucham…',stt:'Rozpoznaję…'}[VOICE.state])+'</span>':
+    '<span class="note">'+(att?'Uwaga trafi do agenta strony (zadanie albo pracujący agent).':ag?(live?'Agent pracuje: „Wyślij do agenta” przekazuje mu polecenie.':'„Wyślij i wykonaj”: agent wykonuje polecenie.'):'Prośba o pracę zakłada zadanie agenta i je uruchamia.')+'</span>')+'</div></form>';
   return h+'</section>';
 }
 function renderDock(r){
   const el=$('#pjdock');if(!el)return;
   const ta=el.querySelector('textarea'),cid=ta&&ta.closest('form')?ta.closest('form').dataset.pchat:'',v=ta?ta.value:'',ss=ta?ta.selectionStart:0,se=ta?ta.selectionEnd:0;
   const ms=el.querySelector('[data-pjdm]'),stick=!ms||ms.scrollHeight-ms.scrollTop-ms.clientHeight<40;
+  if(VOICE?.pid&&(!PF.more['pj-chat']||dockTarget(r)?.id!==VOICE.pid||VOICE.att!==PJD.att||
+      VOICE.ref!==PJD.ref||VOICE.route!==location.hash))voiceStop(true,false);
   const h=dockHtml(r),open=!!h&&!!PF.more['pj-chat'];
   document.body.classList.toggle('pjd-on',!!h);document.body.classList.toggle('pjd-open',open);el.classList.toggle('open',open);
   el.classList.toggle('over-dr',!!(DR&&h));
   if(!setHtml(el,h))return;
-  const t=el.querySelector('textarea');if(t&&v&&t.closest('form').dataset.pchat===cid){t.value=v;try{t.setSelectionRange(ss,se)}catch(e){}}
+  const t=el.querySelector('textarea');if(t&&v&&t.form.dataset.pchat===cid){t.value=v;try{t.setSelectionRange(ss,se)}catch(e){}}
+  else if(cid&&PJC[cid])PJC[cid].spoken=false;
   const m=el.querySelector('[data-pjdm]');if(m&&stick)m.scrollTop=m.scrollHeight;
   pjdKb();scrollLockSync();
 }
@@ -5537,7 +5542,8 @@ document.addEventListener('keydown',ev=>{
   const inside=el.contains(document.activeElement);
   if(!inside&&(DR||A.bnMore||(typeof SC!=='undefined'&&SC.cur)||(typeof ED!=='undefined'&&ED.cur)||(typeof OD!=='undefined'&&OD.ov)))return;
   if(!inside&&/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||''))return;
-  ev.preventDefault();ev.stopPropagation();pjdSet(false)},true);
+  ev.preventDefault();ev.stopPropagation();
+  if(VOICE?.pid)voiceStop(true);else pjdSet(false)},true);
 async function loadPChat(pid){
   const c=PJC[pid]||(PJC[pid]={messages:[],pending:false,error:''}),was=c.pending;
   try{const r=await fetch('/api/project/chat?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
@@ -5561,16 +5567,34 @@ async function sendPChat(f,exec){
   const ag=t&&['agent','claude','codex'].includes(t.executor)&&t.kind!=='publikacja';
   exec=!att&&ag&&(!!exec||CH_EXEC.test(text));
   if(c.pending&&!exec&&!att){say('Czekam jeszcze na odpowiedź.');return}
+  if(VOICE?.pid===pid){say('Zakończ nagrywanie i poczekaj na transkrypcję.');return}
   if(c.exec){say('Czekam jeszcze na odpowiedź.');return}
   if(!LIVE){say(PRV);return}
   const body={project:pid,message:text};if(t)body.task=t.id;if(exec)body.execute=true;
   if(att)body.attach={kind:'strona',project:att.project,page:att.page,view:att.view,selector:att.selector,elementText:att.elementText};
-  const mine={role:'ty',text:text};if(t)mine.task={id:t.id,title:t.title};if(att)mine.attach=att;
+  const spoken=!!c.spoken,mine={role:'ty',text:text};
+  if(spoken){
+    body.spoken=true;mine.spoken=true;mine.at=new Date().toISOString();
+  }
+  c.spoken=false;
+  if(t)mine.task={id:t.id,title:t.title};if(att)mine.attach=att;
   ta.value='';ta.blur();c.messages.push(mine);c.error='';if(exec||att)c.exec=true;else c.pending=true;render(true);
   const x=await post('/api/project/chat',body);
   c.exec=false;
-  if(!x.ok&&x.status!==202){if(!exec&&!att)c.pending=false;c.error=x.error||'Nie wysłano wiadomości.';render(true);return}
-  if(att){const s=wwSt(att.project);PJD.att=null;s.sel=null;if(s.pick){s.pick=false;wwPost(att.project,{pw:'wskaz',on:false})}wwPost(att.project,{pw:'czysc'});
+  if(!x.ok&&x.status!==202){
+    if(!exec&&!att)c.pending=false;
+    c.messages=c.messages.filter(m=>m!==mine);c.error=x.error||'Nie wysłano wiadomości.';render(true);
+    const draft=$('#pjdock textarea');
+    if(draft?.form.dataset.pchat===pid&&!draft.value&&pjdRef(g)?.id===t?.id&&pjdAtt(g)===att){draft.value=text;c.spoken=spoken}
+    return;
+  }
+  if(att){
+    const s=wwSt(att.project);
+    if(PJD.att===att){
+      PJD.att=null;s.sel=null;
+      if(s.pick){s.pick=false;wwPost(att.project,{pw:'wskaz',on:false})}
+      wwPost(att.project,{pw:'czysc'});
+    }
     const n=x.data&&x.data.note;if(s.d&&n)s.d.notes=[n].concat((s.d.notes||[]).filter(y=>y.id!==n.id));wwLoad(att.project)}
   if(exec||att){await load(true);loadPChat(pid);return}
   setTimeout(()=>loadPChat(pid),3000);
@@ -6913,7 +6937,7 @@ function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|
     (m.restart&&(m.live==='running'||m.live==='queued')?'<div class="row"><button type="button" class="btn sec sm" data-restart="'+esc(m.restart)+'">Zatrzymaj i uruchom z poprawką</button></div>':'')+'</div></div>'}
 const chatRef=m=>(m.task&&m.task.title?'<small class="cm-ref">O zadaniu: '+(m.task.id&&m.task.id!==(DR&&DR.id)?'<button type="button" class="lk" data-task="'+esc(m.task.id)+'">'+esc(shortT(m.task.title,70))+'</button>':esc(shortT(m.task.title,70)))+(m.exec?' · polecenie dla agenta':'')+'</small>':m.exec?'<small class="cm-ref">Polecenie dla agenta</small>':'')+
   (m.attach?'<small class="cm-ref">Załącznik: '+esc(attLabel(m.attach))+'</small>':'');
-const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+(m.role==='ty'?chatRef(m):'')+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
+const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+(m.spoken?'<small class="cm-ref">mówione · '+esc(whenT(m.at))+'</small>':'')+(m.role==='ty'?chatRef(m):'')+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
 /* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
 const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
 async function loadChat(id){
@@ -9192,7 +9216,7 @@ function renderDrawer(force){
 /* ---------- asystent: rozmowa, głos i sterowanie panelem w każdym widoku ---------- */
 /* mic: ''|'start' (zgoda na mikrofon)|'rec' (nagrywanie)|'stt' (rozpoznawanie na serwerze); voice: serwer rozpoznaje mowę */
 const AS={messages:[],pending:false,error:'',loaded:false,partial:'',activity:'',voice:false,
-  mic:'',rec:null,stream:null,chunks:[],t0:0,tick:0,cancel:false,keyAt:0,pressAt:0,skipClick:false,poll:0,boot:false,hist:false,mcount:-1};
+  mic:'',t0:0,keyAt:0,poll:0,boot:false,hist:false,mcount:-1};
 /* działania na końcu odpowiedzi asystenta, każde w osobnym wierszu (prompt w agents.py, assistant_prompt):
    Pokaż: #adres · Otwórz: <id zadania albo tytuł> · Przewiń: <nagłówek> · Zamknij: szczegóły. Nie są pokazywane. */
 /*asActs:start*/
@@ -9242,8 +9266,12 @@ function asMsgs(){let h='';
   if(AS.error)h+='<p class="warn">'+esc(AS.error)+'</p>';
   return h}
 const AS_MICI='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>';
-function asMicHtml(){if(!AS.voice)return '';const on=AS.mic==='rec'||AS.mic==='start';
-  return '<button type="button" class="btn sec as-mic" data-asmic="1" aria-pressed="'+on+'"'+(AS.mic==='stt'?' disabled':'')+' title="Mów (przytrzymaj spację)">'+(on?'Stop':AS_MICI+'Mów')+'</button>'}
+function asMicHtml(){return AS.voice?voiceButton(''):''}
+function voiceButton(pid){
+  const state=VOICE?.pid===pid?VOICE.state:'',on=state==='rec'||state==='start';
+  return '<button type="button" class="btn sec as-mic" data-voice="'+esc(pid)+'" data-k="voice" aria-pressed="'+on+'"'+
+    (state==='stt'?' disabled':'')+' title="'+(pid?'Kliknij albo przytrzymaj, aby mówić':'Mów (przytrzymaj spację)')+'">'+(on?'Stop':AS_MICI+'Mów')+'</button>';
+}
 function asRender(){
   const h0=$('#asys');if(!h0||!D)return;
   if(LIVE&&!AS.boot){AS.boot=true;asLoad();apLibLoad()}
@@ -9255,7 +9283,11 @@ function asRender(){
   const host=sc?$('#asdock'):h0;
   if(sc&&h0.firstChild)h0.innerHTML='';
   /* rozmowa jest tylko na stronie Asystent; po wyjściu nagrywanie się kończy */
-  if(!page){if(h0.firstChild){if(AS.mic)asRecStop(true);h0.innerHTML=''}return}
+  if(!page){
+    if((AS.mic==='start'||AS.mic==='rec')&&VOICE?.route!==location.hash)voiceStop(true);
+    if(h0.firstChild)h0.innerHTML='';
+    return;
+  }
   if(!host)return;
   if(!host.querySelector('.ap-dock'))host.innerHTML='<section class="ap-dock" aria-label="Rozmowa z asystentem"><div class="ap-dh"><h2>Rozmowa</h2>'+
     '<button type="button" class="btn sec sm ap-hist" data-ashist="1" aria-controls="asms"></button><button type="button" class="btn sec sm" data-asnew="1" title="Nowa rozmowa; przypięte karty zostają">Nowa</button></div>'+
@@ -9296,72 +9328,143 @@ async function asSend(text){
   if(!x.ok&&x.status!==202){AS.pending=false;AS.error=x.error||'Nie wysłano wiadomości.';asRender();return}
   asPoll(300);
 }
-/* mikrofon: nagranie w przeglądarce (MediaRecorder), rozpoznawanie na serwerze (POST /api/asystent/glos) */
-const AS_TYPES=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
-const AS_MAXS=60;
-function asRelease(){clearInterval(AS.tick);AS.tick=0;if(AS.stream){AS.stream.getTracks().forEach(t=>t.stop());AS.stream=null}}
-async function asRecStart(){
-  if(AS.mic)return;
+/* Wspólne nagrywanie i rozpoznawanie mowy dla Asystenta i Rozmowy projektu. */
+const VOICE_TYPES=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+let VOICE=null,voicePress=null;
+function voicePaint(v){
+  if(v.pid)renderDock(CUR);
+  else{AS.mic=VOICE===v?v.state:'';AS.t0=v.t0;asRender()}
+}
+function voiceRelease(v){
+  clearInterval(v.tick);
+  if(v.stream){v.stream.getTracks().forEach(t=>t.stop());v.stream=null}
+}
+function voiceFinish(v,paint=true){
+  if(VOICE!==v)return;
+  VOICE=null;voiceRelease(v);if(paint)voicePaint(v);
+}
+function voiceStop(cancel=false,paint=true){
+  const v=VOICE;if(!v)return;
+  if(cancel||v.state==='start'){
+    voiceFinish(v,paint);
+    try{if(v.rec&&v.rec.state!=='inactive')v.rec.stop()}catch(e){}
+    return;
+  }
+  if(v.state!=='rec')return;
+  v.state='stt';
+  try{v.rec.stop()}catch(e){voiceFinish(v);say('Nie udało się zakończyć nagrania.');return}
+  voiceRelease(v);voicePaint(v);
+}
+async function voiceStart(pid=''){
+  if(VOICE)return;
   if(!LIVE){say(PRV);return}
-  if(AS.pending){say('Czekam jeszcze na odpowiedź.');return}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){say('Ta przeglądarka nie nagrywa dźwięku. Napisz wiadomość.');return}
-  AS.mic='start';AS.cancel=false;AS.error='';asRender();
-  post('/api/asystent/glos/start',{}).then(x=>{if(x.status===409&&x.data&&x.data.voice===false){AS.voice=false;asRender()}});
-  let st;
-  try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
-  catch(e){AS.mic='';asRender();say(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'Zezwól przeglądarce na mikrofon.':'Mikrofon jest niedostępny.');return}
-  if(AS.mic!=='start'){st.getTracks().forEach(t=>t.stop());return}
-  const type=AS_TYPES.find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'';
-  let rec;try{rec=type?new MediaRecorder(st,{mimeType:type}):new MediaRecorder(st)}catch(e){st.getTracks().forEach(t=>t.stop());AS.mic='';asRender();say('Nie udało się włączyć nagrywania.');return}
-  AS.stream=st;AS.rec=rec;AS.chunks=[];
-  rec.ondataavailable=e=>{if(e.data&&e.data.size)AS.chunks.push(e.data)};
-  rec.onstop=()=>asRecDone(rec.mimeType||type);
-  rec.start();AS.mic='rec';AS.t0=Date.now();asRender();
-  AS.tick=setInterval(()=>{const s=Math.floor((Date.now()-AS.t0)/1000),el=$('#asrec');if(el)el.textContent=asFmt(s);if(s>=AS_MAXS)asRecStop()},250);
+  if(!pid&&AS.pending){say('Czekam jeszcze na odpowiedź.');return}
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say('Przeglądarka nie udostępnia mikrofonu. Napisz wiadomość.');return}
+  const v=VOICE={pid,state:'start',att:PJD.att,ref:PJD.ref,route:location.hash};
+  if(!pid)AS.error='';
+  voicePaint(v);
+  post('/api/asystent/glos/start',{}).then(x=>{
+    if(VOICE!==v||x.status!==409||x.data?.voice!==false)return;
+    if(!pid)AS.voice=false;
+    voiceStop(true);say(x.error||'Rozpoznawanie mowy jest niedostępne na serwerze.');
+  });
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
+  catch(e){
+    if(VOICE!==v)return;
+    voiceFinish(v);
+    say(['NotAllowedError','SecurityError'].includes(e.name)?'Zezwól przeglądarce na mikrofon.':'Mikrofon jest niedostępny.');
+    return;
+  }
+  if(VOICE!==v){stream.getTracks().forEach(t=>t.stop());return}
+  v.stream=stream;
+  const type=VOICE_TYPES.find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'',chunks=[];
+  try{
+    const rec=v.rec=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+    rec.ondataavailable=e=>{if(VOICE===v&&e.data?.size)chunks.push(e.data)};
+    rec.onstop=()=>voiceTranscribe(v,rec.mimeType||type,chunks);
+    rec.onerror=()=>{if(VOICE===v){voiceFinish(v);say('Nagrywanie zostało przerwane.')}};
+    rec.start();
+  }catch(e){voiceFinish(v);say('Nie udało się włączyć nagrywania.');return}
+  v.state='rec';v.t0=Date.now();voicePaint(v);
+  v.tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-v.t0)/1000),el=$('#asrec');
+    if(!pid&&el)el.textContent=asFmt(s);
+    if(s>=60)voiceStop();
+  },250);
 }
-function asRecStop(cancel){
-  if(AS.mic==='start'){AS.mic='';asRender();return}
-  if(AS.mic!=='rec'||!AS.rec)return;
-  AS.cancel=!!cancel;AS.mic='stt';asRelease();asRender();
-  try{AS.rec.stop()}catch(e){AS.mic='';asRender()}
-}
-async function asRecDone(type){
-  const rec=AS.rec,ms=Date.now()-AS.t0;AS.rec=null;asRelease();
-  if(AS.cancel||!rec){AS.mic='';AS.cancel=false;asRender();return}
-  const ct=String(type||'audio/webm').split(';')[0],blob=new Blob(AS.chunks,{type:ct});AS.chunks=[];
-  if(ms<500||blob.size<800){AS.mic='';asRender();say('Nagranie za krótkie. Przytrzymaj Mów albo spację i mów.');return}
-  let j={},st=0;
-  try{const r=await fetch('/api/asystent/glos?view='+encodeURIComponent(location.hash||'#asystent')+'&open='+encodeURIComponent(asOpenId()),
-      {method:'POST',headers:{'Content-Type':ct},body:blob});st=r.status;if(st===401){location.assign('/wejscie');return}j=await r.json().catch(()=>({}))}
-  catch(e){AS.mic='';AS.error='Brak połączenia z serwerem.';asRender();return}
-  AS.mic='';
+async function voiceTranscribe(v,type,chunks){
+  if(VOICE!==v)return;
+  voiceRelease(v);
+  const ct=(type||'audio/webm').split(';')[0],blob=new Blob(chunks,{type:ct});
+  chunks.length=0;
+  if(Date.now()-v.t0<500||blob.size<800){voiceFinish(v);say('Nagranie za krótkie. Kliknij Mów i spróbuj ponownie.');return}
+  v.state='stt';voicePaint(v);
+  const q=new URLSearchParams(v.pid?{draft:'1'}:{view:location.hash||'#asystent',open:asOpenId()});
+  let j={},ok=false;
+  try{
+    const r=await fetch('/api/asystent/glos?'+q,{method:'POST',headers:{'Content-Type':ct},body:blob});
+    if(r.status===401){location.assign('/wejscie');return}
+    ok=r.ok;j=await r.json().catch(()=>({}));
+  }catch(e){j.error='Brak połączenia z serwerem.'}
+  if(VOICE!==v)return;
+  voiceFinish(v);
+  if(v.pid){
+    if(!ok||!j.text){say(j.error||'Nie udało się rozpoznać nagrania.');return}
+    const ta=$('#pjdock textarea');
+    if(!ta||ta.form.dataset.pchat!==v.pid)return;
+    const prefix=ta.value.trimEnd();
+    const head=prefix?prefix+'\n':'';
+    if(head.length>=ta.maxLength){say('Brak miejsca na transkrypcję w polu wiadomości.');return}
+    ta.value=(head+j.text).slice(0,ta.maxLength);
+    PJC[v.pid].spoken=true;
+    if(head.length+j.text.length>ta.maxLength)say('Transkrypcja została skrócona do limitu wiadomości.');
+    return;
+  }
   if(j.voice===false)AS.voice=false;
-  if(j.text&&(st===202||j.ok)){AS.messages.push({role:'ty',text:j.text});AS.pending=true;AS.partial='';AS.activity='';AS.error='';asRender();asPoll(300);return}
+  if(ok&&j.text){AS.messages.push({role:'ty',text:j.text});AS.pending=true;AS.partial='';AS.activity='';AS.error='';asRender();asPoll(300);return}
   AS.error=j.error||'Nie udało się rozpoznać nagrania.';
   if(j.text){const ta=$('.ap-dock textarea');if(ta&&!ta.value)ta.value=j.text}
   asRender();
 }
+function voiceToggle(pid){
+  if(VOICE){if(VOICE.pid===pid)voiceStop();return}
+  voiceStart(pid);
+}
+/* Mysz: przytrzymanie kończy po puszczeniu. Dotyk i klawiatura: klik przełącza. */
+document.addEventListener('pointerdown',ev=>{
+  const b=ev.target.closest?.('[data-voice]');
+  if(!b||ev.pointerType!=='mouse'||ev.button!==0||b.disabled)return;
+  ev.preventDefault();
+  const was=VOICE;b._voiceMouse=true;voiceToggle(b.dataset.voice);
+  voicePress={at:Date.now(),started:was?null:VOICE};
+});
+document.addEventListener('pointerup',()=>{
+  const press=voicePress;voicePress=null;
+  if(press?.started&&VOICE===press.started&&Date.now()-press.at>600)voiceStop();
+});
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest?.('[data-voice]');if(!b)return;
+  ev.preventDefault();
+  if(b._voiceMouse&&ev.detail){b._voiceMouse=false;return}
+  voiceToggle(b.dataset.voice);
+});
 /* spacja (fokus poza polem, przyciskiem i linkiem): przytrzymaj i mów albo naciśnij, mów i naciśnij jeszcze raz; Esc przerywa nagranie */
 const asKeyFree=()=>{const a=document.activeElement;
   return !a||a===document.body||!a.closest('input,textarea,select,button,a[href],summary,[contenteditable],[role=button],[role=checkbox],[role=switch],[role=tab],[role=option],[role=menuitem],[role=slider]')};
 document.addEventListener('keydown',ev=>{
-  if(ev.key==='Escape'&&(AS.mic==='rec'||AS.mic==='start')){ev.preventDefault();ev.stopPropagation();asRecStop(true);return}
-  if(ev.key!==' '||ev.ctrlKey||ev.metaKey||ev.altKey||!D||!LIVE||!AS.voice||!asKeyFree())return;
+  if(ev.key==='Escape'&&(AS.mic==='rec'||AS.mic==='start')){ev.preventDefault();ev.stopPropagation();voiceStop(true);return}
+  if(VOICE?.pid||ev.key!==' '||ev.ctrlKey||ev.metaKey||ev.altKey||!D||!LIVE||!AS.voice||!asKeyFree())return;
   ev.preventDefault();ev.stopPropagation();if(ev.repeat)return;
-  if(AS.mic==='rec'||AS.mic==='start'){asRecStop();return}
-  AS.keyAt=Date.now();if(!asPage())location.hash='#asystent';asRecStart()},true);
-document.addEventListener('keyup',ev=>{if(ev.key!==' '||!AS.keyAt)return;const held=Date.now()-AS.keyAt;AS.keyAt=0;if(held>600&&AS.mic)asRecStop()},true);
-/* myszka: naciśnięcie zaczyna, przytrzymanie ponad 0,6 s kończy po puszczeniu; dotyk i klawiatura: klik przełącza */
-document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.target.closest('[data-asmic]');if(!b||ev.pointerType!=='mouse'||ev.button!==0||b.disabled)return;
-  ev.preventDefault();AS.skipClick=true;if(AS.mic==='rec'||AS.mic==='start'){asRecStop();return}AS.pressAt=Date.now();asRecStart()});
-document.addEventListener('pointerup',()=>{if(!AS.pressAt)return;const held=Date.now()-AS.pressAt;AS.pressAt=0;if(held>600&&AS.mic)asRecStop()});
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-ashist],[data-asnew],[data-asmic],[data-ascancel],[data-asq]');if(!b)return;
+  if(AS.mic==='rec'||AS.mic==='start'){voiceStop();return}
+  AS.keyAt=Date.now();if(!asPage())location.hash='#asystent';voiceStart()},true);
+document.addEventListener('keyup',ev=>{if(ev.key!==' '||!AS.keyAt)return;const held=Date.now()-AS.keyAt;AS.keyAt=0;if(held>600&&AS.mic)voiceStop()},true);
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-ashist],[data-asnew],[data-ascancel],[data-asq]');if(!b)return;
   ev.preventDefault();
   if(b.dataset.ashist!=null){AS.hist=!AS.hist;asRender()}
   else if(b.dataset.asnew!=null){if(AS.pending)return;if(!LIVE){say(PRV);return}
     post('/api/asystent/nowa',{}).then(async()=>{AS.messages=[];AS.error='';AS.hist=false;AS.mcount=0;await apLibLoad();render()})}
-  else if(b.dataset.asmic!=null){if(AS.skipClick){AS.skipClick=false;return}if(AS.mic==='rec'||AS.mic==='start')asRecStop();else asRecStart()}
-  else if(b.dataset.ascancel!=null)asRecStop(true);
+  else if(b.dataset.ascancel!=null)voiceStop(true);
   else if(b.dataset.asq!=null){if(asMode()==='sceny'){ASC.ask(b.dataset.asq);return}if(!asPage())location.hash='#asystent';asSend(b.dataset.asq)}
 });
 document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset||f.dataset.asform==null)return;ev.preventDefault();ev.stopPropagation();
@@ -11538,6 +11641,8 @@ document.addEventListener('submit',ev=>{
   else if(f.dataset.addc){ti.value='';addTask(f.dataset.pid,{campaign:f.dataset.addc},v);ti.focus()}
 });
 document.addEventListener('input',ev=>{
+  const ta=ev.target.closest?.('.pjd-f textarea'),chat=ta&&PJC[ta.form.dataset.pchat];
+  if(chat&&!ta.value.trim())chat.spoken=false;
   if(ev.target.dataset&&ev.target.dataset.edtxt!=null){edInput(ev.target);return}
   if(ev.target.dataset&&ev.target.dataset.drq!=null){const pid=ev.target.dataset.drq,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={});P0.q=ev.target.value.trim();
     const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);return}

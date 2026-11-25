@@ -40,7 +40,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
                                czyści rozmowę
   GET  /api/asystent/karty     biblioteka kart asystenta (zapisane, wbudowane, przypięte, ukryte);
   POST /api/asystent/karty     {"zapisz": karta} | {"usun": id} | {"przypiete": [id]} | {"ukryj": id} | {"pokaz": id}
-  POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> rozpoznany tekst -> wiadomość do asystenta;
+  POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> wiadomość do asystenta albo tekst (?draft=1);
                                POST /api/asystent/glos/start wczytuje model mowy w tle
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
@@ -2111,7 +2111,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
                                                              b.get("folder", ""), b.get("path", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(
               b.get("project", ""), b.get("message", ""), str(b.get("task") or ""), b.get("execute") is True,
-              b.get("attach") if isinstance(b.get("attach"), dict) else None),
+              b.get("attach") if isinstance(b.get("attach"), dict) else None, b.get("spoken") is True),
           "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
                                                                  b.get("open", "")),
           "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
@@ -4171,7 +4171,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _voice_upload(self, query):
         """POST /api/asystent/glos?view=&open=: nagranie z mikrofonu (audio/webm z Chrome, audio/mp4 z Safari, do
-        4 MB) -> rozpoznany tekst -> wiadomość do asystenta. Odpowiedź: {"text"} i stan jak POST /api/asystent."""
+        4 MB) -> rozpoznany tekst. draft=1 zwraca sam tekst, w pozostałych przypadkach wysyła go do asystenta."""
         q = parse_qs(query)
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         if not (ctype.startswith("audio/") or ctype in ("video/webm", "video/mp4")):
@@ -4183,7 +4183,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, json.dumps({"ok": False, "error": err.replace("Plik", "Nagranie")},
                                               ensure_ascii=False), "application/json; charset=utf-8")
         code, err, extra = get_agents().assistant_voice(ctype, data, (q.get("view") or [""])[0],
-                                                        (q.get("open") or [""])[0])
+                                                        (q.get("open") or [""])[0], q.get("draft") == ["1"])
         return self._send(code, json.dumps(dict(extra, ok=200 <= code < 300, error=err), ensure_ascii=False),
                           "application/json; charset=utf-8")
 

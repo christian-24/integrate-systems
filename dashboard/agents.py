@@ -1847,13 +1847,15 @@ class Manager:
         """Rozmowa w projekcie, do której trafiają wiadomości o zadaniu: rozmowa projektu (albo części) zadania."""
         return self._project_chat_file(task["project"])
 
-    def chat_execute(self, task, index, text, pins=None, ref=True):
+    def chat_execute(self, task, index, text, pins=None, ref=True, spoken=False):
         """„Wyślij i wykonaj” (Rozmowa w projekcie z odnośnikiem do zadania, „Do poprawy”, odbiór): wiadomość trafia
         pod zadanie jako `poprawka:` (polecenie dla agenta), zadanie wraca do [ ] (zrobione, w toku, do odbioru,
         blokada), potem launch_task albo wiadomość do pracującego agenta. Bez modelu. Wiadomość i stan zapisują się
         w Rozmowie w projekcie zadania. Zwraca (200, "", {"status": wiadomość panelu}) albo błąd zapisu rozmowy."""
         file = self.task_chat_file(task)
         mine = {"role": "ty", "text": text, "at": now_iso(), "exec": True}
+        if spoken:
+            mine["spoken"] = True
         if ref:
             mine["task"] = {"id": task["id"], "title": task["title"], "project": task["project"]}
         if pins:
@@ -2460,7 +2462,7 @@ class Manager:
             lines.append("Ostatnie uruchomienie agenta: brak.")
         return "\n".join(lines)
 
-    def project_chat_send(self, pid, message, task_id="", execute=False, attach=None):
+    def project_chat_send(self, pid, message, task_id="", execute=False, attach=None, spoken=False):
         """Wiadomość właściciela w Rozmowie w projekcie; odpowiedź w tle (project_chat_get). (kod, błąd, dodatki).
         task_id: odnośnik do zadania („Zapytaj o to zadanie”): kontekst zadania przed wiadomością; execute (albo
         „zrób to” na końcu) przy zadaniu agenta: polecenie dla agenta bez modelu (chat_execute). attach: załącznik
@@ -2484,10 +2486,10 @@ class Manager:
             if not task or task["project"] not in fam:
                 return 404, "Nie ma tego zadania w tym projekcie.", {}
         if isinstance(attach, dict) and attach.get("kind") == "strona":
-            return self._site_note(pid, fam, text, attach)
+            return self._site_note(pid, fam, text, attach, spoken)
         if task and (execute is True or EXEC_END.search(text)):
             if task.get("executor") in AGENT_EXECUTORS and task.get("kind") != "publikacja":
-                return self.chat_execute(task, index, text)
+                return self.chat_execute(task, index, text, spoken=spoken)
         path = self.tool_path("claude")
         if not path:
             return 409, "Brak polecenia claude", {}
@@ -2509,6 +2511,8 @@ class Manager:
             chat = self._chat_read(file)
             session = self._chat_session(chat)
             mine = {"role": "ty", "text": text, "at": now_iso()}
+            if spoken:
+                mine["spoken"] = True
             if task:
                 mine["task"] = {"id": task["id"], "title": task["title"], "project": task["project"]}
             chat["messages"].append(mine)
@@ -2542,7 +2546,7 @@ class Manager:
             return 500, "Nie udało się uruchomić rozmowy.", {}
         return 202, "", {"pending": True}
 
-    def _site_note(self, pid, fam, text, attach):
+    def _site_note(self, pid, fam, text, attach, spoken=False):
         """Uwaga ze Strony wysłana z Rozmowy w projekcie (załącznik: podstrona, widok, wskazany element): ta sama
         droga co dawny formularz Strony (site.add_note). Wiadomość i stan zostają w rozmowie."""
         site_pid = str(attach.get("project") or pid)
@@ -2564,8 +2568,10 @@ class Manager:
             msg["text"] = note["error"]
         else:
             msg["text"] = "Uwaga do strony: zadanie „%s” dla agenta." % note.get("title", "")
-        self._chat_append(self._project_chat_file(pid), [{"role": "ty", "text": text, "at": now_iso(), "attach": att},
-                                                         msg])
+        mine = {"role": "ty", "text": text, "at": now_iso(), "attach": att}
+        if spoken:
+            mine["spoken"] = True
+        self._chat_append(self._project_chat_file(pid), [mine, msg])
         return 200, "", dict(extra, status=self.panel_view([msg])[0])
 
     # ---------- asystent: rozmowa o wszystkich projektach (Start i przycisk w każdym widoku) ----------
@@ -2890,8 +2896,8 @@ class Manager:
         return ("Panel projektów. Projekty: %s. Zadania, etapy, marketing, publikacje, zgoda, odbiór." %
                 ", ".join(names[:30]))[:600]
 
-    def assistant_voice(self, ctype, blob, view="", opened=""):
-        """POST /api/asystent/glos: nagranie -> tekst -> wiadomość do asystenta. Zwraca (kod, błąd, {"text", …})."""
+    def assistant_voice(self, ctype, blob, view="", opened="", draft=False):
+        """Rozpoznaje nagranie; przy draft zwraca tekst do edycji, inaczej wysyła go do asystenta."""
         if not self.voice.available():
             return 409, "Rozpoznawanie mowy nie jest zainstalowane na serwerze.", {"voice": False}
         ext, err = glos.check_audio(ctype, blob)
@@ -2903,6 +2909,8 @@ class Manager:
             return code, err, {"voice": self.voice.available()}
         if not text:
             return 422, "Nie rozpoznano mowy. Powiedz jeszcze raz, bliżej mikrofonu.", {}
+        if draft:
+            return 200, "", {"text": text[:CHAT_MAX]}
         code, err, extra = self.assistant_send(text, view, opened)
         return code, err, dict(extra, text=text[:CHAT_MAX])
 
