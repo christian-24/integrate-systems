@@ -49,8 +49,9 @@ CAMPAIGN_DOC = ("kampania", "Kampania", "kampanie/<nazwa>.md", "Jedna kampania w
                 ["Grupa docelowa", "Przekaz", "Harmonogram", "Wyniki i wnioski"])
 CAMPAIGN_META = ["stan", "cel", "kanały", "start", "koniec"]
 
-STATE = {" ": "todo", "~": "doing", "!": "blocked", "x": "done", "X": "done"}
-CHAR = {"todo": " ", "doing": "~", "blocked": "!", "done": "x"}
+STATE = {" ": "todo", "~": "doing", "!": "blocked", "x": "done", "X": "done", "-": "cancelled"}
+CHAR = {"todo": " ", "doing": "~", "blocked": "!", "done": "x", "cancelled": "-"}
+CLOSED_TASK_STATES = ("done", "cancelled")
 WHO = {"agent": "agent", "claude": "claude", "claude code": "claude", "codex": "codex", "ty": "ty", "ja": "ty"}
 WHERE = {"pc": "pc", "windows": "pc", "mac": "mac", "chmura": "cloud", "cloud": "cloud"}
 SLOT = {"dzień": "dzień", "dzien": "dzień", "noc": "noc"}
@@ -83,7 +84,7 @@ COUNTERS = {"zaproszenia": "zaproszenia", "przyjęte": "przyjęte", "przyjete": 
 RESULTS_TITLE = "Wyniki i wnioski"
 CAMPAIGN_FILE = re.compile(r"^kampanie/[^/\\]+\.md$")
 
-TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!])\]\s+(.*\S)\s*$")
+TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!-])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
 INSTAGRAM = re.compile(r"^[A-Za-z0-9._]{1,30}$")      # nazwa profilu Instagram (pole karty instagram:)
 TIKTOK = re.compile(r"^[A-Za-z0-9._]{2,24}$")         # nazwa profilu TikTok (pole karty tiktok:)
@@ -222,6 +223,14 @@ def parse_task(line):
         elif k == "kiedy":
             t["date"] = v if DATE.match(v) else ""
             bad = None if t["date"] else "kiedy: %s (format RRRR-MM-DD)" % v
+        elif k == "anulowano":
+            try:
+                t["cancelledAt"] = _day(v)
+            except ValueError:
+                t["cancelledAt"] = ""
+                bad = "anulowano: podaj datę RRRR-MM-DD"
+        elif k == "powód":
+            t["cancelReason"] = v
         elif k == "pora":
             t["slot"] = SLOT.get(v.lower(), "")
             bad = None if t["slot"] else "pora: %s (dozwolone: dzień, noc)" % v
@@ -665,7 +674,7 @@ def task_gaps(stages, tasks, today=None, active=True, campaigns=()):
     today = today or datetime.date.today()
     soon = (today + datetime.timedelta(days=OWNER_SOON_DAYS)).isoformat()
     dated = {s["id"] for s in stages if s["date"] and not s["closed"]}
-    open_ = [t for t in tasks if t["state"] != "done" and t.get("kind", "zadanie") == "zadanie"]
+    open_ = [t for t in tasks if t["state"] not in CLOSED_TASK_STATES and t.get("kind", "zadanie") == "zadanie"]
     no_done = [t["title"] for t in open_ if t["stage"] in dated and not t["detail"]["doneWhen"]]
     long_ = [t["title"] for t in open_ if len(t["title"]) > TITLE_MAX]
     nouns = [t["title"] for t in open_ if NOUN_START.match((t["title"].split() or [""])[0].lower())]
@@ -742,14 +751,17 @@ def link_after(tasks):
             for frag in t.get("after") or []:
                 low = frag.lower()
                 hit = next((x for L in [rows] + others for x in L if x is not t and low in x["title"].lower()), None)
-                out.append({"title": hit["title"], "done": hit["state"] == "done", "id": hit["id"]} if hit
-                           else {"title": frag, "done": False, "id": ""})
+                dep = {"title": hit["title"], "done": hit["state"] == "done", "id": hit["id"]} if hit else {
+                    "title": frag, "done": False, "id": ""}
+                if hit and hit["state"] == "cancelled":
+                    dep.update(cancelled=True, fragment=frag)
+                out.append(dep)
             t["waitingFor"] = out
     by_id = {t["id"]: t for t in tasks}
     for t in tasks:
         t["unlocks"] = []
     for t in sorted(tasks, key=lambda x: (x["project"], x["file"], x["line"])):
-        if t["state"] == "done":
+        if t["state"] in CLOSED_TASK_STATES:
             continue
         for w in t["waitingFor"]:
             pred = by_id.get(w.get("id"))
@@ -1067,7 +1079,7 @@ def date_key(value, today=None):
 def next_step(tasks, today=None):
     """Następny krok projektu: otwarte zadanie z najwcześniejszą datą, inaczej pierwsze otwarte z polem kto.
     {"title", "taskId", "executor", "date"} albo None."""
-    open_ = [(i, t) for i, t in enumerate(tasks) if t["state"] != "done"]
+    open_ = [(i, t) for i, t in enumerate(tasks) if t["state"] not in CLOSED_TASK_STATES]
     dated = sorted(((date_key(t["date"], today), i, t) for i, t in open_ if date_key(t["date"], today)),
                    key=lambda x: x[:2])
     pick = dated[0][2] if dated else next((t for _, t in open_ if t["executor"]), None)
@@ -1220,7 +1232,7 @@ def site_fields(meta, errors):
 
 def stage_done(stage, tasks):
     mine = [t for t in tasks if t["stage"] == stage["id"]]
-    return stage["closed"] or bool(mine and all(t["state"] == "done" for t in mine))
+    return stage["closed"] or bool(mine and all(t["state"] in CLOSED_TASK_STATES for t in mine))
 
 
 def compute_phase(state, karta_doc, stages, tasks, campaigns):
@@ -1251,7 +1263,7 @@ def owner_needs(task):
 
 def for_owner(task):
     """Otwarte zadanie, które czeka na właściciela: kto: ty albo pole wymaga (po regule owner_needs)."""
-    return task.get("state") != "done" and (task.get("executor") == "ty" or bool(owner_needs(task)))
+    return task.get("state") not in CLOSED_TASK_STATES and (task.get("executor") == "ty" or bool(owner_needs(task)))
 
 
 def task_key(task):
@@ -1260,7 +1272,7 @@ def task_key(task):
 
 def task_status(task):
     """"doing" ([~] bez odbioru), "review" (otwarte z wymaga: odbiór) albo ""."""
-    if task.get("state") == "done":
+    if task.get("state") in CLOSED_TASK_STATES:
         return ""
     if "odbiór" in (task.get("needs") or ([task["needsYou"]] if task.get("needsYou") else [])):
         return "review"
@@ -1315,7 +1327,7 @@ def owner_counts(projects, stages, tasks, today):
                 day = date_key(q.get("date"), today)
                 items.append((day, bool(day and day < key), bool(day and day <= key)))
     out = {"youToday": 0, "youLate": 0, "youWeek": 0, "youLater": 0,
-           "late": sum(1 for t in tasks if t.get("state") != "done" and is_late(t))}
+           "late": sum(1 for t in tasks if t.get("state") not in CLOSED_TASK_STATES and is_late(t))}
     for day, late, now in items:
         if now:
             out["youToday"] += 1
@@ -1379,7 +1391,7 @@ def _task_file(root, file_rel):
 
 def set_state(root, file_rel, line_no, title, state):
     """Zmienia znacznik [ ] w jednym wierszu. False, gdy wiersz zmienił się od odczytu."""
-    if state not in CHAR:
+    if state not in ALLOWED["state"]:
         raise ValueError("nieznany stan")
     path = _task_file(root, file_rel)
     with open(path, encoding="utf-8", newline="") as f:
@@ -1390,7 +1402,34 @@ def set_state(root, file_rel, line_no, title, state):
     t = parse_task(lines[i].rstrip("\r"))
     if not t or t["title"] != title:
         return False
-    lines[i] = re.sub(r"\[[ xX~!]\]", "[%s]" % CHAR[state], lines[i], count=1)
+    if t["state"] == "cancelled":
+        return False
+    lines[i] = re.sub(r"\[[ xX~!-]\]", "[%s]" % CHAR[state], lines[i], count=1)
+    write_atomic(path, "\n".join(lines))
+    return True
+
+
+def change_cancellation(root, file_rel, line_no, title, cancel, reason=""):
+    """Zapisuje anulowanie lub przywrócenie, zachowując resztę wiersza i szczegóły."""
+    path = _task_file(root, file_rel)
+    lines = _lines(path)
+    i = line_no - 1
+    if not 0 <= i < len(lines):
+        return False
+    raw = lines[i]
+    task = parse_task(raw.rstrip("\r"))
+    if not task or task["title"] != title or task["state"] == "done":
+        return False
+    if (task["state"] == "cancelled") == cancel:
+        return True
+    parts = [part for part in raw.rstrip("\r").split("|")
+             if part.partition(":")[0].strip().lower() not in ("anulowano", "powód")]
+    row = re.sub(r"\[[ xX~!-]\]", "[-]" if cancel else "[ ]", "|".join(parts).rstrip(), count=1)
+    if cancel:
+        row += " | anulowano: " + datetime.date.today().isoformat()
+        if reason:
+            row += " | powód: " + reason
+    lines[i] = row + ("\r" if raw.endswith("\r") else "")
     write_atomic(path, "\n".join(lines))
     return True
 
@@ -1398,7 +1437,7 @@ def set_state(root, file_rel, line_no, title, state):
 WHERE_OUT = {"pc": "pc", "mac": "mac", "cloud": "chmura"}
 CAMPAIGN_STATE_OUT = {"plan": "plan", "active": "w toku", "done": "zakończona", "paused": "wstrzymana"}
 KNOWN = {"kto", "gdzie", "kiedy", "pora", "czas", "wymaga", "blokada", "kanał", "kanal", "po"}
-ALLOWED = {"state": set(CHAR), "executor": {"", "agent", "claude", "codex", "ty"}, "machine": {"", "pc", "mac", "cloud"},
+ALLOWED = {"state": set(CHAR) - {"cancelled"}, "executor": {"", "agent", "claude", "codex", "ty"}, "machine": {"", "pc", "mac", "cloud"},
            "slot": {"", "dzień", "noc"}, "needsYou": {"", "zgoda", "odbiór"}}
 
 
@@ -1432,7 +1471,7 @@ def _lines(path):
         return f.read().split("\n")
 
 
-def update_task(root, file_rel, line_no, title, changes):
+def update_task(root, file_rel, line_no, title, changes, *, preserve_after=False):
     """Zmienia pola jednego wiersza zadania. False, gdy wiersz zmienił się od odczytu."""
     path = _task_file(root, file_rel)
     lines = _lines(path)
@@ -1445,6 +1484,8 @@ def update_task(root, file_rel, line_no, title, changes):
         return False
     if not isinstance(changes, dict) or not changes:
         raise ValueError("brak zmian")
+    if t["state"] == "cancelled" and "state" in changes:
+        return False
     for k, v in changes.items():
         if k == "title":
             v = _clean(v, 160)
@@ -1471,7 +1512,8 @@ def update_task(root, file_rel, line_no, title, changes):
         elif k == "after":
             if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
                 raise ValueError("po: lista fragmentów tytułów")
-            v = [x for x in (_clean(x, 120).replace(",", " ").strip() for x in v) if x][:10]
+            if not preserve_after:
+                v = [x for x in (_clean(x, 120).replace(",", " ").strip() for x in v) if x][:10]
         else:
             raise ValueError("nieznane pole")
         t[k] = v
@@ -1874,7 +1916,7 @@ def _match_task(tasks, frag, exclude=None, open_first=True):
     low = frag.lower()
     hits = [t for t in tasks if t is not exclude and low in t["title"].lower()]
     if open_first:
-        open_ = [t for t in hits if t["state"] != "done"]
+        open_ = [t for t in hits if t["state"] not in CLOSED_TASK_STATES]
         if len(open_) == 1:
             return open_[0]
         if len(open_) > 1:
@@ -1927,7 +1969,7 @@ def _apply_effect(root, effect, note):
     _, tasks, _ = parse_tasks("\n".join(_lines(path)), "x")
     if op == "nowe":
         t = parse_task("- [ ] " + args[0])
-        if any(x["title"].lower() == t["title"].lower() and x["state"] != "done" for x in tasks):
+        if any(x["title"].lower() == t["title"].lower() and x["state"] not in CLOSED_TASK_STATES for x in tasks):
             raise ValueError("otwarte zadanie „%s” już jest" % t["title"])
         _insert_inbox(path, ["- [ ] " + args[0], DETAIL_INDENT + note])
         return t["title"]
@@ -2339,7 +2381,7 @@ def cmd_sprawdz(folders):
     for folder in folders:
         d = read_project(folder)
         p = d["project"]
-        open_tasks = sum(1 for t in d["tasks"] if t["state"] != "done")
+        open_tasks = sum(1 for t in d["tasks"] if t["state"] not in CLOSED_TASK_STATES)
         print("%s  (%s)" % (p["name"], os.path.abspath(os.path.expanduser(folder))))
         print("  standard: %d z %d dokumentów kompletnych · zadania otwarte: %d · etapy: %d · kampanie: %d"
               % (p["docsOk"], p["docsTotal"], open_tasks, len(d["stages"]), len(d["campaigns"])))

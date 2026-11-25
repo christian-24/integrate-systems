@@ -2759,6 +2759,8 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
   .prx-more>summary,.ed-mn>summary,.drt-t{min-width:44px}
   .ap-ib{width:44px;height:44px}
 }
+.task-lifecycle{margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--line)}
+.task-cancel-reason{overflow-wrap:anywhere}
 </style>
 
 <div class="app">
@@ -2835,7 +2837,8 @@ const WHO={agent:{n:'Agent',c:'var(--who-none)',i:'A'},claude:{n:'Claude',c:'var
 const COLS=[['todo','Do zrobienia'],['wip','W toku'],['rev','Do odbioru'],['done','Zrobione']];
 const ST={ok:['out','w normie'],risk:['yellow','zagrożony'],late:['red','po terminie'],you:['purple','czeka na Ciebie'],done:['grey','zrobione'],none:['out','bez terminu'],
   backlog:['grey','backlog'],paused:['grey','wstrzymany'],finished:['grey','zakończony']};
-const TS={todo:['grey','do zrobienia'],doing:['blue','w toku'],blocked:['red','zablokowane'],done:['green','zrobione']};
+const taskClosed=t=>t.state==='done'||t.state==='cancelled';
+const TS={cancelled:['grey','anulowane'],todo:['grey','do zrobienia'],doing:['blue','w toku'],blocked:['red','zablokowane'],done:['green','zrobione']};
 const CST={plan:['out','planowana'],active:['green','w toku'],done:['grey','zakończona'],paused:['yellow','wstrzymana']};
 /* D13: panel i agenci na serwerze w chmurze; Mac do Chrome, iOS i Androida; Windows na godziny (pole gdzie: pc) */
 const MACH={pc:'Windows',mac:'Mac',cloud:'serwer'};
@@ -3055,12 +3058,12 @@ function normCosts(c){
 }
 /* następny krok: z serwera, a gdy serwer go nie podaje, liczony tak samo z zadań */
 function calcNext(p,o){
-  const open=o.tasks.filter(t=>inP(p,t.project)&&t.state!=='done');
+  const open=o.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t));
   const dated=open.filter(t=>isDay(t.date)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   const t=dated[0]||open.find(t=>t.executor);
   return t?{title:t.title,taskId:t.id,executor:t.executor||'',date:isDay(t.date)?t.date:''}:null;
 }
-const colOf=t=>t.state==='done'?'done':t.needsYou==='odbiór'?'rev':t.state==='blocked'?'blocked':t.state==='doing'?'wip':'todo';
+const colOf=t=>t.state==='cancelled'?'cancelled':t.state==='done'?'done':t.needsYou==='odbiór'?'rev':t.state==='blocked'?'blocked':t.state==='doing'?'wip':'todo';
 function initials(n){const w=String(n).split(/[\s\-_.()\[\],:;\/]+/).filter(Boolean);return ((w.length>1?w[0][0]+w[1][0]:String(n).slice(0,2))||'?').toUpperCase()}
 function calcPhase(p,o){
   if(p.state==='backlog')return 'pomysl';
@@ -3109,16 +3112,18 @@ function derive(o){
     if(t.after.length){const L=[t.file].concat((filesOf[t.project]||[]).filter(f=>f!==t.file)).map(f=>byFile[t.project+'\n'+f]||[]);w=[];
       t.after.forEach(fr=>{const f=fr.trim().toLowerCase();let m=null;
         if(f)for(const R of L){m=R.find(x=>x!==t&&x.title.toLowerCase().indexOf(f)>=0)||null;if(m)break}
-        if(m){w.push({title:m.title,done:m.state==='done',file:m.file!==t.file?m.file:''});if(m.deps.indexOf(t)<0)m.deps.push(t)}
+        if(m){w.push({title:m.title,done:m.state==='done',cancelled:m.state==='cancelled',fragment:fr,file:m.file!==t.file?m.file:''});if(m.deps.indexOf(t)<0)m.deps.push(t)}
         else if(f)w.push({title:fr.trim(),done:false,missing:true})})}
-    t.waits=t.state==='done'?[]:w.filter(x=>!x.done).map(x=>x.title);
+    t.cancelledDeps=taskClosed(t)?[]:w.filter(x=>x.cancelled);
+    t.pendingDeps=taskClosed(t)?[]:w.filter(x=>!x.done&&!x.cancelled).map(x=>x.title);
+    t.waits=taskClosed(t)?[]:w.filter(x=>!x.done).map(x=>x.title);
     /* brakujące poprzedniki (fragment po: bez wiersza; z serwera: id puste) — jedno źródło dla Blokad */
-    t.missing=t.state==='done'?[]:w.filter(x=>!x.done&&(x.missing||(x.id===''&&!t.after.length))).map(x=>x.title);
+    t.missing=taskClosed(t)?[]:w.filter(x=>!x.done&&(x.missing||(x.id===''&&!t.after.length))).map(x=>x.title);
   });
   /* odblokowania: zadania z po: na tym zadaniu; z serwera (unlocks), a bez pola liczone tak samo z po: */
   o.tasks.forEach(t=>{
-    const L=t.unlocksIn?t.unlocksIn.map(u=>{const x=u.id?o.tasks.find(y=>y.id===u.id):null;return Object.assign({},u,{done:x?x.state==='done':false})})
-      :t.deps.map(x=>({id:x.id,title:x.title,executor:x.executor||'',date:isDay(x.date)?x.date:'',done:x.state==='done'}));
+    const L=t.unlocksIn?t.unlocksIn.map(u=>{const x=u.id?o.tasks.find(y=>y.id===u.id):null;return Object.assign({},u,{done:x?taskClosed(x):false})})
+      :t.deps.map(x=>({id:x.id,title:x.title,executor:x.executor||'',date:isDay(x.date)?x.date:'',done:taskClosed(x)}));
     t.unlocksL=L;
     const n=L.filter(u=>!u.done).length;
     t.unlockCount=!L.length&&t.unlockCountIn>0?t.unlockCountIn:n;
@@ -3128,8 +3133,8 @@ function derive(o){
     const pe=prevEnd[s.project];
     s.start=isDay(s.date)?(pe&&pe<s.date?addK(pe,1):addK(s.date,-13)):'';
     if(isDay(s.date))prevEnd[s.project]=s.date;
-    const ts=o.tasks.filter(t=>t.stage===s.id),open=ts.filter(t=>t.state!=='done');
-    s.total=ts.length;s.open=open.length;
+    const ts=o.tasks.filter(t=>t.stage===s.id),open=ts.filter(t=>!taskClosed(t));
+    s.total=ts.filter(t=>t.state!=='cancelled').length;s.open=open.length;
     s.done=!!s.closed||(ts.length>0&&!open.length);
     let need='';
     if(open.length&&open.every(t=>t.executor==='ty'||t.needsYou))need=open.every(t=>t.needsYou==='odbiór')?'Twój odbiór':open.every(t=>t.needsYou==='zgoda')?'Twoją zgodę':'Ciebie';
@@ -3139,11 +3144,11 @@ function derive(o){
   });
   views.forEach(p=>{
     const ts=o.tasks.filter(t=>inP(p,t.project)&&t.kind!=='publikacja');
-    const c={todo:0,wip:0,rev:0,blocked:0,done:0,all:ts.length};ts.forEach(t=>c[t.col]++);
+    const c={todo:0,wip:0,rev:0,blocked:0,done:0,cancelled:0,all:ts.filter(t=>t.state!=='cancelled').length};ts.forEach(t=>c[t.col]++);
     p.c=c;p.tasksTotal=c.all;p.tasksDone=c.done;
     p.stagesL=o.stages.filter(s=>inP(p,s.project));
     p.cur=p.stagesL.find(s=>!s.done)||null;
-    p.lateTasks=ts.filter(t=>t.state!=='done'&&isDay(t.date)&&t.date<o.todayKey).length;
+    p.lateTasks=ts.filter(t=>!taskClosed(t)&&isDay(t.date)&&t.date<o.todayKey).length;
     p.phase=p.phaseIn||calcPhase(p,o);p.phaseSource=p.phaseIn?p.phaseSrcIn:'wyliczona';
     p.next=p.nextIn===undefined||p.mem.size>1?calcNext(p,o):p.nextIn;
     const st=p.stagesL.filter(s=>!s.done).map(s=>s.st);
@@ -3155,9 +3160,9 @@ function derive(o){
 const P=id=>D.byP[id]||null;
 const projName=id=>{const p=P(id);return p?p.name:(id||'')};
 const stageOf=id=>id?D.stages.find(s=>s.id===id)||null:null;
-const isLate=t=>t.state!=='done'&&isDay(t.date)&&t.date<D.todayKey;
-const needsMe=t=>t.state!=='done'&&(t.executor==='ty'||!!t.needsYou);
-const lateT=t=>{if(t.state==='done')return false;if(isLate(t))return true;const s=stageOf(t.stage);return !!s&&s.st==='late'};
+const isLate=t=>!taskClosed(t)&&isDay(t.date)&&t.date<D.todayKey;
+const needsMe=t=>!taskClosed(t)&&(t.executor==='ty'||!!t.needsYou);
+const lateT=t=>{if(taskClosed(t))return false;if(isLate(t))return true;const s=stageOf(t.stage);return !!s&&s.st==='late'};
 const pid2=p=>encodeURIComponent(p.id);
 /* adres projektu; część projektu i własna część projektu głównego: adres projektu głównego z ?cz=<id części> */
 const phref=(p,tab)=>{const t=tab&&tab!=='plan'?'-'+tab:'';
@@ -3167,7 +3172,7 @@ const originOf=p=>p&&p.origin?p.origin:(D.projectsSource==='registry'?'registry'
 const canMeta=p=>!LIVE||(p?originOf(p)!=='sample':D.projectsSource==='registry');
 function facts(){
   if(FX)return FX;
-  const open=D.tasks.filter(t=>t.state!=='done'),you=open.filter(needsMe).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.title.localeCompare(b.title));
+  const open=D.tasks.filter(t=>!taskClosed(t)),you=open.filter(needsMe).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999')||a.title.localeCompare(b.title));
   const qs=[];D.allP.forEach(p=>p.questions.forEach(x=>{if(!x.answer)qs.push({p:p,n:x.n,text:x.text,date:x.date||'',proposal:x.proposal||'',effects:x.effects||[],options:x.options||[]})}));
   return FX={qs:qs,open:open,you:you,late:open.filter(lateT),lateOwn:open.filter(isLate),blocked:open.filter(t=>t.state==='blocked'),
     lateStages:D.stages.filter(s=>s.st==='late'),riskStages:D.stages.filter(s=>s.st==='risk')};
@@ -3178,7 +3183,7 @@ function evDay(e){if(e.allDay)return e.d1<D.todayKey?null:(e.d0<D.todayKey?D.tod
 function deadlines(){
   const out=[];
   D.stages.forEach(s=>{if(!s.done&&isDay(s.date))out.push({d:s.date,t:'Koniec etapu „'+s.title+'”',p:s.project,kind:'etap',st:s.st,stage:s})});
-  D.tasks.forEach(t=>{if(t.state!=='done'&&isDay(t.date))out.push({d:t.date,t:t.title,p:t.project,kind:t.kind==='publikacja'?'publikacja':'zadanie',task:t})});
+  D.tasks.forEach(t=>{if(!taskClosed(t)&&isDay(t.date))out.push({d:t.date,t:t.title,p:t.project,kind:t.kind==='publikacja'?'publikacja':'zadanie',task:t})});
   D.cal.events.forEach(e=>{if(hiddenCals.has(e.calId))return;const k=evDay(e);if(k)out.push({d:k,t:e.title,p:null,kind:'kalendarz',ev:e,tm:e.allDay?'cały dzień':hm(e.s.getHours()*60+e.s.getMinutes())})});
   return out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:(a.tm||'')<(b.tm||'')?-1:1);
 }
@@ -3408,7 +3413,7 @@ function dateR(k,cls){if(!isDay(k))return '<div class="r">—</div>';const d=dTo
 /* etykieta zależy od rodzaju (publikacja „Opublikowane”, film od panelu „Obejrzane”); akcja ta sama */
 const ACTB=t=>t.needsYou==='zgoda'?['ok','Zatwierdź']:t.needsYou==='odbiór'?['accept','Odbierz']:isFilmTask(t)?['done','Obejrzane']:t.kind==='publikacja'?['done','Opublikowane']:['done','Zrobione'];
 const shortT=(s,n)=>s.length>n?s.slice(0,n-1).trim()+'…':s;
-const waitLz=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="ty-wait" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na:</span> '+esc(shortT(t.waits[0],48))+(t.waits.length>1?' <span class="muted">i '+(t.waits.length-1)+' '+pl(t.waits.length-1,'inne','inne','innych')+'</span>':'')+'</span>':'';
+const waitLz=t=>t.cancelledDeps?.length?'<span class="lz yellow">poprzednik anulowany</span>':t.waits&&t.waits.length&&!taskClosed(t)?'<span class="ty-wait" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na:</span> '+esc(shortT(t.waits[0],48))+(t.waits.length>1?' <span class="muted">i '+(t.waits.length-1)+' '+pl(t.waits.length-1,'inne','inne','innych')+'</span>':'')+'</span>':'';
 /* Twoje sprawy (zadania kto: ty i z wymaga, pytania bez odpowiedzi) z projektów poza wstrzymanymi i backlogiem, w trzech
    grupach. Reguła jak projekt.owner_counts (serwer, pm.py): liczby D.youToday, D.youLate, D.youWeek, D.youLater są
    długościami tych list (test_asystent_duzy). youToday: po terminie (data przed dziś albo etap po terminie) albo z datą
@@ -3416,7 +3421,7 @@ const waitLz=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="ty-wait"
    youLater: później albo bez daty. checked: otwarte zadania, które kontrola serwera („sprawdza:”) uznała za zrobione;
    poza listami, do zamknięcia. */
 const NOWR=x=>x.late?0:x.need==='zgoda'?1:x.need==='odbiór'?2:x.q?4:3;
-const isChecked=t=>t.state!=='done'&&!!t.check&&t.check.ok===true;
+const isChecked=t=>!taskClosed(t)&&!!t.check&&t.check.ok===true;
 function youState(){
   const f=facts();if(f.ys)return f.ys;
   const endW=addK(D.todayKey,7),on=p=>!!p&&p.state!=='paused'&&p.state!=='backlog';
@@ -3502,11 +3507,11 @@ const helpL=(x,ns)=>(ns?'<div class="gw" title="'+esc(ns)+'">następny krok: '+m
 const pShort=p=>{const n=String(p&&p.name||''),i=n.indexOf('(');return i>0?n.slice(0,i).trim():n};
 const pvPrS=p=>p?'<span class="pv-pr" title="'+esc(p.name)+'">'+av(p,'sm')+'<span class="pv-nm">'+esc(pShort(p))+'</span></span>':'';
 /* Dla Ciebie: „czeka na N” i pierwszy tytuł w jednej linii (wielokropek), pełna lista w title i w szczegółach */
-const tyWait=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="ty-wait ty-one" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span></span>':'';
+const tyWait=t=>t.cancelledDeps?.length?'<span class="lz yellow">poprzednik anulowany</span>':t.waits&&t.waits.length&&!taskClosed(t)?'<span class="ty-wait ty-one" title="'+esc('Czeka na: '+t.waits.join('; '))+'"><span class="lz yellow">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span></span>':'';
 /* Dla Ciebie: kolumna .r: data (<time>), względny termin, minuty; w Dziś zadanie na dziś tylko „dziś”; po terminie na czerwono.
    Zadanie z terminem do dziś, które czeka na inne: „czeka na N zad.” (dlatego nie jest w Dziś) */
 function tyDate(x,grp){
-  const t=x.t,k=x.d,w=t&&t.waits&&t.waits.length&&t.state!=='done'?t.waits.length:0,late=!!k&&k<D.todayKey,now=grp==='dzis'&&k===D.todayKey;
+  const t=x.t,k=x.d,w=t&&t.waits&&t.waits.length&&!taskClosed(t)?t.waits.length:0,late=!!k&&k<D.todayKey,now=grp==='dzis'&&k===D.todayKey;
   const mn=x.min?'<span class="muted num">'+x.min+' min</span>':'';
   const d=!k?'<span class="muted">bez terminu</span>'+(mn?'<span class="ty-rel rmeta">'+mn+'</span>':''):'<span class="sr-only">termin </span><time datetime="'+esc(k)+'">'+(now?'dziś':ddl(k))+'</time>'+
     (now?(mn?'<span class="ty-rel rmeta">'+mn+'</span>':''):'<span class="ty-rel rmeta"><span class="'+(late?'ty-rl':'muted')+'">'+rel(k)+'</span>'+(mn?'<span class="muted" aria-hidden="true"> · </span>'+mn:'')+'</span>');
@@ -3560,7 +3565,7 @@ function todayRow(x,o){
   const tmr=!x.need&&t.executor==='ty'&&t.state!=='doing'&&!!x.d&&x.d<=D.todayKey&&(!ty||o.grp==='dzis')?
     '<button class="btn sec sm ty-tmr" data-ag="defer1" data-id="'+id+'" data-k="d1:'+id+'" aria-label="'+esc('Przesuń na jutro: '+t.title)+'" title="Przesuń termin na jutro">Jutro</button>':'';
   /* zgoda i odbiór: zamiast polecenia technicznego jedno zdanie skutku i podgląd wyniku w szczegółach */
-  const wn=t.waits&&t.waits.length&&t.state!=='done'?t.waits.length:0;
+  const wn=t.waits&&t.waits.length&&!taskClosed(t)?t.waits.length:0;
   /* zdanie o skutku zgody jest raz nad listą Decyzji; w wierszu tylko to, na co zgoda jeszcze czeka */
   const eff=x.need==='zgoda'&&wn?'Ruszy po Twojej zgodzie i po '+wn+' '+pl(wn,'zadaniu','zadaniach','zadaniach')+', na które czeka.':'';
   /* odbiór: wynik pokazuje strona odbioru („Obejrzyj”); tytuł wiersza nadal otwiera szczegóły zadania */
@@ -3745,10 +3750,10 @@ function dlRow(x,o){
     '<div class="r'+(showD&&d<0?' late':'')+'">'+act+dt+'</div></li>';
 }
 /* „czeka na” na karcie tablicy: krótko „czeka na N zadań”, tytuły w title (karty czekające są w zwiniętej grupie) */
-const waitLzC=t=>t.waits&&t.waits.length&&t.state!=='done'?'<span class="lz yellow tb-wt" title="'+esc('Czeka na: '+t.waits.join('; '))+'">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span>':'';
+const waitLzC=t=>t.cancelledDeps.length?'<span class="lz yellow tb-wt">poprzednik anulowany</span>':t.waits&&t.waits.length&&!taskClosed(t)?'<span class="lz yellow tb-wt" title="'+esc('Czeka na: '+t.waits.join('; '))+'">czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań')+'</span>':'';
 /* data na karcie: do 7 dni względnie („dziś”, „jutro”, „za 3 dni”, „po terminie 3 dni”), dalej „do 24.11”; pełna data w title */
 function tbDate(t){
-  if(!isDay(t.date)||t.state==='done')return '';
+  if(!isDay(t.date)||taskClosed(t))return '';
   const d=dTo(t.date),txt=d<0||d<=7?relN(d):'do '+dd(t.date);
   return '<span class="dl'+(d<0?' late':'')+'" title="'+esc(ddl(t.date))+'"><span class="sr-only">termin </span><time datetime="'+esc(t.date)+'">'+esc(txt)+'</time></span>';
 }
@@ -3765,11 +3770,12 @@ const pubEd=(t,a)=>a&&a[0]==='ok'&&t.kind==='publikacja'&&t.channel&&isDay(t.dat
 function card(t,showProj,old){
   const p=P(t.project),w=WHO[t.executor]||WHO[''],ar=D.agents?runOf(t):null,b=[],lt=lateT(t);
   if(t.state==='blocked')b.push('<span class="lz red">zablokowane</span>'+(t.blocked?'<span>'+esc(t.blocked)+'</span>':''));
-  (t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(BK_NEED[x]?BK_NEED[x][0]:x)+'</span>'));
+  if(t.state==='cancelled')b.push('<span class="lz grey">anulowane</span>');
+  if(!taskClosed(t))(t.needs&&t.needs.length?t.needs:t.needsYou?[t.needsYou]:[]).forEach(x=>b.push('<span class="lz purple">'+esc(BK_NEED[x]?BK_NEED[x][0]:x)+'</span>'));
   if(ar)b.push('<span class="lz blue">'+(ar.state==='running'?'agent pracuje':'agent w kolejce')+'</span>');
   else if(A.starting[t.id])b.push('<span class="lz grey">uruchamianie</span>');
   const wl=waitLzC(t);if(wl)b.push(wl);
-  const who=t.state==='done'||t.executor==='ty'||!t.executor?'':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
+  const who=taskClosed(t)||t.executor==='ty'||!t.executor?'':'<span class="who"><i aria-hidden="true" style="background:'+w.c+'">'+w.i+'</i>'+w.n+'</span>',dl=tbDate(t);
   const a=needsMe(t)&&!t.waits.length&&t.state!=='blocked'?ACTB(t):null;
   const cl=(old?' old':'')+(t.state==='blocked'?' tb-blk':'')+(lt?' tb-late':'')+(a?' tb-hasact':'');
   const c='<button class="card'+cl+'" data-task="'+esc(t.id)+'" data-k="card:'+esc(t.id)+'"><span class="tt">'+esc(t.title)+'</span>'+(showProj&&p?'<span class="meta">'+av(p,'sm')+'<span class="tb-pn" title="'+esc(p.name)+'">'+esc(p.alias||pShort(p))+'</span></span>':'')+tbStage(t,lt)+
@@ -3816,18 +3822,24 @@ function tbTodo(L,showProj,b){
 /* do 1100 px widać jedną kolumnę (przełącznik nad tablicą); w „Zrobione” 10 najnowszych, starsze po „Pokaż starsze” (stan w A.tbAll).
    Domyślna kolumna: „Do odbioru”, gdy coś czeka na odbiór, a właściciel nie wybrał kolumny sam (PF.colU) */
 const TB_DONE=3;
+function cancelledTaskList(list,showProj){
+  const tasks=list.filter(t=>t.state==='cancelled');
+  return tasks.length?'<details class="dmore task-lifecycle"><summary>Anulowane ('+tasks.length+')</summary>'+
+    tasks.map(t=>card(t,showProj)).join('')+'</details>':'';
+}
 function board(list,showProj,bk){
   const b=bk||'p',cs=COLS.map(([k,n])=>[k,n,tbSort(list.filter(t=>k==='wip'?(t.col==='wip'||t.col==='blocked'):t.col===k),k)]);
   const revN=(cs.find(c=>c[0]==='rev')||[0,0,[]])[2].length;
   const on=PF.colU&&COLS.some(c=>c[0]===PF.col)?PF.col:revN?'rev':'todo',all=!!(A.tbAll&&A.tbAll[b]);
   const nb=L=>L.filter(t=>t.state==='blocked').length,su=n=>pl(n,'zadanie','zadania','zadań');
+  const archive=cancelledTaskList(list,showProj);
   return '<div class="colsw" role="group" aria-label="Kolumna tablicy">'+cs.map(([k,n,L])=>{const bl=k==='wip'?nb(L):0;
     return '<button class="seg'+(k==='rev'&&L.length?' tb-segrev':'')+'" data-colsw="'+k+'" data-k="colsw:'+k+'" aria-pressed="'+(k===on)+'" aria-controls="tb-col-'+k+'"'+(k==='wip'?' title="'+esc('W tym zablokowane: '+bl)+'"':'')+'><span class="tb-sn">'+n+'</span> <span class="num">'+L.length+'<span class="sr-only"> '+su(L.length)+'</span></span></button>'}).join('')+'</div>'+
     '<div class="board">'+cs.map(([k,n,L])=>{const cut=k==='done'&&L.length>TB_DONE,bl=k==='wip'?nb(L):0;
     const body=!L.length?'<p class="tb-empty">'+TB_EMPTY[k]+(PF.mine?' (filtr: tylko moje)':'')+'</p>':k==='todo'?tbTodo(L,showProj,b):L.map((t,i)=>card(t,showProj,cut&&!all&&i>=TB_DONE)).join('');
     return '<div class="col '+k+(k===on?' on':'')+'" id="tb-col-'+k+'" role="region" aria-labelledby="tb-h-'+k+'"><h3 id="tb-h-'+k+'"><span>'+n+'</span><span class="tb-cn"><span class="num">'+L.length+'</span><span class="tb-sr"> '+su(L.length)+'</span></span></h3>'+
       (cut&&!all?'<p class="more">Ostatnie '+TB_DONE+' z '+L.length+'</p>':'')+body+
-      (cut?'<p class="tb-more"><button class="btn sec sm" data-tbmore="'+esc(b)+'" data-k="tbmore" data-first="'+esc(L[TB_DONE].id)+'" aria-expanded="'+all+'" aria-controls="tb-col-done">'+(all?'Zwiń starsze':'Pokaż starsze ('+(L.length-TB_DONE)+')')+'</button></p>':'')+'</div>'}).join('')+'</div>';
+      (cut?'<p class="tb-more"><button class="btn sec sm" data-tbmore="'+esc(b)+'" data-k="tbmore" data-first="'+esc(L[TB_DONE].id)+'" aria-expanded="'+all+'" aria-controls="tb-col-done">'+(all?'Zwiń starsze':'Pokaż starsze ('+(L.length-TB_DONE)+')')+'</button></p>':'')+'</div>'}).join('')+'</div>'+archive;
 }
 
 /* ---------- plan dnia ---------- */
@@ -4121,7 +4133,7 @@ function nwRetryRun(r){
   if(r.kind==='check')return '<button class="btn sec sm" data-ag="check" data-k="nw:re:check">Sprawdź ponownie</button>';
   if(r.kind==='plan')return '<button class="btn sec sm" data-nwfocus="plan" data-k="nw:re:plan">Ułóż plan ponownie</button>';
   const t=taskOfRun(r);if(!t)return nwHint('Zadania nie ma już w pliku.');
-  if(t.state==='done')return nwHint('Zadanie jest już zamknięte.');
+  if(taskClosed(t))return nwHint('Zadanie jest już zamknięte.');
   const why=blockOf(t);if(why)return nwHint(why+'.');
   return '<button class="btn sec sm" data-ag="run" data-id="'+esc(t.id)+'" data-k="nw:re:'+esc(t.id)+'">Uruchom ponownie</button>';
 }
@@ -4148,7 +4160,7 @@ function nwDone0(){
       out.push({at:+tOf(at),err:1,act:act,h:nwRow(nwLz('red','nie opublikowano'),nwTitle(title,{task:t,href:'#marketing',k:'done'}),[nwM([nwProj(pid)]),nwWhy(why)],esc(whenT(at)),act)})}
   });
   /* nieudane przed wysłaniem (czeka na poprzednika, brak tekstu): tylko wiersz „zostało: publikacja nieudana DD.MM GG:MM: …” */
-  D.tasks.forEach(t=>{if(t.kind!=='publikacja'||t.state==='done'||pubBad[K(t.project,t.file,t.title)])return;
+  D.tasks.forEach(t=>{if(t.kind!=='publikacja'||taskClosed(t)||pubBad[K(t.project,t.file,t.title)])return;
     const m=NW_FAIL.exec(t.detail.left||'');if(!m)return;
     const d=new Date(now.getFullYear(),+m[2]-1,+m[1],+m[3],+m[4]);if(d>now)d.setFullYear(d.getFullYear()-1);
     if(now-d>NW_DAY)return;const why=m[5]||'publikacja nieudana',act='<button class="btn sec sm" data-task="'+esc(t.id)+'" data-k="nw:re:o'+esc(t.id)+'">Otwórz i popraw</button>';
@@ -4315,7 +4327,7 @@ const tyWOpen=()=>A.tyW||(A.tyW=tyLoad(TY_W_KEY)||{});
 const tyFlt=()=>A.tyF||(A.tyF=Object.assign({k:'all',p:'all'},tyLoad(TY_F_KEY)||{}));
 /* decyzje: pytania, zgody i odbiory zadań agentów oraz każdy odbiór (także kto: ty); zgoda przy kto: ty to zwykłe zadanie */
 const tyIsDec=x=>!!x.q||(!!x.need&&(x.t.executor!=='ty'||x.need==='odbiór'));
-const tyWaits=x=>!!x.t&&!!x.t.waits&&x.t.waits.length>0&&x.t.state!=='done';
+const tyWaits=x=>!!x.t&&!!x.t.waits&&x.t.waits.length>0&&!taskClosed(x.t);
 const tyKind=x=>x.q?'q':x.need==='zgoda'?'zg':x.need==='odbiór'?'od':'z';
 const tyPid=x=>x.q?x.q.p.id:x.t.project;
 /* grupowanie wierszy w Dla Ciebie: sprawy o tym samym kluczu (≥ min) w jednym zwijanym wierszu na miejscu pierwszej z nich */
@@ -4491,7 +4503,7 @@ function tmGroup(g,narrow,showP){
 }
 /* połączenie z kalendarzem i subskrypcja ICS: na górze, gdy trzeba połączyć (c.btn), inaczej zwinięte na końcu strony */
 function tmSet(c,top){
-  const n=D.stages.filter(s=>!s.done&&isDay(s.date)).length,np=D.tasks.filter(x=>x.kind==='publikacja'&&x.state!=='done'&&isDay(x.date)).length;
+  const n=D.stages.filter(s=>!s.done&&isDay(s.date)).length,np=D.tasks.filter(x=>x.kind==='publikacja'&&!taskClosed(x)&&isDay(x.date)).length;
   const cnt=n+' '+pl(n,'koniec etapu','końce etapów','końców etapów')+' · '+np+' '+pl(np,'publikacja','publikacje','publikacji');
   const ics='<div class="tm-icsb"><p><b>Terminy w Twoim kalendarzu (subskrypcja)</b> <span class="muted">· '+cnt+'</span></p>'+
     (LIVE?'<div class="tm-url"><code id="tm-icsu">'+esc(location.origin+D.icsPath)+'</code><button class="btn sec sm" data-tmcopy="1" data-k="tmcopy">Kopiuj adres</button><a href="'+esc(D.icsPath)+'">otwórz plik</a></div>':
@@ -4720,7 +4732,7 @@ const BK_NEED={zgoda:['czeka na zgodę','potem Twoja zgoda'],'odbiór':['czeka n
    naprawy. panel: zadanie, które robi za Ciebie panel. Raz na stan danych (facts) */
 function bkWork(){
   const f=facts();if(f.bkw)return f.bkw;
-  const w={},now=Date.now(),A2=nwAct(),put=(t,o)=>{if(t&&t.state!=='done'&&!w[t.id])w[t.id]=o};
+  const w={},now=Date.now(),A2=nwAct(),put=(t,o)=>{if(t&&!taskClosed(t)&&!w[t.id])w[t.id]=o};
   runs().filter(isAct).forEach(r=>{const run=r.state==='running',st=tOf(run?r.startedAt:r.queuedAt),why=run?null:nwStuckRun(r,st?now-st:0);
     put(taskOfRun(r),why?{txt:'agent utknął',c:'red',why:why[0],act:why[1]}:{txt:run?'agent pracuje':'agent w kolejce',c:run?'blue':'grey'})});
   A2.chats.forEach(c=>put(nwTask(c.project,c.file,c.title)||D.tasks.find(x=>x.id===c.taskId),{txt:'Claude odpowiada',c:'blue'}));
@@ -4764,7 +4776,7 @@ function bkMeta(n,withProj,extra,sub){
 const bkClaudeWait=t=>{if(t.executor==='codex')return '';const a=D.agents||{},lim=limitT();
   return a.needsLogin?'Uruchomienie po zalogowaniu':lim?'Uruchomienie po '+hhmm(lim)+' (limit)':''};
 function bkAct(n){
-  const t=n.t;if(t.waits.length||t.state==='blocked'||t.state==='done'||bkWork()[t.id])return '';
+  const t=n.t;if(t.waits.length||t.state==='blocked'||taskClosed(t)||bkWork()[t.id])return '';
   if(needsMe(t)){const a=ACTB(t),ed=pubEd(t,a);return '<button class="btn sec sm bk-act" '+(ed?'data-medit="'+esc(ed)+'"':'data-act="'+a[0]+'" data-id="'+esc(t.id)+'"')+' data-k="bka:'+esc(t.id)+'" aria-label="'+esc(a[1]+': '+t.title)+'">'+a[1]+'</button>'}
   if((['agent','claude','codex'].includes(t.executor))&&t.kind!=='publikacja'&&!blockOf(t)){
     const cw=bkClaudeWait(t);
@@ -5128,14 +5140,14 @@ function planView(p){
   const T=D.todayKey,end=addK(T,6),day={},isAg=t=>['agent','claude','codex'].includes(t.executor);
   const dec=planDec(p),decT={};dec.forEach(x=>{if(x.t)decT[x.t.id]=1});
   const put=(k,kind,t)=>{(day[k]||(day[k]=[])).push({kind:kind,t:t})};
-  D.tasks.filter(t=>inP(p,t.project)&&t.state!=='done'&&!decT[t.id]).forEach(t=>{
+  D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&!decT[t.id]).forEach(t=>{
     const d=isDay(t.date)?t.date.slice(0,10):'';
     if(!d)return;
     if(t.kind==='publikacja'){
       if(d<T){put(T,'late',t);return}
       if(d<=end)put(d,'pub',t);
       const r=addK(d,-1)<T?T:addK(d,-1);
-      if(scOwn(t)){if(t.script.state!=='nagrane'&&r<=end&&!scTasks(t.project,d,'rec').some(x=>x.state!=='done'))put(r,'rec',t)}
+      if(scOwn(t)){if(t.script.state!=='nagrane'&&r<=end&&!scTasks(t.project,d,'rec').some(x=>!taskClosed(x)))put(r,'rec',t)}
       else if(mkIsFilm(t)){const fd=PD[t.project+'|'+d];if(!(fd&&fd.ok&&fd.film)&&r<=end)put(r,'rec',t)}
       return}
     if(d>end)return;
@@ -5176,7 +5188,7 @@ function planView(p){
     day[k].sort((a,b)=>PPO[a.kind]-PPO[b.kind]).map(x=>'<li><span class="pp-c">'+(PPK[x.kind][0]?'<span class="lz '+PPK[x.kind][0]+'">'+PPK[x.kind][1]+'</span>':'<span class="pp-k">'+PPK[x.kind][1]+'</span>')+'</span>'+
       '<span class="pp-t"><button type="button" class="lk" '+ppOpen(x)+' data-k="pp:'+esc(x.t.id)+'">'+esc(name(x))+'</button>'+ptag(p,x.t.project)+(meta(x)?' <span class="muted">'+meta(x)+'</span>':'')+
       (pubSA(x)?' <span class="lz '+pubSA(x).st[0]+'">'+esc(pubSA(x).st[1])+'</span>':'')+'</span>'+(pubSA(x)&&pubSA(x).act?'<span class="pp-a">'+pubSA(x).act+'</span>':'')+'</li>').join('')+'</ul>'}).join('')+'</div>';
-  const nd=D.tasks.filter(t=>inP(p,t.project)&&t.state!=='done'&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
+  const nd=D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAg(t)).length;
   if(nd)h+='<p class="note ds-pad">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Zadania</a></p>';
   return h+'</section>';
 }
@@ -5859,7 +5871,7 @@ function mktView(p){
     const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
     if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
     const st=post?mkState(t,day):t.state==='done'?['green','opublikowane']:isLate(t)?['red','po terminie']:t.needsYou==='zgoda'?['purple','czeka na zgodę']:['grey','zaplanowane'];
-    const act=mkAssign(t)||(post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&t.state!=='done'?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'');
+    const act=mkAssign(t)||(post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&!taskClosed(t)?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'');
     const open=post?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
     return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post?mkTitle(t):t.title)+'</button><div class="s">'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
       (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+'</div></div>'+
@@ -5867,8 +5879,8 @@ function mktView(p){
   return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p>'+cs.map(c=>{
     const ps=D.tasks.filter(t=>t.campaign===c.id).sort((x,y)=>(x.date||'9999').localeCompare(y.date||'9999'));
     const dn=ps.filter(t=>t.state==='done').length,tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0,st=CST[c.state]||CST.plan;
-    const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id),open=ps.filter(t=>t.state!=='done'),done=ps.filter(t=>t.state==='done');
-    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+ps.length+'</small></h2><div class="pad mk-camp">'+
+    const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id),open=ps.filter(t=>!taskClosed(t)),done=ps.filter(t=>t.state==='done'),archived=cancelledTaskList(ps,false);
+    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+(open.length+done.length)+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
       '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b><span class="muted">'+esc(mGen(c.metric))+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
@@ -5881,7 +5893,7 @@ function mktView(p){
       '</div></details></div>'+
       (open.length?'<ul class="rows mk-prow">'+open.map(row).join('')+'</ul>':'')+
       (done.length?'<details class="mk-done"><summary>Opublikowane:&nbsp;<span class="num">'+done.length+'</span></summary><ul class="rows mk-prow">'+done.map(row).join('')+'</ul></details>':'')+
-      (ps.length?'':'<p class="empty">Brak publikacji.</p>')+'</section>';
+      archived+(ps.length?'':'<p class="empty">Brak publikacji.</p>')+'</section>';
   }).join('');
 }
 
@@ -6025,7 +6037,7 @@ function cfdChart(id,L){
    termin zaznaczony pionową kreską. Etykiety osi X: pierwsza od lewej, ostatnia do prawej (bez nachodzenia na „0”). */
 /* linia „zostało” z dat zamknięcia zadań etapu (stateSince); bez kompletu dat: ''. Ustawia burnSteps.ok */
 function burnSteps(s,n,x,y,today){
-  const T=D.tasks.filter(t=>t.stage===s.id&&t.kind!=='publikacja'),dn=T.filter(t=>t.state==='done');
+  const T=D.tasks.filter(t=>t.stage===s.id&&t.kind!=='publikacja'&&t.state!=='cancelled'),dn=T.filter(t=>t.state==='done');
   burnSteps.ok=T.length===n&&dn.every(t=>isDay(t.stateSince));if(!burnSteps.ok||!dn.length)return '';
   const ds=dn.map(t=>Math.min(today,Math.max(0,diff(String(t.stateSince).slice(0,10),s.start)))).sort((a,b)=>a-b);
   let left=n,o='';ds.forEach(i=>{o+='L'+x(i)+','+y(left);left--;o+='L'+x(i)+','+y(left)});return o;
@@ -6063,7 +6075,7 @@ function burnChart(p){
   return cap+leg+'<svg viewBox="0 0 '+Wd+' '+Hh+'" role="img" aria-label="'+al+'">'+g+ideal+real+'</svg>';
 }
 function whoBars(L){
-  const ids=L.flatMap(p=>[...(p.mem||[p.id])]),rows=Object.keys(WHO).map(k=>{const all=D.tasks.filter(t=>ids.indexOf(t.project)>=0&&t.kind!=='publikacja'&&(t.executor||'')===k);return {k:k,done:all.filter(t=>t.state==='done').length,open:all.filter(t=>t.state!=='done').length}}).filter(r=>r.open);
+  const ids=L.flatMap(p=>[...(p.mem||[p.id])]),rows=Object.keys(WHO).map(k=>{const all=D.tasks.filter(t=>ids.indexOf(t.project)>=0&&t.kind!=='publikacja'&&(t.executor||'')===k);return {k:k,done:all.filter(t=>t.state==='done').length,open:all.filter(t=>!taskClosed(t)).length}}).filter(r=>r.open);
   if(!rows.length)return '<p class="cap">Brak otwartych zadań.</p>';
   rows.sort((a,b)=>(a.k==='')-(b.k===''));
   /* wiersze tylko z otwartymi zadaniami; „Ty” to pole kto: ty (sprawy w Dla Ciebie liczą też zgody i odbiory) */
@@ -6127,7 +6139,7 @@ function wkMore(L,one,ready,sec){
     thr!=null?'<li><b>Tempo '+scope+':</b> '+fmt1(thr)+' '+(Number.isInteger(thr)?pl(thr,'zadanie','zadania','zadań'):'zadania')+' tygodniowo, średnio z 4 tygodni</li>':''].join('');
   /* kampanie w toku: wynik wobec celu i publikacje (opublikowane, zaplanowane); szczegóły w Marketingu */
   const C=D.campaigns.filter(c=>c.state==='active'&&ids.indexOf(c.project)>=0);
-  const camp=C.map(c=>{const T=D.tasks.filter(t=>t.kind==='publikacja'&&t.campaign===c.id),dn=T.filter(t=>t.state==='done').length,pr=P(c.project);
+  const camp=C.map(c=>{const T=D.tasks.filter(t=>t.kind==='publikacja'&&t.campaign===c.id&&t.state!=='cancelled'),dn=T.filter(t=>t.state==='done').length,pr=P(c.project);
     return '<li><a href="'+phref(pr,'marketing')+'">'+esc(c.name)+'</a>'+(one?'':' <span class="muted">· '+esc(pShort(pr))+'</span>')+': '+
       (+c.target>0?'<span class="num">'+fmtN(+c.result||0)+' z '+fmtN(+c.target)+'</span> '+esc(c.metric?mGen(c.metric):'')+' · ':'')+
       dn+' '+pl(dn,'publikacja opublikowana','publikacje opublikowane','publikacji opublikowanych')+', '+(T.length-dn)+' '+pl(T.length-dn,'zaplanowana','zaplanowane','zaplanowanych')+'</li>'}).join('');
@@ -6676,7 +6688,7 @@ const prxEnt=(p,cls,sh)=>'<a class="prx-ent'+(cls?' '+cls:'')+'" href="'+phref(p
 /* „Zleć agentowi uzupełnienie plików”: jedno zadanie dla Claude w ZADANIA.md projektu (POST /api/task/add, potem kto i cel);
    gdy takie zadanie już jest otwarte, zamiast przycisku odsyłacz do niego */
 const PRX_ZL='Uzupełnić pliki projektu według standardu';
-const prxZlT=pid=>D.tasks.find(t=>t.project===pid&&t.state!=='done'&&t.title===PRX_ZL);
+const prxZlT=pid=>D.tasks.find(t=>t.project===pid&&!taskClosed(t)&&t.title===PRX_ZL);
 function prxZl(p){
   const t=prxZlT(p.id);
   if(t)return '<button class="lk" data-task="'+esc(t.id)+'">Zlecone agentowi: '+esc(TS[t.state]?TS[t.state][1]:t.state)+'</button>';
@@ -6813,25 +6825,53 @@ function agentBlock(t){
 /* jedna linia pod tytułem szuflady: termin, etap albo kampania, stan pracy agenta */
 function dMeta(t,s,c){
   const m=[];
-  if(isDay(t.date)&&t.state!=='done')m.push('<span'+(isLate(t)?' class="late"':'')+'>termin '+esc(ddl(t.date))+', '+esc(rel(t.date))+'</span>');
+  if(isDay(t.date)&&!taskClosed(t))m.push('<span'+(isLate(t)?' class="late"':'')+'>termin '+esc(ddl(t.date))+', '+esc(rel(t.date))+'</span>');
   if(c)m.push('kampania '+esc(c.name));else if(s)m.push('etap '+esc(s.title));
-  if(t.state!=='done'&&t.executor&&t.executor!=='ty'){const r=D.agents?runOf(t):null;m.push(r?(r.state==='running'?'agent pracuje':'agent w kolejce'):t.state==='doing'?'w toku':'jeszcze nie uruchomione')}
+  if(!taskClosed(t)&&t.executor&&t.executor!=='ty'){const r=D.agents?runOf(t):null;m.push(r?(r.state==='running'?'agent pracuje':'agent w kolejce'):t.state==='doing'?'w toku':'jeszcze nie uruchomione')}
   return m.length?'<p class="dmeta">'+m.join(' · ')+'</p>':'';
 }
 /* dec. 34: pole daty jako przycisk z datą w formacie panelu („pt. 20.11”, „ustaw termin”); natywne pole ukryte wizualnie,
    otwierane przez showPicker() (awaryjnie focus i click); zmiana pola idzie dotychczasową drogą (zdarzenie change) */
 const dpkT=v=>isDay(v)?ddl(String(v).slice(0,10)):'ustaw termin';
 const dpk=(inp,v,lab,k)=>'<span class="dpk"><button type="button" class="btn sec sm dpk-b" data-dpk="1"'+(k?' data-k="'+esc(k)+'"':'')+' aria-label="'+esc(lab+': '+dpkT(v)+', zmień')+'">'+esc(dpkT(v))+'</button>'+inp+'</span>';
+function cancelControls(t){
+  if(t.state==='done')return '';
+  const button=(action,label)=>'<button type="button" class="btn sec sm" data-task-life="'+action+
+    '" data-id="'+esc(t.id)+'">'+label+'</button>';
+  if(t.state==='cancelled')return '<div class="task-lifecycle">'+button('restore','Przywróć')+'</div>';
+  if(!dForm(t,'cancel'))return '<div class="task-lifecycle">'+button('ask','Anuluj zadanie')+'</div>';
+  return '<form class="task-lifecycle" data-task-cancel="'+esc(t.id)+'"><h3>Potwierdź anulowanie zadania</h3>'+
+    '<label class="fl"><span>Powód (opcjonalnie)</span><input class="fi" name="reason" maxlength="500"></label>'+
+    '<div class="row"><button class="btn sm" type="submit">Potwierdź anulowanie</button>'+
+    button('dismiss','Wróć')+'</div></form>';
+}
+function cancelledDependencies(t){
+  return t.cancelledDeps.map(dep=>'<div class="move-box"><b>Poprzednik anulowany</b><p>'+esc(dep.title)+
+    '</p><div class="row"><button class="btn sec sm" data-task-life="skip" data-id="'+esc(t.id)+
+    '" data-fragment="'+esc(dep.fragment)+'">Rób bez niego</button>'+
+    '<button class="btn sec sm" data-task-life="ask" data-id="'+esc(t.id)+'">Anuluj też to</button></div></div>').join('');
+}
+async function taskLifecycle(t,action,extra={}){
+  if(!t)return;
+  try{
+    const r=await post('/api/task/'+action,{id:t.id,title:t.title,...extra});
+    if(r.ok&&DR&&DR.id===t.id){DR.form='';DR.fv=null}
+    if(!r.ok)say(failMsg(r,'Nie udało się zapisać zmiany.'));
+    await load(true);
+  }catch(e){say('Nie udało się połączyć z panelem.')}
+}
 function taskHtml(t){
   const pub=t.kind==='publikacja',p=P(t.project),s=stageOf(t.stage),c=t.campaign?D.campaigns.find(x=>x.id===t.campaign):null;
   let h='<div class="dhead"><span class="muted dh-proj">'+(isFilmTask(t)?'Film do obejrzenia · ':pub?'Publikacja · ':'')+av(p,'sm')+'<span class="dh-nm">'+esc(projName(t.project))+'</span></span><button class="x" data-close="1" data-k="close">Zamknij</button></div>'+
     '<h2 class="dttl" id="dtitle">'+esc(t.title)+'</h2>'+dMeta(t,s,c);
-  const d=t.detail||normDetail(null),zg=t.needsYou==='zgoda'&&t.state!=='done',od=t.needsYou==='odbiór'&&t.state!=='done';
+  if(t.state==='cancelled')return h+'<p><span class="lz grey">anulowane</span> '+
+    esc(t.cancelledAt||'')+'</p>'+(t.cancelReason?'<p class="task-cancel-reason">'+esc(t.cancelReason)+'</p>':'')+cancelControls(t);
+  const d=t.detail||normDetail(null),zg=t.needsYou==='zgoda'&&!taskClosed(t),od=t.needsYou==='odbiór'&&!taskClosed(t);
   const hasResult=!!(od||d.result||d.left||lastGitRun(t));
   const rv=hasResult?odDrawerData(t):null;
   if(hasResult)h+=odResults(rv);
   const dec=d.decision?'<p class="dcap" id="ddec">Zatwierdzasz: '+esc(d.decision)+'</p>':'',db=d.decision?' aria-describedby="ddec"':'';
-  const pday=prepDay(t),gr=lastGitRun(t),br=!gr&&t.state!=='done'?branchRun(t):null,mine=t.executor==='ty'||!t.executor;
+  const pday=prepDay(t),gr=lastGitRun(t),br=!gr&&!taskClosed(t)?branchRun(t):null,mine=t.executor==='ty'||!t.executor;
   /* zadanie „Nagraj film …” przy poście ze scenariuszem: film nagrywa panel, właściciel tylko ogląda i zamyka */
   const fday=filmDay(t),ftask=!!fday&&!pday&&FILM_RE.test(t.title||'')&&!(pub&&t.channel);
   /* 1. Twój ruch: jedno zdanie i jedna akcja */
@@ -6840,7 +6880,8 @@ function taskHtml(t){
   else if(t.waits.length){
     /* brakujący poprzednik (po: bez pasującego zadania): naprawa jak dawniej w Blokadach — usuń warunek albo dodaj zadanie */
     let miss=[];try{const bn=bkModel().byId(t.id);miss=bn&&bn.miss||[]}catch(e){}
-    mv='<div class="move-box"><b>Jeszcze nie teraz.</b><p>Najpierw: '+t.waits.map(w=>{const x=D.tasks.find(y=>y.title===w&&y.project===t.project);return x?'<button class="lk" data-task="'+esc(x.id)+'">'+esc(w)+'</button>':esc(w)}).join('; ')+'</p>'+
+    mv=cancelledDependencies(t);
+    if(t.pendingDeps.length)mv+='<div class="move-box"><b>Jeszcze nie teraz.</b><p>Najpierw: '+t.pendingDeps.map(w=>{const x=D.tasks.find(y=>y.title===w&&y.project===t.project);return x?'<button class="lk" data-task="'+esc(x.id)+'">'+esc(w)+'</button>':esc(w)}).join('; ')+'</p>'+
       (miss.length?'<div class="bk-why">'+esc(miss.map(x=>BKWHY.missing({text:x})).join('; '))+'</div>'+miss.map(x=>bkFixAct(t,x)).join(''):'')+'</div>'}
   else if(zg){if(pub&&t.channel&&isDay(t.date)){mv=postBox(t,t.date.slice(0,10),false);shown.post=1}   /* najpierw podgląd posta, potem zgoda */
     mv+='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>Zatwierdź</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>'}
@@ -6855,21 +6896,21 @@ function taskHtml(t){
     mv='<div class="move-box">'+(sm?'<b>Zadanie dla agenta ('+esc(WHO[t.executor].n)+').</b> W projektach przykładowych agenci nie pracują.':'<b>Robi to agent ('+esc(WHO[t.executor].n)+').</b> Nic nie musisz robić.')+(dw!==t.title?'<p>'+esc(dw)+'</p>':'')+'</div>'}
   else if(ftask)mv='';                     /* ruch właściciela pokazuje skrót filmu niżej (obejrzyj i zamknij) */
   else mv='<div class="move-box"><b>Twój ruch</b><p>'+esc(doWhat(t))+'</p><div class="row">'+wwBtn(t,'')+'<button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div></div>';
-  if(!hasResult&&d.fix&&t.state!=='done')mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
-  if(d.fix&&!od&&t.state!=='done'&&(['agent','claude','codex'].includes(t.executor))&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
+  if(!hasResult&&d.fix&&!taskClosed(t))mv='<div class="warn">Do poprawy: '+esc(d.fix)+'</div>'+mv;
+  if(d.fix&&!od&&!taskClosed(t)&&(['agent','claude','codex'].includes(t.executor))&&(()=>{const r=runOf(t);return !!r&&isAct(r)})())
     mv+='<p class="note"><a href="'+esc(odHref(t.id))+'" data-k="od:drl">Postęp poprawki na stronie odbioru</a></p>';
   /* film posta na górze (także gdy zadanie czeka na poprzednie): rodzaj, szablon, długość, kto nagra. W każdym
      zadaniu z postem (film, publikacja, „Przygotować post”) cały film z „Co poprawić” jest na wierzchu, nie w szczegółach */
   const full=!!fday&&!shown.post;
   if(fday&&!shown.post){mv+=filmTop(t,fday,ftask,false);if(full){mv+=postBox(t,fday,false,'film');shown.film=1}}
   /* „gotowe, gdy” i pełny następny krok (w listach są skrócone do dwóch wierszy) */
-  const readUp=!hasResult&&t.state!=='done'&&!od&&!!t.detail&&resFiles(t).length>0;
+  const readUp=!hasResult&&!taskClosed(t)&&!od&&!!t.detail&&resFiles(t).length>0;
   if(readUp)mv=readBlock(t)+mv;            /* najpierw treść, potem decyzja i przyciski */
   if(hasResult&&(d.result||rv&&rv.result))h+='<p class="od-summary">'+esc(odBrief(rv&&rv.result||d.result))+'</p>';
   h+=mv;
   /* zadanie o ocenie strony: „Otwórz podgląd” w ramce ruchu (wyżej) albo pod nią */
   {const wb=wwBtn(t,'');if(wb&&mv.indexOf('data-k="wwgo:')<0)h+='<div class="row ww-go">'+wb+'</div>'}
-  if(!hasResult&&t.state!=='done'&&needsMe(t)&&!(shown.own&&(d.steps.length||d.fields.length))){const ns=shown.own?'':firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
+  if(!hasResult&&!taskClosed(t)&&needsMe(t)&&!(shown.own&&(d.steps.length||d.fields.length))){const ns=shown.own?'':firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
   const liveRun=D.agents?runOf(t):null;
   const progress=(()=>{const r=liveRun;
     if(r&&isAct(r))return '<div class="dbox lv-wrap"><h3>'+(r.state==='running'?'Agent pracuje':'Agent w kolejce')+'</h3>'+lvPh(r.id)+
@@ -6906,7 +6947,7 @@ function taskHtml(t){
   if(t.check)h+='<dt>Sprawdza</dt><dd>'+esc(t.check.key)+' <span class="muted">· '+(t.check.ok===true?'ok':t.check.ok===false?'nie spełnione':'brak danych')+(atShort(t.check.at)?', '+esc(atShort(t.check.at)):'')+'</span></dd>';
   h+='<dt>Plik</dt><dd>'+(t.line?'<code>'+esc(t.file+':'+t.line)+'</code>':'<span class="muted">niezapisane</span>')+'</dd></dl>';
   h+='<p class="note">Zmiany zapisują się po wyjściu z pola. Esc zamyka, r uruchamia agenta.</p></details>';
-  return h;
+  return h+cancelControls(t);
 }
 /* jedno zdanie „co zrobić”: pierwszy niezrobiony krok, cel albo tytuł */
 function doWhat(t){
@@ -7115,10 +7156,10 @@ const diffUrl=id=>{const b=BR[id];return '/api/agent/diff?'+(b?'project='+encode
    Zrobione zapisuje odpowiedzi (odpowiedź:) i zamyka zadanie jednym żądaniem POST /api/task/finish; zadania z po:
    na tym zadaniu przestają czekać. Zadanie bez pyta: raz prosi serwer o propozycję pól (POST /api/task/pola). */
 const ownForm=(t,br,ftask)=>{const d=t.detail;
-  return t.state!=='done'&&(t.executor==='ty'||!t.executor)&&t.kind!=='publikacja'&&!t.needsYou&&(d.fields.length>0||(!br&&!ftask))};
+  return !taskClosed(t)&&(t.executor==='ty'||!t.executor)&&t.kind!=='publikacja'&&!t.needsYou&&(d.fields.length>0||(!br&&!ftask))};
 const ownInputs=t=>t.detail.fields.filter(f=>f.type!=='hasło');
 /* zadanie, dla którego serwer może zaproponować pola (jak pola.needs_fields) */
-const fieldsDue=t=>t.executor==='ty'&&t.state!=='done'&&t.kind!=='publikacja'&&!t.needsYou&&!t.counter&&!t.detail.asks.length&&!t.detail.branch&&!/^kampanie\//.test(t.file||'');
+const fieldsDue=t=>t.executor==='ty'&&!taskClosed(t)&&t.kind!=='publikacja'&&!t.needsYou&&!t.counter&&!t.detail.asks.length&&!t.detail.branch&&!/^kampanie\//.test(t.file||'');
 const FLD={};
 function askFields(t){
   if(!LIVE||FLD[t.id]||!fieldsDue(t))return;
@@ -7220,7 +7261,7 @@ async function loadDiff(id){
 /* diff od razu widoczny; zwinięty, gdy plików jest więcej niż 5 albo właściciel kliknął „Ukryj zmiany” */
 const DIFF_OPEN_MAX=5;
 /* zmienione pliki to same pliki z „Do przeczytania”: ich treść jest już wyżej, diff startuje zwinięty */
-const readAll=(r,t)=>{const L=t&&t.detail&&t.state!=='done'?resFiles(t).map(x=>x.path):[];
+const readAll=(r,t)=>{const L=t&&t.detail&&!taskClosed(t)?resFiles(t).map(x=>x.path):[];
   return !!L.length&&r.changes.length>0&&r.changes.every(c=>L.some(p=>c.path===p||c.path.endsWith('/'+p)))};
 const diffOpen=(r,t)=>A.diff[r.id]!=null?!!A.diff[r.id]:(r.pseudo||(r.changes.length>0&&r.changes.length<=DIFF_OPEN_MAX&&!readAll(r,t)));
 function toggleDiff(id){
@@ -7236,7 +7277,7 @@ function mergeRun(id){
   enqueue(async()=>{
     const x=await post('/api/agent/merge',r.pseudo?{project:r.project,branch:r.branch}:{id:id});A.busy.merge='';
     if(x.ok){A.merged[id]=1;say('Połączono zmiany agenta.');
-      const t=r.pseudo?D.tasks.find(y=>y.id===r.task):null;if(t&&t.state!=='done')finishTask(t,'połączono zmiany agenta',null,null)}
+      const t=r.pseudo?D.tasks.find(y=>y.id===r.task):null;if(t&&!taskClosed(t))finishTask(t,'połączono zmiany agenta',null,null)}
     else if(x.status!==401)say(x.status===404&&!x.error?'Serwer nie obsługuje jeszcze łączenia zmian.':'Nie połączono zmian: '+(x.error?x.error.replace(/\.$/,''):'konflikt albo niezapisane zmiany w projekcie')+'.');
   });
 }
@@ -7327,7 +7368,7 @@ function wynBlock(t,d,decIn,leftIn,own,readUp){
 }
 const nextText=n=>esc(n.title)+(n.executor?' · '+esc(WHO[n.executor].n):'')+(isDay(n.date)?' · '+ddl(n.date):'');
 /* zadanie właściciela z polami do wpisania (pyta:): „Zrobione” w listach otwiera szczegóły z formularzem */
-const needsResult=t=>t.state!=='done'&&ownForm(t,t.detail.branch?1:null,false)&&ownInputs(t).length>0;
+const needsResult=t=>!taskClosed(t)&&ownForm(t,t.detail.branch?1:null,false)&&ownInputs(t).length>0;
 /* odbiór z resztą pracy albo z propozycją następnego zadania: „Odebrane” pokazuje formularz nowego zadania */
 const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
@@ -7351,7 +7392,7 @@ function accBox(t,d,db,dec){
   return h+dec+'</div>';
 }
 /* zadanie z „licznik: <nazwa>”: przy „Zrobione” pole „Ile <nazwa>?”; liczba idzie z zapisem stanu (count) */
-const needsCount=t=>!!t.counter&&t.state!=='done';
+const needsCount=t=>!!t.counter&&!taskClosed(t);
 /* domyślna liczba: odhaczone kroki, gdy zadanie ma kroki i część jest odhaczona */
 const defCount=t=>{const s=t.detail&&t.detail.steps||[],n=s.filter(x=>x.done).length;return s.length&&n?String(n):''};
 /* kampania, do której trafia licznik: kampania publikacji, „kampania: <plik>” albo pierwsza kampania projektu w toku */
@@ -7370,7 +7411,7 @@ const countField=t=>{const c=campOf(t);
   return '<label class="fl"><span>Ile '+esc(cntG(t.counter))+'?</span><input class="fi num" type="number" inputmode="numeric" min="0" max="999999" step="1" data-fv="count" data-k="fv:count" value="'+esc(fvv('count'))+'" autocomplete="off" aria-describedby="dcnt"></label>'+
     '<p class="dcap" id="dcnt">'+(c?'Liczba trafi do kampanii „'+esc(c.name)+'”, sekcja Wyniki i wnioski.':(t.campFile?'Nie ma kampanii z pola kampania: '+esc(t.campFile)+'.':'Projekt nie ma kampanii w toku.')+' Liczby nie da się zapisać; zamknij bez liczby.')+'</p>'};
 function finBox(t){
-  const od=t.needsYou==='odbiór'&&t.state!=='done',nc=needsCount(t),nr=needsResult(t);
+  const od=t.needsYou==='odbiór'&&!taskClosed(t),nc=needsCount(t),nr=needsResult(t);
   let h='<div class="abox you"><b>'+(od?'Odbiór pracy':t.executor==='ty'?'Twoje zadanie':'Zamknięcie zadania')+'</b>';
   if(dForm(t,'done'))h+='<form class="dform" data-dform="done">'+(nc?countField(t):'')+
     (nr||!nc?'<label class="fl"><span>Wynik (np. liczby)</span><input class="fi" data-fv="result" data-k="fv:result" maxlength="300" value="'+esc(fvv('result'))+'" autocomplete="off"></label>':'')+
@@ -7387,7 +7428,7 @@ function checkBox(t){
 }
 /* „Po zrobieniu”: odblokowane zadania (kto, termin), postęp etapu, kampania z celem */
 function afterBlock(t){
-  if(t.state==='done')return '';
+  if(taskClosed(t))return '';
   const L=t.unlocksL||[],s=t.campaign?null:stageOf(t.stage),c=campOf(t),part=[];
   if(L.length){
     part.push('<div class="sub">Odblokowuje</div><ul class="unl">'+L.map(u=>{const x=u.id?D.tasks.find(y=>y.id===u.id):null,w=WHO[u.executor]||WHO[''];
@@ -7421,7 +7462,7 @@ function openForm(id,k){
 function closeForm(){if(!DR)return;DR.form='';DR.fv=null;renderDrawer(true);const n=$('#drawer .x');if(n)n.focus()}
 /* przycisk akcji przy zadaniu (Dziś, Dla Ciebie, szuflada) */
 function actTask(id,k){
-  const t=D.tasks.find(x=>x.id===id);if(!t)return;
+  const t=D.tasks.find(x=>x.id===id);if(!t||t.state==='cancelled')return;
   if(k==='accept'&&hasFollow(t)){openForm(id,'accept');return}
   if(k==='accept'&&needsCount(t)){openForm(id,'done');return}
   if(k==='done'&&(needsResult(t)||needsCount(t))){openForm(id,'done');return}
@@ -7599,7 +7640,7 @@ function filmState(d,t,day){
 const FILM_RE=/^(nagra[jć]|obejrzyj)\s+film/i;
 const isFilmTask=t=>!!t&&!t.channel&&FILM_RE.test(t.title||'');
 /* film zadania „Nagraj film …” jeszcze nie gotowy: robi go panel (nie Twoje na teraz, poza „Twoje wstrzymują”) */
-const filmPending=t=>isFilmTask(t)&&t.state!=='done'&&!!t.filmPost&&!t.filmPost.film;
+const filmPending=t=>isFilmTask(t)&&!taskClosed(t)&&!!t.filmPost&&!t.filmPost.film;
 /* dzień posta, z którym wiąże się zadanie: publikacja, „Przygotować post na …” albo zadanie „Nagraj film …”,
    na które czeka publikacja (po:) */
 function filmDay(t){
@@ -7628,7 +7669,7 @@ function filmTop(t,day,own,jump){
     (fi&&fi.kindHelp?'<p class="note fpv-kind">'+esc(stuKind(fi))[0].toUpperCase()+esc(stuKind(fi)).slice(1)+': '+esc(fi.kindHelp)+'.</p>':'');
   if(own)h+='<p class="move">'+(ready?'Film do posta z '+esc(dd(day))+' nagrał panel ze scenariusza. Obejrzyj go; jeśli jest dobry, kliknij „Zrobione”. Jeśli nie, napisz niżej, co poprawić.'
     :'Film do posta z '+esc(dd(day))+' nagrywa panel ze scenariusza; nie nagrywasz ekranu ręcznie. Gdy będzie gotowy, obejrzysz go tutaj i zamkniesz zadanie.')+'</p>';
-  if(own&&t.state!=='done')h+=ready?'<div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div>':later;
+  if(own&&!taskClosed(t))h+=ready?'<div class="row"><button class="btn sm" data-act="done" data-id="'+esc(t.id)+'">Zrobione</button></div>':later;
   if(jump)h+='<div class="row"><button type="button" class="btn sec sm" data-filmgo="'+esc(k)+'">Obejrzyj film i „Co poprawić” (niżej)</button></div>';
   return h+'</div>';
 }
@@ -7958,7 +7999,7 @@ function fixTplPrev(el){
 }
 /* otwarta poprawka posta (zadanie agenta „Popraw post na <dzień>: …”) albo null */
 function fixPending(pid,day){
-  return (D.tasks||[]).find(x=>x.project===pid&&x.state!=='done'&&String(x.title||'').indexOf('Popraw post na '+day)===0)||null;
+  return (D.tasks||[]).find(x=>x.project===pid&&!taskClosed(x)&&String(x.title||'').indexOf('Popraw post na '+day)===0)||null;
 }
 /* pole obrazu planszy (zrzut ekranu, zdjęcie): wgranie pliku do folderu posta, panel wpisuje go w film i nagrywa od nowa */
 function stuImgField(key,p){
@@ -8196,7 +8237,7 @@ function mkDays(keys,items,inLate){
 const mkIsFilm=t=>{const d=PD[t.project+'|'+String(t.date).slice(0,10)];return !!(d&&d.ok&&(d.scenario||d.film))||/film/i.test(t.title)||/reels|tiktok|youtube/i.test(t.channel||'')};
 function recPanel(fp){
   const T=D.todayKey,end=addK(T,14);
-  const L=D.tasks.filter(t=>t.kind==='publikacja'&&t.state!=='done'&&isDay(t.date)&&t.date.slice(0,10)>=T&&t.date.slice(0,10)<=end&&(scOwn(t)||mkIsFilm(t))&&(!fp||t.project===fp))
+  const L=D.tasks.filter(t=>t.kind==='publikacja'&&!taskClosed(t)&&isDay(t.date)&&t.date.slice(0,10)>=T&&t.date.slice(0,10)<=end&&(scOwn(t)||mkIsFilm(t))&&(!fp||t.project===fp))
     .filter(t=>{if(scOwn(t))return t.script.state!=='nagrane';const d=PD[t.project+'|'+t.date.slice(0,10)];return !(d&&d.ok&&d.film&&filmState(d,t,t.date.slice(0,10))[0]==='green')})
     .sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   if(!L.length)return '';
@@ -8216,16 +8257,16 @@ function recPanel(fp){
 function vMarketing(){
   const off=A.mweek||0,start=addK(D.todayKey,7*off),days=[...Array(7)].map((_,i)=>addK(start,i));
   const fp=PF.mkp&&D.allP.some(p=>p.id===PF.mkp)?PF.mkp:'';
-  const pubAll=D.tasks.filter(t=>t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
+  const pubAll=D.tasks.filter(t=>t.state!=='cancelled'&&t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
   const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
-  const late=mine.filter(t=>t.state!=='done'&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  const late=mine.filter(t=>!taskClosed(t)&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.allP.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
   /* kampanie w toku z celem liczbowym i „Wpisz wynik” (dawniej na Przeglądzie) */
   {const cg=campGoals();if(cg)h+='<section class="panel mk-camp">'+cg+'</section>'}
   if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
   h+=recPanel(fp);
-  const wk=items.filter(t=>!(t.state!=='done'&&t.date.slice(0,10)<D.todayKey));
+  const wk=items.filter(t=>!(!taskClosed(t)&&t.date.slice(0,10)<D.todayKey));
   h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b>'+(wk.length?' <small class="num">'+wk.length+'</small>':'')+'</span>'+
     '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzednie 7 dni">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następne 7 dni">→</button>'+
     (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk.concat(late));
@@ -8253,7 +8294,7 @@ function mkCamps(fp){
    grupa: late (po terminie), ok (czeka na zgodę), review (do obejrzenia), err (błąd), prep (agent przygotowuje), done (opublikowane), '' (reszta) */
 function mkState(t,day,fs){
   const d=PD[t.project+'|'+day];
-  if(t.state!=='done'&&isDay(day)&&day<D.todayKey)return ['red','po terminie','late'];
+  if(!taskClosed(t)&&isDay(day)&&day<D.todayKey)return ['red','po terminie','late'];
   if(t.state==='done')return ['green','opublikowane','done'];
   if(t.needsYou==='zgoda')return ['purple','czeka na zgodę','ok'];
   if(LIVE&&d&&d.ok){
@@ -8279,7 +8320,7 @@ function mkTodo(items){
 }
 /* kanały posta szarym tekstem; domyślnie publikuje właściciel, więc dopisany jest tylko wyjątek: „publikuje panel” (zaplanowana publikacja automatyczna) */
 function mkChan(t){
-  const L=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>c.toLowerCase()),sc=t.state!=='done'&&parseSched(t.detail&&t.detail.scheduled);
+  const L=String(t.channel).split(/,\s*/).filter(Boolean).map(c=>c.toLowerCase()),sc=!taskClosed(t)&&parseSched(t.detail&&t.detail.scheduled);
   return L.map(c=>esc(PUBN[c]||(c==='tiktok'?'TikTok':cap(c)))).join(' · ')+(sc?' · publikuje panel':'');
 }
 /* tytuł posta bez „Opublikuj” i znacznika „film A” */
@@ -8318,7 +8359,7 @@ function mkAssignClick(id){
 }
 function mkAct(t,day,st,why){
   const ed=esc(t.project+'|'+day+'|'+t.id),nm=mkTitle(t),b=n=>'<button type="button" class="btn sec sm" data-medit="'+ed+'" aria-label="'+esc(n+': '+nm)+'">'+n+'</button>';
-  if(t.needsYou==='zgoda'&&t.state!=='done')return b('Zatwierdź');
+  if(t.needsYou==='zgoda'&&!taskClosed(t))return b('Zatwierdź');
   if(st[2]==='late')return b('Opublikuj');
   if(why)return b('Popraw');
   return '';
@@ -8507,7 +8548,7 @@ const udExt=()=>document.documentElement.getAttribute('data-panel-rozszerzenie')
 const udKnown=()=>/^(?:(?:[\w-]+\.)?2-29-181-133\.sslip\.io|localhost|127\.0\.0\.1)$/.test(location.hostname);
 const udPubName=k=>k==='sp-ig'?'Udostępnij':'Opublikuj';
 function igCan(t){
-  if(!t||t.kind!=='publikacja'||t.state==='done'||!/instagram/i.test(t.channel||''))return false;
+  if(!t||t.kind!=='publikacja'||taskClosed(t)||!/instagram/i.test(t.channel||''))return false;
   const p=P(t.project);return !!(p&&p.instagram)||!chanOk(t,'instagram');
 }
 async function udShare(id,k){
@@ -8685,7 +8726,7 @@ function edApi(t,k,d){
 }
 /* jedyna akcja w nagłówku: zgoda → Zatwierdź; potem „Udostępnij na …” dla otwartej zakładki; opublikowane → brak */
 function edPrimary(t,d,k){
-  if(!t||t.state==='done')return null;
+  if(!t||taskClosed(t))return null;
   if(t.needsYou==='zgoda')return {n:'Zatwierdź',attr:'data-act="ok" data-id="'+esc(t.id)+'"'};
   if(!d||!d.ok||!SPN[k])return null;
   const us=UDS[udKey(t.id,k)];if(us&&us.busy)return {n:'Przygotowuję…',attr:'disabled'};
@@ -8697,7 +8738,7 @@ function edMenu(t,d){
   if(ok&&src&&(d.sections||{})[src])L.push(b('data-copy="'+esc(c.pid+'|'+c.day+'|'+src)+'"','Kopiuj opis'));
   if(ok&&(d.film||d.image||(d.photos||[]).length))L.push(b('data-edget','Pobierz pliki'));
   if(ok&&cxPend())L.push(b('data-cxcar','Dodaj nową wersję do karuzeli'));
-  if(t.needsYou==='zgoda'&&t.state!=='done')L.push(b('data-act="hold" data-id="'+esc(t.id)+'"','Wstrzymaj'));
+  if(t.needsYou==='zgoda'&&!taskClosed(t))L.push(b('data-act="hold" data-id="'+esc(t.id)+'"','Wstrzymaj'));
   L.push(b('data-task="'+esc(t.id)+'" data-edclose2','Szczegóły zadania'));
   return '<details class="ed-mn"><summary aria-label="Więcej działań" title="Więcej działań"><span aria-hidden="true">⋯</span></summary><div class="ed-mnl">'+L.join('')+'</div></details>';
 }
@@ -8717,7 +8758,7 @@ function edActs(){
   put(document.getElementById('ed-next'),nx?esc(nx):'');
   const pl=document.getElementById('ed-plan');
   if(pl){const want=chList(t);
-    put(pl,t.state!=='done'&&d&&d.ok&&LIVE&&D.publish&&PUBCH.some(([x])=>want.includes(x))?'<details class="ed-pl"'+(A.edPl?' open':'')+'><summary>Publikacja automatyczna</summary>'+pubPlanBox(t,c.day,d)+'</details>':'')}
+    put(pl,!taskClosed(t)&&d&&d.ok&&LIVE&&D.publish&&PUBCH.some(([x])=>want.includes(x))?'<details class="ed-pl"'+(A.edPl?' open':'')+'><summary>Publikacja automatyczna</summary>'+pubPlanBox(t,c.day,d)+'</details>':'')}
 }
 function edFill(){
   if(!ED.cur)return;const c=ED.cur,d=PD[c.pid+'|'+c.day],v=document.getElementById('ed-view');if(!v)return;
@@ -8872,7 +8913,7 @@ function edChat(){
   const el=document.getElementById('ed-chat');if(!el||!ED.cur)return;const c=ED.cur;
   const L=D.tasks.filter(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0);
   const stT=t=>t.state==='done'?'Zrobione'+(t.detail.result?': '+t.detail.result:'.'):t.state==='blocked'?'Nie udało się'+(t.detail.left?': '+t.detail.left:'.'):
-    t.state==='doing'||(t.runId&&t.state!=='done')?'Poprawiam…':'Czekam na agenta.';
+    t.state==='doing'||(t.runId&&!taskClosed(t))?'Poprawiam…':'Czekam na agenta.';
   el.innerHTML=L.length?L.map(t=>'<div class="cm me"><b>Ty</b><div>'+esc(t.detail.fix||t.title.replace(/^Popraw post na \S+: /,''))+'</div></div>'+
     '<div class="cm ai"><b>Agent</b><div>'+esc(stT(t))+'</div></div>').join(''):'<p class="muted">Napisz, co zmienić w filmie, grafice albo tekście.</p>';
 }
@@ -8898,7 +8939,7 @@ const scLz=st=>{const x=SCST[st||'']||SCST[''];return '<span class="lz '+x[0]+'"
 /* zadania agenta i właściciela wokół scenariusza tego dnia (przygotowanie, poprawki, nagranie) */
 const scTasks=(pid,day,kind)=>D.tasks.filter(t=>t.project===pid&&t.title.indexOf(SCPRE[kind]+day)===0);
 function scBusy(pid,day){const L=scTasks(pid,day,'prep').concat(scTasks(pid,day,'fix'));
-  return L.some(t=>t.state!=='done'&&t.state!=='blocked')?(scTasks(pid,day,'prep').some(t=>t.state!=='done'&&t.state!=='blocked')?'prep':'fix'):''}
+  return L.some(t=>!taskClosed(t)&&t.state!=='blocked')?(scTasks(pid,day,'prep').some(t=>!taskClosed(t)&&t.state!=='blocked')?'prep':'fix'):''}
 /* zadanie „Nagraj według scenariusza na <dzień>: …”: klucz okna scenariusza (projekt|dzień publikacji|publikacja) albo '' */
 function scRecKey(t){if(!t||t.title.indexOf(SCPRE.rec)!==0)return '';const day=t.title.slice(SCPRE.rec.length,SCPRE.rec.length+10);
   const p=D.tasks.find(x=>x.project===t.project&&scOwn(x)&&String(x.date).slice(0,10)===day);return p?t.project+'|'+day+'|'+p.id:''}
@@ -8991,7 +9032,7 @@ function scDoc(d){
 function scChat(){
   const el=document.getElementById('sc-chat'),c=SC.cur;if(!el||!c)return;
   const stT=t=>t.state==='done'?'Zrobione'+(t.detail&&t.detail.result?': '+t.detail.result:'.'):t.state==='blocked'?'Nie udało się'+(t.detail&&t.detail.left?': '+t.detail.left:'.'):
-    t.state==='doing'||(t.runId&&t.state!=='done')?'Piszę…':'Czekam na agenta.';
+    t.state==='doing'||(t.runId&&!taskClosed(t))?'Piszę…':'Czekam na agenta.';
   const L=scTasks(c.pid,c.day,'prep').concat(scTasks(c.pid,c.day,'fix'));
   const me=t=>t.title.indexOf(SCPRE.prep)===0?(t.detail&&t.detail.fix?'Przygotuj scenariusz od nowa.':'Przygotuj scenariusz.'):(t.detail&&t.detail.fix)||t.title.replace(/^Popraw scenariusz nagrania na \S+: /,'');
   el.innerHTML=L.length?L.map(t=>'<div class="cm me"><b>Ty</b><div>'+esc(me(t))+'</div></div><div class="cm ai"><b>Agent</b><div>'+esc(stT(t))+'</div></div>').join(''):
@@ -9220,7 +9261,7 @@ const AS={messages:[],pending:false,error:'',loaded:false,partial:'',activity:''
 /* działania na końcu odpowiedzi asystenta, każde w osobnym wierszu (prompt w agents.py, assistant_prompt):
    Pokaż: #adres · Otwórz: <id zadania albo tytuł> · Przewiń: <nagłówek> · Zamknij: szczegóły. Nie są pokazywane. */
 /*asActs:start*/
-const AS_ACT=/^\s*(Pokaż|Otwórz|Przewiń|Zamknij|Uruchom)\s*:\s*(.*?)\s*$/i;   /* Uruchom wykonuje serwer; tu tylko ukryty w trakcie pisania */
+const AS_ACT=/^\s*(Pokaż|Otwórz|Przewiń|Zamknij|Uruchom|Anuluj zadanie)\s*:\s*(.*?)\s*$/i;   /* Uruchom wykonuje serwer; tu tylko ukryty w trakcie pisania */
 function asActs(t){const body=[],acts=[];
   String(t||'').split('\n').forEach(l=>{const m=AS_ACT.exec(l),k=m?m[1].toLowerCase():'';
     if(m&&(m[2]||k==='zamknij'))acts.push({k:k,v:m[2]});else body.push(l)});
@@ -9233,7 +9274,7 @@ const asFmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
 const asOpenId=()=>DR&&DR.kind==='task'?DR.id:'';
 function asFind(v){v=String(v||'').trim().replace(/^[„"'«]+|[”"'»]+$/g,'');if(!v||!D)return null;
   const T=D.tasks,low=v.toLowerCase(),m=/id:\s*(\S+)/.exec(v),id=m?m[1]:v;let t=T.find(x=>x.id===id);if(t)return t;
-  const op=T.filter(x=>x.state!=='done'),ti=x=>String(x.title||'').toLowerCase();
+  const op=T.filter(x=>!taskClosed(x)),ti=x=>String(x.title||'').toLowerCase();
   return op.find(x=>ti(x)===low)||T.find(x=>ti(x)===low)||op.find(x=>ti(x).indexOf(low)>=0)||null}
 function asScroll(v){const low=String(v||'').trim().toLowerCase();if(!low)return;
   const H=Array.prototype.filter.call(document.querySelectorAll('#view h1,#view h2,#view h3,#view summary,#drawer h2,#drawer h3'),x=>x.offsetParent!==null);
@@ -9494,7 +9535,7 @@ function kqRows(q,data,today){
   let rows=[];
   if(src==='zadania'||src==='publikacje'){
     rows=(data.tasks||[]).filter(t=>(src==='publikacje')===(t.kind==='publikacja')&&pOk(t.project)).map(t=>{const c=kqCol(t),st=S[t.stage];
-      return {id:t.id,typ:'zadanie',tytul:t.title||'',pid:t.project,projekt:pn(t.project),data:String(t.date||'').slice(0,10),open:t.state!=='done',
+      return {id:t.id,typ:'zadanie',tytul:t.title||'',pid:t.project,projekt:pn(t.project),data:String(t.date||'').slice(0,10),open:t.state!=='done'&&t.state!=='cancelled',
         col:c,stan:KQ_COL[c],kto:t.executor||'',czeka:t.needsYou||'',minuty:+t.minutes||0,kanal:String(t.channel||''),etap:st?st.title||'':'',wartosc:1}})}
   else if(src==='etapy')rows=(data.stages||[]).filter(s=>pOk(s.project)).map(s=>({id:s.id,typ:'etap',tytul:s.title||'',pid:s.project,projekt:pn(s.project),
     data:String(s.date||'').slice(0,10),open:!s.done,col:s.done?'done':'todo',stan:s.done?'zrobione':'otwarte',kto:'',czeka:'',minuty:0,kanal:'',etap:s.title||'',
@@ -9513,7 +9554,7 @@ function kqRows(q,data,today){
     rows.forEach(x=>Object.assign(x,{typ:'zasob',projekt:'',data:'',open:true,stan:'',kto:'',czeka:'',minuty:0,kanal:'',etap:'',postep:x.wartosc}))}
   /* filtry */
   const st=kqList(f.stan);
-  if(st.length)rows=rows.filter(r=>st.some(s=>s==='otwarte'?r.open:s==='zrobione'?!r.open||r.col==='done':s==='po terminie'?r.open&&!!r.data&&r.data<today:
+  if(st.length)rows=rows.filter(r=>st.some(s=>s==='otwarte'?r.open:s==='zrobione'?r.col!=='cancelled'&&(!r.open||r.col==='done'):s==='po terminie'?r.open&&!!r.data&&r.data<today:
     s==='aktywne'||s==='wstrzymane'||s==='backlog'||s==='zakończone'?r.stan===s:r.stan===s));
   const who=kqList(f.kto);
   if(who.length)rows=rows.filter(r=>who.some(w=>w==='agenci'?['agent','claude','codex'].includes(r.kto):w==='dla-ciebie'?r.kto==='ty'||!!r.czeka:r.kto===w));
@@ -9824,7 +9865,7 @@ const F={
   today:()=>youState().youToday.map(x=>{const p=x.q?x.q.p:P(x.t.project);
     return {kind:x.q?'pytanie':x.need||'zadanie',p:p,t:x.t||null,q:x.q||null,title:x.q?x.q.text:x.t.title,date:x.d,min:x.q?2:x.min,uc:x.uc||0,
       why:x.q?'Pytanie z karty projektu':(x.t.detail&&x.t.detail.goal)||''}}).filter(x=>x.p),
-  waiting:p=>{const L=[];D.tasks.filter(t=>inP(p,t.project)&&t.state!=='done').forEach(t=>{
+  waiting:p=>{const L=[];D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)).forEach(t=>{
       if(t.state==='blocked')L.push({t:t,who:'',av:'!',txt:'czeka na: '+(F.waitsOf(t).join(', ')||'nieznane'),since:t.blockedSince?diff(T(),t.blockedSince):null});
       else if(t.executor==='ty'||t.needsYou)L.push({t:t,who:'ty',av:'Ty',me:true,txt:t.needsYou==='zgoda'?'czeka na Twoją zgodę':t.needsYou==='odbiór'?'czeka na Twój odbiór':'Twoja kolej',due:t.date});
       else if(t.state==='doing')L.push({t:t,who:t.executor,av:(WHO[t.executor]||WHO['']).i,txt:who(t.executor)+' pracuje',due:t.date})});
@@ -9890,7 +9931,7 @@ function scChanges(){
       return L}}}
 
 function riskCard(p,i){
-  const late=p.stagesL.find(s=>s.st==='late'),bl=F.blocked(p),mine=D.tasks.filter(t=>inP(p,t.project)&&t.state!=='done'&&t.executor==='ty');
+  const late=p.stagesL.find(s=>s.st==='late'),bl=F.blocked(p),mine=D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.executor==='ty');
   let h='<div class="as-card as-rk as-fx as-gen" id="ask-'+esc(p.id)+'" style="--d:'+(i+1)+';'+pc(p)+'"><div class="as-rkh"><i class="as-pdot"></i><b>'+esc(p.name)+'</b>'+spill(F.status(p))+'</div>';
   if(late&&isDay(late.start)){const span=Math.max(1,diff(late.date,late.start)),now=diff(T(),late.start),tot=Math.max(span,now)+2,x=v=>Math.round(100*v/tot);
     h+='<p>Etap „'+esc(late.title)+'” miał termin '+ddl(late.date)+'.</p>'+
@@ -11377,7 +11418,7 @@ async function load(force){
     else{D=normalize(raw);D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;A.sig=sig;A.fullAt=Date.now();render(force===true)}
     scRefresh();
     if(ED.cur){edChat();const c=ED.cur,k=c.pid+'|'+c.day,pd=PD[k];
-      if(pd&&pd.rec&&(pd.rec.state==='running'||pd.rec.state==='queued'||D.tasks.some(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0&&t.state!=='done'))){delete PD[k];loadPost(c.pid,c.day)}}
+      if(pd&&pd.rec&&(pd.rec.state==='running'||pd.rec.state==='queued'||D.tasks.some(t=>t.project===c.pid&&t.title.indexOf('Popraw post na '+c.day)===0&&!taskClosed(t)))){delete PD[k];loadPost(c.pid,c.day)}}
   }catch(e){console.error(e)}
   finally{
     if(arm){let busy=0;try{busy=D?(route().v==='agenci'&&!document.hidden?2:nwBusy()):0}catch(e){}
@@ -11534,6 +11575,16 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-pjd]')){pjdSet(el.dataset.pjd==='open');return}
   if(el=qq('[data-pjcode]')){PF.more['pj-code']=!PF.more['pj-code'];savePF();render(true);focusK('pjcode');return}
   if(el=qq('[data-ag]')){agentAct(el);return}
+  if(el=qq('[data-task-life]')){
+    const t=D.tasks.find(x=>x.id===el.dataset.id),action=el.dataset.taskLife;
+    if(action==='ask'){
+      openForm(el.dataset.id,'cancel');
+      const input=$('#drawer [name="reason"]');if(input)input.focus();
+    }else if(action==='dismiss')closeForm();
+    else if(action==='skip')taskLifecycle(t,'skip-cancelled-dependency',{fragment:el.dataset.fragment});
+    else taskLifecycle(t,'restore');
+    return;
+  }
   if(el=qq('[data-act]')){if(el.dataset.id){const id=el.dataset.id,k=el.dataset.act,t=D.tasks.find(x=>x.id===id);
     /* publikacja w dowolnej liście (Przegląd, Dla Ciebie, Tablica, Blokady, Terminy, Plan, Marketing): „Zatwierdź” i „Opublikowane”
        najpierw pokazują post — z datą edytor posta, bez daty szuflada z podglądem; w edytorze i w szufladzie akcja działa od razu */
@@ -11614,6 +11665,14 @@ document.addEventListener('change',ev=>{
 });
 document.addEventListener('submit',ev=>{
   if(!D)return;const f=ev.target;ev.preventDefault();
+  if(f.dataset.taskCancel!=null){
+    const t=D.tasks.find(x=>x.id===f.dataset.taskCancel);
+    f.querySelector('[type="submit"]').disabled=true;
+    taskLifecycle(t,'cancel',{reason:f.elements.reason.value}).finally(()=>{
+      f.querySelector('[type="submit"]').disabled=false;
+    });
+    return;
+  }
   if(f.dataset.edfix!=null){ev.preventDefault();edSend(f);return}
   if(f.dataset.scfix!=null){scSend(f);return}
   if(f.dataset.scsave!=null){scSave(f);return}

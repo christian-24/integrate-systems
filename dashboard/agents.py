@@ -165,13 +165,13 @@ def variant_name(path):
 
 RUN_LINE = re.compile(r"^[ \t>*`-]*Uruchom\s*:\s*(.+?)\s*$", re.I)
 # wiersze działań rozmów (Asystent i Rozmowa w projekcie); panel wykonuje je i usuwa z odpowiedzi
-ACTION_LINE = re.compile(r"^[ \t>*`-]*(Uruchom|Polecenie|Odpowiedź na pytanie|Odpowiedz na pytanie)\s*:\s*(.+?)\s*$", re.I)
-RUN_MAX = 3                 # najwyżej tyle uruchomień (Uruchom: i Polecenie:) z jednej odpowiedzi
+ACTION_LINE = re.compile(r"^[ \t>*`-]*(Uruchom|Anuluj zadanie|Polecenie|Odpowiedź na pytanie|Odpowiedz na pytanie)\s*:\s*(.+?)\s*$", re.I)
+RUN_MAX = 3                 # łączny limit Uruchom:, Anuluj zadanie: i Polecenie:
 ANSWER_MAX = 3              # najwyżej tyle odpowiedzi na pytania z jednej odpowiedzi
 # „zrób to” / „wykonaj” na końcu wiadomości o zadaniu (Rozmowa w projekcie z odnośnikiem do zadania) = „Wyślij i wykonaj”
 EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
 # wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
-CHAT_RULES_V = "6"
+CHAT_RULES_V = "7"
 PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
 
 
@@ -182,9 +182,10 @@ def _unq(text):
 def take_actions(answer):
     """Wiersze działań z odpowiedzi rozmowy: (odpowiedź bez nich, [(rodzaj, pola)]). Rodzaje:
     ("run", (projekt, tytuł)) z „Uruchom: <projekt> | <tytuł>” (albo „Uruchom: <tytuł>”),
+    ("cancel", (projekt, tytuł, powód)) z „Anuluj zadanie: <projekt> | <tytuł> | <opcjonalny powód>”,
     ("order", (projekt, tytuł, polecenie)) z „Polecenie: <projekt> | <tytuł> | <polecenie>”,
     ("answer", (projekt, numer, odpowiedź)) z „Odpowiedź na pytanie: <projekt> | <numer> | <odpowiedź>”.
-    Najwyżej RUN_MAX uruchomień i poleceń razem oraz ANSWER_MAX odpowiedzi; powtórzenia raz."""
+    Najwyżej RUN_MAX uruchomień, anulowań i poleceń razem oraz ANSWER_MAX odpowiedzi; powtórzenia raz."""
     keep, found = [], []
     runs = answers = 0
     for line in str(answer or "").split("\n"):
@@ -197,6 +198,10 @@ def take_actions(answer):
             pid, _, title = value.rpartition("|") if "|" in value else ("", "", value)
             item = ("run", (pid.strip(), _unq(title)))
             ok = bool(item[1][1])
+        elif word == "anuluj zadanie":
+            bits = [x.strip() for x in value.split("|", 2)]
+            item = ("cancel", (bits[0], _unq(bits[1]), bits[2] if len(bits) == 3 else "")) if len(bits) >= 2 else None
+            ok = bool(item and all(item[1][:2]))
         else:
             bits = [x.strip() for x in value.split("|", 2)]
             if len(bits) < 3:
@@ -1870,7 +1875,9 @@ class Manager:
         msg = self._panel_msg(task)
         key = (task["project"], task["file"], task["title"])
         why = ""
-        if task.get("kind") == "publikacja":
+        if task.get("state") == "cancelled":
+            why = "zadanie anulowane."
+        elif task.get("kind") == "publikacja":
             why = "publikację wykonujesz samodzielnie."
         elif task.get("executor") not in AGENT_EXECUTORS:
             why = "to zadanie nie jest dla agenta (kto: %s). Zmień wykonawcę w szczegółach." % (task.get("executor") or "brak")
@@ -2152,6 +2159,20 @@ class Manager:
             if kind == "answer":
                 out.append(self._chat_answer(data, allowed, *val))
                 continue
+            if kind == "cancel":
+                want, title, reason = val
+                target = self._project_id(data, want)
+                candidates = [t for t in data["tasks"] if t["project"] == target
+                              and _norm_title(t["title"]) == _norm_title(title)]
+                msg = self._panel_msg({"project": target or pid, "title": title})
+                if not target or (allowed is not None and target not in allowed) or len(candidates) != 1:
+                    msg["text"] = "Wskaż jedno zadanie i jego projekt, aby je anulować."
+                else:
+                    task = candidates[0]
+                    code, error = self.cancel_hook({"id": task["id"], "title": task["title"], "reason": reason})
+                    msg["text"] = "Anulowano: " + title if code == 200 else error
+                out.append(msg)
+                continue
             want_pid, title = val[0], val[1]
             task = self._match_task(data, want_pid if not pid or want_pid in (allowed or ()) else pid, title,
                                     allowed=allowed)
@@ -2215,7 +2236,7 @@ class Manager:
         if not cands and allowed is not None and pid:      # tytuł z innej części tego samego projektu
             cands = [t for t in data["tasks"] if t.get("kind") != "publikacja" and t["project"] in allowed
                      and _norm_title(t["title"]) == want]
-        order = {"todo": 0, "blocked": 1, "doing": 2, "done": 3}
+        order = {"todo": 0, "blocked": 1, "doing": 2, "done": 3, "cancelled": 4}
         cands.sort(key=lambda t: order.get(t.get("state"), 2))
         return cands[0] if cands else None
 
@@ -2362,15 +2383,17 @@ class Manager:
             "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela (np. zamknij, anuluj, przesuń, zmień termin, "
             "dodaj zadanie) i tylko ZADANIA.md, DECYZJE.md oraz pliki w kampanie/, w formacie ze STANDARD.md. "
             "Gdy prośba jest niejasna, dopytaj zamiast zgadywać.",
-            "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
-            "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
+            "- Na wyraźną prośbę właściciela o anulowanie dodaj jeden wiersz "
+            "`Anuluj zadanie: %s<dokładny tytuł zadania> | <opcjonalny powód właściciela>`. "
+            "Pomiń ostatnią kreskę, jeśli nie podano powodu. Panel zatrzyma agenta i zapisze stan. "
+            "Przy anulowaniu nie edytuj wiersza zadania bezpośrednio." % prefix,
             "- Po każdej zmianie pliku napisz przed wierszami działań wiersz zaczynający się od „Zmieniono:” "
             "z projektem, plikiem i zadaniem.",
             "- Odpowiedź właściciela na pytanie z sekcji „Pytania do właściciela” karty zapisuje panel: dodaj na końcu "
             "wiersz `Odpowiedź na pytanie: %s<numer pytania> | <odpowiedź właściciela>`. Propozycję przyjmujesz tylko "
             "na wyraźne „tak” właściciela. Sam nie odpowiadasz za właściciela." % prefix,
             ] + Manager.site_rule(list(sites)) + Manager.run_rules(prefix, today) + [
-            "- Wiersze `Uruchom:`, `Polecenie:` i `Odpowiedź na pytanie:` są zawsze na samym końcu, każdy w osobnym "
+            "- Wiersze `Uruchom:`, `Anuluj zadanie:`, `Polecenie:` i `Odpowiedź na pytanie:` są zawsze na samym końcu, każdy w osobnym "
             "wierszu; panel wykonuje je i nie pokazuje ich właścicielowi.",
             "- Nie zmieniasz kart (KARTA.md), kodu ani innych plików, nie uruchamiasz poleceń, nic nie publikujesz "
             "i nie wysyłasz. Nigdy nie proś o hasła, klucze ani tokeny.",
@@ -2658,7 +2681,7 @@ class Manager:
         tk = today.isoformat()
         mine, late, pubs = [], [], []
         for t in data["tasks"]:
-            if t.get("state") == "done" or t.get("project") not in active:
+            if t.get("state") in ("done", "cancelled") or t.get("project") not in active:
                 continue
             d = t.get("date") or ""
             line = "- %s | %s | %s%s%s" % (names[t["project"]], t.get("title", ""), d or "bez daty",
@@ -2673,7 +2696,8 @@ class Manager:
                 mine.append(line)
         prog = []
         for pid in active:
-            ts = [t for t in data["tasks"] if t.get("project") == pid and t.get("kind") != "publikacja"]
+            ts = [t for t in data["tasks"] if t.get("project") == pid and t.get("kind") != "publikacja"
+                  and t.get("state") != "cancelled"]
             if ts:
                 done = sum(1 for t in ts if t.get("state") == "done")
                 prog.append("- %s: %d%% (%d z %d zadań)" % (names[pid], round(100 * done / len(ts)), done, len(ts)))
@@ -3646,7 +3670,7 @@ class Manager:
             return
         added = 0
         for t in tasks:
-            if t.get("state") == "done" or t is me or \
+            if t.get("state") in self.projekt.CLOSED_TASK_STATES or t is me or \
                     not any(isinstance(w, dict) and w.get("title") == rec["title"] for w in t.get("waitingFor") or []):
                 continue
             refs = [r for r in (t.get("detail") or {}).get("refs") or [] if isinstance(r, dict) and r.get("path")]
@@ -4088,7 +4112,7 @@ class Manager:
         ready, waiting = [], collections.Counter()
         by_id = {t.get("id"): t for t in data["tasks"] if t.get("id")}
         for task in data["tasks"]:
-            if (task.get("executor") not in AGENT_EXECUTORS or task.get("state") == "done"
+            if (task.get("executor") not in AGENT_EXECUTORS or task.get("state") in self.projekt.CLOSED_TASK_STATES
                     or task.get("kind") == "publikacja"):
                 continue
             reason = self._pm_wait(task, today)
@@ -4154,7 +4178,7 @@ class Manager:
             if not folder or not os.path.isfile(os.path.join(folder, RYTM_FILE)):
                 continue
             tasks = [t for t in data["tasks"] if t["project"] == pid]
-            if any(t["title"].startswith(POST_TASK) and t["title"].endswith(RYTM_SUFFIX) and t["state"] != "done"
+            if any(t["title"].startswith(POST_TASK) and t["title"].endswith(RYTM_SUFFIX) and t["state"] not in self.projekt.CLOSED_TASK_STATES
                    for t in tasks):
                 continue
             dates = []
@@ -4312,7 +4336,7 @@ class Manager:
             cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
             for t in tasks:
                 day = str(t.get("date") or "")[:10]
-                if t.get("kind") != "publikacja" or t["state"] == "done" or not scenariusz.is_film(t) \
+                if t.get("kind") != "publikacja" or t["state"] in self.projekt.CLOSED_TASK_STATES or not scenariusz.is_film(t) \
                         or not (today.isoformat() <= day <= horizon):
                     continue
                 if publication_task_title(t, self.projekt) in titles or any(
@@ -4395,7 +4419,7 @@ class Manager:
                 detail = t.get("detail") or {}
                 # nagranie to nie publikacja; opis pod film dopiero po nagraniu
                 film = t["title"].startswith(FILM_TASK) or any(w.startswith(FILM_TASK) for w in self.projekt.waiting_titles(t))
-                if t["state"] != "done" and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
+                if t["state"] not in self.projekt.CLOSED_TASK_STATES and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
                         and not any((n == day or n.startswith(day + "-")) and has_post(os.path.join(posts, n))
                                     for n in folders):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
@@ -4439,7 +4463,7 @@ class Manager:
         stages = {s["id"]: s for s in data["stages"]}
         out = []
         for t in data["tasks"]:
-            if t.get("state") == "done":
+            if t.get("state") in self.projekt.CLOSED_TASK_STATES:
                 continue
             pub = t.get("kind") == "publikacja"
             if pub and "zgoda" not in needs_of(t):
@@ -4929,6 +4953,25 @@ class Manager:
             self._state["automat"] = enabled
             self._save_state()
         return 200, "", {}
+
+    def task_start_guard(self):
+        return self._start_lock
+
+    def stop_task(self, task):
+        """Zdejmuje uruchomienie z kolejki lub czeka na zakończenie zatrzymanego procesu."""
+        key = (task["project"], task["file"], task["title"])
+        rid = self._live_keys().get(key)
+        if not rid:
+            return True
+        with self._lock:
+            self._priv.get(rid, {}).pop("restart", None)
+        self.stop(rid)
+        deadline = time.monotonic() + 12
+        while key in self._live_keys():
+            if time.monotonic() >= deadline:
+                return False
+            time.sleep(0.05)
+        return True
 
     def stop(self, rid):
         """Zdejmuje z kolejki albo kończy proces razem z jego grupą."""
@@ -6093,12 +6136,16 @@ def run_block(task, source, live, tools, sample_ok=False):
     live: {(projekt, plik, tytuł): id uruchomienia w kolejce albo w toku}; tools: {"claude": bool, "codex": bool}.
     sample_ok pomija regułę projektów przykładowych (podgląd).
     """
+    if task.get("state") == "cancelled":
+        return "Anulowane"
     if source != "registry" and not sample_ok:
         return "Projekty przykładowe"
     if task.get("kind") == "publikacja":
         return "Publikację wykonujesz samodzielnie"
     if task.get("state") == "done":
         return "Zrobione"
+    if any(w.get("cancelled") for w in task.get("waitingFor") or [] if isinstance(w, dict)):
+        return "Poprzednik anulowany"
     if task.get("executor") == "ty":
         return "Zadanie po Twojej stronie"
     if "zgoda" in needs_of(task):

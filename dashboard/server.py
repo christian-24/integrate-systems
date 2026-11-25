@@ -10,6 +10,9 @@ Mały serwer, tylko biblioteka standardowa Pythona:
                               git: repo, remote, url, host, unpushed, branch)
   POST /api/task/update       zmienia pola zadania w ZADANIA.md albo w pliku kampanii
   POST /api/task/state        zmienia sam stan zadania (z "count": wynik licznika do kampanii)
+  POST /api/task/cancel       zatrzymuje agenta i anuluje zadanie (opcjonalny powód)
+  POST /api/task/restore      przywraca anulowane zadanie do zrobienia
+  POST /api/task/skip-cancelled-dependency  usuwa wskazany fragment po: na anulowanym zadaniu
   POST /api/task/count        dopisuje wynik licznika zadania do kampanii projektu („Wyniki i wnioski”)
   POST /api/task/close-checked  zamyka zadanie potwierdzone kontrolą serwera (pole sprawdza:)
   POST /api/task/detail      jeden klucz szczegółów zadania (cel, gotowe gdy, materiał, wynik…, poprawka, następne, krok)
@@ -270,6 +273,51 @@ def change_task(body):
     return (200, "") if ok else (409, "Plik zmienił się od ostatniego odczytu. Odświeżam listę.")
 
 
+def cancel_task(body, cancel=True):
+    """Wspólna operacja przycisku i rozmów. Start agenta jest wstrzymany do końca zapisu."""
+    task_id, title = body.get("id", ""), body.get("title", "")
+    reason = body.get("reason", "")
+    if not isinstance(reason, str) or len(reason) > 500:
+        return 400, "Powód może mieć do 500 znaków."
+    reason = " ".join(reason.replace("|", "/").split())
+    mgr = get_agents()
+    try:
+        with mgr.task_start_guard():
+            task, _, folder = _find_task(task_id, title)
+            if task is None:
+                return folder
+            if task["state"] == "done":
+                return 409, "Zadanie jest już zrobione."
+            if cancel and not mgr.stop_task(task):
+                return 409, "Agent nadal się zatrzymuje. Spróbuj ponownie za chwilę."
+            with _write_lock:
+                ok = projekt.change_cancellation(folder, task["file"], task["line"], title, cancel, reason)
+    except (ValueError, OSError):
+        return 400, "Nie udało się zapisać zmiany."
+    if ok:
+        data_invalidate()
+    return (200, "") if ok else CONFLICT
+
+
+def skip_cancelled_dependency(body):
+    """Usuń z po: tylko fragment, który nadal wskazuje na anulowanego poprzednika."""
+    try:
+        with _write_lock:
+            task, _, folder = _find_task(body.get("id", ""), body.get("title", ""))
+            if task is None:
+                return folder
+            fragment = body.get("fragment")
+            if task["state"] in projekt.CLOSED_TASK_STATES or not any(
+                    dep.get("cancelled") and dep.get("fragment") == fragment for dep in task["waitingFor"]):
+                return CONFLICT
+            after = [entry for entry in task["after"] if entry != fragment]
+            ok = projekt.update_task(folder, task["file"], task["line"], task["title"], {"after": after},
+                                     preserve_after=True)
+    except (ValueError, OSError):
+        return 400, "Nie udało się zapisać zmiany."
+    return (200, "") if ok else CONFLICT
+
+
 def finish_task(body):
     """POST /api/task/finish {id, title, values, steps?, count?}: „Zrobione” w formularzu zadania właściciela.
     values: odpowiedzi w kolejności pól `pyta:` (tak/nie jako true/false), sprawdzane według typu
@@ -278,7 +326,7 @@ def finish_task(body):
     t, data, where = _find_task(body.get("id", ""), body.get("title", ""))
     if t is None:
         return where
-    if t["state"] == "done":
+    if t["state"] in projekt.CLOSED_TASK_STATES:
         return CONFLICT
     folder, file, line = where, t["file"], t["line"]
     try:
@@ -364,6 +412,8 @@ def count_task(body, state=None):
     t, data, folder = _find_task(body.get("id", ""), title)
     if t is None:
         return folder
+    if t["state"] == "cancelled":
+        return CONFLICT
     name = task_counter(t)
     if not name:
         return 400, "Nie zapisano: zadanie nie ma pola licznik."
@@ -484,6 +534,8 @@ def close_checked(body):
         return folder
     if t["state"] == "done":
         return 409, "Zadanie jest już zrobione."
+    if t["state"] == "cancelled":
+        return 409, "Zadanie jest anulowane."
     check = task_check(t, server_state(), folder)
     if not check or check.get("ok") is not True:
         return 409, "Kontrola serwera nie potwierdza tego zadania."
@@ -774,7 +826,7 @@ def apply_answer_task(folder, pid, n, today):
         return [t for t in projekt.read_project(folder, pid)["tasks"]
                 if t["file"] == "ZADANIA.md" and t["title"] == title]
 
-    if any(t["state"] != "done" for t in rows()):
+    if any(t["state"] not in projekt.CLOSED_TASK_STATES for t in rows()):
         return title
     projekt.add_task(folder, title)
     t = rows()[-1]
@@ -906,7 +958,7 @@ def fix_post(body):
     started = False
     try:                                        # agent od razu, bez czekania na Automat (gdy nie może, zrobi to Automat)
         data, _ = load_projects()
-        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] != "done"), None)
+        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] not in projekt.CLOSED_TASK_STATES), None)
         if t:
             started = get_agents().run_task(t["id"], t["title"])[0] == 200
     except Exception:  # noqa: BLE001
@@ -963,7 +1015,7 @@ def publication_job(pub, jobs):
     if scenariusz.is_film(pub):
         title = projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day, scenariusz.pub_title(pub)), 120)
     job = jobs.get((pid, title))
-    return job if job and job["state"] != "done" else None
+    return job if job and job["state"] not in projekt.CLOSED_TASK_STATES else None
 
 
 def publication_jobs(data, index):
@@ -973,7 +1025,7 @@ def publication_jobs(data, index):
             and t["title"].startswith(("Przygotuj publikację na ", agents.POST_TASK, scenariusz.PREP_TASK))}
     for pub in data["tasks"]:
         day = str(pub.get("date") or "")[:10]
-        if pub.get("kind") != "publikacja" or pub["state"] == "done" or not POST_DAY.fullmatch(day):
+        if pub.get("kind") != "publikacja" or pub["state"] in projekt.CLOSED_TASK_STATES or not POST_DAY.fullmatch(day):
             continue
         job = publication_job(pub, jobs)
         pid = pub["project"]
@@ -992,7 +1044,7 @@ def assign_publication(body):
     with _write_lock:
         data, index = load_projects()
         pub = next((t for t in data["tasks"] if t["id"] == tid and t["title"] == title
-                    and t.get("kind") == "publikacja" and t["state"] != "done"), None)
+                    and t.get("kind") == "publikacja" and t["state"] not in projekt.CLOSED_TASK_STATES), None)
         if not pub:
             return 409, "Publikacja się zmieniła. Odśwież Marketing.", {}
         pid, day = pub["project"], str(pub.get("date") or "")[:10]
@@ -1075,7 +1127,7 @@ def _script_run(title, pid):
     """Uruchamia agenta dla zadania o tym tytule od razu (gdy nie może, zrobi to Automat). True, gdy ruszył."""
     try:
         data, _ = load_projects()
-        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] != "done"), None)
+        t = next((x for x in data["tasks"] if x["project"] == pid and x["title"] == title and x["state"] not in projekt.CLOSED_TASK_STATES), None)
         return bool(t) and get_agents().run_task(t["id"], t["title"])[0] == 200
     except Exception:  # noqa: BLE001
         return False
@@ -1091,7 +1143,7 @@ def script_prepare(body):
         return ctx
     data, folder, proj, pub, day = ctx
     again = body.get("od_nowa") is True
-    if any(t["state"] != "done" for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK)):
+    if any(t["state"] not in projekt.CLOSED_TASK_STATES for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK)):
         return 409, "Agent już przygotowuje ten scenariusz."
     post = post_folder(proj["id"], day)
     if post and os.path.isfile(os.path.join(post, scenariusz.FILE)) and not again:
@@ -1101,7 +1153,7 @@ def script_prepare(body):
     try:
         with _write_lock:
             name = agents.publication_task_title(pub, projekt)
-            if any(t["title"] == name and t["state"] != "done"
+            if any(t["title"] == name and t["state"] not in projekt.CLOSED_TASK_STATES
                    for t in projekt.read_project(folder, proj["id"])["tasks"]):
                 return 409, "Agent już przygotowuje ten scenariusz."
             post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(pub))
@@ -1137,7 +1189,7 @@ def script_fix(body):
     if not post or not os.path.isfile(os.path.join(post, scenariusz.FILE)):
         return 404, "Scenariusza jeszcze nie ma. Najpierw go przygotuj."
     title = projekt._clean("%s%s: %s" % (scenariusz.FIX_TASK, day, note), 120)
-    if any(t["title"] == title and t["state"] != "done" for t in data["tasks"] if t["project"] == proj["id"]):
+    if any(t["title"] == title and t["state"] not in projekt.CLOSED_TASK_STATES for t in data["tasks"] if t["project"] == proj["id"]):
         return 409, "Ta uwaga już czeka na agenta."
     rel = "posty/%s/%s" % (os.path.basename(post), scenariusz.FILE)
     detail = {"cel": "scenariusz nagrania %s poprawiony według uwagi właściciela" % rel,
@@ -1221,7 +1273,7 @@ def script_state(body):
                                             "materiał": [rel]})
             elif want == "do realizacji":
                 task_title = projekt._clean("%s%s: %s" % (scenariusz.AGENT_TASK, day, title), 120)
-                if not any(t["title"] == task_title and t["state"] != "done" for t in data["tasks"]
+                if not any(t["title"] == task_title and t["state"] not in projekt.CLOSED_TASK_STATES for t in data["tasks"]
                            if t["project"] == proj["id"]):
                     get_agents()._add_task(folder, proj["id"], task_title,
                                            {"executor": "claude", "machine": "cloud",
@@ -1233,7 +1285,7 @@ def script_state(body):
                                             "materiał": [rel]})
             elif want == "nagrane":
                 for t in _script_tasks(data, proj["id"], day, scenariusz.REC_TASK):
-                    if t["state"] != "done":
+                    if t["state"] not in projekt.CLOSED_TASK_STATES:
                         projekt.set_state(folder, t["file"], t["line"], t["title"], "done")
             projekt.write_atomic(path, scenariusz.set_state(text, want))
     except (ValueError, OSError, StopIteration) as e:
@@ -2039,6 +2091,7 @@ def get_agents():
         if _agents is None:
             _agents = agents.Manager(load_projects, _write_lock, projekt)
             _agents.site.secret = _derive("panel-podglad").encode("ascii")   # adresy podglądu trwają po restarcie
+            _agents.cancel_hook = cancel_task
             _agents.counts_hook = cached_counts
             _agents.answer_hook = answer_question    # „Odpowiedź na pytanie:” z rozmów: ta sama droga co przycisk
         return _agents
@@ -2072,7 +2125,9 @@ def cached_counts():
 
 # Wiadomość w rozmowie: 2000 znaków w JSON z \uXXXX (np. polskie litery, emoji) przekracza 4 KB.
 CHAT_BODY = 32 * 1024
-WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
+WRITES = {"/api/task/cancel": cancel_task, "/api/task/restore": lambda b: cancel_task(b, cancel=False),
+          "/api/task/skip-cancelled-dependency": skip_cancelled_dependency,
+          "/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
           "/api/task/count": lambda b: count_task(b),
           "/api/task/close-checked": lambda b: close_checked(b),
           "/api/task/detail": lambda b: update_detail(b),
@@ -2520,7 +2575,7 @@ def track_closed(tasks, prev, now=None, when=None):
     prev = prev if isinstance(prev, dict) else {}
     closed = [c for c in prev.get("closed") or [] if isinstance(c, dict) and all(isinstance(c.get(k), str)
               for k in ("project", "file", "title", "at")) and _recent(_iso(c["at"]), now, 48)]
-    open_now = collections.Counter(projekt.task_key(t) for t in tasks if t.get("state") != "done")
+    open_now = collections.Counter(projekt.task_key(t) for t in tasks if t.get("state") not in projekt.CLOSED_TASK_STATES)
     done_now = set(projekt.task_key(t) for t in tasks if t.get("state") == "done")
     closed = [c for c in closed if not (open_now[projekt.task_key(c)] and projekt.task_key(c) not in done_now)]
     if isinstance(prev.get("open"), list):
@@ -3527,15 +3582,15 @@ def build_ics():
         tasks = [t for t in d["tasks"] if t["stage"] == st["id"]]
         done = sum(1 for t in tasks if t["state"] == "done")
         day = as_day(st["date"])
-        if not day or st["closed"] or (tasks and done == len(tasks)):
+        if not day or projekt.stage_done(st, tasks):
             continue
         name = names.get(st["project"], st["project"])
         lines += ics_event(st["id"], day, "Termin: %s (%s)" % (st["title"], name),
-                           "Projekt: %s. Zadania: %d z %d." % (name, done, len(tasks)),
+                           "Projekt: %s. Zadania: %d z %d." % (name, done, sum(t["state"] != "cancelled" for t in tasks)),
                            "Jutro termin: " + st["title"], stamp)
     for t in d["tasks"]:
         day = as_day(t["date"])
-        if t["kind"] != "publikacja" or t["state"] == "done" or not day:
+        if t["kind"] != "publikacja" or t["state"] in projekt.CLOSED_TASK_STATES or not day:
             continue
         where = " (%s)" % t["channel"] if t["channel"] else ""
         lines += ics_event("pub-" + t["id"], day, "Publikacja: %s%s" % (t["title"], where),
