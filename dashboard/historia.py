@@ -30,7 +30,7 @@ def counts(tasks):
     """Liczby stanów jednej listy zadań. Kolejność reguł: zrobione, do odbioru, zablokowane, w toku, reszta."""
     c = dict.fromkeys(KEYS, 0)
     for t in tasks:
-        if t.get("kind", "zadanie") != "zadanie":
+        if t.get("kind", "zadanie") != "zadanie" or t["state"] == "cancelled":
             continue
         c["total"] += 1
         if t["state"] == "done":

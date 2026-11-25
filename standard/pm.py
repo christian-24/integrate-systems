@@ -118,7 +118,7 @@ def stage_state(stage, tasks, today):
     if not is_day(stage["date"]):
         return ""
     mine = [t for t in tasks if t["stage"] == stage["id"]]
-    left = [t for t in mine if t["state"] != "done"]
+    left = [t for t in mine if t["state"] not in projekt.CLOSED_TASK_STATES]
     days = (datetime.date.fromisoformat(stage["date"]) - today).days
     if stage["closed"] or (mine and not left):
         return "done"
@@ -149,7 +149,7 @@ def stage_end(stage, tasks):
     """(najpóźniejszy koniec otwartych zadań etapu z datą: data + dni trwania, zadanie) albo ("", None)."""
     best, pick = "", None
     for t in tasks:
-        if t["stage"] != stage["id"] or t["state"] == "done" or not is_day(t["date"]):
+        if t["stage"] != stage["id"] or t["state"] in projekt.CLOSED_TASK_STATES or not is_day(t["date"]):
             continue
         end = (datetime.date.fromisoformat(t["date"]) + datetime.timedelta(days=duration_days(t))).isoformat()
         if end > best:
@@ -209,7 +209,7 @@ def facts(today=None, runs_dir=None):
     by_id = {t["id"]: t for t in d["tasks"]}
     for s in d["stages"]:
         s["state"] = stage_state(s, d["tasks"], today)
-    open_tasks = [t for t in d["tasks"] if t["state"] != "done"]
+    open_tasks = [t for t in d["tasks"] if t["state"] not in projekt.CLOSED_TASK_STATES]
     quiet = {p["id"] for p in d["projects"] if p.get("state") in projekt.QUIET_STATES}
     since, live, ended = runs_info(runs_dir) if d["source"] == "registry" else ({}, set(), {})
     health = projekt.read_health()
@@ -235,7 +235,7 @@ def facts(today=None, runs_dir=None):
                 "unlockCount": t.get("unlockCount", 0), "late": late(t)}
 
     def stage_brief(s):
-        mine = [t for t in d["tasks"] if t["stage"] == s["id"]]
+        mine = [t for t in d["tasks"] if t["stage"] == s["id"] and t["state"] != "cancelled"]
         return {"project": names.get(s["project"], s["project"]), "title": s["title"], "date": s["date"],
                 "state": s["state"], "done": sum(1 for t in mine if t["state"] == "done"), "total": len(mine)}
 
@@ -271,7 +271,7 @@ def facts(today=None, runs_dir=None):
             continue
         for w in t.get("waitingFor") or []:
             pred = by_id.get(w.get("id"))
-            if not pred or pred["state"] == "done":
+            if not pred or pred["state"] in projekt.CLOSED_TASK_STATES:
                 continue
             if not is_day(pred["date"]) or (is_day(t["date"]) and t["date"] < pred["date"]):
                 order.append(dict(brief(t), after=pred["title"], afterDate=pred["date"]))
@@ -316,7 +316,7 @@ def facts(today=None, runs_dir=None):
         if p.get("partOf"):
             continue
         ids = {m["id"] for m in members[p["id"]]}
-        mine = [t for t in d["tasks"] if t["project"] in ids and t["kind"] != "publikacja"]
+        mine = [t for t in d["tasks"] if t["project"] in ids and t["kind"] != "publikacja" and t["state"] != "cancelled"]
         st = [s for s in d["stages"] if s["project"] in ids]
         upcoming = sorted((s for s in st if s["state"] not in ("", "done")), key=lambda s: s["date"])
         worst = min((s["state"] for s in st), key=WORST.index, default="")
