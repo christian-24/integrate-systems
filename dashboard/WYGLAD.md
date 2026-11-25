@@ -69,8 +69,8 @@ słowami („nie połączono z GitHubem”, „3 zmiany do wysłania”), bez �
 ## Przycisk Rozmowy
 
 Na stronie projektu „Rozmowa” jest w nagłówku (nie pływa nad treścią); znacznik „czeka na odpowiedź” / „nowa
-odpowiedź” przy nim. Otwarte okno rozmowy: na komputerze w prawym dolnym rogu, na telefonie arkusz od dołu. Nad
-szufladą zadania nie ma pływającego przycisku („Zapytaj o to zadanie” w szufladzie). Odbiór pracy: przycisk w rogu,
+odpowiedź” przy nim. Otwarte okno rozmowy: na komputerze w prawym dolnym rogu, na telefonie arkusz od dołu. Szczegóły
+zadania mają „Rozmowa” w swoim nagłówku (z odnośnikiem do zadania), pływający przycisk jest wtedy ukryty. Odbiór pracy: przycisk w rogu,
 treść ma odstęp na dole.
 
 ## Teksty

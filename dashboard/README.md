@@ -67,10 +67,12 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
   folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
   gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
-  folderu”), „Zmień folder”, „Odłącz”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
+  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
   i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
-- **Google Drive** (Serwer → Google Drive, albo „Kod i pliki”, gdy żadne konto nie jest połączone): jedno logowanie
-  na konto Google (można połączyć kilka, każde z nazwą nadaną przy łączeniu), tylko do odczytu. Łączenie idzie
+- **Google Drive** w „Kod i pliki” pokazuje konta przypisane do projektu lub części. Nowe połączenie
+  przypisuje konto do wybranego projektu i jego obecnych części. „Użyj konta z innego projektu” pozwala
+  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive widać przypisania i można odłączyć konto
+  od wskazanej karty. Dostęp do Google Drive jest tylko do odczytu. Łączenie idzie
   tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Logowanie jednym kliknięciem”,
   INSTALACJA.md, „Google Drive”): Google wraca do panelu. Bez klienta panel pokazuje, jak go ustawić; dawne łączenie
   z wklejaniem adresu (klient rclone) jest w interfejsie wyłączone (decyzja właściciela 2026-11-25).
@@ -78,15 +80,15 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   w instrukcji zadania. Połączenia sprzed kont (osobne logowanie na folder) działają dalej; „Zmień folder” przenosi
   je na konto.
 - **Rozmowa** (Rozmowa w projekcie): z agentem rozmawia się tylko tu i w Asystencie; obie rozmowy mają te same
-  uprawnienia i tę samą drogę działania (AGENCI.md, „Rozmowy: dwa miejsca, jeden silnik”). Przycisk w prawym dolnym
-  rogu strony projektu, szczegółów zadania i odbioru pracy rozwija okno czatu (na komputerze 380×520 px, przy otwartych
+  uprawnienia i tę samą drogę działania (AGENCI.md, „Rozmowy: dwa miejsca, jeden silnik”). Przycisk „Rozmowa” w nagłówku
+  strony projektu i szczegółów zadania (w odbiorze pracy w prawym dolnym rogu) rozwija okno czatu (na komputerze 380×520 px, przy otwartych
   szczegółach obok nich; na telefonie arkusz od dołu na całą szerokość, nad klawiaturą ekranową); „Zwiń” albo Esc je
   zwija. Rozmowa dotyczy bieżącego projektu: przy projekcie z częściami całości (rozmowa projektu głównego, czyta
   i zmienia też pliki części) albo wybranej części (jej własna rozmowa); w szczegółach zadania projektu albo części
-  tego zadania. Część główna i Całość mają tę samą rozmowę. Okno zachowuje historię, na zwiniętym przycisku widać
+  tego zadania. Część główna i Całość mają tę samą rozmowę. Okno zachowuje historię, przy przycisku widać
   „czeka na odpowiedź” i „nowa odpowiedź”. Prośba o pracę zakłada i uruchamia zadanie agenta (`POST
   /api/project/chat`). Treść strony ma odstęp na dole, żeby przycisk niczego nie zasłaniał.
-  - **Zapytaj o to zadanie** (szczegóły zadania i odbiór pracy; w zadaniu nie ma osobnego czatu) otwiera rozmowę
+  - **Rozmowa** w nagłówku szczegółów zadania (w zadaniu nie ma osobnego czatu) otwiera rozmowę
     z odnośnikiem „O zadaniu: …”: agent dostaje tytuł, szczegóły i ostatnie uruchomienie. Przy zadaniu agenta obok
     „Wyślij” jest „Wyślij i wykonaj” (polecenie pod zadaniem i uruchomienie), a gdy agent pracuje, „Wyślij do agenta”.
     Odnośnik usuwa „×”. Dawna rozmowa o zadaniu zostaje do odczytu w szczegółach („Dawna rozmowa o zadaniu”).

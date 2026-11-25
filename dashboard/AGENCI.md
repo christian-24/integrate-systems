@@ -474,9 +474,9 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 Z agentem rozmawia się tylko w dwóch miejscach:
 
 - **Asystent** (strona Asystent): sprawy wszystkich projektów (`POST /api/asystent`, głos `POST /api/asystent/glos`).
-- **Rozmowa w projekcie** (przycisk „Rozmowa” w nagłówku strony projektu, w prawym dolnym rogu odbioru pracy;
-  w szczegółach zadania „Zapytaj o to zadanie”): sprawy projektu i jego części (`POST /api/project/chat`). W szczegółach zadania i w odbiorze przycisk
-  „Zapytaj o to zadanie” otwiera tę rozmowę z odnośnikiem do zadania; zadanie części otwiera rozmowę tej części.
+- **Rozmowa w projekcie** (przycisk „Rozmowa” w nagłówku strony projektu i w nagłówku szczegółów zadania, w prawym
+  dolnym rogu odbioru pracy): sprawy projektu i jego części (`POST /api/project/chat`). Otwarta przy otwartym zadaniu
+  ma od razu odnośnik do zadania; zadanie części otwiera rozmowę tej części.
 
 Obie mają te same uprawnienia i tę samą drogę działania (`Manager.chat_tools`, `chat_args`, `chat_rules`,
 `chat_launches`), więc żadna nie odmawia tego, co robi druga:
