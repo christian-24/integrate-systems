@@ -156,7 +156,7 @@ with sync_playwright() as p:
               "#p-firmowa-etapy", "#p-firmowa-wskazniki", "#p-firmowa-ksiega", "#p-firmowa-strona?cz=firmowa-onepager",
               "#p-firmowa-tablica?cz=firmowa-onepager"):
         go(h); out[h] = pg.evaluate(M, "")
-    go("#p-firmowa"); pg.locator("#pjdock [data-pjd=open]").click(); pg.wait_for_timeout(400)
+    go("#p-firmowa"); pg.locator("#view [data-pjd=open]").click(); pg.wait_for_timeout(400)   # Rozmowa w nagłówku projektu
     out["rozmowa"] = pg.evaluate(M, "#pjdock button,#pjdock .btn")
     pg.locator("#pjdock [data-pjd=close]").click(); pg.wait_for_timeout(300)
     out["rozmowa"]["po"] = pg.evaluate("document.body.classList.contains('sl')")
@@ -166,7 +166,7 @@ with sync_playwright() as p:
     r["lock"] = pg.evaluate("document.body.classList.contains('sl')")
     r["scroll"] = pg.evaluate("(()=>{const d=document.querySelector('#drawer');const a=d.scrollTop;d.scrollTop=a+200;const ok=d.scrollTop>a||d.scrollHeight<=d.clientHeight;d.scrollTop=a;return ok})()")
     r["textarea"] = pg.locator("#drawer textarea[data-cq]").count()
-    pg.locator("#pjdock [data-pjd=open]").first.click(); pg.wait_for_timeout(500)   # Rozmowa przy otwartym zadaniu
+    pg.locator("#drawer [data-pjd=open]").click(); pg.wait_for_timeout(500)   # Rozmowa w nagłówku otwartego zadania
     r = out["zapytaj"] = pg.evaluate(M, "#pjdock button,#pjdock .btn")
     r["ref"] = pg.locator("#pjdock .pjd-chip").inner_text()
     r["exec"] = pg.locator("#pjdock [data-pjdx]").count()

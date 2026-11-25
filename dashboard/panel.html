@@ -2778,7 +2778,7 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
 .phead .pj-ovb{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:var(--g-m) var(--g-p)}
 /* przełącznik części: przyciski segmentowe w jednym wierszu */
 .pj-parts.hscroll{display:flex;gap:var(--g-s);border:0;margin-top:var(--g-xs)}
-.pj-parts.hscroll a{display:inline-flex;align-items:center;min-height:32px;padding:0 var(--g-m);border:1px solid var(--line);border-radius:999px;font-size:var(--fs-md);font-weight:600;color:var(--ink-2);text-decoration:none;max-width:280px;overflow:hidden;text-overflow:ellipsis}
+.pj-parts.hscroll a{display:inline-block;line-height:30px;min-height:32px;padding:0 var(--g-m);border:1px solid var(--line);border-radius:999px;font-size:var(--fs-md);font-weight:600;color:var(--ink-2);text-decoration:none;max-width:280px;overflow:hidden;text-overflow:ellipsis}
 .pj-parts.hscroll a:hover{color:var(--ink);border-color:var(--line-2)}
 .pj-parts.hscroll a[aria-current="page"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 /* zakładki: jeden wiersz, przewijane w poziomie; linia pod spodem jako cień (bez ucinania przez overflow) */
@@ -2821,7 +2821,7 @@ details.psec>.empty{padding:var(--g-m) var(--g-p)}
 .colsw .seg[aria-pressed="true"] .num{color:inherit}
 /* szczegóły zadania: jedna karta dla „Twój ruch”, zgody, pracy agenta i ramek; „Twój ruch” wyróżnia tylko lewa krawędź */
 #dbody .move-box,#dbody .dbox,#dbody .abox:not(.bad):not(.ok){border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);padding:var(--g-m) var(--g-p);margin:0 0 var(--g-m)}
-#dbody .move-box,#dbody .abox.you{border-left:3px solid var(--accent)}
+#dbody .move-box,#dbody .abox.you:not(.bad):not(.ok){border-left:3px solid var(--accent)}
 #dbody .move-box b,#dbody .abox>b,#dbody .dbox h3{font-size:var(--fs-md);font-weight:650}
 #dbody .move-box p,#dbody .abox .move,#dbody .dbox p{font-size:var(--fs-md)}
 #dbody .move-box .row,#dbody .abox .row{display:flex;flex-wrap:wrap;gap:var(--g-s)}
@@ -2850,10 +2850,10 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
   .phead .pj-sum>span:nth-child(3)::before{content:none}
   .pj-parts.hscroll a{max-width:220px}
   .pj-hb{margin-left:0}
-  .pj-hb .btn{min-height:44px}
+  .pj-hb .btn,#drawer .dh-acts .btn{min-height:44px}
   .ptabs.hscroll,.pj-parts.hscroll{display:flex;grid-template-columns:none}
   .ptabs.hscroll a{padding:0 var(--g-m);justify-content:center}
-  .pj-parts.hscroll a{min-height:44px}
+  .pj-parts.hscroll a{min-height:44px;line-height:42px}
   .prow>li{flex-wrap:wrap;padding:var(--g-s) var(--g-m)}
   .pr-m{flex:1 1 180px}
   .pr-a .btn{min-height:44px}
