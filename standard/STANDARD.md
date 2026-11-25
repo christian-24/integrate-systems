@@ -103,13 +103,15 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 
 | Element | Wartości |
 |---|---|
-| stan | `[ ]` do zrobienia, `[~]` w toku, `[!]` zablokowane, `[x]` zrobione |
+| stan | `[ ]` do zrobienia, `[~]` w toku, `[!]` zablokowane, `[x]` zrobione, `[-]` anulowane |
 | `kto` | agent (panel wybiera Claude lub Codex), claude, codex, ty |
 | `gdzie` | pc, mac, chmura |
 | `kiedy` | data RRRR-MM-DD |
 | `pora` | dzień, noc |
 | `czas` | minuty Twojej pracy (np. `30` albo `1h 30`) |
 | `wymaga` | zgoda (agent czeka na decyzję), odbiór (praca czeka na przegląd) |
+| `anulowano` | data anulowania RRRR-MM-DD, przy stanie `[-]` |
+| `powód` | opcjonalny powód anulowania |
 | `blokada` | powód, przy stanie `[!]` |
 | `kanał` | kanał publikacji, w kampaniach |
 | `po` | fragmenty tytułów zadań tego projektu (po przecinku), które muszą być `[x]` wcześniej; najpierw z tego samego pliku |
@@ -117,7 +119,12 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `licznik` | liczba podawana przy zamknięciu: zaproszenia, przyjęte, rozmowy, linki, konta, oferty, odpowiedzi |
 | `kampania` | plik kampanii, do której trafia licznik (`kampanie/nazwa.md`, `nazwa.md` albo `nazwa`); bez pola: pierwsza kampania w toku |
 
-Wszystkie pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
+Anulowany wiersz pozostaje w pliku, np. `- [-] Przygotuj szkic | kto: ty | anulowano: 2026-11-25 | powód: zmiana zakresu`.
+Panel pomija go w otwartych zadaniach, terminach, sprawach właściciela i raporcie PM.
+Przywrócenie zmienia stan na `[ ]` i usuwa pola anulowania. Zadanie zależne pokazuje „poprzednik anulowany”.
+„Rób bez niego” usuwa wskazany fragment z `po:`, a „Anuluj też to” otwiera potwierdzenie anulowania zadania zależnego.
+
+Pozostałe pola są opcjonalne. Etap bez otwartych zadań jest zamknięty.
 `wymaga` może mieć kilka wartości po przecinku (`wymaga: odbiór, zgoda`); każda z nich obowiązuje.
 `po: makietę, zatwierdź teksty`: poprzednikiem jest pierwszy wiersz tego samego pliku, którego tytuł zawiera fragment
 (bez wielkości liter). Gdy w tym pliku nie ma takiego wiersza, poprzednikiem jest pierwszy pasujący wiersz innego pliku

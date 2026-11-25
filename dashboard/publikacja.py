@@ -311,7 +311,7 @@ class Publisher:
         data, index = self.load_projects()
         now = self.now()
         for t in data["tasks"]:
-            if t.get("kind") != "publikacja" or t["state"] == "done":
+            if t.get("kind") != "publikacja" or t["state"] in ("done", "cancelled"):
                 continue
             sched = parse_schedule((t.get("detail") or {}).get("scheduled"))
             if not sched or sched[0] > now:
