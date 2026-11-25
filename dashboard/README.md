@@ -58,21 +58,24 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
 ### Strona projektu
 
 - Układ według `dashboard/WYGLAD.md`. Wiersz nazwy: stan projektu, po prawej „Szczegóły” (fazy, kafle, Księga, GitHub
-  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Pod nazwą jedna linia: faza · postęp · bieżący etap. Przy projekcie
-  z częściami przełącznik „Całość · <część główna> · <części>” (domyślnie Całość) w jednym wierszu, przewijany
-  w poziomie. Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana
-  część pokazuje tylko swoje i swoje zakładki (np. Strona). Zakładki w jednym wierszu, na telefonie przewijane w poziomie.
-- Plan: sekcje rozwijane z licznikiem: **Decyzje** i **Dla Ciebie dziś** otwarte, **Po terminie**, **Agenci** i **Później**
-  (do 7 dni) zwinięte; stan każdej zapamiętany na urządzeniu (`pp-*`). W wierszu jeden znacznik terminu (po terminie
-  czerwony tekst) i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same
-  zadania co grupa „Po terminie” w Zadaniach (Twoje, bez publikacji, bez czekających na poprzednika); publikacje po
-  terminie są w „Dla Ciebie dziś”. Na końcu sekcja **Kod i pliki**: na wierzchu GitHub („zgodne z GitHubem”, „N zmian
-  do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
-  folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
-  gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
-  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Przegląd kopii
-  wszystkich projektów nie jest już w Serwerze.
-- **Google Drive** w „Kod i pliki” pokazuje konta przypisane do projektu lub części. Nowe połączenie
+  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Przy projekcie z częściami przy nazwie mała lista „Część” (Całość,
+  <część główna>, <części>; domyślnie Całość). Pod nazwą jedna linia: faza · postęp · bieżący etap. Całość pokazuje
+  zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana część pokazuje tylko swoje
+  i swoje zakładki (np. Strona). Zakładki (Zadania, Strona, Marketing, Etapy, Wskaźniki, Księga, Połączenia) zawsze
+  widoczne w jednym wierszu, na telefonie przewijane w poziomie. Bez zakładki Plan: stary adres `#p-<id>-plan` prowadzi
+  do Zadań.
+- Zadania (domyślna zakładka): na górze sekcja **Decyzje** (pytania, zgody, odbiory projektu; rozwijana, stan `pp-dec`),
+  pod nią „Dodaj zadanie” i tablica.
+- Połączenia: jedna karta na usługę, na wierzchu jeden wiersz stanu (przy projekcie z częściami wiersz na część),
+  „Szczegóły” rozwija działania (stan `pj-con-gh`, `pj-con-dr`, `pj-con-meta`). **GitHub**: „zgodne z GitHubem”, „N zmian
+  do wysłania”, „nie połączono z GitHubem”; w Szczegółach Sprawdź, Wyślij na GitHub, Usuń kopię z serwera, gałęzie,
+  pliki, zatwierdź/odłóż zmiany. **Google Drive**: ścieżka folderu z kontem, N pozycji, albo „bez folderu”; w Szczegółach
+  wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do folderu”), „Zmień folder”, „Odłącz
+  folder”. **Meta Business (Facebook i Instagram)**: strony Facebook przypisane do projektu w Kanałach publikacji
+  i konto Instagram strony; bez strony „Niepołączone” i „Połącz” (Marketing → Kanały publikacji). W Szczegółach wybór
+  strony dla projektu z połączonych i profile z karty (`facebook:`, `instagram:`). Karta Meta jest w projektach, które
+  mają albo mogą mieć kanały: strona przypisana, profil w karcie, kampania albo publikacja w zadaniach.
+- **Google Drive** w Połączeniach pokazuje konta przypisane do projektu lub części. Nowe połączenie
   przypisuje konto do wybranego projektu i jego obecnych części. „Użyj konta z innego projektu” pozwala
   dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive → „Szczegóły” widać przypisania i można odłączyć konto
   od wskazanej karty. Dostęp do Google Drive jest tylko do odczytu. Łączenie idzie

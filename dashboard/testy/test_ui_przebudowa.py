@@ -1,15 +1,14 @@
 """Przebudowa układu panelu według dashboard/WYGLAD.md (zlecenie 2026-11-25 „UI: przebudowa”).
 
 Duży zestaw (dashboard/przyklad-duzy) plus część projektu ze stroną (Portal klienta · Strona WWW). Sprawdza w Chromium:
-brak poziomego przewijania 393–1920 px na stronie projektu (Plan, Zadania, Strona), w szczegółach zadania i w Agentach;
-zakładki i przełącznik części w jednym wierszu; przycisk Rozmowy nie zasłania treści (bounding box, także nad szufladą
-na telefonie); sekcje Planu rozwijane (Dla Ciebie dziś otwarta, reszta zwinięta, stan zapamiętany); „Po terminie” w Planie
-= grupa „Po terminie” w Zadaniach = pm.py dla każdego projektu; brak błędów JS.
+brak poziomego przewijania 393–1920 px na stronie projektu (Zadania, Strona, Połączenia, stary adres Planu), w szczegółach
+zadania i w Agentach; zakładki w jednym wierszu; przycisk Rozmowy nie zasłania treści (bounding box, także nad szufladą
+na telefonie); Decyzje na górze Zadań (otwarte, stan zapamiętany, licznik = wiersze); brak błędów JS.
+Grupa projekt (2026-11-25): zakładka Plan usunięta, jej „Po terminie” porównywane z Zadaniami już nie istnieje.
 """
 import json
 import os
 import subprocess
-import sys
 import unittest
 
 from test_asystent_duzy import PW, Duzy
@@ -94,8 +93,9 @@ with sync_playwright() as p:
         r = out["w"][w] = {}
         def sw(k):
             r[k] = pg.evaluate("document.documentElement.scrollWidth")
-        for name, h in (("plan", "#p-portal"), ("tablica", "#p-portal-tablica"), ("strona", "#p-portal-strona?cz=portal-www"),
-                        ("agenci", "#agenci"), ("plan2", "#p-shield")):
+        for name, h in (("zadania", "#p-portal"), ("tablica", "#p-portal-tablica"), ("strona", "#p-portal-strona?cz=portal-www"),
+                        ("agenci", "#agenci"), ("zadania2", "#p-shield"), ("polaczenia", "#p-portal-polaczenia"),
+                        ("staryplan", "#p-portal-plan")):
             pg.goto(U + h); pg.wait_for_timeout(700)
             sw("sw-" + name)
             pg.evaluate("scrollTo(0, 0)"); r["cov0-" + name] = pg.evaluate(COVER)
@@ -104,32 +104,30 @@ with sync_playwright() as p:
             if name != "agenci":
                 r["tabRows-" + name] = pg.evaluate(ONE_ROW + "('.ptabs a')")
                 r["partRows-" + name] = pg.evaluate(ONE_ROW + "('.pj-parts a')")
-        # sekcje Planu: domyślnie Dla Ciebie dziś otwarta, Po terminie / Agenci / Później zwinięte; stan zapamiętany
-        pg.goto(U + "#p-shield"); pg.wait_for_timeout(600)
-        r["open0"] = pg.evaluate("Object.fromEntries([...document.querySelectorAll('details.psec')].map(d => [d.id, d.open]))")
-        pg.locator("#plate > summary").click(); pg.wait_for_timeout(200)
+        # Decyzje na górze Zadań: otwarte, pierwsze pod zakładkami, stan zwinięcia zapamiętany; stary adres Planu → Zadania
+        pg.goto(U + "#p-portal-plan"); pg.wait_for_timeout(600)
+        r["oldPlan"] = [pg.evaluate("location.hash"), pg.locator(".ptabs a[aria-current]").inner_text()]
+        r["tabs"] = pg.locator(".ptabs a").all_inner_texts()
+        r["first"] = pg.evaluate("(document.querySelector('.ptabs').nextElementSibling||{}).className||''")
+        r["dec0"] = pg.evaluate("document.querySelector('#pdec').open")
+        pg.locator("#pdec > summary").click(); pg.wait_for_timeout(200)
         pg.reload(); pg.wait_for_timeout(700)
-        r["lateAfterReload"] = pg.evaluate("document.querySelector('#plate').open")
-        r["lateRows"] = pg.locator("#plate .prow > li").count()
-        r["lateActs"] = pg.locator("#plate .prow > li .pr-a .btn").count()
-        r["lateDue"] = pg.locator("#plate .prow > li .due.late").count()
-        r["lateBadges"] = pg.locator("#plate .prow .lz.red").count()
-        pg.locator("#plate > summary").click(); pg.wait_for_timeout(200)
+        r["decAfterReload"] = pg.evaluate("document.querySelector('#pdec').open")
+        pg.locator("#pdec > summary").click(); pg.wait_for_timeout(200)
+        pg.goto(U + "#p-portal-polaczenia"); pg.wait_for_timeout(600)
+        r["cards"] = pg.locator(".pjx-card h2").count()
         # szczegóły zadania: bez poziomego przewijania, pływający przycisk Rozmowy nie zasłania „Zamknij”
         pg.goto(U + "#p-shield-tablica?z=" + TASK); pg.wait_for_timeout(800)
         r["drawer"] = pg.locator("#drawer .dttl").count()
         sw("sw-drawer"); r["cov-drawer"] = pg.evaluate(COVER)
         ctx.close()
-    # liczby: „Po terminie” w Planie = grupa „Po terminie” w Zadaniach, dla każdego projektu
+    # liczby: licznik Decyzji = wiersze, dla każdego projektu (bez decyzji: bez sekcji)
     ctx = b.new_context(viewport={"width": 1440, "height": 900}, color_scheme="dark"); pg = ctx.new_page()
     pg.on("pageerror", lambda e: errs.append("liczby: %s" % e))
     for pid in PIDS:
         pg.goto(U + "#p-" + pid); pg.wait_for_timeout(500)
-        plan = pg.evaluate("(document.querySelector('#plate .cnt')||{textContent:'0'}).textContent")
-        today = [pg.evaluate("(document.querySelector('#pplan .cnt')||{textContent:'-1'}).textContent"), pg.locator("#pplan .prow > li").count()]
-        pg.goto(U + "#p-" + pid + "-tablica"); pg.wait_for_timeout(500)
-        board = pg.evaluate("(document.querySelector('.col.todo .tb-gh.late .tb-gn')||{textContent:'0'}).textContent")
-        out["late"][pid] = {"plan": int(plan), "board": int(board), "today": [int(today[0]), today[1]]}
+        out["late"][pid] = [int(pg.evaluate("(document.querySelector('#pdec .cnt')||{textContent:'0'}).textContent")),
+                            pg.locator("#pdec .rows > li").count()]
     ctx.close()
     b.close()
 print(json.dumps({"out": out, "errs": errs}, ensure_ascii=False))
@@ -165,30 +163,18 @@ class Przebudowa(Duzy):
                     self.assertEqual(v["hits"], [], (w, k))                               # Rozmowa nie zasłania treści
                 if k.startswith("tabRows-") or k.startswith("partRows-"):
                     self.assertLessEqual(v, 1, (w, k))                                    # jeden wiersz, bez zawijania
-            for k in ("cov0-plan", "cov0-tablica", "cov0-strona"):
+            for k in ("cov0-zadania", "cov0-tablica", "cov0-strona", "cov0-polaczenia"):
                 self.assertEqual((o[k]["n"], o[k]["floating"]), (1, 0), (w, k))         # Rozmowa w nagłówku projektu
             self.assertEqual(o["cov-drawer"]["floating"], 0, w)                           # nad szufladą bez pływającego
             self.assertEqual(o["drawer"], 1, w)
-            self.assertEqual(o["open0"].get("pplan"), True, w)
-            for sec in ("plate", "pag", "plater"):
-                if sec in o["open0"]:
-                    self.assertFalse(o["open0"][sec], (w, sec))
-            self.assertTrue(o["lateAfterReload"], w)                                      # stan zwinięcia zapamiętany
-            self.assertEqual(o["lateRows"], 3, w)
-            self.assertEqual((o["lateActs"], o["lateDue"], o["lateBadges"]), (3, 3, 0), w)   # przycisk i jeden znacznik
-        # jedno źródło: Plan = Zadania = pm.py (Twoje zadania po terminie, bez publikacji)
-        sys.path.insert(0, os.path.join(os.path.dirname(DASH), "standard"))
-        import pm
-        names = {p["id"]: p["name"] for p in data["projects"]}
-        late = pm.facts()["late"]
-        tasks = {(t["project"], t["title"]): t for t in data["tasks"]}
+            self.assertEqual(o["oldPlan"], ["#p-portal-tablica", "Zadania"], w)          # stary adres Planu → Zadania
+            self.assertEqual(o["tabs"], ["Zadania", "Strona", "Marketing", "Etapy", "Wskaźniki", "Księga", "Połączenia"], w)
+            self.assertEqual(o["first"], "pjx-dec", w)                                    # Decyzje na górze Zadań
+            self.assertTrue(o["dec0"], w)
+            self.assertFalse(o["decAfterReload"], w)                                      # stan zwinięcia zapamiętany
+            self.assertEqual(o["cards"], 2, w)                                            # Portal: bez kanałów, bez karty Meta
         for pid, v in res["out"]["late"].items():
-            mine = [x for x in late if x["project"] == names[pid] and x["kind"] != "publikacja"
-                    and (x["executor"] == "ty" or x["needsYou"])]
-            mine = [x for x in mine if not tasks.get((pid, x["title"]), {}).get("waits")]
-            self.assertEqual(v["plan"], v["board"], pid)
-            self.assertEqual(v["plan"], len(mine), pid)
-            self.assertEqual(v["today"][0], v["today"][1], pid)                           # licznik = wiersze
+            self.assertEqual(v[0], v[1], pid)                                             # licznik Decyzji = wiersze
 
 
 if __name__ == "__main__":

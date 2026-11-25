@@ -1812,7 +1812,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .ww-pick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
 .ww-pick>span{color:var(--ink-2);font-size:var(--fs-sm)}
 .ptag{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);white-space:nowrap;vertical-align:1px}
-/* Kod i pliki: wiersze stanu, „Szczegóły” rozwija działania */
+/* karty Połączeń (dawniej „Kod i pliki”): wiersze stanu, „Szczegóły” rozwija działania */
 .pj-code{padding:0}
 .kp-h{display:flex;align-items:center;gap:12px;justify-content:space-between}
 .kp-h h2{margin:0;padding:0}
@@ -2808,7 +2808,7 @@ details.psec>.empty{padding:var(--g-m) var(--g-p)}
 /* jeden znacznik terminu: zwykły tekst; po terminie czerwony */
 .due{font-weight:600;color:var(--ink-2)}
 .due.late{color:var(--l-red)}
-/* Kod i pliki: nagłówek jak w sekcjach, wiersze stanu */
+/* karty Połączeń: nagłówek jak w sekcjach, wiersze stanu */
 .pj-code .kp-h{padding:var(--g-s) var(--g-p);min-height:48px;border-bottom:1px solid var(--line)}
 .pj-code .kp-h h2{font-size:var(--fs-md);font-weight:650}
 .pj-code .kp{margin:0;padding:var(--g-m) var(--g-p);gap:var(--g-s) var(--g-p);font-size:var(--fs-md)}
@@ -2898,6 +2898,27 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
   .srvs-inf{grid-template-columns:minmax(0,1fr)}
   .srvs-inf-l{position:static;max-height:none}
   .srvs-inf-b{padding:0 var(--g-m) var(--g-m)}
+}
+/* grupa projekt: wybór części przy nazwie, Decyzje nad Zadaniami, karty Połączeń */
+.pjx-cz{display:inline-flex;align-items:center;gap:var(--g-xs);font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;min-width:0;max-width:100%}
+.pjx-cz select.fi{width:auto;max-width:200px;min-height:32px;padding:var(--g-xs) var(--g-s);font-size:var(--fs-md);font-weight:600;text-overflow:ellipsis}
+.pjx-dec{margin:0 0 var(--g-m)}
+.pjx-con{display:grid;gap:var(--g-m)}
+.pjx-card h2 small{font-size:var(--fs-xs);font-weight:500;color:var(--ink-3);margin-left:var(--g-xs)}
+.pjx-lead{padding:var(--g-m) var(--g-p);font-size:var(--fs-md)}
+.pjx-lead>p,.pjx-lead>.kp{margin:0;padding:0;overflow-wrap:anywhere}
+.pjx-lead .kp{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--g-s) var(--g-p)}
+.pjx-pg{list-style:none;margin:0;padding:0;display:grid;gap:var(--g-s)}
+.pjx-pg li{overflow-wrap:anywhere}
+.pjx-off{display:flex;flex-wrap:wrap;align-items:center;gap:var(--g-s)}
+.pjx-card .kp-det .fl{display:grid;gap:var(--g-xs);margin:var(--g-s) 0}
+.pjx-card .kp-det .row{display:flex;flex-wrap:wrap;gap:var(--g-s)}
+.pjx-card .kp-det>p{margin:var(--g-s) 0 0}
+@media (max-width:820px){
+  .pjx-cz select.fi{min-height:44px;max-width:220px}
+  .pjx-lead{padding:var(--g-m)}
+  .pjx-lead .kp{grid-template-columns:minmax(0,1fr);gap:var(--g-xs)}
+  .pjx-lead .kp dd{margin-bottom:var(--g-s)}
 }
 </style>
 
@@ -2999,13 +3020,14 @@ const OLDV={start:'',przeglad:'',ty:'sprawy',wskazniki:'wskazniki',tablica:'zada
 const BNAV=['asystent','marketing','media','agenci'];
 /* menu boczne: wszystkie widoki */
 const MAINV=VIEWS;
-const PTABS=[['plan','Plan'],['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga']];
-const PTMAIN=3;
+/* grupa projekt: bez zakładki Plan (Decyzje są na górze Zadań, domyślnej zakładki); wszystkie zakładki widoczne, Połączenia na końcu */
+const PTABS=[['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga'],['polaczenia','Połączenia']];
+const PTMAIN=PTABS.length;
 /* strony (pole karty strona:) widoczne z widoku p: „Całość” projektu z częściami ma strony swoich części (własnej części
    projektu głównego i części z polem strona:); część i projekt bez części: tylko własną */
 const wwSites=p=>!p?[]:p.partsL&&p.partsL.length&&p.own&&!p.isOwn?[p.own].concat(p.partsL).filter(x=>x.site):p.site?[p]:[];
-/* zakładka Strona w projektach z którąkolwiek stroną (także „Całość”), jako trzecia główna */
-const ptabsOf=p=>wwSites(p).length?PTABS.slice(0,2).concat([['strona','Strona']],PTABS.slice(2)):PTABS;
+/* zakładka Strona w projektach z którąkolwiek stroną (także „Całość”), jako druga, zaraz po Zadaniach */
+const ptabsOf=p=>wwSites(p).length?PTABS.slice(0,1).concat([['strona','Strona']],PTABS.slice(1)):PTABS;
 const ptMain=p=>wwSites(p).length?PTMAIN+1:PTMAIN;
 /* wybrana strona w „Całość” przy kilku częściach ze stroną (WWC[id projektu głównego] = id części) */
 const WWC={};
@@ -5209,10 +5231,10 @@ function mkDay(day){
 }
 
 /* ---------- strona projektu ----------
-   Nagłówek zwarty na każdej zakładce: nazwa, stan i jedna linia (faza · postęp · bieżący etap). Na zakładce Plan ta linia
-   rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
+   Nagłówek zwarty na każdej zakładce: nazwa, stan, wybór części (przy nazwie) i jedna linia (faza · postęp · bieżący etap).
+   „Szczegóły” rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
    Pod zakładkami jedno zdanie, co jest na zakładce (PTD); Marketing ma własne zdanie w mktView. */
-const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
+const PTD={polaczenia:'GitHub, Google Drive i Meta Business projektu: stan połączenia i działania.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
   wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu i ich terminy.',
   ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.',
   strona:'Podgląd strony WWW projektu. Wskaż element, opisz zmianę, a agent poprawi stronę.'};
@@ -5231,8 +5253,8 @@ function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+codeBox(p);   /* rozmowa w prawym dolnym rogu (#pjdock), poza treścią strony */
-  else if(tab==='tablica')body=projBoard(p);
+  if(tab==='tablica')body=pjxDecyzje(p)+projBoard(p);   /* grupa projekt: Decyzje na górze Zadań */
+  else if(tab==='polaczenia')body=pjxConView(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
   else if(tab==='ksiega')body=bookView(p);
@@ -5250,14 +5272,14 @@ function vProjekt(p,tab){
     '<div class="fact"><span class="l">Bieżący etap</span><span class="v">'+(s?esc(s.title):'—')+'</span><span class="d">'+(s?(isDay(s.date)?ddl(s.date)+' · '+rel(s.date):'bez terminu'):'brak etapów')+'</span></div>'+
     '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+
     '<div class="fact" title="Księga: dokumenty, które każdy projekt powinien mieć"><span class="l">Księga</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+'</span></div>'+
-    '<div class="fact"><span class="l">Kod</span><span class="v">'+gitPlain(p)+'</span><span class="d"><a href="'+phref(p,'plan')+'" data-pjgo="pcode">Kod i pliki</a></span></div></div>';
+    '<div class="fact"><span class="l">Kod</span><span class="v">'+gitPlain(p)+'</span><span class="d"><a href="'+phref(p,'polaczenia')+'">Połączenia</a></span></div></div>';
   /* „Szczegóły” w wierszu nazwy na każdej zakładce (stan w PF.more['pj-ov']); „Rozmowa” w nagłówku zamiast pływającego
      przycisku (WYGLAD.md: przycisk nie zasłania treści); znacznik stanu rozmowy uzupełnia renderDock */
   const open=PF.more['pj-ov']===true,tp=topP(p);
   const btns='<div class="pj-hb"><button type="button" class="btn sec sm" data-more="pj-ov" data-k="more:pj-ov" aria-expanded="'+open+'" aria-controls="pj-ovb">'+(open?'Zwiń':'Szczegóły')+'</button>'+
     '<button type="button" class="btn sm pjh-chat" data-pjd="open" data-k="pjh:open" aria-controls="pchat">Rozmowa<span class="pjd-b" data-pjhb hidden></span></button></div>';
-  return '<div class="phead"><div class="ptitle">'+av(p)+'<div class="pt-nm"><h1>'+esc(tp.name)+'</h1>'+(tp.alias?'<span class="muted">'+esc(tp.alias)+'</span>':'')+lz(p.pst)+'</div>'+btns+'</div>'+
-    '<p class="pj-sum">'+sum+'</p>'+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+partSw(p,tab)+'</div>'+
+  return '<div class="phead"><div class="ptitle">'+av(p)+'<div class="pt-nm"><h1>'+esc(tp.name)+'</h1>'+(tp.alias?'<span class="muted">'+esc(tp.alias)+'</span>':'')+lz(p.pst)+partSw(p,tab)+'</div>'+btns+'</div>'+
+    '<p class="pj-sum">'+sum+'</p>'+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+'</div>'+
     '<nav class="tabs ptabs hscroll" aria-label="Widoki projektu">'+ptabsOf(p).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+body;
 }
 /* GitHub zwykłymi słowami (Szczegóły projektu): bez „origin”, „pola github:” i „niewypchniętych” */
@@ -5267,96 +5289,29 @@ function gitPlain(p){
   if(g.remote!=='github')return 'tylko na serwerze, bez GitHuba';
   return (u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">GitHub</a>':'GitHub')+(n?', '+n+' '+pl(n,'zmiana','zmiany','zmian')+' do wysłania':', wysłane');
 }
-/* przełącznik części projektu („Całość · Integracje · Strona WWW”): przyciski segmentowe w jednym wierszu, przewijane
-   w poziomie na telefonie; bez części pusty. Zakładka, której część nie ma (Strona), przechodzi na Plan */
+/* grupa projekt: wybór części projektu („Całość”, części) jako mała lista rozwijana przy nazwie, nie jak osobne całości;
+   domyślnie „Całość”, bez części pusty. Wartość opcji to adres części na tej samej zakładce; zakładka, której część nie ma
+   (Strona), przechodzi na Zadania. Zmiana wyboru: pjxCz (zdarzenie change) */
 function partSw(p,tab){
   const t=topP(p);if(!t.partsL||!t.partsL.length||!t.own)return '';
   const L=[[t,'Całość'],[t.own,t.partLabel]].concat(t.partsL.map(x=>[x,x.partLabel]));
-  return '<nav class="pj-parts hscroll" aria-label="Części projektu">'+L.map(([x,n])=>'<a href="'+phref(x,tab==='strona'&&!wwSites(x).length?'plan':tab)+'" data-k="cz:'+esc(x.isOwn?'*':x.id)+'" title="'+esc(n)+'"'+(x===p?' aria-current="page"':'')+'>'+esc(n)+'</a>').join('')+'</nav>';
+  return '<label class="pjx-cz"><span class="pjx-czl">Część</span><select class="fi" data-pjxcz="1" data-k="cz" aria-label="Część projektu">'+
+    L.map(([x,n])=>'<option value="'+esc(phref(x,tab==='strona'&&!wwSites(x).length?'tablica':tab))+'"'+(x===p?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></label>';
 }
-/* ---------- Plan projektu: sekcje rozwijane (WYGLAD.md) ----------
-   „Decyzje” i „Dla Ciebie dziś” otwarte; „Po terminie”, „Agenci” i „Później” (do 7 dni) zwinięte. Stan każdej sekcji
-   w PF.more (pp-*), pamiętany na urządzeniu. W wierszu jeden znacznik terminu (po terminie: czerwony tekst), tytuł
-   i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same zadania co grupa
-   „Po terminie” w Zadaniach (pjLate); publikacje po terminie są w „Dla Ciebie dziś” z czerwonym znacznikiem. */
-const isAgT=t=>['agent','claude','codex'].includes(t.executor);
-/* Twoje zadania po terminie: ta sama reguła co grupa „Po terminie” w kolumnie Do zrobienia (tbTodo) */
-const pjLate=p=>D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.kind!=='publikacja'&&t.col==='todo'&&tbMine(t)&&!t.waits.length&&tbPer(t)==='late');
-/* „Decyzje”: decyzje projektu (zgody, odbiory, pytania) z tym samym wierszem i przyciskiem co w sprawach dla Ciebie;
-   zadanie po terminie jest raz, w „Po terminie” */
+function pjxCz(el){const h=el.value;if(h&&h!==location.hash)location.hash=h}
+/* ---------- grupa projekt: Decyzje na górze zakładki Zadania (zakładka Plan usunięta) ----------
+   Decyzje projektu (pytania, zgody, odbiory) z tym samym wierszem i przyciskiem co w sprawach dla Ciebie (todayRow);
+   sekcja rozwijana jak w WYGLAD.md, domyślnie otwarta, stan w PF.more['pp-dec']; bez decyzji nic. */
 function planDec(p){
-  const ys=youState(),lt={};pjLate(p).forEach(t=>{lt[t.id]=1});
-  const of=x=>inP(p,x.q?x.q.p.id:x.t.project)&&(x.q||x.need)&&!(x.t&&lt[x.t.id]);
+  const ys=youState(),of=x=>inP(p,x.q?x.q.p.id:x.t.project)&&(x.q||x.need);
   return ys.youToday.concat(ys.youWeek,ys.youLater).filter(of);
-}
-const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind==='rec'&&scOwn(t)&&d)return 'data-scopen="'+esc(t.project+'|'+d+'|'+t.id)+'"';
-  const sk=scRecKey(t);if(sk)return 'data-scopen="'+esc(sk)+'"';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
-/* publikacja z kanałem i datą: stan i akcja jak na karcie w Marketingu (mkState, mkAct) */
-const ppPub=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind!=='pub'||!t.channel||!d)return null;
-  const k=t.project+'|'+d;if(PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,d)}
-  const st=mkState(t,d);return {st:st,act:mkAct(t,d,st,'')}};
-/* przycisk działania wiersza: Zrobione / Zatwierdź / Obejrzyj (odbiór, publikacja, nagranie); agent: bez przycisku */
-function ppAct(x){
-  const t=x.t,id=esc(t.id),lab=s=>' aria-label="'+esc(s+': '+t.title)+'"';
-  if(x.kind==='agent')return '';
-  if(x.kind==='pub'||x.kind==='rec'){const s=ppPub(x);if(s&&s.act)return s.act;return '<button type="button" class="btn sec sm" '+ppOpen(x)+' data-k="ppa:'+id+'"'+lab('Obejrzyj')+'>Obejrzyj</button>'}
-  if(t.waits&&t.waits.length)return '<button type="button" class="btn sec sm" data-task="'+id+'" data-k="ppa:'+id+'"'+lab('Otwórz')+'>Otwórz</button>';
-  if(t.needsYou==='odbiór')return '<a class="btn sec sm" href="'+esc(odHref(t.id))+'" data-k="ppa:'+id+'"'+lab('Obejrzyj i odbierz')+'>Obejrzyj</a>';
-  if(t.needsYou==='zgoda'&&t.kind==='publikacja'&&isDay(t.date))return '<button type="button" class="btn sec sm" data-medit="'+esc(t.project+'|'+String(t.date).slice(0,10)+'|'+t.id)+'" data-k="ppa:'+id+'"'+lab('Obejrzyj i zatwierdź')+'>Zatwierdź</button>';
-  const a=ACTB(t);return '<button type="button" class="btn sec sm" data-act="'+a[0]+'" data-id="'+id+'" data-k="ppa:'+id+'"'+lab(a[1])+'>'+a[1]+'</button>';
-}
-function ppRow(p,x){
-  const t=x.t,T=D.todayKey,d=t.date.slice(0,10),late=d<T,pub=x.kind==='pub'||x.kind==='rec';
-  const due='<span class="due'+(late?' late':'')+'">'+(late?rel(d):d===T?'dziś':d===addK(T,1)?'jutro':esc(ddl(d)))+'</span>';
-  const chan=String(t.channel||'').split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(', ');
-  const m=[];
-  if(x.kind==='rec')m.push('nagranie do publikacji '+(d===T?'dziś':ddl(d))+(scOwn(t)?', scenariusz: '+(SCST[t.script.state||'']||SCST[''])[1]:''));
-  else if(x.kind==='pub')m.push('publikacja'+(chan?' · '+esc(chan):''));
-  if(x.kind==='agent')m.push(esc((WHO[t.executor]||WHO.agent).n)+(t.state==='doing'?' · w toku':t.state==='blocked'?' · zablokowane':''));
-  else if(t.needsYou&&!pub)m.push(esc(t.needsYou));
-  if(t.waits&&t.waits.length&&t.state!=='done')m.push('czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań'));
-  if(+t.minutes>0&&x.kind!=='agent')m.push('<span class="num">'+(+t.minutes)+' min</span>');
-  const s=ppPub(x),name=pub?cap(t.title.replace(/^Opublikuj\s+/,'')):t.title;
-  return '<li><div class="pr-m"><button type="button" class="lk t" '+ppOpen(x)+' data-k="pp:'+esc(t.id)+'">'+esc(name)+'</button>'+
-    '<div class="pr-s">'+due+ptag(p,t.project)+m.map(v=>'<span>'+v+'</span>').join('')+(s?'<span class="lz '+s.st[0]+'">'+esc(s.st[1])+'</span>':'')+'</div></div>'+
-    '<div class="pr-a">'+ppAct(x)+'</div></li>';
 }
 /* sekcja rozwijana: nagłówek z licznikiem (WYGLAD.md), stan w PF.more[k]; domyślnie otwarta albo zwinięta */
 const ppSec=(k,id,title,n,open0,body,small,bad)=>{const open=PF.more[k]!=null?!!PF.more[k]:open0;
   return '<details class="panel psec" id="'+id+'" data-pvdet="'+k+'"'+(open?' open':'')+'><summary><h2>'+title+' <span class="cnt num'+(bad&&n?' bad':'')+'">'+n+'</span></h2>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>'};
-function planView(p){
-  const T=D.todayKey,end=addK(T,6),S={today:[],late:[],ag:[],later:[]};
-  const dec=planDec(p),decT={};dec.forEach(x=>{if(x.t)decT[x.t.id]=1});
-  const LT=pjLate(p),lt={};LT.forEach(t=>{lt[t.id]=1});
-  LT.forEach(t=>S.late.push({kind:'you',t:t}));
-  D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&!decT[t.id]&&!lt[t.id]).forEach(t=>{
-    const d=isDay(t.date)?t.date.slice(0,10):'';
-    if(!d)return;
-    if(t.kind==='publikacja'){
-      if(d<=end)(d<=T?S.today:S.later).push({kind:'pub',t:t});
-      const r=addK(d,-1)<T?T:addK(d,-1);
-      const rec=scOwn(t)?t.script.state!=='nagrane'&&r<=end&&!scTasks(t.project,d,'rec').some(x=>!taskClosed(x)):mkIsFilm(t)?(()=>{const fd=PD[t.project+'|'+d];return !(fd&&fd.ok&&fd.film)&&r<=end})():false;
-      if(rec)(r===T?S.today:S.later).push({kind:'rec',t:t,at:r});
-      return}
-    if(d>end)return;
-    if(isAgT(t)&&!needsMe(t)){S.ag.push({kind:'agent',t:t});return}
-    (d<=T&&!(t.waits&&t.waits.length)?S.today:S.later).push({kind:'you',t:t});
-  });
-  const at=x=>x.at||x.t.date.slice(0,10);
-  Object.keys(S).forEach(k=>S[k].sort((a,b)=>at(a).localeCompare(at(b))||a.t.title.localeCompare(b.t.title)));
-  const ul=L=>'<ul class="prow">'+L.map(x=>ppRow(p,x)).join('')+'</ul>';
-  /* minuty Twoich spraw na dziś (dziś i po terminie) wobec limitu dnia (dayMinutes); bez minut nic */
-  const cap0=D.dayMinutes||120,min=S.today.concat(S.late).filter(x=>x.kind==='you'&&+x.t.minutes>0).reduce((s,x)=>s+(+x.t.minutes),0);
-  const minS=min?'<span class="num'+(min>cap0?' pp-over':'')+'">'+min+' min na dziś'+(min>cap0?', limit '+cap0:'')+'</span>':'';
-  let h='';
-  if(dec.length)h+=ppSec('pp-dec','pdec','Decyzje',dec.length,true,'<ul class="rows">'+dec.map(x=>todayRow(x,{prio:false,tag:ptag(p,x.q?x.q.p.id:x.t.project)})).join('')+'</ul>');
-  h+=ppSec('pp-dzis','pplan','Dla Ciebie dziś',S.today.length,true,S.today.length?ul(S.today):'<p class="empty">Na dziś nic.</p>',minS);
-  if(S.late.length)h+=ppSec('pp-late','plate','Po terminie',S.late.length,false,ul(S.late),'',true);
-  if(S.ag.length)h+=ppSec('pp-ag','pag','Agenci',S.ag.length,false,ul(S.ag),'7 dni');
-  if(S.later.length)h+=ppSec('pp-pozn','plater','Później',S.later.length,false,ul(S.later),'do '+esc(ddl(end)));
-  const nd=D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAgT(t)).length;
-  if(nd)h+='<p class="note pp-nd">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Zadania</a></p>';
-  return '<div class="pplan">'+h+'</div>';
+function pjxDecyzje(p){
+  const dec=planDec(p);if(!dec.length)return '';
+  return '<div class="pjx-dec">'+ppSec('pp-dec','pdec','Decyzje',dec.length,true,'<ul class="rows">'+dec.map(x=>todayRow(x,{prio:false,tag:ptag(p,x.q?x.q.p.id:x.t.project)})).join('')+'</ul>')+'</div>';
 }
 /* Google Drive tylko do odczytu: logowanie przypisuje konto do projektu i jego części. Potem folder z listy
    folderów konta dla projektu albo części (GET /api/drive/konta, /api/drive/foldery, POST /api/drive/wybierz).
@@ -5591,9 +5546,7 @@ async function driveAct(pid,path,body,okMsg){
   await loadDrive(pid);if(x.ok&&DRA[""])loadDrA();
 }
 const PJC={};
-/* ---------- Kod i pliki: GitHub (każde repozytorium projektu i jego części) i Google Drive ----------
-   Na wierzchu po jednym wierszu stanu; „Szczegóły” rozwija pełny stan i działania (ghBody: Sprawdź, Wyślij na GitHub,
-   Usuń kopię z serwera; driveBody: połącz, odłącz). Stan zwinięcia w PF.more['pj-code'] */
+/* ---------- stan GitHuba i Google Drive w jednym wierszu (zakładka Połączenia, pjxGh i pjxDrive) ---------- */
 const kpN=(n,a,b,c)=>n+' '+pl(n,a,b,c);
 function ghLine(x){
   const g=x.git||{};
@@ -5619,23 +5572,62 @@ function driveLine(p){
   }
   return drWhere(d)+(d.files!=null?', '+kpN(d.files,'pozycja','pozycje','pozycji'):'')+repair;
 }
-function codeBox(p){
-  const t=topP(p),own=p.isOwn?P(p.id):p,repos=p===t&&t.partsL.length?[t].concat(t.partsL):[own],multi=repos.length>1;
-  const op=!!PF.more['pj-code'],reg=LIVE&&D.projectsSource==='registry';
-  const lab=x=>multi?' <span class="ptag">'+esc(x.partLabel||t.partLabel)+'</span>':'';
-  let h='<section class="panel pj-code" id="pcode" aria-labelledby="pcode-h"><div class="kp-h"><h2 id="pcode-h">Kod i pliki</h2>'+
-    '<button type="button" class="btn sec sm" data-pjcode="1" data-k="pjcode" aria-expanded="'+op+'" aria-controls="pcode-det">'+(op?'Zwiń':'Szczegóły')+'</button></div>'+
-    /* jedna część: wiersze GitHub i Google Drive; kilka części: wiersz na część z obydwoma stanami (WYGLAD.md) */
-    (multi?'<dl class="kp kp-m">'+repos.map(x=>'<dt>'+esc(x.partLabel||t.partLabel)+'</dt><dd><div><span class="kp-k">GitHub</span> '+ghLine(x)+'</div><div><span class="kp-k">Google Drive</span> '+driveLine(x)+'</div></dd>').join('')+'</dl>':
-      '<dl class="kp"><dt>GitHub</dt><dd>'+ghLine(own)+'</dd><dt>Google Drive</dt><dd>'+driveLine(own)+'</dd></dl>');
-  h+='<div class="kp-det" id="pcode-det"'+(op?'':' hidden')+'>';
-  if(op){
-    h+=repos.map(x=>{if(reg&&GHS[x.id]===undefined)ghLoad(x.id,false);
-      return '<h3 class="kp-sh">GitHub'+lab(x)+'</h3>'+(reg?ghBody(x):'<p class="note">Stan kopii i wysyłanie na GitHub działają w panelu na serwerze, przy projektach z rejestru.</p>')}).join('')+
-      repos.map(x=>'<h3 class="kp-sh">Google Drive'+lab(x)+'</h3>'+driveBody(x)).join('');
-  }
-  return h+'</div></section>';
+/* ---------- grupa projekt: zakładka Połączenia (zastępuje sekcję „Kod i pliki”) ----------
+   Jedna karta na usługę: GitHub (stan kopii, wyślij, zatwierdź/odłóż zmiany: ghBody), Google Drive (konto projektu, wybór
+   folderu: driveBody) i Meta Business (strona Facebook i konto Instagram z Kanałów publikacji, D.publish). Na wierzchu
+   jeden wiersz stanu (przy częściach: wiersz na część), „Szczegóły” rozwija działania; stan w PF.more['pj-con-<klucz>'].
+   Karta Meta tylko w projektach, które mają albo mogą mieć kanały (pjxMetaHas). */
+const pjxRepos=p=>{const t=topP(p),own=p.isOwn?P(p.id):p;return {t:t,L:p===t&&t.partsL.length?[t].concat(t.partsL):[own]}};
+function pjxCard(k,title,lead,det){
+  const op=!!PF.more['pj-con-'+k],id='pcon-'+k;
+  return '<section class="panel pj-code pjx-card" id="'+id+'" tabindex="-1" aria-labelledby="'+id+'-h"><div class="kp-h"><h2 id="'+id+'-h">'+title+'</h2>'+
+    '<button type="button" class="btn sec sm" data-pjcon="'+k+'" data-k="pjcon:'+k+'" aria-expanded="'+op+'" aria-controls="'+id+'-det">'+(op?'Zwiń':'Szczegóły')+'</button></div>'+
+    '<div class="pjx-lead">'+lead+'</div><div class="kp-det" id="'+id+'-det"'+(op?'':' hidden')+'>'+(op?det():'')+'</div></section>';
 }
+/* przy częściach: wiersz na część z jej etykietą; jedna część: sam stan */
+const pjxRows=(R,line)=>R.L.length>1?'<dl class="kp">'+R.L.map(x=>'<dt>'+esc(x.partLabel||R.t.partLabel)+'</dt><dd>'+line(x)+'</dd>').join('')+'</dl>':'<p>'+line(R.L[0])+'</p>';
+function pjxGh(p){
+  const R=pjxRepos(p),reg=LIVE&&D.projectsSource==='registry';
+  return pjxCard('gh','GitHub',pjxRows(R,ghLine),()=>R.L.map(x=>{if(reg&&GHS[x.id]===undefined)ghLoad(x.id,false);
+    return (R.L.length>1?'<h3 class="kp-sh">'+esc(x.partLabel||R.t.partLabel)+'</h3>':'')+(reg?ghBody(x):'<p class="note">Stan kopii i wysyłanie na GitHub działają w panelu na serwerze, przy projektach z rejestru.</p>')}).join(''));
+}
+function pjxDrive(p){
+  const R=pjxRepos(p);
+  return pjxCard('dr','Google Drive',pjxRows(R,driveLine),()=>R.L.map(x=>(R.L.length>1?'<h3 class="kp-sh">'+esc(x.partLabel||R.t.partLabel)+'</h3>':'')+driveBody(x)).join(''));
+}
+/* Meta: strony Facebook przypisane do projektu (albo jego części) w Kanałach publikacji, z kontem Instagram strony */
+const pjxPages=p=>{const P0=D.publish;return P0&&P0.fb?P0.fb.pages.filter(g=>g.project&&inP(p,g.project)):[]};
+const pjxMembers=p=>p.mem?[...p.mem].map(P).filter(Boolean):[p];
+/* projekt ma albo może mieć kanały: strona przypisana w Kanałach publikacji, profil w karcie (facebook:, instagram:),
+   kampania albo publikacja w zadaniach */
+const pjxMetaHas=p=>pjxPages(p).length>0||pjxMembers(p).some(x=>x.facebook||x.instagram)||
+  D.campaigns.some(c=>inP(p,c.project))||D.tasks.some(t=>t.kind==='publikacja'&&inP(p,t.project));
+const pjxIg=g=>g.instagram?'Instagram '+(g.instagram==='tak'?'połączony':'@'+esc(g.instagram)):'<span class="muted">Instagram niepołączony</span>';
+function pjxMeta(p){
+  const G=pjxPages(p),P0=D.publish,fb=!!(P0&&P0.fb&&P0.fb.connected);
+  const go='<button type="button" class="btn sm" data-nwchan="1" data-k="pjx:meta-go">Połącz</button>';
+  const lead=G.length?'<ul class="pjx-pg">'+G.map(g=>'<li><span class="lz green">połączone</span> <b>'+esc(g.name)+'</b> <span class="muted">Facebook</span> · '+pjxIg(g)+'</li>').join('')+'</ul>':
+    '<div class="row pjx-off"><span class="lz yellow">Niepołączone</span>'+go+'</div>';
+  return pjxCard('meta','Meta Business <small>Facebook i Instagram</small>',lead,()=>{
+    const free=fb?P0.fb.pages.filter(g=>!G.includes(g)):[],card=pjxMembers(p).filter(x=>x.facebook||x.instagram);
+    let h='<p class="note">Panel publikuje sam posty, które zaplanujesz w poście (Facebook, Reels, Instagram). Połączenie jest wspólne dla panelu: Marketing → Kanały publikacji.</p>';
+    if(!G.length&&free.length)h+='<label class="fl">Strona Facebook tego projektu<select class="fi" data-pjxfb="'+esc(p.id)+'" data-k="pjx:fb"><option value="">Wybierz stronę</option>'+
+      free.map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name+(g.project?' · teraz: '+projName(g.project):''))+'</option>').join('')+'</select></label>';
+    if(card.length)h+='<p>W karcie projektu: '+card.map(x=>[x.facebook?'Facebook „'+esc(x.facebook)+'”':'',x.instagram?'Instagram @'+esc(x.instagram):''].filter(Boolean).join(', ')).join('; ')+
+      ' <span class="muted">(do „Udostępnij na …”)</span></p>';
+    return h+'<div class="row"><button type="button" class="btn sec sm" data-nwchan="1" data-k="pjx:meta-pub">'+(fb?'Kanały publikacji':'Połącz Facebook i Instagram')+'</button></div>';
+  });
+}
+function pjxConView(p){
+  return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>';
+}
+/* przypisanie strony Facebook do projektu z karty Meta (ten sam zapis co w Kanałach publikacji) */
+function pjxFb(el){
+  if(!el.value)return;if(!LIVE){say(PRV);return}
+  enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.value,project:el.dataset.pjxfb});say(x.ok?'Zapisano stronę projektu.':failMsg(x,'Nie zapisano.'))});
+}
+/* stare odnośniki do „Kod i pliki” (data-pjgo="pcode", np. w Serwerze i na Stronie): zakładka Połączenia, karta GitHub rozwinięta */
+const pjxConHref=h=>{const m=/^(#p-[^?]*?)(?:-(?:plan|tablica|wskazniki|etapy|ksiega|marketing|strona|polaczenia))?(\?.*)?$/.exec(h||'');return m?m[1]+'-polaczenia'+(m[2]||''):h};
 /* ---------- Rozmowa w projekcie: przycisk „Rozmowa” w prawym dolnym rogu i okno czatu (#pjdock, poza #view) ----------
    Jedno z dwóch miejsc rozmowy z agentem (drugie: Asystent). Widać ją na stronie projektu, w szczegółach zadania
    (szuflada) i w odbiorze pracy; dotyczy projektu (przy projekcie z częściami całości albo wybranej części) albo projektu
@@ -6054,11 +6046,11 @@ function bookView(p){
   const meta=cm?'<div class="kv2"><label>Wymagania <select class="fi" data-meta="threshold" data-pid="'+esc(p.id)+'"><option value="lekka"'+(p.threshold==='lekka'?' selected':'')+'>podstawowe</option><option value="pelna"'+(p.threshold==='pelna'?' selected':'')+'>pełne</option></select></label>'+
     '<label>Rodzaj <select class="fi" data-meta="client" data-pid="'+esc(p.id)+'"><option value="tak"'+(p.client?' selected':'')+'>dla klienta</option><option value="nie"'+(p.client?'':' selected')+'>własny</option></select></label></div>':
     '<p class="kv2">Wymagania: <b>'+thr+'</b> · Rodzaj: <b>'+kind+'</b></p>';
-  /* pytania (też w Planie → Decyzje): nad Księgą; rozwinięte, gdy pytanie bez odpowiedzi ma termin */
+  /* pytania (też w Zadaniach → Decyzje): nad Księgą; rozwinięte, gdy pytanie bez odpowiedzi ma termin */
   const BKN={Karta:'Opis projektu',README:'README: opis dla programistów',Architektura:'Architektura: budowa systemu'};
   const tg=p.book.some(x=>x.key==='zadania'&&x.status==='gaps'),lab=x=>BKN[x.label]||x.label,qd=qa.some(x=>!x.answer&&x.date);
   const act=full?'<p class="note">Księga kompletna.</p>':'<div class="pj-bk"><span class="note">'+(pre?'Uzupełnij księgę przed rozpoczęciem budowy.':'Braki uzupełni Claude, gdy o to poprosisz.')+'</span>'+
-    '<a class="btn sec sm" href="'+phref(p,'plan')+'" data-pjgo="pchat" title="Otwiera rozmowę o projekcie">Poproś Claude o uzupełnienie</a>'+(tg?'<a class="pj-lk" href="'+phref(p,'tablica')+'">Zadania projektu →</a>':'')+'</div>';
+    '<a class="btn sec sm" href="'+phref(p,'ksiega')+'" data-pjgo="pchat" title="Otwiera rozmowę o projekcie">Poproś Claude o uzupełnienie</a>'+(tg?'<a class="pj-lk" href="'+phref(p,'tablica')+'">Zadania projektu →</a>':'')+'</div>';
   return (qa.length?pjFold('pj-q','pkq','Pytania',nq?nq+' bez odpowiedzi':'wszystkie z odpowiedzią','<ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul>',qd):'')+'<section class="panel"><h2>Księga <small class="num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+' bez braków</small></h2>'+meta+
     (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div title="'+esc(x.file)+'">'+esc(lab(x))+(x.status==='ok'?'<span class="sr-only">: jest</span>':'')+'</div>'+(x.gaps.length&&x.status==='gaps'?'<ul>'+x.gaps.map(gapLi).join('')+'</ul>':'')+'</div><div>'+(x.status==='ok'?'':BOOKLZ[x.status])+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
     act+'</section>';
@@ -6067,7 +6059,7 @@ function bookView(p){
    z tym samym stanem i akcją co karta w widoku Marketing (mkState, mkAct); wiersz otwiera edytor posta */
 function mktView(p){
   const cs=D.campaigns.filter(c=>inP(p,c.project));
-  if(!cs.length)return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
+  if(!cs.length)return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (przycisk Rozmowa).</div>';
   const row=t=>{
     const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
     if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
@@ -6700,15 +6692,15 @@ function ghBody(p){
   if(s.blocks.length)h+='<div class="note" id="gh-b-'+id+'">Usunięcie kopii blokuje:<ul>'+s.blocks.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul></div>';
   return h+msg+'</div>';
 }
-/* Serwer: krótki przegląd kopii projektów; stan i działania (Sprawdź, Wyślij, Usuń kopię) są w sekcji „Kod i pliki”
+/* Serwer: krótki przegląd kopii projektów; stan i działania (Sprawdź, Wyślij, Usuń kopię) są w zakładce Połączenia
    na stronie projektu */
 function ghPanel(){
   if(!LIVE||D.projectsSource!=='registry')return '';
   const L=D.allP.filter(p=>p.github||(p.git&&p.git.repo));
   if(!L.length)return '';
   return '<section class="panel" id="github"><h2>Projekty i GitHub <small>kopie na serwerze</small></h2><ul class="rows gh-ov">'+L.map(p=>
-    '<li><div><b>'+esc(p.name)+'</b><div class="s">'+ghLine(p)+'</div></div><div class="r"><a class="btn sec sm" href="'+esc(phref(p))+'" data-pjgo="pcode">Kod i pliki</a></div></li>').join('')+
-    '</ul><p class="note ds-pad">Wysyłanie na GitHub i usuwanie kopii: strona projektu, sekcja „Kod i pliki”.</p></section>';
+    '<li><div><b>'+esc(p.name)+'</b><div class="s">'+ghLine(p)+'</div></div><div class="r"><a class="btn sec sm" href="'+esc(phref(p))+'" data-pjgo="pcode">Połączenia</a></div></li>').join('')+
+    '</ul><p class="note ds-pad">Wysyłanie na GitHub i usuwanie kopii: strona projektu, zakładka Połączenia.</p></section>';
 }
 /* rozwój panelu na serwerze (ROZWOJ.md): zmiany na gałęzi rozwoj, panel testowy, przycisk „Wdróż” z potwierdzeniem */
 const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
@@ -11101,13 +11093,15 @@ function route(){
   if(h==='asystent'){const m=/(?:^|&)k=([^&]*)/.exec(qs);if(m)return {v:'asystent',old:h,k:m[1],qs:qs}}
   /* #koszty?k=projekty|kalendarz: Serwer przewinięty do sekcji */
   if(h==='koszty'){const m=/(?:^|&)k=([^&]*)/.exec(qs);if(m)return {v:'koszty',go:m[1]}}
-  if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='plan';
-    if(!p){const m=/^(.*)-(plan|tablica|wskazniki|etapy|ksiega|marketing|strona)$/.exec(rest);if(m){p=P(m[1]);tab=m[2]}}
+  if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='tablica';
+    if(!p){const m=/^(.*)-(plan|tablica|wskazniki|etapy|ksiega|marketing|strona|polaczenia)$/.exec(rest);if(m){p=P(m[1]);tab=m[2]}}
+    /* grupa projekt: stary adres zakładki Plan (#p-<id>-plan) prowadzi do Zadań */
+    if(tab==='plan'){tab='tablica';if(p&&!p.partOf){try{history.replaceState(null,'',location.pathname+location.search+location.hash.replace(/-plan(?=\?|$)/,'-tablica'))}catch(e){}}}
     /* część projektu: stary adres (#p-<część>…) przechodzi na stronę projektu głównego z wybraną częścią */
-    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!wwSites(p).length?'plan':tab))}catch(e){}}
+    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!wwSites(p).length?'tablica':tab))}catch(e){}}
     else if(p&&p.partsL&&p.partsL.length){const m=/(?:^|&)cz=([^&]*)/.exec(qs),cz=m?m[1]:'';
       if(cz&&cz===p.id&&p.own)p=p.own;else if(cz)p=p.partsL.find(x=>x.id===cz)||p}
-    if(p&&tab==='strona'&&!wwSites(p).length)tab='plan';
+    if(p&&tab==='strona'&&!wwSites(p).length)tab='tablica';
     if(p)return {v:'projekt',p:p,tab:tab}}
   return {v:VIEWS.indexOf(h)>=0?h:'asystent'};
 }
@@ -11685,9 +11679,12 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   try{i.showPicker()}catch(e){dpkShow(i)}},true);
 /* bez showPicker (starsze przeglądarki): ukryte pole staje się widoczne i dostaje fokus */
 function dpkShow(i){i.removeAttribute('aria-hidden');i.tabIndex=0;i.style.cssText='position:static;opacity:1;pointer-events:auto;width:auto;height:auto';try{i.focus();i.click()}catch(e){}}
-/* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
+/* Księga → „Poproś w rozmowie o projekcie”: rozwinięta rozmowa, kursor w polu. „Kod i pliki” (data-pjgo="pcode", stare
+   odnośniki): zakładka Połączenia z rozwiniętą kartą GitHub (grupa projekt) */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
-  PF.more[a.dataset.pjgo==='pcode'?'pj-code':'pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;A.pjKeep=a.dataset.pjgo==='pchat'&&location.hash!==a.getAttribute('href');if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
+  if(a.dataset.pjgo==='pcode'){ev.preventDefault();PF.more['pj-con-gh']=true;savePF();A.pjGo='pcon-gh';const h=pjxConHref(a.getAttribute('href'));
+    if(location.hash===h)render(true);else location.hash=h;return}
+  PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;A.pjKeep=a.dataset.pjgo==='pchat'&&location.hash!==a.getAttribute('href');if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
 document.addEventListener('click',async ev=>{
   if(ev.target&&ev.target.id==='toast'){clearTimeout(noticeT);notice='';setToast('');return}
   if(!D)return;
@@ -11814,7 +11811,7 @@ document.addEventListener('click',async ev=>{
     if(a==='migracja'){MDS.items=null;draAct('/api/drive/konto/migracja',{},'Sprawdzono odłączenia.');return}
     if(a==='odlacz'){const pid=el.dataset.pid;if(confirm('Odłączyć konto Google od projektu '+drName(pid)+'?'))draAct('/api/drive/konto/odlacz',{project:pid,account:el.dataset.acc},'Konto odłączone od projektu.');return}
     if(a==='anuluj'){draAct('/api/drive/konto/anuluj',{project:el.dataset.pid||''});return}
-    if(a==='ponow'){if(el.dataset.pid){PF.more['pj-code']=true;(A.drc||(A.drc={}))[el.dataset.pid]=true;render(true)}
+    if(a==='ponow'){if(el.dataset.pid){PF.more['pj-con-dr']=true;(A.drc||(A.drc={}))[el.dataset.pid]=true;render(true)}
       draAct('/api/drive/konto/start',{account:el.dataset.acc,project:el.dataset.pid||''});return}
     if(a==='usun'){if(confirm('Odłączyć konto Google od panelu? Pliki na Drive zostają.'))draAct('/api/drive/konto/usun',{account:el.dataset.acc},'Konto odłączone.');return}
     if(a==='schowek'){const f=el.closest('form'),i=f.elements.url;
@@ -11825,11 +11822,11 @@ document.addEventListener('click',async ev=>{
     const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);focusK('drt:'+k);return}
   if(el=qq('[data-drw]')){const pid=el.dataset.pid,k=drKey(pid);driveAct(pid,'/api/drive/wybierz',{account:k.acc,folder:el.dataset.drw,path:el.dataset.path},'Folder wybrany: '+el.dataset.path+'.');return}
   if(el=qq('[data-drf]')){const k=drKey(el.dataset.pid);if(k.acc)loadDrF(el.dataset.pid,k.acc,true);return}
-  if(el=qq('[data-drc]')){if(el.getAttribute('aria-disabled')==='true')return;PF.more['pj-code']=true;(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
+  if(el=qq('[data-drc]')){if(el.getAttribute('aria-disabled')==='true')return;PF.more['pj-con-dr']=true;(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   /* Rozmowa otwarta przy otwartym zadaniu: od razu z odnośnikiem do niego (bez osobnego „Zapytaj o to zadanie”) */
   if(el=qq('[data-pjd]')){if(el.dataset.pjd==='open'&&DR&&DR.kind==='task')pjdAsk(DR.id);else pjdSet(el.dataset.pjd==='open');return}
-  if(el=qq('[data-pjcode]')){PF.more['pj-code']=!PF.more['pj-code'];savePF();render(true);focusK('pjcode');return}
+  if(el=qq('[data-pjcon]')){const k='pj-con-'+el.dataset.pjcon;PF.more[k]=!PF.more[k];savePF();render(true);focusK('pjcon:'+el.dataset.pjcon);return}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-task-life]')){
     const t=D.tasks.find(x=>x.id===el.dataset.id),action=el.dataset.taskLife;
@@ -11901,6 +11898,8 @@ document.addEventListener('change',ev=>{
   if(el.dataset.filmmus!=null){setFilmMusic(el);return}
   if(el.dataset.pch&&DR){const f=PL[DR.id];if(f)f.ch[el.dataset.pch]=el.checked;return}
   if((el.dataset.pday!=null||el.dataset.ptime!=null)&&DR){const f=PL[DR.id];if(f){if(el.dataset.pday!=null)f.day=el.value;else f.time=el.value}return}
+  if(el.dataset.pjxcz!=null){pjxCz(el);return}
+  if(el.dataset.pjxfb!=null){pjxFb(el);return}
   if(el.dataset.fbmap){if(!LIVE){say(PRV);return}enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.dataset.fbmap,project:el.value});say(x.ok?'Zapisano projekt strony.':failMsg(x,'Nie zapisano.'))});return}
   if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.type==='checkbox'?(el.checked?'tak':'nie'):el.value;return}
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
