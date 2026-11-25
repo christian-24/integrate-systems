@@ -46,7 +46,8 @@
   zmiany: dołączone zmiany z nowa-koncepcja (miejsce na film i opis zdjęć w „Kto to robi”, we wszystkich czterech językach); strona zbudowana, zrzuty obejrzane; poprawka: zrobione
   zostało: gdy dojdzie Google Ads albo inny tag reklamowy, trzeba dodać baner zgody (Consent Mode v2); film i zdjęcia czekają na pliki od właściciela
 
-- [!] Strona: bez wyboru języka, język z przeglądarki | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | po: Strona: poprawki po punkcie kontrolnym 1 | blokada: środowisko blokuje instalację esbuild, więc podgląd się nie buduje
+- [ ] Strona: bez wyboru języka, język z przeglądarki | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | po: Strona: poprawki po punkcie kontrolnym 1
+  wykonawca: tylko claude
   cel: właściciel nie chce przełącznika języków (PL·DE·IT·EN) na stronie; strona sama wybiera język z ustawień przeglądarki i systemu
   gotowe gdy: w nagłówku i menu na telefonie nie ma przełącznika języków; adres główny kieruje na język z navigator.languages (domyślnie PL); każda wersja językowa ma dalej własny adres i znaczniki hreflang (Google i linki z reklam działają); wersja robocza buduje się poleceniem z karty; zrzuty 390 i 1440 px obejrzane
   materiał: site/src/Strona.jsx
