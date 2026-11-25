@@ -253,7 +253,10 @@ termin: 2027-01-28
   materiał: Plan-filmow-iteracje.md
   wynik: posty/2026-12-02-film-auto-klienta-archiwum-2/scenariusz.md — ujęcia przed i po, dogrywka telefonem, tekst lektora AI i wariant zapasowy Z1.
   zostało: dobór konkretnego auta i potwierdzenie zakresu usługi na podstawie archiwum Media.
-- [ ] Przygotuj publikację na 2026-11-29 (b21821b2c9ff6928): Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+- [~] Przygotuj publikację na 2026-11-29 (b21821b2c9ff6928): Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59) | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | wymaga: odbiór
   cel: Przygotuj tekst posta do publikacji „Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59)” (meta ads), termin 2026-11-29. Pozostaw publikację właścicielowi.
   gotowe gdy: Tekst posta jest w posty/2026-11-29-publikacja/post.md, zgodny z wpisem w kampanie/meta-statyczne.md i gotowy do odbioru przed publikacją 2026-11-29.
   materiał: kampanie/meta-statyczne.md
+  wynik: posty/2026-11-29-publikacja/post.md: tekst główny, nagłówek, opis i przycisk reklamy B1 „Bon na ciszę” (słowo w słowo z meta-ads/Reklamy-statyczne-Meta.md), napisy na grafice, szablon wiadomości, nazwa reklamy, ustawienia kampanii „Wiadomości – Bon” (5 zł/dzień, koniec 21.12.2026 23:59), lista sprawdzenia przed wgraniem i reguły budżetu po wgraniu
+  decyzja: zatwierdź tekst reklamy, w tym obietnicę „przygotujemy go na wybrany dzień” (czy dasz radę także tuż przed świętami)
+  zostało: grafiki B1 jeszcze nie ma: reklama B1 czeka na zdjęcie koperty z bonem przy drzwiach auta; nie sprawdzono, jak sprzedajesz bon przez wiadomość (płatność, ważność, forma bonu); bez tego reklamy nie wgrywaj 29.11
