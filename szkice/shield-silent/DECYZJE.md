@@ -1,5 +1,12 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-25: Zestaw zdjęć do Grand Silent Auto V / VI
+
+Kontekst: Trzy warianty wymagają różnych par zdjęć z realizacji.
+Decyzja: Wybrano lakier Cupry, felgę Mercedesa i wnętrze Hondy CR-V.
+Skutki: Każdy wariant pokazuje inną usługę w układzie przed i po zgodnym ze zdjęciami źródłowymi.
+- Kto: agent
+
 ## 2026-11-25: Film „Auto klienta (archiwum 2)” z drugiej realizacji
 - Kontekst: środowy film ma pokazać efekt z archiwum, a właściciel przygotowuje materiał sam telefonem 1 grudnia.
 - Decyzja: wybrać drugie auto z wiarygodną parą przed i po. Same zdjęcia wystarczą do pionowego filmu. Gdy brakuje pary, użyć zapasu Z1 z Cuprą studia, jeśli jest dostępny.

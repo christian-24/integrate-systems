@@ -176,9 +176,12 @@ termin: 2027-01-28
   materiał: media/2026-11-18-wizytowka-przed-po-konsola.jpg
   materiał: media/2026-11-18-wizytowka-przed-po-lakier-i-lampy-honda.jpg
   materiał: KARTA.md
-  - [ ] Wybierz 3 pary przed/po z materiałów; używaj tylko prawdziwych zdjęć realizacji, bez dorabiania efektu przez AI
+  - [x] Wybierz 3 pary przed/po z materiałów; używaj tylko prawdziwych zdjęć realizacji, bez dorabiania efektu przez AI
   - [ ] Złóż każdy wariant w HTML (własny napis w stylu parodii, np. „Grand Silent Auto V” i „VI”; bez oryginalnych logo i fontów GTA, bez znaków Rockstar) i wyrenderuj do PNG narzędziem dashboard/html-do-pdf.py
-  - [ ] Obejrzyj każdy PNG, popraw czytelność na telefonie, zapisz podpisy w opis.md; niczego nie publikuj
+  - [x] Obejrzyj każdy PNG, popraw czytelność na telefonie, zapisz podpisy w opis.md; niczego nie publikuj
+  wynik: posty/2026-11-25-grand-silent-auto/wariant-1.png, posty/2026-11-25-grand-silent-auto/wariant-2.png, posty/2026-11-25-grand-silent-auto/wariant-3.png, posty/2026-11-25-grand-silent-auto/opis.md
+  decyzja: wybór wariantu posta przy odbiorze.
+  zostało: skrypt dashboard/html-do-pdf.py nie uruchomił Chromium. PNG przygotowano lokalnie z tych samych zdjęć i tekstów.
 - [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
   - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
