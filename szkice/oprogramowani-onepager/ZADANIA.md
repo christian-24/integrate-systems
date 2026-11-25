@@ -41,6 +41,15 @@
   - [ ] Pod Google Ads: dane firmy, kontakt i polityka prywatności łatwo dostępne z każdej podstrony; jeśli strona ma tagi analityki lub reklam, baner zgody z Consent Mode v2 (domyślnie odmowa); nowych tagów bez identyfikatorów od właściciela nie dodawaj
   - [ ] Zbuduj, zrób zrzuty, obejrzyj, popraw; w wynik: co zmieniono w każdej sekcji
 
+- [ ] Strona: bez wyboru języka, język z przeglądarki | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | po: Strona: poprawki po punkcie kontrolnym 1
+  cel: właściciel nie chce przełącznika języków (PL·DE·IT·EN) na stronie; strona sama wybiera język z ustawień przeglądarki i systemu
+  gotowe gdy: w nagłówku i menu na telefonie nie ma przełącznika języków; adres główny kieruje na język z navigator.languages (domyślnie PL); każda wersja językowa ma dalej własny adres i znaczniki hreflang (Google i linki z reklam działają); wersja robocza buduje się poleceniem z karty; zrzuty 390 i 1440 px obejrzane
+  materiał: site/src/Strona.jsx
+  materiał: site/src/i18n.js
+  - [ ] Usuń przełącznik języków z nagłówka i menu (komponent Jezyki i jego style, jeśli nigdzie indziej nie są używane)
+  - [ ] Sprawdź wykrywanie języka na adresie głównym (pl, de, it, en, inny język → PL) i zapamiętanie wyboru tylko z adresu, bez pliku cookie
+  - [ ] Zostaw adresy /pl/, /de/, /it/, /en/ i hreflang; zbuduj, zrób zrzuty, obejrzyj
+
 - [ ] Podaj dane firmy do strony: prawo i RODO | kto: ty | kiedy: 2026-11-25 | czas: 15
   cel: dane prawne, bez których strona nie może wyjść na produkcję
   materiał: site/src/dane.js
