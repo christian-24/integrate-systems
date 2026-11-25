@@ -185,6 +185,48 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
 - Edytor posta: zakładki podglądu Instagram, Facebook (też dla `reels`) i TikTok dla kanałów z pola kanału (Instagram
   tylko ze zdjęciem albo filmem, TikTok tylko z filmem): układ jak w aplikacji, opis ucięty przed „więcej”
   (Instagram 125 znaków, Facebook 250, TikTok 80, albo na pierwszym końcu wiersza), profil i awatar projektu.
+- Wyniki postów (`wyniki.py`, `wyniki_meta.py`, tylko odczyt): dla publikacji z linkiem z publikatora (`stan.json`)
+  albo z pola `link:` (Facebook, Instagram) panel czyta statystyki tokenem strony: co 6 h przez pierwsze 3 dni, potem
+  raz dziennie do 30 dni. Facebook: `/{post}/insights` (`post_media_view`, `post_total_media_view_unique`,
+  `post_clicks`, a gdy v26 ich nie zwraca: `post_impressions*`) i pola reakcji, komentarzy, udostępnień; filmy
+  `/{film}/video_insights`. Instagram: `/{media}/insights` (`reach`, `views`, `likes`, `comments`, `shares`, `saved`,
+  `total_interactions`, przy Reels czas oglądania). Metryk, których v26 nie zwraca, panel nie pyta ponownie
+  (`badMetrics` w `~/dane/reklamy/stan-wynikow.json`). Historia odczytów w `wyniki.json` w folderze posta
+  (bez folderu: `~/dane/reklamy/organiczne-<projekt>.json`), najnowsze liczby w wierszu publikacji
+  (`wyświetlenia:` suma kanałów, `kliknięcia:` z Facebooka; `konta:` zostaje ręczne). Post z `wyniki.json` nie dostaje
+  zadania „Wpisz wynik publikacji…”. Błąd (wygasły token, brak uprawnienia, usunięty post): jedno powiadomienie,
+  znacznik „wyniki: błąd odczytu” przy publikacji i bez ponawiania do ponownego połączenia Facebooka. Brak uprawnień
+  (`read_insights`, `instagram_basic`, `instagram_manage_insights`) panel pokazuje w Kanałach publikacji.
+- Reklamy Meta (Marketing API, `ads_read`, tylko odczyt): Kanały publikacji → „Konto reklamowe Meta”: token
+  użytkownika systemowego z Business Managera (nie wygasa; token z Graph API Explorer tylko awaryjnie, z ostrzeżeniem
+  o dacie końca po 60 dniach) w `PANEL_PUBLIKACJA_DIR/meta-reklamy.json` (0600, nigdy w `/api/data`). Panel pokazuje
+  konta widoczne dla tokenu; konto `act_…` przypisujesz do projektu (jedno konto, jeden projekt; `polaczenia.json`).
+  Codziennie od 6:00: `/act_{id}/insights?level=ad&time_increment=1` od ostatniego dnia (pierwszy raz od startu
+  kampanii, najwyżej 90 dni) do wczoraj oraz suma 7 dni (częstotliwość). Rozmowy: akcja
+  `onsite_conversion.messaging_conversation_started_7d`. Kod reklamy to początek nazwy (`S1 · Drzwi od 1590` → `S1`);
+  reklamy bez kodu widok Wyniki wypisuje z prośbą o zmianę nazwy. Zapis: `PANEL_REKLAMY_DIR` (domyślnie
+  `~/dane/reklamy/<projekt>.json`, 0600).
+- Alerty reklam: zadanie `kto: ty` na dziś w `ZADANIA.md` z `kampania:` (kampania w toku projektu), najwyżej jedno na
+  reklamę na tydzień: „Wyłącz reklamę {kod}: 0 rozmów za 60 zł”, „Wymień reklamę {kod}” (koszt rozmowy ponad 40 zł
+  w 7 dniach), „Odśwież grafikę {kod}” (częstotliwość ponad 3 w 7 dniach). Progi w karcie: `- meta progi: 60; 40; 3`.
+- Połączenia projektu (Marketing projektu → Połączenia, `wyConnCard`; `polaczenia.json` w `PANEL_PUBLIKACJA_DIR`, bez
+  sekretów): Meta (strona i Instagram z Kanałów publikacji, konto reklamowe), LinkedIn (strona firmowa z id albo profil,
+  stan wniosku o Community Management API: nie złożony, złożony, przyznany; reklamy LinkedIn), Google Ads (identyfikator
+  klienta). Widok Wyniki i alerty biorą dane tylko z połączeń danego projektu. Przy dodaniu połączenia panel zakłada raz
+  zadanie właściciela (Meta: token użytkownika systemowego, gdy go nie ma; LinkedIn: wniosek; Google Ads: wklejenie skryptu).
+- LinkedIn: po „przyznany” i z tokenem LinkedIn panel czyta statystyki postów strony firmowej z linkiem
+  `urn:li:share|ugcPost` (`/rest/organizationalEntityShareStatistics`: wyświetlenia, kliknięcia, reakcje, komentarze,
+  udostępnienia) w tym samym rytmie co Facebook. Bez zgody i dla profilu prywatnego: wpis ręczny jak dotąd. 7 dni przed
+  końcem ważności tokenu LinkedIn zadanie „Odnów token LinkedIn (wygasa DD.MM)” w projektach z LinkedIn (raz). Panel nie
+  odświeża tokenu sam (wymagałoby to sekretu aplikacji LinkedIn na serwerze).
+- Google Ads bez tokenu dewelopera (`wyniki_google.py`): „Pokaż skrypt” tworzy klucz projektu (zapis tylko skrótu
+  SHA-256; nowy klucz unieważnia poprzedni, „Unieważnij klucz”) i skrypt z adresem `PANEL_PUBLIC_URL` i kluczem; klucz
+  widać tylko w tej chwili. Skrypt (Narzędzia → Działania zbiorcze → Skrypty, harmonogram codziennie) czyta wczorajsze
+  grupy reklam (wyświetlenia, kliknięcia, koszt, konwersje, w tym telefony) i wyszukiwane hasła z kosztem i wysyła
+  `POST /api/wyniki/google-ads` z nagłówkiem `X-Klucz-Projektu` (bez sesji panelu, JSON do 512 KB). Zły klucz: 403
+  „Odmowa.”; konto inne niż w połączeniu projektu: 400; ten sam dzień wysłany drugi raz zastępuje poprzedni. Kod
+  wiersza: `G · <kampania>`. Alerty z `- google progi: 150; 4; 20` (zł bez konwersji w 7 dni na kampanię, limit
+  średniego CPC, zł za hasło bez konwersji: zadanie „Wyklucz hasło „…” w G · …”).
 
 ## Marketing i filmy
 
@@ -195,6 +237,23 @@ Edytor posta: zakładki platform (Instagram, Facebook, LinkedIn, TikTok według 
 podgląd i edycja opisu (`POST /api/post/tekst`: sekcja post.md) oraz grafiki (`POST /api/post/grafika`). Jedna akcja
 „Udostępnij na …”: publikacja przez API (z potwierdzeniem), inaczej rozszerzenie Chrome na stronie tworzenia posta
 (telefon i zakładka „Post”: strona tworzenia posta, opis w schowku i pobrane pliki). „Oznacz jako opublikowane” i odwrotnie w menu „⋯” (z „Cofnij”).
+
+Zakładka Marketing projektu ma części Kampanie, Wyniki i Klienci (`wyTab` w `panel.html`).
+- Klienci (`klienci.py`): szybki formularz (data, auto, źródło z listy, kod reklamy albo posta, usługa, wycena), potem
+  w wierszu „Umówiony” i „Wykonane (zł)”. Bez imion i telefonów (pole z numerem telefonu jest odrzucane). Dane poza
+  repozytorium: `PANEL_KLIENCI_DIR` (domyślnie `~/dane/klienci/<projekt>.json`, 0600); wpisy czyta `GET /api/klienci`,
+  w `/api/data` są tylko sumy. Import CSV (`;`, kolumny po nazwach: data, auto, źródło, kod, usługa, wycena, umówiony,
+  wykonane; inne kolumny pomija, powtórzone wiersze nie wchodzą). Podsumowanie: bieżący tydzień i od startu kampanii,
+  podział na źródła. Kampania z `- miernik: zapytania z reklam` ma wynik z dziennika: zapytania w okresie kampanii
+  z kodem albo ze źródłem „Meta – reklama” lub „Google Ads” (ręczny `wynik:` wygrywa, gdy jest większy).
+- Wyniki (`GET /api/wyniki?project=&okres=7|30|start&kampania=`): wiersz na kod posta albo reklamy (posty: kod z tytułu,
+  np. `S1`, albo `post DD.MM`; Google Ads: `G · <kampania>`): zasięg, wyświetlenia, interakcje, wydano, rozmowy
+  (reklamy z API, posty: zapytania z kodem posta), koszt rozmowy, umówieni, wykonane, przychód, koszt klienta,
+  przychód na 1 zł. Kolejność: przychód, potem koszt klienta. Wiersz posta otwiera post, wiersz reklamy wykres dzienny
+  wydatku i rozmów (`GET /api/wyniki/historia`). Zasięg reklam to suma dziennych zasięgów. Projekt bez połączenia
+  reklam pokazuje „brak połączenia” z odnośnikiem do połączeń. Na Przeglądzie projektu: przychód z marketingu w tym
+  miesiącu i wydatek na reklamy.
+
 Filmy nagrywa panel (`film.py`) według `scenariusz.json` w folderze posta: prawdziwa przeglądarka (Playwright,
 `~/narzedzia/film`), kursor i podświetlenie kliknięć, napisy, MP4 1080×1920 (ffmpeg). Nagranie startuje samo, gdy
 film jest starszy niż scenariusz albo obrazy posta, albo przyciskiem „Nagraj film”. Zmiana samego studia (szablon,
@@ -260,6 +319,8 @@ pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzn
   (Codex czyta ją przez `../AGENTS.md`). Z panelu: „Raport PM” w karcie Notatka PM na stronie Asystent albo w Agentach.
 - Notatka PM trafia do `../raporty/RRRR-MM-DD.md`; panel pokazuje najnowszą na stronie Asystent (start: część
   „Proponuję”, karta `raport-pm`: cała).
+- `pm.py --json`: kampania ma `marketing` (zapytania, zapytania z reklam, wykonane, przychód, wydatek na reklamy,
+  przychód na 1 zł w okresie kampanii) z dziennika klientów i zapisu reklam (`klienci.marketing_numbers`); same sumy.
 
 ### Co dziś robimy
 

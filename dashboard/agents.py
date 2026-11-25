@@ -4434,7 +4434,9 @@ class Manager:
                         new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
                                        "minutes": POST_REVIEW_MINUTES},
                                self.post_detail(folder, day, t.get("channel") or "", t["title"]))
-                elif t["state"] == "done" and day < old and not has_result(detail):
+                elif t["state"] == "done" and day < old and not has_result(detail) \
+                        and not any((n == day or n.startswith(day + "-")) and os.path.isfile(os.path.join(posts, n, "wyniki.json"))
+                                    for n in folders):      # wyniki odczytuje panel sam (wyniki.py)
                     key = "%s|%s|%s" % (pid, day, t["title"])
                     title = self.projekt._clean("%s%s" % (RESULT_TASK, t["title"]), 160)
                     if key not in done_keys:

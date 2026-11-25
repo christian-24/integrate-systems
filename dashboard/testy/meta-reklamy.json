@@ -1,0 +1,462 @@
+{
+ "strona1": {
+  "data": [
+   {
+    "date_start": "2026-11-22",
+    "date_stop": "2026-11-22",
+    "ad_id": "601",
+    "ad_name": "S1 · Drzwi od 1590 · 2026-11-22",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "25.00",
+    "impressions": "900",
+    "reach": "700",
+    "frequency": "1.2857",
+    "clicks": "9",
+    "ctr": "1.0000",
+    "cpm": "27.7778",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "9"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-23",
+    "date_stop": "2026-11-23",
+    "ad_id": "601",
+    "ad_name": "S1 · Drzwi od 1590 · 2026-11-22",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "25.00",
+    "impressions": "900",
+    "reach": "700",
+    "frequency": "1.2857",
+    "clicks": "9",
+    "ctr": "1.0000",
+    "cpm": "27.7778",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "9"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-24",
+    "date_stop": "2026-11-24",
+    "ad_id": "601",
+    "ad_name": "S1 · Drzwi od 1590 · 2026-11-22",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "25.00",
+    "impressions": "900",
+    "reach": "700",
+    "frequency": "1.2857",
+    "clicks": "9",
+    "ctr": "1.0000",
+    "cpm": "27.7778",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "9"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-16",
+    "date_stop": "2026-11-16",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-17",
+    "date_stop": "2026-11-17",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-18",
+    "date_stop": "2026-11-18",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-19",
+    "date_stop": "2026-11-19",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-20",
+    "date_stop": "2026-11-20",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-21",
+    "date_stop": "2026-11-21",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   }
+  ],
+  "paging": {
+   "cursors": {
+    "after": "x"
+   },
+   "next": "https://graph.facebook.com/v26.0/act_123456/insights?after=x&access_token=TOKEN-SYSTEMOWY"
+  }
+ },
+ "strona2": {
+  "data": [
+   {
+    "date_start": "2026-11-22",
+    "date_stop": "2026-11-22",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-23",
+    "date_stop": "2026-11-23",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "1"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-24",
+    "date_stop": "2026-11-24",
+    "ad_id": "602",
+    "ad_name": "F2 · Wygłuszenie podłogi",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "10.00",
+    "impressions": "500",
+    "reach": "420",
+    "frequency": "1.1905",
+    "clicks": "4",
+    "ctr": "0.8000",
+    "cpm": "20.0000",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "4"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-20",
+    "date_stop": "2026-11-20",
+    "ad_id": "603",
+    "ad_name": "B1 - Bagażnik cicho",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "12.50",
+    "impressions": "800",
+    "reach": "600",
+    "frequency": "1.3333",
+    "clicks": "11",
+    "ctr": "1.3750",
+    "cpm": "15.6250",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "11"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "2"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-21",
+    "date_stop": "2026-11-21",
+    "ad_id": "603",
+    "ad_name": "B1 - Bagażnik cicho",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "12.50",
+    "impressions": "800",
+    "reach": "600",
+    "frequency": "1.3333",
+    "clicks": "11",
+    "ctr": "1.3750",
+    "cpm": "15.6250",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "11"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "2"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-22",
+    "date_stop": "2026-11-22",
+    "ad_id": "603",
+    "ad_name": "B1 - Bagażnik cicho",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "12.50",
+    "impressions": "800",
+    "reach": "600",
+    "frequency": "1.3333",
+    "clicks": "11",
+    "ctr": "1.3750",
+    "cpm": "15.6250",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "11"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "2"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-23",
+    "date_stop": "2026-11-23",
+    "ad_id": "603",
+    "ad_name": "B1 - Bagażnik cicho",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "12.50",
+    "impressions": "800",
+    "reach": "600",
+    "frequency": "1.3333",
+    "clicks": "11",
+    "ctr": "1.3750",
+    "cpm": "15.6250",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "11"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "2"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-24",
+    "date_stop": "2026-11-24",
+    "ad_id": "603",
+    "ad_name": "B1 - Bagażnik cicho",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "12.50",
+    "impressions": "800",
+    "reach": "600",
+    "frequency": "1.3333",
+    "clicks": "11",
+    "ctr": "1.3750",
+    "cpm": "15.6250",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "11"
+     },
+     {
+      "action_type": "onsite_conversion.messaging_conversation_started_7d",
+      "value": "2"
+     }
+    ]
+   },
+   {
+    "date_start": "2026-11-24",
+    "date_stop": "2026-11-24",
+    "ad_id": "604",
+    "ad_name": "Reklama testowa listopad",
+    "adset_name": "Kierowcy 30 km",
+    "campaign_name": "Shield · rozmowy",
+    "spend": "5.00",
+    "impressions": "300",
+    "reach": "280",
+    "frequency": "1.0714",
+    "clicks": "2",
+    "ctr": "0.6667",
+    "cpm": "16.6667",
+    "actions": [
+     {
+      "action_type": "link_click",
+      "value": "2"
+     }
+    ]
+   }
+  ],
+  "paging": {
+   "cursors": {
+    "before": "x"
+   }
+  }
+ },
+ "ostatnie7": {
+  "data": [
+   {
+    "ad_id": "601",
+    "frequency": "1.29",
+    "reach": "2100"
+   },
+   {
+    "ad_id": "602",
+    "frequency": "1.6",
+    "reach": "2940"
+   },
+   {
+    "ad_id": "603",
+    "frequency": "3.40",
+    "reach": "1180"
+   },
+   {
+    "ad_id": "604",
+    "frequency": "1.07",
+    "reach": "280"
+   }
+  ]
+ },
+ "konta": {
+  "data": [
+   {
+    "id": "act_123456",
+    "name": "Shield & Silent",
+    "account_status": 1
+   },
+   {
+    "id": "act_777888",
+    "name": "Inna firma",
+    "account_status": 1
+   }
+  ]
+ },
+ "_opis": "Nagrana odpowiedź Marketing API v26 /act_{id}/insights?level=ad&time_increment=1 (dane przykładowe, dwie strony) oraz suma 7 dni i lista kont."
+}

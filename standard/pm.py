@@ -335,7 +335,7 @@ def facts(today=None, runs_dir=None):
               "noNextStep": len(no_next), "stagesNoDate": len(no_date), "noSlack": len(no_slack),
               "overCapacity": 1 if capacity["over"] else 0, "toClose": len(to_close)}
     counts.update(projekt.owner_counts(d["projects"], d["stages"], d["tasks"], today))   # youToday… i late: jedno źródło z panelem
-    return {
+    out = {
         "today": key, "source": d["source"], "dayMinutes": limit,
         "counts": counts,
         "decisions": [b for b, _ in decisions],
@@ -367,6 +367,15 @@ def facts(today=None, runs_dir=None):
                        else None}
                       for c in d["campaigns"]],
     }
+    if d.get("source") == "registry":           # wyniki marketingu (dashboard/klienci.py); dane klientów poza gitem, tu tylko sumy
+        try:
+            sys.path.insert(0, os.path.join(HERE, "..", "dashboard"))
+            import klienci
+            for c, src in zip(out["campaigns"], d["campaigns"]):
+                c["marketing"] = klienci.marketing_numbers(src["project"], src.get("start") or "", src.get("end") or "")
+        except (ImportError, OSError, ValueError):
+            pass
+    return out
 
 
 TOP = 3
