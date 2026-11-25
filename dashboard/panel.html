@@ -1672,6 +1672,11 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .gh-dl dt{color:var(--ink-2)}.gh-dl dd{margin:0;overflow-wrap:anywhere}
 .gh-sel{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:4px 14px}.gh-sel legend{color:var(--ink-2);padding:0;margin-bottom:2px}
 .gh-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gh-dirty{border-left:3px solid var(--l-yellow);background:var(--l-yellow-bg);padding:8px 10px;border-radius:var(--r-sm);margin:8px 0}
+.gh-dirty p{margin:0 0 8px}
+.gh-stash ul{list-style:none;margin:4px 0 8px;padding:0}
+.gh-stash li{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line)}
+.gh-stash li>span{min-width:0;overflow-wrap:anywhere}
 @media (max-width:600px){.gh-dl{grid-template-columns:1fr}.gh-dl dd{margin-bottom:4px}}
 .prx-menu{position:absolute;right:0;top:calc(100% + 4px);width:min(300px,80vw);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-2);padding:10px 12px;display:grid;gap:6px;z-index:5}
 .prx-more .pf{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;margin:6px 0 4px}
@@ -2025,6 +2030,9 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 #ag-view .panel h2{flex-wrap:wrap}
 #ag-view .ag-ac{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #ag-view .ag-ac button{min-height:36px;white-space:normal}
+#ag-view .ag-par{display:inline-flex;gap:4px;align-items:center;color:var(--ink-2)}
+#ag-view .ag-par button{min-width:36px}
+#ag-view .ag-par [aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
 #ag-view .ag-tools summary small{min-width:0}
 #ag-view .ag-gh{font-size:var(--fs-sm);margin:16px 0 4px;color:var(--ink-2)}
 #ag-view .ag-gh button{padding:4px 0;font:inherit;color:inherit}
@@ -2245,6 +2253,16 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-con>summary{padding:12px 16px;cursor:pointer;font-weight:600}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
+.ww-lv{display:grid;gap:6px}
+.ww-lv p{margin:0;overflow-wrap:anywhere}
+.ww-steps,.ww-rc{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:var(--fs-sm);max-height:220px;overflow:auto}
+.ww-steps li,.ww-rc li{overflow-wrap:anywhere}
+.ww-steps .num{color:var(--ink-3);font-size:var(--fs-xs)}
+.ww-shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.ww-shots figure{margin:0;display:grid;gap:2px}
+.ww-shots img{width:100%;height:90px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:var(--r-sm)}
+.ww-shots figcaption{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
+.ww-lv .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:44px}}
 /* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
 .od{display:grid;gap:var(--g-m);min-width:0}
@@ -3217,7 +3235,7 @@ function normAgents(a){
   const tl=x=>({found:!!(x&&x.found),version:(x&&x.version)||'',loggedIn:!!(x&&x.loggedIn),subscription:(x&&x.subscription)||'',loginCmd:(x&&typeof x.loginCmd==='string'&&x.loginCmd)||''});
   const t=a.tools||{},td=a.today||{};
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
-    maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
+    maxParallel:+a.maxParallel||0,parallelMax:+a.parallelMax||0,deployHold:!!a.deployHold,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
     usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[],queueEstimate:a.queueEstimate||{}};
 }
@@ -3258,6 +3276,9 @@ function normRun(r){
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[],
       /* praca w git worktree: gałąź, baza i pliki zmienione względem bazy (git diff --numstat) */
       branch:typeof r.branch==='string'?r.branch:'',base:typeof r.base==='string'?r.base:'',merged:!!r.merged,
+      /* części projektu: gałęzie w repozytoriach części (własny katalog roboczy agenta) */
+      parts:(Array.isArray(r.parts)?r.parts:[]).filter(x=>x&&x.branch&&x.project).map(x=>({project:String(x.project),label:String(x.label||x.project),branch:String(x.branch),commits:+x.commits||0,
+        changes:(Array.isArray(x.changes)?x.changes:[]).filter(c=>c&&c.path)})),
       changes:(Array.isArray(r.changes)?r.changes:[]).filter(c=>c&&typeof c.path==='string'&&c.path).map(c=>({path:c.path,
         added:Number.isFinite(+c.added)&&c.added!==''&&c.added!=null?+c.added:null,removed:Number.isFinite(+c.removed)&&c.removed!==''&&c.removed!=null?+c.removed:null}))});
 }
@@ -5615,7 +5636,7 @@ function wwMount(p){
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
       '<button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild">Zbuduj podgląd</button></div></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
-      '<aside class="ww-side"><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
+      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
       '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div></section>'+
       '<section class="panel"><h2>Uwagi <small data-wwn></small></h2><ol class="ww-notes" data-wwnotes></ol></section>'+
       '<details class="panel ww-con" data-wwcondet><summary>Nowa wersja według koncepcji</summary><form class="pad" data-wwcon="'+esc(p.id)+'">'+
@@ -5644,11 +5665,32 @@ async function wwLoad(pid){
     else s.err=String(j.error||'Podgląd jest niedostępny.')}catch(e){s.err='Brak połączenia z serwerem.'}
   const q=CUR,qc=q&&q.v==='projekt'&&q.p&&q.tab==='strona'&&wwCur(q.p);if(!(qc&&qc.id===pid))return;
   wwPaint(pid);
-  const live=s.d&&(s.d.build.state==='building'||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
+  const live=s.d&&(s.d.build.state==='building'||!!s.d.live||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
   s.tm=setTimeout(()=>wwLoad(pid),live?4000:30000);
+}
+/* budowa strony na żywo: agent strony pracuje (d.live): kroki, ostatnie czynności, zrzuty z jego .zrzuty/,
+   „Pokaż wersję w budowie” (podgląd z jego katalogu roboczego, odświeżany po każdym budowaniu) i wiadomość do agenta */
+const wwLiveOn=s=>!!(s.liveView&&s.d&&s.d.live&&s.d.live.url);
+function wwLiveHtml(pid,s){
+  const L=s.d.live;
+  if(L.state==='queued')return '<h2>Agent strony czeka w kolejce</h2><div class="pad"><p class="note">'+esc(L.title)+'</p></div>';
+  const st=(L.steps||[]).slice().reverse(),rc=(L.recent||[]).slice().reverse(),plan=L.plan||[];
+  const done=plan.filter(x=>x.done||x.status==='completed').length;
+  return '<h2>Agent pracuje nad stroną <small>'+esc(wwAgo(L.startedAt))+'</small></h2><div class="pad ww-lv">'+
+    '<p><b>'+esc(L.title)+'</b></p>'+(L.activity?'<p class="note">Teraz: '+esc(L.activity)+'</p>':'')+
+    (plan.length?'<p class="note">Kroki: '+done+' z '+plan.length+'</p>':'')+
+    (st.length?'<ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
+    (rc.length?'<details><summary class="note">Ostatnie czynności</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
+    ((L.shots||[]).length?'<div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
+    '<div class="row">'+(L.url?'<button type="button" class="btn sm" data-wwlv data-k="wwlv" aria-pressed="'+wwLiveOn(s)+'">'+(wwLiveOn(s)?'Pokaż ostatni podgląd':'Pokaż wersję w budowie')+'</button>':
+      '<span class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</span>')+
+    '<button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
+    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div>'+
+    (L.browser?'<p class="note">Agent ogląda stronę w przeglądarce (tylko swój podgląd).</p>':'')+'</div>';
 }
 function wwBuildHtml(s){
   const d=s.d;if(!d)return s.err?'<span class="ww-err">'+esc(s.err)+'</span>':'Wczytuję…';
+  if(wwLiveOn(s))return '<span class="lz blue">Wersja w budowie</span><span>z katalogu agenta, zbudowana '+esc(wwAgo(d.live.builtAt))+'</span>';
   const b=d.build||{},open=d.url?' <a href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">Otwórz w nowej karcie</a>':'';
   if(b.state==='building')return '<span class="lz blue">Buduję…</span><span>'+(d.url?'Pokazuję poprzednią wersję.':'')+'</span>';
   if(b.state==='error')return '<span class="lz red">Błąd budowania</span><span>'+esc(b.error||'')+'</span>'+open+
@@ -5673,12 +5715,16 @@ function wwPaint(pid){
   const pk=q('[data-wwpick]');pk.setAttribute('aria-pressed',String(s.pick));pk.textContent=s.pick?'Wskazywanie: kliknij element':'Wskaż';
   const bb=q('[data-wwbuild]');if(d&&d.build.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
   const fit=q('.ww-fit'),ifr=fit.querySelector('iframe'),em=q('[data-wwempty]');
-  if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  if(s.liveView&&!wwLiveOn(s))s.liveView=false;           /* agent skończył: wracamy do zbudowanego podglądu */
+  const lv=q('[data-wwlive]');lv.hidden=!(d&&d.live);if(d&&d.live)setHtml(lv,wwLiveHtml(pid,s));
+  const rb=q('[data-wwrepo]');rb.hidden=!(d&&d.repo);if(d&&d.repo){const pp=P(pid);setHtml(rb,'<div class="gh-dirty" role="status"><p>'+esc(d.repo.text)+'</p>'+(pp?'<a class="navlk inl" href="'+esc(phref(pp))+'" data-pjgo="pcode">Kod i pliki →</a>':'')+'</div>')}
+  if(wwLiveOn(s)){const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else{fit.hidden=true;em.hidden=false;setHtml(em,d?(d.build.state==='building'?'<p>Buduję pierwszy podgląd…</p>':'<p>Podglądu jeszcze nie ma.</p><button type="button" class="btn" data-wwbuild data-k="wwbuild2">Zbuduj podgląd</button><p class="note">Strony jeszcze nie ma? Zleć wykonanie według koncepcji (pole obok).</p>'):'<p>Wczytuję…</p>')}
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
     '<p class="note">Uwagę piszesz w Rozmowie (prawy dolny róg); podstrona i widok idą jako załącznik. Kliknij „Wskaż” i element w podglądzie, żeby dołączyć też element.</p>');
   const L=d?d.notes||[]:[];
-  const sb=q('[data-wwnote]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
+  const sb=q('[data-k="wwnote"]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
   setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
@@ -5701,8 +5747,9 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote]');if(!b)return;
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
+  if(b.dataset.wwlv!=null){s.liveView=!s.liveView;wwPaint(pid);focusK('wwlv');return}
   if(b.dataset.wwnote!=null){if(!LIVE){say(PRV);return}pjdAttach(pid,s);return}
   if(b.dataset.wwview){s.view=b.dataset.wwview;wwPaint(pid);return}
   if(b.dataset.wwpick!=null){s.pick=!s.pick;wwPost(pid,{pw:'wskaz',on:s.pick});wwPaint(pid);return}
@@ -6098,10 +6145,14 @@ function agBarHtml(){
   else if(no&&!a.tools.codex.found)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
   /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
-  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+
+  /* ile agentów naraz (różne projekty; w jednym projekcie po kolei): ustawienie w panelu, stan.json */
+  const pm=a.parallelMax||0,par=pm&&a.canRunTasks?'<span class="ag-par" role="group" aria-label="Agenci naraz">Naraz:'+
+    Array.from({length:pm},(_,i)=>i+1).map(n=>'<button type="button" class="btn sec sm" data-ag="par" data-v="'+n+'" data-k="par:'+n+'" aria-pressed="'+(a.maxParallel===n)+'" title="'+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+' naraz, z różnych projektów">'+n+'</button>').join('')+'</span>':'';
+  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+par+
     (no?'':pmBtn('pm'))+
     (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
   if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
+  if(a.deployHold)h+='<p class="ahint">Wdrożenie panelu czeka, aż agenci skończą pracę (najwyżej 30 min). Nowe zadania czekają w kolejce.</p>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
   const windowLabel=k=>pct(u[k])+(u[k+'New']?' (nowe okno)':'')+
@@ -6326,9 +6377,34 @@ function ghLoad(pid,fetch){
   if(fetch)A.busy['gh:'+pid]='check';else if(GHS[pid]===undefined)GHS[pid]=null;
   post('/api/github/stan',{project:pid,fetch:!!fetch}).then(r=>{if(r.status===401)return;ghSet(pid,r);if(fetch)A.busy['gh:'+pid]='';render(true)});
 }
-function ghAct(a,pid){
+/* zmiany niezatwierdzone w kopii: skąd są (przebiegi agentów), „Zatwierdź jako zmiany agenta”, „Odłóż na bok”,
+   odłożone zmiany z „Przywróć” (POST /api/repo/zatwierdz | odloz | przywroc, wykonuje konto panelu) */
+function ghDirty(pid,s,busy){
+  const id=esc(pid),dis=busy?' aria-disabled="true"':'';let h='';
+  if(s.dirtyCount){
+    const src=s.sources||[];
+    h+='<div class="gh-dirty" role="group" aria-label="Zmiany niezatwierdzone"><p>'+(src.length?'Zmiany zapisał agent w zadaniu '+
+      src.map(x=>'„'+esc(x.title)+'”'+(x.projectName?' ('+esc(x.projectName)+(x.at?', '+esc(whenT(x.at)):'')+')':'')).join('; ')+', poza swoją gałęzią.':
+      'Nie wiadomo, skąd są te zmiany: żaden agent nie zapisywał tych plików w ostatnich dniach.')+
+      ' Dopóki są, panel nie scali pracy agentów w tym repozytorium.</p><div class="gh-acts">'+
+      '<button type="button" class="btn sm" data-ag="gh-commit" data-id="'+id+'" data-k="ghcm:'+id+'"'+dis+' title="Jeden commit na gałęzi '+esc(s.branch||'')+' z opisem, z którego zadania są zmiany">'+(busy==='commit'?'Zatwierdzam…':'Zatwierdź jako zmiany agenta')+'</button>'+
+      '<button type="button" class="btn sec sm" data-ag="gh-stash" data-id="'+id+'" data-k="ghst:'+id+'"'+dis+' title="Schowek git z opisem; przywrócisz je tutaj">'+(busy==='stash'?'Odkładam…':'Odłóż na bok')+'</button></div></div>';
+  }
+  const st=s.stashes||[];
+  if(st.length)h+='<div class="gh-stash"><div class="sub">Odłożone zmiany</div><ul>'+st.map(x=>'<li><span>'+esc(x.message)+' <span class="muted">· '+esc(whenT(x.at))+' · '+kpN(x.files.length,'plik','pliki','plików')+'</span></span>'+
+    '<button type="button" class="btn sec sm" data-ag="gh-restore" data-id="'+id+'" data-ref="'+esc(x.ref)+'" data-k="ghrs:'+id+':'+esc(x.ref)+'"'+dis+(s.dirtyCount?' aria-disabled="true" title="Najpierw zatwierdź albo odłóż obecne zmiany"':'')+'>'+(busy==='restore'?'Przywracam…':'Przywróć')+'</button></li>').join('')+'</ul></div>';
+  return h;
+}
+function ghRepo(a,pid,ref){
+  const act={'gh-commit':'commit','gh-stash':'stash','gh-restore':'restore'}[a];
+  A.busy['gh:'+pid]=act;GHM[pid]=null;render(true);
+  post('/api/repo/'+({commit:'zatwierdz',stash:'odloz',restore:'przywroc'}[act]),{project:pid,ref:ref||''}).then(r=>{if(r.status===401)return;
+    A.busy['gh:'+pid]='';ghSet(pid,r);render(true);if(GHM[pid])say(GHM[pid].text,10000);load(true)});
+}
+function ghAct(a,pid,el){
   if(!LIVE){say(PRV);return}
   if(A.busy['gh:'+pid])return;
+  if(a==='gh-commit'||a==='gh-stash'||a==='gh-restore'){ghRepo(a,pid,el&&el.dataset.ref);return}
   if(a==='gh-check'){ghLoad(pid,true);render(true);return}
   if(a==='gh-rm'){A.ghConf=pid;render(true);focusK('ghn:'+pid);return}
   if(a==='gh-rm-no'){A.ghConf='';render(true);focusK('ghr:'+pid);return}
@@ -6373,6 +6449,7 @@ function ghBody(p){
     s.dirty.slice(0,8).map(d=>'<code>'+esc(d.path)+'</code>').join(', ')+(s.dirtyCount>8?', …':''):'wszystkie zatwierdzone <span class="muted">(bez .agent/, node_modules/, wyników budowania i .zrzuty/)</span>']);
   rows.push(['Sprawdzono na GitHubie',s.fetchedAt?esc(whenT(s.fetchedAt)):'jeszcze nie (kliknij „Sprawdź”)']);
   h+='<dl class="gh-dl">'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>';
+  h+=ghDirty(pid,s,busy);
   /* inne gałęzie do wysłania: wybór zapamiętany w GHSEL (odświeżanie danych go nie kasuje) */
   const opt=s.branches.filter(b=>!b.current&&b.unpushed),sel=GHSEL[pid]||(GHSEL[pid]=new Set());
   if(opt.length)h+='<fieldset class="gh-sel"><legend>Wyślij też</legend>'+opt.map(b=>'<label class="prx-chk"><input type="checkbox" data-ghb="'+id+'" value="'+esc(b.name)+'"'+(sel.has(b.name)?' checked':'')+'> '+esc(b.name)+' <span class="muted num">('+b.unpushed+')</span></label>').join('')+'</fieldset>';
@@ -6985,8 +7062,12 @@ function chgBlock(r,bare,t){
   }
   h+='<div class="row">'+b.join('')+'</div>'+cf;
   if(open)h+=diffView(r);
+  if(!r.pseudo&&r.parts&&r.parts.length)h+=r.parts.map(x=>'<div class="sub">Część: '+esc(x.label)+'</div>'+chgBlock(partRun(r,x),true)).join('');
   return h+'</div>';
 }
+/* gałąź agenta w repozytorium części (zadanie projektu z częściami): przyciski jak przy gałęzi z pola „gałąź:” */
+function partRun(r,x){const id='b:'+x.project+'|'+x.branch;
+  return BR[id]||(BR[id]={id:id,pseudo:true,project:x.project,branch:x.branch,base:'',changes:x.changes,merged:'',task:''});}
 function diffView(r){
   if(!LIVE)return '<p class="note">Podgląd zmian działa w panelu na serwerze.</p>';
   const d=DF[r.id];
@@ -11014,6 +11095,12 @@ function runCheck(){
   if(!LIVE){simRun({kind:'check',tool:'claude',title:KIND.check});return}
   A.busy.check=true;render();agentPost('/api/agent/check',{tool:'claude'},'Test nie ruszył.');
 }
+function setParallel(n){
+  const a=D.agents;if(!a||!n||a.maxParallel===n)return;
+  a.maxParallel=n;render(true);focusK('par:'+n);
+  if(!LIVE){say(PRV);return}
+  agentPost('/api/agent/rownolegle',{value:n},'Nie zmieniono liczby agentów naraz.',()=>say(n+' '+pl(n,'agent','agentów','agentów')+' naraz, w jednym projekcie po kolei.'));
+}
 function setAutomat(){
   const a=D.agents;if(!a)return;
   a.automat=!a.automat;render();
@@ -11101,13 +11188,14 @@ function agentAct(el){
     });
   }
   else if(a==='automat')setAutomat();
+  else if(a==='par')setParallel(+el.dataset.v);
   else if(a==='copy')copyCmd();
   else if(a==='login')openLogin();
   else if(a==='recheck')recheckLogin();
   else if(a==='prm'){A.confirm=id;render(true);focusK('pn:'+id)}
   else if(a==='prm-no'){A.confirm='';render(true);focusK('pr:'+id)}
   else if(a==='prm-yes')removeProject(id);
-  else if(a.startsWith('gh-'))ghAct(a,id);
+  else if(a.startsWith('gh-'))ghAct(a,id,el);
   else if(a==='padd-go'){const d=$('#padd-d');if(d&&!d.open){d.open=true;(A.prxDet||(A.prxDet={})).add=true}const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
   else if(a==='prx-zl')prxDelegate(id);
   else if(a==='plan-go')acceptPlan(id);

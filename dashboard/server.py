@@ -49,6 +49,9 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/drive/powrot      powrót z Google przy własnym kliencie OAuth (bez sesji, chroni jednorazowy state)
   POST /api/drive/konto/start|finish|anuluj|usun   łączenie konta Google; /api/drive/wybierz: folder dla projektu
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
+  POST /api/repo/zatwierdz    zatwierdza niezatwierdzone zmiany w repozytorium projektu jako zmiany agenta
+  POST /api/repo/odloz        odkłada niezatwierdzone zmiany do schowka git (z opisem); /api/repo/przywroc przywraca
+  POST /api/agent/rownolegle  ile uruchomień agentów naraz (1–4), zapis w stan.json
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
   POST /api/project/add       dopisuje folder do rejestru projektów (opcjonalnie zakłada pliki standardu)
@@ -2080,6 +2083,10 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/project/meta": lambda b: update_meta(b),
           "/api/github/stan": lambda b: github_state(b), "/api/github/wyslij": lambda b: github_push(b),
           "/api/github/usun-kopie": lambda b: github_remove(b),
+          "/api/repo/zatwierdz": lambda b: repo_change(b, "commit"),
+          "/api/repo/odloz": lambda b: repo_change(b, "stash"),
+          "/api/repo/przywroc": lambda b: repo_change(b, "restore"),
+          "/api/agent/rownolegle": lambda b: get_agents().set_parallel(b.get("value")),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
           "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
@@ -2903,6 +2910,9 @@ def _gh_view(p, folder):
             st["blocks"].append("Projekt ze zbieracza: kopię usuwasz na komputerze, z którego pochodzi")
     st.update(agentLive=live, removable=st["repo"] and not st["blocks"], folder=short_path(folder),
               project=p["id"])
+    if st["repo"]:
+        st["stashes"] = kopie.stash_list(folder)
+        st["sources"] = m.dirty_sources(folder, [d["path"] for d in st["dirty"]]) if st["dirtyCount"] else []
     if st["removed"].get("trash"):
         st["removed"]["trash"] = short_path(st["removed"]["trash"])
     return st
@@ -2997,6 +3007,19 @@ def github_remove(body):
     return 200, "", {"trash": short_path(dest), "state": _gh_view(p, folder),
                      "message": "Kopia w koszu: %s. Projekt zostaje; kopia sklonuje się z GitHuba przy następnym zadaniu."
                      % short_path(dest)}
+
+
+def repo_change(body, action):
+    """POST /api/repo/zatwierdz | odloz | przywroc {"project", "ref"?}: zmiany niezatwierdzone w kopii projektu
+    (zatwierdzenie jako zmiany agenta, odłożenie do schowka, przywrócenie); potem stan kopii od nowa."""
+    p, folder, err = _gh_project(body)
+    if err:
+        return err
+    code, msg, extra = get_agents().repo_action(p["id"], action, str(body.get("ref") or ""))
+    _gh_forget(folder)
+    data_invalidate()
+    extra = dict(extra or {}, state=_gh_view(p, folder))
+    return (code, msg, extra) if code != 200 else (200, "", extra)
 
 
 def build_data():
@@ -4375,6 +4398,7 @@ if __name__ == "__main__":
         print("Brak PANEL_TOKEN: połączenia z innych urządzeń będą odrzucane.")
 
     def _stop(signum, frame):
+        get_agents()._closing = True            # uruchomienia za pośrednikiem pracują dalej (AGENCI.md)
         raise KeyboardInterrupt
 
     for name in ("SIGTERM", "SIGBREAK"):       # zatrzymanie usługi ma zakończyć także procesy agentów
@@ -4393,4 +4417,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        get_agents().shutdown()
+        get_agents().shutdown(keep=True)

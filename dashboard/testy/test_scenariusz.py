@@ -125,6 +125,7 @@ class Trasy(Serwer):
         self.assertEqual(code, 200, ans)
         self.assertTrue(ans["started"], ans)
         self.wait_for(lambda: all(t["state"] == "done" for t in self.tasks(scenariusz.PREP_TASK)), timeout=15)
+        self.wait_for(lambda: not server.get_agents().has_live(self.pid), timeout=15)   # koniec uruchomienia
         return ans
 
     def test_dane_i_przygotowanie(self):

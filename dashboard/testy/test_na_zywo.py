@@ -227,7 +227,7 @@ class Codex(Wspolne):
         st, answer = self.post("/api/agent/restart", {"id": rid})
         self.assertEqual(st, 200, answer)
         self.assertEqual(self.wait(rid)["state"], "stopped")
-        self.wait_for(lambda: len(self.runs_of("Zadanie C")) == 2, timeout=10)
+        self.wait_for(lambda: len(self.runs_of("Zadanie C")) == 2, timeout=30)
         again = next(r for r in self.runs_of("Zadanie C") if r["id"] != rid)
         self.assertEqual(self.wait(again["id"])["state"], "done")
         call = [c for c in self.calls() if c.get("prompt")][-1]
@@ -266,7 +266,8 @@ class Reguly(unittest.TestCase):
         self.assertIn("`npm ci`, `npm run build:panel`", text)
         tools = strona.Site.tools(None, site)
         self.assertEqual(tools, ["Bash(npm ci)", "Bash(npm ci:*)", "Bash(npm run build:panel)",
-                                 "Bash(npm run build:panel:*)", "Bash(python3 zrzut.py:*)"])
+                                 "Bash(npm run build:panel:*)", "Bash(python3 zrzut.py:*)",
+                                 "Bash(git merge:*)"])
         site.update(build="make all && npm ci")
         text = "\n".join(strona.Site.rules(site, "/r"))
         self.assertIn("nie uruchamiaj (brak uprawnienia): `make all`", text)

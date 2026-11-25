@@ -64,6 +64,10 @@ panel ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block wdroz-panel.servi
 EOF
 visudo -cf /tmp/90-rozwoj >/dev/null && install -m 440 /tmp/90-rozwoj /etc/sudoers.d/90-rozwoj && rm -f /tmp/90-rozwoj
 install -d -m 750 -o panel -g panel /home/panel/dane/wdrozenie
+# restart panelu nie przerywa agentów: usługa zabija tylko proces panelu (pośrednicy przebieg.py pracują dalej),
+# liczba agentów naraz z ustawienia w panelu (Agenci), nie ze zmiennej w usłudze
+install -d -m 755 /etc/systemd/system/panel.service.d
+install -m 644 "$SRC/panel-agenci.conf" /etc/systemd/system/panel.service.d/agenci.conf
 
 systemctl daemon-reload
 systemctl enable --now panel-testowy.service >/dev/null
