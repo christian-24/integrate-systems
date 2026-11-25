@@ -84,7 +84,9 @@ def safe_url(url):
 # ---------- git ----------
 def _git(cwd, args, timeout=20, net=False):
     """(kod, stdout, stderr); kod -1 przy braku gita albo przekroczonym czasie (stderr "timeout")."""
-    env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true", SSH_ASKPASS="true")
+    # GIT_OPTIONAL_LOCKS=0: odczyt stanu (git status) nie zakłada index.lock, więc nie blokuje scalania obok
+    env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="true", SSH_ASKPASS="true",
+               GIT_OPTIONAL_LOCKS="0")
     if net and not env.get("GIT_SSH_COMMAND"):
         env["GIT_SSH_COMMAND"] = "ssh -o BatchMode=yes -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new"
     base = ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.fsmonitor=false", "-c", "core.quotePath=false",
@@ -162,6 +164,100 @@ def _dirty(folder):
             continue
         items.append((xy.strip() or "?", path))
     return items
+
+
+# ---------- zmiany niezatwierdzone: zatwierdzenie i odłożenie na bok (AGENCI.md, „Zmiany niezatwierdzone”) ----------
+STASH_MAX = 10
+STASH_REF = re.compile(r"^stash@\{\d{1,3}\}$")
+
+
+def _pathspec(folder):
+    """Ścieżki zmian projektu: folder bez katalogów pomijanych i bez dowiązań karty."""
+    spec = ["--", "."] + [":(exclude,glob)**/%s/**" % x for x in sorted(SKIP_PARTS)]
+    spec += [":(exclude)%s" % n for n in CARD_LINKS if os.path.islink(os.path.join(folder, n))]
+    return spec
+
+
+def commit_dirty(folder, message, name="Panel projektów", email="panel@localhost"):
+    """Zatwierdza pliki niezatwierdzone i nieśledzone (jak w stanie kopii) jednym commitem na bieżącej gałęzi.
+    (True, skrót commita) albo (False, powód)."""
+    dirty = _dirty(folder)
+    if dirty is None:
+        return False, "Nie odczytano stanu repozytorium."
+    if not dirty:
+        return False, "Nie ma zmian do zatwierdzenia."
+    code, _, err = _git(folder, ["add", "-A"] + _pathspec(folder), timeout=120)
+    if code != 0:
+        return False, "git add: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
+    ident = ["-c", "user.name=%s" % name, "-c", "user.email=%s" % email, "-c", "commit.gpgsign=false"]
+    code, _, err = _git(folder, ident + ["commit", "-q", "--no-verify", "-m", message] + _pathspec(folder),
+                        timeout=120)
+    if code != 0:
+        return False, "git commit: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
+    code, sha, _ = _git(folder, ["rev-parse", "--short", "HEAD"])
+    return True, sha.strip()
+
+
+def stash_save(folder, message):
+    """Odkłada zmiany (także nieśledzone) do schowka git z opisem; do przywrócenia (stash_restore). (True, ref)."""
+    dirty = _dirty(folder)
+    if dirty is None:
+        return False, "Nie odczytano stanu repozytorium."
+    if not dirty:
+        return False, "Nie ma zmian do odłożenia."
+    code, _, err = _git(folder, ["stash", "push", "-u", "-q", "-m", message] + _pathspec(folder), timeout=120)
+    if code != 0:
+        return False, "git stash: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
+    return True, "stash@{0}"
+
+
+def stash_list(folder):
+    """[{"ref", "message", "at", "files"}] schowka repozytorium, najnowsze pierwsze, najwyżej STASH_MAX."""
+    code, out, _ = _git(folder, ["stash", "list", "--format=%gd%x09%cI%x09%gs"])
+    if code != 0:
+        return []
+    items = []
+    for line in out.splitlines()[:STASH_MAX]:
+        parts = line.split("\t", 2)
+        if len(parts) != 3 or not STASH_REF.match(parts[0]):
+            continue
+        msg = re.sub(r"^On [^:]+: ", "", parts[2])
+        code, names, _ = _git(folder, ["stash", "show", "--include-untracked", "--name-only", parts[0]])
+        if code != 0:
+            code, names, _ = _git(folder, ["stash", "show", "--name-only", parts[0]])
+        items.append({"ref": parts[0], "at": parts[1][:19], "message": msg[:300],
+                      "files": [x for x in names.splitlines() if x.strip()][:LIST_MAX]})
+    return items
+
+
+def stash_restore(folder, ref):
+    """Przywraca odłożone zmiany (git stash apply, potem drop). Tylko przy czystym repozytorium; przy konflikcie
+    repozytorium wraca do stanu sprzed próby, a schowek zostaje. (True, "") albo (False, powód)."""
+    ref = str(ref or "")
+    if not STASH_REF.match(ref):
+        return False, "Nieznany wpis schowka."
+    dirty = _dirty(folder)
+    if dirty is None:
+        return False, "Nie odczytano stanu repozytorium."
+    if dirty:
+        return False, "Najpierw zatwierdź albo odłóż obecne zmiany (%d %s)." % (
+            len(dirty), "plik" if len(dirty) == 1 else "pliki")
+    if _git(folder, ["rev-parse", "-q", "--verify", ref])[0] != 0:
+        return False, "Nie ma już tego wpisu schowka."
+    code, out, err = _git(folder, ["stash", "apply", "-q", ref], timeout=120)
+    if code != 0:
+        _git(folder, ["reset", "-q", "--merge"], timeout=60)
+        _git(folder, ["checkout", "-q", "--", "."], timeout=60)
+        left = _dirty(folder) or []
+        for code_, path in left:
+            if code_ == "??":
+                full = os.path.join(folder, path)
+                if os.path.isfile(full) and not os.path.islink(full):
+                    os.remove(full)     # nieśledzone pliki z nieudanej próby: są też w schowku
+        return False, "Zmiany kolidują z obecnym stanem plików; schowek zostaje. %s" % (
+            (err or out).strip().splitlines() or [""])[-1][:160]
+    _git(folder, ["stash", "drop", "-q", ref], timeout=60)
+    return True, ""
 
 
 def _refs(folder, prefix):

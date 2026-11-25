@@ -7,14 +7,17 @@ Panel buduje stronę w folderze projektu (na serwerze jako użytkownik agenta), 
 Sama biblioteka standardowa. Moduł nie importuje serwera; zarządca uruchomień (agents.Manager) podaje się w Site().
 """
 import datetime
+import glob
 import hashlib
 import hmac
+import http.server
 import json
 import os
 import re
 import secrets
 import shutil
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -34,6 +37,17 @@ NOTE_MAX = 1000
 PID = re.compile(r"^[a-z0-9][a-z0-9-]{0,80}$")
 KEY = re.compile(r"^[0-9a-f]{24}$")
 WIDTH = {"telefon": 390, "komputer": 1440}
+LIVE = "~budowa"                                # /podglad/<p>/<klucz>/~budowa/: wersja w budowie (katalog agenta)
+LIVE_STEPS = 8                                  # ostatnie czynności agenta w zakładce Strona
+# Przeglądarka dla agenta strony (Playwright MCP): tylko adres podglądu jego wersji w budowie, bez internetu.
+MCP_CLI = "/home/agent/narzedzia/mcp/node_modules/@playwright/mcp/cli.js"
+MCP_CHROME = ("/opt/ms-playwright/chromium-*/chrome-linux*/chrome", "~/.cache/ms-playwright/chromium-*/chrome-linux*/chrome")
+MCP_NAME = "przegladarka"
+MCP_TOOLS = ("browser_navigate", "browser_navigate_back", "browser_snapshot", "browser_take_screenshot",
+             "browser_click", "browser_hover", "browser_type", "browser_press_key", "browser_resize",
+             "browser_wait_for", "browser_tabs", "browser_close", "browser_console_messages", "browser_select_option",
+             "browser_fill_form", "browser_find", "browser_emulate_media", "browser_handle_dialog", "browser_drag")
+MCP_DENY = ("browser_run_code_unsafe", "browser_evaluate", "browser_file_upload", "browser_drop")
 WRAPPER = "/usr/local/lib/integrate/podglad-buduj.sh"   # uruchom/serwer/zainstaluj-podglad.sh
 SHOT_SCRIPT = "/usr/local/lib/integrate/zrzut-strony.py"
 SHOT_PYTHON = "/home/agent/narzedzia/pw/bin/python"
@@ -76,7 +90,7 @@ function sel(el){var out=[];while(el&&el.nodeType===1&&el!==document.documentEle
  if(el.id&&document.querySelectorAll('#'+esc(el.id)).length===1){out.unshift('#'+esc(el.id));break}
  var p=el.parentElement,s=t;if(p){var same=[].filter.call(p.children,function(x){return x.tagName===el.tagName});if(same.length>1)s+=':nth-of-type('+(same.indexOf(el)+1)+')'}
  out.unshift(s);el=p;if(out.length>7)break}return out.join(' > ')}
-function page(){var p=location.pathname.replace(/^\/podglad\/[^\/]+\/[^\/]+/,'');return (p||'/').replace(/index\.html$/,'')}
+function page(){var p=location.pathname.replace(/^\/podglad\/[^\/]+\/[^\/]+(\/~budowa)?/,'');return (p||'/').replace(/index\.html$/,'')}
 addEventListener('message',function(e){if(e.source!==window.parent)return;var d=e.data||{};
  if(d.pw==='wskaz'){on=!!d.on;if(!on&&hb)hb.style.display='none'}
  if(d.pw==='czysc'&&sb)sb.style.display='none';
@@ -112,6 +126,22 @@ def _inside(base, path):
 def log(text):
     sys.stdout.write("[strona] %s\n" % text)
     sys.stdout.flush()
+
+
+def _file_in(root, rest):
+    """Plik do wysłania z folderu wyniku (index.html dla folderu, .html bez rozszerzenia) albo None: bez dowiązań,
+    bez wyjścia poza folder."""
+    names = [x for x in str(rest).split("/") if x not in ("", ".")]
+    if "\\" in rest or "\x00" in rest or ".." in names or not root or not os.path.isdir(root):
+        return None
+    fpath = os.path.join(root, *names)
+    if os.path.isdir(fpath):
+        fpath = os.path.join(fpath, "index.html")
+    elif not os.path.exists(fpath) and not os.path.splitext(fpath)[1] and os.path.isfile(fpath + ".html"):
+        fpath += ".html"
+    if os.path.islink(fpath) or not os.path.isfile(fpath) or not _inside(root, fpath):
+        return None
+    return fpath
 
 
 def copy_tree(src, dst):
@@ -150,6 +180,7 @@ class Site:
         self._lock = threading.RLock()
         self._cond = threading.Condition(self._lock)
         self._busy, self._again, self._finishing = set(), set(), set()
+        self._live = {}                         # id uruchomienia -> serwer podglądu wersji w budowie (dla agenta)
 
     # ---------- projekt i pliki stanu ----------
     def project(self, pid):
@@ -224,6 +255,13 @@ class Site:
             return 303, b"", "text/plain; charset=utf-8", SERVE_HEADERS + [("Location", path + "/")]
         pid, rest = parts[2], urllib.parse.unquote(parts[4])
         root = os.path.join(self._dir(pid), "wynik")
+        if rest == LIVE or rest.startswith(LIVE + "/"):
+            root = self.live_root(pid)
+            if not root:
+                return 404, "Agent nie pracuje teraz nad stroną".encode("utf-8"), "text/plain; charset=utf-8", SERVE_HEADERS
+            if rest == LIVE:
+                return 303, b"", "text/plain; charset=utf-8", SERVE_HEADERS + [("Location", path + "/")]
+            rest = rest[len(LIVE) + 1:]
         names = [x for x in rest.split("/") if x not in ("", ".")]
         if "\\" in rest or "\x00" in rest or ".." in names or not os.path.isdir(root):
             return 404, b"Nie znaleziono", "text/plain; charset=utf-8", SERVE_HEADERS
@@ -379,6 +417,189 @@ class Site:
         self._update(pid, build={"state": "ok", "error": "", "at": now_iso(), "version": int(time.time() * 1000),
                                  "seconds": round(time.time() - t0, 1), "files": files, "log": tail})
 
+    # ---------- wersja w budowie: katalog roboczy pracującego agenta ----------
+    def live_dir(self, priv):
+        """Folder wyniku budowania w katalogu roboczym uruchomienia zadania strony albo ''."""
+        site = (priv.get("task") or {}).get("site") or {}
+        if not site or not priv.get("cwd"):
+            return ""
+        sdir = os.path.normpath(os.path.join(priv["cwd"], site["dir"]))
+        out = os.path.normpath(os.path.join(sdir, site["out"]))
+        return out if _inside(priv["cwd"], out) else ""
+
+    def live_run_priv(self, pid):
+        """(rekord, dane robocze) pracującego agenta strony tego projektu albo (None, None)."""
+        rec = self.live_run(pid)
+        if not rec or rec.get("state") != "running":
+            return None, None
+        with self.m._lock:
+            priv = self.m._priv.get(rec["id"]) or {}
+        return rec, priv
+
+    def live_root(self, pid):
+        _, priv = self.live_run_priv(pid)
+        out = self.live_dir(priv or {})
+        return out if out and os.path.isfile(os.path.join(out, "index.html")) else ""
+
+    def live_info(self, pid):
+        """Postęp agenta strony dla zakładki Strona: kroki, ostatnie czynności, zrzuty, wersja w budowie."""
+        rec, priv = self.live_run_priv(pid)
+        if not rec:
+            q = self.live_run(pid)
+            return {"runId": q["id"], "title": q["title"], "state": "queued"} if q else None
+        with self.m._lock:
+            full = self.m._runs.get(rec["id"]) or rec
+            recent = [x["text"][:300] for x in full.get("log") or []
+                      if x.get("k") in ("agent", "narzedzie", "panel", "odmowa")][-4:]
+            steps = [dict(x) for x in (full.get("steps") or [])][-LIVE_STEPS:]
+            plan = [dict(x) for x in full.get("plan") or [] if x.get("text")]
+        out = self.live_dir(priv)
+        built = ""
+        try:
+            built = now_iso(os.stat(os.path.join(out, "index.html")).st_mtime) if out else ""
+        except OSError:
+            built = ""
+        return {"runId": rec["id"], "title": rec["title"], "state": "running", "activity": rec.get("activity") or "",
+                "startedAt": rec.get("startedAt"), "steps": steps, "recent": recent, "plan": plan,
+                "shots": self.m.shots(rec["id"]), "builtAt": built,
+                "url": self.url(pid) + LIVE + "/" if built else "",
+                "browser": bool((priv.get("preview") or {}).get("mcp"))}
+
+    def preview_port(self, priv):
+        """Port podglądu wersji w budowie dla przeglądarki agenta (127.0.0.1), zapamiętany w danych uruchomienia."""
+        pv = priv.setdefault("preview", {})
+        if not pv.get("port"):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sk:
+                sk.bind(("127.0.0.1", 0))
+                pv["port"] = sk.getsockname()[1]
+        return pv["port"]
+
+    def live_open(self, rid, priv):
+        """Serwer plików wyniku budowania agenta na 127.0.0.1:<port> (tylko odczyt, bez dowiązań)."""
+        self.live_close(rid)
+        port = (priv.get("preview") or {}).get("port")
+        if not port:
+            return
+        site = self
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                root = site.live_dir(priv)
+                rest = urllib.parse.unquote(self.path.split("?", 1)[0].split("#", 1)[0])
+                fpath = _file_in(root, rest.lstrip("/")) if root else None
+                if not fpath:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "text/plain; charset=utf-8")
+                    self.end_headers()
+                    self.wfile.write("Nie znaleziono (zbuduj stronę)".encode("utf-8"))
+                    return
+                with open(fpath, "rb") as f:
+                    body = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", TYPES.get(os.path.splitext(fpath)[1].lower(),
+                                                           "application/octet-stream"))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        try:
+            httpd = http.server.ThreadingHTTPServer(("127.0.0.1", int(port)), Handler)
+        except OSError as e:
+            log("Podgląd w budowie %s: %s" % (rid, e))
+            return
+        httpd.daemon_threads = True
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        with self._lock:
+            self._live[rid] = httpd
+
+    def live_close(self, rid):
+        with self._lock:
+            httpd = self._live.pop(rid, None)
+        if httpd:
+            threading.Thread(target=lambda: (httpd.shutdown(), httpd.server_close()), daemon=True).start()
+
+    def repo_block(self, pid, folder):
+        """Niezatwierdzone zmiany w repozytorium projektu: scalanie pracy agenta strony czeka. None, gdy czysto."""
+        import kopie
+        top = self.m._git_top(folder) if folder else ""
+        if not top or not kopie.has_repo(top):
+            return None
+        import agents
+        # pliki standardu (KARTA.md, ZADANIA.md, DECYZJE.md) zmienia panel; scalania nie blokują (Manager.merge)
+        dirty = [(c, p) for c, p in kopie._dirty(top) or [] if os.path.basename(p) not in agents.STANDARD_LINKS]
+        if not dirty:
+            return None
+        return {"count": len(dirty), "files": [p for _, p in dirty[:6]],
+                "text": "Niezatwierdzone pliki w repozytorium strony: %d (%s). Scalanie pracy agenta i nowy podgląd "
+                        "czekają. W Kod i pliki: „Zatwierdź jako zmiany agenta” albo „Odłóż na bok”."
+                        % (len(dirty), ", ".join(p for _, p in dirty[:3]) + (", …" if len(dirty) > 3 else ""))}
+
+    # ---------- przeglądarka MCP dla agenta strony ----------
+    def mcp_cli(self):
+        path = os.path.expanduser((self.m.env.get("PANEL_PRZEGLADARKA_MCP") or MCP_CLI).strip())
+        return path if path and path != "0" and os.path.isfile(path) else ""
+
+    def mcp_chrome(self):
+        given = (self.m.env.get("PANEL_PRZEGLADARKA_CHROME") or "").strip()
+        if given:
+            return given
+        for pattern in MCP_CHROME:
+            found = sorted(glob.glob(os.path.expanduser(pattern)))
+            if found:
+                return found[-1]
+        return ""
+
+    def mcp_config(self, priv, cwd):
+        """--mcp-config dla zadania strony: Playwright MCP, tylko adres podglądu w budowie, zrzuty w .zrzuty/."""
+        site = (priv.get("task") or {}).get("site")
+        cli = self.mcp_cli()
+        if not site or not cli or not cwd:
+            return None
+        port = self.preview_port(priv)
+        priv["preview"]["mcp"] = True
+        shots = os.path.join(cwd, ".zrzuty")
+        args = [cli, "--headless", "--isolated", "--browser", "chromium",
+                "--allowed-origins", "http://127.0.0.1:%d" % port, "--block-service-workers",
+                "--output-dir", os.path.join(shots, "przegladarka"), "--viewport-size", "1440,900"]
+        chrome = self.mcp_chrome()
+        if chrome:
+            args[5:5] = ["--executable-path", chrome]
+        node = (self.m.env.get("PANEL_NODE") or shutil.which("node") or "node").strip()
+        return {"mcpServers": {MCP_NAME: {"command": node, "args": args,
+                                          "env": {"XDG_CACHE_HOME": os.path.join(shots, ".pamiec")}}}}
+
+    def mcp_args(self, priv, cwd):
+        cfg = self.mcp_config(priv, cwd)
+        return ["--mcp-config", json.dumps(cfg, ensure_ascii=False)] if cfg else []
+
+    @staticmethod
+    def mcp_tools(priv):
+        if not (priv.get("preview") or {}).get("mcp"):
+            return []
+        return ["mcp__%s__%s" % (MCP_NAME, t) for t in MCP_TOOLS]
+
+    @staticmethod
+    def mcp_deny(priv):
+        if not (priv.get("preview") or {}).get("mcp"):
+            return []
+        return ["mcp__%s__%s" % (MCP_NAME, t) for t in MCP_DENY]
+
+    @staticmethod
+    def mcp_rules(priv):
+        pv = priv.get("preview") or {}
+        if not pv.get("mcp"):
+            return []
+        return ["- Masz przeglądarkę (narzędzia mcp__%s__…). Pod http://127.0.0.1:%d/ widzisz swoją zbudowaną "
+                "stronę z tego katalogu roboczego (po każdym budowaniu od razu nowa wersja). Otwieraj tylko ten adres "
+                "(internet jest zablokowany). Sprawdzaj stronę w przeglądarce: browser_resize do 390x844 i 1440x900, "
+                "browser_navigate, browser_snapshot, browser_click (menu, przyciski, formularz), browser_take_screenshot. "
+                "Zrzuty z polecenia zrzutu nadal zapisz w .zrzuty/ (właściciel widzi je w panelu)."
+                % (MCP_NAME, pv["port"])]
+
     # ---------- dane dla zakładki Strona ----------
     def info(self, pid):
         """GET /api/strona?project=: konfiguracja, stan budowania, adres podglądu, uwagi z ich stanem, podpowiedzi."""
@@ -396,7 +617,8 @@ class Site:
         runs = self._runs(pid)
         notes = [self._note_view(n, runs) for n in data["notes"]]
         return 200, "", {"site": p["site"], "build": build, "url": self.url(pid) if has else "",
-                         "notes": notes, "docs": self.docs(folder, p["site"]), "widths": WIDTH}
+                         "notes": notes, "docs": self.docs(folder, p["site"]), "widths": WIDTH,
+                         "live": self.live_info(pid), "repo": self.repo_block(pid, folder)}
 
     def _runs(self, pid):
         """{tytuł zadania: najnowsze uruchomienie} dla projektu."""
@@ -589,7 +811,8 @@ class Site:
 
     def tools(self, site):
         rules = build_rules(site["build"])[0] if site.get("customBuild") else list(DEFAULT_BUILD_RULES)
-        return rules + ["Bash(%s:*)" % site["shot"]]
+        # git merge: scalenie bieżącej wersji strony do gałęzi agenta (konflikty rozstrzyga agent, nie panel)
+        return rules + ["Bash(%s:*)" % site["shot"], "Bash(git merge:*)"]
 
     @staticmethod
     def rules(site, cwd):

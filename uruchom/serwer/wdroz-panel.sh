@@ -3,7 +3,8 @@
 # Automat: wdroz-panel-auto.path (nowy commit na rozwoj) i wdroz-panel-auto.timer (co 5 min) uruchamiają
 # „wdroz-panel --auto”: bez nowych commitów albo przy commicie, którego wdrożenie już się nie udało, kończy bez śladu.
 # Ręcznie: przycisk w panelu (sudo systemctl start --no-block wdroz-panel.service), także ponowienie nieudanego.
-# Kolejność: testy jako agent na sprawdzanym commicie → pull produkcji → scalenie → restart → kontrola strony
+# Kolejność: testy jako agent na sprawdzanym commicie → czekanie na koniec pracy agentów (najwyżej 30 min)
+# → pull produkcji → scalenie → restart → kontrola strony
 # → push do GitHuba. Błąd po scaleniu: produkcja wraca do poprzedniego commita (git reset --keep, zmiany kart
 # na dysku zostają) i panel startuje ponownie. Stan dla panelu: $STAN (JSON), dziennik: $LOG.
 # Instaluje uruchom/serwer/zainstaluj-rozwoj.sh; zmiany tylko w repozytorium.
@@ -106,6 +107,38 @@ st=$?
 tail -n 40 "$WYNIK"; rm -f "$WYNIK"
 [ "$st" = 0 ] || blad "testy nie przeszły (dziennik wdrożenia)"
 sprzataj; TMP=""
+
+# agenci w trakcie pracy: czekam, aż skończą (najwyżej WDROZ_CZEKAJ_AGENCI s, domyślnie 30 min); w tym czasie panel
+# nie zaczyna nowych zadań (stan „waiting”). Potem wdrażam i tak: uruchomienie przeżywa restart (KillMode=process,
+# panel-agenci.conf) albo panel po starcie je dokańcza (AGENCI.md, „Restart panelu”).
+pracujacy() {
+  python3 - "${WDROZ_URUCHOMIENIA:-$PROD/uruchomienia}" <<'PY'
+import glob, json, os, sys
+n = 0
+for path in glob.glob(os.path.join(sys.argv[1], "*.json")):
+    try:
+        with open(path, encoding="utf-8") as f:
+            rec = json.load(f)
+    except (OSError, ValueError):
+        continue
+    if isinstance(rec, dict) and rec.get("state") == "running" and rec.get("kind") in ("task", "pm"):
+        n += 1
+print(n)
+PY
+}
+CZEKAJ=${WDROZ_CZEKAJ_AGENCI:-1800}
+T0=$(date +%s)
+while :; do
+  ILE=$(pracujacy)
+  [ "${ILE:-0}" -gt 0 ] 2>/dev/null || break
+  if [ $(( $(date +%s) - T0 )) -ge "$CZEKAJ" ]; then
+    log "Agenci pracują dalej ($ILE) po $((CZEKAJ / 60)) min: wdrażam"
+    break
+  fi
+  stan waiting "Czekam, aż agenci skończą pracę ($ILE)"
+  [ $(( $(date +%s) - T0 )) -lt 25 ] && log "Agenci pracują ($ILE): czekam najwyżej $((CZEKAJ / 60)) min"
+  sleep "${WDROZ_CZEKAJ_KROK:-20}"
+done
 
 stan running "Scalam z produkcją"
 [ "$(as_panel git -C "$PROD" branch --show-current)" = "main" ] || blad "produkcja nie jest na gałęzi main"

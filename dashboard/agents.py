@@ -36,6 +36,7 @@ import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
 import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
 import kopie  # noqa: E402  (kopia projektu a GitHub: klon na start)
+import naprawy  # noqa: E402  (jednorazowe naprawy po starcie panelu)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela)
 import strona  # noqa: E402  (podgląd strony WWW projektu)
 ROOT = os.path.dirname(HERE)
@@ -465,6 +466,153 @@ def task_outcome(task):
     return "unknown"
 
 
+RUNNER = os.path.join(HERE, "przebieg.py")
+RUN_PRIVATE = ("log", "runner", "logPos", "family", "startCommit")    # pola rekordu poza /api/data
+RUNNER_FILES = (".log", ".wej", ".koniec", ".przebieg")      # pliki uruchomienia obok rekordu <id>.json
+KILLED_CODES = (-15, -9, -1, 143, 137, 129, -1001)            # koniec sygnałem (restart, zatrzymanie usługi)
+PARALLEL_MAX = 4            # najwięcej uruchomień naraz w ustawieniu panelu
+PARTS_MAX = 4               # tyle części projektu dostaje katalog roboczy w jednym uruchomieniu
+RECOVER_MAX = 2             # tyle razy z rzędu panel wznawia zadanie przerwane restartem
+
+
+def pid_alive(pid, rid=""):
+    """Czy proces o tym pid żyje (i, gdy podano rid, jest pośrednikiem tego uruchomienia)."""
+    try:
+        pid = int(pid)
+        os.kill(pid, 0)
+    except (TypeError, ValueError, OSError):
+        return False
+    if not rid:
+        return True
+    try:
+        with open("/proc/%d/cmdline" % pid, "rb") as f:
+            args = f.read().split(b"\0")
+    except OSError:
+        return sys.platform == "darwin"     # bez /proc (macOS): sam pid
+    try:
+        with open("/proc/%d/stat" % pid, "rb") as f:
+            if f.read().rsplit(b")", 1)[-1].split()[0] == b"Z":
+                return False                # zombie: proces już się skończył
+    except (OSError, IndexError):
+        pass
+    return any(a.endswith(b"przebieg.py") for a in args) and rid.encode() in args
+
+
+class _Inbox:
+    """stdin agenta za pośrednikiem: dopisywanie do <id>.wej (wiersze JSON)."""
+
+    def __init__(self, path):
+        self.path = path
+        self.closed = False
+
+    def _put(self, msg):
+        if self.closed:
+            raise ValueError("wejście zamknięte")
+        with open(self.path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(msg, ensure_ascii=False) + "\n")
+
+    def write(self, text):
+        self._put({"d": text})
+
+    def flush(self):
+        pass
+
+    def close(self):
+        if not self.closed:
+            try:
+                self._put({"zamknij": True})
+            except OSError:
+                pass
+            self.closed = True
+
+
+class Detached:
+    """Uruchomienie za pośrednikiem (przebieg.py) z interfejsem Popen: pid (grupa procesów), stdin, stdout (wiersze
+    z <id>.log od miejsca `pos`), poll(), wait(). Działa też po restarcie panelu (proc=None: pośrednik nie jest
+    dzieckiem tego procesu)."""
+
+    def __init__(self, runs_dir, rid, pid, proc=None, pos=0):
+        self.base = os.path.join(runs_dir, rid)
+        self.rid, self.pid, self.proc, self.pos = rid, int(pid), proc, int(pos or 0)
+        self.abandoned = False          # panel kończy pracę: przestaje czytać, uruchomienie pracuje dalej
+        self.stdin = _Inbox(self.base + ".wej")
+        self.stdout = self._lines()
+        self.returncode = None
+
+    def _end(self):
+        try:
+            with open(self.base + ".koniec", encoding="utf-8") as f:
+                data = json.load(f)
+            return int(data.get("code"))
+        except (OSError, ValueError, TypeError, AttributeError):
+            return None
+
+    def poll(self):
+        if self.returncode is not None:
+            return self.returncode
+        if self.proc is not None and self.proc.poll() is None:
+            return None
+        code = self._end()
+        if code is None and self.proc is None and pid_alive(self.pid, self.rid):
+            return None
+        if code is None:
+            code = self._end()          # pośrednik zapisał koniec między odczytami
+        self.returncode = -1001 if code is None else code     # pośrednik zniknął bez zapisu końca
+        return self.returncode
+
+    def wait(self, timeout=None):
+        end = None if timeout is None else time.time() + timeout
+        while self.poll() is None:
+            if end is not None and time.time() > end:
+                raise subprocess.TimeoutExpired("przebieg", timeout)
+            time.sleep(0.2)
+        return self.returncode
+
+    def _lines(self):
+        buf = b""
+        f = None
+        try:
+            while not self.abandoned:
+                if f is None:
+                    try:
+                        f = open(self.base + ".log", "rb")
+                        f.seek(self.pos)
+                    except OSError:
+                        f = None
+                chunk = f.read(65536) if f else b""
+                if chunk:
+                    buf += chunk
+                    while b"\n" in buf:
+                        line, buf = buf.split(b"\n", 1)
+                        self.pos += len(line) + 1
+                        yield line.decode("utf-8", "replace") + "\n"
+                    continue
+                if self.poll() is not None:
+                    rest = f.read() if f else b""
+                    buf += rest
+                    for line in buf.split(b"\n"):
+                        if line:
+                            self.pos += len(line)
+                            yield line.decode("utf-8", "replace") + "\n"
+                    return
+                time.sleep(0.2)
+        finally:
+            if f:
+                f.close()
+
+    def abandon(self):
+        self.abandoned = True
+
+    def kill(self):
+        try:
+            os.killpg(self.pid, signal.SIGKILL)
+        except OSError:
+            pass
+
+    def close(self):
+        self.stdout.close()
+
+
 class Manager:
     """Kolejka i przebieg uruchomień jednego węzła."""
 
@@ -482,7 +630,10 @@ class Manager:
         # Zadania bez „gdzie:” bierze Automat węzła domyślnego (po D13 serwer). Mac domyślnie nie.
         default = (get("PANEL_DEFAULT_NODE") or "").strip()
         self.default_node = default == "1" if default in ("0", "1") else self.machine != "mac"
-        self.max_parallel = _int(get("PANEL_AGENTS_MAX"), 2)
+        self.max_parallel = _int(get("PANEL_AGENTS_MAX"), 2)     # bez ustawienia w panelu (stan.json parallel)
+        self.deploy_file = (get("PANEL_WDROZENIE_DIR") or "").strip() or os.path.expanduser("~/dane/wdrozenie")
+        self.deploy_file = os.path.join(self.deploy_file, "stan.json")
+        self._hold = (0.0, False)
         self.timeout = _int(get("PANEL_AGENT_TIMEOUT"), 3600)
         # bezpiecznik zużycia: limit 5 godzin subskrypcji (rate_limit_event w strumieniu claude, ułamek 0–1)
         self.run_budget = max(0.02, min(1.0, _int(get("PANEL_RUN_BUDGET_PROC"), 20) / 100.0))   # jedno uruchomienie
@@ -531,6 +682,7 @@ class Manager:
                                                             stderr=subprocess.DEVNULL, **kw)
         self._stop_event = threading.Event()
         self._thread = None
+        self._closing = False                 # panel kończy pracę: uruchomienia za pośrednikiem zostają
         self._git_lock = threading.Lock()     # operacje panelu na repozytoriach projektów (worktree, commit, merge)
         self._ver_lock = threading.Lock()     # zapis i porządki wersji wyniku (strona odbioru)
         self.chat_timeout = 180               # s: odpowiedź w rozmowie (Rozmowa w projekcie)
@@ -709,7 +861,10 @@ class Manager:
                 continue
             if not isinstance(rec, dict) or rec.get("id") != name[:-5]:
                 continue
-            if rec.get("state") in LIVE:
+            if rec.get("state") == "running" and rec.get("kind") == "task" or \
+                    rec.get("state") == "running" and (rec.get("runner") or {}).get("pid"):
+                self._interrupted.append(rec)          # start(): podjęcie śledzenia albo dokończenie
+            elif rec.get("state") in LIVE:
                 rec.update(state="stopped", error="Serwer został zatrzymany.", endedAt=now_iso(), activity="")
                 self._save(rec)
                 self._interrupted.append(rec)
@@ -734,6 +889,11 @@ class Manager:
                 self._state["decisions"] = {key: v for key, v in decisions.items()
                                             if isinstance(v, dict) and v.get("day") == now_iso()[:10]}
             self._state["automat"] = saved.get("automat") is True
+            if isinstance(saved.get("naprawy"), list):
+                self._state["naprawy"] = [x for x in saved["naprawy"] if isinstance(x, str)][-50:]
+            if isinstance(saved.get("parallel"), int) and 1 <= saved["parallel"] <= PARALLEL_MAX:
+                self._state["parallel"] = saved["parallel"]
+                self.max_parallel = saved["parallel"]
             self._state["needsLogin"] = saved.get("needsLogin") is True
             self._state["limitUntil"] = saved.get("limitUntil") if isinstance(saved.get("limitUntil"), str) else None
             since = saved.get("since")
@@ -755,7 +915,7 @@ class Manager:
             pass
 
     def _remove_files(self, rid):
-        for ext in (".json", ".log"):
+        for ext in (".json",) + RUNNER_FILES:
             try:
                 os.remove(os.path.join(self.runs_dir, rid + ext))
             except OSError:
@@ -773,6 +933,12 @@ class Manager:
     def start(self):
         """Uruchamia wątek Automatu i porządkuje zadania po uruchomieniach przerwanych restartem."""
         for rec in self._interrupted:
+            if rec.get("state") == "running":
+                try:
+                    self._resume_after_restart(rec)
+                except Exception as e:
+                    log("Uruchomienie %s po restarcie: %s" % (rec["id"], e))
+                continue
             if rec.get("kind") == "task":
                 self._settle_task(rec, rec["state"])
                 try:
@@ -782,6 +948,8 @@ class Manager:
                 except Exception as e:
                     log("Gałąź uruchomienia %s: %s" % (rec["id"], e))
         self._interrupted = []
+        if self.machine == "cloud" and (self.env.get("PANEL_NAPRAWY") or "1").strip() != "0":
+            naprawy.start(self)                 # jednorazowe naprawy (dashboard/naprawy.py) w tle
         if self._thread is None:
             self._thread = threading.Thread(target=self._loop, daemon=True)
             self._thread.start()
@@ -794,22 +962,32 @@ class Manager:
             except Exception as e:  # wątek ma przeżyć błąd jednego obiegu
                 log("Automat: %s" % e)
 
-    def shutdown(self, wait=8):
-        """Zatrzymuje wątek i wszystkie procesy (koniec pracy serwera, testy). Czeka, aż rekordy zostaną zamknięte."""
+    def shutdown(self, wait=8, keep=False):
+        """Zatrzymuje wątek i wszystkie procesy (koniec pracy serwera, testy). Czeka, aż rekordy zostaną zamknięte.
+        keep (koniec pracy serwera): uruchomienia za pośrednikiem pracują dalej; panel po starcie je podejmie."""
+        if getattr(self, "_shut", False):
+            return
+        if keep:
+            self._closing = True
+            self._shut = True
         if self._login:
             self._login_stop(self._login)
         self._stop_event.set()
         self._as.stop()
         self.voice.stop()
         with self._lock:
-            ids = [rid for rid, rec in self._runs.items() if rec["state"] in LIVE]
-            procs = [p["proc"] for p in self._priv.values() if p.get("proc") is not None]
+            kept = {rid for rid, p in self._priv.items() if keep and isinstance(p.get("proc"), Detached)}
+            ids = [rid for rid, rec in self._runs.items() if rec["state"] in LIVE and rid not in kept]
+            procs = [p["proc"] for rid, p in self._priv.items() if p.get("proc") is not None and rid not in kept]
+            for rid in kept:
+                self._priv[rid]["proc"].abandon()
+                self._save(self._runs[rid])     # miejsce w przebiegu (logPos) dla podjęcia po starcie
         for rid in ids:
             self.stop(rid)
         end = time.time() + wait
         while time.time() < end:
             with self._lock:
-                if not any(rec["state"] in LIVE for rec in self._runs.values()):
+                if not any(rec["state"] in LIVE for rid, rec in self._runs.items() if rid not in kept):
                     break
             time.sleep(0.05)
         for proc in procs:                      # proces, który nie zareagował na SIGTERM
@@ -1075,7 +1253,7 @@ class Manager:
         upcoming = self.next_tasks(data, index) if data and index else []
         with self._lock:
             # przebieg (log) idzie osobno: GET /api/agent/przebieg; w /api/data tylko liczba wierszy
-            runs = [dict({k: v for k, v in r.items() if k != "log"}, steps=list(r.get("steps") or []),
+            runs = [dict({k: v for k, v in r.items() if k not in RUN_PRIVATE}, steps=list(r.get("steps") or []),
                          denials=list(r.get("denials") or []), logN=int(r.get("logN") or 0),
                          takesMsg=bool(r["state"] == "running" and (self._priv.get(r["id"]) or {}).get("stream")
                                    and not (self._priv.get(r["id"]) or {}).get("ended")))
@@ -1124,6 +1302,7 @@ class Manager:
                     "tools": {k: dict(v) for k, v in self._tools.items()},
                     "needsLogin": self._state["needsLogin"], "limitUntil": limit,
                     "automat": self._state["automat"], "maxParallel": self.max_parallel, "canRunTasks": True,
+                    "parallelMax": PARALLEL_MAX, "deployHold": self.deploy_hold(),
                     "usage": self.usage_state(),
                     "loginWeb": self.login_web,
                     "login": ({"active": True, "url": self._login["url"]}
@@ -1201,7 +1380,8 @@ class Manager:
             out += ["  " + projekt_pin_line(p) for p in pins]
         return out
 
-    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=(), drive=""):
+    def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=(), drive="",
+                    parts=()):
         """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia.
         site_rules: zasady zadania strony WWW (strona.Site.rules)."""
         rules = "AGENTS.md" if tool == "codex" else "CLAUDE.md"
@@ -1255,7 +1435,7 @@ class Manager:
             "bieżącego zadania. Nie uruchamiaj innych agentów ani nie używaj ogólnego Bash.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + drive_rules(drive) + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
+        ] + git_rules + self.part_rules(parts) + drive_rules(drive) + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
             + self.render_rules() + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
@@ -1387,6 +1567,7 @@ class Manager:
             rec = self._new("task", tool, title, auto, task["project"], project.get("name", task["project"]),
                             task["id"], task["file"])
             rec["steps"] = first_steps
+            rec["family"] = project.get("partOf") or task["project"]
             rec["choiceReason"] = reason
             rec["category"] = self._task_category(task, project, folder)
             with self._lock:
@@ -1404,7 +1585,10 @@ class Manager:
                              "line": task["line"], "title": title, "stage": stage,
                              "detail": with_answers(task, data["tasks"]),
                              "site": self.site.task_site(project, title)},
-                    "resume": self._resume_branches(task)}
+                    "resume": self._resume_branches(task),
+                    "parts": [{"project": x["id"], "label": x.get("partLabel") or x.get("name") or x["id"],
+                               "folder": index[x["id"]]} for x in data["projects"]
+                              if x.get("partOf") == task["project"] and x["id"] in index][:PARTS_MAX]}
             self._task_command(priv)
             self._enqueue(rec, priv)
             return 200, "", {"id": rec["id"]}
@@ -1435,21 +1619,28 @@ class Manager:
         mnt = drive_dir(folder)
         if mnt and mnt not in extra:
             extra = extra + ["--add-dir", mnt]       # odczyt plików z Drive (Claude czyta tylko w podanych folderach)
+        parts = [x for x in priv.get("parts") or [] if x.get("worktree")]
+        for x in parts:
+            extra = extra + ["--add-dir", x["worktree"]]
+        mcp = self.site.mcp_args(priv, cwd) if site and t["tool"] == "claude" else []
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
-                                  git=info, site_rules=self.site.rules(site, cwd) if site else (), drive=mnt)
+                                  git=info, site_rules=(self.site.rules(site, cwd) + self.site.mcp_rules(priv))
+                                  if site else (), drive=mnt, parts=parts)
         if t["tool"] == "codex":
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-c", "sandbox_workspace_write.network_access=false",
                                           "-c", "features.multi_agent=false", "-c", "features.multi_agent_v2=false",
-                                          "-C", cwd] + (extra if git else []) + ["-"]
+                                          "-C", cwd] + (extra if git or parts else []) + ["-"]
         else:
             render = self.render_command()
             tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
-                             (self.site.tools(site) if site else []))
+                             (self.site.tools(site) + self.site.mcp_tools(priv) if site else []))
             # wejście stream-json: stdin zostaje otwarty do zdarzenia result, więc właściciel może pisać do agenta
             # w trakcie pracy (live_order); po result panel zamyka stdin i CLI kończy pracę
+            deny = ",".join([RUN_DENY] + [r for x in parts for r in x.get("deny") or []] + self.site.mcp_deny(priv))
             args = self._claude_args(t["path"], self.model, ["--input-format", "stream-json"] + extra +
-                                     ["--allowedTools", tools, "--disallowedTools", RUN_DENY, "--strict-mcp-config"])
+                                     ["--allowedTools", tools, "--disallowedTools", deny, "--strict-mcp-config"]
+                                     + mcp)
             priv["stream"] = True
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
@@ -2851,11 +3042,12 @@ class Manager:
                     return self._step(rec, "git: nie utworzono katalogu roboczego (%s), praca w folderze projektu"
                                       % _short(err, 80))
         # baseCommit: punkt rozejścia z bieżącą gałęzią projektu (przy wznowieniu zmiany całej gałęzi agenta)
+        tip = git_run(top, ["rev-parse", "refs/heads/" + branch], timeout=15)[1].strip() or start
         git = {"top": top, "rel": rel, "worktree": wt, "branch": branch, "base": base, "baseCommit": start,
-               "resumed": bool(resumed)}
+               "resumed": bool(resumed), "startCommit": tip}
         priv["git"] = git
         with self._lock:
-            rec.update(branch=branch, base=base, baseCommit=start, changes=[], commits=0)
+            rec.update(branch=branch, base=base, baseCommit=start, startCommit=tip, changes=[], commits=0)
             if resumed:
                 rec["resumed"] = True
             self._save(rec)
@@ -2864,6 +3056,118 @@ class Manager:
         else:
             self._step(rec, "Gałąź %s od %s" % (branch, base if base != head else head[:8]))
         self._task_command(priv, git)
+
+    # ---------- części projektu: własny katalog roboczy i gałąź w repozytorium części ----------
+    @staticmethod
+    def part_rules(parts):
+        if not parts:
+            return []
+        out = ["- Projekt ma części z własnym repozytorium. Zmiany w części rób wyłącznie w jej katalogu roboczym "
+               "(panel założył go na osobnej gałęzi); folder części jest tylko do odczytu. Niezatwierdzone zmiany "
+               "w katalogu roboczym części panel zatwierdzi na tej gałęzi po zakończeniu:"]
+        out += ["  - %s: katalog roboczy %s (gałąź `%s`), folder części %s"
+                % (x["label"], x["cwd"], x["branch"], x["folder"]) for x in parts]
+        return out
+
+    def _parts_open(self, rec, priv):
+        """Zadanie projektu z częściami: dla każdej części z repozytorium git (innym niż repozytorium zadania)
+        gałąź agent/RRRR-MM-DD-nazwa i katalog roboczy <repozytorium części>/.agent/<id>. Agent dostaje do nich
+        --add-dir, a folder części (poza .agent/ i .git/) ma odmowę zapisu (Edit(//…))."""
+        parts = priv.get("parts") or []
+        if not parts:
+            return
+        own = (priv.get("git") or {}).get("top") or self._git_top(priv["folder"])
+        opened = []
+        for x in parts:
+            if x.get("worktree"):
+                opened.append(x)
+                continue
+            top = self._git_top(x["folder"])
+            if not top or top == own:
+                continue
+            rel = os.path.relpath(os.path.realpath(x["folder"]), top)
+            wt = os.path.join(top, AGENT_DIR, rec["id"])
+            with self._git_lock:
+                code, head, _ = git_run(top, ["rev-parse", "--verify", "-q", "HEAD^{commit}"], timeout=15)
+                if code != 0:
+                    continue
+                head = head.strip()
+                code, cur, _ = git_run(top, ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+                base = cur.strip() if code == 0 and cur.strip() else head
+                try:
+                    os.makedirs(os.path.join(top, AGENT_DIR), exist_ok=True)
+                except OSError:
+                    continue
+                self._exclude_agent_dir(top, (".zrzuty/", "node_modules/"))
+                branch = self._branch_name(top, rec["title"])
+                code, _, err = git_run(top, ["worktree", "add", "-q", "-b", branch, wt, head], timeout=300)
+            if code != 0:
+                self._step(rec, "git: nie utworzono katalogu roboczego części %s (%s)" % (x["label"], _short(err, 60)))
+                continue
+            cwd = wt if rel == "." else os.path.join(wt, rel)
+            deny = []
+            try:
+                names = sorted(os.listdir(top))
+            except OSError:
+                names = []
+            for name in names:
+                if name in (AGENT_DIR, ".git"):
+                    continue
+                path = "/" + os.path.join(top, name).lstrip("/")
+                deny.append("Edit(/%s)" % path)
+                if os.path.isdir(os.path.join(top, name)) and not os.path.islink(os.path.join(top, name)):
+                    deny.append("Edit(/%s/**)" % path)
+            x.update(top=top, rel=rel, worktree=wt, cwd=cwd, branch=branch, base=base, baseCommit=head, deny=deny)
+            opened.append(x)
+            self._step(rec, "Część %s: gałąź %s w osobnym katalogu roboczym" % (x["label"], branch))
+        if opened:
+            with self._lock:
+                rec["parts"] = [{"project": x["project"], "label": x["label"], "branch": x["branch"],
+                                 "base": x["base"], "baseCommit": x["baseCommit"], "changes": [], "commits": 0}
+                                for x in opened]
+                self._save(rec)
+            self._task_command(priv, priv.get("git"))
+
+    def _parts_close(self, rec, parts):
+        """Po zakończeniu: commit zmian w katalogach roboczych części, changes i commits, usunięcie katalogu;
+        gałąź bez commitów znika (nic na niej nie ma)."""
+        parts = [x for x in parts or [] if x.get("worktree")]
+        if not parts and rec.get("parts"):
+            parts = self._parts_info(rec)
+        out = []
+        for x in parts:
+            git = {"top": x["top"], "rel": x.get("rel") or ".", "worktree": x["worktree"], "branch": x["branch"],
+                   "baseCommit": x["baseCommit"]}
+            probe = {"id": rec["id"], "title": rec["title"], "tool": rec.get("tool"), "file": "",
+                     "branch": x["branch"]}
+            self._worktree_close(probe, git, record=False)
+            item = {"project": x["project"], "label": x["label"], "branch": probe["branch"], "base": x["base"],
+                    "baseCommit": x["baseCommit"], "changes": probe.get("changes") or [],
+                    "commits": probe.get("commits") or 0}
+            if not item["commits"] and probe["branch"] == x["branch"]:
+                with self._git_lock:
+                    git_run(x["top"], ["branch", "-D", x["branch"]], timeout=30)
+                item["branch"] = ""
+            elif item["commits"]:
+                self._step(rec, "Część %s: %d commit(ów) na gałęzi %s do scalenia"
+                           % (x["label"], item["commits"], item["branch"]))
+            out.append(item)
+        if out:
+            with self._lock:
+                rec["parts"] = [i for i in out if i["branch"]]
+                self._save(rec)
+
+    def _parts_info(self, rec):
+        """Katalogi robocze części z rekordu (uruchomienie przerwane restartem panelu)."""
+        _, index = self.load_projects(resolve=False)
+        out = []
+        for p in rec.get("parts") or []:
+            folder = index.get(p.get("project"))
+            top = self._git_top(folder) if folder else ""
+            if top and p.get("branch") and p.get("baseCommit"):
+                out.append(dict(p, top=top, rel=os.path.relpath(os.path.realpath(folder), top),
+                                worktree=os.path.join(top, AGENT_DIR, rec["id"])))
+        return out
 
     def _worktree_info(self, rec):
         """Dane katalogu roboczego z rekordu (uruchomienie przerwane restartem serwera) albo None."""
@@ -2878,9 +3182,10 @@ class Manager:
                 "worktree": os.path.join(top, AGENT_DIR, rec["id"]), "base": rec.get("base") or "",
                 "baseCommit": rec["baseCommit"]}
 
-    def _worktree_close(self, rec, git):
+    def _worktree_close(self, rec, git, record=True):
         """Po zakończeniu: commit niezatwierdzonych zmian agenta na gałęzi (bez plików standardu), changes i commits
-        w rekordzie, usunięcie katalogu roboczego. Gałąź zostaje."""
+        w rekordzie, usunięcie katalogu roboczego. Gałąź zostaje. record=False: tylko pola w `rec` (część projektu),
+        bez zapisu rekordu."""
         wt, top = git["worktree"], git["top"]
         branch, note = rec.get("branch") or git["branch"], ""
         with self._git_lock:
@@ -2906,6 +3211,9 @@ class Manager:
                 if git_run(top, ["worktree", "remove", "--force", wt], timeout=300)[0] != 0:
                     shutil.rmtree(wt, ignore_errors=True)
             git_run(top, ["worktree", "prune"], timeout=30)
+        if not record:
+            rec.update(branch=branch, changes=changes, commits=commits, note=note)
+            return
         if note:
             self._step(rec, note)
         with self._lock:
@@ -3065,7 +3373,9 @@ class Manager:
             dirty = [line[3:].strip() for line in status.splitlines() if len(line) > 3]
             dirty = [p for p in dirty if os.path.basename(p.split(" -> ")[-1].strip('"')) not in STANDARD_LINKS]
             if dirty:
-                return 409, _short("Niezatwierdzone zmiany w repozytorium: %s." % ", ".join(dirty[:5]), 300), {}
+                return 409, _short("Scalenie blokują niezatwierdzone zmiany w repozytorium (%d: %s). W Kod i pliki: "
+                                   "„Zatwierdź jako zmiany agenta” albo „Odłóż na bok”."
+                                   % (len(dirty), ", ".join(dirty[:4])), 300), {"blocked": "dirty"}
             code, out, _ = git_run(top, ["rev-list", "--count", "%s..%s" % (base, rec["branch"])], timeout=15)
             if code == 0 and out.strip() == "0":
                 return 409, "Gałąź %s nie ma zmian do scalenia." % rec["branch"], {}
@@ -3102,6 +3412,95 @@ class Manager:
         except Exception as e:
             log("Podgląd strony po scaleniu: %s" % e)
         return 200, "", {"commit": sha}
+
+    # ---------- zmiany niezatwierdzone w repozytorium projektu (Kod i pliki) ----------
+    SOURCES_DAYS = 3            # tyle dni wstecz panel szuka uruchomień, które zmieniały pliki repozytorium
+
+    def dirty_sources(self, folder, paths):
+        """Uruchomienia agentów, które zmieniały te pliki w folderze (a nie w swoim katalogu roboczym):
+        [{"runId", "title", "project", "at", "files"}], najnowsze pierwsze. Z przebiegów (Edit, Write) z ostatnich dni."""
+        top = os.path.realpath(folder)
+        want = {os.path.normpath(os.path.join(top, p)) for p in paths}
+        if not want:
+            return []
+        since = (datetime.datetime.now() - datetime.timedelta(days=self.SOURCES_DAYS)).isoformat()[:19]
+        with self._lock:
+            runs = [dict(r) for r in self._runs.values() if r.get("kind") == "task"
+                    and (r.get("startedAt") or "") >= since]
+        out, needle = [], top.encode("utf-8")
+        for r in reversed(runs):
+            hit = set()
+            try:
+                with open(os.path.join(self.runs_dir, r["id"] + ".log"), "rb") as f:
+                    for raw in f:
+                        if needle not in raw or b"tool_use" not in raw:
+                            continue
+                        try:
+                            ev = json.loads(raw.decode("utf-8", "replace"))
+                        except ValueError:
+                            continue
+                        for b in (ev.get("message") or {}).get("content") or []:
+                            if isinstance(b, dict) and b.get("type") == "tool_use" and \
+                                    b.get("name") in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
+                                fp = str((b.get("input") or {}).get("file_path") or "")
+                                if fp and os.path.normpath(fp) in want:
+                                    hit.add(os.path.relpath(os.path.normpath(fp), top))
+            except OSError:
+                continue
+            if hit:
+                out.append({"runId": r["id"], "title": r.get("title") or "", "project": r.get("project") or "",
+                            "projectName": r.get("projectName") or "", "at": r.get("startedAt") or "",
+                            "files": sorted(hit)[:20]})
+        return out[:5]
+
+    def repo_message(self, folder, dirty, kind="commit"):
+        """Opis commita albo schowka: z jakiego zadania pochodzą zmiany (dirty_sources) albo ogólny."""
+        src = self.dirty_sources(folder, [p for _, p in dirty])
+        day = now_iso()[:16].replace("T", " ")
+        if src:
+            first = src[0]
+            what = "Zmiany agenta z zadania „%s” (%s, uruchomienie %s)" % (
+                first["title"], first["projectName"] or first["project"], first["runId"])
+            if len(src) > 1:
+                what += " i %d innych uruchomień" % (len(src) - 1)
+        else:
+            what = "Zmiany niezatwierdzone w repozytorium"
+        if kind == "commit":
+            return "%s\n\nAgent pisał w głównym katalogu repozytorium zamiast na swojej gałęzi; zatwierdzono w panelu " \
+                   "%s (Kod i pliki)." % (what, day), src
+        return "%s, odłożone w panelu %s" % (what, day), src
+
+    def repo_action(self, pid, action, ref="", note=""):
+        """POST /api/repo/zatwierdz | odloz | przywroc: zmiany niezatwierdzone w repozytorium projektu (konto panelu)."""
+        _, index = self.load_projects(resolve=False)
+        folder = index.get(str(pid))
+        if not folder:
+            return 404, "Nie ma takiego projektu.", {}
+        if not kopie.has_repo(folder):
+            return 409, "Folder projektu nie jest repozytorium git.", {}
+        if self.has_live(pid) and not self.worktrees:
+            return 409, "Agent pracuje w folderze projektu. Poczekaj na koniec jego pracy.", {}
+        with self._git_lock, kopie.folder_lock(folder):
+            dirty = kopie._dirty(folder) or []
+            if action == "commit":
+                msg, src = self.repo_message(folder, dirty, "commit")
+                if note:
+                    msg = "%s\n\n%s" % (msg, _short(note, 500))
+                ok, out = kopie.commit_dirty(folder, msg)
+                text = "Zatwierdzono %d %s jako commit %s." % (len(dirty), "plik" if len(dirty) == 1 else "pliki", out) \
+                    if ok else out
+            elif action == "stash":
+                msg, src = self.repo_message(folder, dirty, "stash")
+                ok, out = kopie.stash_save(folder, msg)
+                text = "Zmiany odłożone na bok (%d). Przywrócisz je w Kod i pliki." % len(dirty) if ok else out
+            elif action == "restore":
+                ok, out = kopie.stash_restore(folder, ref)
+                text = "Przywrócono odłożone zmiany." if ok else out
+            else:
+                return 400, "Nieznane działanie.", {}
+        if not ok:
+            return 409, text, {}
+        return 200, "", {"message": text}
 
     # ---------- materiał z wyniku dla następników (po:) ----------
     def result_paths(self, text, folder, git=None):
@@ -4394,6 +4793,40 @@ class Manager:
                 self._save_state()
         return 200, "", {"loggedIn": {t: bool((tools.get(t) or {}).get("loggedIn")) for t in ("claude", "codex")}}
 
+    def set_parallel(self, value):
+        """POST /api/agent/rownolegle {"value": 1–4}: ile uruchomień naraz (różne projekty; projekt: jedno)."""
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= PARALLEL_MAX:
+            return 400, "Podaj liczbę od 1 do %d." % PARALLEL_MAX, {}
+        with self._lock:
+            self._state["parallel"] = value
+            self.max_parallel = value
+            self._save_state()
+        self._pump()
+        return 200, "", {"maxParallel": value}
+
+    def deploy_hold(self):
+        """Wdrożenie panelu czeka, aż agenci skończą (wdroz-panel, stan „waiting”): nowe uruchomienia czekają
+        w kolejce. Odczyt najwyżej co 5 s; stan starszy niż 40 min się nie liczy."""
+        at, value = self._hold
+        if time.time() - at < 5:
+            return value
+        value = False
+        try:
+            with open(self.deploy_file, encoding="utf-8") as f:
+                st = json.load(f)
+            if isinstance(st, dict) and st.get("state") == "waiting":
+                when = datetime.datetime.fromisoformat(str(st.get("at") or "")[:19])
+                value = (datetime.datetime.now() - when).total_seconds() < 2400
+        except (OSError, ValueError, TypeError):
+            value = False
+        self._hold = (time.time(), value)
+        return value
+
+    @staticmethod
+    def _family(rec):
+        """Klucz projektu dla limitu „jedno uruchomienie na projekt” (części liczą się z projektem głównym)."""
+        return rec.get("family") or rec.get("project") or ""
+
     def set_automat(self, enabled):
         if not isinstance(enabled, bool):
             return 400, "Podaj enabled: true albo false.", {}
@@ -4446,12 +4879,26 @@ class Manager:
             return "git pull: nie udało się", False
 
     def _pump(self):
+        """Start uruchomień z kolejki: najwyżej max_parallel naraz, zadania najwyżej jedno na projekt; w czasie
+        oczekiwania wdrożenia na koniec pracy agentów nowe zadania czekają (raport PM i test połączenia nie)."""
+        hold = self.deploy_hold() if self._queue else False
         with self._lock:
-            while self._queue and sum(1 for r in self._runs.values() if r["state"] == "running") < self.max_parallel:
-                rec = self._runs[self._queue.pop(0)]
+            running = [r for r in self._runs.values() if r["state"] == "running"]
+            busy = {self._family(r) for r in running if r.get("kind") == "task"}
+            for rid in list(self._queue):
+                if len(running) >= self.max_parallel:
+                    break
+                rec = self._runs[rid]
+                fam = self._family(rec) if rec.get("kind") == "task" else ""
+                if fam and fam in busy or hold and rec.get("kind") == "task":
+                    continue
+                self._queue.remove(rid)
                 rec["state"], rec["startedAt"] = "running", now_iso()
                 self._priv[rec["id"]]["t0"] = time.time()
                 self._save(rec)
+                running.append(rec)
+                if fam:
+                    busy.add(fam)
                 threading.Thread(target=self._execute, args=(rec,), daemon=True).start()
 
     def _step(self, rec, text, log=True):
@@ -4519,33 +4966,84 @@ class Manager:
         if proc is not None:
             self._kill(proc)
 
+    def _detachable(self, rec):
+        """Zadanie i raport PM idą przez pośrednika (przebieg.py): przeżywają restart panelu. PANEL_PRZEBIEG=0
+        wyłącza (proces jak dotąd, potok do panelu). Windows: bez pośrednika."""
+        return not WINDOWS and rec.get("kind") in ("task", "pm") and \
+            (self.env.get("PANEL_PRZEBIEG") or "1").strip() != "0"
+
+    PRIV_KEEP = ("folder", "cwd", "client", "label", "stream", "limit", "task", "git", "resume", "preview", "parts")
+
+    def _site_live_open(self, rec, priv):
+        """Zadanie strony: zrzuty z .zrzuty/ (podgląd na żywo) i serwer wersji w budowie dla przeglądarki agenta."""
+        with self._lock:
+            self._shot_dirs[rec["id"]] = os.path.join(priv["cwd"], ".zrzuty")
+        try:
+            self.site.live_open(rec["id"], priv)
+        except Exception as e:
+            log("Podgląd w budowie %s: %s" % (rec["id"], e))
+
+    def _priv_save(self, rec, priv):
+        """Dane robocze uruchomienia za pośrednikiem (<id>.przebieg): po restarcie panel podejmuje śledzenie."""
+        data = {k: priv[k] for k in self.PRIV_KEEP if k in priv}
+        data["t0"] = priv.get("t0") or time.time()
+        try:
+            self._write_json(os.path.join(self.runs_dir, rec["id"] + ".przebieg"), data)
+        except (OSError, TypeError, ValueError) as e:
+            log("Dane uruchomienia %s: %s" % (rec["id"], e))
+
+    def _spawn_detached(self, rec, priv, cwd):
+        base = os.path.join(self.runs_dir, rec["id"])
+        for ext in (".koniec", ".wej"):
+            try:
+                os.remove(base + ext)
+            except OSError:
+                pass
+        open(base + ".log", "w").close()
+        open(base + ".wej", "w").close()
+        self._priv_save(rec, priv)
+        args = [sys.executable or "python3", RUNNER, self.runs_dir, rec["id"], "--"] + self.as_agent(priv["args"])
+        p = subprocess.Popen(args, cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, env=child_env(self.env), start_new_session=True)
+        with self._lock:
+            rec["runner"] = {"pid": p.pid}
+            rec["logPos"] = 0
+            self._save(rec)
+        return Detached(self.runs_dir, rec["id"], p.pid, proc=p)
+
     def _execute(self, rec):
         priv = self._priv[rec["id"]]
         st = {"result": None, "tail": collections.deque(maxlen=8), "limit": False, "rate": None, "status": None,
               "last": "", "failed": ""}
-        code, timer, out, proc = None, None, None, None
+        out, proc = None, None
         try:
             if priv.get("stop"):
                 return self._finish(rec, "stopped", "")
             os.makedirs(self.runs_dir, exist_ok=True)
-            out = open(os.path.join(self.runs_dir, rec["id"] + ".log"), "w", encoding="utf-8")
+            detached = self._detachable(rec)
+            if not detached:
+                out = open(os.path.join(self.runs_dir, rec["id"] + ".log"), "w", encoding="utf-8")
             if WINDOWS:     # własna grupa (zatrzymanie całego drzewa) i brak okna konsoli
                 kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | NO_WINDOW["creationflags"]}
             else:
                 kw = {"start_new_session": True}
             if priv.get("task") and self.worktrees:
                 self._worktree_open(rec, priv)
+            if priv.get("task"):
+                self._parts_open(rec, priv)
             cwd = priv["cwd"]
             if self.agent_user and rec["kind"] in ("check", "plan"):
                 cwd = tempfile.gettempdir()     # agent nie musi mieć dostępu do katalogu uruchomień
             if (priv.get("task") or {}).get("site"):
-                with self._lock:                # zrzuty strony tego uruchomienia (podgląd na żywo)
-                    self._shot_dirs[rec["id"]] = os.path.join(priv["cwd"], ".zrzuty")
+                self._site_live_open(rec, priv)
             try:
-                proc = subprocess.Popen(self.as_agent(priv["args"]), cwd=cwd, stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT, env=child_env(self.env), encoding="utf-8",
-                                        errors="replace", bufsize=1, **kw)
+                if detached:
+                    proc = self._spawn_detached(rec, priv, cwd)
+                else:
+                    proc = subprocess.Popen(self.as_agent(priv["args"]), cwd=cwd, stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.STDOUT, env=child_env(self.env), encoding="utf-8",
+                                            errors="replace", bufsize=1, **kw)
             except OSError as e:
                 st["tail"].append("Nie udało się uruchomić polecenia %s: %s" % (rec["tool"], e.strerror or e))
                 return self._conclude(rec, st, -1)
@@ -4554,9 +5052,6 @@ class Manager:
                 stop_now = priv.get("stop")
             if stop_now:
                 self._kill(proc)
-            timer = threading.Timer(priv.get("limit") or self.timeout, self._on_timeout, [rec])
-            timer.daemon = True
-            timer.start()
             if priv.get("stream"):
                 # zadanie Claude: polecenie jako pierwsza wiadomość stream-json, stdin otwarty do zdarzenia result
                 # (live_message); wiadomości wysłane przed startem procesu idą zaraz po poleceniu
@@ -4575,10 +5070,26 @@ class Manager:
                     proc.stdin.close()
                 except (OSError, ValueError):
                     pass
+        except Exception as e:
+            st["tail"].append(str(e))
+            if proc is None:
+                if out:
+                    out.close()
+                return self._conclude(rec, st, -1)
+        self._follow(rec, priv, proc, st, out)
+
+    def _follow(self, rec, priv, proc, st, out=None, limit=None):
+        """Czytanie zdarzeń agenta do końca procesu i klasyfikacja końca (także po ponownym podpięciu)."""
+        code, timer = None, None
+        try:
+            timer = threading.Timer(limit or priv.get("limit") or self.timeout, self._on_timeout, [rec])
+            timer.daemon = True
+            timer.start()
             parse = self._on_codex if rec["tool"] == "codex" else self._on_claude
             for line in proc.stdout:
-                out.write(line)
-                out.flush()
+                if out:
+                    out.write(line)
+                    out.flush()
                 line = line.strip()
                 if not line:
                     continue
@@ -4588,18 +5099,28 @@ class Manager:
                     ev = None
                 if not isinstance(ev, dict):
                     st["tail"].append(_short(line, 200))
-                    continue
-                try:
+                else:
+                    try:
+                        with self._lock:
+                            plan = list(rec.get("plan") or [])
+                            agent_progress.update_plan(plan, ev)
+                            agent_progress.task_creates(priv.setdefault("planCreates", {}), plan, ev)
+                            if plan or "plan" in rec:
+                                rec["plan"] = plan
+                        parse(rec, ev, st, priv["cwd"])
+                    except Exception:  # nieznany kształt zdarzenia nie może przerwać uruchomienia
+                        pass
+                if isinstance(proc, Detached):
                     with self._lock:
-                        plan = list(rec.get("plan") or [])
-                        agent_progress.update_plan(plan, ev)
-                        agent_progress.task_creates(priv.setdefault("planCreates", {}), plan, ev)
-                        if plan or "plan" in rec:
-                            rec["plan"] = plan
-                    parse(rec, ev, st, priv["cwd"])
-                except Exception:  # nieznany kształt zdarzenia nie może przerwać uruchomienia
-                    pass
+                        rec["logPos"] = proc.pos
+            if self._closing and isinstance(proc, Detached):
+                return          # panel kończy pracę: uruchomienie podejmie panel po starcie
             code = proc.wait()
+            if self._closing and isinstance(proc, Detached):
+                return          # panel kończy pracę: uruchomienie dokończy (albo podejmie) panel po starcie
+            if isinstance(proc, Detached) and code in KILLED_CODES and st["result"] is None \
+                    and not priv.get("stop") and not priv.get("timeout") and rec.get("kind") == "task":
+                return self._recover(rec, priv, "Agent przerwany (kod %s)." % code)
             self._conclude(rec, st, code)
         except Exception as e:
             st["tail"].append(str(e))
@@ -4612,12 +5133,158 @@ class Manager:
                 grace.cancel()
             with self._lock:
                 priv["closed"] = True
-            for stream in (out, proc.stdout if proc else None, proc.stdin if proc else None):
+            for stream in (out, proc.stdout if proc else None,
+                           proc.stdin if proc and not isinstance(proc, Detached) else None):
                 if stream:
                     try:
                         stream.close()
-                    except OSError:
+                    except (OSError, ValueError):
                         pass
+
+    # ---------- restart panelu: podjęcie śledzenia albo dokończenie (AGENCI.md, „Restart panelu”) ----------
+    def _priv_load(self, rid):
+        try:
+            with open(os.path.join(self.runs_dir, rid + ".przebieg"), encoding="utf-8") as f:
+                data = json.load(f)
+            return data if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def _resume_after_restart(self, rec):
+        """Rekord w stanie running z poprzedniego życia panelu: pośrednik żyje albo zapisał koniec → panel czyta
+        dalej jego przebieg; inaczej zadanie jest przerwane → _recover."""
+        rid = rec["id"]
+        runner = rec.get("runner") or {}
+        priv = self._priv_load(rid) if runner.get("pid") else {}
+        base = os.path.join(self.runs_dir, rid)
+        alive = bool(runner.get("pid")) and pid_alive(runner["pid"], rid)
+        if priv.get("cwd") and (alive or os.path.exists(base + ".koniec")):
+            return self._reattach(rec, priv, runner["pid"])
+        if rec.get("kind") != "task":
+            rec.update(state="stopped", error="Serwer został zatrzymany.", endedAt=now_iso(), activity="")
+            self._save(rec)
+            return
+        priv.setdefault("folder", None)
+        with self._lock:
+            self._priv[rid] = priv
+        self._recover(rec, priv, "Panel uruchomił się ponownie w trakcie pracy agenta.")
+
+    def _replay(self, rec, upto):
+        """Stan końca (zdarzenie result, limit) z przebiegu przeczytanego przed restartem panelu."""
+        st = {"result": None, "tail": collections.deque(maxlen=8), "limit": False, "rate": None, "status": None,
+              "last": "", "failed": ""}
+        try:
+            with open(os.path.join(self.runs_dir, rec["id"] + ".log"), "rb") as f:
+                head = f.read(max(0, int(upto or 0)))
+        except OSError:
+            return st
+        for raw in head.split(b"\n"):
+            try:
+                ev = json.loads(raw.decode("utf-8", "replace"))
+            except ValueError:
+                continue
+            if not isinstance(ev, dict):
+                continue
+            kind = ev.get("type")
+            if kind == "result":
+                st["result"], st["status"] = ev, ev.get("api_error_status") or st["status"]
+            elif kind == "rate_limit_event":
+                info = ev.get("rate_limit_info") or {}
+                st["rate"] = info
+                st["limit"] = st["limit"] or str(info.get("status") or "").lower() in DENIED
+            elif kind in ("turn.completed",):
+                st["result"] = {"is_error": False}
+            elif kind == "item.completed" and (ev.get("item") or {}).get("type") in ("agent_message",):
+                st["last"] = str((ev.get("item") or {}).get("text") or "")
+        return st
+
+    def _reattach(self, rec, priv, pid):
+        rid = rec["id"]
+        pos = int(rec.get("logPos") or 0)
+        st = self._replay(rec, pos)
+        proc = Detached(self.runs_dir, rid, pid, pos=pos)
+        priv.update(proc=proc, reattached=True)
+        if priv.get("stream"):
+            priv["open"] = st["result"] is None
+            priv["ended"] = st["result"] is not None
+        with self._lock:
+            self._priv[rid] = priv
+            rec["activity"] = "Panel uruchomił się ponownie: śledzę pracę agenta dalej"
+            self._save(rec)
+        if (priv.get("task") or {}).get("site"):
+            self._site_live_open(rec, priv)
+        self._log(rec, "panel", "Panel uruchomił się ponownie; agent pracował dalej.")
+        left = self.timeout
+        if priv.get("t0"):
+            left = max(30, int((priv.get("limit") or self.timeout) - (time.time() - float(priv["t0"]))))
+        threading.Thread(target=self._follow, args=(rec, priv, proc, st, None, left), daemon=True).start()
+
+    def _agent_commits(self, rec, git):
+        """Commity tej pracy na gałęzi (od startCommit, bez commita panelu z końca tego uruchomienia)."""
+        start = rec.get("startCommit") or git.get("startCommit") or git["baseCommit"]
+        branch = rec.get("branch") or git["branch"]
+        code, out, _ = git_run(git["top"], ["log", "--format=%H%x00%B%x01", "%s..%s" % (start, branch)], timeout=30)
+        if code != 0:
+            return 0
+        mark = "Uruchomienie panelu %s " % rec["id"]
+        return sum(1 for item in out.split("\x01") if item.strip() and mark not in item)
+
+    def _recover(self, rec, priv, reason):
+        """Zadanie przerwane (restart panelu, zabity proces): zatwierdzona praca na gałęzi → koniec jak zwykle
+        (stan done); bez commita → zatrzymanie i ponowne uruchomienie od gałęzi z dopiskiem w `poprawka:`."""
+        git = priv.get("git") or self._worktree_info(rec)
+        if git and not git.get("startCommit") and rec.get("startCommit"):
+            git["startCommit"] = rec["startCommit"]
+        wt = git and os.path.isdir(git["worktree"])
+        if wt:
+            code, cur, _ = git_run(git["worktree"], ["symbolic-ref", "--short", "-q", "HEAD"], timeout=15)
+            if code == 0 and cur.strip():
+                rec["branch"] = cur.strip()
+        commits = self._agent_commits(rec, git) if git else 0
+        with self._lock:
+            priv["git"] = git
+            self._priv[rec["id"]] = priv
+            rec["state"] = "running"
+        if commits:
+            rec["recovered"] = "commit"
+            self._step(rec, "%s Na gałęzi %s jest zatwierdzona praca (%d): kończę zadanie jak po zwykłym końcu."
+                       % (reason, rec.get("branch") or git["branch"], commits))
+            said = next((x["text"] for x in reversed(rec.get("log") or []) if x.get("k") == "agent"), "")
+            return self._finish(rec, "done", "", result=_short(said, 4000))
+        rec["recovered"] = "restart"
+        n = int(rec.get("recoverN") or 0)
+        again = n < RECOVER_MAX
+        self._finish(rec, "stopped", _short(reason + (" Bez zatwierdzonej pracy: zadanie uruchomi się ponownie od "
+                                                      "swojej gałęzi." if again else
+                                                      " Wznowienia się powtarzają: uruchom zadanie ręcznie."), 300))
+        if again:
+            threading.Thread(target=self._relaunch_recovered, args=(dict(rec), n + 1), daemon=True).start()
+
+    RECOVER_NOTE = ("Poprzednie uruchomienie przerwał restart panelu (%s). Twoja dotychczasowa praca jest na gałęzi "
+                    "%s: sprawdź ją (git log, git diff) i dokończ zadanie.")
+
+    def _relaunch_recovered(self, rec, n, wait=3):
+        """Ponowne uruchomienie zadania przerwanego bez commita: dopisek w `poprawka:`, start od gałęzi zadania."""
+        time.sleep(wait)
+        task, data, index = self._find_task(key=(rec["project"], rec["file"], rec["title"]))
+        if not task or task["state"] != "todo" or task["project"] not in index:
+            return
+        note = self.RECOVER_NOTE % ((rec.get("endedAt") or now_iso())[:16].replace("T", " "),
+                                     rec.get("branch") or "zadania")
+        if self._append_fix(task, index[task["project"]], note):
+            task, data, index = self._find_task(key=(rec["project"], rec["file"], rec["title"]))
+        if not task:
+            return
+        code, err, extra = self.run_task(task["id"], task["title"], auto=bool(rec.get("auto")))
+        if code == 200:
+            with self._lock:
+                new = self._runs.get(extra["id"])
+                if new is not None:
+                    new["recoverN"] = n
+                    new["recoveredFrom"] = rec["id"]
+                    self._save(new)
+        else:
+            log("Wznowienie %s: %s" % (rec["id"], err))
 
     def _grace_end(self, rec, priv):
         """Po zdarzeniu result: wiadomości, których agent nie zdążył odczytać (brak nowej tury w GRACE s), zostają
@@ -4852,15 +5519,29 @@ class Manager:
         if "five" not in windows:
             return
         with self._lock:
-            used = rec["limitNow"] - rec["limitStart"]
-            priv = self._priv.setdefault(rec["id"], {})
-            if used < self.run_budget or priv.get("stop"):
+            # kilka uruchomień naraz: zużycie okna to suma ich pracy; próg rośnie z liczbą pracujących,
+            # a zatrzymanie dostaje uruchomienie pracujące najdłużej (największy przyrost od startu)
+            now = rec["limitNow"]
+            running = [r for r in self._runs.values() if r["state"] == "running" and r.get("tool") == "claude"
+                       and isinstance(r.get("limitStart"), (int, float))]
+            if rec not in running:
+                running.append(rec)
+            deltas = {r["id"]: now - r["limitStart"] for r in running}
+            victim = max(running, key=lambda r: deltas[r["id"]])
+            used = deltas[victim["id"]]
+            budget = self.run_budget * len(running)
+            priv = self._priv.setdefault(victim["id"], {})
+            if used < budget or priv.get("stop"):
                 return
-            priv["budget"] = ("Zatrzymano: to uruchomienie zużyło już %d%% limitu 5 godzin (próg %d%%). "
-                              "Zwykłe zadanie zużywa kilka procent; sprawdź, czym agent się zajmował."
-                              % (round(used * 100), round(self.run_budget * 100)))
-        self._step(rec, "Bezpiecznik: zużyto %d%% limitu 5 godzin, zatrzymuję" % round(used * 100))
-        self.stop(rec["id"])
+            if len(running) > 1:
+                priv["budget"] = ("Zatrzymano: %d uruchomienia naraz zużyły razem %d%% limitu 5 godzin (próg %d%%); "
+                                  "to pracowało najdłużej." % (len(running), round(used * 100), round(budget * 100)))
+            else:
+                priv["budget"] = ("Zatrzymano: to uruchomienie zużyło już %d%% limitu 5 godzin (próg %d%%). "
+                                  "Zwykłe zadanie zużywa kilka procent; sprawdź, czym agent się zajmował."
+                                  % (round(used * 100), round(self.run_budget * 100)))
+        self._step(victim, "Bezpiecznik: zużyto %d%% limitu 5 godzin, zatrzymuję" % round(used * 100))
+        self.stop(victim["id"])
 
     def usage_state(self):
         now = time.time()
@@ -4925,7 +5606,7 @@ class Manager:
                 return
             priv["finishing"] = True
         if rec["kind"] == "task":                      # wiersz zadania przed ogłoszeniem stanu końcowego
-            self._close_task(rec, state, priv.get("git"))
+            self._close_task(rec, state, priv.get("git"), priv.get("parts"))
         if rec["kind"] == "task" and state == "done":
             try:
                 task, _, _ = self._find_task(key=(rec["project"], rec["file"], rec["title"]))
@@ -4966,6 +5647,7 @@ class Manager:
         restart = bool(priv.get("restart")) and state == "stopped"
         if state != "stopped" and rec["kind"] != "check":
             self._notify(rec, priv)
+        self.site.live_close(rec["id"])
         try:
             self.site.after_run(dict(rec))
         except Exception as e:
@@ -4976,7 +5658,7 @@ class Manager:
         self.refresh_tools(force=True)
         self._pump()
 
-    def _close_task(self, rec, state, git=None):
+    def _close_task(self, rec, state, git=None, parts=None):
         """Koniec zadania: wiersz zadania, gałąź uruchomienia (commit, changes, katalog roboczy), materiał dla
         następników. Błąd jednego kroku nie zatrzymuje pozostałych."""
         try:
@@ -4988,6 +5670,10 @@ class Manager:
                 self._worktree_close(rec, git)
         except Exception as e:
             log("Gałąź uruchomienia %s: %s" % (rec["id"], e))
+        try:
+            self._parts_close(rec, parts)
+        except Exception as e:
+            log("Części projektu %s: %s" % (rec["id"], e))
         if state == "done":
             try:
                 self._pass_materials(rec, dict(git, branch=rec.get("branch") or git["branch"]) if git else None)
@@ -5117,6 +5803,7 @@ class Manager:
     def tick(self, now=None):
         """Jeden obieg Automatu. Zwraca listę id nowych uruchomień."""
         started = []
+        self._pump()                            # kolejka po końcu oczekiwania wdrożenia
         now = now or datetime.datetime.now()
         today = now.date().isoformat()
         with self._lock:
@@ -5148,7 +5835,13 @@ class Manager:
             added = self._plan_scripts(data, index, now.date()) or added
             if added:
                 data, index = self.load_projects()
+        projects = {p["id"]: p for p in data["projects"]}
         for t, _ in self._auto_candidates(data, index, now):
+            fam = (projects.get(t["project"]) or {}).get("partOf") or t["project"]
+            with self._lock:
+                if any(self._family(r) == fam and r["state"] in LIVE and r.get("kind") == "task"
+                       for r in self._runs.values()):
+                    continue                    # jedno uruchomienie na projekt: następne zadanie w kolejnym obiegu
             code, _, extra = self.run_task(t["id"], t["title"], auto=True)
             if code == 200:
                 started.append(extra["id"])

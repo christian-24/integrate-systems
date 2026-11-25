@@ -266,7 +266,8 @@ class Reguly(unittest.TestCase):
         self.assertIn("`npm ci`, `npm run build:panel`", text)
         tools = strona.Site.tools(None, site)
         self.assertEqual(tools, ["Bash(npm ci)", "Bash(npm ci:*)", "Bash(npm run build:panel)",
-                                 "Bash(npm run build:panel:*)", "Bash(python3 zrzut.py:*)"])
+                                 "Bash(npm run build:panel:*)", "Bash(python3 zrzut.py:*)",
+                                 "Bash(git merge:*)"])
         site.update(build="make all && npm ci")
         text = "\n".join(strona.Site.rules(site, "/r"))
         self.assertIn("nie uruchamiaj (brak uprawnienia): `make all`", text)
