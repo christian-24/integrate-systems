@@ -556,9 +556,9 @@ p.stu-sws{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0}
   .tl-card>video.tl-media,.tl-card>.mk-media{align-self:start}
   .tl-body{padding:8px 10px}.mk-why{margin:0 10px 8px}.mk-act{padding:0 10px 10px}
   .mk-todo{flex-direction:column;align-items:flex-start}
-  .stn-list .lk,.stu-rows .lk{min-height:40px;display:inline-flex;align-items:center}
-  .stu-proj>summary{min-height:40px;padding:10px 0}
-  .stu-det>summary{min-height:40px;padding-top:11px;padding-bottom:11px}.stu-tdet>summary{min-height:40px;padding:8px 0}
+  .stn-list .lk,.stu-rows .lk{min-height:44px;display:inline-flex;align-items:center}
+  .stu-proj>summary{min-height:44px;padding:10px 0}
+  .stu-det>summary{min-height:44px;padding-top:11px;padding-bottom:11px}.stu-tdet>summary{min-height:44px;padding:8px 0}
   .stu-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stu-acts .btn{width:100%;white-space:normal}
   .stu-songs audio{height:40px}}
 .bkm-scroll{overflow:auto;padding:4px 16px 16px;max-width:100%}
@@ -860,9 +860,9 @@ a.prx-c:hover,a.prx-c:focus-visible{text-decoration:underline}
   .prx-cards{display:grid}
   .prx-stdt{display:none}
   .prx-std-doc{display:block}
-  .panel>details[data-prxdet]>summary{min-height:40px;display:flex;align-items:center}
-  .prx-path>summary{display:inline-flex;min-height:40px;align-items:center}
-  .linkbtn.prx-rm{min-height:40px}
+  .panel>details[data-prxdet]>summary{min-height:44px;display:flex;align-items:center}
+  .prx-path>summary{display:inline-flex;min-height:44px;align-items:center}
+  .linkbtn.prx-rm{min-height:44px}
   .padd{margin:0 12px}
 }
 .chips{display:flex;flex-wrap:wrap;gap:6px}
@@ -1053,7 +1053,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   .app{grid-template-columns:minmax(0,1fr)}
   .side{display:none}
   .mobilenav{display:flex;gap:8px;flex:1 1 200px;min-width:0}
-  .mobilenav select{flex:1;min-width:0;min-height:40px;border:1px solid var(--ctl-line);background:var(--surface);border-radius:var(--r);padding:6px 8px}
+  .mobilenav select{flex:1;min-width:0;min-height:44px;border:1px solid var(--ctl-line);background:var(--surface);border-radius:var(--r);padding:6px 8px}
   /* dolny pasek: 6 widoków + „Więcej” (arkusz z pozostałymi); od 820 px, bo wtedy znika menu boczne */
   .bnav{display:grid;grid-template-columns:repeat(7,minmax(min-content,1fr));column-gap:1px;position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--line);
     padding:4px max(2px,env(safe-area-inset-right,0px)) max(4px,env(safe-area-inset-bottom,0px)) max(2px,env(safe-area-inset-left,0px))}
@@ -1089,15 +1089,16 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   .drawer dl{grid-template-columns:minmax(0,1fr);gap:2px}
   .drawer dd{margin-bottom:8px}
   .abar .sp{display:none}
-  /* telefon: pola 16 px (iOS nie powiększa), przyciski 40 px, dolny pasek */
+  /* telefon: pola 16 px (iOS nie powiększa), przyciski 44 px (iPhone), dolny pasek */
   input,select,textarea:not(.ttl){font-size:16px!important}
-  .btn,.btn.sm,.seg,.x,.chip,.sw,.toolbar select,.fi:not(textarea){min-height:40px}
+  .btn,.btn.sm,.seg,.x,.chip,.sw,.toolbar select,.fi:not(textarea),select{min-height:44px}
   .btn.sm{padding:4px 12px}
-  /* cele dotyku ≥40 px: linki i przyciski tekstowe, summary, zakładki, tytuły wierszy list */
-  .linkbtn,.lk.t,.rows a.t,.tabs a,.panel>h2 small a,.nx .lk,.nw-foot a,.navlk{min-height:40px;display:inline-flex;align-items:center}
+  .btn,.x{min-width:44px}
+  /* cele dotyku ≥44 px: linki i przyciski tekstowe, summary, zakładki, tytuły wierszy list */
+  .linkbtn,.lk.t,.rows a.t,.tabs a,.panel>h2 small a,.nx .lk,.nw-foot a,.navlk{min-height:44px;display:inline-flex;align-items:center}
   .rows .lk.t,.rows a.t{display:flex}
-  summary{min-height:40px;display:flex;align-items:center}
-  .seg{min-width:40px}
+  summary{min-height:44px;display:flex;align-items:center}
+  .seg{min-width:44px}
   .pill{white-space:normal;max-width:100%}
   input[type=checkbox],input[type=radio]{width:20px;height:20px}
   /* filtr w nagłówku: pod h1 na całą szerokość, select rośnie, nie rozpycha strony */
@@ -1257,7 +1258,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .bk-why{font-size:12.5px;color:var(--ink-2);margin-top:2px;overflow-wrap:anywhere}
 .bk-why.none{color:var(--ink-3)}
 @media (max-width:620px){
-  .nw-more .linkbtn,.nw-tog,.nw-idle .linkbtn,.bk-cut,.bk-jump{min-height:40px;display:inline-flex;align-items:center}
+  .nw-more .linkbtn,.nw-tog,.nw-idle .linkbtn,.bk-cut,.bk-jump{min-height:44px;display:inline-flex;align-items:center}
   .bk-tree{padding:0 12px 8px}
   .bk-sub{margin-left:4px;padding-left:10px}
   .bk-tog{width:38px;height:38px;margin:-9px -6px -9px -11px}
@@ -1265,7 +1266,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   /* position: tekst .bk-sr (absolute) zostaje w przewijanym pasku, nie poszerza strony */
   .bk-sum{flex-wrap:nowrap;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0;position:relative}
   .bk-sum::-webkit-scrollbar{display:none}
-  .bk-sum .chip{flex:none;font-size:12px;padding-left:8px;padding-right:8px;min-height:40px}
+  .bk-sum .chip{flex:none;font-size:12px;padding-left:8px;padding-right:8px;min-height:44px}
   .bk-srn{display:block}
   .bk-pl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   /* opis grupy: tylko dla czytnika (i w title śródtytułu) */
@@ -1321,7 +1322,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
   .board .col{padding:6px}
 }
 @media (max-width:620px){
-  .tb-more .btn{min-height:40px}
+  .tb-more .btn{min-height:44px}
 }
 @media (max-width:400px){
   .colsw{display:grid;grid-template-columns:1fr 1fr}
@@ -1420,8 +1421,8 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .tm-ics>summary{cursor:pointer;font-weight:600;color:var(--ink-2)}
 .nav .count.red{background:var(--l-red-bg);color:var(--l-red)}
 @media (max-width:760px){
-  .tm-tg,.tm-cals>summary,.tm-calp .linkbtn{min-height:40px}
-  .tm-ics>summary{display:flex;align-items:center;min-height:40px}
+  .tm-tg,.tm-cals>summary,.tm-calp .linkbtn{min-height:44px}
+  .tm-ics>summary{display:flex;align-items:center;min-height:44px}
   .tm-bar select{flex:1 1 180px;width:auto}
   .tm-sepd{display:none}
 }
@@ -1447,7 +1448,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .note.pj-legend{margin-top:6px}
 @media (max-width:620px){
   .tst-ok{width:40px;height:40px}
-  .ds-more .linkbtn{min-height:40px}
+  .ds-more .linkbtn{min-height:44px}
 }
 /* Przegląd (prefiks pv-): nagłówek, Dziś, ryzyka, notatka PM, kampanie, projekty, terminy w 7 dni */
 .nw-htog{gap:4px}
@@ -1473,7 +1474,7 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .pv-dt{color:var(--ink-3)}
 @media (max-width:620px){
   .pv-cap{width:150px}
-  .panel>h2 small .linkbtn{display:inline-flex;min-height:40px;align-items:center}
+  .panel>h2 small .linkbtn{display:inline-flex;min-height:44px;align-items:center}
   /* cały wiersz listy jako cel dotyku: tytuł rozciąga się na wiersz, przyciski i formularze nad nim */
   .pv-rows li{position:relative}
   .pv-rows .t::after{content:"";position:absolute;inset:0}
@@ -1507,7 +1508,7 @@ section.panel.ty-chk{border-left:4px solid var(--bar-done)}
 .toast .ty-undo{color:inherit;text-decoration:underline;margin-left:8px;font-size:inherit}
 @media (max-width:620px){
   .ty-grp>h2{position:sticky;top:0;background:var(--surface);z-index:1;border-radius:var(--r-lg) var(--r-lg) 0 0}
-  .ty-grp .rows .lk.t{display:block;min-height:40px;padding:8px 0}
+  .ty-grp .rows .lk.t{display:block;min-height:44px;padding:8px 0}
   .ty-grp .rows li{grid-template-columns:minmax(0,1fr)}
   .ty-grp .rows .r{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;text-align:left;gap:6px 8px;white-space:normal}
   .ty-dt{display:flex;flex-wrap:wrap;gap:0 8px}
@@ -1554,7 +1555,7 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
   /* wykresy: viewBox ok. 600 jednostek, po skali 20 ≈ 11 px; wartości końcowe są w legendzie i podpowiedzi */
   .chartbox svg text{font-size:24px}
   .chartbox svg text.lb,.chartbox svg text.wk-ax2{display:none}
-  .linkbtn[data-toggle]{min-height:40px;display:inline-flex;align-items:center}
+  .linkbtn[data-toggle]{min-height:44px;display:inline-flex;align-items:center}
 }
 /* poprawki UI: Tablica, Terminy, Blokady */
 .tb-gh{margin:2px 0 0;font-size:13px}
@@ -1585,8 +1586,8 @@ th.wk-go,td.wk-go{width:24px;padding-left:0;color:var(--ink-3);text-align:right}
 @media (max-width:620px){
   .card .tb-stg:not(.late){display:none}
   .tb-pn{max-width:none}
-  .tb-act{min-height:40px;min-width:112px}
-  .card.tb-hasact .foot{min-height:40px;padding-right:128px}
+  .tb-act{min-height:44px;min-width:112px}
+  .card.tb-hasact .foot{min-height:44px;padding-right:128px}
   .tm-cnt,.tm-pl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .bk-sum{flex-wrap:wrap;overflow:visible}
   .bk-row .bk-next{display:block;white-space:normal;flex:1 1 100%}
@@ -1636,7 +1637,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 @media (max-width:620px){
   .md-bar{padding:10px 12px 4px}
   .md-sel{flex:1 1 100%;max-width:none}
-  .md-k{flex:1 1 100%}.md-k .seg{flex:1;min-height:40px}
+  .md-k{flex:1 1 100%}.md-k .seg{flex:1;min-height:44px}
   .md-gh{margin:8px 12px 0}.md-more{margin:0 12px 4px}
   .md-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px 12px 8px}
   .md-c{border-radius:6px;border:0}
@@ -1690,11 +1691,11 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .kbd-h{display:none}
   .rs-path{display:none}
   .plx li{grid-template-columns:minmax(0,1fr) auto}
-  .prx-more>summary{min-height:40px;min-width:44px}
+  .prx-more>summary{min-height:44px;min-width:44px}
   .prx-cdet{display:block}
-  .prx-cdet>summary,.prx-stdall>details>summary,.rs-det>summary,.ag-tools>summary,.prx-add>summary{min-height:40px;display:flex;align-items:center;gap:6px}
+  .prx-cdet>summary,.prx-stdall>details>summary,.rs-det>summary,.ag-tools>summary,.prx-add>summary{min-height:44px;display:flex;align-items:center;gap:6px}
   .prx-keysd{display:none}
-  .panel>details.prx-stdall>summary{display:list-item;min-height:40px;padding-top:9px;box-sizing:border-box}
+  .panel>details.prx-stdall>summary{display:list-item;min-height:44px;padding-top:9px;box-sizing:border-box}
 }
 /* poprawki UI: Przegląd, Dla Ciebie, Wskaźniki */
 .pv-fold>summary,.ty-later>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px;border-radius:var(--r-lg)}
@@ -1768,7 +1769,7 @@ video.md-m{background:var(--media-bg);object-fit:cover}
   .ty-chips{flex:1 1 100%;flex-wrap:wrap}
   .pv-rows .r>.btn,.pv-rows .r>.pv-acts{margin-left:auto}
   .pv-rows .r>.btn{min-width:112px;justify-content:center}
-  .ty-see{min-height:40px;display:inline-flex;align-items:center}
+  .ty-see{min-height:44px;display:inline-flex;align-items:center}
 }
 /* poprawki UI runda 1: B (strona projektu) */
 .pj-sum{display:flex;flex-wrap:wrap;gap:2px 14px;margin:0;font-size:14px;color:var(--ink-2);min-width:0}
@@ -1826,12 +1827,42 @@ body.pjd-on #view{padding-bottom:96px}
 .pjd-f textarea{width:100%;resize:vertical;min-height:52px}
 .pjd-f .row{display:flex;align-items:center;gap:10px}
 .pjd-f .note{margin:0;font-size:var(--fs-xs)}
+.pjd-f .row{flex-wrap:wrap}
+.pjd-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.pjd-chip{display:flex;align-items:center;gap:2px;width:100%;min-width:0;padding:2px 0 2px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:var(--fs-xs);line-height:1.35}
+.pjd-chip>span{flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.pjd-chip .lk{display:inline;min-height:0;color:var(--accent);font-weight:600}
+.pjd-x{flex:none;width:36px;height:36px;border:0;background:none;color:var(--ink-3);font-size:18px;line-height:1;cursor:pointer;border-radius:999px}
+.pjd-x:hover{color:var(--ink)}
+.cm-ref{display:block;color:var(--ink-3);font-size:var(--fs-xs);overflow-wrap:anywhere}
+.cm-ref .lk{color:var(--accent);font-weight:600}
+.dr-ask{display:grid;gap:6px;justify-items:start}
+.dr-ask .note{margin:0}
+.dr-old{width:100%}
+/* telefon (iPhone): cele dotyku 44 px także w regułach poza blokami telefonu */
+@media (max-width:820px){.tb-gt,.mk-wnav .btn,.tm-flt>summary,details.mk-stu>summary,.pj-ov>summary,.pj-parts a,.pj-more>summary,.mk-done>summary,.as-mic,.od-pick .od-seg button,.ww-acts .btn,.ww-seg .seg{min-height:44px}
+  .mk-wnav .btn{min-width:44px}.steps-ro label{min-height:44px;align-items:center}}
+/* telefon: tło nie przewija się pod szufladą i otwartą rozmową (scrollLockSync); strona wraca na to samo miejsce */
+body.sl{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+.pjd-msgs{overscroll-behavior:contain}
+/* rozmowa nad szufladą zadania: na szerokim ekranie obok szuflady, na wąskim w rogu nad nią */
+.pjd.over-dr{z-index:22}
+body.pjd-on .drawer{padding-bottom:84px}
+@media (min-width:821px){.pjd.over-dr{right:calc(min(460px,100%) + 16px)}}
+/* zakładka Strona: otwarta rozmowa nie zasłania kolumny z uwagami (podgląd sam się dopasowuje) */
+@media (min-width:1100px){body.pjd-open .ww-root{margin-right:396px}}
 @media (max-width:820px){
   .kp{grid-template-columns:1fr;gap:2px}.kp dd{margin-bottom:8px}
   .pjd{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  .pjd.over-dr{bottom:max(16px,env(safe-area-inset-bottom,0px))}
   body.pjd-on #view{padding-bottom:150px}
   .pjd.open{left:0;right:0;bottom:0;z-index:24}
-  .pjd.open .pjd-win{width:100%;height:min(85vh,640px);max-height:85vh;border-radius:var(--r-lg) var(--r-lg) 0 0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .pjd.open .pjd-win{width:100%;height:min(85vh,640px);height:min(85dvh,640px);max-height:85vh;max-height:85dvh;border-radius:var(--r-lg) var(--r-lg) 0 0;border-width:1px 0 0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  /* klawiatura ekranowa: okno kończy się nad nią (pjdKb ustawia --kb i --vvh z visualViewport) */
+  .pjd.open.kb{bottom:var(--kb,0px)}
+  .pjd.open.kb .pjd-win{height:calc(var(--vvh,85vh) - 8px);max-height:calc(var(--vvh,85vh) - 8px);padding-bottom:0}
+  .pjd-x{width:44px;height:44px}
+  .pjd-f .btn{min-height:44px}
 }
 .pj-add{display:grid;gap:10px;justify-items:start}
 .pj-add>summary{list-style:none;cursor:pointer}
@@ -1848,7 +1879,7 @@ p.kv2 .muted{display:block;font-size:var(--fs-xs);margin-top:2px}
   .ptabs a{padding:8px 4px;white-space:nowrap;justify-content:center;text-align:center}
   .pj-parts a{padding:8px 4px;justify-content:center;text-align:center;overflow-wrap:anywhere}
   .pj-pl{grid-column:1/-1;padding:0}
-  .pj-ov>summary{min-height:40px}
+  .pj-ov>summary{min-height:44px}
   .pj-gap>summary{display:inline;min-height:0}
   .pj-tabd,.pj-sum{font-size:13px}
   .pp-l li{font-size:14px}
@@ -1907,16 +1938,16 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 @media (max-width:640px){
   .ed-h{padding:8px 12px}
   .ed-acts{margin-left:0;width:100%}
-  .ed-h .btn,.ed-acts .btn{min-height:40px}
+  .ed-h .btn,.ed-acts .btn{min-height:44px}
   .ed-acts>.btn{flex:1}
-  .ed-mn>summary{min-height:40px;min-width:44px}
-  .ed-tabs .seg{min-height:40px}
+  .ed-mn>summary{min-height:44px;min-width:44px}
+  .ed-tabs .seg{min-height:44px}
   .sc-l{padding:10px 8px 20px}
   .sc-doc{padding:14px 14px;font-size:17px;border-radius:var(--r)}
-  .mk-cdet>summary{min-height:40px;display:flex;align-items:center}
+  .mk-cdet>summary{min-height:44px;display:flex;align-items:center}
   .mk-prow .r{display:flex;flex-wrap:wrap;justify-content:flex-start;text-align:left;white-space:normal;gap:6px 8px}
-  .mk-prow .r .btn{min-height:40px;margin-left:auto}
-  .md-ups .md-up{flex:1 1 100%;min-height:40px;justify-content:center}
+  .mk-prow .r .btn{min-height:44px;margin-left:auto}
+  .md-ups .md-up{flex:1 1 100%;min-height:44px;justify-content:center}
 }
 /* poprawki UI runda 1: D */
 @media (min-width:821px){.app{background:linear-gradient(to right,var(--surface) calc(var(--side) - 1px),var(--line) calc(var(--side) - 1px),var(--line) var(--side),transparent var(--side))}}
@@ -1960,7 +1991,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 @media (max-width:620px){
   .pp-l li{grid-template-columns:minmax(0,1fr);gap:0;padding:4px 0}
   .pp-c{line-height:1.2}
-  .pj-bk .lk{min-height:40px;display:inline-flex;align-items:center}
+  .pj-bk .lk{min-height:44px;display:inline-flex;align-items:center}
   .kgrid.pj-k3{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 /* poprawki UI runda 2: C (Marketing, edytor posta, Media, Marketing projektu) */
@@ -2033,7 +2064,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .pj-lk{color:var(--accent);text-decoration:none;font-weight:600;font-size:13px}
 .pj-lk:hover{text-decoration:underline}
 @media (max-width:620px){
-  .pj-lk{min-height:40px;display:inline-flex;align-items:center}
+  .pj-lk{min-height:44px;display:inline-flex;align-items:center}
 }
 /* poprawki UI runda 3: C (Marketing, edytor posta, Media, Marketing projektu) */
 .tl-items>.tl-card+.tl-card{border-top:1px solid var(--line);border-radius:0;padding-top:12px}
@@ -2208,7 +2239,7 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-con>summary{padding:12px 16px;cursor:pointer;font-weight:600}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
-@media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:40px}}
+@media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:44px}}
 /* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
 .od{display:grid;gap:var(--g-m);min-width:0}
 .od-top{display:grid;gap:4px}
@@ -2686,6 +2717,16 @@ body.ap-on.as-sc-on .content{padding-bottom:0}
   .as-sc .as-orb i{animation:none!important}
 }
 @media print{.as-sc{position:static}.as-dk,.as-amb{display:none}}
+
+/* telefon (iPhone 15, dotyk): cele dotyku co najmniej 44 px także tam, gdzie reguły ogólne dają mniej; na końcu arkusza,
+   żeby wygrywały z regułami o tej samej szczegółowości */
+@media (max-width:820px){
+  .ed-tabs .seg,.drt-t,.tm-dup>details>summary,.prx-more>summary,.over-det>summary,.ty-pg summary,.wk-rest>summary,.pmn-det>summary,
+  .ty-eff>summary,.ty-flt select,.ed-mn>summary,.mk-cdet>summary,#ag-view .ag-ac button,.od-back,.od-seg button,.od-tgl,.od-vsel .fi,
+  .mk-done>summary,.sw{min-height:44px}
+  .prx-more>summary,.ed-mn>summary,.drt-t{min-width:44px}
+  .ap-ib{width:44px;height:44px}
+}
 </style>
 
 <div class="app">
@@ -5330,17 +5371,32 @@ function codeBox(p){
   }
   return h+'</div></section>';
 }
-/* ---------- Rozmowa o projekcie: przycisk „Rozmowa” w prawym dolnym rogu i okno czatu (#pjdock, poza #view) ----------
-   Rozmowa dotyczy bieżącego projektu; przy projekcie z częściami całości (rozmowa projektu głównego) albo wybranej
-   części (jej własna rozmowa). Stan otwarcia w PF.more['pj-chat']; Esc i „Zwiń” zwijają. */
+/* ---------- Rozmowa w projekcie: przycisk „Rozmowa” w prawym dolnym rogu i okno czatu (#pjdock, poza #view) ----------
+   Jedno z dwóch miejsc rozmowy z agentem (drugie: Asystent). Widać ją na stronie projektu, w szczegółach zadania
+   (szuflada) i w odbiorze pracy; dotyczy projektu (przy projekcie z częściami całości albo wybranej części) albo projektu
+   otwartego zadania. „Zapytaj o to zadanie” dodaje odnośnik do zadania (PJD.ref, serwer dokleja kontekst zadania),
+   „Wskaż” na Stronie dodaje załącznik (PJD.att: podstrona, widok, element). Stan otwarcia w PF.more['pj-chat']. */
+const PJD={ref:null,att:null};
 function pjChatOf(p){
   const t=topP(p),multi=t.partsL&&t.partsL.length;
   if(p.partOf)return {id:p.id,label:p.name};
   return {id:t.id,label:multi?(p.isOwn?p.name:t.name+' · całość'):t.name};
 }
+/* rozmowa dla zadania: projekt (albo część) zadania; serwer zapisuje tam też „Wyślij i wykonaj” i stan uruchomień */
+function taskChatOf(t){const p=P(t.project);if(!p)return null;
+  if(p.partOf)return {id:p.id,label:p.name};const top=topP(p);return {id:t.project,label:top.partsL&&top.partsL.length?top.name+' · '+(p.own?p.own.name:p.name):top.name}}
+function dockTarget(r){
+  if(DR&&DR.kind==='task'){const t=D&&D.tasks.find(x=>x.id===DR.id);if(t)return taskChatOf(t)}
+  if(r&&r.v==='odbior'&&typeof OD!=='undefined'&&OD.m&&OD.m.task){const t=D.tasks.find(x=>x.id===OD.m.task.id)||OD.m.task;if(t.project)return taskChatOf(t)}
+  if(r&&r.v==='projekt'&&r.p)return pjChatOf(r.p);
+  return null;
+}
+const pjdRef=g=>PJD.ref&&g&&PJD.ref.chat===g.id?D.tasks.find(x=>x.id===PJD.ref.id)||null:null;
+const pjdAtt=g=>PJD.att&&g&&PJD.att.chat===g.id?PJD.att:null;
+const attLabel=a=>'Strona'+(a.selector?': '+(a.elementText?'„'+String(a.elementText).slice(0,60)+'”':'<'+(a.tag||'element')+'>'):'')+' · '+(a.page||'/')+' · '+(a.view==='telefon'?'telefon':'komputer');
 function dockHtml(r){
-  if(!(r&&r.v==='projekt'&&r.p))return '';
-  const g=pjChatOf(r.p),open=!!PF.more['pj-chat'];
+  const g=dockTarget(r);if(!g)return '';
+  const open=!!PF.more['pj-chat'];
   let c=PJC[g.id];
   if(LIVE&&!c){c=PJC[g.id]={messages:[],pending:false,error:'',loading:true};loadPChat(g.id)}
   c=c||{messages:[],pending:false,error:''};
@@ -5352,12 +5408,22 @@ function dockHtml(r){
   let h='<section class="pjd-win chat" id="pchat" role="dialog" aria-modal="false" aria-labelledby="pjd-h"><div class="pjd-top"><h2 id="pjd-h">Rozmowa <small>'+esc(g.label)+'</small></h2>'+
     '<button type="button" class="btn sec sm" data-pjd="close" data-k="pjd:close" aria-expanded="true" aria-controls="pchat" title="Zwiń (Esc)">Zwiń</button></div>';
   if(!LIVE)return h+'<div class="pjd-msgs"><p class="empty">Rozmowa działa w panelu na serwerze.</p></div></section>';
-  h+='<div class="pjd-msgs cms" data-pjdm tabindex="0" aria-label="Wiadomości">'+(c.messages.length?c.messages.slice(-30).map(m=>chatMsg(m,'',r.p)).join(''):
+  const here=DR&&DR.kind==='task'?DR.id:'';
+  h+='<div class="pjd-msgs cms" data-pjdm tabindex="0" aria-label="Wiadomości">'+(c.messages.length?c.messages.slice(-30).map(m=>chatMsg(m,here,P(g.id))).join(''):
     '<p class="empty">'+(c.loading?'Wczytuję rozmowę…':'Zapytaj o zadania i terminy albo poproś o pracę.')+'</p>')+'</div>';
   if(c.pending)h+='<p class="note pjd-st" role="status">Czeka na odpowiedź. Claude czyta pliki projektu (do ok. 2 min).</p>';
   if(c.error)h+='<p class="warn pjd-st">'+esc(c.error)+'</p>';
-  h+='<form class="pjd-f" data-pchat="'+esc(g.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq data-k="pjd:ta" aria-label="'+esc('Wiadomość: '+g.label)+'" placeholder="Np. co mam zrobić jutro?"></textarea>'+
-    '<div class="row"><button class="btn sm" data-k="pjd:send"'+(c.pending?' aria-disabled="true"':'')+'>Wyślij</button><span class="note">Prośba o pracę zakłada zadanie agenta i je uruchamia.</span></div></form>';
+  const t=pjdRef(g),att=pjdAtt(g),ag=t&&['agent','claude','codex'].includes(t.executor)&&t.kind!=='publikacja';
+  const run=ag&&D.agents?runOf(t):null,live=!!run&&isAct(run),cx=live&&run.tool==='codex';
+  const chips=(t?'<span class="pjd-chip"><span>O zadaniu: <button type="button" class="lk" data-task="'+esc(t.id)+'" data-k="pjd:reft">'+esc(shortT(t.title,70))+'</button></span><button type="button" class="pjd-x" data-pjdref="0" data-k="pjd:refx" aria-label="Usuń odnośnik do zadania">×</button></span>':'')+
+    (att?'<span class="pjd-chip"><span>Załącznik: '+esc(attLabel(att))+'</span><button type="button" class="pjd-x" data-pjdatt="0" data-k="pjd:attx" aria-label="Usuń załącznik">×</button></span>':'');
+  const dis=c.pending&&!att?' aria-disabled="true"':'';
+  h+='<form class="pjd-f" data-pchat="'+esc(g.id)+'">'+(chips?'<div class="pjd-chips">'+chips+'</div>':'')+
+    '<textarea class="fi" rows="2" maxlength="2000" data-cq data-k="pjd:ta" aria-label="'+esc((att?'Uwaga do strony: ':'Wiadomość: ')+g.label)+'" placeholder="'+
+      (att?'Co zmienić? Np. większy nagłówek, inny kolor przycisku':t?(live?'Np. pytanie albo polecenie dla pracującego agenta':'Np. po co to zadanie? Albo polecenie dla agenta'):'Np. co mam zrobić jutro?')+'"></textarea>'+
+    '<div class="row"><button class="btn sm" data-k="pjd:send"'+dis+'>'+(att?'Wyślij uwagę':'Wyślij')+'</button>'+
+    (ag&&!att?'<button type="button" class="btn sec sm" data-pjdx="1" data-k="pjd:exec"'+(c.exec?' aria-disabled="true"':'')+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta albo przekazuje je pracującemu agentowi">'+(cx?'Zapisz poprawkę':live?'Wyślij do agenta':'Wyślij i wykonaj')+'</button>':'')+
+    '<span class="note">'+(att?'Uwaga trafi do agenta strony (zadanie albo pracujący agent).':ag?(live?'Agent pracuje: „Wyślij do agenta” przekazuje mu polecenie.':'„Wyślij i wykonaj”: agent wykonuje polecenie.'):'Prośba o pracę zakłada zadanie agenta i je uruchamia.')+'</span></div></form>';
   return h+'</section>';
 }
 function renderDock(r){
@@ -5365,15 +5431,48 @@ function renderDock(r){
   const ta=el.querySelector('textarea'),cid=ta&&ta.closest('form')?ta.closest('form').dataset.pchat:'',v=ta?ta.value:'',ss=ta?ta.selectionStart:0,se=ta?ta.selectionEnd:0;
   const ms=el.querySelector('[data-pjdm]'),stick=!ms||ms.scrollHeight-ms.scrollTop-ms.clientHeight<40;
   const h=dockHtml(r),open=!!h&&!!PF.more['pj-chat'];
-  document.body.classList.toggle('pjd-on',!!h);el.classList.toggle('open',open);
+  document.body.classList.toggle('pjd-on',!!h);document.body.classList.toggle('pjd-open',open);el.classList.toggle('open',open);
+  el.classList.toggle('over-dr',!!(DR&&h));
   if(!setHtml(el,h))return;
   const t=el.querySelector('textarea');if(t&&v&&t.closest('form').dataset.pchat===cid){t.value=v;try{t.setSelectionRange(ss,se)}catch(e){}}
   const m=el.querySelector('[data-pjdm]');if(m&&stick)m.scrollTop=m.scrollHeight;
+  pjdKb();scrollLockSync();
 }
+/* iPhone: przy otwartej szufladzie albo rozmowie (arkusz na telefonie) tło nie przewija się pod nimi. Bez tego Safari
+   przewija stronę pod stałym oknem, a przy klawiaturze przesuwa okno poza ekran. Po zamknięciu strona wraca na miejsce. */
+const SL={on:false,y:0};
+function scrollLockSync(){
+  const mob=matchMedia('(max-width:820px)').matches,want=mob&&(!!DR||(!!PF.more['pj-chat']&&!!document.querySelector('#pjdock .pjd-win')));
+  if(want===SL.on)return;SL.on=want;const b=document.body;
+  if(want){SL.y=scrollY;b.style.top=-SL.y+'px';b.classList.add('sl')}
+  else{b.classList.remove('sl');b.style.top='';scrollTo(0,SL.y)}
+}
+addEventListener('resize',()=>scrollLockSync());
 function pjdSet(open){
   PF.more['pj-chat']=!!open;savePF();renderDock(CUR);
   const n=open?$('#pjdock textarea'):$('#pjdock [data-pjd="open"]');if(n)n.focus({preventScroll:true});
 }
+/* „Zapytaj o to zadanie” (szczegóły zadania, odbiór): Rozmowa w projekcie zadania z odnośnikiem do niego */
+function pjdAsk(id){
+  const t=D&&D.tasks.find(x=>x.id===id);if(!t)return;const g=taskChatOf(t);if(!g)return;
+  PJD.ref={chat:g.id,id:t.id};if(PJD.att&&PJD.att.chat===g.id)PJD.att=null;pjdSet(true);
+}
+/* uwaga do strony (zakładka Strona, „Wskaż” albo „Napisz uwagę”): Rozmowa w projekcie z załącznikiem */
+function pjdAttach(pid,s){
+  const r=CUR;if(!(r&&r.v==='projekt'&&r.p))return;const g=pjChatOf(r.p),sel=s.sel||{};
+  if(PJD.ref&&PJD.ref.chat===g.id)PJD.ref=null;     /* uwaga do strony to nie wiadomość o zadaniu */
+  PJD.att={chat:g.id,kind:'strona',project:pid,page:sel.page||s.page||'/',view:s.view,selector:sel.sel||'',elementText:sel.text||'',tag:sel.tag||''};
+  pjdSet(true);
+}
+/* klawiatura ekranowa (iPhone): okno rozmowy kończy się nad nią (visualViewport), pole wpisywania zostaje widoczne */
+function pjdKb(){
+  const el=$('#pjdock');if(!el)return;const vv=window.visualViewport,H=document.documentElement.clientHeight||innerHeight;
+  const kb=vv?Math.max(0,Math.round(H-vv.height-vv.offsetTop)):0;
+  el.style.setProperty('--kb',kb+'px');el.style.setProperty('--vvh',Math.round(vv?vv.height:H)+'px');el.classList.toggle('kb',kb>80);
+}
+if(window.visualViewport){visualViewport.addEventListener('resize',pjdKb);visualViewport.addEventListener('scroll',pjdKb)}
+document.addEventListener('focusin',ev=>{if(ev.target.closest&&ev.target.closest('#pjdock textarea')){setTimeout(pjdKb,300);setTimeout(()=>{pjdKb();ev.target.scrollIntoView({block:'nearest'})},700)}});
+document.addEventListener('focusout',ev=>{if(ev.target.closest&&ev.target.closest('#pjdock'))setTimeout(pjdKb,300)});
 /* Esc zwija rozmowę: z fokusem w oknie zawsze, poza nim tylko, gdy nic innego nie jest otwarte (szuflada, edytor, menu) */
 document.addEventListener('keydown',ev=>{
   if(ev.key!=='Escape'||!PF.more['pj-chat'])return;const el=$('#pjdock');if(!el||!el.querySelector('.pjd-win'))return;
@@ -5388,19 +5487,34 @@ async function loadPChat(pid){
     if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[];c.pending=!!j.pending;c.error=String(j.error||'')}
     else c.error=String(j.error||'Rozmowa jest niedostępna.')}catch(e){c.error='Brak połączenia z serwerem.'}
   c.loading=false;
-  const r=CUR;if(!(r&&r.v==='projekt'&&r.p&&r.p.id===pid))return;
+  const on=()=>{const g=dockTarget(CUR);return !!g&&g.id===pid};
+  if(!on())return;
   if(was&&!c.pending)load();                     // odpowiedź mogła zmienić zadania
   render();clearTimeout(c.poll);
-  if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{const q=CUR;if(q&&q.v==='projekt'&&q.p&&q.p.id===pid)loadPChat(pid)},c.pending?3000:5000);
+  if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{if(on())loadPChat(pid)},c.pending?3000:5000);
 }
-async function sendPChat(f){
+/* exec: „Wyślij i wykonaj” / „Wyślij do agenta” przy odnośniku do zadania agenta (albo „zrób to” na końcu): serwer
+   zapisuje polecenie pod zadaniem i uruchamia agenta (albo przekazuje je pracującemu), odpowiedź od razu, bez modelu */
+const CH_EXEC=/(^|[\s,.;:!?—–-])(zrób to|zrob to|wykonaj( to)?)[\s.!]*$/i;
+async function sendPChat(f,exec){
   const pid=f.dataset.pchat,ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim(),c=PJC[pid]||(PJC[pid]={messages:[],pending:false,error:''});
-  if(!text)return;
-  if(c.pending){say('Czekam jeszcze na odpowiedź.');return}
+  const g={id:pid},t=pjdRef(g),att=pjdAtt(g);
+  if(!text){if(exec||att){say(att?'Opisz, co zmienić.':'Napisz polecenie dla agenta.');ta.focus()}return}
+  const ag=t&&['agent','claude','codex'].includes(t.executor)&&t.kind!=='publikacja';
+  exec=!att&&ag&&(!!exec||CH_EXEC.test(text));
+  if(c.pending&&!exec&&!att){say('Czekam jeszcze na odpowiedź.');return}
+  if(c.exec){say('Czekam jeszcze na odpowiedź.');return}
   if(!LIVE){say(PRV);return}
-  ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.pending=true;c.error='';render(true);
-  const x=await post('/api/project/chat',{project:pid,message:text});
-  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano wiadomości.';render(true);return}
+  const body={project:pid,message:text};if(t)body.task=t.id;if(exec)body.execute=true;
+  if(att)body.attach={kind:'strona',project:att.project,page:att.page,view:att.view,selector:att.selector,elementText:att.elementText};
+  const mine={role:'ty',text:text};if(t)mine.task={id:t.id,title:t.title};if(att)mine.attach=att;
+  ta.value='';ta.blur();c.messages.push(mine);c.error='';if(exec||att)c.exec=true;else c.pending=true;render(true);
+  const x=await post('/api/project/chat',body);
+  c.exec=false;
+  if(!x.ok&&x.status!==202){if(!exec&&!att)c.pending=false;c.error=x.error||'Nie wysłano wiadomości.';render(true);return}
+  if(att){const s=wwSt(att.project);PJD.att=null;s.sel=null;if(s.pick){s.pick=false;wwPost(att.project,{pw:'wskaz',on:false})}wwPost(att.project,{pw:'czysc'});
+    const n=x.data&&x.data.note;if(s.d&&n)s.d.notes=[n].concat((s.d.notes||[]).filter(y=>y.id!==n.id));wwLoad(att.project)}
+  if(exec||att){await load(true);loadPChat(pid);return}
   setTimeout(()=>loadPChat(pid),3000);
 }
 /* ---------- Strona: podgląd strony WWW projektu (pole karty strona:, dashboard/strona.py) ----------
@@ -5464,9 +5578,8 @@ function wwMount(p){
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
       '<button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild">Zbuduj podgląd</button></div></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
-      '<aside class="ww-side"><section class="panel"><h2>Co zmienić?</h2><form class="pad" data-wwform="'+esc(p.id)+'"><div data-wwsel></div>'+
-      '<textarea class="fi" rows="4" maxlength="1000" name="text" data-k="wwtext" placeholder="Np. większy nagłówek, krótszy tekst, inny kolor przycisku" aria-label="Co zmienić"></textarea>'+
-      '<div class="row"><button class="btn" type="submit">Wyślij agentowi</button></div></form></section>'+
+      '<aside class="ww-side"><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
+      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div></section>'+
       '<section class="panel"><h2>Uwagi <small data-wwn></small></h2><ol class="ww-notes" data-wwnotes></ol></section>'+
       '<details class="panel ww-con" data-wwcondet><summary>Nowa wersja według koncepcji</summary><form class="pad" data-wwcon="'+esc(p.id)+'">'+
       '<label class="note" for="ww-cp">Plik albo folder koncepcji w repozytorium</label><input class="fi" id="ww-cp" name="path" list="ww-docs" autocomplete="off" placeholder="np. docs/koncepcja.md" data-k="wwcp"><datalist id="ww-docs"></datalist>'+
@@ -5526,9 +5639,9 @@ function wwPaint(pid){
   if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else{fit.hidden=true;em.hidden=false;setHtml(em,d?(d.build.state==='building'?'<p>Buduję pierwszy podgląd…</p>':'<p>Podglądu jeszcze nie ma.</p><button type="button" class="btn" data-wwbuild data-k="wwbuild2">Zbuduj podgląd</button><p class="note">Strony jeszcze nie ma? Zleć wykonanie według koncepcji (pole obok).</p>'):'<p>Wczytuję…</p>')}
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
-    '<p class="note">Opisz zmianę. Możesz też kliknąć „Wskaż” i element w podglądzie.</p>');
+    '<p class="note">Uwagę piszesz w Rozmowie (prawy dolny róg); podstrona i widok idą jako załącznik. Kliknij „Wskaż” i element w podglądzie, żeby dołączyć też element.</p>');
   const L=d?d.notes||[]:[];
-  const sb=q('form[data-wwform] button[type=submit]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Wyślij do pracującego agenta':'Wyślij agentowi';
+  const sb=q('[data-wwnote]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
   setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
@@ -5542,18 +5655,6 @@ async function wwBuild(pid){
   if(!x.ok){say(x.error||'Nie uruchomiono budowania.');return}
   if(s.d)s.d.build=Object.assign({},s.d.build,{state:'building'});wwPaint(pid);wwLoad(pid);
 }
-async function wwSend(f){
-  const pid=f.dataset.wwform,s=wwSt(pid),ta=f.elements.text,text=(ta.value||'').trim();
-  if(!text){say('Opisz, co zmienić.');ta.focus();return}
-  if(!LIVE){say(PRV);return}
-  const sel=s.sel||{};
-  const x=await post('/api/strona/uwaga',{project:pid,text:text,view:s.view,page:sel.page||s.page||'/',selector:sel.sel||'',elementText:sel.text||''});
-  if(!x.ok){say(x.error||'Nie wysłano uwagi.');return}
-  ta.value='';s.sel=null;if(s.pick){s.pick=false;wwPost(pid,{pw:'wskaz',on:false})}wwPost(pid,{pw:'czysc'});
-  const n=x.data&&x.data.note;
-  say(x.data&&x.data.forwarded?'Agent strony już pracuje: '+x.data.forwarded:n&&n.error?n.error:'Wysłano agentowi. Podgląd odświeży się po jego pracy.');
-  if(s.d&&n)s.d.notes=[n].concat(s.d.notes||[]);wwPaint(pid);load();wwLoad(pid);
-}
 async function wwConcept(f){
   const pid=f.dataset.wwcon,path=(f.elements.path.value||'').trim(),text=(f.elements.text.value||'').trim();
   if(!path){say('Wskaż plik albo folder koncepcji.');f.elements.path.focus();return}
@@ -5563,12 +5664,13 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow]');if(!b)return;
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
+  if(b.dataset.wwnote!=null){if(!LIVE){say(PRV);return}pjdAttach(pid,s);return}
   if(b.dataset.wwview){s.view=b.dataset.wwview;wwPaint(pid);return}
   if(b.dataset.wwpick!=null){s.pick=!s.pick;wwPost(pid,{pw:'wskaz',on:s.pick});wwPaint(pid);return}
   if(b.dataset.wwbuild!=null){if(b.getAttribute('aria-disabled')!=='true')wwBuild(pid);return}
-  if(b.dataset.wwclear!=null){s.sel=null;wwPost(pid,{pw:'czysc'});wwPaint(pid);return}
+  if(b.dataset.wwclear!=null){s.sel=null;wwPost(pid,{pw:'czysc'});wwPaint(pid);if(PJD.att&&PJD.att.project===pid){PJD.att.selector='';PJD.att.elementText='';PJD.att.tag='';renderDock(CUR)}return}
   if(b.dataset.wwshow){if(WWW[b.dataset.wwnv]&&b.dataset.wwnv!==s.view){s.view=b.dataset.wwnv;wwPaint(pid)}wwPost(pid,{pw:'pokaz',sel:b.dataset.wwshow});return}
 });
 /* wiadomości z ramki podglądu: tylko z ramki tej zakładki (e.source), dane przycięte do tekstu */
@@ -5577,7 +5679,7 @@ addEventListener('message',e=>{
   const root=ifr.closest('.ww-root'),pid=root.dataset.ww,s=wwSt(pid),d=e.data||{};
   if(d.pw==='gotowe'){s.page=String(d.page||'/').slice(0,200);if(s.pick)wwPost(pid,{pw:'wskaz',on:true});if(s.sel&&s.sel.page===s.page)wwPost(pid,{pw:'pokaz',sel:s.sel.sel});return}
   if(d.pw==='wybrano'){s.sel={sel:String(d.sel||'').slice(0,300),text:String(d.text||'').slice(0,300),tag:String(d.tag||'').slice(0,20),page:String(d.page||'/').slice(0,200)};
-    s.pick=false;wwPost(pid,{pw:'wskaz',on:false});wwPaint(pid);const ta=root.querySelector('[data-wwform] textarea');if(ta)ta.focus()}
+    s.pick=false;wwPost(pid,{pw:'wskaz',on:false});wwPaint(pid);pjdAttach(pid,s)}   /* wskazany element: Rozmowa z załącznikiem */
 });
 addEventListener('resize',()=>{const r=CUR,c=r&&r.v==='projekt'&&r.tab==='strona'&&wwCur(r.p);if(c)wwFit(c.id)});
 function projBoard(p){
@@ -6453,10 +6555,14 @@ function prxDelegate(pid){
     const r=await post('/api/task/add',{project:pid,title:PRX_ZL});
     if(!r.ok){A.busy['zl:'+pid]=false;if(r.status!==401)say(r.error||'Nie udało się zlecić zadania.');return}
     const id=r.id||await newTaskId(pid,PRX_ZL,'');
+    let run=null;
     if(id){const u=await post('/api/task/update',{id:id,title:PRX_ZL,changes:{executor:'claude'}});
-      if(u.ok)await detailPost({id:id,title:PRX_ZL},'cel',goal)}
+      if(u.ok){await detailPost({id:id,title:PRX_ZL},'cel',goal);
+        await load(true);const t=D.tasks.find(x=>x.project===pid&&x.title===PRX_ZL&&x.state!=='done');
+        if(t)run=await post('/api/agent/run',{id:t.id,title:t.title})}}   /* ta sama droga co „Uruchom” (run_task) */
     A.busy['zl:'+pid]=false;
-    say(id?'Zlecono agentowi: '+PRX_ZL+' ('+p.name+').':'Dodano zadanie: '+PRX_ZL+'. Ustaw wykonawcę w szczegółach zadania.');
+    say(!id?'Dodano zadanie: '+PRX_ZL+'. Ustaw wykonawcę w szczegółach zadania.':run&&run.ok?'Zlecono agentowi i uruchomiono: '+PRX_ZL+' ('+p.name+').':
+      'Zlecono agentowi: '+PRX_ZL+' ('+p.name+')'+(run&&run.error?'. Nie uruchomiono: '+run.error:'.'));load();
   });
 }
 const prxFiles=(p,txt)=>'<span class="muted num">'+txt+'</span>';
@@ -6662,29 +6768,17 @@ function doWhat(t){
   const g=d.goal?cap(d.goal.replace(/\.$/,''))+'.':'';
   return (g||t.title)+(st?' Następny krok: '+st.text+(n>1?' (zostało '+n+')':'')+'.':'');
 }
-/* ---------- czat o zadaniu (POST/GET /api/task/chat): Claude czyta zadanie, kartę i kod, nic nie zmienia ---------- */
+/* ---------- rozmowa o zadaniu: „Zapytaj o to zadanie” otwiera Rozmowę w projekcie z odnośnikiem (pjdAsk) ----------
+   W szczegółach zadania nie ma osobnego czatu. Dawna rozmowa o zadaniu (GET /api/task/chat) zostaje do odczytu. */
 const CH={};
 function chatBox(t){
   if(!LIVE)return '';
   let c=CH[t.id];
   if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
-  const ag=['agent','claude','codex'].includes(t.executor);
-  const run=ag&&t.kind!=='publikacja'&&D.agents?runOf(t):null,live=!!run&&isAct(run);
-  let h='<details class="dbox chat dr-chat"'+(live||c.messages.length||c.pending||(DR&&DR.chat)?' open':'')+' id="dchat"><summary>'+(live?(run.tool==='codex'?'Poprawka dla agenta (Codex)':'Napisz do pracującego agenta'):ag&&t.kind!=='publikacja'?'Zapytaj Claude albo zleć pracę':'Zapytaj Claude o to zadanie')+'</summary>';
-  if(c.messages.length)h+='<div class="cms">'+c.messages.map(m=>chatMsg(m,t.id,P(t.project))).join('')+'</div>';
-  if(c.pending)h+='<p class="note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>';
-  if(c.error)h+='<p class="warn">'+esc(c.error)+'</p>';
-  const dis=c.pending||c.exec?' aria-disabled="true"':'';
-  if(live){const cx=run.tool==='codex';
-    h+='<form class="dform" data-chat="'+esc(t.id)+'" data-live="1"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Wiadomość do pracującego agenta" placeholder="Np. nagłówek ma być granatowy"></textarea>'+
-      '<div class="row"><button class="btn sm"'+dis+'>'+(cx?'Zapisz poprawkę':'Wyślij do agenta')+'</button><button type="button" class="btn sec sm" data-chatask="'+esc(t.id)+'"'+dis+'>Tylko zapytaj</button>'+
-      '<span class="note">'+(cx?'Codex nie przyjmuje wiadomości w trakcie pracy: polecenie trafi pod zadanie (poprawka:), potem możesz zatrzymać i uruchomić je z poprawką.':
-        run.state==='queued'?'Agent czeka w kolejce: polecenie trafi pod zadanie i do jego polecenia startowego.':'Agent pracuje: Enter wysyła mu wiadomość, uwzględni ją przy następnym kroku. Polecenie zostaje też pod zadaniem (poprawka:).')+'</span></div></form></details>';
-    return h}
-  h+='<form class="dform" data-chat="'+esc(t.id)+'"><textarea class="fi" rows="2" maxlength="2000" data-cq aria-label="Pytanie albo polecenie do zadania" placeholder="Np. po co to zadanie? Albo polecenie dla agenta i „Wyślij i wykonaj”."></textarea>'+
-    '<div class="row"><button class="btn sm"'+dis+'>Wyślij</button>'+(ag&&t.kind!=='publikacja'?'<button type="button" class="btn sec sm" data-chatexec="'+esc(t.id)+'"'+dis+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta">Wyślij i wykonaj</button>':'')+
-    '<span class="note">Wyślij: Claude odpowiada, niczego nie zmienia.'+(ag?' Wyślij i wykonaj (albo „zrób to” na końcu): agent wykonuje polecenie.':'')+'</span></div></form></details>';
-  return h;
+  const old=c.messages.filter(m=>m.role!=='panel'||m.text);
+  return '<div class="dbox dr-ask"><button type="button" class="btn sec" data-askt="'+esc(t.id)+'" data-k="askt" aria-controls="pchat">Zapytaj o to zadanie</button>'+
+    '<p class="note">Rozmowa w projekcie z odnośnikiem do tego zadania: pytania, polecenia dla agenta, zmiany zadań.</p>'+
+    (old.length?'<details class="chat dr-old"><summary>Dawna rozmowa o zadaniu ('+old.length+')</summary><div class="cms">'+old.map(m=>chatMsg(m,t.id,P(t.project))).join('')+'</div></details>':'')+'</div>';
 }
 /* lk: odpowiedź modelu ({p: projekt rozmowy albo null w Asystencie}): linki do zakładki Strona (wwLinks) */
 const chatText=(x,lk)=>{const h='<div>'+String(x||'').split('\n').map(l=>/^\s*(Propozycja|Zmieniono):/i.test(l)?'<p class="prop">'+esc(l)+'</p>':esc(l)).join('<br>')+'</div>';
@@ -6695,37 +6789,18 @@ function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|
   return '<div class="cm pn"><b>Panel</b><div>'+esc(m.text||'')+(l?'<span class="lz '+c+'">'+esc(l)+'</span>':'')+
     (m.taskId&&m.taskId!==here?'<button type="button" class="lk" data-task="'+esc(m.taskId)+'">Szczegóły</button>':'')+
     (m.restart&&(m.live==='running'||m.live==='queued')?'<div class="row"><button type="button" class="btn sec sm" data-restart="'+esc(m.restart)+'">Zatrzymaj i uruchom z poprawką</button></div>':'')+'</div></div>'}
-const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
+const chatRef=m=>(m.task&&m.task.title?'<small class="cm-ref">O zadaniu: '+(m.task.id&&m.task.id!==(DR&&DR.id)?'<button type="button" class="lk" data-task="'+esc(m.task.id)+'">'+esc(shortT(m.task.title,70))+'</button>':esc(shortT(m.task.title,70)))+(m.exec?' · polecenie dla agenta':'')+'</small>':m.exec?'<small class="cm-ref">Polecenie dla agenta</small>':'')+
+  (m.attach?'<small class="cm-ref">Załącznik: '+esc(attLabel(m.attach))+'</small>':'');
+const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+(m.role==='ty'?chatRef(m):'')+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
 /* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
 const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
 async function loadChat(id){
   let c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
   try{const r=await fetch('/api/task/chat?id='+encodeURIComponent(id),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
     const j=await r.json().catch(()=>({}));
-    if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[];c.pending=!!j.pending;c.error=String(j.error||'')}
-    else if(r.status!==404)c.error=String(j.error||'Czat jest niedostępny.')}catch(e){c.error='Brak połączenia z serwerem.'}
+    if(r.ok&&j.ok!==false){c.messages=Array.isArray(j.messages)?j.messages:[]}}catch(e){}
   c.loading=false;
-  if(CUR&&CUR.v==='odbior'&&OD.id===id&&!(DR&&DR.id===id)){render();clearTimeout(c.poll);if(c.pending)c.poll=setTimeout(()=>{if(CUR&&CUR.v==='odbior'&&OD.id===id)loadChat(id)},2500)}
-  if(DR&&DR.kind==='task'&&DR.id===id){renderDrawer();clearTimeout(c.poll);
-    if(c.pending||pnLive(c.messages))c.poll=setTimeout(()=>{if(DR&&DR.id===id)loadChat(id)},c.pending?2500:5000)}
-}
-/* exec: „Wyślij i wykonaj” (albo „zrób to” na końcu): serwer zapisuje polecenie pod zadaniem i uruchamia agenta, odpowiedź od razu */
-const CH_EXEC=/(^|[\s,.;:!?—–-])(zrób to|zrob to|wykonaj( to)?)[\s.!]*$/i;
-async function sendChat(f,exec,ask){
-  const id=f.dataset.chat,t=D.tasks.find(x=>x.id===id),ta=f.querySelector('[data-cq]'),text=(ta.value||'').trim();
-  if(!ask&&f.dataset.live==='1')exec=true;      /* agent pracuje: wiadomość do niego (serwer: live_message) */
-  if(!t)return;if(!text){if(exec){say('Napisz polecenie dla agenta.');ta.focus()}return}
-  const c=CH[id]||(CH[id]={messages:[],pending:false,error:''});
-  if(c.pending||c.exec){say('Czekam jeszcze na odpowiedź.');return}
-  if(!LIVE){say(PRV);return}
-  exec=!ask&&(!!exec||CH_EXEC.test(text));
-  ta.value='';ta.blur();c.messages.push({role:'ty',text:text});c.error='';if(exec)c.exec=true;else c.pending=true;if(DR)DR.chat=1;renderDrawer(true);
-  const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:exec});
-  c.exec=false;
-  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano.';renderDrawer(true);return}
-  if(exec){await load(true);const n=D&&D.tasks.find(y=>y.project===t.project&&y.file===t.file&&y.title===t.title);
-    if(n&&DR&&DR.kind==='task'&&DR.id===id&&n.id!==id){CH[n.id]=c;DR.id=n.id;DR.ref=refOf(n)}loadChat(n?n.id:id);return}
-  load();setTimeout(()=>loadChat(id),2500);
+  if(c.messages.length&&DR&&DR.kind==='task'&&DR.id===id)renderDrawer();
 }
 /* blok „Co zrobić”: cel, kroki (odhaczane z panelu), warunek ukończenia, materiały, notatki */
 const MV={};
@@ -7163,19 +7238,21 @@ function qHtml(o){const p=o.p,x=o.x,cm=canMeta(p);
   return '<div class="dhead"><span class="muted">Pytanie · '+esc(p.name)+'</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">'+x.n+'. '+esc(x.text)+'</h2>'+(qDate(x)?'<p>'+qDate(x)+'</p>':'')+
     (x.answer?'<div class="dbox"><h3>Odpowiedź</h3><p>'+esc(x.answer)+'</p></div>':'')+'<div class="qa qa-flat">'+qForm(p,x)+'</div>'+
     '<p class="note">'+(cm?'':'W projektach przykładowych odpowiedź nie jest zapisywana. ')+'<a href="'+phref(p,'ksiega')+'">Księga projektu</a></p>'}
+/* telefon: arkusz rozmowy zasłania cały ekran, więc przy otwarciu szczegółów i przy zmianie widoku się zwija */
+const pjdMobClose=()=>{if(A.pjKeep){A.pjKeep=false;return}if(PF.more['pj-chat']&&matchMedia('(max-width:820px)').matches){PF.more['pj-chat']=false;savePF()}};
 function openDrawer(kind,id){
-  const opener=document.activeElement;
+  const opener=document.activeElement;pjdMobClose();
   if(kind==='task'){const t=D.tasks.find(x=>x.id===id);if(!t)return;DR={kind:'task',id:id,ref:refOf(t),opener:opener,mat:''}}
   else if(kind==='q'){if(!qOf(id))return;DR={kind:'q',id:id,opener:opener}}
   else if(kind==='card'){if(!apDef(id,null)&&!apCards().some(x=>x.c.id===id))return;DR={kind:'card',id:id,opener:opener}}
   else{if(!runById(id))return;DR={kind:'run',id:id,opener:opener}}
-  renderDrawer(true);
+  renderDrawer(true);renderDock(CUR);
   const n=$('#drawer .x');if(n)n.focus();
   asRender();
 }
 function closeDrawer(){
   if(!DR)return;
-  const o=DR.opener,kind=DR.kind,id=DR.id;DR=null;A.mconf='';$('#drawerHost').innerHTML='';asRender();
+  const o=DR.opener,kind=DR.kind,id=DR.id;DR=null;A.mconf='';$('#drawerHost').innerHTML='';renderDock(CUR);scrollLockSync();asRender();
   if(o&&document.body.contains(o))o.focus();
   else{const n=document.querySelector('['+(kind==='task'?'data-task':kind==='q'?'data-q':'data-run')+'="'+CSS.escape(id)+'"]');if(n)n.focus()}
 }
@@ -8610,7 +8687,7 @@ function openScript(key){
     '<header class="ed-h"><button type="button" class="btn sec sm" data-scclose>← Wróć</button><div class="ed-tt"><b id="sc-t">Scenariusz: '+esc(mkTitle(t))+'</b><span class="muted" id="sc-meta"></span></div>'+
     '<div class="ed-acts" id="sc-acts"></div><p class="ed-next" id="sc-next" aria-live="polite"></p></header>'+
     '<div class="ed-b"><section class="sc-l" aria-label="Scenariusz"><div class="sc-doc" id="sc-doc"><p class="muted">Wczytuję scenariusz…</p></div></section>'+
-    '<aside class="ed-r" aria-label="Rozmowa o scenariuszu"><section class="ed-blk"><h3>Co zmienić?</h3><div class="ed-chat" id="sc-chat" aria-live="polite"></div>'+
+    '<aside class="ed-r" aria-label="Uwagi do scenariusza"><section class="ed-blk"><h3>Co zmienić?</h3><div class="ed-chat" id="sc-chat" aria-live="polite"></div>'+
     '<form class="ed-f" data-scfix><textarea class="fi" rows="3" maxlength="1000" data-scq aria-label="Co zmienić w scenariuszu" placeholder="Np. skróć do 30 s; dodaj ujęcie miernika z bliska; mów prościej"></textarea>'+
     '<div class="row"><button class="btn sec sm">Wyślij agentowi</button></div></form></section></aside></div></div>';
   document.body.classList.add('ed-open');scLoad();
@@ -8896,7 +8973,7 @@ async function copyPost(key){
 }
 function renderDrawer(force){
   const host=$('#drawerHost');
-  if(!DR){if(host.firstChild)host.innerHTML='';return}
+  if(!DR){if(host.firstChild)host.innerHTML='';scrollLockSync();return}
   let html,t=null;
   if(DR.kind==='task'){t=findTask(DR.ref,true);if(!t){closeDrawer();return}DR.id=t.id;DR.ref=refOf(t);html=taskHtml(t)}
   else if(DR.kind==='q'){const o=qOf(DR.id);if(!o){closeDrawer();return}html=qHtml(o)}
@@ -8909,7 +8986,7 @@ function renderDrawer(force){
   if(!force&&typing){if(t)setHtml($('#dag'),agentBlock(t));lvMount();return}
   const dw=$('#drawer');if(dw)dw.classList.toggle('dr-wide',DR.kind==='card');
   setHtml($('#dbody'),html);
-  lvMount();
+  lvMount();scrollLockSync();
 }
 
 
@@ -9937,7 +10014,6 @@ const odLast=m=>m.versions[m.versions.length-1];
 const odVer=m=>m.versions[Math.min(Math.max(OD.view,1),m.versions.length)-1];
 const odName=s=>{s=String(s||'').replace(/[-_]+/g,' ').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):''};
 /* pytanie, które brzmi jak poprawka: pod odpowiedzią „Wyślij jako poprawkę” */
-const OD_FIXRE=/zmie[nń]|popraw|inaczej|zamiast|usu[nń]|wi[eę]ksz|mniejsz|za du[zż]o|za ma[lł]o|dodaj|bez /i;
 const OD_CHIPS={image:['Inny tekst','Większe logo','Inne kolory','Mniej tekstu'],text:['Krócej','Prostszy język','Inny tytuł','Dodaj przykład'],
   video:['Większe napisy','Krócej','Wolniej','Inne zakończenie'],other:['Krócej','Prościej','Więcej szczegółów']};
 function odLiveSay(t){let el=document.getElementById('odlive');
@@ -10213,17 +10289,10 @@ function odDet(m,v){
     (D.tasks.some(x=>x.id===T.id)?'<button type="button" class="btn sec sm" data-task="'+esc(T.id)+'" data-k="od:task">Wszystkie szczegóły zadania</button>':'')+'</div></details>';
 }
 function odAsk(T){
-  if(!LIVE)return '';
-  let c=CH[T.id];if(!c){c=CH[T.id]={messages:[],pending:false,error:'',loading:true};loadChat(T.id)}
-  const L=c.messages.filter(x=>x.role!=='panel').slice(-6);
-  const lastQ=[...L].reverse().find(x=>x.role==='ty'),lastA=L.length&&L[L.length-1].role!=='ty';
-  return '<section class="panel od-ask" aria-labelledby="od-ask-h"><h2 id="od-ask-h">Zapytaj o tę pracę</h2><div class="od-pad">'+
-    L.map((x,i)=>'<div class="od-msg'+(x.role==='ty'?' od-me':'')+'"><b>'+(x.role==='ty'?'Ty':'Claude')+':</b> '+esc(x.text||'')+
-      (i===L.length-1&&lastA&&lastQ&&OD_FIXRE.test(lastQ.text||'')?'<div><button type="button" class="btn sec sm" data-od="chat2fix" data-k="od:c2f">Wyślij jako poprawkę</button></div>':'')+'</div>').join('')+
-    (c.pending?'<p class="od-note">Claude czyta zadanie i pliki… (do ok. 2 min)</p>':'')+(c.error?'<p class="od-note">'+esc(c.error)+'</p>':'')+
-    '<form class="od-askf" data-odform="ask"><label class="sr-only" for="od-ask-i">Pytanie o tę pracę</label><input id="od-ask-i" class="fi" maxlength="2000" autocomplete="off" data-k="od:ask" placeholder="Np. jaki papier proponujesz?">'+
-    '<button class="btn sec" type="submit" data-k="od:asks"'+(c.pending?' aria-disabled="true"':'')+'>Zapytaj</button></form>'+
-    '<p class="od-note">Pytanie nie zmienia pracy. Żeby zmienić, użyj „Popraw”.</p></div></section>';
+  if(!LIVE||!D.tasks.some(x=>x.id===T.id))return '';
+  return '<section class="panel od-ask" aria-labelledby="od-ask-h"><h2 id="od-ask-h">Pytanie o tę pracę</h2><div class="od-pad">'+
+    '<button type="button" class="btn sec" data-askt="'+esc(T.id)+'" data-k="od:ask" aria-controls="pchat">Zapytaj o to zadanie</button>'+
+    '<p class="od-note">Otwiera Rozmowę w projekcie. Pytanie nie zmienia pracy. Żeby zmienić, użyj „Popraw”.</p></div></section>';
 }
 function odOverlay(m){
   const o=OD.ov;if(!o)return '';
@@ -10351,15 +10420,6 @@ async function odAccept(){
   say('Odebrano: '+what+'.',8000);render(true);const h=document.querySelector('#view .od-h1');if(h)h.focus({preventScroll:true});
   load(true);odLoad();
 }
-async function odAskSend(f){
-  const m=OD.m;if(!m)return;const i=f.querySelector('input'),text=(i.value||'').trim(),T=m.task;if(!text)return;
-  if(!LIVE){say(PRV);return}
-  const c=CH[T.id]||(CH[T.id]={messages:[],pending:false,error:''});if(c.pending){say('Czekam jeszcze na odpowiedź.');return}
-  i.value='';c.messages.push({role:'ty',text:text});c.pending=true;c.error='';odRe('od:ask');
-  const x=await post('/api/task/chat',{id:T.id,title:T.title,message:text,execute:false});
-  if(!x.ok&&x.status!==202){c.pending=false;c.error=x.error||'Nie wysłano pytania.';render();return}
-  setTimeout(()=>loadChat(T.id),2500);
-}
 document.addEventListener('click',ev=>{
   if(!D||!CUR||CUR.v!=='odbior')return;
   const mk=ev.target.closest&&ev.target.closest('[data-odmk]');if(mk){ev.preventDefault();odMk(mk,ev);return}
@@ -10385,11 +10445,10 @@ document.addEventListener('click',ev=>{
     case 'files':OD.ov={t:'files'};OD.ovFocus=true;render(true);break;
     case 'ovclose':odOvClose();break;
     case 'follow':openForm(m.task.id,'accept');break;
-    case 'chat2fix':{const c=CH[m.task.id],q=c?[...c.messages].reverse().find(x=>x.role==='ty'):null;odFixOpen(q?q.text:'');break}
   }
 });
 document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset||!f.dataset.odform)return;ev.preventDefault();
-  if(f.dataset.odform==='fix')odSend();else if(f.dataset.odform==='ask')odAskSend(f)});
+  if(f.dataset.odform==='fix')odSend()});
 document.addEventListener('input',ev=>{const el=ev.target;if(!el.closest||!el.closest('.od'))return;
   if(el.dataset.odfx!=null&&OD.fix){OD.fix.text=el.value;const b=document.querySelector('[data-k="od:send"]');if(b)b.disabled=!(OD.fix.text.trim()||OD.fix.pins.length)||OD.busy;return}
   if(el.dataset.odpin!=null&&OD.fix){const p=OD.fix.pins.find(x=>x.n===+el.dataset.odpin);if(p)p.note=el.value;return}
@@ -10678,12 +10737,13 @@ function closeChecked(id){
 }
 /* Do poprawy: najpierw poprawka:, potem stan do zrobienia */
 function sendFix(t,text){
-  /* zadanie agenta: uwagi idą tą samą drogą co „Wyślij i wykonaj” — zapis pod zadaniem i od razu uruchomienie agenta */
+  /* zadanie agenta: uwagi idą tą samą drogą co „Wyślij i wykonaj” w Rozmowie w projekcie — zapis pod zadaniem i run_task */
   if((['agent','claude','codex'].includes(t.executor))&&t.kind!=='publikacja'&&LIVE){
     if(DR)DR.form='';render(true);
     enqueue(async()=>{
-      const x=await post('/api/task/chat',{id:t.id,title:t.title,message:text,execute:true});
+      const x=await post('/api/project/chat',{project:t.project,task:t.id,message:text,execute:true});
       if(!x.ok&&x.status!==202){if(x.status!==401)say(failMsg(x,'Nie wysłano uwag do poprawki.'));return}
+      const g=taskChatOf(t);if(g)loadPChat(g.id);
       const st=x.data&&x.data.status;say((st&&st.text)||'Wysłano do poprawy.',8000);await load(true);
     });
     return;
@@ -10993,7 +11053,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 function dpkShow(i){i.removeAttribute('aria-hidden');i.tabIndex=0;i.style.cssText='position:static;opacity:1;pointer-events:auto;width:auto;height:auto';try{i.focus();i.click()}catch(e){}}
 /* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
-  PF.more[a.dataset.pjgo==='pcode'?'pj-code':'pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
+  PF.more[a.dataset.pjgo==='pcode'?'pj-code':'pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;A.pjKeep=a.dataset.pjgo==='pchat'&&location.hash!==a.getAttribute('href');if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
 document.addEventListener('click',async ev=>{
   if(ev.target&&ev.target.id==='toast'){clearTimeout(noticeT);notice='';setToast('');return}
   if(!D)return;
@@ -11141,8 +11201,10 @@ document.addEventListener('click',async ev=>{
     if(ED.cur&&el.closest('#ed')&&t&&k==='done'&&(needsResult(t)||needsCount(t)))closeEditor();
     rowAct(el,()=>actTask(id,k))}return}
   if(el=qq('[data-run]')){openDrawer('run',el.dataset.run);return}
-  if(el=qq('[data-chatexec]')){const f=el.closest('form[data-chat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendChat(f,true);return}
-  if(el=qq('[data-chatask]')){const f=el.closest('form[data-chat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendChat(f,false,true);return}
+  if(el=qq('[data-askt]')){pjdAsk(el.dataset.askt);return}
+  if(el=qq('[data-pjdx]')){const f=el.closest('form[data-pchat]');if(f&&el.getAttribute('aria-disabled')!=='true')sendPChat(f,true);return}
+  if(el=qq('[data-pjdref]')){PJD.ref=null;renderDock(CUR);const n=$('#pjdock textarea');if(n)n.focus({preventScroll:true});return}
+  if(el=qq('[data-pjdatt]')){const a=PJD.att;PJD.att=null;if(a){const s=wwSt(a.project);s.sel=null;wwPost(a.project,{pw:'czysc'});wwPaint(a.project)}renderDock(CUR);const n=$('#pjdock textarea');if(n)n.focus({preventScroll:true});return}
   if(el=qq('[data-restart]')){restartRun(el.dataset.restart);return}
   if(el=qq('[data-task]')){openDrawer('task',el.dataset.task);return}
   if(el=qq('[data-state]')){if(DR&&DR.kind==='task'){const k=el.dataset.state,t=findTask(DR.ref,true);
@@ -11213,9 +11275,7 @@ document.addEventListener('submit',ev=>{
   if(f.dataset.edfix!=null){ev.preventDefault();edSend(f);return}
   if(f.dataset.scfix!=null){scSend(f);return}
   if(f.dataset.scsave!=null){scSave(f);return}
-  if(f.dataset.chat!=null){ev.preventDefault();sendChat(f);return}
   if(f.dataset.pchat!=null){ev.preventDefault();sendPChat(f);return}
-  if(f.dataset.wwform!=null){wwSend(f);return}
   if(f.dataset.wwcon!=null){wwConcept(f);return}
   if(f.dataset.drastart!=null){draAct('/api/drive/konto/start',{label:f.elements.label?(f.elements.label.value||'').trim():''});return}
   if(f.dataset.drafin!=null){draFinish(f,f.elements.url.value.trim());return}
@@ -11273,11 +11333,11 @@ document.addEventListener('keydown',ev=>{const svg=ev.target.closest&&ev.target.
   if(ev.key==='ArrowLeft'||ev.key==='ArrowRight'){ev.preventDefault();wkChartAt(svg,on&&svg.dataset.i!=null?+svg.dataset.i+(ev.key==='ArrowLeft'?-1:1):c.n-1)}
   else if(ev.key==='Escape'&&on){ev.preventDefault();ev.stopPropagation();wkChartOff()}},true);
 document.addEventListener('keydown',ev=>{
-  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-chat] textarea, form[data-pchat] textarea, form[data-edfix] textarea, form[data-scfix] textarea');
+  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-pchat] textarea, form[data-edfix] textarea, form[data-scfix] textarea');
   if(qt&&ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=qt.form;if(f.requestSubmit)f.requestSubmit();else f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return}
   if(!D||ev.metaKey||ev.ctrlKey||ev.altKey)return;
   const a=document.activeElement,tg=a&&a.tagName,k=ev.key,inField=tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT';
-  if(DR&&k==='Tab'){const box=$('#drawer');if(box){const f=Array.prototype.filter.call(box.querySelectorAll(FOCUSABLE),x=>!x.disabled&&x.offsetParent!==null);
+  if(DR&&k==='Tab'&&!(a&&a.closest&&a.closest('#pjdock'))){const box=$('#drawer');if(box){const f=Array.prototype.filter.call(box.querySelectorAll(FOCUSABLE),x=>!x.disabled&&x.offsetParent!==null);
     if(f.length){const i=f.indexOf(a);if(ev.shiftKey&&(i<=0)){ev.preventDefault();f[f.length-1].focus()}else if(!ev.shiftKey&&(i<0||i===f.length-1)){ev.preventDefault();f[0].focus()}}}return}
   if(inField){
     if(k==='Escape'){ev.preventDefault();
@@ -11327,7 +11387,7 @@ document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||c.d
   const pid=c.dataset.dracc,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={});P0.acc=c.value;P0.open={};render(true)});
 document.addEventListener('change',ev=>{const c=ev.target;if(!c||!c.dataset||!c.dataset.ghb)return;
   const S=GHSEL[c.dataset.ghb]||(GHSEL[c.dataset.ghb]=new Set());if(c.checked)S.add(c.value);else S.delete(c.value)});
-window.addEventListener('hashchange',()=>{if(DR){DR=null;$('#drawerHost').innerHTML=''}A.confirm='';A.lo=false;A.mconf='';A.bnMore=false;
+window.addEventListener('hashchange',()=>{pjdMobClose();if(DR){DR=null;$('#drawerHost').innerHTML='';SL.y=0}A.confirm='';A.lo=false;A.mconf='';A.bnMore=false;
   const a=document.activeElement,lost=!a||a===document.body||!document.contains(a)||!!(a.closest&&a.closest('#view,#bnsheet'));
   render(true);window.scrollTo(0,0);
   if(LIVE&&D&&route().v==='agenci')load();

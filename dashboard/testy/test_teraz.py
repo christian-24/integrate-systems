@@ -313,12 +313,13 @@ class Rozmowy(Baza):
     def test_czeka_na_odpowiedz(self):
         self.set_mode("czat-wolno")
         t = self.task("Zadanie A")
-        self.assertEqual(self.manager.chat_send(t["id"], t["title"], "Co dalej?")[0], 202)
+        self.assertEqual(self.manager.project_chat_send(t["project"], "Co dalej?", t["id"])[0], 202)
         pend = self.manager.chat_pending()
+        title = "Rozmowa w projekcie Projekt testowy: Zadanie A"
         self.assertEqual([(c["title"], c["project"], c["file"], c["taskId"]) for c in pend],
-                         [("Zadanie A", t["project"], t["file"], t["id"])])
+                         [(title, t["project"], t["file"], t["id"])])
         self.assertRegex(pend[0]["since"], r"^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d$")
-        self.assertEqual([c["title"] for c in server.build_data()["activity"]["chats"]], ["Zadanie A"])
+        self.assertEqual([c["title"] for c in server.build_data()["activity"]["chats"]], [title])
         self.wait_for(lambda: not self.manager.chat_pending())
 
 
