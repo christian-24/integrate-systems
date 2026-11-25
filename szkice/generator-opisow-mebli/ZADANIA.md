@@ -126,6 +126,7 @@ termin: 2026-12-23
   materiał: metryki.md#1
   materiał: metryki.md#3
   materiał: KARTA.md#Definicja ukończenia
+  pyta: Wybrana droga [wybór: go | zamrożenie | pivot]
   Reguła: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot.
 
 ## Etap: Pierwsze 10 kont (wariant B)
@@ -257,6 +258,7 @@ termin: 2026-11-30
   cel: pomiar kont nie liczy kont właściciela ani testowych
   gotowe gdy: identyfikatory podane przy zamknięciu zadania (pole notatki), np. „1, 2”, albo „brak”
   materiał: metryki.md#6
+  pyta: Identyfikatory kont [tekst, np. 1, 2 albo brak]
   Z pytania 11 w KARTA.md (odpowiedź przyjęła sposób, ale bez liczb); dopisane przy porządkach 2026-11-21. Panel admina → lista użytkowników → kolumna ID przy Twoich kontach (także konto z testu rejestracji na telefonie 18.11).
   Wpisanie liczb do `ARRAY[...]` w metryki.md zrobi agent.
 - [ ] Dodaj parametr UTM i pole źródła przy rejestracji | kto: claude | gdzie: chmura | kiedy: 2026-12-01

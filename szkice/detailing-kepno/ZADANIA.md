@@ -33,13 +33,16 @@ termin: 2027-01-15
   materiał: faza-0/
   materiał: faza-0/poprawki-strony.md
   materiał: faza-0/kampania-ads.md
+  pyta: Data startu [data]; Budżet fazy 0 (zł) [liczba]
 - [ ] Zmierz zapytania z Kępna przez 4–6 tygodni | kto: ty | kiedy: 2027-01-10 | czas: 20 | po: Ustal z Shield & Silent start Fazy 0
   cel: liczba zapytań i zleceń z regionu Kępna
   gotowe gdy: liczba zapytań i zleceń tygodniowo w notatce pod zadaniem
+  pyta: Zapytania tygodniowo [liczba]; Zlecenia tygodniowo [liczba]
 - [ ] Zdecyduj o Fazie 1 (stanowisko w Kępnie) | kto: ty | kiedy: 2027-01-15 | czas: 20 | po: Zmierz zapytania z Kępna
   cel: decyzja według progów z analizy (pkt 11)
   gotowe gdy: decyzja i liczby w DECYZJE.md
   materiał: analiza-rynku-kepno-shieldnsilent.md#11
+  pyta: Otwieramy Fazę 1 [tak/nie]; Zapytania tygodniowo [liczba]; Zlecenia tygodniowo [liczba]
 
 ## Do rozplanowania
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude

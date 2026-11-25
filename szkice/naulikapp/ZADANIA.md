@@ -134,6 +134,7 @@ termin: 2026-12-13
 - [ ] Wygeneruj keystore do podpisu wydania | kto: ty | gdzie: mac | kiedy: 2026-11-21 | czas: 20
   cel: klucz podpisu wydania gotowy do budowania AAB
   gotowe gdy: keystore i hasła zapisane w menedżerze haseł z kopią zapasową; plik keystore poza repozytorium
+  pyta: Hasło do keystore [hasło: gdzie właściciel wpisuje je sam]
   - [ ] `mkdir -p ~/klucze && keytool -genkey -v -keystore ~/klucze/naulikapp-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
   - [ ] plik `android/key.properties` w repozytorium na Macu: storePassword, keyPassword, keyAlias=upload, storeFile=/Users/krystianstryjakiewicz/klucze/naulikapp-upload.jks
   - [x] `android/.gitignore` zawiera `key.properties` i `*.jks` (sprawdził agent 2026-11-21)
@@ -175,6 +176,7 @@ termin: 2026-12-13
   cel: Google Play i ekran w aplikacji wskazują ten sam publiczny adres polityki
   gotowe gdy: polityka otwiera się pod publicznym URL bez logowania, a URL wpisany w Play Console
   materiał: docs/compliance/
+  pyta: Adres polityki prywatności [link]
   - [ ] GitHub → nowe publiczne repozytorium `naulikapp-polityka` → wgraj `docs/compliance/index.html` (Add file → Upload files) → Settings → Pages → Deploy from branch: main
   - [ ] `https://christian-24.github.io/naulikapp-polityka/` otwiera się w oknie prywatnym przeglądarki
   - [ ] Play Console → aplikacja → Zasady i programy → Treści w aplikacji → Polityka prywatności: wklejony ten adres
@@ -188,6 +190,7 @@ termin: 2026-12-13
 - [ ] Wgraj AAB do ścieżki zamkniętego testu | kto: ty | kiedy: 2026-11-24 | czas: 30 | po: Zbuduj podpisany AAB, Opublikuj politykę prywatności
   cel: wersja 1.0.0 w ścieżce zamkniętego testu wysłana do sprawdzenia przez Google z zapasem przed startem testu
   gotowe gdy: w Play Console wersja w ścieżce zamkniętego testu ma stan „W trakcie sprawdzania” albo „Dostępna”; lista testerów przypisana do ścieżki
+  pyta: Link do dołączenia do testu [link]; Testerzy [wybór: Grupa Google | lista adresów e-mail]
   - [ ] Play Console → aplikacja → Testowanie → Testy zamknięte: ścieżka (np. Alpha), kraje: Polska
   - [ ] Testerzy: Grupa Google (rekomendacja ze szkicu zaproszenia) albo lista adresów e-mail; skopiuj link do dołączenia
   - [ ] Utwórz wersję: Play App Signing włączone, wgraj app-release.aab, opis zmian, zapisz
@@ -197,6 +200,7 @@ termin: 2026-12-13
   cel: co najmniej 15 kandydatów dostało zaproszenie z instrukcją dołączenia do testu
   gotowe gdy: zaproszenia wysłane do wszystkich osób z listy; liczba potwierdzeń wpisana w notatce pod tym zadaniem
   materiał: docs/marketing/zaproszenie-testerzy-zamkniety-test.md
+  pyta: Liczba potwierdzeń [liczba]
   - [ ] w szkicu wpisane [LINK-GRUPA], [LINK-TEST] z Play Console i [KONTAKT]
   - [ ] wiadomość prywatna do każdej osoby z listy 15 kandydatów
   Wysyłka tylko przez Ciebie. Kto nie odpowie do 26.11, dostaje jedno przypomnienie (szkic przypomnienia w tym samym pliku).
@@ -204,6 +208,7 @@ termin: 2026-12-13
   cel: potwierdzenie, że podpisany build nadaje się do zamkniętego testu
   gotowe gdy: wszystkie scenariusze TC-01..TC-20 przechodzą albo błędy zapisane jako nowe zadania
   materiał: docs/testing/plan-testow-mvp.md
+  pyta: Liczba zaliczonych TC-01..TC-20 [liczba]; Liczba nowych zadań z błędami [liczba]
   docs/testing/plan-testow-mvp.md: plan odtworzony 21.11 (opisuje aplikację z maja 2026, nazwy ekranów mogą się różnić).
   - [ ] instalacja z Play (jesteś testerem własnej ścieżki) albo `bundletool build-apks --bundle=app-release.aab --output=naulik.apks --ks=$HOME/klucze/naulikapp-upload.jks --ks-key-alias=upload` i `bundletool install-apks --apks=naulik.apks`
   - [ ] TC-01..TC-20 przeprowadzone, wynik wpisany w kolumnie wyniku planu

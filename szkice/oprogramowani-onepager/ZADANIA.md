@@ -64,6 +64,7 @@
   cel: decyzja, czy strona może wyjść na oprogramowani.com
   gotowe gdy: uwagi wysłane z zakładki Strona albo zadanie zamknięte, co oznacza zgodę na publikację
   materiał: site
+  pyta: Decyzja o publikacji [wybór: zgoda na publikację | uwagi wysłane z zakładki Strona]
   - [ ] Przeczytaj oceny audytorów w wyniku poprzedniego zadania
   - [ ] Obejrzyj stronę i zdecyduj
 - [!] Strona: skróć teksty na stronie głównej | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | blokada: produkcyjne `npm run build` nie może przejść, dopóki w danych firmy brakuje wymaganych pól (VAT, adres, gwarancja, stawka i inne); wersja robocza buduje się bez błędu

@@ -26,6 +26,7 @@ termin: 2026-11-22
 - [x] Śledzenie: konwersja „połączenie z reklamy” | kto: ty | kiedy: 2026-11-22
   wynik: zamknięte przy porządkach 2026-11-21 (połączone z zadaniem „Konto Google Ads i program Google Ads Editor”)
 - [ ] Wybrać 1 istniejący film z Instagrama o wygłuszaniu (najlepiej z dźwiękiem przed i po) do reklamy Meta | kto: ty | kiedy: 2026-11-22 | czas: 10
+  pyta: Link do wybranego filmu [link]
 - [x] Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry | kto: ty | kiedy: 2026-11-19 | czas: 90
   cel: Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry. Szczegóły: Plan-filmow-do-28-stycznia.md, sekcja 1
 - [ ] Usunąć „Piława” z opisów na Instagramie | kto: ty | kiedy: 2026-11-22 | czas: 10
@@ -35,10 +36,12 @@ termin: 2026-11-22
   cel: Meta: reklama z celem „Wiadomości”, 12 zł/dzień, wybrany film z Instagrama, Wrocław + 40 km, wiek 25–60. Bez rabatów i gratisów (cały okres)
 - [ ] Od tego dnia każdego pytającego zapisujesz | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: Od tego dnia każdego pytającego zapisujesz: skąd przyszedł (Google, Instagram, TikTok, polecenie)
+  pyta: Źródło pytania [wybór: Google | Instagram | TikTok | polecenie]
 - [ ] Konto TikTok i kanał YouTube | kto: ty | kiedy: 2026-11-22 | czas: 20
 - [ ] Wizytówka: logo, zdjęcie w tle, 8+ zdjęć prac, prośba o opinię do dotychczasowych klientów | kto: ty | kiedy: 2026-11-22 | czas: 30
   materiał: google-wizytowka/README.md
 - [ ] Zapisać, ilu klientów było przed startem reklam (punkt odniesienia) | kto: ty | kiedy: 2026-11-22 | czas: 10
+  pyta: Liczba klientów przed startem reklam [liczba]
 - [ ] Nagraj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-22 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
@@ -120,6 +123,7 @@ termin: 2027-01-03
   z pytania 1, 2026-11-22
 - [ ] KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z… | kto: ty | kiedy: 2027-01-03 | czas: 20
   cel: 3 sty, KONTROLA 2: czy grudzień dał co najmniej 10 klientów z marketingu? Jeśli mniej niż 6, przenosimy budżet z kanału, który nie działa
+  pyta: Liczba klientów z marketingu w grudniu [liczba, np. 8]; Kanał do przeniesienia budżetu [wybór: Google | Meta]
 - [ ] Nagraj filmy tygodnia 28 gru – 3 sty | kto: ty | kiedy: 2027-01-03 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
@@ -160,6 +164,7 @@ termin: 2027-01-28
   cel: 25 sty, Meta: reklama „Zarezerwuj ceramikę lub PPF na wiosnę”. Zamiast reklamy bonów, 5 zł/dzień
 - [ ] KONTROLA 3: | kto: ty | kiedy: 2027-01-28 | czas: 20
   cel: 28 sty, KONTROLA 3:
+  pyta: Klienci z marketingu w styczniu [liczba, np. 12]; Koszt jednego klienta z reklam, zł [liczba, np. 140]; Podnosimy budżet do ok. 2 300 zł/mies. [tak/nie]
   - [ ] ilu klientów z marketingu było w styczniu (cel: co najmniej 11),
   - [ ] ile kosztował jeden klient z reklam (cel: do 150 zł),
   - [ ] decyzja: jeśli klient kosztuje do 150 zł, podnosimy budżet do ok. 2 300 zł/mies., żeby dojść do 15 klientów

@@ -63,6 +63,7 @@
 - [ ] Załóż Storage Box i konto tylko do zapisu | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 15
   cel: Storage Box z kontem pomocniczym tylko dla serwera i codziennymi migawkami, których kod z serwera nie może usunąć
   gotowe gdy: w Hetzner Console Storage Box (inna lokalizacja niż serwer) ma plan migawek codziennie, 14 sztuk, i konto pomocnicze z katalogiem integrate-serwer i samym SSH; login i hasło konta pomocniczego oraz konta głównego są w menedżerze haseł
+  pyta: Numer Storage Boxa [tekst, np. uXXXXXX]; Login konta pomocniczego [tekst, np. uXXXXXX-subN]
   - [ ] konto Hetzner ma włączone 2FA
   - [ ] Hetzner Console: zamów Storage Box BX11 w innej lokalizacji niż serwer (serwer w Helsinkach → Falkenstein), zapisz uXXXXXX
   - [ ] Snapshots: plan automatyczny codziennie o 05:00, 14 migawek
@@ -90,6 +91,7 @@
 - [ ] Przeprowadź dzień próbny bez PC | kto: ty
   cel: potwierdzenie, że do pracy nie jest potrzebny PC
   gotowe gdy: 24 h bez włączania PC i bez brakujących danych; braki zapisane w notatce pod tym zadaniem
+  pyta: Brakujące dane [tekst, np. plik z faktury]
   Warunek etapu 4 z ksiega/MIGRACJA.md; po nim PC idzie do resetu i sprzedaży.
 - [ ] Przygotuj PC do sprzedaży | kto: ty | gdzie: pc | po: Przeprowadź dzień próbny bez PC
   cel: PC bez danych, kont i dostępu do serwerów i GitHuba

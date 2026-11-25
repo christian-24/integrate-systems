@@ -25,6 +25,7 @@ termin: 2027-02-28
   cel: stanowisko organu w sprawie kategorii krwi płodowej i trybu rejestracji
   gotowe gdy: pismo wysłane; data i sposób wysyłki w notatce pod zadaniem
   materiał: etap_0/01_pismo_do_lekarza_weterynarii.md
+  pyta: Data wysłania [data]; Sposób wysyłki [wybór: e-mail | ePUAP]
   - [ ] uzupełnij dane nadawcy i właściwy powiat
   - [ ] wyślij e-mailem albo przez ePUAP i zapisz datę
 - [ ] Zadzwoń do 5–8 ubojni według listy pytań | kto: ty | kiedy: 2026-12-04 | czas: 90 | po: Wybierz 8 największych ubojni
@@ -32,11 +33,13 @@ termin: 2027-02-28
   gotowe gdy: przy każdej ubojni z listy notatka z odpowiedziami na pytania 1–9
   materiał: etap_0/02_rozmowy_z_ubojniami.md
   materiał: etap_0/ubojnie-wybor.md
+  pyta: Liczba krów tygodniowo [liczba]; Zgoda na pomiar [tak/nie]; Los płodów [tekst, np. utylizacja]
 - [ ] Wyślij zapytania ofertowe do 4–6 przetwórców | kto: ty | kiedy: 2026-12-04 | czas: 40 | po: Wybierz 6 przetwórców
   cel: cena za litr, minimalna dostawa i specyfikacja od przetwórców
   gotowe gdy: zapytania wysłane do co najmniej 4 przetwórców; data przy każdym
   materiał: etap_0/03_zapytanie_do_przetworcow.md
   materiał: etap_0/przetworcy-wybor.md
+  pyta: Data wysłania [data]
 - [ ] Przelicz model opłacalności na odpowiedziach z Etapu 0 | kto: claude | gdzie: chmura | kiedy: 2027-02-10 | po: Zadzwoń do 5–8 ubojni, Wyślij zapytania ofertowe
   cel: wynik finansowy na liczbach z ubojni i od przetwórców zamiast szacunków
   gotowe gdy: model_oplacalnosci.py ma podmienione parametry ze źródłem „Etap 0”, a wynik i różnica względem Dokumentu 2 są w etap_0/wynik-etapu-0.md
@@ -46,6 +49,7 @@ termin: 2027-02-28
   cel: decyzja według bramki z Dokumentu 3 (pkt 3, Etap 0)
   gotowe gdy: w DECYZJE.md wpis z datą, liczbami z Etapu 0 i decyzją
   materiał: 03_plan_wdrozenia.md
+  pyta: Decyzja [wybór: Etap 1 | przerwanie]; Liczba krów tygodniowo z Etapu 0 [liczba]; Cena za litr z Etapu 0 [liczba]
 
 ## Do rozplanowania
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude

@@ -51,6 +51,7 @@ termin: 2026-12-18
   gotowe gdy: 10 firm dostało pierwszą wiadomość bez ceny; data i kanał zapisane w notatce pod tym zadaniem
   materiał: KARTA.md#Zasady pracy agentów
   materiał: kampanie/pozyskanie-klientow.md
+  pyta: Data wysłania [data]; Kanał wysyłki [tekst, np. nazwa kanału]
   Szkice: wynik zadania „Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości” (panel dopisze plik jako materiał). Oferta z ceną wymaga osobnej zgody.
   Termin 25.11: 4 dni po wyborze firm (21.11), zapas na wgranie listy i przegląd szkiców.
 - [ ] Przeprowadź rozmowy z firmami, które odpisały | kto: ty | kiedy: 2026-12-01 | czas: 60 | po: Napisz do 10 wybranych firm | licznik: rozmowy
