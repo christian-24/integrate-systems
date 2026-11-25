@@ -54,13 +54,18 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
 
 ### Strona projektu
 
-- Pod tytułem: faza, postęp, etap, stan GitHuba; przy projekcie z częściami przełącznik „Całość · <część główna> ·
-  <części>” (domyślnie Całość). Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części
-  (np. „Strona WWW”); wybrana część pokazuje tylko swoje i swoje zakładki (np. Strona).
-- Plan: decyzje, najbliższe 7 dni i sekcja **Kod i pliki**: na wierzchu po jednym wierszu GitHub (gałąź, „zgodne
-  z GitHubem” albo „N commitów do wysłania”, „brak pola github:”; przy projekcie z częściami wiersz na każde
-  repozytorium części) i Google Drive na projekt i każdą część (ścieżka folderu z kontem, N pozycji, albo „bez
-  folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
+- Układ według `dashboard/WYGLAD.md`. Wiersz nazwy: stan projektu, po prawej „Szczegóły” (fazy, kafle, Księga, GitHub
+  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Pod nazwą jedna linia: faza · postęp · bieżący etap. Przy projekcie
+  z częściami przełącznik „Całość · <część główna> · <części>” (domyślnie Całość) w jednym wierszu, przewijany
+  w poziomie. Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana
+  część pokazuje tylko swoje i swoje zakładki (np. Strona). Zakładki w jednym wierszu, na telefonie przewijane w poziomie.
+- Plan: sekcje rozwijane z licznikiem: **Decyzje** i **Dla Ciebie dziś** otwarte, **Po terminie**, **Agenci** i **Później**
+  (do 7 dni) zwinięte; stan każdej zapamiętany na urządzeniu (`pp-*`). W wierszu jeden znacznik terminu (po terminie
+  czerwony tekst) i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same
+  zadania co grupa „Po terminie” w Zadaniach (Twoje, bez publikacji, bez czekających na poprzednika); publikacje po
+  terminie są w „Dla Ciebie dziś”. Na końcu sekcja **Kod i pliki**: na wierzchu GitHub („zgodne z GitHubem”, „N zmian
+  do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
+  folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
   gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
   folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
   i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
@@ -75,15 +80,15 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   w instrukcji zadania. Połączenia sprzed kont (osobne logowanie na folder) działają dalej; „Zmień folder” przenosi
   je na konto.
 - **Rozmowa** (Rozmowa w projekcie): z agentem rozmawia się tylko tu i w Asystencie; obie rozmowy mają te same
-  uprawnienia i tę samą drogę działania (AGENCI.md, „Rozmowy: dwa miejsca, jeden silnik”). Przycisk w prawym dolnym
-  rogu strony projektu, szczegółów zadania i odbioru pracy rozwija okno czatu (na komputerze 380×520 px, przy otwartych
+  uprawnienia i tę samą drogę działania (AGENCI.md, „Rozmowy: dwa miejsca, jeden silnik”). Przycisk „Rozmowa” w nagłówku
+  strony projektu i szczegółów zadania (w odbiorze pracy w prawym dolnym rogu) rozwija okno czatu (na komputerze 380×520 px, przy otwartych
   szczegółach obok nich; na telefonie arkusz od dołu na całą szerokość, nad klawiaturą ekranową); „Zwiń” albo Esc je
   zwija. Rozmowa dotyczy bieżącego projektu: przy projekcie z częściami całości (rozmowa projektu głównego, czyta
   i zmienia też pliki części) albo wybranej części (jej własna rozmowa); w szczegółach zadania projektu albo części
-  tego zadania. Część główna i Całość mają tę samą rozmowę. Okno zachowuje historię, na zwiniętym przycisku widać
+  tego zadania. Część główna i Całość mają tę samą rozmowę. Okno zachowuje historię, przy przycisku widać
   „czeka na odpowiedź” i „nowa odpowiedź”. Prośba o pracę zakłada i uruchamia zadanie agenta (`POST
   /api/project/chat`). Treść strony ma odstęp na dole, żeby przycisk niczego nie zasłaniał.
-  - **Zapytaj o to zadanie** (szczegóły zadania i odbiór pracy; w zadaniu nie ma osobnego czatu) otwiera rozmowę
+  - **Rozmowa** w nagłówku szczegółów zadania (w zadaniu nie ma osobnego czatu) otwiera rozmowę
     z odnośnikiem „O zadaniu: …”: agent dostaje tytuł, szczegóły i ostatnie uruchomienie. Przy zadaniu agenta obok
     „Wyślij” jest „Wyślij i wykonaj” (polecenie pod zadaniem i uruchomienie), a gdy agent pracuje, „Wyślij do agenta”.
     Odnośnik usuwa „×”. Dawna rozmowa o zadaniu zostaje do odczytu w szczegółach („Dawna rozmowa o zadaniu”).
