@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-25: Serial wycofany z planu filmów
+- Kontekst: plan „Zima bez kompromisów” miał co piątek odcinek serialu („[Imię]…”, odc. 2–9 do 22.01).
+- Decyzja: właściciel wycofał serial na teraz; może wrócić w przyszłości. Zostają filmy w poniedziałki (wygłuszanie) i środy (auto klienta).
+- Skutki: z kampanii usunięte 8 publikacji serialu i ich foldery scenariuszy (treść jest w historii git); cel „30 filmów do 28.01” do decyzji właściciela przy najbliższym przeglądzie.
+- Kto: właściciel, zapisane przez sesję z Maca
+
 ## 2026-11-25: Google Ads: kampania Wygłuszanie opublikowana
 - Kontekst: konto Google Ads 434-771-1860 założone, karta i wizytówka podpięte. Kampania budowana z właścicielem krok po kroku w przeglądarce.
 - Decyzja: kampania `SNS – Wygłuszanie` tylko w wyszukiwarce Google, Wrocław + 50 km (opcja „Obecność”), 18 zł dziennie, maks. 6 zł za kliknięcie, AI Max wyłączone, 10 słów kluczowych (ścisłe i do wyrażenia), 12 wykluczeń, reklama z oceną „Świetna” bez długich myślników, 6 linków do podstron, 5 objaśnień, przycisk „Zadzwoń” pn-pt 9-18. Telefon z reklamy liczony jako konwersja po 30 s, raz na osobę; nagrywanie rozmów wyłączone (warunki odrzucone). Detailing na razie nie startuje. Do codziennych liczb skrypt Google Ads zamiast Google Ads API.

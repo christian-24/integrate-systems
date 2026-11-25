@@ -15,7 +15,7 @@ Kampania „Zima bez kompromisów” dla Shield & Silent Studio (detailing i wyg
 
 ## Zakres
 - Reklamy: Google Ads (Wygłuszanie, Detailing, od stycznia Ceramika i PPF) i Meta (Wiadomości, bony świąteczne do 21.12, wiosna od 25.01) według `Plan-reklam-do-28-stycznia.md`.
-- Filmy: 3 tygodniowo (pn DRZWI, śr DOWÓD, pt SERIAL) według `Plan-filmow-do-28-stycznia.md`; publikacja 18:00–20:00.
+- Filmy: 2 tygodniowo (pn DRZWI, śr DOWÓD; serial usunięty 25.11) według `Plan-filmow-do-28-stycznia.md`; publikacja 18:00–20:00.
 - Wizytówka Google, strona (ceny, bez adresu), landing page, kontrole 6.12, 3.01 i 28.01.
 
 ## Poza zakresem
