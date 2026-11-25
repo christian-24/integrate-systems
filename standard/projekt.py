@@ -472,6 +472,8 @@ def parse_field(text):
             kind = "data"
         else:
             kind, where = "hasło", rest
+            if re.match(r"^(gdzie|miejsce)\b", where, re.I):   # przepisany wzór zamiast miejsca
+                where = ""
     if kind != "hasło" and SECRET_LABEL.search(label):
         kind, hint, options = "hasło", "", []
     return {"label": label, "type": kind, "hint": hint, "options": options, "where": where}

@@ -64,6 +64,7 @@ class Parser(unittest.TestCase):
                 projekt.asks_value(label)
         self.assertEqual(projekt.parse_field("Słowa kluczowe")["type"], "tekst")
         self.assertEqual(projekt.asks_value("Hasło do Meta", strict=False), "Hasło do Meta [hasło]")
+        self.assertEqual(projekt.parse_field("Hasło [hasło: gdzie właściciel wpisuje je sam]")["where"], "")
         with self.assertRaises(ValueError):                                # na pole hasła nie ma odpowiedzi
             projekt.answer_of(projekt.parse_field("Hasło [hasło]"), "tajne")
 
