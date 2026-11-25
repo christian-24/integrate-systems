@@ -22,6 +22,7 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
            na plik ATRAPA_DALEJ_PLIK, potem jak ok (restart panelu w trakcie pracy)
   czekaj-commit  jak czekaj, a praca.txt zatwierdza sam przed czekaniem
   czesc    jak ok, a w każdym katalogu roboczym części z promptu („katalog roboczy … (gałąź”) zapisuje z-czesci.txt
+  pola     propozycja pól formularza (prompt „Zaproponuj pola”): JSON z jednym polem [liczba]; inne tryby: kod 1
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
   (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”; wiersze „Uruchom: …” (rozdzielone
   „;”) z ostatniego wiersza wracają na końcu odpowiedzi (rozmowa o projekcie uruchamia zadania). Tryby: czat-wolno (odpowiedź
@@ -316,6 +317,13 @@ def main(argv):
             return 0
         if mode() in ("strona", "zrzuty"):
             out({"type": "result", "result": json.dumps({"wykonawca": "claude", "powód": "Praca nad stroną"})})
+            return 0
+        return 1
+    if "--no-session-persistence" in argv and prompt.startswith("Zaproponuj pola"):
+        journal({"argv": argv, "prompt": prompt})
+        if mode() == "pola":
+            out({"type": "result", "result": "```json\n" + json.dumps({"zadania": [{"n": 1, "pyta": "Liczba kont [liczba]"}]})
+                 + "\n```", "usage": {"input_tokens": 40, "output_tokens": 12}})
             return 0
         return 1
     return task(argv, prompt)

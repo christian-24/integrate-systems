@@ -448,6 +448,14 @@ Gałąź bez uruchomienia (pole `gałąź:` zadania): `/api/agent/merge` z `{"pr
 `/api/agent/diff?project=&branch=`; tylko gałęzie `agent/…`, baza to gałąź wybrana teraz w repozytorium.
 Zasada w poleceniu agenta: bez zlecania właścicielowi kroków technicznych; potrzebne dane jako pytanie w `KARTA.md`.
 Odpowiedzi z formularza `pyta:` poprzedników (`po:`) trafiają do polecenia jako „Dane od właściciela”.
+Zadanie `kto: ty`, które wymaga danych od właściciela, dostaje od razu `pyta:` z typami (`Etykieta [tekst, np. …]`,
+`[tak/nie]`, `[liczba]`, `[wybór: A | B]`, `[data]`, `[link]`; format w STANDARD.md); dotyczy Asystenta, Rozmowy
+w projekcie, PM i agentów. Pól na hasła nie ma: `Hasło do X [hasło: gdzie je wpisać]` daje tylko zdanie.
+Zadanie właściciela bez `pyta:` panel pokazuje raz Claude Haiku (`POST /api/task/pola`, `dashboard/pola.py`),
+a przy pierwszym starcie po wdrożeniu robi to jednorazowo dla wszystkich otwartych zadań właściciela z rejestru;
+lista dopisanych pól jest w `pola-zadan.json` (katalog uruchomień) i w danych panelu (`fieldsMigration`).
+„Zrobione” w formularzu to `POST /api/task/finish {id, title, values, count?}`: odpowiedzi sprawdzone według typu,
+`odpowiedź:`, kroki, stan `[x]` w jednym zapisie.
 
 `GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
 błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.

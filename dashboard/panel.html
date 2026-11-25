@@ -955,6 +955,12 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .fl{display:grid;gap:3px;font-size:12.5px;color:var(--ink-3);min-width:0;flex:1}
 .fl .fi{width:100%;color:var(--ink);font-size:14px}
 .abox .row .fl{min-width:140px}
+.abox.own .dform{gap:10px}
+.own-chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;color:var(--ink);cursor:pointer;min-height:var(--ctl-h-sm);padding:4px 0}
+.own-chk input{flex:0 0 auto;margin:2px 0 0;width:20px;height:20px;accent-color:var(--accent)}
+.own-chk .ok{color:var(--ink-3);text-decoration:line-through}
+.own-steps{display:grid;gap:2px}
+.own-pw{margin:0}
 
 /* Dziś: liczniki, pasek serwera */
 .ycnt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 16px 10px;max-width:600px}
@@ -2989,8 +2995,19 @@ function normDetail(d){
     changes:L(d.changes).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),     /* zmiany: (co agent zmienił po poprawce) */
     pins:L(d.pins).filter(x=>x&&typeof x==='object'),                                     /* znaczniki poprawki ({n,file,x,y,t,note}) */
     scheduled:s(d.scheduled),
-    branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,6),
+    branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,8),
+    fields:normFields(d.fields,d.asks),
     answers:L(d.answers).filter(a=>a&&typeof a.label==='string'&&a.label.trim()).map(a=>({label:a.label.trim(),value:s(a.value)}))};
+}
+/* pola formularza z „pyta:” ({label,type,hint,options,where}); starszy serwer bez fields: same etykiety jako tekst */
+const FTYPES=['tekst','tak/nie','liczba','wybór','data','link','hasło'],SECRET_RE=/hasł|hasel|haseł|password|\btoken|\bsekret|\bsecret|\bklucz(a|e|em|y|u)?\b|\bapi[ _-]?key|\bPIN\b/i;
+function normFields(F,asks){
+  const s=v=>typeof v==='string'?v.trim():'',L=v=>Array.isArray(v)?v:[];
+  let o=L(F).filter(f=>f&&typeof f.label==='string'&&f.label.trim()).map(f=>({label:f.label.trim(),type:FTYPES.indexOf(f.type)>=0?f.type:'tekst',hint:s(f.hint),
+    options:L(f.options).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),where:s(f.where)}));
+  if(!o.length)o=L(asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>({label:x.trim(),type:'tekst',hint:'',options:[],where:''}));
+  o.forEach(f=>{if(f.type==='wybór'&&f.options.length<2)f.type='tekst';if(f.type!=='hasło'&&SECRET_RE.test(f.label))f.type='hasło'});
+  return o.slice(0,8);
 }
 const STATK={'wyświetlenia':'views','wyswietlenia':'views','kliknięcia':'clicks','klikniecia':'clicks','konta':'accounts','link':'link'};
 const hasStats=s=>!!(s&&(s.views||s.clicks||s.accounts||s.link));
@@ -6805,6 +6822,7 @@ function taskHtml(t){
     mv+='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>Zatwierdź</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>'}
   /* odbiór: krótko „Wynik do odbioru · wersja N” i przejście na stronę odbioru; formularze z list (nowe zadanie, poprawka) zostają */
   else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+(dForm(t,'accept')||dForm(t,'fix')?accBox(t,d,db,dec):odDrawerBox(t));shown.post=1}
+  else if(ownForm(t,br,ftask)){mv=ownBox(t);shown.own=1}
   else if(d.asks.length&&!d.answers.length){mv=askBox(t);shown.ask=1}
   else if(br){mv='<div class="abox you"><b>Przejrzyj zmiany agenta i połącz je z projektem</b><p class="move">Połączenie zamyka to zadanie.</p>'+chgBlock(br,true,t)+'</div>'}
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
@@ -6827,7 +6845,7 @@ function taskHtml(t){
   h+=mv;
   /* zadanie o ocenie strony: „Otwórz podgląd” w ramce ruchu (wyżej) albo pod nią */
   {const wb=wwBtn(t,'');if(wb&&mv.indexOf('data-k="wwgo:')<0)h+='<div class="row ww-go">'+wb+'</div>'}
-  if(!hasResult&&t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
+  if(!hasResult&&t.state!=='done'&&needsMe(t)&&!(shown.own&&(d.steps.length||d.fields.length))){const ns=shown.own?'':firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
   const liveRun=D.agents?runOf(t):null;
   const progress=(()=>{const r=liveRun;
     if(r&&isAct(r))return '<div class="dbox lv-wrap"><h3>'+(r.state==='running'?'Agent pracuje':'Agent w kolejce')+'</h3>'+lvPh(r.id)+
@@ -6839,7 +6857,7 @@ function taskHtml(t){
   if(hasResult)h+=odVersionList(ODR[t.id],rv,true)+progress;
   h+='<label class="fl"><span>Tytuł</span><textarea class="fi ttl" rows="2" maxlength="160" data-f="title" aria-label="Tytuł">'+esc(t.title)+'</textarea></label>';
   h+=checkBox(t);
-  h+=planBlock(t);
+  h+=planBlock(t,!!shown.own);
   if(pub&&t.channel&&isDay(t.date)&&!shown.post)h+=postBox(t,t.date.slice(0,10),false,shown.film?'text':'');
   h+=wynBlock(t,d,zg,!!dForm(t,'accept')||!!dForm(t,'fix'),t.executor==='ty',readUp||!!rv);
   if(pday&&!shown.post)h+=postBox(t,pday,false,shown.film&&pday===fday?'text':'');
@@ -6910,13 +6928,13 @@ async function loadChat(id){
 const MV={};
 const matKey=(t,r)=>t.project+'|'+r.path+'#'+r.anchor;
 const refLabel=r=>(r.path.split('/').pop()||r.path)+(r.anchor?' #'+r.anchor:'');
-function planBlock(t){
+function planBlock(t,noSteps){
   const d=t.detail||normDetail(null);
   if(!hasPlan(d))return '<div class="dbox"><h3>Co zrobić</h3><p class="note">Brak szczegółów: cel, warunek ukończenia, kroki, materiały.</p>'+editBlock(t)+'</div>';
   const nd=d.steps.filter(x=>x.done).length;
   let h='<div class="dbox"><h3><span>Co zrobić</span>'+(d.steps.length?'<small class="num">kroki '+nd+' z '+d.steps.length+'</small>':'')+'</h3>';
   if(d.goal)h+='<p>'+esc(d.goal)+'</p>';
-  if(d.steps.length)h+='<ul class="steps-ro">'+d.steps.map(x=>'<li><label><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label></li>').join('')+'</ul>';
+  if(d.steps.length&&!noSteps)h+='<ul class="steps-ro">'+d.steps.map(x=>'<li><label><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label></li>').join('')+'</ul>';
   if(d.doneWhen)h+='<div class="sub">Gotowe, gdy</div><p>'+esc(d.doneWhen)+'</p>';
   if(d.refs.length)h+='<div class="sub">Materiały</div>'+matButtons(t,'p');
   if(d.notes.length)h+='<div class="sub">Notatki</div><ul class="notes">'+d.notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
@@ -7069,6 +7087,78 @@ function branchRun(t){
   return BR[id]||(BR[id]={id:id,pseudo:true,project:t.project,branch:b,base:'',changes:[],merged:'',task:t.id});
 }
 const diffUrl=id=>{const b=BR[id];return '/api/agent/diff?'+(b?'project='+encodeURIComponent(b.project)+'&branch='+encodeURIComponent(b.branch):'id='+encodeURIComponent(id))};
+/* ---------- formularz zadania właściciela: cel, pola z „pyta:” (typy), kroki, „Zrobione” ----------
+   Zrobione zapisuje odpowiedzi (odpowiedź:) i zamyka zadanie jednym żądaniem POST /api/task/finish; zadania z po:
+   na tym zadaniu przestają czekać. Zadanie bez pyta: raz prosi serwer o propozycję pól (POST /api/task/pola). */
+const ownForm=(t,br,ftask)=>{const d=t.detail;
+  return t.state!=='done'&&(t.executor==='ty'||!t.executor)&&t.kind!=='publikacja'&&!t.needsYou&&(d.fields.length>0||(!br&&!ftask))};
+const ownInputs=t=>t.detail.fields.filter(f=>f.type!=='hasło');
+/* zadanie, dla którego serwer może zaproponować pola (jak pola.needs_fields) */
+const fieldsDue=t=>t.executor==='ty'&&t.state!=='done'&&t.kind!=='publikacja'&&!t.needsYou&&!t.counter&&!t.detail.asks.length&&!t.detail.branch&&!/^kampanie\//.test(t.file||'');
+const FLD={};
+function askFields(t){
+  if(!LIVE||FLD[t.id]||!fieldsDue(t))return;
+  FLD[t.id]='wait';const ref=refOf(t);
+  /* bez kolejki zapisów: wywołanie modelu trwa do ok. minuty, a „Zrobione” ma działać od razu */
+  post('/api/task/pola',{id:ref.id,title:ref.title}).then(r=>{FLD[t.id]=r.ok?'done':'fail';
+    if(r.ok&&r.data&&r.data.asks&&!pending)load(true);else if(DR&&DR.kind==='task'&&DR.id===t.id)renderDrawer()},()=>{FLD[t.id]='fail'});
+}
+/* wartość pola: wpisana w tej sesji (DR.fv), zapisana odpowiedź albo pusta */
+function ownVal(t,f,i){
+  if(DR&&DR.fv&&DR.fv['a'+i]!=null)return DR.fv['a'+i];
+  const a=t.detail.answers.find(x=>x.label===f.label||x.label===f.label.replace(/=/g,'-'));return a?a.value:'';
+}
+function fieldHtml(t,f,i){
+  const v=ownVal(t,f,i),k='a'+i,at=' data-fv="'+k+'" data-k="fv:'+k+'" autocomplete="off"',lab='<span>'+esc(f.label)+'</span>';
+  if(f.type==='hasło')return '<p class="note own-pw">'+esc(f.label)+' wpisujesz sam '+(f.where?esc(f.where.replace(/\.$/,'')):'w serwisie, którego dotyczy')+', nie w panelu.</p>';
+  if(f.type==='tak/nie')return '<label class="own-chk"><input type="checkbox"'+at+(v==='tak'?' checked':'')+'>'+lab+'</label>';
+  if(f.type==='wybór')return '<label class="fl">'+lab+'<select class="fi"'+at+'>'+opt([['','wybierz']].concat(f.options.map(o=>[o,o])),f.options.indexOf(v)>=0?v:'')+'</select></label>';
+  const ty=f.type==='liczba'?' inputmode="decimal"':f.type==='data'?' type="date"':f.type==='link'?' type="url" inputmode="url" autocapitalize="none" spellcheck="false"':'';
+  const ph=f.hint||(f.type==='link'?'https://…':'');
+  return '<label class="fl">'+lab+'<input class="fi'+(f.type==='liczba'?' num':'')+'"'+ty+at+' maxlength="200"'+(ph?' placeholder="'+esc(ph)+'"':'')+' value="'+esc(v)+'"></label>';
+}
+function ownBox(t){
+  const d=t.detail,L=(t.unlocksL||[]).filter(u=>!u.done),goal=d.goal?cap(d.goal.replace(/\.$/,''))+'.':'';
+  askFields(t);
+  let h='<div class="abox you own"><b>Twój ruch</b>'+(goal?'<p class="move">'+esc(goal)+'</p>':'')+'<form class="dform" data-dform="own" novalidate>';
+  h+=d.fields.map((f,i)=>fieldHtml(t,f,i)).join('');
+  if(d.steps.length)h+='<div class="own-steps" role="group" aria-label="Kroki">'+d.steps.map(x=>'<label class="own-chk"><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label>').join('')+'</div>';
+  if(needsCount(t))h+=countField(t);
+  if(FLD[t.id]==='wait'&&!d.fields.length)h+='<p class="note" role="status">Sprawdzam, czy to zadanie potrzebuje danych od Ciebie…</p>';
+  const ww=wwBtn(t,'');
+  h+='<div class="row">'+ww+'<button class="btn sm" data-k="fv:own">Zrobione</button>'+(L.length?'<span class="rsn">Potem: '+esc(L.map(u=>u.title).join('; '))+'</span>':'')+'</div></form></div>';
+  return h;
+}
+/* sprawdzenie jak projekt.answer_of: komunikat albo '' */
+const NUM_RE=/^-?\d{1,3}(?:[  ]\d{3})+(?:[.,]\d+)?$|^-?\d+(?:[.,]\d+)?$/;
+function ownCheck(f,v){
+  if(f.type==='tak/nie')return '';
+  if(!v)return 'Wpisz: '+f.label+'.';
+  if(f.type==='liczba'&&!NUM_RE.test(v))return f.label+': wpisz liczbę.';
+  if(f.type==='data'&&!/^\d{4}-\d\d-\d\d$/.test(v))return f.label+': wybierz datę.';
+  if(f.type==='link'&&!/^https?:\/\/\S+$/.test(v))return f.label+': adres zaczyna się od https://.';
+  if(f.type==='wybór'&&f.options.indexOf(v)<0)return f.label+': wybierz jedną z opcji.';
+  return '';
+}
+function saveOwn(t,f){
+  const d=t.detail,vals=[];let n=null;
+  for(let i=0;i<d.fields.length;i++){const fl=d.fields[i];if(fl.type==='hasło'){vals.push(null);continue}
+    const x=f.querySelector('[data-fv="a'+i+'"]');const v=fl.type==='tak/nie'?!!(x&&x.checked):cleanT(x?x.value:'').slice(0,200);
+    const e=ownCheck(fl,v);if(e){say(e);focusK('fv:a'+i);return}vals.push(v)}
+  if(f.querySelector('[data-fv="count"]')){const c=String((f.querySelector('[data-fv="count"]')||{}).value||'').replace(/\s/g,'');
+    if(c&&!/^\d{1,6}$/.test(c)){say('Liczba całkowita od 0.');focusK('fv:count');return}n=c?+c:null}
+  const prev={answers:d.answers,state:t.state};
+  d.answers=d.fields.map((fl,i)=>fl.type==='hasło'?null:{label:fl.label,value:fl.type==='tak/nie'?(vals[i]?'tak':'nie'):vals[i]}).filter(Boolean);
+  t.state='done';if(DR){DR.form='';DR.fv=null}derive(D);render(true);
+  if(!LIVE){say(PRV);return}
+  const ref=refOf(t),body={id:ref.id,title:ref.title,values:vals};if(n!=null)body.count=n;
+  enqueue(async()=>{
+    const r=await post('/api/task/finish',body);
+    if(!r.ok){Object.assign(d,{answers:prev.answers});t.state=prev.state;derive(D);render(true);if(r.status!==401)say(failMsg(r,'Nie zamknięto zadania.'));return}
+    const L=(t.unlocksL||[]).filter(u=>!u.done);
+    say((vals.some(v=>v!=null)?'Zapisano odpowiedzi i zamknięto zadanie.':'Zamknięto zadanie.')+(L.length?' Odblokowane: '+shortT(L[0].title,60)+(L.length>1?' (+'+(L.length-1)+')':'')+'.':''));
+  });
+}
 /* formularz „pyta:”: właściciel wpisuje kilka wartości, resztę robi agent w zadaniu z po: na tym zadaniu */
 function askBox(t){
   const d=t.detail,n=d.asks.length,L=(t.unlocksL||[]).filter(u=>!u.done);
@@ -7212,8 +7302,8 @@ function wynBlock(t,d,decIn,leftIn,own,readUp){
       (ra.length?'<div class="mats">'+ra.map(r=>'<a class="btn sec sm" href="'+esc(assetUrl(t,r))+'" target="_blank" rel="noopener">'+esc(r.path.split('/').pop())+'</a>').join('')+'</div>':''):'')+'</div>';
 }
 const nextText=n=>esc(n.title)+(n.executor?' · '+esc(WHO[n.executor].n):'')+(isDay(n.date)?' · '+ddl(n.date):'');
-/* zadanie kto: ty z warunkiem „gotowe gdy”: przy „Zrobione” najpierw pole na wynik */
-const needsResult=t=>t.executor==='ty'&&!t.needsYou&&t.state!=='done'&&t.kind!=='publikacja'&&!!t.detail.doneWhen;
+/* zadanie właściciela z polami do wpisania (pyta:): „Zrobione” w listach otwiera szczegóły z formularzem */
+const needsResult=t=>t.state!=='done'&&ownForm(t,t.detail.branch?1:null,false)&&ownInputs(t).length>0;
 /* odbiór z resztą pracy albo z propozycją następnego zadania: „Odebrane” pokazuje formularz nowego zadania */
 const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
@@ -7300,6 +7390,7 @@ function openForm(id,k){
   const t=D.tasks.find(x=>x.id===id);if(!t)return;
   if(!(DR&&DR.kind==='task'&&DR.id===id))openDrawer('task',id);
   if(!DR||DR.kind!=='task')return;
+  if(k==='done'&&needsResult(t)){renderDrawer(true);focusK('fv:a'+t.detail.fields.findIndex(f=>f.type!=='hasło'));return}
   DR.form=k;DR.fv=formInit(t,k);renderDrawer(true);
   focusK(k==='accept'?'fv:title':k==='fix'?'fv:fix':needsCount(t)?'fv:count':'fv:result');
 }
@@ -11081,6 +11172,7 @@ function submitForm(f){
   else if(k==='edit')saveEdit(t);
   else if(k==='pub')savePub(t);
   else if(k==='ask')saveAsks(t,t.detail.asks.map((_,i)=>val('a'+i)));
+  else if(k==='own')saveOwn(t,f);
 }
 function agentAct(el){
   const a=el.dataset.ag,id=el.dataset.id||'';
@@ -11400,7 +11492,7 @@ document.addEventListener('change',ev=>{
   if(el.dataset.pch&&DR){const f=PL[DR.id];if(f)f.ch[el.dataset.pch]=el.checked;return}
   if((el.dataset.pday!=null||el.dataset.ptime!=null)&&DR){const f=PL[DR.id];if(f){if(el.dataset.pday!=null)f.day=el.value;else f.time=el.value}return}
   if(el.dataset.fbmap){if(!LIVE){say(PRV);return}enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.dataset.fbmap,project:el.value});say(x.ok?'Zapisano projekt strony.':failMsg(x,'Nie zapisano.'))});return}
-  if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.value;return}
+  if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.type==='checkbox'?(el.checked?'tak':'nie'):el.value;return}
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
   if(el.dataset.psel){const m=A.psel[el.dataset.psel]||(A.psel[el.dataset.psel]={});m[el.dataset.pid]=el.checked;render(true);return}
   if(el.id==='tyfp'){const F=tyFlt();F.p=el.value;tyStore(TY_F_KEY,F);render(true);focusK('tyfp');return}
