@@ -3539,9 +3539,8 @@ class Manager:
                         except ValueError:
                             continue
                         msg = ev.get("message") if isinstance(ev, dict) else None
-                        if not isinstance(msg, dict):          # zdarzenia z tekstem zamiast obiektu (system, wynik)
-                            continue
-                        for b in msg.get("content") or []:
+                        body = msg.get("content") if isinstance(msg, dict) else None
+                        for b in body if isinstance(body, list) else []:
                             if isinstance(b, dict) and b.get("type") == "tool_use" and \
                                     b.get("name") in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
                                 inp = b.get("input") if isinstance(b.get("input"), dict) else {}
