@@ -62,10 +62,12 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   repozytorium części) i Google Drive na projekt i każdą część (ścieżka folderu z kontem, N pozycji, albo „bez
   folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
   gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
-  folderu”), „Zmień folder”, „Odłącz”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
+  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
   i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
-- **Google Drive** (Serwer → Google Drive, albo „Kod i pliki”, gdy żadne konto nie jest połączone): jedno logowanie
-  na konto Google (można połączyć kilka, każde z nazwą nadaną przy łączeniu), tylko do odczytu. Łączenie idzie
+- **Google Drive** w „Kod i pliki” pokazuje konta przypisane do projektu lub części. Nowe połączenie
+  przypisuje konto do wybranego projektu i jego obecnych części. „Użyj konta z innego projektu” pozwala
+  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive widać przypisania i można odłączyć konto
+  od wskazanej karty. Dostęp do Google Drive jest tylko do odczytu. Łączenie idzie
   tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Logowanie jednym kliknięciem”,
   INSTALACJA.md, „Google Drive”): Google wraca do panelu. Bez klienta panel pokazuje, jak go ustawić; dawne łączenie
   z wklejaniem adresu (klient rclone) jest w interfejsie wyłączone (decyzja właściciela 2026-11-25).
