@@ -50,10 +50,10 @@ class Wspolne(Serwer):
         super().tearDown()
 
     def say(self, title, text):
-        """„Wyślij do agenta” z rozmowy o zadaniu (POST /api/task/chat, execute)."""
+        """„Wyślij do agenta” z Rozmowy w projekcie z odnośnikiem do zadania (POST /api/project/chat, task, execute)."""
         t = self.task(title)
-        status, answer = self.post("/api/task/chat", {"id": t["id"], "title": t["title"], "message": text,
-                                                      "execute": True})
+        status, answer = self.post("/api/project/chat", {"project": t["project"], "task": t["id"], "message": text,
+                                                         "execute": True})
         self.assertEqual(status, 200, answer)
         return answer["status"]
 
@@ -114,7 +114,7 @@ class Wiadomosc(Wspolne):
         self.assertNotIn("log", run)
         self.assertEqual(run["logN"], log["next"])
         # rozmowa: wiadomość właściciela i odpowiedź panelu zostają
-        status, _, text = self.request("GET", "/api/task/chat?id=" + self.task("Zadanie A")["id"])
+        status, _, text = self.request("GET", "/api/project/chat?project=" + self.task("Zadanie A")["project"])
         msgs = json.loads(text)["messages"]
         self.assertEqual([m.get("text") for m in msgs][-2:], ["Nagłówek ma być granatowy", "Przekazano agentowi."])
 
@@ -139,7 +139,7 @@ class Wiadomosc(Wspolne):
         self.assertEqual(self.wait(again["id"])["state"], "done")
         call = [c for c in self.calls() if c.get("prompt")][-1]
         self.assertIn("Poprawka od właściciela (wiersz poprawka:): Dopisz jeszcze stopkę", call["prompt"])
-        status, _, text = self.request("GET", "/api/task/chat?id=" + self.task("Zadanie A")["id"])
+        status, _, text = self.request("GET", "/api/project/chat?project=" + self.task("Zadanie A")["project"])
         texts = [m.get("text") for m in json.loads(text)["messages"]]
         self.assertIn("Uruchomiono: Zadanie A", texts)
 

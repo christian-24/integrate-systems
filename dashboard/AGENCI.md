@@ -42,7 +42,7 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_AGENT_USER` | brak | użytkownik systemu dla agentów; polecenie idzie przez `sudo -n -u <użytkownik> --` |
 | `PANEL_LOKALNY_KLUCZ_PLIK` | brak | plik klucza zapisu dla żądań z tego komputera (nagłówek `X-Panel-Klucz`) |
 | `PANEL_DZIEN_MIN` | `120` | dzienna pojemność właściciela w minutach (`dayMinutes` w `/api/data`) |
-| `PANEL_ASYSTENT_MODEL` | `sonnet` | model asystenta (strona Asystent) |
+| `PANEL_ASYSTENT_MODEL` | `sonnet` | model obu rozmów: Asystent i Rozmowa w projekcie |
 | `PANEL_ASYSTENT_INTERNET` | `1` | `0` zabiera asystentowi WebSearch i WebFetch (karty news); domyślnie włączone, tylko odczyt |
 | `PANEL_ASYSTENT_KARTY` | `<katalog uruchomień>/czat/asystent-karty.json` | biblioteka kart asystenta i układ płótna |
 | `PANEL_ASYSTENT_BEZCZYNNOSC` | `1800` | po tylu sekundach bez wiadomości stała sesja asystenta kończy pracę |
@@ -196,7 +196,7 @@ panel wykonuje je po przyjęciu propozycji, README „Pytania do właściciela�
 i nie łagodzi (bez „albo w zostało:”); niespełniony warunek opisuje w `zostało:` i kończy stanem `[!]`. Agent zmienia stan własnego wiersza (`[x]`; `[~]` + `wymaga: odbiór`; gdy „gotowe gdy” nie jest spełnione
 albo nie może iść dalej: `[!]` + `blokada:`, bez `wymaga: odbiór`) i odpowiada: Zrobione, Sprawdzone, Zostało.
 Gdy pod zadaniem jest `poprawka:` (uwagi właściciela przy „Do poprawy”, ze strony odbioru albo polecenie z „Wyślij
-i wykonaj” w rozmowie o zadaniu), prompt ją podaje razem ze znacznikami (wiersze `- znacznik N (plik, położenie): uwaga`,
+i wykonaj” w Rozmowie w projekcie), prompt ją podaje razem ze znacznikami (wiersze `- znacznik N (plik, położenie): uwaga`,
 ścieżka obrazu albo filmu względem folderu projektu), a agent wykonuje polecenie, poprawia pracę według niej i dopisuje
 `zmiany:` (2–3 zmiany rozdzielone „; ”, przy każdej uwadze i znaczniku „zrobione” albo powód).
 Folder bez repozytorium git (albo `PANEL_AGENT_WORKTREE=0`): pracę w repozytorium agent zapisuje na nowej gałęzi
@@ -410,40 +410,85 @@ błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu
 | `/api/github/wyslij` | `{"project", "branches"?: [nazwy]}` | push bieżącej gałęzi i podanych, bez `--force`; `result`: `sent`/`nothing` (200), `rejected`/`error` (409), `access`/`missing`/`timeout` (502); `results` po gałęziach, `message`, `state` |
 | `/api/github/usun-kopie` | `{"project", "confirm": true}` | przeniesienie kopii do kosza (opis wyżej); 400 bez potwierdzenia, 409 z blokadami, 502 gdy `git fetch` się nie udał; odpowiedź `trash`, `message`, `state` |
 
-Rozmowa o zadaniu (tylko odczyt; „Wyślij i wykonaj” w „Uruchamianie z rozmów”):
-`POST /api/task/chat` z `{"id": taskId, "title": tytuł, "message": tekst}` (najwyżej 2000 znaków, treść żądania
-do 32 KB) zapisuje pytanie i uruchamia w tle Claude; odpowiedź 202 `{"ok": true, "error": "", "pending": true}`;
-400 pusta albo za długa wiadomość, 404 brak zadania, 409 zmieniony wiersz, poprzednia odpowiedź jeszcze trwa
-(„Czekam jeszcze na odpowiedź.”), brak `claude`, wymagane logowanie, limit albo 3 rozmowy naraz.
-`GET /api/task/chat?id=<taskId>`: `{"ok": true, "messages": [{"role": "ty"|"claude"|"panel", "text", "at"}], "pending": bool,
-"error": str}`; 404 bez zadania. Historia (najwyżej 100 wiadomości, id sesji Claude) w
-`uruchomienia/czat/<sha1 „projekt|plik|tytuł”>.json`.
-Polecenie: `claude -p --output-format json --permission-mode default [--model M] [--resume <sesja>] [--add-dir …]
---allowedTools "Read,Grep,Glob,LS" --disallowedTools "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task"
---strict-mcp-config` w folderze projektu (prompt przez stdin, `sudo -n -u` jak przy zadaniach), limit 180 s. Pierwsza
-wiadomość niesie kontekst zadania i zasady (krótko, po polsku, bez zmian w plikach, „Propozycja:” przy zbędnym albo
-niejasnym zadaniu, bez próśb o hasła i klucze); kolejne idą przez `--resume` z samym pytaniem. Agent w rozmowie
-niczego nie zmienia: bez powłoki, zapisu, sieci i serwerów MCP, także gdy `.claude/settings.json` projektu na nie pozwala.
+### Rozmowy: dwa miejsca, jeden silnik
+
+Z agentem rozmawia się tylko w dwóch miejscach:
+
+- **Asystent** (strona Asystent): sprawy wszystkich projektów (`POST /api/asystent`, głos `POST /api/asystent/glos`).
+- **Rozmowa w projekcie** (przycisk „Rozmowa” w prawym dolnym rogu strony projektu, szczegółów zadania i odbioru
+  pracy): sprawy projektu i jego części (`POST /api/project/chat`). W szczegółach zadania i w odbiorze przycisk
+  „Zapytaj o to zadanie” otwiera tę rozmowę z odnośnikiem do zadania; zadanie części otwiera rozmowę tej części.
+
+Obie mają te same uprawnienia i tę samą drogę działania (`Manager.chat_tools`, `chat_args`, `chat_rules`,
+`chat_launches`), więc żadna nie odmawia tego, co robi druga:
+
+- polecenie `claude -p --permission-mode default --model <PANEL_ASYSTENT_MODEL> --add-dir <karty i foldery>
+  --allowedTools "Read,Grep,Glob,LS[,WebSearch,WebFetch],Edit(/<karta>/ZADANIA.md),Edit(/<karta>/DECYZJE.md),
+  Edit(/<karta>/kampanie/**)…" --disallowedTools "<ASSIST_DENY>" --strict-mcp-config`. Zakazy (`CHAT_DENY`): powłoka,
+  zapis innych plików, `MultiEdit`, `NotebookEdit`, pomocnicy i przepływy (`RUN_DENY`); internet tylko do odczytu, gdy
+  `PANEL_ASYSTENT_INTERNET` jest różne od 0. Asystent ma edycję plików wszystkich projektów, Rozmowa w projekcie
+  plików projektu i jego części. Asystent działa w stałej sesji stream-json, Rozmowa w projekcie jednym wywołaniem
+  `--output-format json` z `--resume`;
+- zasady w promptach z jednego źródła (`chat_rules`): zmiany tylko w ZADANIA.md, DECYZJE.md i kampanie/ na prośbę
+  właściciela, anulowanie przez `[x]` i `wynik: anulowane`, wiersz „Zmieniono:”, link do podglądu strony, bez kart,
+  kodu, poleceń, publikacji i próśb o hasła;
+- wiersze działań na końcu odpowiedzi (`take_actions`; panel wykonuje je i usuwa z odpowiedzi):
+  - `Uruchom: <id projektu> | <tytuł>`: `launch_task` → `run_task`;
+  - `Polecenie: <id projektu> | <tytuł> | <polecenie>`: `_execute_order` (poprawka pod zadaniem, uruchomienie albo
+    wiadomość do pracującego agenta, jak „Wyślij i wykonaj”);
+  - `Odpowiedź na pytanie: <id projektu> | <numer> | <odpowiedź>`: `server.answer_question` (ta sama droga co
+    przycisk przy pytaniu, ze skutkami `skutek:`);
+
+  najwyżej 3 uruchomienia i polecenia razem oraz 3 odpowiedzi w jednej odpowiedzi; Rozmowa w projekcie działa tylko
+  na zadaniach swojego projektu i jego części;
+- twarde zasady bez zmian w obu: `wymaga: zgoda` czeka na kliknięcie, `kto: ty` i publikacje nie ruszają, nic nie
+  publikują, bez powłoki; uruchamia zawsze serwer.
+
+`POST /api/project/chat` z `{"project", "message", "task"?: id zadania, "execute"?: true, "attach"?: {...}}`
+(wiadomość najwyżej 2000 znaków, treść żądania do 32 KB):
+
+- bez `execute` i `attach`: wiadomość dla modelu; odpowiedź 202 `{"pending": true}`, odpowiedź modelu w tle.
+  Z `task` panel dokleja przed wiadomością kontekst zadania (`task_context`: tytuł, projekt, plik i wiersz, stan,
+  wykonawca, termin, etap, szczegóły z `cel:`, `gotowe gdy:`, krokami, poprawką, ostatnie uruchomienie: stan, koniec,
+  wynik albo błąd, gałąź), także w trwającej sesji; wiadomość w historii ma `task: {id, title, project}`;
+- `execute: true` przy zadaniu `kto: agent|claude|codex` (albo „zrób to”, „wykonaj”, „wykonaj to” na końcu,
+  `EXEC_END`): bez modelu panel zapisuje wiadomość jako `poprawka:` (najwyżej 1000 znaków), zadanie `[x]`, `[~]` albo
+  `[!]` wraca do `[ ]` (zdejmuje `blokada:` i `wymaga: odbiór`, `wymaga: zgoda` zostaje), potem `run_task`; przy
+  pracującym agencie wiadomość do tego uruchomienia („Praca na żywo”). Odpowiedź 200 `{"status": wiadomość panelu}`.
+  Zadanie właściciela: zwykła wiadomość dla modelu;
+- `attach: {"kind": "strona", "project": <część ze stroną>, "page", "view", "selector", "elementText"}` (zakładka
+  Strona): uwaga do strony bez modelu, ta sama droga co dawny formularz (`site.add_note`: zadanie agenta strony
+  i `run_task` albo wiadomość do pracującego agenta strony); odpowiedź 200 `{"note", "runId", "status"}`; wiadomość
+  w historii ma `attach`.
+
+Błędy: 400 pusta albo za długa wiadomość, 404 brak projektu albo zadania spoza projektu, 409 poprzednia odpowiedź
+jeszcze trwa („Czekam jeszcze na odpowiedź.”), brak `claude`, wymagane logowanie, limit albo 3 rozmowy naraz.
+`GET /api/project/chat?project=`: `{"messages": [{"role": "ty"|"claude"|"panel", "text", "at", "task"?, "attach"?,
+"exec"?}], "pending", "error"}`. Historia (najwyżej 100 wiadomości, id sesji) w
+`uruchomienia/czat/projekt-<sha1 id>.json`. Limit odpowiedzi 180 s.
+
+**Dawny czat przy zadaniu** (do 2026-11-25) nie istnieje: `POST /api/task/chat` zwraca 404. Historia zostaje do odczytu
+(`GET /api/task/chat?id=`, w szczegółach zadania „Dawna rozmowa o zadaniu”). „Do poprawy” w szczegółach i „Popraw”
+w odbiorze (`/api/odbior/popraw`) zapisują polecenie i stan w Rozmowie w projekcie zadania.
+
+**Przyciski jednego działania** nie rozmawiają z modelem: zakładają albo zmieniają zadanie i wołają `run_task` (te same
+reguły co „Uruchom”): Marketing „Zleć” (`/api/post/zlec`), „Co poprawić” w poście i filmie (`/api/post/popraw`),
+scenariusz „Przygotuj” i „Co zmienić?” (`/api/scenariusz/przygotuj|popraw`), studio filmów „Poproś”
+(`/api/studio/popros`), Strona „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`), Serwer → Projekty
+„Zleć agentowi uzupełnienie”, „Do poprawy” i odbiór. Wyjątki z własnym wywołaniem modelu, bez rozmowy: raport PM
+(`/api/agent/pm`, rola PM z `PM_TOOLS`, wiersze `Uruchom:` przez `launch_task`), plan dnia (`/api/plan/ask`, przyjęcie
+przez `run_task`) i grafika posta przez Codex (`/api/post/grafika-codex`, obróbka jednego obrazu w folderze posta).
 
 ### Uruchamianie z rozmów
 
 Każda rozmowa może od razu uruchomić pracę agenta. Uruchamia zawsze serwer przez `run_task` (te same reguły co przycisk
-„Uruchom”: `runBlock`, logowanie, limit, `PANEL_AGENTS_MAX`), nigdy model. Zadania z `wymaga: zgoda` czekają na
-kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie mają powłoki.
+„Uruchom”: `runBlock`, logowanie, limit, `PANEL_AGENTS_MAX`), nigdy model.
 
-- **Rozmowa o zadaniu.** Obok „Wyślij” przycisk „Wyślij i wykonaj” (tylko przy zadaniu `kto: agent|claude|codex`); to samo
-  robi „zrób to”, „wykonaj” albo „wykonaj to” na końcu wiadomości (`EXEC_END`). `POST /api/task/chat` z
-  `"execute": true`: bez modelu rozmowy panel zapisuje wiadomość pod zadaniem jako `poprawka:` (najwyżej 1000 znaków),
-  zadanie `[x]`, `[~]` albo `[!]` wraca do `[ ]` (zdejmuje `blokada:` i `wymaga: odbiór`, `wymaga: zgoda` zostaje),
-  potem `run_task`. Odpowiedź 200 `{"status": wiadomość panelu}`. Zadanie właściciela i publikacja: plik bez zmian,
-  tylko komunikat. Zadanie, nad którym agent pracuje albo czeka w kolejce: wiadomość do tego uruchomienia
-  („Praca na żywo” niżej).
-- **Rozmowa o projekcie** i **Asystent.** Prośba o pracę („zrób”, „przygotuj”, „napraw”…) to zadanie agenta w
-  `ZADANIA.md` (`- [ ] Tytuł | kto: claude | kiedy: <dziś>` z `cel:` i `gotowe gdy:`; pasujące otwarte zadanie zamiast
-  nowego) i na końcu odpowiedzi wiersz działania `Uruchom: <id projektu> | <dokładny tytuł>` (`take_run_lines`,
-  najwyżej 3 w odpowiedzi; w rozmowie o projekcie projekt jest zawsze ten rozmowy, asystent przyjmuje też nazwę albo
-  alias). Panel usuwa ten wiersz z odpowiedzi, szuka zadania po tytule (najpierw otwarte) i woła `run_task`. Pytanie
-  o stan nie zakłada zadań i nie uruchamia.
+- Prośba o pracę („zrób”, „przygotuj”, „napraw”…) to zadanie agenta w `ZADANIA.md` (`- [ ] Tytuł | kto: agent |
+  kiedy: <dziś>` z `cel:` i `gotowe gdy:`; pasujące otwarte zadanie zamiast nowego) i wiersz `Uruchom:`. Panel szuka
+  zadania po tytule (najpierw otwarte) i woła `run_task`. Pytanie o stan nie zakłada zadań i nie uruchamia.
+- Polecenie do istniejącego zadania agenta: wiersz `Polecenie:` albo przycisk „Wyślij i wykonaj” / „Wyślij do agenta”
+  przy odnośniku do zadania.
 - **Stan w rozmowie.** Po każdym uruchomieniu w historii jest wiadomość panelu (`role: "panel"`, nie od modelu):
   „Uruchomiono: …”, „W kolejce: agent pracuje nad „…”, to zadanie ruszy po nim.”, „Już w toku: …” albo „Nie uruchomiono
   „…”: powód.” (czeka na zgodę, po Twojej stronie, brak wykonawcy agenta, nie ma takiego zadania, logowanie, limit; przy
@@ -455,9 +500,10 @@ kliknięcie właściciela, `kto: ty` i publikacje nie ruszają, czaty nadal nie 
 
 ### Praca na żywo (wiadomość w trakcie, podgląd przebiegu)
 
-**Wiadomość do pracującego agenta** (`Manager.live_message`). W rozmowie o zadaniu, gdy agent pracuje albo czeka
-w kolejce, formularz ma „Wyślij do agenta” (Enter; „Tylko zapytaj” pyta jak dotąd, bez zmian). Droga jest ta sama co
-„Wyślij i wykonaj” (`POST /api/task/chat` z `"execute": true`); panel:
+**Wiadomość do pracującego agenta** (`Manager.live_message`). W Rozmowie w projekcie z odnośnikiem do zadania, gdy
+agent pracuje albo czeka w kolejce, przycisk „Wyślij do agenta” („Wyślij” pyta model jak zwykle); wiersz `Polecenie:`
+z odpowiedzi rozmowy idzie tak samo. Droga jest ta sama co „Wyślij i wykonaj” (`POST /api/project/chat` z `"task"`
+i `"execute": true`); panel:
 
 1. zawsze dopisuje polecenie do wiersza `poprawka:` zadania (`stara / nowa`, najwyżej 1500 znaków, znaczniki
    zostają), żeby następne uruchomienie też je znało; rekord dostaje nowe `fix` (Automat nie powtarza przez to
@@ -475,9 +521,9 @@ w kolejce, formularz ma „Wyślij do agenta” (Enter; „Tylko zapytaj” pyta
 5. **Codex** (`codex exec` nie przyjmuje wejścia w trakcie): tylko zapis poprawki i przycisk „Zatrzymaj i uruchom
    z poprawką” (`POST /api/agent/restart {"id"}`: zatrzymanie, potem `launch_task`).
 
-Czaty bez zmian. „Zatrzymaj”, limit czasu i bezpiecznik zużycia działają jak dotąd (zabijają grupę procesów).
+„Zatrzymaj”, limit czasu i bezpiecznik zużycia działają jak dotąd (zabijają grupę procesów).
 
-**Uwaga z zakładki Strona** („Wyślij agentowi”) przy uruchomieniu zadania strony tego projektu w kolejce albo w toku
+**Uwaga z zakładki Strona** (Rozmowa w projekcie z załącznikiem Strony) przy uruchomieniu zadania strony tego projektu w kolejce albo w toku
 idzie tą samą drogą do tego uruchomienia (tekst „Uwaga do strony: … (podstrona, widok, element)”), bez nowego
 zadania; uwaga dostaje tytuł tego zadania i jego wynik.
 
@@ -520,7 +566,7 @@ Strona odbioru w panelu (`#odbior?z=<taskId>`) pokazuje wynik zadania w wersjach
 - `POST /api/odbior/popraw` `{"id", "title", "text", "pins": [{"file", "x", "y", "t", "note"}]}`: tekst do 1000 znaków,
   najwyżej 12 znaczników, x i y 0–100 (oba albo żaden), t w sekundach, uwaga do 300 znaków, plik obrazu albo filmu
   (bez `..`). Pusty tekst i brak znaczników: 400; sam znacznik: `poprawka: Popraw według znaczników poniżej.`
-  Zapis i uruchomienie jak „Wyślij i wykonaj” (`chat_execute`, wpis w rozmowie o zadaniu); odpowiedź `{"status"}`.
+  Zapis i uruchomienie jak „Wyślij i wykonaj” (`chat_execute`, wpis w Rozmowie w projekcie zadania); odpowiedź `{"status"}`.
 - `POST /api/odbior/akceptuj` `{"id", "title", "variants": [nazwy] | null}`: zadanie `[x]` bez `wymaga:` (jak „Odbierz”).
   Warianty to obrazy ostatniej wersji (nazwa pliku bez rozszerzenia). Gdy podano nie wszystkie: pod zadaniem
   `odpowiedź: odebrane warianty = a, b` (pozostałe odpowiedzi zostają); odpowiedź `{"accepted": [...]}`. 400 przy
@@ -594,7 +640,10 @@ taki zapis i słowa „zakładka Strona” w odpowiedzi na link.
    adresy zasobów (`../assets/…`) trafiały.
    Do HTML panel dopisuje w `<head>` skrypt trybu „Wskaż” (postMessage do panelu; panel przyjmuje wiadomości tylko
    z ramki zakładki).
-3. **Uwaga.** „Wyślij agentowi” (`/api/strona/uwaga`) dopisuje do „Do rozplanowania” zadanie
+3. **Uwaga.** „Napisz uwagę” albo element wskazany przyciskiem „Wskaż” otwiera Rozmowę w projekcie z załącznikiem
+   (podstrona, widok, selektor i tekst elementu); wysłana uwaga idzie przez `POST /api/project/chat` z `attach`
+   (`/api/strona/uwaga` zostaje dla zgodności, panel go nie używa). Lista „Uwagi” pokazuje stan. Uwaga dopisuje do
+   „Do rozplanowania” zadanie
    `Strona: <początek uwagi> | kto: claude | kiedy: dziś` z `cel:` (uwaga, podstrona, widok telefon 390 px albo
    komputer 1440 px, selektor CSS i tekst wskazanego elementu) i `gotowe gdy:`, i od razu je uruchamia jak
    `/api/agent/run` (gdy uruchomienie jest zablokowane, zadanie czeka w Zadaniach, a uwaga pokazuje powód).
@@ -683,8 +732,12 @@ jest w menu ⋯. Kolejne polecenie poprawia ostatnią wersję. Ścieżek serwera
 Gałąź uruchomienia, scalenie, diff, materiał z wyniku, `PANEL_AGENT_USER` i klucz lokalny: `testy/test_runda3_agenci.py`
 (tymczasowe repozytorium git). Skutki pytań, licznik, kontrola serwera przy zadaniu, prompt (`skutek:`, `gotowe gdy`)
 i odmowa scalenia z plikami sekretów: `testy/test_runda5_serwer.py` (atrapa w trybie `sekret`).
-Uruchamianie z rozmów (wiersz `Uruchom:`, `run_task` raz, kolejka przy zajętym agencie, blokady, „Wyślij i wykonaj”,
-stan w rozmowie, przycisk w czacie zadania w Chromium) i render HTML → PDF/PNG: `testy/test_czat_uruchamia.py`.
+Rozmowa w projekcie (odnośnik do zadania i kontekst, te same narzędzia i zasady co Asystent, dawna historia zadania
+do odczytu): `testy/test_czat.py`. Uruchamianie z rozmów (wiersze `Uruchom:`, `Polecenie:`, `Odpowiedź na pytanie:`,
+`run_task` raz, kolejka przy zajętym agencie, blokady, „Wyślij i wykonaj”, stan w rozmowie, przycisk „Zapytaj o to
+zadanie” w Chromium) i render HTML → PDF/PNG: `testy/test_czat_uruchamia.py`. Jedna rozmowa w panelu (brak czatu przy
+zadaniu, uwaga ze Strony z załącznikiem, przyciski jednego działania przez `run_task`, układ 393 px jak iPhone 15):
+`testy/test_jedna_rozmowa.py`.
 Odbiór pracy (wersje po uruchomieniu, limit 20, wersja bieżąca, plik wersji i odmowa innych ścieżek, gałąź agenta,
 poprawka ze znacznikami, odbiór całości i wariantów, `zmiany:`): `testy/test_odbior.py`.
 Podgląd strony (pola karty, budowanie atrapą bez Node.js, `/podglad/`, uwaga → zadanie → scalenie i podgląd,

@@ -141,9 +141,9 @@ class Dane(ZCzesciami):
         data, index = server.load_projects()
         p = next(x for x in data["projects"] if x["id"] == "projekt-testowy")
         prompt = self.manager.project_chat_prompt(p, self.folder, self.folder, "Co dalej?",
-                                                  [("Strona WWW", self.part)])
+                                                  [("Strona WWW", self.part, "oprogramowani-onepager")])
         self.assertIn("„Oprogramowani”", prompt)
-        self.assertIn("- Strona WWW: %s" % os.path.join(self.part, "ZADANIA.md"), prompt)
+        self.assertIn("- Strona WWW (id oprogramowani-onepager): %s" % os.path.join(self.part, "ZADANIA.md"), prompt)
         self.assertNotIn("[Otwórz podgląd]", prompt)                     # bez stron: bez zasady o podglądzie
 
     def test_rozmowy_podaja_adres_podgladu(self):
@@ -153,7 +153,7 @@ class Dane(ZCzesciami):
         self.assertEqual(links, [("Oprogramowani · Strona WWW", "#p-projekt-testowy-strona?cz=oprogramowani-onepager")])
         p = next(x for x in data["projects"] if x["id"] == "projekt-testowy")
         prompt = self.manager.project_chat_prompt(p, self.folder, self.folder, "Gdzie zobaczę stronę?",
-                                                  [("Strona WWW", self.part)], links)
+                                                  [("Strona WWW", self.part, "oprogramowani-onepager")], links)
         self.assertIn("[Otwórz podgląd](adres)", prompt)
         self.assertIn("#p-projekt-testowy-strona?cz=oprogramowani-onepager", prompt)
         self.assertIn("#p-projekt-testowy-strona?cz=oprogramowani-onepager",
@@ -171,13 +171,14 @@ class Widok(unittest.TestCase):
 
     def run_view(self, body):
         code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "wwSites", "partSw", "kpN",
-                                                         "ghLine", "drWhere", "driveLine", "codeBox", "pjChatOf", "dockHtml"])
+                                                         "ghLine", "drWhere", "driveLine", "codeBox", "shortT", "PJD", "pjChatOf",
+                                                         "taskChatOf", "dockTarget", "pjdRef", "pjdAtt", "attLabel", "dockHtml"])
         js = """let LIVE=true;const PF={more:{}},GHS={},DRV={x:{connected:true,mounted:true,files:3,folder:'1AbCdEfGhIjK'}},A={busy:{}};
 const D={projectsSource:'registry'},loaded=[];
 const ghLoad=id=>loaded.push(id),loadDrive=()=>{},loadPChat=id=>loaded.push('chat:'+id);
 const ghBody=p=>'<div class="gh">GH:'+p.id+'</div>',driveBody=p=>'<div class="dv">DRV:'+p.id+'</div>';
 const chatMsg=m=>'<div class="cm">'+m.text+'</div>';
-let PJC={};
+let PJC={},DR=null;const runOf=()=>null,isAct=()=>false;
 %s
 const top={id:'x',name:'Oprogramowani',partOf:'',partLabel:'Integracje',github:'f/x',git:{repo:true,remote:'github',branch:'main',unpushed:0}};
 const part={id:'s',name:'Oprogramowani · Strona WWW',partOf:'x',partLabel:'Strona WWW',site:{dir:'site'},github:'',git:{repo:true,remote:'github',branch:'nowa',unpushed:2},mem:new Set(['s']),partsL:[]};
@@ -258,7 +259,7 @@ out.inny=dockHtml({v:'start'});""")
         self.assertIn('data-pchat="s"', o["czesc"])                       # część: własna rozmowa
         self.assertIn("Oprogramowani · Strona WWW", o["czesc"])
         self.assertIn("Oprogramowani · Integracje", o["wlasna"])
-        self.assertEqual(o["inny"], "")                                   # tylko na stronie projektu
+        self.assertEqual(o["inny"], "")                                   # poza projektem i zadaniem bez rozmowy
 
 
 @unittest.skipUnless(NODE, "brak node")
@@ -268,7 +269,8 @@ class Podglad(unittest.TestCase):
     def run_js(self, body):
         code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pid2", "phref", "topP", "PTABS", "PTMAIN", "wwSites", "ptabsOf",
                                                          "ptMain", "WWC", "wwCur", "wwHref", "wwView", "partSw", "WWT", "wwTask",
-                                                         "wwBtn", "wwHrefFor", "wwLinks", "chatText", "chatMsg"])
+                                                         "wwBtn", "wwHrefFor", "wwLinks", "chatText", "shortT", "attLabel",
+                                                         "chatRef", "chatMsg"])
         js = """let LIVE=true;const pnMsg=()=>'',document={addEventListener(){}};
 const top={id:'x',name:'Oprogramowani',partOf:'',partLabel:'Integracje'};
 const part={id:'s',name:'Oprogramowani · Strona WWW',partOf:'x',partLabel:'Strona WWW',site:{dir:'site'},partsL:[]};

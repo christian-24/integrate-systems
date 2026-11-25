@@ -24,15 +24,17 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/agent/restart     „Zatrzymaj i uruchom z poprawką”: zatrzymuje zadanie i uruchamia je ponownie
   GET  /api/agent/przebieg    przebieg uruchomienia na żywo (?id=&od=numer ostatniego wiersza) i zrzuty strony
   GET  /api/agent/zrzut       zrzut PNG z .zrzuty/ katalogu roboczego uruchomienia (?id=&plik=telefon.png)
-  POST /api/task/chat         pytanie właściciela w rozmowie o zadaniu (odpowiedź Claude w tle, tylko odczyt plików);
-                              "execute": true („Wyślij i wykonaj”): polecenie pod zadaniem (poprawka:) i uruchomienie agenta
-  GET  /api/task/chat         historia rozmowy o zadaniu (?id=)
+  GET  /api/task/chat         historia dawnej rozmowy o zadaniu (?id=), tylko do odczytu; nowe wiadomości o zadaniu idą
+                              przez POST /api/project/chat z "task"
   GET  /api/odbior            strona „Odbiór pracy” (?id=): zadanie, wersje wyniku, uruchomienie, odebrane warianty
   GET  /api/odbior/plik       plik wersji wyniku (?id=&v=&path=), z Range
   POST /api/odbior/popraw     poprawka ze znacznikami pod zadaniem i od razu uruchomienie agenta
   POST /api/odbior/akceptuj   odbiór całości albo wybranych wariantów (zadanie zrobione)
-  POST /api/project/chat      wiadomość właściciela w rozmowie o projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę)
-  GET  /api/project/chat      historia rozmowy o projekcie (?project=)
+  POST /api/project/chat      wiadomość w Rozmowie w projekcie (Claude czyta, zmienia ZADANIA/DECYZJE/kampanie na prośbę,
+                              uruchamia zadania przez run_task); "task": id zadania („Zapytaj o to zadanie”, kontekst
+                              zadania), "execute": true (polecenie pod zadaniem i uruchomienie agenta, bez modelu),
+                              "attach": {"kind": "strona", …} (uwaga do strony z zakładki Strona, bez modelu)
+  GET  /api/project/chat      historia Rozmowy w projekcie (?project=)
   POST /api/asystent          wiadomość do asystenta (wszystkie projekty, może przełączyć widok: „Pokaż: #adres”)
   GET  /api/asystent          historia rozmowy z asystentem (z odpowiedzią w trakcie pisania); POST /api/asystent/nowa
                                czyści rozmowę
@@ -1295,7 +1297,7 @@ def studio_request(body):
                                                         "date": datetime.date.today().isoformat()}, detail)
     except (ValueError, OSError, StopIteration) as e:
         return 409, "Nie dodano zadania: %s" % e
-    return 200, "", {"title": title}
+    return 200, "", {"title": title, "started": _script_run(title, pid)}    # od razu, jak inne przyciski (run_task)
 
 
 STUDIO_TYPES = {"muzyka": {"audio/mpeg": "mp3", "audio/mp3": "mp3", "audio/mp4": "m4a", "audio/x-m4a": "m4a",
@@ -1990,6 +1992,7 @@ def get_agents():
             _agents = agents.Manager(load_projects, _write_lock, projekt)
             _agents.site.secret = _derive("panel-podglad").encode("ascii")   # adresy podglądu trwają po restarcie
             _agents.counts_hook = cached_counts
+            _agents.answer_hook = answer_question    # „Odpowiedź na pytanie:” z rozmów: ta sama droga co przycisk
         return _agents
 
 
@@ -2004,7 +2007,7 @@ def cached_counts():
     return {k: d[k] for k in projekt.OWNER_COUNT_KEYS if k in d} if isinstance(d, dict) else None
 
 
-# Wiadomość w rozmowie o zadaniu: 2000 znaków w JSON z \uXXXX (np. polskie litery, emoji) przekracza 4 KB.
+# Wiadomość w rozmowie: 2000 znaków w JSON z \uXXXX (np. polskie litery, emoji) przekracza 4 KB.
 CHAT_BODY = 32 * 1024
 WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
           "/api/task/count": lambda b: count_task(b),
@@ -2020,8 +2023,6 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
           "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
           "/api/strona/koncepcja": lambda b: get_agents().site.concept(b),
-          "/api/task/chat": lambda b: get_agents().chat_send(b.get("id", ""), b.get("title", ""), b.get("message", ""),
-                                                             execute=b.get("execute") is True),
           "/api/odbior/popraw": lambda b: get_agents().review_fix(b.get("id", ""), b.get("title", ""), b.get("text", ""),
                                                                   b.get("pins")),
           "/api/odbior/akceptuj": lambda b: get_agents().review_accept(b.get("id", ""), b.get("title", ""),
@@ -2040,7 +2041,9 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/drive/konto/usun": lambda b: get_drive().remove_account(b.get("account", "")),
           "/api/drive/wybierz": lambda b: get_drive().choose(b.get("project", ""), b.get("account", ""),
                                                              b.get("folder", ""), b.get("path", "")),
-          "/api/project/chat": lambda b: get_agents().project_chat_send(b.get("project", ""), b.get("message", "")),
+          "/api/project/chat": lambda b: get_agents().project_chat_send(
+              b.get("project", ""), b.get("message", ""), str(b.get("task") or ""), b.get("execute") is True,
+              b.get("attach") if isinstance(b.get("attach"), dict) else None),
           "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
                                                                  b.get("open", "")),
           "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
@@ -4027,7 +4030,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/asystent/glos":
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
+            body = self._json_body(CHAT_BODY if path in ("/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
                                                          "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
                                                          "/api/scenariusz/tekst", "/api/drive/klient") else 4096)
             if body is None:
