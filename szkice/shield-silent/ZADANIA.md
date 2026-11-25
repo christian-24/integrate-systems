@@ -165,6 +165,20 @@ termin: 2027-01-28
   materiał: Plan-filmow-do-28-stycznia.md
 
 ## Do rozplanowania
+- [~] Przygotuj 3 warianty grafiki „Grand Silent Auto V / VI” (przed i po) | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | wymaga: odbiór
+  cel: 3 zabawne grafiki w formacie memu „GTA V kontra GTA VI”: po lewej albo u góry „V” = auto przed, po prawej albo na dole „VI” = to samo auto po Shield & Silent; do posta na Instagram i Facebook
+  gotowe gdy: w posty/2026-11-25-grand-silent-auto/ są 3 pliki PNG 1080×1350 (wariant-1.png, wariant-2.png, wariant-3.png), każdy z innej pary zdjęć przed/po, oraz opis.md z 3 krótkimi podpisami do posta (po jednym na wariant, najwyżej 2 zdania, bez cen i obietnic spoza karty)
+  wykonawca: tylko codex
+  materiał: media/2026-11-18-wizytowka-przed-po-lakier-cupra.jpg
+  materiał: media/2026-11-18-wizytowka-przed-po-felga.jpg
+  materiał: media/2026-11-18-wizytowka-przed-po-wnetrze-honda.jpg
+  materiał: media/2026-11-18-wizytowka-przed-po-fotel.jpg
+  materiał: media/2026-11-18-wizytowka-przed-po-konsola.jpg
+  materiał: media/2026-11-18-wizytowka-przed-po-lakier-i-lampy-honda.jpg
+  materiał: KARTA.md
+  - [ ] Wybierz 3 pary przed/po z materiałów; używaj tylko prawdziwych zdjęć realizacji, bez dorabiania efektu przez AI
+  - [ ] Złóż każdy wariant w HTML (własny napis w stylu parodii, np. „Grand Silent Auto V” i „VI”; bez oryginalnych logo i fontów GTA, bez znaków Rockstar) i wyrenderuj do PNG narzędziem dashboard/html-do-pdf.py
+  - [ ] Obejrzyj każdy PNG, popraw czytelność na telefonie, zapisz podpisy w opis.md; niczego nie publikuj
 - [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
   - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
