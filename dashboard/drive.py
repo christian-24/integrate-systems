@@ -223,10 +223,14 @@ class Drive:
         except (OSError, subprocess.SubprocessError) as e:
             return False, "pomocnik niedostępny (%s)" % type(e).__name__
         out = (r.stdout + r.stderr).strip().splitlines()
-        last = out[-1][:160] if out else ""
+        last = out[-1].strip() if out else ""
+        if r.returncode == 0:
+            return True, ""
         if "sudo" in last.lower() or "password" in last.lower():
-            last = "brak zgody sudo dla pomocnika drive-wlacz"
-        return r.returncode == 0, last
+            return False, "brak zgody sudo dla pomocnika drive-wlacz"
+        if last in {"brak folderu karty", "folder karty poza szkice/", "folder bez KARTA.md", "tylko root"}:
+            return False, last
+        return False, "usługa nie zamontowała folderu"
 
     def _connected(self, pid):
         """Połączony = udane połączenie (plik dane/drive/<pid>.json) i wpis drive-<pid> w konfiguracji rclone.
@@ -628,6 +632,55 @@ class Drive:
         return 200, "", res
 
     # ---------- folder projektu ----------
+    @staticmethod
+    def _alias_target(acc, fid):
+        if ACC_RE.fullmatch(acc) and FOLDER_RE.fullmatch(fid):
+            return "%s%s,root_folder_id=%s:" % (ACC_PREFIX, acc, fid)
+        return ""
+
+    def _write_alias(self, pid, target):
+        with self.conf_lock:
+            try:
+                # config create zastępuje wpis o tej nazwie w jednej operacji rclone.
+                res = self._rc("config", "create", "drive-" + pid, "alias", "remote=" + target, timeout=15)
+                return res.returncode == 0
+            except (OSError, subprocess.SubprocessError):
+                return False
+
+    def _probe(self, remote):
+        try:
+            res = self._rc("lsd", remote, "--max-depth", "1", "--contimeout", "3s",
+                           "--timeout", "5s", "--retries", "1", "--low-level-retries", "1", timeout=8)
+            if res.returncode == 0:
+                return "", ""
+            err = res.stderr or res.stdout
+            msg = reason(err)
+            low = err.lower()
+            for (keys, _), action in zip(REASONS[:3], ("reconnect", "reconnect", "choose")):
+                if any(key in low for key in keys):
+                    return msg, action
+            return msg, "mount"
+        except subprocess.TimeoutExpired:
+            return "Google Drive nie odpowiedział w ciągu 8 sekund.", "mount"
+        except OSError:
+            return "Panel nie może uruchomić rclone.", "mount"
+
+    def _diagnose(self, pid, side, connected):
+        target = self._alias_target(str(side.get("account") or ""), str(side.get("folder") or ""))
+        message, action = self._probe("drive-" + pid + ":") if connected else ("Brak wpisu projektu w rclone.", "mount")
+        if not message:
+            if not os.path.isdir(self._mnt(pid)):
+                return "Panel odczytuje folder Google, ale brakuje lokalnego katalogu montowania.", "mount"
+            return "Panel odczytuje folder Google, ale usługa go nie zamontowała.", "mount"
+        if target:
+            direct_message, direct_action = self._probe(target)
+            if not direct_message:
+                return "Folder Google jest dostępny, ale wpis Drive projektu jest uszkodzony lub go brakuje.", "alias"
+            return direct_message, direct_action
+        if side.get("account"):
+            return "Zapisany wybór folderu jest nieprawidłowy.", "choose"
+        return message, "choose" if action == "reconnect" else action
+
     def choose(self, pid, acc, folder, path=""):
         """Folder z konta dla projektu (albo części): wpis alias drive-<pid> i montowanie usługą drive@<pid>."""
         pid, err = self._check(pid)
@@ -649,14 +702,8 @@ class Drive:
             lg = self._login_alive()
             if lg and lg["kind"] == "project" and lg["key"] == pid:
                 self._stop_login()
-        name = "drive-" + pid
-        if name in remotes:
-            self._drop_remote(name)                     # stary wpis (własny token albo inny folder)
-        try:
-            r = self._rc("config", "create", name, "alias", "remote=%s%s,root_folder_id=%s:" % (ACC_PREFIX, acc, fid))
-        except (OSError, subprocess.SubprocessError):
-            return 500, "Nie zapisano folderu projektu.", {}
-        if r.returncode != 0 or name not in self._remotes():
+        target = self._alias_target(acc, fid)
+        if not target or not self._write_alias(pid, target):
             return 500, "Nie zapisano folderu projektu.", {}
         self._side_write(pid, {"account": acc, "folder": fid, "path": path,
                                "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
@@ -690,6 +737,9 @@ class Drive:
                 out["files"] = sum(1 for e in os.scandir(mnt) if not e.name.startswith("."))
             except OSError:
                 out["files"] = None
+                out["reason"], out["repair"] = "Zamontowany folder jest niedostępny dla panelu.", "mount"
+        elif out["connected"] or out["folder"]:
+            out["reason"], out["repair"] = self._diagnose(pid, side, out["connected"])
         with self.lock:
             lg = self._login_alive()
             out["login"] = bool(lg and lg["key"] == pid)
@@ -752,8 +802,18 @@ class Drive:
         pid, err = self._check(pid)
         if err:
             return err
-        if not self._connected(pid):
+        connected = self._connected(pid)
+        side = self._side_read(pid)
+        if not connected and not side.get("folder"):
             return 409, "Drive nie jest połączony.", {}
+        if side.get("account"):
+            message, action = self._diagnose(pid, side, connected)
+            if action in ("reconnect", "choose"):
+                return 409, message, {}
+            if action == "alias":
+                target = self._alias_target(str(side["account"]), str(side["folder"]))
+                if not self._write_alias(pid, target):
+                    return 500, "Nie udało się zapisać wpisu Drive projektu.", {}
         ok, msg = self._helper(pid, self.card_dir(pid))
         return (200, "", {}) if ok else (500, "Montowanie nieudane: %s" % msg, {})
 

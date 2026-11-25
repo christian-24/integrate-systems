@@ -8,6 +8,7 @@ import contextlib
 import datetime
 import glob
 import hashlib
+import io
 import json
 import os
 import posixpath
@@ -24,6 +25,7 @@ import time
 import urllib.parse
 import urllib.request
 import uuid
+import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
@@ -99,14 +101,21 @@ RENDER_SCRIPT = os.path.join(HERE, "html-do-pdf.py")
 # Model tylko prosi; uruchamia serwer przez run_task po sprawdzeniu tych samych reguł co przycisk „Uruchom”.
 # Wersje wyniku zadania (strona „Odbiór pracy”): <runs_dir>/wersje/<sha1(projekt|plik|tytuł)[:16]>/<n>/meta.json
 # i kopie plików z wyniku. Ścieżki jak resFiles w panelu (wynik:, zostało:), także film.
-VERSION_PATH = re.compile(r"(?:^|(?<=[\s(„\"'`:]))((?:[\w.-]+/)*[\w-][\w.-]*\.(?:md|txt|png|jpe?g|webp|pdf|mp4|mov))"
-                          r"(?:#[\w-]+)?(?=$|[\s),.;:\"'`”])", re.I | re.A)
-VERSION_KINDS = {".png": "image", ".jpg": "image", ".jpeg": "image", ".webp": "image", ".pdf": "pdf",
-                 ".md": "text", ".txt": "text", ".mp4": "video", ".mov": "video"}
 VERSION_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
-                 ".pdf": "application/pdf", ".md": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8",
-                 ".mp4": "video/mp4", ".mov": "video/quicktime"}
+                 ".gif": "image/gif", ".avif": "image/avif", ".svg": "image/svg+xml", ".pdf": "application/pdf",
+                 ".md": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8",
+                 ".mp4": "video/mp4", ".mov": "video/quicktime", ".webm": "video/webm",
+                 ".zip": "application/zip", ".csv": "text/csv", ".json": "application/json", ".docx": "application/octet-stream",
+                 ".xlsx": "application/octet-stream", ".pptx": "application/octet-stream",
+                 ".odt": "application/octet-stream", ".tiff": "application/octet-stream", ".mp3": "audio/mpeg", ".wav": "audio/wav"}
+VERSION_KINDS = {ext: (mime.split("/")[0] if mime.startswith(("image/", "video/")) else "other")
+                 for ext, mime in VERSION_TYPES.items()}
+VERSION_KINDS.update({".pdf": "pdf", ".md": "text", ".txt": "text"})
+VERSION_EXTENSIONS = "|".join(re.escape(ext) for ext in VERSION_TYPES)
+VERSION_PATH = re.compile(r"(?:^|(?<=[\s(„\"'`:]))((?:[\w.-]+/)*[\w-][\w.-]*(?:" + VERSION_EXTENSIONS +
+                          r"))(?:#[\w-]+)?(?=$|[\s),.;:\"'`”])", re.I)
 VERSION_FILE_MAX = 15 * 1024 * 1024     # jeden plik w kopii wersji (i odczyt z folderu albo gałęzi)
+REVIEW_FILE_MAX = 128 * 1024 * 1024  # pojedyncze pobranie, także bez kopii wersji
 VERSION_TOTAL_MAX = 60 * 1024 * 1024    # razem na wersję
 VERSION_FILES = 12
 VERSIONS_KEEP = 20
@@ -132,6 +141,19 @@ def version_paths(text, refs=()):
             continue
         out.append(path)
     return out[:VERSION_FILES]
+
+
+def review_pdf_thumbnail(blob):
+    """Pierwsza strona jako mały PNG. Renderer nie zapisuje podglądu na dysku."""
+    renderer = shutil.which("pdftoppm")
+    if not renderer or len(blob) > VERSION_FILE_MAX:
+        return None
+    try:
+        proc = subprocess.run([renderer, "-f", "1", "-l", "1", "-scale-to", "192", "-png", "-singlefile", "-"],
+                              input=blob, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=5, **NO_WINDOW)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return proc.stdout if proc.returncode == 0 and proc.stdout.startswith(b"\x89PNG\r\n\x1a\n") else None
 
 
 def variant_name(path):
@@ -3172,39 +3194,108 @@ class Manager:
         return sorted(out, key=lambda m: m["n"])
 
     @staticmethod
-    def _result_bases(folder):
-        root = os.path.realpath(folder)
-        cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
-        return [root] + ([cards] if cards != root else [])
+    def _review_path(path):
+        return (path and not any(c in path for c in ("\\", ":", "\x00", "\ufffd"))
+                and all(part and not part.startswith(".") for part in path.split("/"))
+                and posixpath.basename(path).lower() not in {"karta.md", "zadania.md", "decyzje.md", "kampania.md"}
+                and os.path.splitext(path.lower())[1] in VERSION_TYPES)
 
-    def _result_locate(self, project, folder, rel, branch):
-        """Plik z wyniku: ("dysk", ścieżka, rozmiar), ("gałąź", (repozytorium, spec), rozmiar) albo None.
-        Najpierw folder projektu i karty, potem gałąź agenta."""
-        if not folder or not rel or "\x00" in rel or os.path.isabs(rel):
+    def _review_sources(self, task, folder, rec=None):
+        """Pliki z różnicy zadania albo jawne ścieżki wyniku dla pracy bez gałęzi."""
+        if not folder:
+            return {}
+        detail = task.get("detail") or {}
+        refs = version_paths("%s\n%s" % (detail.get("result") or "", detail.get("left") or ""),
+                             detail.get("refs") or [])
+        refs = [path for path in refs if path != task["file"]]
+        branch = (rec or {}).get("branch") or detail.get("branch") or ""
+        if not branch:
+            return {rel: where for rel in refs if (where := self._result_locate(folder, rel))}
+        if not self.projekt.BRANCH.fullmatch(branch) or ".." in branch:
+            return {}
+        top = self._git_top(folder)
+        if not top:
+            return {}
+        code, head, _ = git_run(top, ["rev-parse", "--verify", "refs/heads/" + branch + "^{commit}"], timeout=10)
+        if code != 0:
+            return {}
+        head = head.strip()
+        base = (rec or {}).get("baseCommit") or ""
+        if not base:
+            code, base, _ = git_run(top, ["merge-base", "HEAD", head], timeout=10)
+            if code != 0:
+                return {}
+            base = base.strip()
+        if not re.fullmatch(r"[0-9a-f]{40,64}", base):
+            return {}
+        scope = os.path.relpath(os.path.realpath(folder), top).replace(os.sep, "/")
+        prefix = scope + "/" if scope != "." else ""
+        code, diff, _ = git_run(top, ["--literal-pathspecs", "diff", "--name-only", "-z", "--no-renames",
+                                     "--no-ext-diff", base, head, "--", scope], timeout=15)
+        if code != 0:
+            return {}
+        paths = {path for path in diff.split("\0") if path.startswith(prefix)
+                 and path[len(prefix):] != task["file"] and self._review_path(path[len(prefix):])}
+        if not paths:
+            return {}
+        code, tree, _ = git_run(top, ["--literal-pathspecs", "ls-tree", "-rlz", head, "--", scope], timeout=15)
+        sources = {}
+        if code == 0:
+            for line in tree.split("\0"):
+                meta, _, path = line.partition("\t")
+                if path not in paths:
+                    continue
+                mode, kind, oid, size = meta.split()
+                if mode in ("100644", "100755") and kind == "blob":
+                    sources[path[len(prefix):]] = ("gałąź", (top, oid), int(size))
+        return {rel: sources[rel] for rel in dict.fromkeys(refs + sorted(sources)) if rel in sources}
+
+    def _result_locate(self, folder, rel):
+        if not self._review_path(rel):
             return None
-        bases = self._result_bases(folder)
-        for base in bases:
-            path = os.path.realpath(os.path.join(base, rel))
-            if any(_inside(b, path) for b in bases) and os.path.isfile(path):
-                try:
-                    return "dysk", path, os.path.getsize(path)
-                except OSError:
-                    return None
-        if branch:
-            top, spec, size = self._branch_spec(project, branch, rel)
-            if top:
-                return "gałąź", (top, spec), size
+        base = os.path.realpath(folder)
+        path = os.path.join(base, *rel.split("/"))
+        try:
+            if os.path.realpath(path) == path and stat.S_ISREG(os.lstat(path).st_mode):
+                return "dysk", (base, rel), os.path.getsize(path)
+        except OSError:
+            pass
         return None
 
-    def _result_read(self, where, branch=""):
-        kind, src, _ = where
+    @staticmethod
+    def _review_disk(base, rel):
+        """Otwórz zwykły plik bez podążania za dowiązaniami, także przy zmianie katalogu podczas odczytu."""
+        with contextlib.ExitStack() as stack:
+            if os.open in os.supports_dir_fd and hasattr(os, "O_NOFOLLOW"):
+                flags = os.O_RDONLY | os.O_NOFOLLOW
+                fd = os.open(os.path.sep, flags | os.O_DIRECTORY)
+                stack.callback(os.close, fd)
+                parts = base.strip(os.path.sep).split(os.path.sep) + rel.split("/")
+                for part in parts[:-1]:
+                    fd = os.open(part, flags | os.O_DIRECTORY, dir_fd=fd)
+                    stack.callback(os.close, fd)
+                fd = os.open(parts[-1], flags | os.O_NONBLOCK, dir_fd=fd)
+            else:
+                path = os.path.join(base, *rel.split("/"))
+                if os.path.realpath(path) != path:
+                    return None
+                fd = os.open(path, os.O_RDONLY | getattr(os, "O_BINARY", 0))
+            with os.fdopen(fd, "rb") as f:
+                if stat.S_ISREG(os.fstat(f.fileno()).st_mode):
+                    blob = f.read(REVIEW_FILE_MAX + 1)
+                    return blob if len(blob) <= REVIEW_FILE_MAX else None
+        return None
+
+    def _result_read(self, where):
+        kind, src, size = where
+        if size > REVIEW_FILE_MAX:
+            return None
         if kind == "dysk":
             try:
-                with open(src, "rb") as f:
-                    return f.read()
+                return self._review_disk(*src)
             except OSError:
                 return None
-        return self._branch_read(src[0], src[1], branch)[0]
+        return self._branch_read(src[0], src[1], "")[0]
 
     def _task_run(self, key):
         """Bieżące (w kolejce albo w toku) albo ostatnie uruchomienie zadania: kopia rekordu i miejsce w kolejce."""
@@ -3218,16 +3309,6 @@ class Manager:
             pos = self._queue.index(rec["id"]) + 1 if rec["state"] == "queued" and rec["id"] in self._queue else None
             return dict(rec, steps=list(rec.get("steps") or [])), pos
 
-    def _task_branch(self, task):
-        """Gałąź agenta z wynikiem zadania: ostatnie uruchomienie z gałęzią, inaczej pole gałąź:."""
-        key = (task["project"], task["file"], task["title"])
-        with self._lock:
-            recs = [r for r in self._runs.values() if r.get("kind") == "task" and r.get("branch")
-                    and (r.get("project"), r.get("file"), r.get("title")) == key]
-        if recs:
-            return max(recs, key=lambda r: r.get("queuedAt") or "")["branch"]
-        return str((task.get("detail") or {}).get("branch") or "")
-
     def _save_version(self, rec):
         """Po udanym uruchomieniu zadania: nowa wersja wyniku (wynik:, zostało:, decyzja:, zmiany:, poprawka
         z rekordu i kopie plików z wyniku). Bez nadpisywania; najwyżej VERSIONS_KEEP wersji na zadanie."""
@@ -3239,7 +3320,8 @@ class Manager:
             return None
         d = task.get("detail") or {}
         result, left, decision = (str(d.get(k) or "") for k in ("result", "left", "decision"))
-        if not (result or left or decision):
+        sources = self._review_sources(task, folder, rec)
+        if not (result or left or decision or sources):
             return None
         base = self._versions_dir(*key)
         with self._ver_lock:
@@ -3260,18 +3342,15 @@ class Manager:
             if rec.get("fix") or rec.get("pins"):
                 fixes.append({"text": str(rec.get("fix") or ""), "pins": list(rec.get("pins") or [])})
             files, total = [], 0
-            for i, rel in enumerate(version_paths(result + "\n" + left, d.get("refs") or [])):
+            for i, (rel, where) in enumerate(sources.items()):
                 ext = os.path.splitext(rel.lower())[1]
-                where = self._result_locate(rec["project"], folder, rel, rec.get("branch") or "")
-                if not where:
-                    continue
                 entry = {"path": rel, "kind": VERSION_KINDS[ext], "size": where[2]}
                 if where[2] > VERSION_FILE_MAX:
                     entry["skipped"] = "większy niż %d MB" % (VERSION_FILE_MAX >> 20)
                 elif total + where[2] > VERSION_TOTAL_MAX:
                     entry["skipped"] = "razem ponad %d MB" % (VERSION_TOTAL_MAX >> 20)
                 else:
-                    blob = self._result_read(where, rec.get("branch") or "")
+                    blob = self._result_read(where)
                     if blob is None:
                         continue
                     copy = "plik-%d%s" % (i + 1, ext)
@@ -3298,12 +3377,9 @@ class Manager:
         """Wersja „bieżąca” (saved=false) z pól zadania, gdy wersji zapisanych nie ma."""
         d = task.get("detail") or {}
         rec, _ = self._task_run((task["project"], task["file"], task["title"]))
-        branch = self._task_branch(task)
-        files = []
-        for rel in version_paths("%s\n%s" % (d.get("result") or "", d.get("left") or ""), d.get("refs") or []):
-            where = self._result_locate(task["project"], folder, rel, branch)
-            if where:
-                files.append({"path": rel, "kind": VERSION_KINDS[os.path.splitext(rel.lower())[1]], "size": where[2]})
+        sources = self._review_sources(task, folder, rec)
+        files = [{"path": rel, "kind": VERSION_KINDS[os.path.splitext(rel.lower())[1]], "size": where[2]}
+                 for rel, where in sources.items()]
         fixes = [{"text": d["fix"], "pins": list(d.get("pins") or [])}] if d.get("fix") else []
         return {"n": 1, "at": (rec or {}).get("endedAt") or "", "saved": False, "runId": (rec or {}).get("id", ""),
                 "result": d.get("result") or "", "left": d.get("left") or "", "decision": d.get("decision") or "",
@@ -3330,12 +3406,22 @@ class Manager:
                          "result": m.get("result", ""), "decision": m.get("decision", ""), "left": m.get("left", ""),
                          "changes": list(m.get("changes") or []), "fixes": list(m.get("fixes") or []),
                          "files": [dict(f) for f in m.get("files") or []]} for m in saved]
+            live = self._review_latest_sources(task, index.get(task["project"]), saved[-1])
+            latest = versions[-1]["files"]
+            known = {f["path"] for f in latest}
+            latest.extend({"path": path, "kind": VERSION_KINDS[os.path.splitext(path.lower())[1]], "size": where[2]}
+                          for path, where in live.items() if path not in known)
         else:
             versions = [self._current_version(task, index.get(task["project"]))]
         for v in versions:
             for f in v["files"]:
                 f.pop("copy", None)
                 f.update(name=posixpath.basename(f["path"]), url=self._file_url(task["id"], v["n"], f["path"]))
+                if f.get("size", 0) > REVIEW_FILE_MAX:
+                    f["skipped"] = "większy niż %d MB" % (REVIEW_FILE_MAX >> 20)
+                elif v is versions[-1] and saved and f["path"] in live:
+                    f.pop("skipped", None)
+            v["zip"] = "/api/odbior/zip?" + urllib.parse.urlencode({"id": task["id"], "v": v["n"]})
         rec, pos = self._task_run(key)
         run = None
         if rec:
@@ -3347,54 +3433,74 @@ class Manager:
         return 200, "", {"task": info, "versions": versions, "run": run,
                          "accepted": [x.strip() for x in accepted.split(",") if x.strip()]}
 
-    def review_file(self, task_id, n, path):
-        """GET /api/odbior/plik: (kod, bajty | komunikat, typ). Tylko pliki wymienione w wersji n: kopia z wersji,
-        a dla wersji bieżącej (albo pliku pominiętego w kopii) folder projektu lub gałąź agenta."""
-        ctype = VERSION_TYPES.get(os.path.splitext(str(path).lower())[1])
-        if not ctype:
-            return 404, "Nie ma takiego pliku.", ""
+    def _review_latest_sources(self, task, folder, meta):
+        with self._lock:
+            rec = self._runs.get(meta.get("runId"))
+        if not rec:
+            return {}
+        live = self._review_sources(task, folder, rec)
+        if rec.get("branch"):
+            return live
+        saved_paths = {f["path"] for f in meta.get("files") or []}
+        return {path: where for path, where in live.items() if path in saved_paths}
+
+    def _review_downloads(self, task_id, n):
         task, _, index = self._find_task(task_id=str(task_id))
         if not task:
-            return 404, "Nie ma tego zadania.", ""
+            return {}
         try:
             n = int(n)
         except (TypeError, ValueError):
-            return 404, "Nie ma takiej wersji.", ""
+            return {}
         key = (task["project"], task["file"], task["title"])
-        folder = index.get(task["project"])
         saved = self.versions(*key)
-        if saved:
-            meta = next((m for m in saved if m["n"] == n), None)
-            if not meta:
-                return 404, "Nie ma takiej wersji.", ""
-            entry = next((f for f in meta.get("files") or [] if isinstance(f, dict) and f.get("path") == path), None)
-            if not entry:
-                return 404, "Nie ma takiego pliku w tej wersji.", ""
-            copy = str(entry.get("copy") or "")
-            if copy:
-                here = os.path.join(self._versions_dir(*key), str(n))
-                src = os.path.realpath(os.path.join(here, copy))
-                if os.path.dirname(src) != os.path.realpath(here) or not os.path.isfile(src):
-                    return 404, "Nie ma takiego pliku.", ""
-                with open(src, "rb") as f:
-                    return 200, f.read(), ctype
-            branch = self._task_branch(task)
-        else:
+        folder = index.get(task["project"])
+        if not saved:
             if n != 1:
-                return 404, "Nie ma takiej wersji.", ""
-            d = task.get("detail") or {}
-            if path not in version_paths("%s\n%s" % (d.get("result") or "", d.get("left") or ""), d.get("refs") or []):
-                return 404, "Nie ma takiego pliku w tej wersji.", ""
-            branch = self._task_branch(task)
-        where = self._result_locate(task["project"], folder, path, branch)
-        if not where:
-            return 404, "Nie ma takiego pliku.", ""
-        if where[2] > VERSION_FILE_MAX:
-            return 404, "Plik jest większy niż %d MB." % (VERSION_FILE_MAX >> 20), ""
-        blob = self._result_read(where, branch)
+                return {}
+            live = self._review_sources(task, folder, self._task_run(key)[0])
+            return {path: where for path, where in live.items() if where[2] <= REVIEW_FILE_MAX}
+        meta = next((m for m in saved if m["n"] == n), None)
+        if not meta:
+            return {}
+        live = self._review_latest_sources(task, folder, meta) if meta is saved[-1] else {}
+        here = os.path.join(self._versions_dir(*key), str(n))
+        sources = {}
+        for f in meta.get("files") or []:
+            path, copy = f.get("path", ""), f.get("copy", "")
+            if not self._review_path(path):
+                continue
+            if re.fullmatch(r"plik-\d+\.[a-z0-9]+", copy):
+                sources[path] = ("dysk", (here, copy), f["size"])
+        sources.update({path: where for path, where in live.items()
+                        if path not in sources and where[2] <= REVIEW_FILE_MAX})
+        return sources
+
+    def review_file(self, task_id, n, path):
+        where = self._review_downloads(task_id, n).get(path)
+        blob = self._result_read(where) if where else None
         if blob is None:
-            return 404, "Nie udało się odczytać pliku.", ""
-        return 200, blob, ctype
+            return 404, "Nie ma takiego pliku do pobrania.", ""
+        return 200, blob, VERSION_TYPES[os.path.splitext(path.lower())[1]]
+
+    def review_zip(self, task_id, n):
+        sources = self._review_downloads(task_id, n)
+        if not sources:
+            return 404, "Nie ma plików do pobrania.", ""
+        if sum(where[2] for where in sources.values()) > REVIEW_FILE_MAX:
+            return 413, "Pliki przekraczają limit ZIP (128 MB). Pobierz je pojedynczo.", ""
+        out = io.BytesIO()
+        total = 0
+        with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as archive:
+            for path, where in sources.items():
+                blob = self._result_read(where)
+                if blob is None:
+                    return 404, "Jeden z plików wyniku jest niedostępny.", ""
+                total += len(blob)
+                if total > REVIEW_FILE_MAX:
+                    return 413, "Pliki przekraczają limit ZIP (128 MB). Pobierz je pojedynczo.", ""
+                archive.writestr(path, blob)
+        return 200, out.getvalue(), "application/zip"
 
     def review_fix(self, task_id, title, text, pins):
         """POST /api/odbior/popraw: poprawka ze znacznikami pod zadaniem i od razu uruchomienie (jak „Wyślij

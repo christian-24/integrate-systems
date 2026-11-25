@@ -1,12 +1,14 @@
 """Strona „Odbiór pracy” (AGENCI.md, „Odbiór pracy”): wersje wyniku po uruchomieniu, /api/odbior, plik wersji,
 poprawka ze znacznikami, odbiór całości i części wariantów, klucz zmiany:."""
 import http.client
+import io
 import json
 import os
 import shutil
 import subprocess
 import threading
 import unittest
+import zipfile
 from http.server import ThreadingHTTPServer
 from urllib.parse import quote
 
@@ -137,6 +139,54 @@ class Odbior(Baza):
         v = self.review("Zadanie A")[1]["versions"]
         self.assertEqual([(x["n"], x["saved"]) for x in v], [(1, False)])
         self.assertEqual(self.http("GET", v[0]["files"][0]["url"])[:2], (200, raw))
+
+    def test_pliki_z_galezi_tylko_zmiany_zadania(self):
+        def git(*args):
+            return subprocess.check_output(["git", "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+                                            *args], cwd=self.folder).decode().strip()
+        git("init", "-q")
+        git("add", "-A")
+        git("commit", "-qm", "start")
+        git("checkout", "-qb", "agent/wizytowka")
+        with open(os.path.join(self.folder, "wizytowki", "dane klienta.csv"), "wb") as f:
+            f.write(b"a,b")
+        os.symlink("przod.png", os.path.join(self.folder, "wizytowki", "skrot.png"))
+        git("add", "-A")
+        git("commit", "-qm", "wynik")
+        git("checkout", "-q", "-")
+        t = self.task("Wizytówka")
+        projekt.set_detail(self.folder, t["file"], t["line"], t["title"], "gałąź", "agent/wizytowka")
+        v = self.review()[1]["versions"][0]
+        self.assertEqual([(f["path"], f["size"]) for f in v["files"]], [("wizytowki/dane klienta.csv", 3)])
+        status, raw, head = self.http("GET", v["files"][0]["url"] + "&pobierz=1")
+        self.assertEqual((status, raw), (200, b"a,b"))
+        self.assertEqual(head["Content-Disposition"], "attachment; filename*=UTF-8''dane%20klienta.csv")
+        status, raw, _ = self.http("GET", v["zip"])
+        self.assertEqual(status, 200)
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            self.assertEqual(z.namelist(), ["wizytowki/dane klienta.csv"])
+            self.assertEqual(z.read(z.namelist()[0]), b"a,b")
+
+    def test_zip_z_folderu_odrzuca_dowiazania(self):
+        t = self.task("Wizytówka")
+        outside = os.path.join(self.folder, "..", "poza.png")
+        with open(outside, "wb") as f:
+            f.write(b"poza projektem")
+        os.symlink(outside, os.path.join(self.folder, "wizytowki", "link.png"))
+        os.symlink("przod.png", os.path.join(self.folder, "wizytowki", "wewnatrz.png"))
+        os.symlink("wizytowki", os.path.join(self.folder, "skrot"))
+        projekt.set_detail(self.folder, t["file"], t["line"], t["title"], "wynik",
+                           "wizytowki/przod.png wizytowki/link.png wizytowki/wewnatrz.png skrot/przod.png ../poza.png")
+        v = self.review()[1]["versions"][0]
+        self.assertEqual([f["path"] for f in v["files"]], ["wizytowki/przod.png"])
+        status, raw, head = self.http("GET", v["zip"])
+        self.assertEqual(status, 200)
+        self.assertTrue(head["Content-Disposition"].startswith("attachment"))
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            self.assertEqual(z.namelist(), ["wizytowki/przod.png"])
+            self.assertEqual(z.read(z.namelist()[0]), PNG + b"p")
+        for path in ("wizytowki/link.png", "wizytowki/wewnatrz.png", "skrot/przod.png", "../poza.png"):
+            self.assertEqual(self.manager.review_file(t["id"], 1, path)[0], 404)
 
     def test_limit_wersji(self):
         t = self.task("Wizytówka")

@@ -86,7 +86,7 @@ import threading
 import time
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 for _stream in ("stdout", "stderr"):            # pythonw na Windows: brak konsoli, strumienie to None
@@ -3760,10 +3760,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(raw)
 
-    def _send_range(self, body, ctype):
+    def _send_range(self, body, ctype, disposition="inline", extra=()):
         """Bajty pliku z obsługą nagłówka Range (film w Safari wymaga odpowiedzi 206)."""
         size = len(body)
-        head = [("Cache-Control", "no-store"), ("Content-Disposition", "inline"), ("Accept-Ranges", "bytes")]
+        head = [("Cache-Control", "no-store"), ("Content-Disposition", disposition), ("Accept-Ranges", "bytes"), *extra]
         m = re.match(r"^bytes=(\d*)-(\d*)$", (self.headers.get("Range") or "").strip())
         if not m or not (m.group(1) or m.group(2)):
             return self._send(200, body, ctype, head)
@@ -3912,12 +3912,28 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = get_agents().review((parse_qs(url.query).get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
-        if path == "/api/odbior/plik":            # plik wersji wyniku (obraz, PDF, tekst, film)
+        if path in ("/api/odbior/plik", "/api/odbior/zip"):
             qs = parse_qs(url.query)
-            code, body, ctype = get_agents().review_file(*((qs.get(k) or [""])[0] for k in ("id", "v", "path")))
+            task_id, version, rel = ((qs.get(k) or [""])[0] for k in ("id", "v", "path"))
+            full = path.endswith("/zip")
+            if full:
+                code, body, ctype = get_agents().review_zip(task_id, version)
+            else:
+                code, body, ctype = get_agents().review_file(task_id, version, rel)
             if code != 200:
                 return self._send(code, body, "text/plain; charset=utf-8")
-            return self._send_range(body, ctype)
+            if qs.get("miniatura") == ["1"]:
+                if ctype != "application/pdf":
+                    return self._send(404, "Brak miniatury.", "text/plain; charset=utf-8")
+                preview = agents.review_pdf_thumbnail(body)
+                if not preview:
+                    return self._send(404, "Brak miniatury PDF.", "text/plain; charset=utf-8")
+                return self._send(200, preview, "image/png", [("Cache-Control", "private, max-age=60")])
+            name = "pliki-wyniku.zip" if full else rel.rsplit("/", 1)[-1]
+            disposition = "attachment; filename*=UTF-8''" + quote(name, safe="") if full or qs.get("pobierz") == ["1"] else "inline"
+            if ctype == "image/svg+xml":
+                return self._send_range(body, ctype, disposition, [("Content-Security-Policy", "sandbox; default-src 'none'; style-src 'unsafe-inline'")])
+            return self._send_range(body, ctype, disposition)
         if path == "/api/plik/surowy":            # obraz albo PDF z wyniku zadania (podgląd w szufladzie)
             code, body, ctype = read_project_asset(url.query)
             if code != 200:
