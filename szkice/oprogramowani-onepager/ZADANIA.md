@@ -18,13 +18,29 @@
   zostało: przeglądarka do zrzutów ma język angielski, więc strona główna jest na nich w wersji EN (tak działa wykrywanie języka); polską wersję widać na zrzutach Regulaminu i Prywatności. Nie klikałem przełącznika języka ani formularza. Część z 66 miejsc siedzi w zwiniętych odpowiedziach na pytania, więc na zrzucie widać ich mniej. Produkcyjnego `npm run build` nie uruchamiałem ponownie: kod nie zmienił się od poprzedniego sprawdzenia.
   poprawka: Zacznij od gałęzi agent/2026-11-23-strona-przygotuj-podglad-nowej-strony-w (commit 68af8b7): kod podglądu jest gotowy. Zbuduj go poleceniem z karty, zrób zrzuty 390 i 1440 px, obejrzyj je i dokończ kroki 2–3.
   zmiany: podgląd zbudowany poleceniem z karty: zrobione; zrzuty 390 i 1440 px zrobione i obejrzane: zrobione; kroki 2–3 dokończone, [UZUPEŁNIJ] policzone: zrobione
-- [ ] Oceń nową stronę w zakładce Strona (punkt kontrolny 1: kierunek) | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: przygotuj podgląd nowej strony
+- [x] Oceń nową stronę w zakładce Strona (punkt kontrolny 1: kierunek) | kto: ty | kiedy: 2026-11-24 | czas: 20 | po: przygotuj podgląd nowej strony
   cel: decyzja, czy nowa strona idzie w dobrym kierunku
   gotowe gdy: uwagi wysłane z zakładki Strona („Wskaż” i „Wyślij agentowi”) albo zadanie zamknięte bez uwag
   materiał: site
   materiał: site/package.json
   - [ ] Obejrzyj stronę na telefonie i komputerze
   - [ ] Wskaż, co zmienić, albo zamknij zadanie
+  wynik: właściciel ocenił stronę 25.11; uwagi w zadaniu „Strona: poprawki po punkcie kontrolnym 1”
+- [~] Strona: poprawki po punkcie kontrolnym 1 (sekcje, wycena, animacja, telefon) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+  cel: strona prostsza i nastawiona na telefon i bezpłatną wycenę, według uwag właściciela z 25.11
+  gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel), zmiany są we wszystkich językach (PL, DE, IT, EN), zrzuty 390 i 1440 px obejrzane, w wynik: lista zmian sekcja po sekcji; dane firmy i miejsca [UZUPEŁNIJ] bez zmian, bez wymyślonych danych
+  materiał: site/src/jezyki/tresc-pl.js
+  materiał: site/src/jezyki/wspolne-pl.js
+  materiał: site/src/Strona.jsx
+  materiał: site/src/strona.css
+  - [ ] Połącz w jedną sekcję: cennik („co realizujemy i ile kosztuje”), „Dwie rzeczy. Robimy je porządnie” i „Cenę znasz, zanim zaczniemy”; ceny zostają jako widełki „od … zł”
+  - [ ] Usuń motyw „cena znana przed startem” i „ocena przed wyceną” w całej stronie; zamiast tego prosta „Bezpłatna wycena” (główny przycisk zamiast „Umów darmową godzinę”; okno zgłoszenia zostaje jako prośba o wycenę)
+  - [ ] Wstęp zostaje, ale szarpaną animację zastąp spokojnym ruchem w tle za tekstem (płynnie, bez skoków, z prefers-reduced-motion)
+  - [ ] Usuń sekcję „Bez wymyślonych opinii” i sekcję „Zanim zadzwonisz” (pytania); „Cztery kroki” i „Zamiast raportów” zostają
+  - [ ] Strona zachęca do telefonu: numer i „Zadzwoń” w nagłówku i przy wycenie, na telefonie stały przycisk „Zadzwoń” na dole ekranu
+  - [ ] Pod Google Ads: dane firmy, kontakt i polityka prywatności łatwo dostępne z każdej podstrony; jeśli strona ma tagi analityki lub reklam, baner zgody z Consent Mode v2 (domyślnie odmowa); nowych tagów bez identyfikatorów od właściciela nie dodawaj
+  - [ ] Zbuduj, zrób zrzuty, obejrzyj, popraw; w wynik: co zmieniono w każdej sekcji
+
 - [ ] Podaj dane firmy do strony: prawo i RODO | kto: ty | kiedy: 2026-11-25 | czas: 15
   cel: dane prawne, bez których strona nie może wyjść na produkcję
   materiał: site/src/dane.js
@@ -50,13 +66,16 @@
   materiał: site
   - [ ] Przeczytaj oceny audytorów w wyniku poprzedniego zadania
   - [ ] Obejrzyj stronę i zdecyduj
-- [~] Strona: skróć teksty na stronie głównej | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+- [!] Strona: skróć teksty na stronie głównej | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | blokada: produkcyjne `npm run build` nie może przejść, dopóki w danych firmy brakuje wymaganych pól (VAT, adres, gwarancja, stawka i inne); wersja robocza buduje się bez błędu
   cel: strona ma mniej tekstu: krótsze akapity, jedno zdanie na punkt, bez powtórzeń między sekcjami
   gotowe gdy: produkcyjne `npm run build` przechodzi bez błędu; zrzuty 390 i 1440 px obejrzane; w wynik: liczba słów strony głównej przed i po; sens, ceny, dane firmy i miejsca [UZUPEŁNIJ] bez zmian
   materiał: site/src/tresc-pl.js
   materiał: site/src/jezyki/wspolne-pl.js
-  - [ ] Policz słowa każdej sekcji i skróć najdłuższe (najpierw sekcje z najdłuższym tekstem)
-  - [ ] Zbuduj, zrób zrzuty, obejrzyj
+  - [x] Policz słowa każdej sekcji i skróć najdłuższe (najpierw sekcje z najdłuższym tekstem)
+  - [x] Zbuduj, zrób zrzuty, obejrzyj
+  wynik: strona główna PL ma 1643 słowa zamiast 1909 (−14%; bez żółtych [UZUPEŁNIJ]). Po sekcjach przed → po: Pytania 442→372, Cennik 369→313, Oferta 154→132, Hero 145→138, Kontakt 140→135, Pewność 133→91, Czat 106→98, Jak pracujemy 102→79, Kalkulator 94→85, Dowody 86→72, O nas 84→74. Usunięte powtórzenia: „cena na piśmie” (zostaje w hero, krokach, cenniku i FAQ), licencje i pliki na Twoim koncie (tylko w „Bez uzależnienia” i FAQ), „60 minut, bez zobowiązań” (tylko w „Pierwsza rozmowa”). Punkty i kroki mają po jednym zdaniu. Ceny, dane firmy, zdania składane z danych firmy i miejsca [UZUPEŁNIJ] są bez zmian. Plik: site/src/jezyki/tresc-pl.js. Zrzuty 390 i 1440 px (/pl): układ się nie rozjechał, akapity w kartach i krokach są wyraźnie krótsze.
+  zostało: produkcyjne `npm run build` nie było uruchamiane (brak uprawnień), a i tak zatrzyma się na pustych wymaganych polach w danych firmy; zrzut kończy się na 6000 px, więc Cennika, Pytań i Kontaktu nie oglądałem na obrazie (liczyłem je w kodzie); wersje DE, IT i EN nie są skrócone
+  następne: Strona: skróć teksty w wersjach DE, IT i EN tak jak w PL | kto: agent | kiedy: 2026-11-26
 
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
