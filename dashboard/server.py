@@ -3852,8 +3852,20 @@ def preview_data():
     add_checks(out["tasks"], {projekt.slug(os.path.basename(f)): f for f in sample_folders()}, None)
     agents.annotate_sample(out["tasks"], block)    # w podglądzie zadania przykładowe wyglądają jak prawdziwe
     if block:
+        block["stats"] = sample_stats(block.get("runs") or [])
         out["agents"] = block
     return out
+
+
+def sample_stats(runs):
+    """Sekcja Użycie w podglądzie: czasy względne („-185m”) z agenci-przyklad.json na ISO, potem usage_stats."""
+    now = time.time()
+
+    def iso(value):
+        match = re.fullmatch(r"([+-]\d+)m", value) if isinstance(value, str) else None
+        return datetime.datetime.fromtimestamp(now + int(match[1]) * 60).isoformat() if match else value
+    rows = [dict(r, startedAt=iso(r.get("startedAt")), queuedAt=iso(r.get("queuedAt"))) for r in runs if isinstance(r, dict)]
+    return agents.agent_progress.usage_stats(rows, now)
 
 
 def export_preview(path):

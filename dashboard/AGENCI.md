@@ -834,8 +834,10 @@ poprzedniego uruchomienia i z pola `gałąź:`): `testy/test_na_zywo.py` (atrapa
 
 „Teraz” odświeża się co 3 sekundy. Karta pokazuje zadanie, projekt, komputer, upływ czasu,
 trzy ostatnie wpisy i zużycie limitu 5 h, gdy strumień je podaje. Postęp pochodzi z listy Claude
-(`TodoWrite`, `TaskCreate`, `TaskUpdate`) lub planu Codex (`todo_list`, zdarzenia planu). Gdy planu
-brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność. Pasek liczy ukończone kroki.
+(`TodoWrite`, `TaskCreate`, `TaskUpdate`) lub planu Codex (`todo_list`, zdarzenia planu). Polecenie zadania
+(`MILESTONES_RULE`) każe agentowi zapisać na początku 3–7 kamieni milowych i odhaczać je po kolei; karta pokazuje
+„Kamień 2 z 5: nazwa” z paskiem. Ukończony kamień dostaje w planie `doneAt` (chwila zdarzenia). Gdy planu
+brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność.
 „Przebieg na żywo” otwiera szczegóły uruchomienia. Pod kartami widać uruchomienia w kolejce, zadania
 gotowe dla włączonego Automatu oraz zlecenia rozwoju czekające na start (patrz `ROZWOJ.md`).
 
@@ -851,6 +853,12 @@ panel sprawdza najnowszą sesję konta `agent`. Katalog można wskazać przez `P
 0% do następnego odczytu.
 
 Szacunki czasu, tokenów i zużycia 5 h to mediany zakończonych uruchomień tego samego narzędzia i rodzaju.
-Każda wielkość wymaga przynajmniej trzech odczytów. Ukończone kroki pozwalają skorygować szacunek trwającej pracy.
+Każda wielkość wymaga przynajmniej trzech odczytów; kwartyle czasu (`low`, `high`) są w podpowiedzi. Przed pierwszym
+ukończonym kamieniem trwająca praca ma szacunek z historii („ok. N min”, `basis: history`). Po pierwszym kamieniu:
+„zostało ok. N min (± M)” z tempa kamieni (czas do ostatniego ukończonego / ukończone × pozostałe), ważone z historią
+(waga tempa n/(n+1) po n kamieniach); margines to ±50% / √n (`basis: milestones`, `agent_progress.estimate_running`).
+Sekcja „Użycie” (`stats` w `/api/data`, `agent_progress.usage_stats`): dla Claude i Codex limit 5 h i tygodniowy,
+uruchomienia i tokeny dziś i w 7 dni, średni czas, odsetek udanych i najdroższe zadania 7 dni, z zapisanych rekordów
+uruchomień i zleceń rozwoju.
 Godziny w kolejce uwzględniają przewidywany koniec uruchomień w toku oraz liczbę równoległych prac.
 Raport PM korzysta z rejestru lub zbieracza i może uruchomić gotowe zadania agentów zgodnie ze standardem PM.
