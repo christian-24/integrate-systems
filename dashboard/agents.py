@@ -36,6 +36,7 @@ import glos  # noqa: E402  (rozpoznawanie mowy)
 import grafiki  # noqa: E402  (grafiki do postów przez Codex)
 import karty  # noqa: E402  (karty asystenta: katalog, sprawdzenie, biblioteka)
 import kopie  # noqa: E402  (kopia projektu a GitHub: klon na start)
+import pola  # noqa: E402  (pola formularza zadań właściciela: propozycja modelu)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela)
 import strona  # noqa: E402  (podgląd strony WWW projektu)
 ROOT = os.path.dirname(HERE)
@@ -299,6 +300,13 @@ def photos_only(card_text, detail_text=""):
 
 
 # najwyżej jedno otwarte pytanie na projekt, odbiór tylko dla pracy wychodzącej na zewnątrz albo z decyzją.
+FIELDS_RULE = ("- Zadanie `kto: ty`, które wymaga danych od właściciela (identyfikatory, liczby, wybór, data, adres), "
+               "zakładasz od razu z wciętym wierszem `  pyta: Etykieta [typ]; Etykieta [typ]` (typy: `[tekst, np. …]`, "
+               "`[tak/nie]`, `[liczba]`, `[wybór: A | B]`, `[data]`, `[link]`; najwyżej 3 pola; format w STANDARD.md). "
+               "Bez pól na hasła, klucze i tokeny: zamiast nich `Hasło do X [hasło: gdzie je wpisać]`. Zadanie bez "
+               "potrzebnych danych zostaje bez `pyta:` (właściciel kliknie tylko „Zrobione”).")
+
+
 OWNER_RULES = [
     "- Właściciela angażuj tylko w sprawy, których nikt poza nim nie rozstrzygnie: pieniądze i koszty, dane prawne "
     "i firmowe, działania nieodwracalne albo wychodzące na zewnątrz, zakres i terminy projektu, rzeczy fizyczne "
@@ -957,6 +965,52 @@ class Manager:
             pass
         return "", "", cost
 
+    def claude_free(self):
+        """Czy można teraz wywołać Claude (jest, zalogowany, bez limitu i poniżej rezerwy limitu)."""
+        usage = self.usage_state()
+        info = self._tools.get("claude") or {}
+        return (self.tool_found("claude") and not (info.get("found") and not info.get("loggedIn"))
+                and not self._state["needsLogin"] and not self.limit_until()
+                and all((usage.get(k) or 0) < self.auto_reserve for k in ("five", "seven")))
+
+    def ask_fields(self, items):
+        """Pola formularza dla zadań właściciela (pola.PROMPT, Claude Haiku, jedno wywołanie):
+        {n: "Etykieta [typ]; …" albo ""} albo None, gdy model jest niedostępny albo odpowiedź jest zła."""
+        if not items or not self.claude_free():
+            return None
+        prompt = pola.PROMPT + json.dumps(items, ensure_ascii=False)
+        args = self._claude_args(self.tool_path("claude"), "haiku",
+                                 ["--tools", "", "--strict-mcp-config", "--no-session-persistence"])
+        try:
+            process = subprocess.run(self.as_agent(args), input=prompt, stdout=subprocess.PIPE,
+                                     stderr=subprocess.DEVNULL, cwd=tempfile.gettempdir(), env=child_env(self.env),
+                                     encoding="utf-8", errors="replace", timeout=90, **NO_WINDOW)
+        except (OSError, subprocess.SubprocessError):
+            return None
+        answer = None
+        for line in process.stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if not isinstance(event, dict):
+                continue
+            self._record_limits("claude", agent_progress.limit_windows(event, "claude", time.time()), {})
+            if event.get("type") == "result" and not event.get("is_error"):
+                text = str(event.get("result") or "").strip()
+                text = text[text.find("{"):text.rfind("}") + 1] if "{" in text else ""
+                try:
+                    answer = json.loads(text)
+                except ValueError:
+                    answer = None
+        if process.returncode != 0 or not isinstance(answer, dict) or not isinstance(answer.get("zadania"), list):
+            return None
+        out = {}
+        for z in answer["zadania"]:
+            if isinstance(z, dict) and isinstance(z.get("n"), int) and isinstance(z.get("pyta", ""), str):
+                out[z["n"]] = z.get("pyta", "")
+        return out
+
     def auto_task_ready(self, task, project, folder, claude_paused):
         tool, _ = self.choose_task_tool(task, project, folder)
         return bool(tool) and (tool != "claude" or not claude_paused)
@@ -1286,6 +1340,7 @@ class Manager:
             "bieżącego zadania. Nie uruchamiaj innych agentów ani nie używaj ogólnego Bash.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
+            FIELDS_RULE,
         ] + git_rules + drive_rules(drive) + film_rules(title) + list(site_rules) + (self._image_rules(file, title, detail) if tool == "codex" else []) + OWNER_RULES
             + self.render_rules() + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
@@ -2106,6 +2161,7 @@ class Manager:
             "i bez „Polecenie:”. „wymaga: zgoda” dopisujesz tylko, gdy praca wysyła coś na zewnątrz (publikacja, "
             "wysyłka, płatność); takie zadanie czeka na zgodę właściciela w panelu.",
             "- Zadań `kto: ty` nie uruchamiasz i nie dajesz im poleceń: to praca właściciela.",
+            FIELDS_RULE,
         ]
 
     @staticmethod
