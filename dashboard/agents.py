@@ -278,6 +278,26 @@ CODEX_IMAGE_RULES = [
     "jako PNG w folderze posta (posty/<dzień>-<nazwa>/) pod nazwą wariant-<n>.png z kolejnym wolnym numerem; "
     "nie nadpisuj grafika.png ani zdjęć (właściciel wybiera wariant w edytorze posta).",
 ]
+# Projekt z polem karty „- grafiki: tylko zdjęcia” (albo zadanie z „bez $imagegen” / „Zachowaj zdjęcie”): Codex
+# nie generuje obrazów, tylko obrabia prawdziwe zdjęcia (decyzja właściciela 2026-11-25, reklamy Shield & Silent).
+CODEX_PHOTO_RULES = [
+    "- Nie generuj ani nie przerabiaj obrazów narzędziem $imagegen. Pracuj tylko na prawdziwych zdjęciach z materiałów "
+    "zadania albo folderu posta: kadrowanie, tekst, gradient, ramka i logo (Pillow albo HTML i dashboard/html-do-pdf.py). "
+    "Auto, ludzie i tło zostają takie jak na zdjęciu. Wynik zapisz jako PNG w folderze posta (posty/<dzień>-<nazwa>/); "
+    "nie nadpisuj grafika.png ani zdjęć.",
+]
+PHOTO_ONLY_RE = re.compile(r"bez\s+\$imagegen|zachowaj\s+zdj", re.I)
+
+
+def photos_only(card_text, detail_text=""):
+    """Czy Codex ma pracować tylko na prawdziwych zdjęciach: pole karty „- grafiki: tylko zdjęcia” albo zapis w zadaniu."""
+    for line in str(card_text or "").splitlines():
+        m = re.match(r"^\s*-\s*grafiki\s*:\s*(.+?)\s*$", line, re.I)
+        if m and re.search(r"tylko\s+(prawdziwe\s+)?zdj", m.group(1), re.I):
+            return True
+    return bool(PHOTO_ONLY_RE.search(str(detail_text or "")))
+
+
 # najwyżej jedno otwarte pytanie na projekt, odbiór tylko dla pracy wychodzącej na zewnątrz albo z decyzją.
 OWNER_RULES = [
     "- Właściciela angażuj tylko w sprawy, których nikt poza nim nie rozstrzygnie: pieniądze i koszty, dane prawne "
@@ -1201,6 +1221,17 @@ class Manager:
             out += ["  " + projekt_pin_line(p) for p in pins]
         return out
 
+    def _image_rules(self, file, title, detail):
+        """Zasady obrazów dla Codexa: generowanie ($imagegen) albo tylko prawdziwe zdjęcia (pole karty, zapis w zadaniu)."""
+        card = ""
+        try:
+            with open(os.path.join(os.path.dirname(os.path.realpath(file)), "KARTA.md"), encoding="utf-8") as f:
+                card = f.read()
+        except (OSError, TypeError, ValueError):
+            pass
+        text = " ".join([str(title or "")] + [str(x) for x in (self.detail_lines(detail) or [])])
+        return CODEX_PHOTO_RULES if photos_only(card, text) else CODEX_IMAGE_RULES
+
     def task_prompt(self, tool, name, file, line, title, stage, detail=None, git=None, site_rules=(), drive=""):
         """git: {"branch", "cwd", "file", "card", "cards"} przy pracy w katalogu roboczym gałęzi uruchomienia.
         site_rules: zasady zadania strony WWW (strona.Site.rules)."""
@@ -1255,7 +1286,7 @@ class Manager:
             "bieżącego zadania. Nie uruchamiaj innych agentów ani nie używaj ogólnego Bash.",
             "- Możesz dopisać pod zadaniem jeden wiersz `  następne: Tytuł | kto: … | kiedy: RRRR-MM-DD` z propozycją "
             "kolejnego zadania. Nowych zadań nie zakładaj.",
-        ] + git_rules + drive_rules(drive) + film_rules(title) + list(site_rules) + (CODEX_IMAGE_RULES if tool == "codex" else []) + OWNER_RULES
+        ] + git_rules + drive_rules(drive) + film_rules(title) + list(site_rules) + (self._image_rules(file, title, detail) if tool == "codex" else []) + OWNER_RULES
             + self.render_rules() + [
             "- Pytania do właściciela dopisz jako kolejny punkt „1. pytanie” w sekcji „## Pytania do właściciela” "
             "w KARTA.md (załóż sekcję na końcu pliku, gdy jej nie ma); termin odpowiedzi jako wcięty wiersz "
