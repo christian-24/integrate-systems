@@ -53,6 +53,19 @@ SERVE_HEADERS = [("Content-Security-Policy", "sandbox allow-scripts allow-forms 
 STATE_TEXT = {"error": "agent zakończył się błędem", "timeout": "przekroczony czas", "login": "wymaga logowania",
               "limit": "limit subskrypcji", "stopped": "zatrzymane"}
 
+# Ramka podglądu ma sandbox bez allow-same-origin (strona nie widzi ciasteczek panelu). Safari na iPhonie blokuje
+# w takiej ramce history.pushState/replaceState i localStorage (SecurityError): strona z routerem mignęła treścią
+# i zostawała biała (2026-11-25, oprogramowani-onepager). Ten skrypt idzie przed skryptami strony: zablokowana zmiana
+# adresu nic nie robi, a zamiast niedostępnej pamięci jest pamięć na czas otwarcia podglądu.
+SANDBOX_JS = (
+    "(function(){['pushState','replaceState'].forEach(function(k){var f=history[k];if(!f)return;"
+    "history[k]=function(){try{return f.apply(history,arguments)}catch(e){}}});"
+    "['localStorage','sessionStorage'].forEach(function(k){var ok=true;try{var s=window[k];s.getItem('x')}catch(e){ok=false}"
+    "if(ok)return;var d={},m={getItem:function(a){return Object.prototype.hasOwnProperty.call(d,a)?d[a]:null},"
+    "setItem:function(a,b){d[a]=String(b)},removeItem:function(a){delete d[a]},clear:function(){d={}},"
+    "key:function(i){return Object.keys(d)[i]||null}};Object.defineProperty(m,'length',{get:function(){return Object.keys(d).length}});"
+    "try{Object.defineProperty(window,k,{value:m,configurable:true})}catch(e){}})})();")
+
 # Skrypt wstrzykiwany do podglądu: tryb „Wskaż” (obrys elementu pod kursorem, klik wybiera element i wysyła
 # selektor, tekst i położenie do panelu przez postMessage). Panel przyjmuje wiadomości tylko z tej ramki.
 PICKER_JS = r"""(function(){if(window.parent===window)return;var on=false,hb=null,sb=null;
@@ -233,7 +246,7 @@ class Site:
 
     @staticmethod
     def inject(body):
-        tag = ("<script>%s</script>" % PICKER_JS).encode("utf-8")
+        tag = ("<script>%s</script><script>%s</script>" % (SANDBOX_JS, PICKER_JS)).encode("utf-8")
         m = re.search(rb"<head[^>]*>", body, re.I)
         if m:
             return body[:m.end()] + tag + body[m.end():]
