@@ -30,6 +30,9 @@ Rozszerzenie Chrome sprawdza je przy „Udostępnij na …” (`facebook`, `link
 robi właściciel w narzędziu AI według gotowych poleceń. Podział, np. `- nagrywa: panel 50, ai 40, ty 10`: Automat
 przydziela każdemu filmowi sposób tak, żeby trzymać ten podział (`filmMix` w danych projektu; wybór zapisany w panelu).
 Film „panel” robi studio panelu, filmy „ty” i „ai” dostają scenariusz.
+`- grafiki: tylko zdjęcia`: agenci (Codex) nie generują obrazów ($imagegen), tylko obrabiają prawdziwe zdjęcia z projektu (kadr,
+tekst, logo). To samo w jednym zadaniu daje zapis „bez $imagegen” albo „Zachowaj zdjęcie” w tytule lub szczegółach.
+
 `- strona: site`: projekt ma stronę WWW w tym folderze (względem folderu projektu, `.` to sam folder). Panel pokazuje
 wtedy zakładkę „Strona”: podgląd, uwagi do agenta i zlecenie według koncepcji (`site` w danych projektu; opis
 w `dashboard/AGENCI.md`, „Podgląd strony”). Opcjonalnie `- strona build: polecenie` (domyślnie
