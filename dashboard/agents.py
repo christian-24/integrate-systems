@@ -238,7 +238,7 @@ def _inside(base, path):
 def git_run(cwd, args, timeout=60):
     """git bez haków i fsmonitora (repozytorium mógł zmienić agent), z komunikatami po angielsku do rozpoznania
     konfliktów. Zwraca (kod, stdout, stderr); -1 przy braku polecenia albo przekroczonym czasie."""
-    env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0")
+    env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
     base = ["git", "-c", "core.hooksPath=" + os.devnull, "-c", "core.fsmonitor=false", "-c", "core.quotePath=false"]
     try:
         p = subprocess.run(base + list(args), cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
@@ -3370,7 +3370,7 @@ class Manager:
 
     @staticmethod
     def _branch_read(top, spec, branch):
-        env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0")
+        env = dict(os.environ, LC_ALL="C", LANG="C", GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
         try:
             p = subprocess.run(["git", "-c", "core.hooksPath=" + os.devnull, "cat-file", "blob", spec], cwd=top,
                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
