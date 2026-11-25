@@ -50,9 +50,16 @@
   materiał: site
   - [ ] Przeczytaj oceny audytorów w wyniku poprzedniego zadania
   - [ ] Obejrzyj stronę i zdecyduj
+- [~] Strona: skróć teksty na stronie głównej | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+  cel: strona ma mniej tekstu: krótsze akapity, jedno zdanie na punkt, bez powtórzeń między sekcjami
+  gotowe gdy: produkcyjne `npm run build` przechodzi bez błędu; zrzuty 390 i 1440 px obejrzane; w wynik: liczba słów strony głównej przed i po; sens, ceny, dane firmy i miejsca [UZUPEŁNIJ] bez zmian
+  materiał: site/src/tresc-pl.js
+  materiał: site/src/jezyki/wspolne-pl.js
+  - [ ] Policz słowa każdej sekcji i skróć najdłuższe (najpierw sekcje z najdłuższym tekstem)
+  - [ ] Zbuduj, zrób zrzuty, obejrzyj
 
 ## Do rozplanowania
-- [~] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
+- [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
   cel: wizytówka Krystiana Stryjakiewicza (Oprogramowani) w stylu nowej strony: biel, czerń, jeden czerwony akcent z logo, Inter, dużo powietrza
   gotowe gdy: w folderze wizytowka/ są wizytowka.pdf (2 strony: przód i tył, 85×55 mm plus 3 mm spadu), przod.png i tyl.png (300 dpi) oraz wizytowka.html do podglądu; każdy napis na karcie pochodzi z plików strony, bez wymyślonych danych
   materiał: site/src/dane.js
