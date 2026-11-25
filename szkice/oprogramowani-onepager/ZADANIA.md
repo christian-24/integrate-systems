@@ -26,7 +26,7 @@
   - [ ] Obejrzyj stronę na telefonie i komputerze
   - [ ] Wskaż, co zmienić, albo zamknij zadanie
   wynik: właściciel ocenił stronę 25.11; uwagi w zadaniu „Strona: poprawki po punkcie kontrolnym 1”
-- [~] Strona: poprawki po punkcie kontrolnym 1 (sekcje, wycena, animacja, telefon) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+- [ ] Strona: poprawki po punkcie kontrolnym 1 (sekcje, wycena, animacja, telefon) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: strona prostsza i nastawiona na telefon i bezpłatną wycenę, według uwag właściciela z 25.11
   gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel), zmiany są we wszystkich językach (PL, DE, IT, EN), zrzuty 390 i 1440 px obejrzane, w wynik: lista zmian sekcja po sekcji; dane firmy i miejsca [UZUPEŁNIJ] bez zmian, bez wymyślonych danych
   materiał: site/src/jezyki/tresc-pl.js
