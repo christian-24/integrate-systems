@@ -5192,8 +5192,7 @@ function drAccBox(compact){
   }else if(lg){
     h+='<div class="dra-lg"><p class="note">Łączenie z wklejaniem adresu jest wyłączone.</p><div class="row"><button type="button" class="btn sec sm" data-dra="anuluj" data-k="dra-a">Anuluj</button></div></div>';
   }else if(noC){
-    h+=compact?'<p class="note">Najpierw ustaw logowanie Google: <a href="#koszty">Serwer</a> → Google Drive → „Logowanie jednym kliknięciem” (raz, ok. 10 minut). Potem łączysz jednym kliknięciem, także z telefonu.</p>':
-      '<p class="note">Najpierw ustaw klienta Google poniżej (raz, ok. 10 minut). Potem „Połącz Google Drive” działa jednym kliknięciem, także z telefonu.</p>';
+    h+='<p class="note">Najpierw ustaw klienta Google (raz dla całego panelu, ok. 10 minut). Potem „Połącz Google Drive” działa jednym kliknięciem, także z telefonu.</p>'+(compact?draClient():'');
   }else{
     h+='<form class="dform" data-drastart="1">'+(L.length||!compact?'<input class="fi" name="label" autocomplete="off" maxlength="60" placeholder="Nazwa konta, np. Firma albo Prywatne" aria-label="Nazwa konta Google">':'')+
       '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+' data-k="dra-start">'+(L.length?'Połącz kolejne konto':'Połącz Google Drive')+'</button></div></form>'+
