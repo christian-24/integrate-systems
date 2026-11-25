@@ -48,9 +48,10 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
   GET  /api/drive/konta       połączone konta Google (jedno logowanie na konto), logowanie w toku
-  GET  /api/drive/foldery     foldery konta (?account=, odswiez=1) do wyboru folderu projektu
+  GET  /api/drive/foldery     foldery konta przypisanego do projektu (?project=, account=, odswiez=1)
   GET  /api/drive/powrot      powrót z Google przy własnym kliencie OAuth (bez sesji, chroni jednorazowy state)
-  POST /api/drive/konto/start|finish|anuluj|usun   łączenie konta Google; /api/drive/wybierz: folder dla projektu
+  POST /api/drive/konto/start|finish|anuluj|usun|przypisz|odlacz|migracja   konta i przypisania
+  POST /api/drive/wybierz    wybór folderu dla projektu
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
   POST /api/repo/zatwierdz    zatwierdza niezatwierdzone zmiany w repozytorium projektu jako zmiany agenta
   POST /api/repo/odloz        odkłada niezatwierdzone zmiany do schowka git (z opisem); /api/repo/przywroc przywraca
@@ -586,9 +587,12 @@ def project_file(pid, rel, types=FILE_TYPES, max_size=FILE_MAX):
     card = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
     if card not in bases:
         bases.append(card)
+    drive_root = os.path.join(card, "media", "drive")
     for base in bases:
         path = os.path.realpath(os.path.join(base, rel))
         if not any(_inside(b, path) for b in bases):
+            continue
+        if _inside(drive_root, path) and not get_drive().folder_allowed(pid):
             continue
         if os.path.isfile(path):
             if not path.lower().endswith(tuple(types)):
@@ -2092,6 +2096,7 @@ def get_agents():
             _agents = agents.Manager(load_projects, _write_lock, projekt)
             _agents.site.secret = _derive("panel-podglad").encode("ascii")   # adresy podglądu trwają po restarcie
             _agents.cancel_hook = cancel_task
+            _agents.drive_mount = lambda pid, folder: get_drive().mount_path(pid)
             _agents.counts_hook = cached_counts
             _agents.answer_hook = answer_question    # „Odpowiedź na pytanie:” z rozmów: ta sama droga co przycisk
         return _agents
@@ -2158,9 +2163,15 @@ WRITES = {"/api/task/cancel": cancel_task, "/api/task/restore": lambda b: cancel
           "/api/post/zlec": lambda b: assign_publication(b),
           "/api/drive/klient": lambda b: get_drive().save_client(b),
           "/api/drive/konto/start": lambda b: get_drive().start_account(b.get("label", ""),
-                                                                         b.get("account", ""), b.get("returnTo", "")),
-          "/api/drive/konto/finish": lambda b: get_drive().finish_account(b.get("url", "")),
-          "/api/drive/konto/anuluj": lambda b: get_drive().cancel_account(),
+                                                                         b.get("account", ""), b.get("returnTo", ""),
+                                                                         b.get("project", "")),
+          "/api/drive/konto/finish": lambda b: get_drive().finish_account(b.get("url", ""), b.get("project", "")),
+          "/api/drive/konto/anuluj": lambda b: get_drive().cancel_account(b.get("project", "")),
+          "/api/drive/konto/przypisz": lambda b: get_drive().assign_account(b.get("project", ""),
+                str(b.get("account") or ""), b.get("confirmed")),
+          "/api/drive/konto/odlacz": lambda b: get_drive().unassign_account(b.get("project", ""),
+                str(b.get("account") or "")),
+          "/api/drive/konto/migracja": lambda b: get_drive().retry_migration(),
           "/api/drive/konto/usun": lambda b: get_drive().remove_account(b.get("account", "")),
           "/api/drive/wybierz": lambda b: get_drive().choose(b.get("project", ""), b.get("account", ""),
                                                              b.get("folder", ""), b.get("path", "")),
@@ -3305,13 +3316,19 @@ DRIVE_BACK_REDIRECT = ('<!doctype html><html lang="pl"><meta charset="utf-8"><ti
 _drive = {"obj": None}
 
 
+def drive_parts(pid):
+    data, _ = load_projects(resolve=False)
+    return [p["id"] for p in data["projects"] if p.get("partOf") == pid]
+
+
 def get_drive():
     """Połączenia Google Drive projektów (drive.py); jedno na proces."""
     if _drive["obj"] is None:
         env = os.environ.get       # PANEL_RCLONE*, PANEL_DRIVE_*: atrapa i osobne pliki (testy, zrzuty)
         helper = env("PANEL_DRIVE_HELPER")
         _drive["obj"] = drive.Drive(card_dir, rclone=env("PANEL_RCLONE"), conf=env("PANEL_RCLONE_CONF"),
-                                    data_dir=env("PANEL_DRIVE_DIR"), helper=helper.split() if helper else None)
+                                    data_dir=env("PANEL_DRIVE_DIR"), helper=helper.split() if helper else None,
+                                    parts=drive_parts)
     return _drive["obj"]
 
 
@@ -3626,6 +3643,9 @@ def media_list():
         for sub in MEDIA_DIRS:
             for root, dirs, files in os.walk(os.path.join(cards, sub)):
                 dirs[:] = [d for d in dirs if not d.startswith(".")]
+                if sub == "media" and root == os.path.join(cards, sub) and "drive" in dirs \
+                        and not get_drive().folder_allowed(pid):
+                    dirs.remove("drive")
                 for f in files:
                     ext = os.path.splitext(f)[1].lower()
                     if f.startswith(".") or ext not in MEDIA_TYPES:
@@ -3654,6 +3674,8 @@ def media_file(pid, rel):
     if not cards or not rel or rel.startswith("/") or parts[0] not in MEDIA_DIRS or any(x.startswith(".") or not x for x in parts):
         return None
     path = os.path.realpath(os.path.join(cards, rel))
+    if _inside(os.path.join(cards, "media", "drive"), path) and not get_drive().folder_allowed(pid):
+        return None
     if os.path.commonpath([cards, path]) != cards or os.path.splitext(path)[1].lower() not in MEDIA_TYPES \
             or not os.path.isfile(path) or os.path.basename(path).startswith("."):
         return None
@@ -4018,8 +4040,9 @@ class Handler(BaseHTTPRequestHandler):
                               "application/json; charset=utf-8")
         if path in ("/api/drive/konta", "/api/drive/foldery"):
             q = parse_qs(url.query)
-            code, err, extra = get_drive().accounts() if path == "/api/drive/konta" else \
-                get_drive().folders((q.get("account") or [""])[0], (q.get("odswiez") or [""])[0] == "1")
+            pid = (q.get("project") or [""])[0]
+            code, err, extra = get_drive().accounts(pid) if path == "/api/drive/konta" else \
+                get_drive().folders((q.get("account") or [""])[0], (q.get("odswiez") or [""])[0] == "1", pid)
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
         if path == "/api/drive/powrot":         # powrót z Google (własny klient OAuth); bez sesji: chroni state
@@ -4459,6 +4482,7 @@ if __name__ == "__main__":
     for name in ("SIGTERM", "SIGBREAK"):       # zatrzymanie usługi ma zakończyć także procesy agentów
         if hasattr(signal, name):
             signal.signal(getattr(signal, name), _stop)
+    get_drive().migrate_accounts()
     get_agents().start()                        # dopiero po zajęciu portu: drugi egzemplarz nie rusza rekordów
     get_publisher().start()
     try:

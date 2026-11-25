@@ -131,8 +131,9 @@ class Drive:
     """Konta Google Drive i foldery projektów. card_dir: funkcja pid -> folder karty albo None."""
 
     def __init__(self, card_dir, rclone=None, helper=None, conf=None, data_dir=None, port=PORT, oauth_file=None,
-                 token_url=TOKEN_URL):
+                 token_url=TOKEN_URL, parts=None):
         self.card_dir = card_dir
+        self.parts = parts or (lambda pid: ())
         self.rclone = rclone if rclone is not None else (shutil.which("rclone") or "")
         self.helper = helper or ["sudo", "-n", "/usr/local/bin/drive-wlacz"]
         self.conf = conf or os.path.expanduser("~/.config/rclone/rclone.conf")
@@ -141,7 +142,7 @@ class Drive:
             os.path.expanduser("~/.config/integrate/google-oauth.json")
         self.token_url = token_url
         self.port = port
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.conf_lock = threading.Lock()
         self.login = None               # {"key", "kind", "proc", "state", "url", "at", "folder" | "acc", "label"}
         self._folders = {}              # konto -> (czas, wynik)
@@ -206,13 +207,108 @@ class Drive:
                 out[n[:-5]] = self._side_read(n[:-5])
         return out
 
+    def _project_access(self, account, pid):
+        return bool(pid) and pid in account.get("projects", [])
+
+    def _project_group(self, pid):
+        return [pid, *self.parts(pid)] if pid else []
+
+    def migrate_accounts(self):
+        """Zapisuje przypisania sprzed wdrożenia i ponawia niedokończone odłączenia."""
+        if not self.rclone:
+            return
+        with self.lock:
+            meta, sides = self._accounts_read(), self._project_sides()
+            changed = False
+            dated = [acc for acc, m in meta.items() if "projects" not in m
+                     and str(m.get("at", ""))[:10] == "2026-11-25"]
+            if dated and not self.card_dir("shield-silent"):
+                dated = []
+            shield = sides.get("shield-silent", {}).get("account")
+            target = shield if shield in dated else dated[0] if len(dated) == 1 else None
+            for acc, m in meta.items():
+                if "projects" in m:
+                    continue
+                selected = sorted(pid for pid, side in sides.items() if side.get("account") == acc)
+                if acc == target:
+                    allowed = sorted({pid for root in ("shield-silent", "detailing-kepno")
+                                      if self.card_dir(root) for pid in self._project_group(root)})
+                    m["migration"] = {"before": selected, "after": allowed,
+                                      "pending": sorted(set(selected) - set(allowed))}
+                    m["projects"] = allowed
+                    changed = True
+                elif acc not in dated or target:
+                    m["projects"] = selected
+                    changed = True
+            if changed:
+                self._accounts_write(meta)
+            for acc, m in meta.items():
+                report = m.get("migration")
+                if not report:
+                    continue
+                for pid in list(report["pending"]):
+                    if self._side_read(pid).get("account") == acc and self._disconnect_folder(pid)[0] != 200:
+                        continue
+                    report["pending"].remove(pid)
+                    self._accounts_write(meta)
+
+    def retry_migration(self):
+        self.migrate_accounts()
+        pending = any(m.get("migration", {}).get("pending") for m in self._accounts_read().values())
+        return (500, "Nie usunięto wszystkich montowań. Możesz ponowić próbę.", {}) if pending else (200, "", {})
+
+    def assign_account(self, pid, acc, confirmed=False):
+        if confirmed is not True:
+            return 400, "Potwierdź przypisanie konta.", {}
+        pid, err = self._check(pid)
+        if err:
+            return err
+        with self.lock:
+            meta = self._accounts_read()
+            if acc not in meta or "projects" not in meta[acc] or ACC_PREFIX + acc not in self._remotes():
+                return 404, "Nie ma połączonego konta.", {}
+            m = meta[acc]
+            group = set(self._project_group(pid))
+            if group.intersection(m.get("migration", {}).get("pending", [])):
+                return 409, "Najpierw dokończ odłączanie folderu w Serwer → Google Drive.", {}
+            m["projects"] = sorted(set(m["projects"]) | group)
+            self._accounts_write(meta)
+        return 200, "", {}
+
+    def unassign_account(self, pid, acc):
+        if not isinstance(pid, str) or not PID_RE.fullmatch(pid):
+            return 404, "Nie ma tego projektu.", {}
+        with self.lock:
+            meta = self._accounts_read()
+            if not self._project_access(meta.get(acc, {}), pid):
+                return 404, "Konto nie jest przypisane do projektu.", {}
+            if self._side_read(pid).get("account") == acc:
+                result = self._disconnect_folder(pid)
+                if result[0] != 200:
+                    return result
+            meta[acc]["projects"].remove(pid)
+            self._accounts_write(meta)
+        return 200, "", {}
+
+    def _allowed_side(self, pid, side):
+        acc = side.get("account")
+        return not acc or self._project_access(self._accounts_read().get(acc, {}), pid)
+
+    def folder_allowed(self, pid):
+        return self._allowed_side(pid, self._side_read(pid))
+
     def _mnt(self, pid):
         card = self.card_dir(pid)
         return os.path.join(card, "media", "drive") if card else ""
 
     def mount_path(self, pid):
         """Zamontowany folder Drive projektu (tylko do odczytu) albo ''."""
-        mnt = self._mnt(str(pid or "")) if PID_RE.match(str(pid or "")) else ""
+        if not isinstance(pid, str) or not PID_RE.fullmatch(pid):
+            return ""
+        side = self._side_read(pid)
+        if not side.get("folder") or not self._allowed_side(pid, side):
+            return ""
+        mnt = self._mnt(pid)
         return mnt if mnt and os.path.ismount(mnt) else ""
 
     def _helper(self, *args):
@@ -402,45 +498,60 @@ class Drive:
         return 200, "", {"ownClient": True}
 
     # ---------- konta Google ----------
-    def accounts(self):
+    def accounts(self, pid=""):
         out = {"available": bool(self.rclone), "ownClient": False, "redirectUri": REDIRECT_URI, "scope": SCOPE,
                "accounts": [], "login": None}
         if not self.rclone:
             return 200, "", out
         out["ownClient"] = self.own_client() is not None
-        meta, remotes, sides = self._accounts_read(), self._remotes(), self._project_sides()
+        meta, remotes = self._accounts_read(), self._remotes()
         for acc, m in sorted(meta.items(), key=lambda x: str(x[1].get("label") or x[0]).lower()):
+            if pid and not self._project_access(m, pid):
+                continue
             out["accounts"].append({"id": acc, "label": str(m.get("label") or acc), "at": str(m.get("at") or ""),
                                     "connected": (ACC_PREFIX + acc) in remotes,
-                                    "projects": sorted(p for p, s in sides.items() if s.get("account") == acc)})
+                                    "projects": [pid] if pid else m.get("projects", [])})
+            if not pid and m.get("migration"):
+                out["accounts"][-1]["migration"] = m["migration"]
+        if not pid:
+            out["migrationAmbiguous"] = any("projects" not in m for m in meta.values())
         with self.lock:
             lg = self._login_alive()
-            if lg and lg["kind"] == "account":
+            if lg and lg["kind"] == "account" and lg.get("project", "") == pid:
                 out["login"] = {"account": lg["acc"], "label": lg["label"], "url": lg["url"], "mode": lg["mode"]}
         return 200, "", out
 
-    def start_account(self, label, account="", return_to=""):
+    def start_account(self, label, account="", return_to="", project=""):
         """Logowanie nowego konta (label) albo ponowne istniejącego (account: cofnięty albo wygasły dostęp)."""
-        if not self.rclone:
-            return 409, "Na serwerze brakuje rclone (uruchom/serwer/zainstaluj-drive.sh).", {}
-        meta = self._accounts_read()
-        if account:
-            if account not in meta:
-                return 404, "Nie ma tego konta.", {}
-            acc, label = account, str(meta[account].get("label") or account)
-        else:
-            label = re.sub(r"\s+", " ", str(label or "")).strip()[:60]
-            if not label:
-                label = "Konto Google" if not meta else "Konto Google %d" % (len(meta) + 1)
-            if any(str(m.get("label") or "").lower() == label.lower() for m in meta.values()):
-                return 409, "Konto o tej nazwie jest już połączone. Podaj inną nazwę.", {}
-            acc = account_id(label, set(meta) | {r[len(ACC_PREFIX):] for r in self._remotes()
-                                                 if r.startswith(ACC_PREFIX)})
+        account = str(account or "")
         with self.lock:
+            if not self.rclone:
+                return 409, "Na serwerze brakuje rclone (uruchom/serwer/zainstaluj-drive.sh).", {}
+            if not account and not project:
+                return 400, "Wybierz projekt dla konta Google.", {}
+            if project:
+                project, err = self._check(project)
+                if err:
+                    return err
+            meta = self._accounts_read()
+            if account:
+                if account not in meta or (project and not self._project_access(meta[account], project)):
+                    return 404, "Nie ma tego konta.", {}
+                acc, label = account, str(meta[account].get("label") or account)
+            else:
+                label = re.sub(r"\s+", " ", str(label or "")).strip()[:60]
+                if not label:
+                    label = "Konto Google" if not meta else "Konto Google %d" % (len(meta) + 1)
+                if any(str(m.get("label") or "").lower() == label.lower() for m in meta.values()):
+                    return 409, "Konto o tej nazwie jest już połączone. Podaj inną nazwę.", {}
+                acc = account_id(label, set(meta) | {r[len(ACC_PREFIX):] for r in self._remotes()
+                                                     if r.startswith(ACC_PREFIX)})
             lg = self._login_alive()
             if lg and lg["kind"] == "project":
                 return 409, "Trwa logowanie Drive w projekcie. Spróbuj za kilka minut.", {}
             if lg:
+                if lg.get("project", "") != project:
+                    return 409, "Trwa logowanie w innym projekcie. Dokończ je albo anuluj.", {}
                 if lg["mode"] == "paste" and (lg["acc"] == acc or (not account and lg["label"] == label)):
                     return 200, "", {"loginUrl": lg["url"], "mode": "paste", "account": lg["acc"]}
                 if lg["mode"] == "paste":
@@ -454,7 +565,7 @@ class Drive:
                     "scope": SCOPE, "access_type": "offline", "prompt": "consent select_account", "state": state})
                 self.login = {"key": "konto:" + acc, "kind": "account", "mode": "own", "proc": None, "state": state,
                               "url": url, "at": time.time(), "acc": acc, "label": label,
-                              "return": return_page(return_to), "client": own}
+                              "return": return_page(return_to), "client": own, "project": project}
             else:
                 if account:
                     self._drop_remote(ACC_PREFIX + acc)      # wpis z cofniętym tokenem; aliasy projektów zostają
@@ -462,28 +573,29 @@ class Drive:
                 if not proc:
                     return 500, url, {}
                 self.login = {"key": "konto:" + acc, "kind": "account", "mode": "paste", "proc": proc,
-                              "state": state, "url": url, "at": time.time(), "acc": acc, "label": label}
+                              "state": state, "url": url, "at": time.time(), "acc": acc, "label": label, "project": project}
             return 200, "", {"loginUrl": url, "mode": self.login["mode"], "account": acc}
 
-    def _account_done(self, acc, label):
+    def _account_done(self, acc, label, project=""):
         try:
             os.chmod(self.conf, 0o600)
         except OSError:
             pass
         meta = self._accounts_read()
-        meta[acc] = {"label": label, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
+        m = meta.setdefault(acc, {"projects": sorted(set(self._project_group(project)))})
+        m.update(label=label, at=time.strftime("%Y-%m-%dT%H:%M:%S"))
         self._accounts_write(meta)
         self._folders.pop(acc, None)
         for pid, side in self._project_sides().items():          # ponowne połączenie: montowania od nowa
-            if side.get("account") == acc and self.card_dir(pid):
+            if side.get("account") == acc and self._project_access(m, pid) and self.card_dir(pid):
                 self._helper(pid, self.card_dir(pid))
 
-    def finish_account(self, url):
+    def finish_account(self, url, project=""):
         if not self.rclone:
             return 409, "Na serwerze brakuje rclone.", {}
         with self.lock:
             lg = self._login_alive()
-            if not lg or lg["kind"] != "account" or lg["mode"] != "paste":
+            if not lg or lg["kind"] != "account" or lg["mode"] != "paste" or lg.get("project", "") != project:
                 return 409, "Logowanie wygasło. Kliknij „Połącz Google Drive” jeszcze raz.", {}
             query, err = account_back_query(url, lg["state"])
             if err:
@@ -511,7 +623,7 @@ class Drive:
             if proc.returncode != 0 or (ACC_PREFIX + acc) not in self._remotes():
                 self._stop_login()
                 return 409, "rclone zakończył logowanie bez dostępu. Otwórz nowe logowanie.", {}
-            self._account_done(acc, label)
+            self._account_done(acc, label, project)
             self._stop_login(drop=False)
         return 200, "", {"account": acc}
 
@@ -548,9 +660,9 @@ class Drive:
             ok = self._conf_section(ACC_PREFIX + lg["acc"], {
                 "type": "drive", "client_id": own["client_id"], "client_secret": own["client_secret"],
                 "scope": "drive.readonly", "token": token})
-        if not ok:
-            return 500, "Nie zapisano połączenia na serwerze."
-        self._account_done(lg["acc"], lg["label"])
+            if not ok:
+                return 500, "Nie zapisano połączenia na serwerze."
+            self._account_done(lg["acc"], lg["label"], lg["project"])
         if redirect:
             return 303, lg["return"]
         return 200, "Google Drive połączony (%s). Wróć do panelu." % lg["label"]
@@ -577,32 +689,36 @@ class Drive:
             os.replace(tmp, self.conf)
         return True
 
-    def cancel_account(self):
+    def cancel_account(self, project=""):
         with self.lock:
-            if self.login and self.login["kind"] == "account":
+            if self.login and self.login["kind"] == "account" and self.login.get("project", "") == project:
                 self._stop_login()
         return 200, "", {}
 
     def remove_account(self, acc):
-        acc = str(acc or "")
-        meta = self._accounts_read()
-        if acc not in meta:
-            return 404, "Nie ma tego konta.", {}
-        used = sorted(p for p, s in self._project_sides().items() if s.get("account") == acc)
-        if used:
-            return 409, "Tego konta używają projekty: %d. Najpierw odłącz w nich Drive." % len(used), \
-                {"projects": used}
-        if self.rclone:
-            self._drop_remote(ACC_PREFIX + acc)
-        meta.pop(acc, None)
-        self._accounts_write(meta)
-        self._folders.pop(acc, None)
-        return 200, "", {}
+        with self.lock:
+            acc = str(acc or "")
+            meta = self._accounts_read()
+            if acc not in meta:
+                return 404, "Nie ma tego konta.", {}
+            used = sorted(set(meta[acc].get("projects", [])) |
+                          {p for p, side in self._project_sides().items() if side.get("account") == acc})
+            if used:
+                return 409, "Tego konta używają projekty: %d. Najpierw odłącz w nich Drive." % len(used), \
+                    {"projects": used}
+            if self.login and self.login.get("acc") == acc:
+                self._stop_login(drop=False)
+            if self.rclone:
+                self._drop_remote(ACC_PREFIX + acc)
+            meta.pop(acc, None)
+            self._accounts_write(meta)
+            self._folders.pop(acc, None)
+            return 200, "", {}
 
-    def folders(self, acc, refresh=False):
+    def folders(self, acc, refresh=False, project=""):
         """Foldery konta (bez plików): [{"id", "path"}] posortowane po ścieżce, najwyżej MAX_FOLDERS."""
         acc = str(acc or "")
-        if acc not in self._accounts_read():
+        if not self._project_access(self._accounts_read().get(acc, {}), project):
             return 404, "Nie ma tego konta.", {}
         if not self.rclone:
             return 409, "Na serwerze brakuje rclone.", {}
@@ -628,7 +744,10 @@ class Drive:
                 out.append({"id": e["ID"], "path": str(e["Path"])[:500]})
         out.sort(key=lambda x: x["path"].lower())
         res = {"folders": out[:MAX_FOLDERS], "truncated": len(out) > MAX_FOLDERS}
-        self._folders[acc] = (time.time(), res)
+        with self.lock:
+            if not self._project_access(self._accounts_read().get(acc, {}), project):
+                return 404, "Nie ma tego konta.", {}
+            self._folders[acc] = (time.time(), res)
         return 200, "", res
 
     # ---------- folder projektu ----------
@@ -683,34 +802,36 @@ class Drive:
 
     def choose(self, pid, acc, folder, path=""):
         """Folder z konta dla projektu (albo części): wpis alias drive-<pid> i montowanie usługą drive@<pid>."""
-        pid, err = self._check(pid)
-        if err:
-            return err
-        acc = str(acc or "")
-        meta = self._accounts_read()
-        if acc not in meta:
-            return 404, "Nie ma tego konta. Połącz Google Drive.", {}
-        fid = folder_id(folder)
-        if not fid:
-            return 400, "Wybierz folder z listy albo wklej link do folderu (…/drive/folders/…).", {}
-        remotes = self._remotes()
-        if (ACC_PREFIX + acc) not in remotes:
-            return 409, "Brak połączenia z kontem na serwerze. Połącz konto ponownie.", {}
-        known = {f["id"]: f["path"] for f in (self._folders.get(acc) or (0, {"folders": []}))[1]["folders"]}
-        path = known.get(fid) or re.sub(r"[\x00-\x1f]", "", str(path or "")).strip()[:500]
         with self.lock:
+            pid, err = self._check(pid)
+            if err:
+                return err
+            acc = str(acc or "")
+            if not self.folder_allowed(pid):
+                return 409, "Najpierw dokończ odłączanie poprzedniego folderu.", {}
+            meta = self._accounts_read()
+            if not self._project_access(meta.get(acc, {}), pid):
+                return 404, "Konto nie jest przypisane do projektu.", {}
+            fid = folder_id(folder)
+            if not fid:
+                return 400, "Wybierz folder z listy albo wklej link do folderu (…/drive/folders/…).", {}
+            remotes = self._remotes()
+            if (ACC_PREFIX + acc) not in remotes:
+                return 409, "Brak połączenia z kontem na serwerze. Połącz konto ponownie.", {}
+            known = {f["id"]: f["path"] for f in (self._folders.get(acc) or (0, {"folders": []}))[1]["folders"]}
+            path = known.get(fid) or re.sub(r"[\x00-\x1f]", "", str(path or "")).strip()[:500]
             lg = self._login_alive()
             if lg and lg["kind"] == "project" and lg["key"] == pid:
                 self._stop_login()
-        target = self._alias_target(acc, fid)
-        if not target or not self._write_alias(pid, target):
-            return 500, "Nie zapisano folderu projektu.", {}
-        self._side_write(pid, {"account": acc, "folder": fid, "path": path,
-                               "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
-        ok, msg = self._helper(pid, self.card_dir(pid))
-        if not ok:
-            return 500, "Folder zapisany, ale montowanie nieudane: %s" % msg, {}
-        return 200, "", {}
+            target = self._alias_target(acc, fid)
+            if not target or not self._write_alias(pid, target):
+                return 500, "Nie zapisano folderu projektu.", {}
+            self._side_write(pid, {"account": acc, "folder": fid, "path": path,
+                                   "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            ok, msg = self._helper(pid, self.card_dir(pid))
+            if not ok:
+                return 500, "Folder zapisany, ale montowanie nieudane: %s" % msg, {}
+            return 200, "", {}
 
     # ---------- API projektu ----------
     def status(self, pid):
@@ -721,8 +842,10 @@ class Drive:
                "login": False, "account": "", "accountLabel": "", "path": "", "legacy": False}
         if not self.rclone:
             return 200, "", out
-        out["connected"] = self._connected(pid)
         side = self._side_read(pid)
+        if not self._allowed_side(pid, side):
+            return 200, "", out
+        out["connected"] = self._connected(pid)
         out["folder"] = str(side.get("folder") or "")
         out["account"] = str(side.get("account") or "")
         out["path"] = str(side.get("path") or "")
@@ -730,7 +853,7 @@ class Drive:
             out["accountLabel"] = str(self._accounts_read().get(out["account"], {}).get("label") or out["account"])
         out["legacy"] = out["connected"] and not out["account"]
         mnt = self._mnt(pid)
-        out["mounted"] = bool(mnt) and os.path.ismount(mnt)
+        out["mounted"] = bool(out["folder"] and mnt) and os.path.ismount(mnt)
         if out["mounted"]:
             out["mountPath"] = mnt
             try:
@@ -755,9 +878,9 @@ class Drive:
         fid = folder_id(link)
         if not fid:
             return 400, "Wklej link do folderu na Google Drive (…/drive/folders/…).", {}
-        if self._connected(pid):
-            return 409, "Ten projekt ma już połączony Drive. Najpierw odłącz.", {}
         with self.lock:
+            if self._connected(pid) or self._side_read(pid).get("folder"):
+                return 409, "Ten projekt ma już połączony Drive. Najpierw odłącz.", {}
             lg = self._login_alive()
             if lg and lg["key"] != pid:
                 return 409, "Trwa inne logowanie Google Drive. Spróbuj za kilka minut.", {}
@@ -788,34 +911,35 @@ class Drive:
                 self._stop_login()                      # usuwa niedokończony wpis
                 return 500, "Google nie potwierdził logowania. Spróbuj jeszcze raz.", {}
             self._stop_login(drop=False)
-        try:
-            os.chmod(self.conf, 0o600)
-        except OSError:
-            pass
-        self._side_write(pid, {"folder": folder, "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
-        ok, msg = self._helper(pid, self.card_dir(pid))
-        if not ok:
-            return 500, "Połączono, ale montowanie nieudane: %s" % msg, {}
-        return 200, "", {}
+            try:
+                os.chmod(self.conf, 0o600)
+            except OSError:
+                pass
+            self._side_write(pid, {"folder": folder, "at": time.strftime("%Y-%m-%dT%H:%M:%S")})
+            ok, msg = self._helper(pid, self.card_dir(pid))
+            if not ok:
+                return 500, "Połączono, ale montowanie nieudane: %s" % msg, {}
+            return 200, "", {}
 
     def mount(self, pid):
-        pid, err = self._check(pid)
-        if err:
-            return err
-        connected = self._connected(pid)
-        side = self._side_read(pid)
-        if not connected and not side.get("folder"):
-            return 409, "Drive nie jest połączony.", {}
-        if side.get("account"):
-            message, action = self._diagnose(pid, side, connected)
-            if action in ("reconnect", "choose"):
-                return 409, message, {}
-            if action == "alias":
-                target = self._alias_target(str(side["account"]), str(side["folder"]))
-                if not self._write_alias(pid, target):
-                    return 500, "Nie udało się zapisać wpisu Drive projektu.", {}
-        ok, msg = self._helper(pid, self.card_dir(pid))
-        return (200, "", {}) if ok else (500, "Montowanie nieudane: %s" % msg, {})
+        with self.lock:
+            pid, err = self._check(pid)
+            if err:
+                return err
+            connected = self._connected(pid)
+            side = self._side_read(pid)
+            if not self._allowed_side(pid, side) or (not connected and not side.get("folder")):
+                return 409, "Drive nie jest połączony.", {}
+            if side.get("account"):
+                message, action = self._diagnose(pid, side, connected)
+                if action in ("reconnect", "choose"):
+                    return 409, message, {}
+                if action == "alias":
+                    target = self._alias_target(str(side["account"]), str(side["folder"]))
+                    if not self._write_alias(pid, target):
+                        return 500, "Nie udało się zapisać wpisu Drive projektu.", {}
+            ok, msg = self._helper(pid, self.card_dir(pid))
+            return (200, "", {}) if ok else (500, "Montowanie nieudane: %s" % msg, {})
 
     def cancel(self, pid):
         with self.lock:
@@ -825,18 +949,31 @@ class Drive:
 
     def disconnect(self, pid):
         """Odłącza folder od projektu: zatrzymuje montowanie, usuwa wpis drive-<pid>. Konto zostaje."""
-        pid, err = self._check(pid)
-        if err:
-            return err
+        with self.lock:
+            pid, err = self._check(pid)
+            if err:
+                return err
+            return self._disconnect_folder(pid)
+
+    def _disconnect_folder(self, pid):
         ok, msg = self._helper("--wylacz", pid)
         if not ok:
             return 500, "Nie odłączono: %s" % msg, {}
+        mnt = self._mnt(pid)
+        if mnt and os.path.ismount(mnt):
+            return 500, "Folder nadal jest zamontowany.", {}
         try:
-            self._rc("config", "delete", "drive-" + pid)
+            remote = "drive-" + pid
+            remotes = self._rc("listremotes")
+            if remotes.returncode != 0 or (remote + ":" in remotes.stdout.splitlines()
+                                          and self._rc("config", "delete", remote).returncode != 0):
+                return 500, "Odmontowano, ale nie usunięto połączenia.", {}
         except (OSError, subprocess.SubprocessError):
             return 500, "Odmontowano, ale nie usunięto połączenia.", {}
         try:
             os.remove(self._side(pid))
-        except OSError:
+        except FileNotFoundError:
             pass
+        except OSError:
+            return 500, "Nie usunięto wyboru folderu.", {}
         return 200, "", {}

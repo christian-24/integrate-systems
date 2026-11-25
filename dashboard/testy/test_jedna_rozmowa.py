@@ -1,6 +1,6 @@
 """Jedna rozmowa (zlecenie 2026-11-25): z agentem rozmawia się tylko w Asystencie i w Rozmowie w projekcie.
 
-Sprawdza: w panelu nie ma czatu przy zadaniu (tylko „Zapytaj o to zadanie”), uwaga ze Strony idzie przez Rozmowę
+Sprawdza: w panelu nie ma czatu przy zadaniu ani „Zapytaj o to zadanie” (Rozmowa przy otwartym zadaniu dostaje odnośnik), uwaga ze Strony idzie przez Rozmowę
 w projekcie z załącznikiem (to samo zadanie agenta i run_task co dawny formularz), przyciski jednego działania wołają
 run_task, a w Chromium z emulacją iPhone 15 (393 px, dotyk) na dużym zestawie: brak poziomego przewijania, okna
 w ekranie, przewijanie szuflady, odblokowana strona po zamknięciu, cele dotyku ≥ 44 px w szufladzie i rozmowie,
@@ -30,7 +30,7 @@ class Panel(unittest.TestCase):
         for gone in ("data-chatexec", "data-chatask", "sendChat(", "odAskSend", "data-odform=\"ask\"", "Tylko zapytaj"):
             self.assertNotIn(gone, self.html)
         box = re.search(r"function chatBox\(t\)\{(.*?)\n\}", self.html, re.S).group(1)
-        self.assertIn("Zapytaj o to zadanie", box)
+        self.assertNotIn("Zapytaj o to zadanie", box)                    # decyzja 2026-11-25: bez przycisku w zadaniu
         self.assertNotIn("<textarea", box)
         self.assertIn("Dawna rozmowa o zadaniu", box)                     # historia zostaje do odczytu
 
@@ -166,7 +166,7 @@ with sync_playwright() as p:
     r["lock"] = pg.evaluate("document.body.classList.contains('sl')")
     r["scroll"] = pg.evaluate("(()=>{const d=document.querySelector('#drawer');const a=d.scrollTop;d.scrollTop=a+200;const ok=d.scrollTop>a||d.scrollHeight<=d.clientHeight;d.scrollTop=a;return ok})()")
     r["textarea"] = pg.locator("#drawer textarea[data-cq]").count()
-    pg.locator("#drawer [data-askt]").first.click(); pg.wait_for_timeout(500)
+    pg.locator("#pjdock [data-pjd=open]").first.click(); pg.wait_for_timeout(500)   # Rozmowa przy otwartym zadaniu
     r = out["zapytaj"] = pg.evaluate(M, "#pjdock button,#pjdock .btn")
     r["ref"] = pg.locator("#pjdock .pjd-chip").inner_text()
     r["exec"] = pg.locator("#pjdock [data-pjdx]").count()
@@ -356,7 +356,7 @@ class Iphone15(Duzy):
         self.assertIn("Załącznik: Strona", out["strona"]["att"])
         self.assertFalse(out["odbior"]["details"])
         self.assertTrue(out["odbior"]["after"])
-        self.assertEqual(out["odbior"]["ask"], 1)                         # odbiór: „Zapytaj o to zadanie”
+        self.assertEqual(out["odbior"]["ask"], 0)                         # odbiór bez „Zapytaj o to zadanie”
 
 
 if __name__ == "__main__":
