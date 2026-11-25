@@ -165,10 +165,37 @@ Należą do zadania nad nimi i kończą się na pierwszym wierszu bez wcięcia (
 | `wyświetlenia:`, `kliknięcia:`, `konta:` | wynik publikacji, liczba całkowita (`1200` albo `1 200`) | właściciel, agent |
 | `link:` | adres opublikowanego wpisu, `http://` albo `https://` | właściciel, agent |
 | `gałąź:` | gałąź agenta `agent/…` do przejrzenia: panel pokazuje zmiany i „Scal”, scalenie zamyka zadanie | PM, agent |
-| `pyta:` | pola formularza dla właściciela, rozdzielone `;` (np. `pyta: Imię w commitach; E-mail w commitach`); bez haseł i kluczy | PM, agent |
-| `odpowiedź:` | `etykieta = wartość`, wiersz na pole; zapisuje panel z formularza `pyta:`, agent z `po:` na tym zadaniu dostaje je w poleceniu | panel |
+| `pyta:` | pola formularza dla właściciela, rozdzielone `;`, każde `Etykieta [typ]` (niżej); bez pól na hasła i klucze | PM, agent, panel |
+| `odpowiedź:` | `etykieta = wartość`, wiersz na pole (`tak/nie` jako `tak` albo `nie`); zapisuje panel przy „Zrobione”, agent z `po:` na tym zadaniu dostaje je w poleceniu | panel |
 
 Kroki zmienia się po kolejności (od 0, liczone tylko wiersze `- [ ]`/`- [x]` pod zadaniem).
+
+Pola `pyta:` (formularz w szczegółach zadania właściciela):
+
+| Zapis | Pole w panelu | Odpowiedź |
+|---|---|---|
+| `Etykieta` albo `Etykieta [tekst, np. 1, 2]` | krótki tekst, po przecinku podpowiedź | tekst do 200 znaków |
+| `Etykieta [tak/nie]` | pole wyboru | `tak` albo `nie` |
+| `Etykieta [liczba]` (`[liczba, zł]`) | liczba | `12`, `1 200`, `3,5` |
+| `Etykieta [wybór: A \| B \| C]` | lista, 2–8 opcji | jedna z opcji |
+| `Etykieta [data]` | data | `RRRR-MM-DD` |
+| `Etykieta [link]` | adres | `http://…` albo `https://…` |
+| `Hasło do X [hasło: gdzie je wpisać]` | bez pola: jedno zdanie, gdzie właściciel wpisuje hasło sam | brak |
+
+```
+- [ ] Podaj identyfikatory kont do pomiaru | kto: ty | kiedy: 2026-11-25 | czas: 5
+  cel: Pomiar kont nie liczy kont właściciela ani testowych.
+  pyta: Identyfikatory Twoich kont [tekst, np. 1, 2 albo brak]; Brak kont testowych [tak/nie]
+```
+
+Nawias bez znanego typu należy do etykiety (pole tekstowe), więc dawne `pyta: Imię; E-mail` działa bez zmian. Najwyżej
+8 pól. Etykieta o haśle, kluczu, tokenie, PIN-ie albo kodzie zawsze daje zdanie zamiast pola; panel nie zapisze `pyta:`
+z takim polem bez `[hasło: …]` i nie przyjmie na nie odpowiedzi. Szczegóły zadania właściciela to formularz: cel,
+pola, kroki jako pola wyboru i „Zrobione”, które zapisuje `odpowiedź:`, zamyka zadanie `[x]` i zwalnia zadania
+z `po:` na tym zadaniu. Zadanie `kto: ty` bez `pyta:` panel raz pokazuje modelowi (Claude Haiku, cel, `gotowe gdy:`,
+kroki, zadania czekające) i dopisuje `pyta:`, gdy zadanie wymaga danych; bez potrzebnych danych zostaje sam
+„Zrobione”, a decyzja trafia do `pola-zadan.json` w katalogu uruchomień, bez zmiany pliku. Zakładając zadanie
+właściciela, które wymaga danych, od razu dopisz `pyta:` z typami.
 Zadanie właściciela nie zawiera kroków technicznych (git, commit, konfiguracja, polecenia w terminalu): scalenie to `gałąź:` i przycisk w panelu, a potrzebne dane to `pyta:` i zadanie agenta z `po:` na tym zadaniu. `następne:` nie jest zadaniem: właściciel decyduje, czy je założyć. Każdy inny wcięty wiersz to notatka. Tytułu zadania agent nie zmienia; wynik zapisuje w szczegółach, nie w tytule.
 Tytuł zaczyna się od czasownika („Wyślij”, „Przygotuj”) i ma najwyżej 120 znaków.
 
