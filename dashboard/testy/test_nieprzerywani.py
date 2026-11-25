@@ -184,6 +184,10 @@ class ZmianyNiezatwierdzone(Baza):
         ev = {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Edit",
                                                             "input": {"file_path": self.file}}]}}
         with open(os.path.join(self.runs, rid + ".log"), "w", encoding="utf-8") as f:
+            # zdarzenia z innym kształtem (message jako tekst, lista, napis) jak w przebiegach z produkcji
+            for odd in ({"type": "user", "message": "tool_use %s" % self.file}, ["tool_use", self.file],
+                        "tool_use " + self.file):
+                f.write(json.dumps(odd) + "\n")
             f.write(json.dumps(ev) + "\n")
         self.m = self.new_manager()
         server._agents = self.m
