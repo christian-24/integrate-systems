@@ -40,7 +40,9 @@ class Menu(unittest.TestCase):
         names = re.search(r"^const VNAME=\{(.*?)\};", self.html, re.M).group(1)
         self.assertEqual(re.findall(r"(\w+):'", names), ["asystent", "marketing", "media", "agenci", "koszty", "informacje", "odbior"])
         # licznik spraw dla Ciebie stoi przy Asystencie
-        self.assertIn("C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']}", self.html)
+        # przy Agentach licznik pracujących z wsAgCnt (grupa „wskazniki” 2026-11-25: running zamiast running+queued,
+        # kolejka w podpowiedzi albo jako liczba, gdy nic nie pracuje; sprawdza test_wskazniki)
+        self.assertIn("C={asystent:[you.today,'',youCntT(you)],agenci:wsAgCnt()}", self.html)
 
     def test_kod_widokow_usuniety(self):
         for fn in ("vStart", "vPrzeglad", "vWskazniki", "vTy", "vTablica", "vTerminy", "vBlokady", "vProjekty",
