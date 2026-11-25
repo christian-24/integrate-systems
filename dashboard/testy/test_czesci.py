@@ -219,12 +219,16 @@ out.cz=codeBox(part);LIVE=false;out.off=codeBox(part);""")
         self.assertIn('id="pcode-det" hidden', zw)
         self.assertNotIn("GH:", zw)
         self.assertEqual(o["ld"], [])                                     # zwinięte: bez zapytań o stan kopii
-        self.assertEqual(zw.count("<dt>GitHub"), 2)                       # wiersz na każde repozytorium części
+        # wiersz na każdą część z obydwoma stanami (WYGLAD.md), zwykłe słowa zamiast „commit”, „origin”, „pole github:”
+        self.assertEqual(zw.count('<span class="kp-k">GitHub</span>'), 2)
+        self.assertIn("<dt>Integracje</dt>", zw)
+        self.assertIn("<dt>Strona WWW</dt>", zw)
         self.assertIn("zgodne z GitHubem", zw)
-        self.assertIn("2 commity do wysłania", zw)
-        self.assertIn("brak pola github:", zw)
+        self.assertIn("2 zmiany do wysłania", zw)
+        self.assertNotIn("brak pola github:", zw)
+        self.assertNotIn("commit", zw)
         self.assertIn("<a href=\"https://drive.google.com/drive/folders/1AbCdEfGhIjK\"", zw)
-        self.assertEqual(zw.count("<dt>Google Drive"), 2)                 # folder Drive na każdą część
+        self.assertEqual(zw.count('<span class="kp-k">Google Drive</span>'), 2)   # folder Drive na każdą część
         self.assertIn("3 pozycje", zw)
         self.assertIn('aria-expanded="true"', rw)
         self.assertIn(">Zwiń<", rw)
@@ -234,6 +238,7 @@ out.cz=codeBox(part);LIVE=false;out.off=codeBox(part);""")
         self.assertIn("DRV:s", rw)
         self.assertEqual(o["ld2"], ["x", "s"])
         self.assertEqual(o["cz"].count("<dt>GitHub"), 1)                  # wybrana część: tylko jej repozytorium
+        self.assertEqual(o["cz"].count("<dt>Google Drive"), 1)
         self.assertIn("GH:s", o["cz"])
         self.assertNotIn("GH:", o["off"])                                 # poza serwerem bez działań na kopii
 
@@ -303,7 +308,7 @@ out.two=wwView(top);WWC.x='s2';out.two2=wwView(top);LIVE=false;out.off=wwView(to
         self.assertIn("strona", o["part"])
         self.assertIn('data-ww="s"', o["view"])                                  # podgląd części ze stroną
         self.assertIn('href="#p-x-strona?cz=s"', o["view"])
-        self.assertIn('class="tabs pj-parts"', o["sw"])                          # przełącznik w wyglądzie zakładek
+        self.assertIn('class="pj-parts hscroll"', o["sw"])                         # przełącznik w jednym wierszu (WYGLAD.md)
         self.assertIn('href="#p-x-strona"', o["sw"])                             # „Całość” zostaje na zakładce Strona
         self.assertIn('href="#p-x?cz=x"', o["sw"])                               # część bez strony: Plan
         self.assertEqual(o["two"].count("data-wwpart="), 2)                      # dwie części ze stroną: wybór
