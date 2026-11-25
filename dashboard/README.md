@@ -54,13 +54,18 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
 
 ### Strona projektu
 
-- Pod tytułem: faza, postęp, etap, stan GitHuba; przy projekcie z częściami przełącznik „Całość · <część główna> ·
-  <części>” (domyślnie Całość). Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części
-  (np. „Strona WWW”); wybrana część pokazuje tylko swoje i swoje zakładki (np. Strona).
-- Plan: decyzje, najbliższe 7 dni i sekcja **Kod i pliki**: na wierzchu po jednym wierszu GitHub (gałąź, „zgodne
-  z GitHubem” albo „N commitów do wysłania”, „brak pola github:”; przy projekcie z częściami wiersz na każde
-  repozytorium części) i Google Drive na projekt i każdą część (ścieżka folderu z kontem, N pozycji, albo „bez
-  folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
+- Układ według `dashboard/WYGLAD.md`. Wiersz nazwy: stan projektu, po prawej „Szczegóły” (fazy, kafle, Księga, GitHub
+  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Pod nazwą jedna linia: faza · postęp · bieżący etap. Przy projekcie
+  z częściami przełącznik „Całość · <część główna> · <części>” (domyślnie Całość) w jednym wierszu, przewijany
+  w poziomie. Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana
+  część pokazuje tylko swoje i swoje zakładki (np. Strona). Zakładki w jednym wierszu, na telefonie przewijane w poziomie.
+- Plan: sekcje rozwijane z licznikiem: **Decyzje** i **Dla Ciebie dziś** otwarte, **Po terminie**, **Agenci** i **Później**
+  (do 7 dni) zwinięte; stan każdej zapamiętany na urządzeniu (`pp-*`). W wierszu jeden znacznik terminu (po terminie
+  czerwony tekst) i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same
+  zadania co grupa „Po terminie” w Zadaniach (Twoje, bez publikacji, bez czekających na poprzednika); publikacje po
+  terminie są w „Dla Ciebie dziś”. Na końcu sekcja **Kod i pliki**: na wierzchu GitHub („zgodne z GitHubem”, „N zmian
+  do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
+  folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
   gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
   folderu”), „Zmień folder”, „Odłącz”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
   i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
