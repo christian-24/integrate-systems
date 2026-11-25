@@ -1,0 +1,11 @@
+{
+ "kanaly": {
+  "facebook": {
+   "link": "https://www.facebook.com/1416011748262183_122115016131539109",
+   "at": "2026-11-25T23:25:54",
+   "error": "brak uprawnienia: (#10) This endpoint requires the 'pages_read_user_content' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pa",
+   "stop": true,
+   "conn": "2026-11-19T19:30:50"
+  }
+ }
+}
