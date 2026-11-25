@@ -6922,8 +6922,10 @@ function chatBox(t){
   let c=CH[t.id];
   if(!c){c=CH[t.id]={messages:[],pending:false,error:'',loading:true};loadChat(t.id)}
   const old=c.messages.filter(m=>m.role!=='panel'||m.text);
-  return '<div class="dbox dr-ask"><button type="button" class="btn sec" data-askt="'+esc(t.id)+'" data-k="askt" aria-controls="pchat">Zapytaj o to zadanie</button>'+
-    '<p class="note">Rozmowa w projekcie z odnośnikiem do tego zadania: pytania, polecenia dla agenta, zmiany zadań.</p>'+
+  /* decyzja właściciela 2026-11-25: w zadaniu bez rozmowy i bez przycisku pytania o zadanie; rozmowa tylko w Asystencie
+     i w Rozmowie projektu (przycisk w rogu). Zostaje tylko dawna rozmowa do odczytu. */
+  if(!old.length)return '';
+  return '<div class="dbox dr-ask">'+
     (old.length?'<details class="chat dr-old"><summary>Dawna rozmowa o zadaniu ('+old.length+')</summary><div class="cms">'+old.map(m=>chatMsg(m,t.id,P(t.project))).join('')+'</div></details>':'')+'</div>';
 }
 /* lk: odpowiedź modelu ({p: projekt rozmowy albo null w Asystencie}): linki do zakładki Strona (wwLinks) */
@@ -10634,8 +10636,7 @@ function odDet(m,v,content){
     (D.tasks.some(x=>x.id===T.id)?'<button type="button" class="btn sec sm" data-task="'+esc(T.id)+'" data-k="od:task">Wszystkie szczegóły zadania</button>':'')+'</div></details>';
 }
 function odAsk(T){
-  if(!LIVE||!D.tasks.some(x=>x.id===T.id))return '';
-  return '<div><button type="button" class="btn sec sm" data-askt="'+esc(T.id)+'" data-k="od:ask" aria-controls="pchat">Zapytaj o to zadanie</button></div>';
+  return '';   /* bez „Zapytaj o to zadanie” (decyzja właściciela 2026-11-25): rozmowa w Rozmowie projektu */
 }
 function odOverlay(m){
   const o=OD.ov;if(!o)return '';
@@ -11531,7 +11532,8 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-drf]')){const k=drKey(el.dataset.pid);if(k.acc)loadDrF(k.acc,true);return}
   if(el=qq('[data-drc]')){if(el.getAttribute('aria-disabled')==='true')return;PF.more['pj-code']=true;(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
-  if(el=qq('[data-pjd]')){pjdSet(el.dataset.pjd==='open');return}
+  /* Rozmowa otwarta przy otwartym zadaniu: od razu z odnośnikiem do niego (bez osobnego „Zapytaj o to zadanie”) */
+  if(el=qq('[data-pjd]')){if(el.dataset.pjd==='open'&&DR&&DR.kind==='task')pjdAsk(DR.id);else pjdSet(el.dataset.pjd==='open');return}
   if(el=qq('[data-pjcode]')){PF.more['pj-code']=!PF.more['pj-code'];savePF();render(true);focusK('pjcode');return}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-act]')){if(el.dataset.id){const id=el.dataset.id,k=el.dataset.act,t=D.tasks.find(x=>x.id===id);

@@ -371,7 +371,7 @@ const CH={a:{messages:[{role:'ty',text:'Zrób szkic'},{role:'panel',text:'Urucho
 %s
 const r={};
 const ha=chatBox({id:'a',executor:'claude',title:'A'}),hd=chatBox({id:'d',executor:'ty',title:'D'});
-r.ask=/data-askt="a"/.test(ha)&&/Zapytaj o to zadanie/.test(ha)&&/data-askt="d"/.test(hd);
+r.ask=!/data-askt|Zapytaj o to zadanie/.test(ha+hd)&&hd==='';
 r.field=/<textarea|<form|data-chatexec|Wyślij/.test(ha+hd);
 r.old=/Dawna rozmowa o zadaniu \\(2\\)/.test(ha)&&!/Dawna rozmowa/.test(hd);
 r.stan=(ha.match(/<span class="lz [a-z]+">[^<]+/g)||[]).map(x=>x.replace(/.*class="lz /,'').replace('">',':'));
@@ -388,7 +388,7 @@ document.getElementById('w').textContent=JSON.stringify(r);
             text, err = page_result(path, tmp)
         self.assertTrue(text, err[-500:])
         r = json.loads(text)
-        self.assertTrue(r["ask"])                        # w zadaniu tylko „Zapytaj o to zadanie”
+        self.assertTrue(r["ask"])                        # w zadaniu bez „Zapytaj o to zadanie” (decyzja 2026-11-25)
         self.assertFalse(r["field"])                     # bez pola rozmowy i „Wyślij i wykonaj”
         self.assertTrue(r["old"])                        # dawna rozmowa do odczytu
         self.assertEqual(r["stan"], ["blue:w toku"])

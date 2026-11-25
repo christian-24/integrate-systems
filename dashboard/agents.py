@@ -3534,10 +3534,14 @@ class Manager:
                             ev = json.loads(raw.decode("utf-8", "replace"))
                         except ValueError:
                             continue
-                        for b in (ev.get("message") or {}).get("content") or []:
+                        msg = ev.get("message") if isinstance(ev, dict) else None
+                        if not isinstance(msg, dict):          # zdarzenia z tekstem zamiast obiektu (system, wynik)
+                            continue
+                        for b in msg.get("content") or []:
                             if isinstance(b, dict) and b.get("type") == "tool_use" and \
                                     b.get("name") in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
-                                fp = str((b.get("input") or {}).get("file_path") or "")
+                                inp = b.get("input") if isinstance(b.get("input"), dict) else {}
+                                fp = str(inp.get("file_path") or "")
                                 if fp and os.path.normpath(fp) in want:
                                     hit.add(os.path.relpath(os.path.normpath(fp), top))
             except OSError:
