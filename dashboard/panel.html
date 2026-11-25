@@ -2864,6 +2864,22 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 }
 .task-lifecycle{margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--line)}
 .task-cancel-reason{overflow-wrap:anywhere}
+/* grupa wskazniki: praca agentów w menu, w nagłówku projektu i na zakładkach; kropka w kolorze „w toku” (--bar-wip),
+   spokojne pulsowanie (2,4 s), przy prefers-reduced-motion bez animacji */
+@keyframes ws-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.ws-dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--bar-wip);animation:ws-pulse 2.4s ease-in-out infinite}
+.ws-b{display:inline-flex;align-items:center;gap:var(--g-xs);flex:none;font-size:11px;font-weight:600;color:var(--l-blue);white-space:nowrap}
+.nav .count.ws-live::before,.bnav .count.ws-live::before,.bn-sheet .count.ws-live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;animation:ws-pulse 2.4s ease-in-out infinite}
+/* wiersz w nagłówku projektu: zwykły tekst w linii (na telefonie zawija się jak zdanie, kropka zostaje przy tekście) */
+.ws-row{display:block;margin:0;font-size:var(--fs-sm);line-height:1.5;color:var(--ink-2);min-width:0;overflow-wrap:anywhere}
+.ws-row>.ws-dot{margin-right:var(--g-s);vertical-align:1px}
+.ws-row b{color:var(--ink);font-weight:600}
+.ws-row .ws-sep{color:var(--ink-3);margin:0 6px}
+.ws-row .lk,.ws-row a{display:inline;font-size:var(--fs-sm);color:var(--accent);font-weight:600;white-space:nowrap}
+/* telefon: cel dotyku 44 px bez zmiany wysokości linii (wypełnienie elementu w linii nie przesuwa tekstu) */
+@media (max-width:820px){.ws-row .lk,.ws-row a{padding:12px 4px;margin:0 -4px}}
+.ptabs a .ws-dot{width:7px;height:7px;margin-left:6px;vertical-align:2px}
+@media (prefers-reduced-motion:reduce){.ws-dot,.nav .count.ws-live::before,.bnav .count.ws-live::before,.bn-sheet .count.ws-live::before{animation:none}}
 </style>
 
 <div class="app">
@@ -5221,8 +5237,8 @@ function vProjekt(p,tab){
   const btns='<div class="pj-hb"><button type="button" class="btn sec sm" data-more="pj-ov" data-k="more:pj-ov" aria-expanded="'+open+'" aria-controls="pj-ovb">'+(open?'Zwiń':'Szczegóły')+'</button>'+
     '<button type="button" class="btn sm pjh-chat" data-pjd="open" data-k="pjh:open" aria-controls="pchat">Rozmowa<span class="pjd-b" data-pjhb hidden></span></button></div>';
   return '<div class="phead"><div class="ptitle">'+av(p)+'<div class="pt-nm"><h1>'+esc(tp.name)+'</h1>'+(tp.alias?'<span class="muted">'+esc(tp.alias)+'</span>':'')+lz(p.pst)+'</div>'+btns+'</div>'+
-    '<p class="pj-sum">'+sum+'</p>'+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+partSw(p,tab)+'</div>'+
-    '<nav class="tabs ptabs hscroll" aria-label="Widoki projektu">'+ptabsOf(p).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+body;
+    '<p class="pj-sum">'+sum+'</p>'+wsProjRow(p)+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+partSw(p,tab)+'</div>'+
+    '<nav class="tabs ptabs hscroll" aria-label="Widoki projektu">'+ptabsOf(p).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+wsTabDot(p,k)+'</a>').join('')+'</nav>'+body;
 }
 /* GitHub zwykłymi słowami (Szczegóły projektu): bez „origin”, „pola github:” i „niewypchniętych” */
 function gitPlain(p){
@@ -11054,10 +11070,67 @@ function youCnt(){const ys=youState(),n=v=>typeof v==='number'?v:null;
   return {today:n(D.youToday)??ys.youToday.length,late:n(D.youLate)??ys.youToday.filter(x=>x.late).length,
     week:n(D.youWeek)??ys.youWeek.length,later:n(D.youLater)??ys.youLater.length}}
 const youCntT=c=>'Sprawy dla Ciebie na dziś: '+c.today+(c.late?', w tym po terminie: '+c.late:'');
+/* grupa wskazniki: praca agentów widoczna w menu (projekty, licznik przy Agentach), w nagłówku projektu i na zakładce
+   z zadaniem w toku. Źródło: agents.runs (running), activity.chats i activity.films z /api/data; gdy coś trwa, panel
+   pobiera je co 3 s (nwBusy), a applyAgents rysuje menu i widok od nowa */
+const WS_WHO={claude:'Claude',codex:'Codex'};
+/* zakładka projektu z pracą: zadania strony („Strona: …”) → Strona, kampania, publikacja i grafika posta → Marketing,
+   pozostałe → Zadania */
+function wsTab(t,title,kind){
+  if(kind==='grafika')return 'marketing';
+  if(/^Strona:/i.test(t?t.title:String(title||'')))return 'strona';
+  return t&&(t.kind==='publikacja'||t.campaign)?'marketing':'tablica';
+}
+/* kamień milowy (bieżący krok planu agenta), a bez planu ostatnia czynność */
+function wsStep(r){
+  const s=r.plan||[];let i=s.findIndex(x=>x.active&&!x.done);
+  if(i<0&&s.some(x=>x.done))i=s.findIndex(x=>!x.done);
+  if(i>=0)return 'krok '+(i+1)+' z '+s.length+': '+s[i].text;
+  return r.activity?nwPlain(r.activity):'';
+}
+function wsWork0(){
+  const out=[],seen={},a=nwAct();
+  runs().filter(r=>r.state==='running'&&r.project).forEach(r=>{const t=taskOfRun(r),who=WS_WHO[r.tool]||'Agent';if(t)seen[t.id]=1;
+    out.push({pid:r.project,who:who,lead:who+' pracuje',title:t?t.title:r.title,tab:wsTab(t,r.title,r.kind),step:wsStep(r),run:r.id,task:''})});
+  a.chats.forEach(c=>{const t=nwTask(c.project,c.file,c.title)||D.tasks.find(x=>x.id===c.taskId)||null,pid=c.project||(t?t.project:'');
+    if(!pid||(t&&seen[t.id]))return;
+    out.push({pid:pid,who:'Claude',lead:'Claude odpowiada',title:c.title,tab:wsTab(t,c.title),step:'rozmowa o zadaniu',run:'',task:t?t.id:''})});
+  a.films.filter(f=>f.state==='running'&&f.project).forEach(f=>{const t=nwPostTask(f);
+    out.push({pid:f.project,who:'Film',lead:'Nagrywa się film',title:f.title,tab:'marketing',step:f.day?'post na '+dd(f.day):'',run:'',task:t?t.id:''})});
+  return out;
+}
+const wsWork=()=>D?nwMemo('ws',wsWork0):[];
+/* menu: projekt główny zbiera pracę swoich części */
+function wsSide(p){
+  const L=wsWork().filter(x=>topId(x.pid)===p.id);if(!L.length)return null;
+  return {t:p.name+'\n'+L.map(x=>x.lead+': '+x.title+(x.step?' ('+x.step+')':'')).join('\n'),
+    h:'<span class="ws-b"><i class="ws-dot" aria-hidden="true"></i>'+(L.length===1?'pracuje':L.length+' '+pl(L.length,'agent','agentów','agentów'))+
+      '<span class="sr-only">: '+esc(L.map(x=>x.who+', '+x.title).join('; '))+'</span></span>'};
+}
+/* licznik przy Agentach: pracujące uruchomienia (zadania i zlecenia rozwoju); bez pracy liczba czekających w kolejce */
+function wsAgCnt(){
+  const a=D.agents,R=a?a.runs.concat(a.development):[],n=R.filter(r=>r.state==='running').length,q=R.filter(r=>r.state==='queued').length;
+  if(n)return [n,'blue ws-live','Pracuje: '+n+(q?', w kolejce: '+q:'')];
+  return [q,'blue',q?'W kolejce: '+q:''];
+}
+/* nagłówek projektu: jeden wiersz o pracy (pierwsza pozycja; reszta „i jeszcze n” w Agentach) */
+function wsProjRow(p){
+  const L=wsWork().filter(x=>inP(p,x.pid));if(!L.length)return '';
+  const x=L[0],more=L.length-1,sep='<span class="ws-sep" aria-hidden="true">·</span>',k=esc(x.run||x.task||x.pid);
+  const show=x.run?'<button type="button" class="lk" data-run="'+esc(x.run)+'" data-k="ws:'+k+'" title="Przebieg na żywo">Pokaż</button>':
+    x.task?'<button type="button" class="lk" data-task="'+esc(x.task)+'" data-k="ws:'+k+'">Pokaż</button>':'<a href="'+phref(p,'marketing')+'">Pokaż</a>';
+  return '<p class="ws-row"><i class="ws-dot" aria-hidden="true"></i><span><b>'+esc(x.lead)+':</b> <span title="'+esc(x.title)+'">'+esc(shortT(x.title,80))+'</span>'+ptag(p,x.pid)+'</span>'+
+    (x.step?sep+'<span title="'+esc(x.step)+'">'+esc(shortT(x.step,70))+'</span>':'')+sep+show+(more?sep+'<a href="#agenci">i jeszcze '+more+'</a>':'')+'</p>';
+}
+/* kropka na zakładce projektu z pracą (Strona bez zakładki Strona: Zadania) */
+function wsTabDot(p,k){
+  const st=ptabsOf(p).some(x=>x[0]==='strona');
+  return wsWork().some(x=>inP(p,x.pid)&&(x.tab==='strona'&&!st?'tablica':x.tab)===k)?'<i class="ws-dot" aria-hidden="true"></i><span class="sr-only">, agent pracuje</span>':'';
+}
 function renderSide(r){
   /* licznik przy Asystencie: sprawy dla Ciebie na dziś, w tym po terminie (D.youToday z serwera: ta sama liczba na starcie
      Asystenta, w karcie spraw, w raporcie PM i w faktach rozmowy) */
-  const you=youCnt(),ag=runs().filter(isAct).length,C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']};
+  const you=youCnt(),C={asystent:[you.today,'',youCntT(you)],agenci:wsAgCnt()};
   const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],C[h][2]||''):'';
   const nvA=h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+cnt(h)+'</a>';
   setHtml($('#nav'),MAINV.map(nvA).join(''));
@@ -11074,10 +11147,11 @@ function renderSide(r){
     /* arkusz „Więcej”: nagłówek z „Zamknij”, widoki spoza paska z tym samym licznikiem co menu, projekty, na dole Odśwież i Motyw.
        Zwykła nawigacja (lista linków), bez ról menu; Escape i dotknięcie tła zamykają */
     setHtml(sh,'<div class="bs-top"><h2 class="bs-t">Więcej</h2><button type="button" class="btn sec sm" data-bnmore="1" data-k="bnclose">Zamknij</button></div>'+VIEWS.filter(v=>BNAV.indexOf(v)<0).map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bs-n">'+esc(VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
-      (D.projects.length?'<h3 class="bs-h">Przejdź do projektu</h3>'+D.projects.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span></a>').join(''):'')+
+      (D.projects.length?'<h3 class="bs-h">Przejdź do projektu</h3>'+D.projects.map(p=>{const ws=wsSide(p);return '<a href="'+phref(p)+'" title="'+esc(ws?ws.t:p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span>'+(ws?ws.h:'')+'</a>'}).join(''):'')+
       '<div class="bs-foot"><button type="button" class="btn sec" data-bnref="1" data-k="bnref">Odśwież</button><button type="button" class="btn sec" data-bntheme="1" data-k="bntheme">'+themeL()+'</button></div>')}
   $('#pcount').textContent=D.projects.length;
-  setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted side-empty">Brak wyników</p>');
+  /* grupa wskazniki: przy projekcie z pracą agenta znacznik „pracuje” zamiast fazy (faza jest w nagłówku projektu i w podpowiedzi) */
+  setHtml($('#plist'),L.map(p=>{const ws=wsSide(p);return '<a href="'+phref(p)+'" title="'+esc(ws?ws.t+'\nFaza: '+PHASES[PHI[p.phase]][1]:p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span>'+(ws?ws.h:'<span class="ph">'+PHASES[PHI[p.phase]][1]+'</span>')+'</a>'}).join('')||'<p class="muted side-empty">Brak wyników</p>');
   const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='asystent'&&you.today?' ('+you.today+')':'')]);
   const curH=r.v==='projekt'?phref(topP(r.p)):'#'+r.v,ms=$('#mnav');
   if(document.activeElement!==ms)setHtml(ms,opts.map(([h,n])=>'<option value="'+esc(h)+'"'+(h===curH?' selected':'')+'>'+esc(n)+'</option>').join('')+
