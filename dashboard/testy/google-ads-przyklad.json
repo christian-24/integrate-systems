@@ -1,0 +1,18 @@
+{
+ "_opis": "Przykładowe wyniki AdsApp.search dla jednego dnia (konto 434-771-1860): grupy reklam, konwersje według akcji, wyszukiwane hasła. Pola jak w odpowiedzi GAQL w skryptach Google Ads (camelCase).",
+ "konto": "434-771-1860",
+ "grupy": [
+  {"campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Drzwi"}, "metrics": {"impressions": "1200", "clicks": "48", "costMicros": "96500000", "conversions": 3}},
+  {"campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Podłoga"}, "metrics": {"impressions": "600", "clicks": "15", "costMicros": "31200000", "conversions": 0}},
+  {"campaign": {"name": "Marka"}, "adGroup": {"name": "Shield"}, "metrics": {"impressions": "90", "clicks": "12", "costMicros": "6000000", "conversions": 1}}
+ ],
+ "konwersje": [
+  {"campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Drzwi"}, "segments": {"conversionActionName": "Telefon z reklamy", "conversionActionCategory": "PHONE_CALL_LEAD"}, "metrics": {"conversions": 2}},
+  {"campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Drzwi"}, "segments": {"conversionActionName": "Formularz", "conversionActionCategory": "SUBMIT_LEAD_FORM"}, "metrics": {"conversions": 1}},
+  {"campaign": {"name": "Marka"}, "adGroup": {"name": "Shield"}, "segments": {"conversionActionName": "Połączenie ze strony", "conversionActionCategory": "CONTACT"}, "metrics": {"conversions": 1}}
+ ],
+ "hasla": [
+  {"searchTermView": {"searchTerm": "wygłuszenie drzwi samochodu"}, "campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Drzwi"}, "metrics": {"costMicros": "41000000", "clicks": "20", "conversions": 2}},
+  {"searchTermView": {"searchTerm": "mata wygłuszająca allegro"}, "campaign": {"name": "Wygłuszanie"}, "adGroup": {"name": "Podłoga"}, "metrics": {"costMicros": "23500000", "clicks": "11", "conversions": 0}}
+ ]
+}
