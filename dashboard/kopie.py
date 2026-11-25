@@ -186,12 +186,14 @@ def commit_dirty(folder, message, name="Panel projektów", email="panel@localhos
         return False, "Nie odczytano stanu repozytorium."
     if not dirty:
         return False, "Nie ma zmian do zatwierdzenia."
-    code, _, err = _git(folder, ["add", "-A"] + _pathspec(folder), timeout=120)
+    # tylko ścieżki z listy zmian (_dirty pomija katalogi robocze i dowiązania karty): wykluczenia w pathspec dla plików
+    # ignorowanych (np. KARTA.md w .git/info/exclude) kończyły „git add” błędem „paths are ignored”
+    paths = sorted({p.rstrip("/") for _, p in dirty})
+    code, _, err = _git(folder, ["add", "-A", "--"] + paths, timeout=120)
     if code != 0:
         return False, "git add: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
     ident = ["-c", "user.name=%s" % name, "-c", "user.email=%s" % email, "-c", "commit.gpgsign=false"]
-    code, _, err = _git(folder, ident + ["commit", "-q", "--no-verify", "-m", message] + _pathspec(folder),
-                        timeout=120)
+    code, _, err = _git(folder, ident + ["commit", "-q", "--no-verify", "-m", message, "--"] + paths, timeout=120)
     if code != 0:
         return False, "git commit: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
     code, sha, _ = _git(folder, ["rev-parse", "--short", "HEAD"])
@@ -205,7 +207,8 @@ def stash_save(folder, message):
         return False, "Nie odczytano stanu repozytorium."
     if not dirty:
         return False, "Nie ma zmian do odłożenia."
-    code, _, err = _git(folder, ["stash", "push", "-u", "-q", "-m", message] + _pathspec(folder), timeout=120)
+    paths = sorted({p.rstrip("/") for _, p in dirty})     # jak w commit_dirty: bez wykluczeń plików ignorowanych
+    code, _, err = _git(folder, ["stash", "push", "-u", "-q", "-m", message, "--"] + paths, timeout=120)
     if code != 0:
         return False, "git stash: %s" % (err.strip().splitlines() or ["błąd"])[-1][:200]
     return True, "stash@{0}"
