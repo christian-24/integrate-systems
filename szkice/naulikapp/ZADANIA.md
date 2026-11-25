@@ -168,7 +168,7 @@ termin: 2026-12-13
   Przenieś je stamtąd; gdy nie masz dostępu, oznacz [!] z blokadą „brak dostępu do niezacommitowanych plików polityki”.
   - [ ] pola poza formularzem wydawcy (porządki 2026-11-21, DECYZJE.md): adres polityki `https://christian-24.github.io/naulikapp-polityka/`, okres przechowywania korespondencji 12 miesięcy, dostawca poczty z domeny podanego adresu e-mail
   - [ ] `docs/compliance/index.html`: kopia polityki gotowa do wgrania na GitHub Pages
-- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: zgoda | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
+- [ ] Wypchnij master NaulikApp na GitHub i pobierz go na Macu | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | po: Zrealizuj zadania T48, Zapisz politykę prywatności na gałęzi, Zmerguj PR #124
   cel: master na GitHubie i na Macu ma PR #124, zmiany T48 i politykę prywatności
   gotowe gdy: origin/master na GitHubie ma ten sam commit co master na serwerze (z PR #124 i polityką prywatności)
   Przekazane agentowi przy porządkach 2026-11-21: Twoja część to tylko zgoda w panelu (wypchnięcie wychodzi na zewnątrz). Pobranie na Macu to pierwszy krok zadania „Zbuduj podpisany AAB…” (`git pull`).

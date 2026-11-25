@@ -7,16 +7,16 @@
 termin: 2026-11-22
 
 - [x] Wizytówka Google bez adresu, z obszarem obsługi (Wrocław, Kąty, Sobótka, Świdnica, Oława)
-- [ ] Strona na Facebooku połączona z Instagramem (Meta Business Suite) + konto reklamowe z kartą | kto: ty | kiedy: 2026-11-22 | czas: 30
+- [x] Strona na Facebooku połączona z Instagramem (Meta Business Suite) + konto reklamowe z kartą | kto: ty | kiedy: 2026-11-22 | czas: 30
   materiał: Plan-reklam-do-28-stycznia.md#2
-- [ ] Konto Google Ads i program Google Ads Editor | kto: ty | kiedy: 2026-11-22 | czas: 60
+- [x] Konto Google Ads i program Google Ads Editor | kto: ty | kiedy: 2026-11-22 | czas: 60
   cel: jedno posiedzenie: konto Google Ads z kartą, Google Ads Editor, import plików CSV z google-ads/ (tylko kampanie Wygłuszanie i Detailing), ustawienia kampanii i konwersja „połączenie z reklamy” (połączone przy porządkach 2026-11-21 z trzema osobnymi zadaniami)
-  - [ ] Konto Google Ads w trybie eksperta, bez kampanii, z kartą i automatycznymi płatnościami
-  - [ ] Google Ads Editor: import google-ads/google-ads-rsa.csv i google-ads/google-ads-keywords.csv; kampanie Ceramika, PPF i Bony wstrzymane
-  - [ ] Wygłuszanie: Wrocław + 50 km, 18 zł/dzień
-  - [ ] Detailing: promień 30 km od studia, 10 zł/dzień
-  - [ ] Wszystkie kampanie: tylko sieć wyszukiwania, język polski, lokalizacja „Obecność”, maks. CPC 6 zł
-  - [ ] Śledzenie: konwersja „połączenie z reklamy” (połączenie dłuższe niż 30 s)
+  - [x] Konto Google Ads w trybie eksperta, bez kampanii, z kartą i automatycznymi płatnościami
+  - [x] Google Ads Editor: import google-ads/google-ads-rsa.csv i google-ads/google-ads-keywords.csv; kampanie Ceramika, PPF i Bony wstrzymane
+  - [x] Wygłuszanie: Wrocław + 50 km, 18 zł/dzień
+  - [x] Detailing: promień 30 km od studia, 10 zł/dzień
+  - [x] Wszystkie kampanie: tylko sieć wyszukiwania, język polski, lokalizacja „Obecność”, maks. CPC 6 zł
+  - [x] Śledzenie: konwersja „połączenie z reklamy” (połączenie dłuższe niż 30 s)
   materiał: Plan-reklam-do-28-stycznia.md#2
 - [x] Import plików CSV z google-ads/ (na razie tylko kampanie Wygłuszanie i Detailing) | kto: ty | kiedy: 2026-11-22
   wynik: zamknięte przy porządkach 2026-11-21 (połączone z zadaniem „Konto Google Ads i program Google Ads Editor”)
@@ -253,3 +253,7 @@ termin: 2027-01-28
   materiał: Plan-filmow-iteracje.md
   wynik: posty/2026-12-02-film-auto-klienta-archiwum-2/scenariusz.md — ujęcia przed i po, dogrywka telefonem, tekst lektora AI i wariant zapasowy Z1.
   zostało: dobór konkretnego auta i potwierdzenie zakresu usługi na podstawie archiwum Media.
+- [ ] Przygotuj publikację na 2026-11-29 (b21821b2c9ff6928): Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+  cel: Przygotuj tekst posta do publikacji „Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59)” (meta ads), termin 2026-11-29. Pozostaw publikację właścicielowi.
+  gotowe gdy: Tekst posta jest w posty/2026-11-29-publikacja/post.md, zgodny z wpisem w kampanie/meta-statyczne.md i gotowy do odbioru przed publikacją 2026-11-29.
+  materiał: kampanie/meta-statyczne.md
