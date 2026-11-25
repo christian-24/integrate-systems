@@ -31,7 +31,7 @@ PROMPT = (
     "terminy spotkań). W razie wątpliwości zwróć \"\". Najwyżej 3 pola. Zapis pola: Etykieta [typ], pola "
     "rozdzielone „; ”. Typy: [tekst, np. przykład], [tak/nie] (pole wyboru), [liczba], [wybór: A | B] (opcje tylko "
     "z treści zadania), [data], [link]. Bez pól na hasła, klucze, tokeny i kody: gdy zadanie wymaga hasła, zwróć "
-    "„Hasło do <serwis> [hasło: gdzie właściciel wpisuje je sam]”. Etykiety krótkie, po polsku, bez znaków ; = [ ]. "
+    "„Hasło do <serwis> [hasło: <miejsce, np. w Google Play Console>]” (bez miejsca: „[hasło]”). Etykiety krótkie, po polsku, bez znaków ; = [ ]. "
     "Zwróć tylko JSON {\"zadania\":[{\"n\":1,\"pyta\":\"…\"}]}.\n")
 
 
