@@ -1,0 +1,21 @@
+{
+ "_opis": "Nagrane odpowiedzi Graph API v26 (dane przykładowe) dla testów odczytu postów: klucz to fragment adresu.",
+ "fb_insights": {"data": [
+   {"name": "post_media_view", "period": "lifetime", "values": [{"value": 1840}]},
+   {"name": "post_total_media_view_unique", "period": "lifetime", "values": [{"value": 1210}]},
+   {"name": "post_clicks", "period": "lifetime", "values": [{"value": 37}]}]},
+ "fb_bledna_metryka": {"error": {"message": "(#100) The value must be a valid insights metric", "type": "OAuthException", "code": 100}},
+ "fb_pola": {"id": "111_9", "reactions": {"data": [], "summary": {"total_count": 12}},
+             "comments": {"data": [], "summary": {"total_count": 3}}, "shares": {"count": 2}},
+ "ig_media": {"data": [{"id": "m0", "permalink": "https://www.instagram.com/p/inny/", "media_product_type": "FEED"},
+                       {"id": "m1", "permalink": "https://www.instagram.com/p/abc/", "media_product_type": "FEED"}]},
+ "ig_insights": {"data": [
+   {"name": "reach", "period": "lifetime", "values": [{"value": 640}]},
+   {"name": "views", "period": "lifetime", "values": [{"value": 910}]},
+   {"name": "likes", "period": "lifetime", "values": [{"value": 41}]},
+   {"name": "comments", "period": "lifetime", "values": [{"value": 5}]},
+   {"name": "shares", "period": "lifetime", "values": [{"value": 4}]},
+   {"name": "saved", "period": "lifetime", "values": [{"value": 9}]},
+   {"name": "total_interactions", "period": "lifetime", "values": [{"value": 59}]}]},
+ "token_wygasl": {"error": {"message": "Error validating access token: Session has expired", "type": "OAuthException", "code": 190, "error_subcode": 463}}
+}
