@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-25: Strona: miejsce na film jako pole opcjonalne, bez zmian w kodzie przed buildem
+- Kontekst: zadanie „Dodaj na stronie miejsca na zdjęcia, LinkedIn, dane firmy i film”. Zdjęcia, LinkedIn, NIP, adres i link CEIDG mają już miejsca w kodzie strony (oprogramowani-onepager), brakuje sekcji filmu. Agent nie miał uprawnień do builda, zrzutów ani gita w repozytorium strony. W karcie jest otwarte pytanie 9, więc nowego pytania nie zadaję.
+- Decyzja: (1) kodu strony nie zmieniam, dopóki nie da się go zbudować i obejrzeć, bo strona idzie na produkcję; (2) film to pole opcjonalne `DANE.film` (plik MP4, plakat, napisy .vtt z własnego serwera, bez YouTube, więc bez zmian w CSP), bez autoodtwarzania; bez pliku w produkcji sekcji nie ma; (3) plan zmian w strona-www/miejsca-wiarygodnosci.md.
+- Skutki: kolejne zadanie z uprawnieniami do builda dopisuje sekcję filmu według planu. Produkcyjne `npm run build` i tak nie przejdzie, dopóki w dane.js brakuje 23 wymaganych pól (VAT, adres, ceny, gwarancja, RODO).
+- Kto: agent
+
 ## 2026-11-24: Filmy na grudzień: 6 publikacji, podział 3 AI, 2 Ty, 1 panel
 - Kontekst: zadanie „Zaplanuj filmy na grudzień według podziału z karty” (4–6 publikacji z filmem, podział „nagrywa: ai 50, ty 30, panel 20”). Kampania „Pozyskanie klientów” kończy się 8.12, a okno marketingu z marketing/formy-grudzien.md trwa do 18.12. W karcie jest otwarte pytanie 9, więc nowego pytania nie zadaję.
 - Decyzja: (1) 6 filmów, bo tylko przy tej liczbie podział wychodzi w całych filmach: 3 AI, 2 Ty, 1 panel; (2) daty 2, 7, 9, 11, 14 i 16.12, poza dniami wpisów serii na LinkedIn (wtorki i czwartki) i poza filmami z zadań (1.12 i 4.12), pierwszy termin tak, żeby scenariusz powstał 7 dni wcześniej; (3) kolejność sposobów AI, Ty, panel, AI, Ty, AI, czyli taka, jaką panel sam wylicza z podziału karty przy pustej historii; planowany sposób jest zapisany w notatce pod każdą publikacją; (4) kanały: reels dla filmów AI i nagrania strony (4 filmy), linkedin dla nagrań telefonem (2 filmy), bo tam odbiorca sprawdza nadawcę; (5) nagrania telefonem pokazują tylko wydruki z przeglad-zamowienia/ (arkusz i przykład na zmyślonych danych), żadnych danych firm; (6) trzy filmy wychodzą po 8.12, daty końca kampanii nie zmieniam.
