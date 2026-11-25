@@ -26,20 +26,25 @@
   - [ ] Obejrzyj stronę na telefonie i komputerze
   - [ ] Wskaż, co zmienić, albo zamknij zadanie
   wynik: właściciel ocenił stronę 25.11; uwagi w zadaniu „Strona: poprawki po punkcie kontrolnym 1”
-- [ ] Strona: poprawki po punkcie kontrolnym 1 (sekcje, wycena, animacja, telefon) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
+- [x] Strona: poprawki po punkcie kontrolnym 1 (sekcje, wycena, animacja, telefon) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: strona prostsza i nastawiona na telefon i bezpłatną wycenę, według uwag właściciela z 25.11
   gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel), zmiany są we wszystkich językach (PL, DE, IT, EN), zrzuty 390 i 1440 px obejrzane, w wynik: lista zmian sekcja po sekcji; dane firmy i miejsca [UZUPEŁNIJ] bez zmian, bez wymyślonych danych
   materiał: site/src/jezyki/tresc-pl.js
   materiał: site/src/jezyki/wspolne-pl.js
   materiał: site/src/Strona.jsx
   materiał: site/src/strona.css
-  - [ ] Połącz w jedną sekcję: cennik („co realizujemy i ile kosztuje”), „Dwie rzeczy. Robimy je porządnie” i „Cenę znasz, zanim zaczniemy”; ceny zostają jako widełki „od … zł”
-  - [ ] Usuń motyw „cena znana przed startem” i „ocena przed wyceną” w całej stronie; zamiast tego prosta „Bezpłatna wycena” (główny przycisk zamiast „Umów darmową godzinę”; okno zgłoszenia zostaje jako prośba o wycenę)
-  - [ ] Wstęp zostaje, ale szarpaną animację zastąp spokojnym ruchem w tle za tekstem (płynnie, bez skoków, z prefers-reduced-motion)
-  - [ ] Usuń sekcję „Bez wymyślonych opinii” i sekcję „Zanim zadzwonisz” (pytania); „Cztery kroki” i „Zamiast raportów” zostają
-  - [ ] Strona zachęca do telefonu: numer i „Zadzwoń” w nagłówku i przy wycenie, na telefonie stały przycisk „Zadzwoń” na dole ekranu
-  - [ ] Pod Google Ads: dane firmy, kontakt i polityka prywatności łatwo dostępne z każdej podstrony; jeśli strona ma tagi analityki lub reklam, baner zgody z Consent Mode v2 (domyślnie odmowa); nowych tagów bez identyfikatorów od właściciela nie dodawaj
-  - [ ] Zbuduj, zrób zrzuty, obejrzyj, popraw; w wynik: co zmieniono w każdej sekcji
+  gałąź: agent/2026-11-25-strona-poprawki-po-punkcie-kontrolnym-1
+  poprawka: Dokończ to zadanie od swojej gałęzi (praca jest już zrobiona, przerwał ją restart panelu): scal bieżącą nowa-koncepcja, zbuduj, obejrzyj zrzuty i zamknij zadanie.
+  - [x] Połącz w jedną sekcję: cennik („co realizujemy i ile kosztuje”), „Dwie rzeczy. Robimy je porządnie” i „Cenę znasz, zanim zaczniemy”; ceny zostają jako widełki „od … zł”
+  - [x] Usuń motyw „cena znana przed startem” i „ocena przed wyceną” w całej stronie; zamiast tego prosta „Bezpłatna wycena” (główny przycisk zamiast „Umów darmową godzinę”; okno zgłoszenia zostaje jako prośba o wycenę)
+  - [x] Wstęp zostaje, ale szarpaną animację zastąp spokojnym ruchem w tle za tekstem (płynnie, bez skoków, z prefers-reduced-motion)
+  - [x] Usuń sekcję „Bez wymyślonych opinii” i sekcję „Zanim zadzwonisz” (pytania); „Cztery kroki” i „Zamiast raportów” zostają
+  - [x] Strona zachęca do telefonu: numer i „Zadzwoń” w nagłówku i przy wycenie, na telefonie stały przycisk „Zadzwoń” na dole ekranu
+  - [x] Pod Google Ads: dane firmy, kontakt i polityka prywatności łatwo dostępne z każdej podstrony; jeśli strona ma tagi analityki lub reklam, baner zgody z Consent Mode v2 (domyślnie odmowa); nowych tagów bez identyfikatorów od właściciela nie dodawaj
+  - [x] Zbuduj, zrób zrzuty, obejrzyj, popraw; w wynik: co zmieniono w każdej sekcji
+  wynik: zmiany w site/src/Strona.jsx, site/src/strona.css, site/src/dane.js, site/src/jezyki/tresc-{pl,de,it,en}.js i wspolne-{pl,de,it,en}.js, w czterech językach. Sekcja po sekcji: nagłówek — numer 663 206 373 z „Zadzwoń” i czerwony przycisk „Bezpłatna wycena”; wstęp — ten sam tekst, zamiast szarpanej animacji spokojny ruch tła za tekstem (stoi przy prefers-reduced-motion), przyciski „Bezpłatna wycena” i „Zadzwoń”; „Pracujemy na tym, co masz” i kalkulator — treść bez zmian, przycisk „Bezpłatna wycena”; „Co robimy i ile to kosztuje” — jedna sekcja zamiast cennika, „Dwie rzeczy” i „Cenę znasz, zanim zaczniemy”, ceny jako widełki „od … zł”, na końcu czarna karta „Bezpłatna wycena 0 zł” z przyciskiem i telefonem; „Cztery kroki” i „Zamiast raportów” zostały; „Bez wymyślonych opinii” i pytania „Zanim zadzwonisz” usunięte; „Kto to robi” — karty osób i miejsce na film; kontakt — bezpłatna wycena z telefonem na pierwszym planie, okno zgłoszenia jako prośba o wycenę; stopka — dane firmy (NIP), telefon, mail, Prywatność, Cookies i Regulamin na każdej podstronie; na telefonie stały przycisk „Zadzwoń 663 206 373” na dole ekranu. Strona nie ma tagów reklam, a analityka (Plausible bez ciasteczek) jest wyłączona, dopóki nie zostaną wpisane dane, więc baneru zgody nie dodano. Zrzuty 390 i 1440 px (.zrzuty/telefon.png, .zrzuty/komputer.png, .zrzuty/telefon-film.png, .zrzuty/komputer-stopka.png) obejrzane: układ czysty, żółte [UZUPEŁNIJ] bez zmian, nic nie wymyślone
+  zmiany: dołączone zmiany z nowa-koncepcja (miejsce na film i opis zdjęć w „Kto to robi”, we wszystkich czterech językach); strona zbudowana, zrzuty obejrzane; poprawka: zrobione
+  zostało: gdy dojdzie Google Ads albo inny tag reklamowy, trzeba dodać baner zgody (Consent Mode v2); film i zdjęcia czekają na pliki od właściciela
 
 - [ ] Strona: bez wyboru języka, język z przeglądarki | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | po: Strona: poprawki po punkcie kontrolnym 1
   cel: właściciel nie chce przełącznika języków (PL·DE·IT·EN) na stronie; strona sama wybiera język z ustawień przeglądarki i systemu

@@ -3,6 +3,12 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-25: Post 3 (rachunek ryzyka eksportu): poprawione zdanie o 38% zwrotów
+- Kontekst: draft z 26.06 pisał, że 38% zwrotów mebli to rozbieżność między opisem a tym, co klient rozpakował. W danych projektu (CLAUDE.md, dane rynkowe) 38% to rozbieżność zdjęcie–rzeczywistość, nie opis.
+- Decyzja: w poście zdanie mówi o zdjęciu, a opis przedstawia jako drugą połowę tej samej oferty. Usunięte też uogólnienie „niemiecki kupujący czyta dokładniej i mniej wybacza” (brak źródła w repozytorium). Ostatni akapit według planu 10 kont, punkt 4 (post 3). Post tylko w wersji LinkedIn, bo tylko ten kanał ma wiersz w kampanii.
+- Skutki: post nie przypisuje liczbie 38% więcej, niż mówi źródło. Odwracalne do chwili publikacji.
+- Kto: agent
+
 ## 2026-11-24: Filmy na grudzień: 6 publikacji, podział 3 panel, 2 AI, 1 właściciel
 - Kontekst: karta ma pole „nagrywa: panel 50, ai 40, ty 10”, a harmonogram kampanii (kampanie/staly-rytm.md) kończył się na 27.11 i nie miał filmów na grudzień. Realne okno według marketing/formy-grudzien.md to 1–18.12 (po 20.12 sprzedawcy nie odpisują), decyzja go/no-go 23.12.
 - Decyzja: 6 filmów w dniach 3, 7, 10, 12, 15 i 17.12 (dwa na tydzień, poza dniami innych publikacji właściciela: 1, 4, 8 i 18.12). Przy 6 filmach podział 50/40/10 daje 3 panel, 2 AI, 1 właściciel. Kolejność (panel, AI, panel, AI, ty, panel) jest taka, w jakiej panel sam przydziela sposób kolejnym filmom. Tematy z planu 10 kont (slot B), form grudniowych (C, D, B) i gotowych draftów LinkedIn. Film nagrywany telefonem to mierzenie prawdziwego mebla, bo tylko tam potrzebna jest prawdziwa rzecz.
