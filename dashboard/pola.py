@@ -38,7 +38,7 @@ PROMPT = (
 def needs_fields(task):
     """Czy otwarte zadanie właściciela nie ma jeszcze pól (`pyta:`) i może ich potrzebować."""
     d = task.get("detail") or {}
-    return (task.get("state") != "done" and task.get("executor") == "ty" and task.get("kind") != "publikacja"
+    return (task.get("state") not in ("done", "cancelled") and task.get("executor") == "ty" and task.get("kind") != "publikacja"
             and not task.get("needsYou") and not task.get("counter") and not d.get("asks")
             and not d.get("branch") and not str(task.get("file") or "").startswith("kampanie/"))
 
