@@ -1,5 +1,6 @@
 """Czaty uruchamiają pracę (AGENCI.md, „Uruchamianie z rozmów”): wiersz „Uruchom:” w odpowiedzi rozmowy o projekcie
-i asystenta, „Wyślij i wykonaj” w rozmowie o zadaniu, stan uruchomienia w historii rozmowy. Render HTML → PDF/PNG."""
+i asystenta, „Polecenie:” i „Odpowiedź na pytanie:”, „Wyślij i wykonaj” w Rozmowie w projekcie z odnośnikiem do zadania,
+stan uruchomienia w historii rozmowy. Render HTML → PDF/PNG."""
 import http.client
 import json
 import os
@@ -31,6 +32,16 @@ class WierszDzialania(unittest.TestCase):
         self.assertEqual(len(agents.take_run_lines(many)[1]), agents.RUN_MAX)
         self.assertEqual(agents.take_run_lines("Bez działań.\nUruchomię to jutro."), ("Bez działań.\nUruchomię to jutro.", []))
         self.assertEqual(agents.take_run_lines("Uruchom:   ")[1], [])
+
+    def test_polecenie_i_odpowiedz(self):
+        text, found = agents.take_actions(
+            "Dobrze.\nPolecenie: proj | Strona: nagłówek | Zmień kolor na granatowy | i pogrub\n"
+            "Odpowiedź na pytanie: proj | 2 | Tak, wersja B\nPolecenie: proj | bez polecenia\nUruchom: proj | X")
+        self.assertEqual(text, "Dobrze.")
+        self.assertEqual(found, [("order", ("proj", "Strona: nagłówek", "Zmień kolor na granatowy | i pogrub")),
+                                 ("answer", ("proj", "2", "Tak, wersja B")), ("run", ("proj", "X"))])
+        many = "\n".join("Polecenie: p | Z%d | zrób" % i for i in range(3)) + "\nUruchom: p | Y"
+        self.assertEqual(len(agents.take_actions(many)[1]), agents.RUN_MAX)   # razem z Uruchom: najwyżej 3
 
     def test_zrob_to_na_koncu(self):
         for t in ("Dodaj stopkę. Zrób to", "popraw kolory, wykonaj", "Wykonaj to!", "zrob to."):
@@ -163,11 +174,17 @@ class Uruchamianie(Baza):
         argv = [c for c in self.calls() if "json" in c["argv"]][-1]["argv"]
         self.assertEqual(argv[argv.index("--resume") + 1], "sesja-1")
 
-    # ---------- rozmowa o zadaniu: Wyślij i wykonaj ----------
+    # ---------- Rozmowa w projekcie z odnośnikiem do zadania: Wyślij i wykonaj ----------
+    def execute(self, title, text, **kw):
+        t = self.task(title)
+        return self.manager.project_chat_send(self.pid, text, t["id"], **kw)
+
+    def msgs(self):
+        return self.manager.project_chat_get(self.pid)[2]["messages"]
+
     def test_wyslij_i_wykonaj(self):
         self.set_mode("wolno")
-        t = self.task("Zadanie A")
-        code, err, extra = self.manager.chat_send(t["id"], t["title"], "Dopisz sekcję o cenach.", execute=True)
+        code, err, extra = self.execute("Zadanie A", "Dopisz sekcję o cenach.", execute=True)
         self.assertEqual((code, err), (200, ""))
         self.assertEqual(extra["status"]["text"], "Uruchomiono: Zadanie A")
         self.assertEqual(extra["status"]["label"], "w toku")
@@ -175,14 +192,40 @@ class Uruchamianie(Baza):
             self.assertIn("- [~] Zadanie A | kto: claude | gdzie: mac\n  poprawka: Dopisz sekcję o cenach.", f.read())
         self.assertEqual(len(self.task_runs("Zadanie A")), 1)
         self.assertEqual([c for c in self.calls() if "json" in c["argv"]], [])      # bez modelu rozmowy
-        msgs = self.manager.chat_get(t["id"])[2]["messages"]
+        msgs = self.msgs()
         self.assertEqual([m["role"] for m in msgs], ["ty", "panel"])
         self.assertTrue(msgs[0]["exec"])
+        self.assertEqual(msgs[0]["task"]["title"], "Zadanie A")
+
+    def test_polecenie_z_odpowiedzi_rozmowy(self):
+        """Model w Rozmowie w projekcie (albo w Asystencie) daje polecenie do istniejącego zadania: poprawka i run_task."""
+        self.set_mode("wolno")
+        out = self.launch("Polecenie: %s | Gotowe agenta | Zmień kolor na granatowy" % self.pid)
+        self.assertEqual(out[0]["text"], "Uruchomiono: Gotowe agenta")
+        self.assertIn("poprawka: Zmień kolor na granatowy", self.text())
+        out = self.manager.chat_launches("Ok.\nPolecenie: %s | Zadanie D | zrób za mnie" % self.pid, "")[1]
+        self.assertIn("nie jest dla agenta (kto: ty)", out[0]["text"])            # Asystent: te same reguły
+        out = self.launch("Polecenie: %s | Zgoda agenta | dodaj logo" % self.pid)
+        self.assertEqual(out[0]["text"], "Nie uruchomiono „Zgoda agenta”: czeka na Twoją zgodę.")
+        self.assertEqual(len(self.task_runs()), 1)
+
+    def test_odpowiedz_na_pytanie_z_rozmowy(self):
+        seen = []
+        self.manager.answer_hook = lambda body: (seen.append(body) or (200, ""))
+        out = self.launch("Odpowiedź na pytanie: %s | 1 | Tak, wersja B" % self.pid)
+        self.assertEqual(seen, [{"id": self.pid, "n": 1, "answer": "Tak, wersja B"}])
+        self.assertTrue(out[0]["text"].startswith("Zapisano odpowiedź na pytanie 1"))
+        self.manager.answer_hook = lambda body: (400, "Nie zapisano: nie ma takiego pytania.")
+        out = self.manager.chat_launches("Ok.\nOdpowiedź na pytanie: %s | 9 | x" % self.pid, "")[1]
+        self.assertIn("Nie zapisano odpowiedzi na pytanie 9", out[0]["text"])
+        out = self.launch("Odpowiedź na pytanie: obcy | 1 | x")
+        self.assertIn("Nie zapisano", out[0]["text"])
+        import inspect                                                    # ta sama droga co przycisk przy pytaniu
+        self.assertIn("answer_hook = answer_question", inspect.getsource(server.get_agents))
 
     def test_zrob_to_wraca_zrobione_do_poprawy(self):
         self.set_mode("wolno")
-        t = self.task("Gotowe agenta")
-        code, _, extra = self.manager.chat_send(t["id"], t["title"], "Zmień kolor na granatowy, zrób to")
+        code, _, extra = self.execute("Gotowe agenta", "Zmień kolor na granatowy, zrób to")
         self.assertEqual(code, 200)
         self.assertEqual(extra["status"]["text"], "Uruchomiono: Gotowe agenta")
         self.assertTrue(self.row("Gotowe agenta").startswith("- [~]"))
@@ -191,30 +234,25 @@ class Uruchamianie(Baza):
         self.assertIn("Poprawka od właściciela (wiersz poprawka:): Zmień kolor na granatowy, zrób to", prompt)
 
     def test_wykonaj_przy_zadaniu_wlasciciela_i_zgodzie(self):
-        t = self.task("Zadanie D")
         before = self.text()
-        code, _, extra = self.manager.chat_send(t["id"], t["title"], "Zrób to za mnie", execute=True)
-        self.assertEqual(code, 200)
-        self.assertEqual(extra["status"]["text"],
-                         "Nie uruchomiono „Zadanie D”: to zadanie nie jest dla agenta (kto: ty). Zmień wykonawcę w szczegółach.")
+        code, _, extra = self.execute("Zadanie D", "Zrób to za mnie", execute=True)
+        self.assertEqual((code, extra), (202, {"pending": True}))         # zadanie właściciela: zwykła rozmowa
+        self.wait_for(lambda: not self.manager.project_chat_get(self.pid)[2]["pending"])
         self.assertEqual(self.text(), before)
-        t = self.task("Zgoda agenta")
-        code, _, extra = self.manager.chat_send(t["id"], t["title"], "Dodaj logo", execute=True)
+        code, _, extra = self.execute("Zgoda agenta", "Dodaj logo", execute=True)
         self.assertEqual(extra["status"]["text"], "Nie uruchomiono „Zgoda agenta”: czeka na Twoją zgodę.")
         self.assertIn("wymaga: zgoda", self.row("Zgoda agenta"))       # polecenie zapisane, zgoda zostaje
         self.assertEqual(self.task_runs(), [])
 
     def test_do_odbioru_po_pracy(self):
         self.set_mode("zostaw")                 # agent kończy bez [x]: panel dopisuje wymaga: odbiór
-        t = self.task("Zadanie A")
-        rid = self.manager.chat_send(t["id"], t["title"], "Zrób szkic", execute=True)[2]["status"]["runId"]
+        rid = self.execute("Zadanie A", "Zrób szkic", execute=True)[2]["status"]["runId"]
         self.wait(rid)
-        last = self.manager.chat_get(t["id"])[2]["messages"][-1]
+        last = self.manager.project_chat_get(self.pid)[2]["messages"][-1]
         self.assertEqual((last["live"], last["label"]), ("done", "do odbioru"))
         # poprawka po odbiorze: odbiór znika, zadanie wraca do pracy
-        t = self.task("Zadanie A")
         self.set_mode("wolno")
-        extra = self.manager.chat_send(t["id"], t["title"], "Krótszy tytuł", execute=True)[2]
+        extra = self.execute("Zadanie A", "Krótszy tytuł", execute=True)[2]
         self.assertEqual(extra["status"]["text"], "Uruchomiono: Zadanie A")
         self.assertNotIn("odbiór", self.row("Zadanie A"))
 
@@ -227,8 +265,8 @@ class Uruchamianie(Baza):
             self.set_mode("wolno")
             t = self.task("Zadanie A")
             conn = http.client.HTTPConnection("127.0.0.1", httpd.server_address[1], timeout=15)
-            conn.request("POST", "/api/task/chat", body=json.dumps(
-                {"id": t["id"], "title": t["title"], "message": "Popraw", "execute": True}).encode("utf-8"),
+            conn.request("POST", "/api/project/chat", body=json.dumps(
+                {"project": self.pid, "task": t["id"], "message": "Popraw", "execute": True}).encode("utf-8"),
                 headers={"Content-Type": "application/json"})
             resp = conn.getresponse()
             body = json.loads(resp.read().decode("utf-8"))
@@ -323,20 +361,23 @@ def page_result(path, tmp):
                      "brak Playwright i Chrome albo PANEL_TESTY_BEZ_RENDERU: test czatu zadania w przeglądarce pominięty")
 class CzatZadaniaWChrome(unittest.TestCase):
     def test_przycisk_i_stan(self):
-        code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "chatText", "PNL", "pnMsg", "chatMsg", "pnLive", "chatBox"])
+        code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "shortT", "chatText", "PNL", "pnMsg", "attLabel", "chatRef",
+                                                         "chatMsg", "pnLive", "chatBox"])
         page = """<!doctype html><meta charset="utf-8"><body><pre id="w"></pre><script>
-const LIVE=true,DR=null,loadChat=()=>{};
+const LIVE=true,DR={kind:'task',id:'a'},loadChat=()=>{},P=()=>null,wwLinks=h=>h;
 const CH={a:{messages:[{role:'ty',text:'Zrób szkic'},{role:'panel',text:'Uruchomiono: A',label:'w toku',live:'running',taskId:'a'}],
   pending:false,error:''},b:{messages:[{role:'panel',text:'Uruchomiono: B',label:'do odbioru',live:'done',taskId:'b'}],pending:false,error:''},
   d:{messages:[],pending:false,error:''}};
 %s
 const r={};
 const ha=chatBox({id:'a',executor:'claude',title:'A'}),hd=chatBox({id:'d',executor:'ty',title:'D'});
-r.exec=/data-chatexec="a"/.test(ha)&&/Wyślij i wykonaj/.test(ha);
-r.execTy=/data-chatexec/.test(hd);
+r.ask=/data-askt="a"/.test(ha)&&/Zapytaj o to zadanie/.test(ha)&&/data-askt="d"/.test(hd);
+r.field=/<textarea|<form|data-chatexec|Wyślij/.test(ha+hd);
+r.old=/Dawna rozmowa o zadaniu \\(2\\)/.test(ha)&&!/Dawna rozmowa/.test(hd);
 r.stan=(ha.match(/<span class="lz [a-z]+">[^<]+/g)||[]).map(x=>x.replace(/.*class="lz /,'').replace('">',':'));
 r.linkHere=/data-task="a"/.test(ha);
 r.linkOther=/data-task="b"/.test(pnMsg(CH.b.messages[0],'a'));
+r.ref=chatMsg({role:'ty',text:'x',task:{id:'b',title:'Zadanie B'},exec:true},'a',null);
 r.live=[pnLive(CH.a.messages),pnLive(CH.b.messages)];
 document.getElementById('w').textContent=JSON.stringify(r);
 </script>""" % code
@@ -347,11 +388,14 @@ document.getElementById('w').textContent=JSON.stringify(r);
             text, err = page_result(path, tmp)
         self.assertTrue(text, err[-500:])
         r = json.loads(text)
-        self.assertTrue(r["exec"])
-        self.assertFalse(r["execTy"])                    # zadanie właściciela: bez „Wyślij i wykonaj”
+        self.assertTrue(r["ask"])                        # w zadaniu tylko „Zapytaj o to zadanie”
+        self.assertFalse(r["field"])                     # bez pola rozmowy i „Wyślij i wykonaj”
+        self.assertTrue(r["old"])                        # dawna rozmowa do odczytu
         self.assertEqual(r["stan"], ["blue:w toku"])
         self.assertFalse(r["linkHere"])                  # w szufladzie tego zadania bez linku do niego samego
         self.assertTrue(r["linkOther"])
+        self.assertIn("O zadaniu:", r["ref"])
+        self.assertIn('data-task="b"', r["ref"])
         self.assertEqual(r["live"], [True, False])
 
 

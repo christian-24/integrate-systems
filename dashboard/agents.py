@@ -54,12 +54,12 @@ TASK_TOOLS = ",".join([
     "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep",
     "TodoWrite", "TaskCreate", "TaskUpdate", "TaskList", "TaskGet"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
-# Rozmowa o zadaniu (AGENCI.md, „Rozmowa o zadaniu”): tylko odczyt plików, bez powłoki, zapisu i sieci.
-CHAT_TOOLS = "Read,Grep,Glob,LS"
 # Agent uruchomiony z panelu nie zakłada własnych pomocników ani przepływów (2026-11-23: zadanie „wizytówki” uruchomiło
 # 33 pomocników i zużyło cały limit 5 godzin) i nie dostaje konektorów konta (--strict-mcp-config).
 RUN_DENY = "Agent,Task,Workflow,SendMessage,TaskStop,Monitor,CronCreate,CronDelete,ScheduleWakeup,RemoteTrigger,PushNotification"
-CHAT_DENY = "Bash,Edit,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
+# Rozmowy z agentem (Asystent i Rozmowa w projekcie, AGENCI.md „Rozmowy”): jedna lista zabronionych narzędzi dla obu;
+# internet (WebSearch, WebFetch) zdejmuje z niej Manager przy PANEL_ASYSTENT_INTERNET różnym od 0.
+CHAT_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
 PL_DAYS = ("poniedziałek", "wtorek", "środa", "czwartek", "piątek", "sobota", "niedziela")
 CHAT_MAX = 2000             # znaków w jednej wiadomości właściciela
 CHAT_KEEP = 100             # tyle wiadomości zostaje w historii zadania
@@ -140,29 +140,64 @@ def variant_name(path):
 
 
 RUN_LINE = re.compile(r"^[ \t>*`-]*Uruchom\s*:\s*(.+?)\s*$", re.I)
-RUN_MAX = 3                 # najwyżej tyle uruchomień z jednej odpowiedzi
-# „zrób to” / „wykonaj” na końcu wiadomości w rozmowie o zadaniu = „Wyślij i wykonaj”
+# wiersze działań rozmów (Asystent i Rozmowa w projekcie); panel wykonuje je i usuwa z odpowiedzi
+ACTION_LINE = re.compile(r"^[ \t>*`-]*(Uruchom|Polecenie|Odpowiedź na pytanie|Odpowiedz na pytanie)\s*:\s*(.+?)\s*$", re.I)
+RUN_MAX = 3                 # najwyżej tyle uruchomień (Uruchom: i Polecenie:) z jednej odpowiedzi
+ANSWER_MAX = 3              # najwyżej tyle odpowiedzi na pytania z jednej odpowiedzi
+# „zrób to” / „wykonaj” na końcu wiadomości o zadaniu (Rozmowa w projekcie z odnośnikiem do zadania) = „Wyślij i wykonaj”
 EXEC_END = re.compile(r"(?:^|[\s,.;:!?—–-])(?:zrób to|zrob to|wykonaj(?: to)?)[\s.!]*$", re.I)
 # wersja zasad w promptach rozmów: inna wersja w pliku rozmowy = nowa sesja z pełnym promptem
-CHAT_RULES_V = "5"
+CHAT_RULES_V = "6"
 PANEL_ROLE = "panel"        # wiadomość panelu w historii rozmowy (stan uruchomienia), nie od modelu
 
 
-def take_run_lines(answer):
-    """Odpowiedź bez wierszy „Uruchom: <projekt> | <tytuł>” (albo „Uruchom: <tytuł>”) i lista (projekt, tytuł)."""
+def _unq(text):
+    return str(text or "").strip().strip("`").strip().strip("„”\"'`«»").strip()
+
+
+def take_actions(answer):
+    """Wiersze działań z odpowiedzi rozmowy: (odpowiedź bez nich, [(rodzaj, pola)]). Rodzaje:
+    ("run", (projekt, tytuł)) z „Uruchom: <projekt> | <tytuł>” (albo „Uruchom: <tytuł>”),
+    ("order", (projekt, tytuł, polecenie)) z „Polecenie: <projekt> | <tytuł> | <polecenie>”,
+    ("answer", (projekt, numer, odpowiedź)) z „Odpowiedź na pytanie: <projekt> | <numer> | <odpowiedź>”.
+    Najwyżej RUN_MAX uruchomień i poleceń razem oraz ANSWER_MAX odpowiedzi; powtórzenia raz."""
     keep, found = [], []
+    runs = answers = 0
     for line in str(answer or "").split("\n"):
-        m = RUN_LINE.match(line)
+        m = ACTION_LINE.match(line)
         if not m:
             keep.append(line)
             continue
-        value = m.group(1).strip().strip("`")
-        pid, _, title = value.rpartition("|") if "|" in value else ("", "", value)
-        title = title.strip().strip("„”\"'`«»").strip()
-        item = (pid.strip(), title)
-        if title and item not in found:
-            found.append(item)
-    return "\n".join(keep).rstrip(), found[:RUN_MAX]
+        word, value = m.group(1).lower(), m.group(2).strip().strip("`")
+        if word == "uruchom":
+            pid, _, title = value.rpartition("|") if "|" in value else ("", "", value)
+            item = ("run", (pid.strip(), _unq(title)))
+            ok = bool(item[1][1])
+        else:
+            bits = [x.strip() for x in value.split("|", 2)]
+            if len(bits) < 3:
+                continue
+            kind = "order" if word == "polecenie" else "answer"
+            item = (kind, (bits[0], _unq(bits[1]), bits[2].strip()))
+            ok = all(item[1])
+        if not ok or item in found:
+            continue
+        if item[0] == "answer":
+            if answers >= ANSWER_MAX:
+                continue
+            answers += 1
+        else:
+            if runs >= RUN_MAX:
+                continue
+            runs += 1
+        found.append(item)
+    return "\n".join(keep).rstrip(), found
+
+
+def take_run_lines(answer):
+    """Odpowiedź bez wierszy działań i lista (projekt, tytuł) samych „Uruchom:”."""
+    text, found = take_actions(answer)
+    return text, [v for k, v in found if k == "run"]
 
 
 def _norm_title(text):
@@ -476,7 +511,7 @@ class Manager:
         self._thread = None
         self._git_lock = threading.Lock()     # operacje panelu na repozytoriach projektów (worktree, commit, merge)
         self._ver_lock = threading.Lock()     # zapis i porządki wersji wyniku (strona odbioru)
-        self.chat_timeout = 180               # s: odpowiedź w rozmowie o zadaniu
+        self.chat_timeout = 180               # s: odpowiedź w rozmowie (Rozmowa w projekcie)
         self.assist_model = (get("PANEL_ASYSTENT_MODEL") or "sonnet").strip()  # tańszy model dla asystenta
         self._chat_lock = threading.Lock()    # pliki rozmów i _chat_live
         self._chat_live = set()               # pliki rozmów, które czekają na odpowiedź w tym procesie
@@ -1186,7 +1221,7 @@ class Manager:
             "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to polecenie albo uwagi właściciela (po odbiorze albo "
-            "z rozmowy o zadaniu): wykonaj je, a istniejącą pracę popraw według nich. Wiersze `- znacznik N (plik, "
+            "z rozmowy w panelu): wykonaj je, a istniejącą pracę popraw według nich. Wiersze `- znacznik N (plik, "
             "położenie): uwaga` pod poprawką to uwagi do miejsca na obrazie (albo chwili filmu); nie zmieniaj ich.",
             "- Na koniec dopisz pod wierszem zadania wcięte o 2 spacje wiersze (istniejące wiersze z tym kluczem zastąp): "
             "`  wynik: …` (krótko, co powstało i gdzie); `  decyzja: …`, gdy właściciel ma coś zatwierdzić przy odbiorze; "
@@ -1396,7 +1431,7 @@ class Manager:
             priv["stream"] = True
         priv.update(args=args, cwd=cwd, prompt=prompt)
 
-    # ---------- rozmowa o zadaniu ----------
+    # ---------- dawna rozmowa o zadaniu (tylko odczyt historii; rozmowy: Asystent i Rozmowa w projekcie) ----------
     def _chat_file(self, task):
         key = "%s|%s|%s" % (task["project"], task["file"], task["title"])
         return os.path.join(self.runs_dir, "czat", hashlib.sha1(key.encode("utf-8")).hexdigest() + ".json")
@@ -1425,7 +1460,8 @@ class Manager:
         self._write_json(path, chat)
 
     def chat_get(self, task_id):
-        """Historia rozmowy o zadaniu. Zwraca (kod, błąd, {"messages", "pending", "error"})."""
+        """Historia dawnej rozmowy o zadaniu, tylko do odczytu (szczegóły zadania, „Dawna rozmowa o zadaniu”).
+        Nowe wiadomości o zadaniu idą do Rozmowy w projekcie. Zwraca (kod, błąd, {"messages", "pending", "error"})."""
         task, _, _ = self._find_task(task_id=str(task_id))
         if not task:
             return 404, "Nie ma tego zadania.", {}
@@ -1496,130 +1532,37 @@ class Manager:
         with self._chat_lock:
             return [dict(m) for m in reversed(self._chat_done) if str(m.get("at", "")) >= low]
 
-    def chat_prompt(self, name, task, stage, detail, folder, text):
-        """Pierwsza wiadomość rozmowy: kontekst zadania, zasady i pytanie właściciela (ostatnie wiersze)."""
-        lines = ["Rozmawiasz z właścicielem projektu „%s” o jednym zadaniu z pliku %s, wiersz %d: „%s”."
-                 % (name, task["file"], task["line"], task["title"])]
-        if stage:
-            lines.append("Etap: %s." % stage)
-        more = self.detail_lines(detail)
-        if more:
-            lines += ["", "Szczegóły zadania:"] + more
-        files = [os.path.join(folder, n) for n in ("KARTA.md", "ZADANIA.md", task["file"])]
-        lines += ["", "Pliki projektu: karta %s, zadania %s%s." % (files[0], files[1], "" if files[2] == files[1]
-                                                                  else ", plik zadania %s" % files[2]),
-                  "", "Zasady:",
-                  "- Odpowiadasz na pytanie właściciela o to jedno zadanie.",
-                  "- Krótko i konkretnie, prostym językiem po polsku. Bez żargonu technicznego, chyba że właściciel o niego prosi.",
-                  "- Możesz czytać pliki projektu, ale niczego nie zmieniasz i nie uruchamiasz poleceń.",
-                  "- Gdy właściciel prosi o wykonanie pracy przy tym zadaniu, napisz jednym zdaniem, że wystarczy wysłać "
-                  "polecenie przyciskiem „Wyślij i wykonaj” (albo dopisać „zrób to” na końcu wiadomości): panel zapisze "
-                  "je pod zadaniem i uruchomi agenta.",
-                  "- Gdy zadanie wygląda na zbędne, błędne albo niejasne, powiedz to wprost i zaproponuj jedną konkretną "
-                  "zmianę (np. zamknąć je, zmienić termin, zastąpić je innym zadaniem) w jednym zdaniu zaczynającym się "
-                  "od „Propozycja:”.",
-                  "- Nigdy nie proś właściciela o hasła, klucze ani tokeny.",
-                  "", "Pytanie właściciela:", text]
-        return "\n".join(lines) + "\n"
-
-    def chat_send(self, task_id, title, message, execute=False):
-        """Wiadomość właściciela w rozmowie o zadaniu; odpowiedź Claude przychodzi w tle (chat_get).
-        execute (przycisk „Wyślij i wykonaj”) albo „zrób to” / „wykonaj” na końcu: polecenie dla agenta (chat_execute).
-        Zwraca (kod, błąd, dodatki): 202 z {"pending": True}, 200 z {"status"} przy wykonaniu albo błąd 400, 404,
-        409, 500."""
-        text = str(message or "").strip()
-        if not text:
-            return 400, "Napisz pytanie.", {}
-        if len(text) > CHAT_MAX:
-            return 400, "Najwyżej %d znaków." % CHAT_MAX, {}
-        task, data, index = self._find_task(task_id=str(task_id))
-        if not task or task["project"] not in index:
-            return 404, "Nie ma tego zadania.", {}
-        if task["title"] != str(title):
-            return 409, CONFLICT, {}
-        if data["projectsSource"] != "registry":
-            return 409, "Projekty przykładowe", {}
-        if execute is True or EXEC_END.search(text):
-            return self.chat_execute(task, index, text)
-        path = self.tool_path("claude")
-        if not path:
-            return 409, "Brak polecenia claude", {}
-        with self._lock:
-            login = self._state["needsLogin"]
-        if login:
-            return 409, "Wymaga logowania: %s" % self.login_cmd("claude", path), {}
-        limit = self.limit_until()
-        if limit:
-            return 409, "Limit subskrypcji. Odnowienie o %s." % limit[11:16], {}
-        folder = index[task["project"]]
-        file = self._chat_file(task)
-        with self._chat_lock:
-            if file in self._chat_live:
-                return 409, "Czekam jeszcze na odpowiedź.", {}
-            if len(self._chat_live) >= CHAT_PARALLEL:
-                return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
-            chat = self._chat_read(file)
-            session = self._chat_session(chat)
-            chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
-            chat.update(pending=True, error="")
-            try:
-                self._chat_write(file, chat)
-            except OSError:
-                return 500, "Nie udało się zapisać rozmowy.", {}
-            self._chat_live.add(file)
-            self._chat_meta[file] = {"taskId": task["id"], "project": task["project"], "file": task["file"],
-                                     "title": task["title"], "since": now_iso()}
-            self._chat_save()
-        try:
-            if session:
-                prompt = text + "\n"
-            else:
-                project = next((p for p in data["projects"] if p["id"] == task["project"]), {})
-                stage = next((s["title"] for s in data["stages"] if s["id"] == task.get("stage")), "")
-                prompt = self.chat_prompt(project.get("name", task["project"]), task, stage,
-                                          with_answers(task, data["tasks"]), folder, text)
-            # Tylko odczyt: tryb uprawnień default (bez acceptEdits i bypass), lista narzędzi do odczytu, reszta
-            # zabroniona wprost (zabronione wygrywa z regułami allow z .claude/settings.json projektu), bez MCP.
-            args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
-            if self.model:
-                args += ["--model", self.model]
-            if session:
-                args += ["--resume", session]
-            args += _card_dirs(folder) + ["--allowedTools", CHAT_TOOLS, "--disallowedTools", CHAT_DENY,
-                                          "--strict-mcp-config"]
-            threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session)),
-                             daemon=True).start()
-        except Exception:
-            self._chat_end(file, "", "", "Nie udało się uruchomić rozmowy.")
-            return 500, "Nie udało się uruchomić rozmowy.", {}
-        return 202, "", {"pending": True}
-
     # ---------- uruchamianie z rozmów (AGENCI.md, „Uruchamianie z rozmów”) ----------
-    def chat_execute(self, task, index, text, pins=None):
-        """„Wyślij i wykonaj” w rozmowie o zadaniu: wiadomość trafia pod zadanie jako `poprawka:` (polecenie dla
-        agenta), zadanie wraca do [ ] (zrobione, w toku, do odbioru, blokada), potem launch_task. Bez modelu.
-        Zwraca (200, "", {"status": wiadomość panelu}) albo błąd zapisu rozmowy."""
-        file = self._chat_file(task)
+    def _chat_append(self, file, msgs):
+        """Dopisuje wiadomości do pliku rozmowy (pod _chat_lock). False przy błędzie zapisu."""
         with self._chat_lock:
-            if file in self._chat_live:
-                return 409, "Czekam jeszcze na odpowiedź.", {}
             chat = self._chat_read(file)
-            mine = {"role": "ty", "text": text, "at": now_iso(), "exec": True}
-            if pins:
-                mine["pins"] = pins
-            chat["messages"].append(mine)
+            chat["messages"] += list(msgs)
             try:
                 self._chat_write(file, chat)
             except OSError:
-                return 500, "Nie udało się zapisać rozmowy.", {}
+                return False
+        return True
+
+    def task_chat_file(self, task):
+        """Rozmowa w projekcie, do której trafiają wiadomości o zadaniu: rozmowa projektu (albo części) zadania."""
+        return self._project_chat_file(task["project"])
+
+    def chat_execute(self, task, index, text, pins=None, ref=True):
+        """„Wyślij i wykonaj” (Rozmowa w projekcie z odnośnikiem do zadania, „Do poprawy”, odbiór): wiadomość trafia
+        pod zadanie jako `poprawka:` (polecenie dla agenta), zadanie wraca do [ ] (zrobione, w toku, do odbioru,
+        blokada), potem launch_task albo wiadomość do pracującego agenta. Bez modelu. Wiadomość i stan zapisują się
+        w Rozmowie w projekcie zadania. Zwraca (200, "", {"status": wiadomość panelu}) albo błąd zapisu rozmowy."""
+        file = self.task_chat_file(task)
+        mine = {"role": "ty", "text": text, "at": now_iso(), "exec": True}
+        if ref:
+            mine["task"] = {"id": task["id"], "title": task["title"], "project": task["project"]}
+        if pins:
+            mine["pins"] = pins
+        if not self._chat_append(file, [mine]):
+            return 500, "Nie udało się zapisać rozmowy.", {}
         msg = self._execute_order(task, index, text, pins)
-        with self._chat_lock:
-            chat = self._chat_read(file)
-            chat["messages"].append(msg)
-            try:
-                self._chat_write(file, chat)
-            except OSError:
-                pass
+        self._chat_append(file, [msg])
         return 200, "", {"status": self.panel_view([msg])[0]}
 
     def _execute_order(self, task, index, text, pins=None):
@@ -1793,7 +1736,7 @@ class Manager:
 
     def _relaunch(self, rec, after, restart):
         """Po zakończeniu uruchomienia: polecenia, które przyszły po zdarzeniu result (ponowne uruchomienie jak
-        „Wyślij i wykonaj”), albo „Zatrzymaj i uruchom z poprawką” (Codex). Wynik trafia do rozmowy o zadaniu."""
+        „Wyślij i wykonaj”), albo „Zatrzymaj i uruchom z poprawką” (Codex). Wynik trafia do Rozmowy w projekcie."""
         title = rec["title"]
         end = time.time() + 1800
         while title in getattr(self.site, "_finishing", ()) and time.time() < end:
@@ -1807,14 +1750,7 @@ class Manager:
             msg = self._execute_order(task, index, text, pins)
         else:
             msg = self.launch_task(task, data)
-        file = self._chat_file(task)
-        with self._chat_lock:
-            chat = self._chat_read(file)
-            chat["messages"].append(msg)
-            try:
-                self._chat_write(file, chat)
-            except OSError:
-                pass
+        self._chat_append(self.task_chat_file(task), [msg])
 
     def restart_run(self, rid):
         """„Zatrzymaj i uruchom z poprawką”: zatrzymuje uruchomienie zadania, po zakończeniu uruchamia je ponownie
@@ -1901,33 +1837,83 @@ class Manager:
         return 200, data
 
     def chat_launches(self, answer, pid=""):
-        """Wiersze „Uruchom:” z odpowiedzi rozmowy: (odpowiedź bez nich, [wiadomość panelu na każde zadanie]).
-        pid: rozmowa o projekcie (zadania tylko z tego projektu); '' asystent (projekt z wiersza albo dowolny)."""
-        text, wanted = take_run_lines(answer)
+        """Wiersze działań z odpowiedzi rozmowy (take_actions): (odpowiedź bez nich, [wiadomość panelu na każde]).
+        Uruchom: launch_task; Polecenie: _execute_order (poprawka i uruchomienie albo wiadomość do pracującego
+        agenta); Odpowiedź na pytanie: ta sama droga co przycisk przy pytaniu (answer_hook = server.answer_question).
+        pid: Rozmowa w projekcie (tylko ten projekt i jego części); '' Asystent (projekt z wiersza albo dowolny)."""
+        text, wanted = take_actions(answer)
         if not wanted:
             return answer, []
         out = []
-        for want_pid, title in wanted:
-            data, _ = self.load_projects()
-            task = self._match_task(data, pid or want_pid, title, only=bool(pid))
-            if task:
-                out.append(self.launch_task(task, data))
-            else:
+        for kind, val in wanted:
+            data, index = self.load_projects()
+            allowed = self.family(data, pid) if pid else None
+            if kind == "answer":
+                out.append(self._chat_answer(data, allowed, *val))
+                continue
+            want_pid, title = val[0], val[1]
+            task = self._match_task(data, want_pid if not pid or want_pid in (allowed or ()) else pid, title,
+                                    allowed=allowed)
+            if not task:
                 out.append(dict(self._panel_msg({"project": pid, "title": title}),
                                 text="Nie uruchomiono „%s”: nie ma takiego zadania w ZADANIA.md." % title))
+            elif kind == "run":
+                out.append(self.launch_task(task, data))
+            else:
+                out.append(self._execute_order(task, index, val[2][:1000]))
         return text, out
 
     @staticmethod
-    def _match_task(data, pid, title, only=False):
+    def family(data, pid):
+        """Projekt rozmowy i jego części (pole karty część projektu:): {id}. Część: tylko ona sama."""
+        pid = str(pid or "")
+        return {pid} | {p["id"] for p in data["projects"] if p.get("partOf") == pid}
+
+    def _chat_answer(self, data, allowed, want, n, text):
+        """„Odpowiedź na pytanie: <projekt> | <numer> | <odpowiedź>” z rozmowy: zapis jak przycisk przy pytaniu."""
+        pid = self._project_id(data, want) if want else ""
+        if allowed is not None and pid not in allowed:
+            pid = next(iter(allowed)) if len(allowed) == 1 else pid
+        msg = dict(self._panel_msg({"project": pid, "title": ""}), text="")
+        num = re.sub(r"\D", "", str(n))[:3]
+        hook = getattr(self, "answer_hook", None)
+        if not pid or (allowed is not None and pid not in allowed) or not num:
+            msg["text"] = "Nie zapisano odpowiedzi: nie ma takiego projektu albo pytania."
+            return msg
+        if not hook:
+            msg["text"] = "Nie zapisano odpowiedzi: panel nie obsługuje tu pytań."
+            return msg
+        try:
+            res = hook({"id": pid, "n": int(num), "answer": str(text)[:1000]})
+        except Exception as e:  # noqa: BLE001  (odpowiedź rozmowy musi trafić do historii)
+            res = (500, "błąd panelu (%s)" % type(e).__name__)
+        code, err = res[0], res[1]
+        name = next((p.get("name") or pid for p in data["projects"] if p["id"] == pid), pid)
+        msg["text"] = ("Zapisano odpowiedź na pytanie %s (%s)." % (num, name) if 200 <= code < 300 else
+                       "Nie zapisano odpowiedzi na pytanie %s: %s" % (num, str(err or "błąd").rstrip(".") + "."))
+        return msg
+
+    @staticmethod
+    def _project_id(data, want):
+        """Id projektu z id, nazwy albo aliasu; '' gdy nie ma."""
+        if any(p["id"] == want for p in data["projects"]):
+            return want
+        low = str(want or "").strip().lower()
+        return next((p["id"] for p in data["projects"] if low in ((p.get("name") or "").lower(),
+                                                                (p.get("alias") or "").lower())), "")
+
+    @classmethod
+    def _match_task(cls, data, pid, title, only=False, allowed=None):
         """Zadanie do uruchomienia po tytule: najpierw otwarte, potem zrobione. pid: id, nazwa albo alias projektu;
-        only: szukaj tylko w tym projekcie."""
+        only: szukaj tylko w tym projekcie; allowed: szukaj tylko w tych projektach (Rozmowa w projekcie)."""
         if pid and not any(p["id"] == pid for p in data["projects"]):
-            low = pid.strip().lower()
-            pid = next((p["id"] for p in data["projects"] if low in ((p.get("name") or "").lower(),
-                                                                    (p.get("alias") or "").lower())), "" if not only else pid)
+            pid = cls._project_id(data, pid) or (pid if only else "")
         want = _norm_title(title)
         cands = [t for t in data["tasks"] if t.get("kind") != "publikacja" and (not pid or t["project"] == pid)
-                 and _norm_title(t["title"]) == want]
+                 and (allowed is None or t["project"] in allowed) and _norm_title(t["title"]) == want]
+        if not cands and allowed is not None and pid:      # tytuł z innej części tego samego projektu
+            cands = [t for t in data["tasks"] if t.get("kind") != "publikacja" and t["project"] in allowed
+                     and _norm_title(t["title"]) == want]
         order = {"todo": 0, "blocked": 1, "doing": 2, "done": 3}
         cands.sort(key=lambda t: order.get(t.get("state"), 2))
         return cands[0] if cands else None
@@ -2014,18 +2000,42 @@ class Manager:
 
     @staticmethod
     def project_chat_tools(folder):
-        """Narzędzia rozmowy o projekcie: odczyt oraz edycja tylko ZADANIA.md, DECYZJE.md i kampanie/ (karta
-        i dowiązania w folderze projektu). Reszta zabroniona wprost; tryb default bez pytań w -p odrzuca inne zmiany."""
+        """Uprawnienia do plików jednego projektu w rozmowach: odczyt oraz edycja tylko ZADANIA.md, DECYZJE.md
+        i kampanie/ (karta i dowiązania w folderze projektu). (allow, deny, folder karty)."""
         cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
         allow = ["Read", "Grep", "Glob", "LS"]
         for base in dict.fromkeys([cards, folder]):
             b = base.rstrip("/")                    # ścieżka bezwzględna: reguła Edit(//…)
             allow += ["Edit(/%s/ZADANIA.md)" % b, "Edit(/%s/DECYZJE.md)" % b, "Edit(/%s/kampanie/**)" % b]
-        return ",".join(allow), "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task", cards
+        return ",".join(allow), CHAT_DENY, cards
+
+    def chat_tools(self, folders):
+        """Narzędzia obu rozmów (Asystent i Rozmowa w projekcie), te same reguły: odczyt, internet do odczytu
+        (PANEL_ASYSTENT_INTERNET), edycja tylko ZADANIA.md, DECYZJE.md i kampanie/ podanych projektów; zabronione
+        wprost: powłoka, zapis innych plików, pomocnicy i przepływy (ASSIST_DENY). (allow, deny, katalogi --add-dir)."""
+        allow, dirs = ["Read", "Grep", "Glob", "LS"] + (list(self.ASSIST_WEB) if self.assist_web else []), []
+        for folder in folders:
+            a, _, cards = self.project_chat_tools(folder)
+            allow += [x for x in a.split(",")[4:] if x not in allow]
+            dirs += [d for d in (cards, folder) if d not in dirs]
+        return allow, self.ASSIST_DENY, dirs
+
+    def chat_args(self, folders, stream=False):
+        """Wywołanie claude dla rozmowy: ten sam model (PANEL_ASYSTENT_MODEL), tryb uprawnień default (bez pytań
+        w -p: wszystko poza listą jest odrzucane), te same narzędzia i katalogi, bez MCP."""
+        allow, deny, dirs = self.chat_tools(folders)
+        args = _command(self.tool_path("claude")) + ["-p"]
+        args += (["--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
+                  "--include-partial-messages"] if stream else ["--output-format", "json"])
+        args += ["--permission-mode", "default", "--model", self.assist_model]
+        for d in dirs:
+            args += ["--add-dir", d]
+        return args + ["--allowedTools", ",".join(allow), "--disallowedTools", deny, "--strict-mcp-config"]
 
     @staticmethod
     def run_rules(prefix, today):
-        """Zasady rozmowy o projekcie i asystenta: prośba o pracę = zadanie agenta i wiersz „Uruchom:”."""
+        """Zasady rozmów o pracy agentów: prośba o pracę = zadanie agenta i wiersz „Uruchom:”; polecenie do
+        istniejącego zadania albo pracującego agenta = „Polecenie:”."""
         return [
             "- Gdy właściciel prosi o wykonanie pracy (zrób, przygotuj, napisz, napraw, sprawdź…), nie robisz jej sam: "
             "dopisz w ZADANIA.md projektu zadanie agenta `- [ ] <Tytuł od czasownika> | kto: agent | kiedy: %s` "
@@ -2033,9 +2043,35 @@ class Manager:
             "`  cel: …` i `  gotowe gdy: …` z prośby. Pasujące otwarte zadanie agenta wykorzystaj zamiast "
             "zakładać nowe. Potem na samym końcu odpowiedzi dodaj wiersz `Uruchom: %s<dokładny tytuł zadania>`; "
             "panel uruchomi agenta i sam pokaże stan, więc nie piszesz, że praca ruszyła." % (today.isoformat(), prefix),
-            "- Pytanie o stan, termin czy plan to nie prośba o pracę: wtedy bez nowego zadania i bez „Uruchom:”. "
-            "„wymaga: zgoda” dopisujesz tylko, gdy praca wysyła coś na zewnątrz (publikacja, wysyłka, płatność); "
-            "takie zadanie czeka na zgodę właściciela w panelu.",
+            "- Gdy właściciel daje polecenie albo uwagi do istniejącego zadania agenta (popraw, zmień, dodaj w tym "
+            "zadaniu; także gdy agent nad nim właśnie pracuje), nie zakładaj nowego zadania: na końcu odpowiedzi dodaj "
+            "wiersz `Polecenie: %s<dokładny tytuł zadania> | <polecenie dla agenta jednym zdaniem>`. Panel zapisze je "
+            "pod zadaniem (poprawka:) i uruchomi agenta albo przekaże je pracującemu agentowi." % prefix,
+            "- Pytanie o stan, termin czy plan to nie prośba o pracę: wtedy bez nowego zadania, bez „Uruchom:” "
+            "i bez „Polecenie:”. „wymaga: zgoda” dopisujesz tylko, gdy praca wysyła coś na zewnątrz (publikacja, "
+            "wysyłka, płatność); takie zadanie czeka na zgodę właściciela w panelu.",
+            "- Zadań `kto: ty` nie uruchamiasz i nie dajesz im poleceń: to praca właściciela.",
+        ]
+
+    @staticmethod
+    def chat_rules(prefix, today, sites=()):
+        """Zasady wspólne obu rozmów (Asystent i Rozmowa w projekcie): pliki, działania, twarde granice."""
+        return [
+            "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela (np. zamknij, anuluj, przesuń, zmień termin, "
+            "dodaj zadanie) i tylko ZADANIA.md, DECYZJE.md oraz pliki w kampanie/, w formacie ze STANDARD.md. "
+            "Gdy prośba jest niejasna, dopytaj zamiast zgadywać.",
+            "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
+            "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
+            "- Po każdej zmianie pliku napisz przed wierszami działań wiersz zaczynający się od „Zmieniono:” "
+            "z projektem, plikiem i zadaniem.",
+            "- Odpowiedź właściciela na pytanie z sekcji „Pytania do właściciela” karty zapisuje panel: dodaj na końcu "
+            "wiersz `Odpowiedź na pytanie: %s<numer pytania> | <odpowiedź właściciela>`. Propozycję przyjmujesz tylko "
+            "na wyraźne „tak” właściciela. Sam nie odpowiadasz za właściciela." % prefix,
+            ] + Manager.site_rule(list(sites)) + Manager.run_rules(prefix, today) + [
+            "- Wiersze `Uruchom:`, `Polecenie:` i `Odpowiedź na pytanie:` są zawsze na samym końcu, każdy w osobnym "
+            "wierszu; panel wykonuje je i nie pokazuje ich właścicielowi.",
+            "- Nie zmieniasz kart (KARTA.md), kodu ani innych plików, nie uruchamiasz poleceń, nic nie publikujesz "
+            "i nie wysyłasz. Nigdy nie proś o hasła, klucze ani tokeny.",
         ]
 
     @staticmethod
@@ -2067,36 +2103,69 @@ class Manager:
         sites: site_links projektu i jego części."""
         name = project.get("name") or project.get("id")
         today = datetime.date.today()
-        lines = ["Rozmawiasz z właścicielem o projekcie „%s” (id %s). Dziś jest %s (%s)." % (
-                     name, project.get("id"), today.isoformat(), PL_DAYS[today.weekday()]),
+        lines = ["Rozmawiasz z właścicielem o projekcie „%s” (id %s) w Rozmowie w projekcie panelu. Dziś jest %s (%s)."
+                 % (name, project.get("id"), today.isoformat(), PL_DAYS[today.weekday()]),
                  "", "Pliki projektu (czytaj je przed odpowiedzią):",
                  "- karta: %s" % os.path.join(cards, "KARTA.md"),
                  "- zadania: %s" % os.path.join(cards, "ZADANIA.md"),
                  "- kampanie: %s (pliki .md, sekcja Harmonogram)" % os.path.join(cards, "kampanie"),
                  "- decyzje: %s" % os.path.join(cards, "DECYZJE.md"),
-                 "- format wierszy: %s" % os.path.normpath(os.path.join(cards, "..", "..", "standard", "STANDARD.md")),
+                 "- format wierszy: %s" % os.path.join(self.root, "standard", "STANDARD.md"),
                  "- dokumenty projektu: %s" % folder,
                  ] + ([
-                 "", "Projekt ma części z osobnymi plikami (tu możesz je czytać; zmiany w nich właściciel zleca "
-                 "w rozmowie o danej części):"] + ["- %s: %s" % (n, os.path.join(c, "ZADANIA.md")) for n, c in parts]
+                 "", "Projekt ma części z osobnymi plikami (czytasz i zmieniasz je tak samo; w wierszach działań "
+                 "podaj id części):"] + ["- %s (id %s): %s" % (n, i, os.path.join(c, "ZADANIA.md")) for n, c, i in parts]
                  if parts else []) + [
                  "", "Zasady:",
                  "- Rozmawiacie o zadaniach, postępie, terminach i o tym, co właściciel ma zrobić w najbliższych dniach "
-                 "(zadania z „kto: ty”, filmy do nagrania dzień przed publikacją, publikacje). Krótko, prostym językiem po polsku.",
-                 "- Pliki zmieniasz tylko na wyraźną prośbę właściciela (np. zamknij, anuluj, przesuń, zmień termin, dodaj "
-                 "zadanie) i tylko ZADANIA.md, DECYZJE.md oraz pliki w kampanie/, w formacie ze STANDARD.md. "
-                 "Gdy prośba jest niejasna, dopytaj zamiast zgadywać.",
-                 "- Anulowanie: stan [x] i wcięty wiersz `wynik: anulowane %s na prośbę właściciela: <powód>`. "
-                 "Wierszy nie usuwasz. Decyzję, która zmienia plan, dopisz krótko do DECYZJE.md." % today.strftime("%d.%m"),
-                 "- Po każdej zmianie napisz na końcu wiersz zaczynający się od „Zmieniono:” z plikiem i zadaniem.",
-                 ] + self.site_rule(list(sites)) + self.run_rules("%s | " % project.get("id"), today) + [
-                 "- Nie zmieniasz KARTA.md, kodu ani innych plików i nie uruchamiasz poleceń.",
-                 "- Nigdy nie proś o hasła, klucze ani tokeny.",
+                 "(zadania z „kto: ty”, filmy do nagrania dzień przed publikacją, publikacje). Krótko, prostym językiem "
+                 "po polsku, bez żargonu technicznego.",
+                 "- Wiadomość może zaczynać się od [zadanie: …] z kontekstem zadania, o które pyta właściciel "
+                 "(szczegóły, ostatnie uruchomienie). Odpowiadasz wtedy o tym zadaniu i działasz na nim. Gdy zadanie "
+                 "wygląda na zbędne, błędne albo niejasne, powiedz to wprost i zaproponuj jedną zmianę w zdaniu "
+                 "zaczynającym się od „Propozycja:”.",
+                 ] + self.chat_rules("%s | " % project.get("id"), today, sites) + [
                  "", "Wiadomość właściciela:", text]
         return "\n".join(lines) + "\n"
 
-    def project_chat_send(self, pid, message):
-        """Wiadomość właściciela w rozmowie o projekcie; odpowiedź w tle (project_chat_get). (kod, błąd, dodatki)."""
+    def task_context(self, task, data, index):
+        """Kontekst zadania dla wiadomości z „Zapytaj o to zadanie”: tytuł, plik, stan, szczegóły, ostatnie
+        uruchomienie. Dodawany przed każdą wiadomością z odnośnikiem (także w trwającej sesji)."""
+        name = next((p.get("name") or p["id"] for p in data["projects"] if p["id"] == task["project"]), task["project"])
+        stage = next((s["title"] for s in data.get("stages") or [] if s["id"] == task.get("stage")), "")
+        head = "[zadanie: „%s” | projekt %s (id %s) | plik %s, wiersz %s | stan: %s | kto: %s%s%s]" % (
+            task["title"], name, task["project"], task["file"], task.get("line"), task.get("state") or "todo",
+            task.get("executor") or "brak", " | termin: %s" % task["date"] if task.get("date") else "",
+            " | etap: %s" % stage if stage else "")
+        lines = [head]
+        more = self.detail_lines(with_answers(task, data["tasks"]))
+        if more:
+            lines += ["Szczegóły zadania:"] + more
+        with self._lock:
+            runs = [r for r in self._runs.values() if r.get("kind") == "task" and r.get("project") == task["project"]
+                    and r.get("title") == task["title"]]
+        if runs:
+            r = max(runs, key=lambda x: str(x.get("queuedAt") or ""))
+            bits = [STATE_LABEL.get(r.get("state"), r.get("state") or ""), "narzędzie %s" % (r.get("tool") or "?")]
+            if r.get("endedAt"):
+                bits.append("koniec %s" % str(r["endedAt"])[:16].replace("T", " "))
+            if r.get("error"):
+                bits.append("błąd: %s" % _short(r["error"], 300))
+            if r.get("result"):
+                bits.append("wynik: %s" % _short(r["result"], 600))
+            if r.get("branch"):
+                bits.append("gałąź %s" % r["branch"])
+            lines.append("Ostatnie uruchomienie agenta: %s." % "; ".join(b for b in bits if b))
+        else:
+            lines.append("Ostatnie uruchomienie agenta: brak.")
+        return "\n".join(lines)
+
+    def project_chat_send(self, pid, message, task_id="", execute=False, attach=None):
+        """Wiadomość właściciela w Rozmowie w projekcie; odpowiedź w tle (project_chat_get). (kod, błąd, dodatki).
+        task_id: odnośnik do zadania („Zapytaj o to zadanie”): kontekst zadania przed wiadomością; execute (albo
+        „zrób to” na końcu) przy zadaniu agenta: polecenie dla agenta bez modelu (chat_execute). attach: załącznik
+        ze Strony {"kind": "strona", "project", "page", "view", "selector", "elementText"}: uwaga do strony
+        (site.add_note: zadanie agenta strony i run_task albo wiadomość do pracującego agenta), bez modelu."""
         text = str(message or "").strip()
         if not text:
             return 400, "Napisz wiadomość.", {}
@@ -2108,6 +2177,17 @@ class Manager:
             return 404, "Nie ma tego projektu.", {}
         if data["projectsSource"] != "registry":
             return 409, "Projekty przykładowe", {}
+        fam = self.family(data, pid)
+        task = None
+        if task_id:
+            task = next((t for t in data["tasks"] if t["id"] == str(task_id)), None)
+            if not task or task["project"] not in fam:
+                return 404, "Nie ma tego zadania w tym projekcie.", {}
+        if isinstance(attach, dict) and attach.get("kind") == "strona":
+            return self._site_note(pid, fam, text, attach)
+        if task and (execute is True or EXEC_END.search(text)):
+            if task.get("executor") in AGENT_EXECUTORS and task.get("kind") != "publikacja":
+                return self.chat_execute(task, index, text)
         path = self.tool_path("claude")
         if not path:
             return 409, "Brak polecenia claude", {}
@@ -2128,28 +2208,33 @@ class Manager:
                 return 409, "Za dużo rozmów naraz. Spróbuj za chwilę.", {}
             chat = self._chat_read(file)
             session = self._chat_session(chat)
-            chat["messages"].append({"role": "ty", "text": text, "at": now_iso()})
+            mine = {"role": "ty", "text": text, "at": now_iso()}
+            if task:
+                mine["task"] = {"id": task["id"], "title": task["title"], "project": task["project"]}
+            chat["messages"].append(mine)
             chat.update(pending=True, error="")
             try:
                 self._chat_write(file, chat)
             except OSError:
                 return 500, "Nie udało się zapisać rozmowy.", {}
             self._chat_live.add(file)
-            self._chat_meta[file] = {"taskId": "", "project": pid, "file": "", "since": now_iso(),
-                                     "title": "Rozmowa o projekcie %s" % (project.get("name") or pid)}
+            self._chat_meta[file] = {"taskId": task["id"] if task else "", "project": pid,
+                                     "file": task["file"] if task else "", "since": now_iso(),
+                                     "title": ("Rozmowa w projekcie %s: %s" % (project.get("name") or pid, task["title"])
+                                               if task else "Rozmowa w projekcie %s" % (project.get("name") or pid))}
             self._chat_save()
         try:
-            allow, deny, cards = self.project_chat_tools(folder)
-            parts = [(x.get("partLabel") or x["id"], os.path.dirname(os.path.realpath(os.path.join(index[x["id"]], "KARTA.md"))))
+            folders = [index[i] for i in sorted(fam) if i in index and i != pid]
+            cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+            parts = [(x.get("partLabel") or x["id"],
+                      os.path.dirname(os.path.realpath(os.path.join(index[x["id"]], "KARTA.md"))), x["id"])
                      for x in data["projects"] if x.get("partOf") == pid and x["id"] in index]
-            sites = self.site_links(data, {x["id"] for x in data["projects"] if x["id"] == pid or x.get("partOf") == pid})
-            prompt = text + "\n" if session else self.project_chat_prompt(project, folder, cards, text, parts, sites)
-            args = _command(path) + ["-p", "--output-format", "json", "--permission-mode", "default"]
-            if self.model:
-                args += ["--model", self.model]
+            sites = self.site_links(data, fam)
+            body = (self.task_context(task, data, index) + "\n\n" + text) if task else text
+            prompt = body + "\n" if session else self.project_chat_prompt(project, folder, cards, body, parts, sites)
+            args = self.chat_args([folder] + folders)
             if session:
-                args += ["--resume", session]
-            args += _card_dirs(folder) + ["--allowedTools", allow, "--disallowedTools", deny, "--strict-mcp-config"]
+                args[args.index("-p") + 1:args.index("-p") + 1] = ["--resume", session]
             threading.Thread(target=self._chat_run, args=(file, args, folder, prompt, bool(session), pid),
                              daemon=True).start()
         except Exception:
@@ -2157,9 +2242,35 @@ class Manager:
             return 500, "Nie udało się uruchomić rozmowy.", {}
         return 202, "", {"pending": True}
 
+    def _site_note(self, pid, fam, text, attach):
+        """Uwaga ze Strony wysłana z Rozmowy w projekcie (załącznik: podstrona, widok, wskazany element): ta sama
+        droga co dawny formularz Strony (site.add_note). Wiadomość i stan zostają w rozmowie."""
+        site_pid = str(attach.get("project") or pid)
+        if site_pid not in fam:
+            return 404, "Strona nie należy do tego projektu.", {}
+        body = {"project": site_pid, "text": text, "view": attach.get("view"), "page": attach.get("page"),
+                "selector": attach.get("selector"), "elementText": attach.get("elementText")}
+        code, err, extra = self.site.add_note(body)
+        if code != 200:
+            return code, err, extra
+        att = {k: str(attach.get(k) or "")[:300] for k in ("project", "page", "view", "selector", "elementText")}
+        att["kind"] = "strona"
+        note = extra.get("note") or {}
+        msg = self._panel_msg({"project": site_pid, "file": "ZADANIA.md", "title": note.get("title", "")})
+        msg["runId"] = extra.get("runId", "")
+        if extra.get("forwarded"):
+            msg["text"] = "Agent strony już pracuje: %s" % extra["forwarded"]
+        elif note.get("state") == "czeka" and note.get("error"):
+            msg["text"] = note["error"]
+        else:
+            msg["text"] = "Uwaga do strony: zadanie „%s” dla agenta." % note.get("title", "")
+        self._chat_append(self._project_chat_file(pid), [{"role": "ty", "text": text, "at": now_iso(), "attach": att},
+                                                         msg])
+        return 200, "", dict(extra, status=self.panel_view([msg])[0])
+
     # ---------- asystent: rozmowa o wszystkich projektach (Start i przycisk w każdym widoku) ----------
     ASSIST = "*asystent"
-    ASSIST_DENY = "Bash,MultiEdit,Write,NotebookEdit,WebFetch,WebSearch,Task," + RUN_DENY
+    ASSIST_DENY = CHAT_DENY     # obie rozmowy; bez WebSearch i WebFetch przy PANEL_ASYSTENT_INTERNET (w __init__)
     ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#asystent", "Asystent: ta strona, karty"), ("#marketing", "Marketing: publikacje i nagrania"),
@@ -2307,6 +2418,8 @@ class Manager:
                   "  Przewiń: <nagłówek>      przewija bieżący widok do sekcji o tym nagłówku",
                   "  Zamknij: szczegóły       zamyka otwarte zadanie",
                   "  Uruchom: <id projektu> | <dokładny tytuł>   uruchamia agenta dla zadania (zasady niżej)",
+                  "  Polecenie: <id projektu> | <dokładny tytuł> | <polecenie>   polecenie do zadania agenta (zasady niżej)",
+                  "  Odpowiedź na pytanie: <id projektu> | <numer> | <odpowiedź>   zapis odpowiedzi właściciela",
                   "Otwórz używaj, gdy właściciel prosi „otwórz” albo gdy szczegóły zadania pomagają. Pokaż tylko poza "
                   "stroną Asystent (ekran inny niż #asystent). Nie zapowiadaj działań w treści.",
                   "Adresy widoków: " + "; ".join("%s (%s)" % v for v in self.ASSIST_VIEWS) + ".",
@@ -2315,11 +2428,7 @@ class Manager:
                   "- Gdy właściciel pyta, co ma zrobić: wymień sprawy po kolei, najpierw po terminie, potem dziś. Przy sprawie, "
                   "która wymaga zgody lub odbioru, opisz ją jednym zdaniem i zapytaj „Zatwierdzasz?”. Na „tak” zamknij ją w pliku, "
                   "na poprawki wprowadź poprawki. Jedna sprawa naraz.",
-                  "- Pliki zmieniasz tylko na prośbę albo zgodę właściciela i tylko ZADANIA.md, DECYZJE.md i kampanie/ projektów, "
-                  "w formacie ze STANDARD.md. Wierszy nie usuwasz; anulowane: [x] i wcięty wiersz `wynik: anulowane`.",
-                  "- Po zmianie dopisz przed wierszami działań wiersz „Zmieniono: <projekt>: <zadanie>”.",
-                  ] + self.site_rule(self.site_links(data)) + self.run_rules("<id projektu> | ", today) + [
-                  "- Nie zmieniasz kart, kodu ani innych plików, nie uruchamiasz poleceń, nie prosisz o hasła ani klucze.",
+                  ] + self.chat_rules("<id projektu> | ", today, self.site_links(data)) + [
                   "- Każda kolejna wiadomość zaczyna się od [ekran: …] (co właściciel ma teraz przed sobą); gdy dane się "
                   "zmienią, dostaniesz też nowe fakty.",
                   "", karty.PROMPT] + ([karty.PROMPT_WEB] if self.assist_web else []) + [
@@ -2340,11 +2449,8 @@ class Manager:
         return "Karty gotowe (id, typ, tytuł):\n" + "\n".join(self.cards.summary())
 
     def _assistant_tools(self, index):
-        allow, dirs = ["Read", "Grep", "Glob", "LS"] + (list(self.ASSIST_WEB) if self.assist_web else []), []
-        for folder in index.values():
-            a, _, cards = self.project_chat_tools(folder)
-            allow += [x for x in a.split(",")[4:] if x not in allow]
-            dirs += [d for d in (cards, folder) if d not in dirs]
+        """Narzędzia Asystenta: chat_tools wszystkich projektów (te same reguły co Rozmowa w projekcie)."""
+        allow, _, dirs = self.chat_tools(list(index.values()))
         return allow, dirs
 
     def assistant_send(self, message, view="", opened=""):
@@ -2387,13 +2493,7 @@ class Manager:
             self._chat_meta[file] = {"taskId": "", "project": "", "file": "", "since": now_iso(), "title": "Asystent"}
             self._chat_save()
         try:
-            allow, dirs = self._assistant_tools(index)
-            args = _command(path) + ["-p", "--input-format", "stream-json", "--output-format", "stream-json",
-                                     "--verbose", "--include-partial-messages", "--permission-mode", "default",
-                                     "--model", self.assist_model]
-            for d in dirs:
-                args += ["--add-dir", d]
-            args += ["--allowedTools", ",".join(allow), "--disallowedTools", self.ASSIST_DENY, "--strict-mcp-config"]
+            args = self.chat_args(list(index.values()), stream=True)
             threading.Thread(target=self._assistant_turn, args=(file, args, session, data, index, text, view, opened),
                              daemon=True).start()
         except Exception:

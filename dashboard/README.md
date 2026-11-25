@@ -72,13 +72,22 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   Folder projektu montuje się w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`), agent dostaje tę ścieżkę
   w instrukcji zadania. Połączenia sprzed kont (osobne logowanie na folder) działają dalej; „Zmień folder” przenosi
   je na konto.
-- **Rozmowa**: przycisk w prawym dolnym rogu każdej strony projektu rozwija okno czatu (na komputerze 380×520 px,
-  na telefonie arkusz od dołu na całą szerokość); „Zwiń” albo Esc je zwija. Rozmowa dotyczy bieżącego projektu:
-  przy projekcie z częściami całości (rozmowa projektu głównego, zna pliki części) albo wybranej części (jej własna
-  rozmowa); nagłówek okna to mówi. Część główna i Całość mają tę samą rozmowę (folder projektu głównego). Okno
-  zachowuje historię, na zwiniętym przycisku widać „czeka na odpowiedź” i „nowa odpowiedź”. Prośba o pracę zakłada
-  i uruchamia zadanie agenta jak dotąd (`POST /api/project/chat`). Treść strony ma odstęp na dole, żeby przycisk
-  niczego nie zasłaniał.
+- **Rozmowa** (Rozmowa w projekcie): z agentem rozmawia się tylko tu i w Asystencie; obie rozmowy mają te same
+  uprawnienia i tę samą drogę działania (AGENCI.md, „Rozmowy: dwa miejsca, jeden silnik”). Przycisk w prawym dolnym
+  rogu strony projektu, szczegółów zadania i odbioru pracy rozwija okno czatu (na komputerze 380×520 px, przy otwartych
+  szczegółach obok nich; na telefonie arkusz od dołu na całą szerokość, nad klawiaturą ekranową); „Zwiń” albo Esc je
+  zwija. Rozmowa dotyczy bieżącego projektu: przy projekcie z częściami całości (rozmowa projektu głównego, czyta
+  i zmienia też pliki części) albo wybranej części (jej własna rozmowa); w szczegółach zadania projektu albo części
+  tego zadania. Część główna i Całość mają tę samą rozmowę. Okno zachowuje historię, na zwiniętym przycisku widać
+  „czeka na odpowiedź” i „nowa odpowiedź”. Prośba o pracę zakłada i uruchamia zadanie agenta (`POST
+  /api/project/chat`). Treść strony ma odstęp na dole, żeby przycisk niczego nie zasłaniał.
+  - **Zapytaj o to zadanie** (szczegóły zadania i odbiór pracy; w zadaniu nie ma osobnego czatu) otwiera rozmowę
+    z odnośnikiem „O zadaniu: …”: agent dostaje tytuł, szczegóły i ostatnie uruchomienie. Przy zadaniu agenta obok
+    „Wyślij” jest „Wyślij i wykonaj” (polecenie pod zadaniem i uruchomienie), a gdy agent pracuje, „Wyślij do agenta”.
+    Odnośnik usuwa „×”. Dawna rozmowa o zadaniu zostaje do odczytu w szczegółach („Dawna rozmowa o zadaniu”).
+  - **Strona**: „Napisz uwagę” albo element wskazany przez „Wskaż” otwiera rozmowę z załącznikiem (podstrona, widok,
+    element); „Wyślij uwagę” zakłada zadanie agenta strony albo przekazuje uwagę pracującemu agentowi. Lista „Uwagi”
+    pokazuje stan.
 
 ### Projekt z częściami
 

@@ -514,7 +514,7 @@ class Site:
         return runs[-1] if runs else None
 
     def _forward(self, pid, rec, text, page, view, selector, el_text, where):
-        """Uwaga z zakładki Strona do pracującego agenta: ta sama droga co wiadomość z rozmowy o zadaniu
+        """Uwaga z zakładki Strona do pracującego agenta: ta sama droga co wiadomość do pracującego agenta z Rozmowy w projekcie
         (Manager.live_order). Uwaga trafia na listę z tytułem tego zadania i dzieli jego wynik."""
         order = "Uwaga do strony: %s (%s)" % (text, where.rstrip("."))
         code, err, msg = self.m.live_message(rec["id"], order)
