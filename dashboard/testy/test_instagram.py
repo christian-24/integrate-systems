@@ -202,7 +202,8 @@ class PodgladyWChrome(unittest.TestCase):
     def test_zakladki_uciecie_i_uklad(self):
         html = read(PANEL).decode("utf-8")
         code = panel_parts(html, ["esc", "AVINK", "av", "IG_MORE", "CHAL", "chList", "SPN", "pvPlats", "SPCHAIN", "spCap", "pvCut", "spMedia", "SPI", "spIco",
-                                  "spVid", "spSlides", "spWho", "pvIg", "spOne", "pvFb", "pvTt"])
+                                  "spVid", "spSlides", "spWho", "pvIg", "spOne", "pvFb", "pvTt",
+                                  "CX", "cxPend", "cxIdx", "cxSwap"])
         long_text = "A" * 130 + " koniec"
         page = """<!doctype html><meta charset="utf-8"><body><pre id="w"></pre><script>
 const ED={more:false,slide:0},D={publish:null};

@@ -142,7 +142,7 @@ class ZakladkiWChrome(unittest.TestCase):
     def test_zakladki_i_akcja(self):
         code = panel_parts(read(PANEL).decode("utf-8"),
                            ["esc", "CHAL", "chList", "SPN", "pvPlats", "SPCHAIN", "spCap", "chanOk", "igCan",
-                            "edApi", "edPrimary", "edSecOf"])
+                            "UDS", "udKey", "edApi", "edPrimary", "edSecOf"])
         page = """<!doctype html><meta charset="utf-8"><body><pre id="w"></pre><script>
 let LIVE=true;const IGS={},A={},PUBN={facebook:'Facebook',linkedin:'LinkedIn',reels:'Reels',instagram:'Instagram'};
 const D={publish:{fb:{pages:[{project:'api',instagram:'tak'}]},li:{connected:false}}};
