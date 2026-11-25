@@ -63,6 +63,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/project/meta      zmienia pola karty projektu: faza, klient, próg (KARTA.md)
   POST /api/session/logout-all  unieważnia wszystkie sesje (nowy klucz sesji w ../uruchomienia/stan.json)
   GET  /api/plik              tekst pliku .md/.txt z folderu projektu albo jego karty (?project=&path=&anchor=)
+  GET  /api/informacje        pliki opisowe repozytorium dla widoku Informacje: lista albo ?plik=<id> z treścią
   GET  /terminy.ics           terminy etapów i publikacje jako kalendarz do subskrypcji (?k=klucz spoza komputera)
 
 Projekty pochodzą z rejestru ../projekty.json (python3 ../standard/projekt.py dodaj <folder>)
@@ -651,6 +652,41 @@ def read_project_asset(query):
         if data is not None:
             return 200, data, ctype
     return 404, error, ""
+
+
+# ---------- widok Informacje: stała lista plików opisowych repozytorium, tylko odczyt ----------
+INFO_FILES = (
+    ("standard", "standard/STANDARD.md", "Standard plików projektu", "Pliki projektu, zapis zadań, kampanie, pytania"),
+    ("ksiega", "ksiega/KSIEGA.md", "Księga systemu", "Założenia i decyzje całego systemu"),
+    ("pm", "standard/PM.md", "Rola PM", "Jak powstaje raport PM"),
+    ("agenci", "dashboard/AGENCI.md", "Zasady agentów", "Uruchamianie agentów, zgody, kopie projektów"),
+    ("panel", "dashboard/README.md", "Panel: opis", "Widoki, adresy i działania panelu"),
+    ("wyglad", "dashboard/WYGLAD.md", "Wzór wyglądu panelu", "Odstępy, tekst, karty, wiersze listy"),
+    ("rozwoj", "ROZWOJ.md", "Rozwój panelu na serwerze", "Kopia robocza, panel testowy, wdrażanie"),
+    ("instalacja", "INSTALACJA.md", "Instalacja i logowanie narzędzi", "Serwer, Claude, Codex, kalendarz, Google Drive"),
+)
+INFO_MAX = 400_000
+
+
+def info_files(query):
+    """GET /api/informacje: (kod, odpowiedź). Bez parametru lista istniejących plików z INFO_FILES; ?plik=<id> treść."""
+    root = os.path.dirname(HERE)
+    fid = (parse_qs(query).get("plik") or [""])[0]
+    if not fid:
+        files = [{"id": i, "path": rel, "title": t, "desc": d} for i, rel, t, d in INFO_FILES
+                 if os.path.isfile(os.path.join(root, rel))]
+        return 200, {"ok": True, "files": files}
+    hit = next((x for x in INFO_FILES if x[0] == fid), None)
+    if not hit:
+        return 404, {"ok": False, "error": "Nie ma takiego pliku."}
+    try:
+        with open(os.path.join(root, hit[1]), encoding="utf-8", errors="replace") as f:
+            text = f.read(INFO_MAX + 1)
+    except OSError:
+        return 404, {"ok": False, "error": "Nie udało się odczytać pliku."}
+    if len(text) > INFO_MAX:
+        text = text[:INFO_MAX] + "\n\n(Dalsza część pliku jest pominięta.)"
+    return 200, {"ok": True, "id": fid, "path": hit[1], "title": hit[2], "text": text}
 
 
 def read_project_file(query):
@@ -4103,6 +4139,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(code, body, "text/plain; charset=utf-8")
             return self._send(200, body, ctype, [("Cache-Control", "no-store"), ("X-Content-Type-Options", "nosniff"),
                                                  ("Content-Disposition", "inline")])
+        if path == "/api/informacje":
+            code, answer = info_files(url.query)
+            return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/api/plik":
             code, answer = read_project_file(url.query)
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")

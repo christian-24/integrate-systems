@@ -160,7 +160,7 @@ iPhone widzi panel tylko przy włączonym Tailscale.
 
 ## Projekty
 
-- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: „+” przy nagłówku Projekty w menu (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Z terminala, nowy projekt:
 
   ```bash

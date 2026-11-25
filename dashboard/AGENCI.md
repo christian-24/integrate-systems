@@ -293,8 +293,8 @@ Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w fo
 
 Repozytorium na GitHubie (pole karty `- github: właściciel/repozytorium`, opcjonalnie `- github gałąź: nazwa`) jest
 źródłem prawdy. Kopia w folderze projektu na serwerze jest potrzebna tylko na czas pracy (zadania agentów,
-podgląd strony). Moduł `dashboard/kopie.py`, widok: Serwer → „Projekty i GitHub” (wiersz projektu z repozytorium git
-albo z polem `github:`; stan wczytuje się po rozwinięciu wiersza). Na stronie projektu kopia usunięta ma znacznik
+podgląd strony). Moduł `dashboard/kopie.py`, widok: strona projektu, sekcja „Kod i pliki” (projekt z repozytorium git
+albo z polem `github:`). Na stronie projektu kopia usunięta ma znacznik
 „Kopia na GitHubie”.
 
 - **Stan** (bez sieci): `origin` (bez danych logowania), bieżąca gałąź, commity przed/za `origin/<gałąź>`, lokalne
@@ -535,7 +535,7 @@ w odbiorze (`/api/odbior/popraw`) zapisują polecenie i stan w Rozmowie w projek
 **Przyciski jednego działania** nie rozmawiają z modelem: zakładają albo zmieniają zadanie i wołają `run_task` (te same
 reguły co „Uruchom”): Marketing „Zleć” (`/api/post/zlec`), „Co poprawić” w poście i filmie (`/api/post/popraw`),
 scenariusz „Przygotuj” i „Co zmienić?” (`/api/scenariusz/przygotuj|popraw`), studio filmów „Poproś”
-(`/api/studio/popros`), Strona „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`), Serwer → Projekty
+(`/api/studio/popros`), Strona „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`), Informacje → Księga projektów
 „Zleć agentowi uzupełnienie”, „Do poprawy” i odbiór. Wyjątki z własnym wywołaniem modelu, bez rozmowy: raport PM
 (`/api/agent/pm`, rola PM z `PM_TOOLS`, wiersze `Uruchom:` przez `launch_task`), plan dnia (`/api/plan/ask`, przyjęcie
 przez `run_task`) i grafika posta przez Codex (`/api/post/grafika-codex`, obróbka jednego obrazu w folderze posta).

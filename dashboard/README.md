@@ -26,7 +26,8 @@ lista projektów z wyszukiwarką; na telefonie dolny pasek (Asystent, Marketing,
 | Marketing | `#marketing` | tydzień postów i filmów, kampanie w toku z „Wpisz wynik”, kanały publikacji, studio filmów |
 | Media | `#media` | zdjęcia i filmy ze wszystkich projektów |
 | Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, publikacje, ostatnie 24 h), plan dnia, uruchomienia |
-| Serwer | `#koszty` | stan i zasoby, kopie na GitHubie, kalendarz (połączenie, subskrypcja ICS), Projekty (rejestr, dodanie i usunięcie, Księga projektów), koszty, rozwój panelu, sesje |
+| Serwer | `#koszty` | stan i zasoby, Google Drive (jeden wiersz stanu, „Połącz Google Drive”, reszta w „Szczegóły”), kalendarz (połączenie, subskrypcja ICS), koszty, rozwój panelu, sesje |
+| Informacje | `#informacje` | Księga projektów (pliki standardu we wszystkich projektach, „Zleć agentowi uzupełnienie”), opis standardu, skróty i pliki opisowe repozytorium (`GET /api/informacje`, stała lista w `server.py` `INFO_FILES`) z podglądem, tylko odczyt |
 | Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing; projekt z częściami: `#p-<id>?cz=<id części>` |
 | Odbiór pracy | `#odbior?z=<id zadania>` | wersje wyniku, porównanie, Akceptuję, Popraw |
 
@@ -47,7 +48,9 @@ Asystent kartami z tych samych danych i z tymi samymi przyciskami (typ karty `pa
 kartę bez pytania modelu: w trybie Sceny jako odpowiedź, w trybie Karty na górze płótna (`PF.apShow`). Stare adresy
 (`#start`, `#ty`, `#przeglad`, `#wskazniki`, `#tablica`, `#terminy`, `#blokady`, `#projekty`, także z `?p=` i `?z=`)
 prowadzą do Asystenta z pasującą kartą; `#asystent?k=<id karty>` robi to samo z odnośników panelu,
-`#koszty?k=projekty|kalendarz` przewija Serwer do sekcji. Naprawa brakującego poprzednika (pole `po:`) jest też
+`#koszty?k=kalendarz|drive` przewija Serwer do sekcji, `#koszty?k=projekty` otwiera okno „Dodaj projekt”.
+Projekt dodaje przycisk „+” przy nagłówku Projekty w menu (na telefonie: Więcej → „+ Dodaj projekt”); w tym samym
+oknie pod „Projekty w panelu” jest folder projektu i „Usuń z rejestru…”. Naprawa brakującego poprzednika (pole `po:`) jest też
 w szczegółach zadania.
 
 Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie agenta.
@@ -67,13 +70,13 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
   folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
   gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
-  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
-  i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
+  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Przegląd kopii
+  wszystkich projektów nie jest już w Serwerze.
 - **Google Drive** w „Kod i pliki” pokazuje konta przypisane do projektu lub części. Nowe połączenie
   przypisuje konto do wybranego projektu i jego obecnych części. „Użyj konta z innego projektu” pozwala
-  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive widać przypisania i można odłączyć konto
+  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive → „Szczegóły” widać przypisania i można odłączyć konto
   od wskazanej karty. Dostęp do Google Drive jest tylko do odczytu. Łączenie idzie
-  tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Logowanie jednym kliknięciem”,
+  tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Szczegóły” → „Logowanie jednym kliknięciem”,
   INSTALACJA.md, „Google Drive”): Google wraca do panelu. Bez klienta panel pokazuje, jak go ustawić; dawne łączenie
   z wklejaniem adresu (klient rclone) jest w interfejsie wyłączone (decyzja właściciela 2026-11-25).
   Folder projektu montuje się w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`), agent dostaje tę ścieżkę
@@ -103,7 +106,7 @@ części ma wiersz `- część projektu: <projekt główny>` (folder projektu g�
 nazwa folderu jego karty). Część dalej ma swój folder, repozytorium, `ZADANIA.md`, agentów i zakładkę Strona; nic
 się nie przenosi. W panelu:
 
-- listy projektów (menu, Serwer → Projekty, wybór projektu w filtrach kart Asystenta) mają jeden wpis;
+- listy projektów (menu, okno „Dodaj projekt”, wybór projektu w filtrach kart Asystenta) mają jeden wpis;
   filtr projektu obejmuje części; zadania i terminy części mają nazwę „Projekt · Część”;
 - nazwa części to tytuł jej karty bez nazwy projektu głównego („Oprogramowani – strona WWW” albo „Strona WWW” →
   „Strona WWW”); projekt główny traci nawias z tytułu („Oprogramowani (integracje ERP ↔ sprzedaż)” → nazwa
@@ -272,7 +275,7 @@ Plan z dzisiejszego dnia zostaje widoczny do następnego.
 ## Projekty
 
 - Rejestr `../projekty.json`, osobny na każdym komputerze. Dopóki go nie ma, panel pokazuje trzy projekty przykładowe z `przyklad/`.
-- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: „+” przy nagłówku Projekty w menu (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Nowy projekt z terminala: `python3 ../standard/projekt.py nowy <folder> --nazwa "Nazwa" --rejestruj`
 - Istniejący folder z terminala: `python3 ../standard/projekt.py dodaj <folder>`
 - Na projektach przykładowych zadań nie da się uruchomić; raport PM i test połączenia działają.

@@ -2864,6 +2864,41 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 }
 .task-lifecycle{margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--line)}
 .task-cancel-reason{overflow-wrap:anywhere}
+/* grupa serwer: „+” przy Projektach w menu, okno „Dodaj projekt”, Google Drive w Serwerze, widok Informacje */
+.srvs-sh{display:inline-flex;align-items:center;gap:var(--g-s)}
+.srvs-add{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:1px solid var(--ctl-line);border-radius:var(--r);background:var(--surface);color:var(--accent);font:600 16px/1 var(--font,inherit);cursor:pointer}
+.srvs-add:hover{background:var(--accent-soft)}
+.bs-add{display:flex;align-items:center;width:100%;min-height:44px;padding:6px 10px;border:0;border-radius:var(--r);background:none;color:var(--accent);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.drawer .srvs-padd-f{grid-template-columns:minmax(0,1fr);margin:var(--g-m) 0 0;padding:0;border-top:0}
+.srvs-reg{margin-top:var(--g-p)}
+.srvs-regl{padding:0}
+.srvs-regl li .r{display:flex;flex-wrap:wrap;gap:var(--g-s);justify-content:flex-end;align-items:center}
+.srvs-regl code{font-size:var(--fs-xs)}
+.srvs-regl li:has(.prx-cf){grid-template-columns:minmax(0,1fr)}
+.srvs-regl li .r.prx-cf{justify-content:flex-start}
+.srvs-drv .dform[data-drastart]{display:flex;flex-wrap:wrap;gap:var(--g-s);align-items:flex-end}
+.srvs-drv .dform[data-drastart] .fl,.srvs-drv .dform[data-drastart]>.fi{flex:1 1 200px}
+.srvs-drv .dform[data-drastart] .row{flex:none}
+.srvs-inf{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:var(--g-m);align-items:start}
+.srvs-inf-l{position:sticky;top:var(--g-m);max-height:calc(100vh - 24px);overflow-y:auto}
+.srvs-inf-l h2{font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:var(--g-m) var(--g-p) var(--g-xs)}
+.srvs-inf-l ul{list-style:none;margin:0;padding:0 var(--g-s) var(--g-s)}
+.srvs-inf-i{display:grid;gap:2px;width:100%;min-height:44px;padding:6px var(--g-s);border:0;border-radius:var(--r);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.srvs-inf-i:hover{background:var(--sunk)}
+.srvs-inf-i[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+.srvs-inf-i .t{font-size:var(--fs-md);font-weight:500}
+.srvs-inf-i .s{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
+.srvs-inf-p{min-width:0}
+.srvs-inf-p>h2 small code{font-size:var(--fs-xs)}
+.srvs-inf-b{padding:0 var(--g-p) var(--g-p);min-width:0;overflow-wrap:anywhere}
+.srvs-inf-b .pmn{padding:0}
+.srvs-inf-b .prx-sum,.srvs-inf-b .prx-gaps{padding-left:0;padding-right:0}
+.srvs-md h3{font-size:var(--fs-md);font-weight:650;text-transform:none;letter-spacing:0;color:var(--ink);margin:var(--g-p) 0 var(--g-xs)}
+@media (max-width:820px){
+  .srvs-inf{grid-template-columns:minmax(0,1fr)}
+  .srvs-inf-l{position:static;max-height:none}
+  .srvs-inf-b{padding:0 var(--g-m) var(--g-m)}
+}
 </style>
 
 <div class="app">
@@ -2872,7 +2907,7 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
     <div class="brand"><div class="mark">IS</div><div><b>Projekty</b><small>IntegrateSystems</small></div></div>
     <nav class="nav" id="nav" aria-label="Widoki"></nav>
     <div class="side-proj">
-      <div class="sidehead"><span>Projekty</span><span id="pcount"></span></div>
+      <div class="sidehead"><span>Projekty</span><span class="srvs-sh"><span id="pcount"></span><button type="button" class="srvs-add" id="srvs-add" data-srvs="padd" data-k="srvs-add" aria-label="Dodaj projekt" title="Dodaj projekt" hidden>+</button></span></div>
       <label class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" type="search" placeholder="Szukaj projektu  /" aria-label="Szukaj projektu" autocomplete="off"></label>
       <div class="plist" id="plist"></div>
     </div>
@@ -2951,12 +2986,13 @@ const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 /* widoki: Asystent (strona startowa) i cztery stałe; dawne Start, Dla Ciebie, Przegląd, Wskaźniki, Tablica, Terminy,
    Blokady i Projekty pokazuje Asystent kartami (OLDV: stary adres → karta), rejestr projektów jest w Serwerze */
-const VIEWS=['asystent','marketing','media','agenci','koszty'];
-const VNAME={asystent:'Asystent',marketing:'Marketing',media:'Media',agenci:'Agenci',koszty:'Serwer',odbior:'Odbiór pracy'};
+const VIEWS=['asystent','marketing','media','agenci','koszty','informacje'];
+const VNAME={asystent:'Asystent',marketing:'Marketing',media:'Media',agenci:'Agenci',koszty:'Serwer',informacje:'Informacje',odbior:'Odbiór pracy'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={asystent:'Asystent: sprawy dla Ciebie, terminy, blokady, wskaźniki i raport PM jako karty; rozmowa głosem i tekstem',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',
-  agenci:'Agenci: kto pracuje teraz, plan dnia i historia uruchomień',koszty:'Serwer: stan, kalendarz, projekty i Księga, koszty i wdrażanie'};
+  agenci:'Agenci: kto pracuje teraz, plan dnia i historia uruchomień',koszty:'Serwer: stan, zasoby, Google Drive, kalendarz, koszty i wdrażanie',
+  informacje:'Informacje: jak działa Księga, standard plików, zasady agentów i opis panelu'};
 /* stare adresy → strona Asystent z kartą (pusty: sama strona) */
 const OLDV={start:'',przeglad:'',ty:'sprawy',wskazniki:'wskazniki',tablica:'zadania',terminy:'terminy',blokady:'blokady',projekty:''};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (Serwer, lista projektów, Odśwież, Motyw) */
@@ -5358,20 +5394,22 @@ async function loadDrF(pid,acc,refresh){
 /* powrót z logowania Google w innej karcie: stan kont od nowa */
 window.addEventListener('focus',()=>{if(LIVE)Object.keys(DRA).filter(pid=>DRA[pid].login).forEach(loadDrA)});
 /* konta Google: lista, łączenie (nazwa konta → logowanie → przy kliencie rclone jedno pole na adres) */
-function drAccBox(pid=""){
+function drAccBox(pid="",part=""){
   const a=drA(pid),compact=!!pid,scope=' data-pid="'+esc(pid)+'"';
-  if(a.loading&&!a.done)return '<p class="note" role="status">Sprawdzam konta Google…</p>';
-  let h=a.err?'<p class="warn">'+esc(a.err)+'</p>':'';
-  if(a.available===false)return h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
+  if(a.loading&&!a.done)return part==='list'?'':'<p class="note" role="status">Sprawdzam konta Google…</p>';
+  /* part (Serwer → Google Drive): 'top' bez listy kont, 'list' tylko lista kont */
+  let h=a.err&&part!=='list'?'<p class="warn">'+esc(a.err)+'</p>':'';
+  if(a.available===false)return part==='list'?'':h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
   const L=a.accounts||[],busy=!!A.busy['dra'],lg=a.login,noC=!a.ownClient;
-  if(a.migrationAmbiguous)h+='<p class="warn">Nie udało się ustalić, które konto z 25.11 należy do Shield &amp; Silent.</p>';
-  if(L.some(x=>x.migration?.pending.length))h+='<button type="button" class="btn sec sm" data-dra="migracja">Ponów odłączanie folderów</button>';
-  if(L.length&&!compact)h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
+  if(a.migrationAmbiguous&&part!=='top')h+='<p class="warn">Nie udało się ustalić, które konto z 25.11 należy do Shield &amp; Silent.</p>';
+  if(part!=='top'&&L.some(x=>x.migration?.pending.length))h+='<button type="button" class="btn sec sm" data-dra="migracja">Ponów odłączanie folderów</button>';
+  if(L.length&&!compact&&part!=='top')h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
     (x.connected?(x.projects.length?'Przypisane projekty':'Brak przypisań'):'<span class="kp-warn">połączenie zniknęło z serwera, połącz ponownie</span>')+'</div>'+
     x.projects.map(p=>'<div class="row"><span>'+esc(drName(p))+'</span><button type="button" class="btn sec sm" data-dra="odlacz" data-pid="'+esc(p)+'" data-acc="'+esc(x.id)+'">Odłącz od projektu</button></div>').join('')+
     (x.migration?'<div class="s">Przed wdrożeniem konto było dostępne we wszystkich projektach. Wybrane foldery: '+esc(x.migration.before.map(drName).join(', ')||'brak')+'. Przypisanie po migracji: '+esc(x.migration.after.map(drName).join(', '))+'.'+
       (x.migration.pending.length?' Do odłączenia: '+esc(x.migration.pending.map(drName).join(', '))+'.':'')+'</div>':'')+'</div>'+
     '<div class="r">'+(noC?'':'<button type="button" class="btn sec sm" data-dra="ponow" data-acc="'+esc(x.id)+'" data-k="dra-p:'+esc(x.id)+'"'+(busy||lg?' aria-disabled="true"':'')+'>Połącz ponownie</button>')+(x.projects.length?'':'<button type="button" class="btn sec sm" data-dra="usun" data-acc="'+esc(x.id)+'" data-k="dra-u:'+esc(x.id)+'"'+(busy?' aria-disabled="true"':'')+'>Odłącz konto</button>')+'</div></li>').join('')+'</ul>';
+  if(part==='list')return h;
   if(lg&&lg.mode==='own'){
     const own=lg.mode==='own';
     h+='<div class="dra-lg"><p><b>Łączenie: '+esc(lg.label)+'</b></p><ol class="dv-st"><li><a class="btn sm" href="'+esc(lg.url)+'"'+
@@ -5467,12 +5505,6 @@ async function draSave(form){
     else if(x.status!==401)say(x.error||'Nie zapisano klienta Google.');
   }catch(e){say('Nie udało się zapisać klienta Google.')}
   finally{button.disabled=false}
-}
-/* Serwer: konta Google Drive */
-function drvPanel(){
-  if(!LIVE)return '';
-  return '<section class="panel" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>konta tylko do odczytu</small></h2><div class="pad dv">'+drAccBox()+draClient()+
-    '<p class="note">Folder dla projektu wybierasz na stronie projektu, w sekcji „Kod i pliki”.</p></div></section>';
 }
 /* zwinięta sekcja pod treścią Planu (stan w PF.more['pj-drive']); w podsumowaniu stan połączenia */
 const pjFold=(k,id,title,small,body,open)=>'<details class="panel pj-fold" id="'+id+'" data-pvdet="'+k+'"'+(open||PF.more[k]?' open':'')+'><summary><span class="pj-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
@@ -6715,8 +6747,8 @@ function vKoszty(){
   /* podtytuł: czym jest strona; stan dopisany tylko, gdy wymaga uwagi (liczby są niżej, bez powtórzeń) */
   const k=D.costs,v=D.server?srvItems():null;
   let h='<div class="pagehead"><div class="ph-main"><h1>Serwer</h1><p>Stan serwera, na którym działają panel i agenci.'+(v&&v.lvl!=='ok'?' <b>'+({warn:'Do sprawdzenia.',bad:'Jest problem.'}[v.lvl])+'</b>':'')+'</p></div></div>';
-  /* kalendarz (połączenie i subskrypcja ICS) i rejestr projektów: dawniej w Terminach i w widoku Projekty */
-  h+=srvPanel()+resPanel()+ghPanel()+drvPanel()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>'+prjPanel();
+  /* kalendarz (połączenie i subskrypcja ICS); projekty dodaje „+” w menu, Księga i opis standardu są w widoku Informacje */
+  h+=srvPanel()+resPanel()+srvsDrv()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>';
   const tail=devPanel()+srvPanel('ses');
   if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>'+tail;
   if(k.configured&&!k.loading){
@@ -6834,7 +6866,6 @@ function runHtml(r){
 /* kotwica pozycji listy Braki (cel linków z komórek tabeli i kart): prx-b-<projekt>-<klucz> */
 const prxB=(pid,k)=>'prx-b-'+String(pid).replace(/[^\w-]/g,'_')+'-'+String(k).replace(/[^\w-]/g,'_');
 const PRX_CRIT={karta:1,zadania:1};
-const prxOpen=(k,def)=>A.prxDet&&k in A.prxDet?A.prxDet[k]:def;
 /* komórka macierzy: kropka stanu + zwykły tekst; z brakami link do pozycji listy Braki */
 function docCell(d,pid){
   if(!d)return '<span class="muted">–</span>';
@@ -6885,12 +6916,71 @@ function prxDelegate(pid){
   });
 }
 const prxFiles=(p,txt)=>'<span class="muted num">'+txt+'</span>';
-/* Serwer → Projekty (dawny widok Projekty): rejestr, dodanie i usunięcie projektu, Księga projektów, opis standardu */
-function prjPanel(){
-  const reg=D.projectsSource==='registry',canAdd=!LIVE||!!D.agents,docs=D.standard.filter(d=>d.key!=='kampania');
+/* ---------- grupa serwer: dodawanie projektu (okno z „+” w menu), widok Informacje ----------
+   Dawna sekcja Serwer → Projekty: formularz i rejestr (usuwanie) są w oknie „Dodaj projekt” (szuflada, DR.kind 'padd'),
+   Księga projektów (pliki wszystkich projektów, „Zleć agentowi uzupełnienie”) i opis standardu w widoku Informacje. */
+const srvsCanAdd=()=>!LIVE||!!D.agents;
+function srvsAddHtml(){
+  const reg=D.projectsSource==='registry',canAdd=srvsCanAdd(),F=A.padd||{},busy=!!A.busy.add;
   if(A.confirm&&!P(A.confirm))A.confirm='';
+  let h='<div class="dhead"><span class="muted">Projekty</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">Dodaj projekt</h2>';
+  if(!canAdd)return h+'<p class="empty">Serwer nie obsługuje dodawania projektów. Dodaj projekt w terminalu: <code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code></p>';
+  h+='<form class="padd srvs-padd-f" id="padd" aria-labelledby="dtitle">'+
+    '<label class="fl"><span>Folder projektu</span><input class="fi" id="ppath" placeholder="np. ~/Projekty/nazwa" autocomplete="off" spellcheck="false" value="'+esc(F.ppath||'')+'"'+(F.bad?' aria-invalid="true"':'')+'></label>'+
+    '<label class="fl"><span>Nazwa (opcjonalnie)</span><input class="fi" id="pname" autocomplete="off" value="'+esc(F.pname||'')+'"></label>'+
+    '<label class="prx-chk"><input type="checkbox" id="pfiles"'+(F.nofiles?'':' checked')+'> Załóż brakujące pliki (nic nie nadpisuje)</label>'+
+    '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj')+'</button></div></form>';
+  /* rejestr: folder i usuwanie z rejestru (pliki zostają); zwinięty, otwarty przy potwierdzaniu usunięcia */
+  if(!reg||!D.projects.length)return h;
+  const ro=!!A.confirm||!!(A.agDet&&A.agDet['srvs-reg']);
+  h+='<details class="ds-det srvs-reg" data-agdet="srvs-reg"'+(ro?' open':'')+'><summary>Projekty w panelu · '+D.projects.length+'</summary><ul class="rows srvs-regl">'+
+    D.projects.map(x=>{const id=esc(x.id),cf=A.confirm===x.id,full=String(x.folder||'');
+      let r='<li><div><a class="t" href="'+phref(x)+'">'+esc(x.name)+'</a>'+(LIVE&&full?'<div class="s"><code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'</div><div class="r'+(cf?' prx-cf':'')+'">';
+      if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu.">ze zbieracza</span>';
+      else r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
+        :'<button type="button" class="btn sec sm" data-ag="prm" data-id="'+id+'" data-k="pr:'+id+'" aria-label="'+esc('Usuń z rejestru: '+x.name)+'">Usuń z rejestru…</button>';
+      return r+'</div></li>'}).join('')+'</ul></details>';
+  return h;
+}
+function srvsAddOpen(){if(!D)return;A.confirm='';openDrawer('padd','');const i=$('#ppath');if(i)i.focus()}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-srvs]');if(!b)return;ev.preventDefault();const k=b.dataset.srvs;
+  if(k==='padd'){A.bnMore=false;renderSide(route());srvsAddOpen();return}
+  if(k==='drv-setup'){(A.agDet||(A.agDet={}))['srvs-drv']=true;PF.more['dra-client']=true;render(true);
+    const s=document.querySelector('#srv-drive .dra-client>summary');if(s){s.scrollIntoView({block:'center'});s.focus()}say('Najpierw ustaw klienta Google: Szczegóły → Logowanie jednym kliknięciem.');return}
+  if(k==='inf'){A.srvsInf=b.dataset.id;render(true);const n=$('#srvs-inf-p');if(n&&matchMedia('(max-width:820px)').matches){n.scrollIntoView({block:'start'})}if(n)n.focus({preventScroll:true});return}
+  if(k==='inf-retry'){delete SRVS_INF.files[b.dataset.id];SRVS_INF.list=null;render(true)}});
+
+/* Serwer → Google Drive: jeden wiersz stanu i „Połącz Google Drive”; konta, logowanie jednym kliknięciem i opis pod „Szczegóły” */
+function srvsDrv(){
+  if(!LIVE)return '';
+  const a=drA(''),L=a.accounts||[],n=L.filter(x=>x.connected).length,ld=a.loading&&!a.done;
+  const st=ld?'sprawdzam…':a.available===false?'brak narzędzia na serwerze':
+    (L.length?n+' '+pl(n,'konto połączone','konta połączone','kont połączonych'):'brak kont')+' · klient Google '+(a.ownClient?'ustawiony':'nieustawiony');
+  const top=ld||a.available===false||a.err?drAccBox('','top'):a.ownClient||a.login?drAccBox('','top'):
+    '<div class="row"><button type="button" class="btn sm" data-srvs="drv-setup" data-k="srvs-drv">Połącz Google Drive</button></div>';
+  const op=!!(A.agDet&&A.agDet['srvs-drv']);
+  return '<section class="panel srvs-drv" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>'+esc(st)+'</small></h2><div class="pad dv">'+top+
+    '<details class="ds-det srvs-det" data-agdet="srvs-drv"'+(op?' open':'')+'><summary>Szczegóły</summary>'+drAccBox('','list')+draClient()+
+    '<p class="note">Konta są tylko do odczytu. Folder dla projektu wybierasz na stronie projektu, w sekcji „Kod i pliki”.</p></details></div></section>';
+}
+
+/* ---------- widok Informacje: opis Księgi i standardu (z danych panelu) i pliki .md repozytorium (GET /api/informacje) ---------- */
+ICON.info='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.9v.1"/></svg>';
+const SRVS_INF={list:null,loading:false,err:'',files:{}};
+async function srvsInfLoad(id){
+  const one=!!id,o=one?(SRVS_INF.files[id]||(SRVS_INF.files[id]={})):SRVS_INF;if(o.loading)return;o.loading=true;o.err='';
+  try{const r=await fetch('/api/informacje'+(one?'?plik='+encodeURIComponent(id):''),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){if(one)o.text=String(j.text||'');else o.list=Array.isArray(j.files)?j.files:[]}
+    else o.err=String(j.error||'Nie odczytano pliku.')}catch(e){o.err='Brak połączenia z serwerem.'}
+  o.loading=false;if(!one&&!o.list&&!o.err)o.list=[];if(CUR&&CUR.v==='informacje')render(true);
+}
+/* Księga projektów: pliki standardu we wszystkich projektach (tabela, karty na telefonie, braki, „Zleć agentowi uzupełnienie”) */
+function srvsBook(){
+  const reg=D.projectsSource==='registry',canAdd=srvsCanAdd(),docs=D.standard.filter(d=>d.key!=='kampania');
   const nP=D.projects.length,okN=D.projects.filter(p=>p.docsOk===p.docsTotal).length;
-  /* braki pogrupowane po projekcie; liczba pozycji jak dawniej: dokument nie „ok” albo kampania z brakami */
+  if(!nP)return '<p class="empty">Pliki projektów pokażą się po dodaniu pierwszego projektu.</p>';
+  /* braki pogrupowane po projekcie; liczba pozycji: dokument nie „ok” albo kampania z brakami */
   const grp=[],gi={};
   const G=pid=>{if(!gi[pid]){gi[pid]={p:P(pid)||{id:pid,name:projName(pid)},crit:[],soft:[],camp:[],miss:[],n:0};grp.push(gi[pid])}return gi[pid]};
   D.projects.forEach(p=>{const g=G(p.id);
@@ -6901,74 +6991,56 @@ function prjPanel(){
   D.campaigns.forEach(c=>{if(!c.gaps.length)return;const g=G(c.project);g.n++;
     g.camp.push('<li id="'+prxB(c.project,'k-'+(c.id||c.name))+'"><b>Kampania „'+esc(c.name)+'”:</b>'+prxGaps(c.gaps)+'</li>')});
   const gN=grp.reduce((s,g)=>s+g.n,0);
-  /* nagłówek: opis, stan w pigułkach, skok do formularza */
-  /* nagłówek: liczby raz, jednym zdaniem; „Dodaj projekt” rozwija formularz pod listą */
-  let h='<div class="srv-sh" id="srv-projekty" tabindex="-1"><h2>Projekty</h2><p class="muted">Rejestr projektów i ich Księga: dokumenty, które każdy projekt powinien mieć.</p>'+
-    (canAdd?'<div class="prx-acts"><button type="button" class="btn" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button></div>':'')+'</div>';
-  /* lista projektów */
-  /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
-  const PSO={late:0,risk:1,you:2,ok:3,none:4,paused:6,backlog:7,finished:8,done:8},PL=D.projects.map((p,i)=>[p,i]).sort((a,b)=>((PSO[a[0].pst]!=null?PSO[a[0].pst]:5)-(PSO[b[0].pst]!=null?PSO[b[0].pst]:5))||a[1]-b[1]).map(x=>x[0]);
-  h+='<section class="panel" aria-labelledby="prx-list-h"><h2 class="sr-only" id="prx-list-h">Lista projektów</h2>'+
-
-    (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
-      const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li class="prx-row"><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
-        '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span>'+gitTag(x)+'</div>'+
-        '</div>';
-      /* cały wiersz prowadzi do strony projektu; folder i usuwanie w menu „⋯” (otwartym przy potwierdzaniu usunięcia) */
-      const mo=cf||prxOpen('m:'+x.id,false);
-      r+='<details class="prx-more" data-prxdet="'+esc('m:'+x.id)+'"'+(mo?' open':'')+'><summary aria-label="'+esc('Więcej o projekcie '+x.name)+'" title="Więcej o projekcie: folder i usuwanie z rejestru"><span aria-hidden="true">⋯</span></summary><div class="prx-menu">'+
-        (LIVE&&full?'<div class="pf"><span class="muted">Folder:</span> <code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'<div class="r'+(cf?' prx-cf':'')+'">';
-      if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu." aria-describedby="prx-col-'+id+'">ze zbieracza</span><span class="note prx-coln" id="prx-col-'+id+'">Aby zdjąć, zmień decyzję w zbieraczu.</span>';
-      else if(reg&&canAdd)r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
-        :'<button type="button" class="linkbtn prx-rm" data-ag="prm" data-id="'+id+'" data-k="pr:'+id+'" aria-label="'+esc('Usuń z rejestru: '+x.name)+'">Usuń z rejestru…</button>';
-      return r+'</div></div></details></li>'}).join('')+'</ul>':'<p class="empty">'+(canAdd?'Nie masz jeszcze projektów. Wpisz ścieżkę folderu poniżej i kliknij Dodaj projekt.':'Brak projektów.')+'</p>');
-  const F=A.padd||{},busy=!!A.busy.add;
-  /* formularz zwinięty: otwiera go „Dodaj projekt” w nagłówku albo summary; otwarty, gdy nie ma projektów albo trwa wpisywanie */
-  const ao=!nP||busy||!!F.bad||!!F.ppath||prxOpen('add',false);
-  h+=(canAdd?'<details class="prx-add" id="padd-d" data-prxdet="add"'+(ao?' open':'')+'><summary id="prx-new-h">Nowy projekt <small>· zwiń</small></summary><form class="padd" id="padd" aria-labelledby="prx-new-h">'+
-      '<label class="fl"><span>Folder projektu</span><input class="fi" id="ppath" placeholder="np. ~/Projekty/nazwa" autocomplete="off" spellcheck="false" value="'+esc(F.ppath||'')+'"'+(F.bad?' aria-invalid="true"':'')+'></label>'+
-      '<label class="fl"><span>Nazwa (opcjonalnie)</span><input class="fi" id="pname" autocomplete="off" value="'+esc(F.pname||'')+'"></label>'+
-      '<label class="prx-chk"><input type="checkbox" id="pfiles"'+(F.nofiles?'':' checked')+'> Załóż brakujące pliki (nic nie nadpisuje)</label>'+
-      '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj')+'</button></div></form></details>'
-    :'<p class="empty">Serwer nie obsługuje dodawania projektów. Dodaj projekt w terminalu: <code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code></p>')+'</section>';
-  /* pliki projektów: zdanie podsumowania, tabela (karty na telefonie), braki pogrupowane */
-  if(!nP)h+='<p class="empty prx-none">Pliki projektów pokażą się po dodaniu pierwszego projektu.</p>';
-  else{
-    const allMiss=docs.filter(d=>D.projects.every(p=>{const x=p.docs.find(y=>y.key===d.key);return x&&x.status==='missing'}));
-    let m='<thead><tr><th scope="col">Projekt</th>'+docs.map(d=>'<th scope="col">'+esc(d.label)+'</th>').join('')+'<th scope="col" class="num">Pliki</th></tr></thead><tbody>';
-    let cards='';
-    D.projects.forEach(p=>{
-      m+='<tr><th scope="row" class="prx-rh"><span class="prx-rhi">'+av(p,'sm')+prxEnt(p)+'</span></th>'+docs.map(d=>'<td>'+docCell(p.docs.find(y=>y.key===d.key),p.id)+'</td>').join('')+
-        '<td class="num">'+prxFiles(p,p.docsOk+' z '+p.docsTotal)+'</td></tr>';
-      const miss=[],marks=[];
-      docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;const b=prxB(p.id,d.key),n=(x.gaps||[]).length;
-        if(x.status==='missing'&&!PRX_CRIT[d.key])miss.push(esc(d.label));
-        else marks.push('<a class="lz '+(x.status==='missing'?'red':'yellow')+'" href="#'+b+'" data-prxgo="'+b+'">'+esc(d.label)+': '+(x.status==='missing'?'brak pliku':n+' '+pl(n,'brak','braki','braków'))+'</a>')});
-      if(p.docsOk!==p.docsTotal)cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p,'',true)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
-        (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+(reg&&canAdd?'<div class="prx-zl">'+prxZl(p)+'</div>':'')+'</li>'});
-    const nC=D.projects.filter(p=>p.docsOk!==p.docsTotal).length;
-    const gl=grp.filter(g=>g.n).map(g=>'<div class="prx-gb"><h4>'+av(g.p,'sm')+prxEnt(g.p)+' <small>· '+g.n+'</small></h4><ul class="prx-gl">'+
-        g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul>'+(reg&&canAdd&&P(g.p.id)?'<div class="prx-zl">'+prxZl(g.p)+'</div>':'')+'</div>').join('');
-    /* jedno zdanie i akcja (zleć agentowi w kartach i w Brakach); na telefonie karty projektów zwinięte, na komputerze tabela */
-    h+='<details class="panel prx-kd" data-prxdet="ks"'+(prxOpen('ks',false)?' open':'')+'><summary><b>Księga projektów</b><span class="muted">'+(okN===nP?'wszystkie komplet':'brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy'))+'</span></summary>'+
-      ((allMiss.length||(nC&&reg&&canAdd))?'<p class="note prx-sum">'+(allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>':'')+
-      '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
-      (nC?'<div class="prx-cdet"><ul class="prx-cards">'+cards+'</ul></div>':'')+
-      (gN?'<div class="prx-gaps"><h3 class="prx-gh">Braki</h3>'+gl+'</div>':'<p class="empty">Wszystkie projekty mają komplet plików.</p>')+'</details>';
-  }
-  /* jak działa standard: dla osób, które edytują pliki ręcznie */
-  const D2=(k,s,body,cls)=>'<details data-prxdet="'+k+'"'+(cls?' class="'+cls+'"':'')+(prxOpen(k,false)?' open':'')+'><summary>'+s+'</summary>'+body+'</details>';
+  const allMiss=docs.filter(d=>D.projects.every(p=>{const x=p.docs.find(y=>y.key===d.key);return x&&x.status==='missing'}));
+  let m='<thead><tr><th scope="col">Projekt</th>'+docs.map(d=>'<th scope="col">'+esc(d.label)+'</th>').join('')+'<th scope="col" class="num">Pliki</th></tr></thead><tbody>';
+  let cards='';
+  D.projects.forEach(p=>{
+    m+='<tr><th scope="row" class="prx-rh"><span class="prx-rhi">'+av(p,'sm')+prxEnt(p)+'</span></th>'+docs.map(d=>'<td>'+docCell(p.docs.find(y=>y.key===d.key),p.id)+'</td>').join('')+
+      '<td class="num">'+prxFiles(p,p.docsOk+' z '+p.docsTotal)+'</td></tr>';
+    const miss=[],marks=[];
+    docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;const b=prxB(p.id,d.key),n=(x.gaps||[]).length;
+      if(x.status==='missing'&&!PRX_CRIT[d.key])miss.push(esc(d.label));
+      else marks.push('<a class="lz '+(x.status==='missing'?'red':'yellow')+'" href="#'+b+'" data-prxgo="'+b+'">'+esc(d.label)+': '+(x.status==='missing'?'brak pliku':n+' '+pl(n,'brak','braki','braków'))+'</a>')});
+    if(p.docsOk!==p.docsTotal)cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p,'',true)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
+      (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+(reg&&canAdd?'<div class="prx-zl">'+prxZl(p)+'</div>':'')+'</li>'});
+  const nC=D.projects.filter(p=>p.docsOk!==p.docsTotal).length;
+  const gl=grp.filter(g=>g.n).map(g=>'<div class="prx-gb"><h4>'+av(g.p,'sm')+prxEnt(g.p)+' <small>· '+g.n+'</small></h4><ul class="prx-gl">'+
+      g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul>'+(reg&&canAdd&&P(g.p.id)?'<div class="prx-zl">'+prxZl(g.p)+'</div>':'')+'</div>').join('');
+  return '<p class="note prx-sum">'+(okN===nP?'Wszystkie projekty mają komplet plików.':'Brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy')+'.')+' '+
+      (allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>'+
+    '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
+    (nC?'<div class="prx-cdet"><ul class="prx-cards">'+cards+'</ul></div>':'')+
+    (gN?'<div class="prx-gaps"><h3 class="prx-gh">Braki</h3>'+gl+'</div>':'');
+}
+/* wpisy z danych panelu (dawniej „Jak działa Księga” w Serwerze) */
+function srvsBuiltin(){
   const wf=f=>esc(f).replace(/\//g,'/<wbr>');
-  h+='<section class="panel prx-stdp"><details class="prx-stdall" data-prxdet="std"'+(prxOpen('std',false)?' open':'')+'><summary>Jak działa Księga <small>· dla osób, które edytują pliki ręcznie</small></summary>'+
-    D2('std-files','Jakie pliki ma mieć projekt <small>· '+D.standard.length+'</small>',
-      '<div class="tw prx-stdt"><table class="mx prx-std"><thead><tr><th scope="col">Dokument</th><th scope="col">Plik</th><th scope="col">Do czego służy</th><th scope="col">Stałe sekcje</th></tr></thead><tbody>'+
-      D.standard.map(d=>'<tr><td><b>'+esc(d.label)+'</b></td><td><code>'+wf(d.file)+'</code></td><td class="soft">'+esc(d.purpose)+'</td><td>'+esc((d.sections||[]).join(', '))+'</td></tr>').join('')+'</tbody></table></div>'+
-      '<dl class="prx-std-doc">'+D.standard.map(d=>'<dt>'+esc(d.label)+' → <code>'+wf(d.file)+'</code></dt><dd>'+esc(d.purpose)+'</dd>'+((d.sections||[]).length?'<dd class="prx-sec">Stałe sekcje: '+esc(d.sections.join(', '))+'</dd>':'')).join('')+'</dl>')+
-    D2('std-line','Zapis zadania w pliku','<pre class="prx-pre"><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></pre>'+
-      '<p class="note pj-legend prx-leg"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>')+
-    D2('std-cmd','Polecenia w terminalu <small>· 4</small>','<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul>')+
-    D2('std-keys','Skróty klawiszowe (klawiatura)','<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>s</kbd> Asystent, <kbd>m</kbd> Marketing, <kbd>e</kbd> Media, <kbd>a</kbd> Agenci, <kbd>k</kbd> Serwer</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>','prx-keysd')+'</details></section>';
+  return [
+    {id:'ksiega-projektow',title:'Księga projektów',desc:'Pliki standardu we wszystkich projektach i braki',body:srvsBook},
+    {id:'pliki-projektu',title:'Jakie pliki ma mieć projekt',desc:D.standard.length+' '+pl(D.standard.length,'dokument','dokumenty','dokumentów')+' Księgi',body:()=>
+      '<dl class="prx-std-doc srvs-std">'+D.standard.map(d=>'<dt>'+esc(d.label)+' → <code>'+wf(d.file)+'</code></dt><dd>'+esc(d.purpose)+'</dd>'+((d.sections||[]).length?'<dd class="prx-sec">Stałe sekcje: '+esc(d.sections.join(', '))+'</dd>':'')).join('')+'</dl>'},
+    {id:'zapis-zadania',title:'Zapis zadania w pliku',desc:'Wiersz zadania w ZADANIA.md',body:()=>'<pre class="prx-pre"><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></pre>'+
+      '<p class="note pj-legend prx-leg"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>'},
+    {id:'polecenia',title:'Polecenia w terminalu',desc:'Nowy projekt, kampania, sprawdzenie, raport PM',body:()=>'<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul>'},
+    {id:'skroty',title:'Skróty klawiszowe',desc:'Nawigacja z klawiatury',body:()=>'<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>s</kbd> Asystent, <kbd>m</kbd> Marketing, <kbd>e</kbd> Media, <kbd>a</kbd> Agenci, <kbd>k</kbd> Serwer, <kbd>i</kbd> Informacje</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>'}];
+}
+function vInformacje(){
+  if(LIVE&&!SRVS_INF.list&&!SRVS_INF.loading&&!SRVS_INF.err)srvsInfLoad();
+  const B=srvsBuiltin(),F=LIVE?(SRVS_INF.list||[]):[],all=B.concat(F.map(f=>({id:f.id,title:f.title,desc:f.desc,file:f.path})));
+  const cur=all.find(x=>x.id===A.srvsInf)||all[0];
+  const item=x=>'<li><button type="button" class="srvs-inf-i" data-srvs="inf" data-id="'+esc(x.id)+'" data-k="inf:'+esc(x.id)+'"'+(x.id===cur.id?' aria-current="true"':'')+'><span class="t">'+esc(x.title)+'</span><span class="s">'+esc(x.file||x.desc||'')+'</span></button></li>';
+  let h='<div class="pagehead"><div class="ph-main"><h1>Informacje</h1><p>Jak działa Księga, standard plików i zasady agentów. Tylko do czytania.</p></div></div><div class="srvs-inf">'+
+    '<nav class="panel srvs-inf-l" aria-label="Pliki informacyjne"><h2>Księga i standard</h2><ul>'+B.map(item).join('')+'</ul><h2>Pliki</h2>'+
+    (!LIVE?'<p class="empty sm">Pliki pokazuje panel na serwerze.</p>':SRVS_INF.err?'<p class="warn ds-pad">'+esc(SRVS_INF.err)+' <button type="button" class="lk" data-srvs="inf-retry" data-id="">Spróbuj ponownie</button></p>':
+      !SRVS_INF.list?'<p class="empty sm" role="status">Wczytuję listę…</p>':F.length?'<ul>'+F.map(x=>item({id:x.id,title:x.title,desc:x.desc,file:x.path})).join('')+'</ul>':'<p class="empty sm">Brak plików.</p>')+'</nav>';
+  let body='';
+  if(cur.body){try{body=cur.body()}catch(e){console.error(e);body='<p class="warn">Nie udało się pokazać tej pozycji.</p>'}}
+  else{const o=SRVS_INF.files[cur.id];
+    if(!o||(o.text==null&&!o.loading&&!o.err)){srvsInfLoad(cur.id);body='<p class="empty" role="status">Wczytuję plik…</p>'}
+    else if(o.loading)body='<p class="empty" role="status">Wczytuję plik…</p>';
+    else if(o.err)body='<p class="warn">'+esc(o.err)+' <button type="button" class="lk" data-srvs="inf-retry" data-id="'+esc(cur.id)+'">Spróbuj ponownie</button></p>';
+    else body='<div class="pmn srvs-md">'+md(o.text)+'</div>'}
+  h+='<article class="panel srvs-inf-p" id="srvs-inf-p" tabindex="-1" aria-labelledby="srvs-inf-h"><h2 id="srvs-inf-h"><span>'+esc(cur.title)+'</span>'+(cur.file?'<small><code>'+esc(cur.file)+'</code></small>':'')+'</h2><div class="srvs-inf-b">'+body+'</div></article></div>';
   return h;
 }
 
@@ -7683,6 +7755,7 @@ function openDrawer(kind,id){
   if(kind==='task'){const t=D.tasks.find(x=>x.id===id);if(!t)return;delete ODR[id];DR={kind:'task',id:id,ref:refOf(t),opener:opener,mat:''}}
   else if(kind==='q'){if(!qOf(id))return;DR={kind:'q',id:id,opener:opener}}
   else if(kind==='card'){if(!apDef(id,null)&&!apCards().some(x=>x.c.id===id))return;DR={kind:'card',id:id,opener:opener}}
+  else if(kind==='padd')DR={kind:'padd',id:'',opener:opener};
   else{if(!runById(id))return;DR={kind:'run',id:id,opener:opener}}
   renderDrawer(true);renderDock(CUR);
   const n=$('#drawer .x');if(n)n.focus();
@@ -9415,6 +9488,7 @@ function renderDrawer(force){
   let html,t=null;
   if(DR.kind==='task'){t=findTask(DR.ref,true);if(!t){closeDrawer();return}DR.id=t.id;DR.ref=refOf(t);html=taskHtml(t)}
   else if(DR.kind==='q'){const o=qOf(DR.id);if(!o){closeDrawer();return}html=qHtml(o)}
+  else if(DR.kind==='padd')html=srvsAddHtml();
   else if(DR.kind==='card'){const c=apCards().map(x=>x.c).find(x=>x.id===DR.id)||apDef(DR.id,null);if(!c){closeDrawer();return}
     let b;try{b=apBody(c,true)}catch(e){console.error(e);b=apEmpty('Nie udało się policzyć tej karty.')}
     html='<div class="dhead"><span class="muted">Karta</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">'+esc(c.tytul)+'</h2><div class="ap-full">'+b+'</div>'}
@@ -11044,7 +11118,7 @@ function oldRoute(r){
   if(r.k)apShowCard(r.k)}
 /* liczba w menu z modelu Blokad: błąd w modelu nie może wywrócić menu i dolnego paska we wszystkich widokach */
 const bkSafe=()=>{try{return bkYouN()}catch(e){console.error(e);return {tasks:0,n:0,all:0}}};
-const VICON={asystent:'you',marketing:'film',media:'photo',agenci:'agent',koszty:'money'};
+const VICON={asystent:'you',marketing:'film',media:'photo',agenci:'agent',koszty:'money',informacje:'info'};
 /* licznik przy nazwie: liczba z jednostką dla czytnika (bez „Dla Ciebie38”) */
 /* Blokady: ta sama nazwa liczby co w h1 Blokad (bkYouCntT), w title i dla czytnika */
 const navCnt=(c,cl,unit,ttl)=>c?'<span class="count '+(cl||'')+'"'+(ttl?' title="'+esc(ttl)+'"':'')+'><span class="sr-only">, </span>'+(ttl?'<span aria-hidden="true">'+c+'</span><span class="sr-only">'+esc(ttl)+'</span>':c+'<span class="sr-only"> '+unit+'</span>')+'</span>':'';
@@ -11074,9 +11148,10 @@ function renderSide(r){
     /* arkusz „Więcej”: nagłówek z „Zamknij”, widoki spoza paska z tym samym licznikiem co menu, projekty, na dole Odśwież i Motyw.
        Zwykła nawigacja (lista linków), bez ról menu; Escape i dotknięcie tła zamykają */
     setHtml(sh,'<div class="bs-top"><h2 class="bs-t">Więcej</h2><button type="button" class="btn sec sm" data-bnmore="1" data-k="bnclose">Zamknij</button></div>'+VIEWS.filter(v=>BNAV.indexOf(v)<0).map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bs-n">'+esc(VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
+      (srvsCanAdd()?'<button type="button" class="bs-add" data-srvs="padd" data-k="bs-add">'+esc('+ Dodaj projekt')+'</button>':'')+
       (D.projects.length?'<h3 class="bs-h">Przejdź do projektu</h3>'+D.projects.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span></a>').join(''):'')+
       '<div class="bs-foot"><button type="button" class="btn sec" data-bnref="1" data-k="bnref">Odśwież</button><button type="button" class="btn sec" data-bntheme="1" data-k="bntheme">'+themeL()+'</button></div>')}
-  $('#pcount').textContent=D.projects.length;
+  $('#pcount').textContent=D.projects.length;$('#srvs-add').hidden=!srvsCanAdd();
   setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted side-empty">Brak wyników</p>');
   const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='asystent'&&you.today?' ('+you.today+')':'')]);
   const curH=r.v==='projekt'?phref(topP(r.p)):'#'+r.v,ms=$('#mnav');
@@ -11107,7 +11182,7 @@ function renderTop(){
   else{
     /* telefon: pasek „Projekty przykładowe” tylko na stronie Asystent (na innych stronach nie zajmuje pierwszego rzędu) */
     const smp=D.projectsSource!=='registry'&&(route().v==='asystent'||!(window.matchMedia&&matchMedia('(max-width:820px)').matches));
-    if(smp)h+='<a class="lz yellow" href="#koszty?k=projekty" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Serwer, sekcja Projekty.">Projekty przykładowe</a>';
+    if(smp)h+='<a class="lz yellow" href="#koszty?k=projekty" title="Rejestr projektów jest pusty. Dodaj projekt przyciskiem + przy liście projektów.">Projekty przykładowe</a>';
     /* kalendarz w ramie tylko przy problemie; przy „połączony” kropka z odsyłaczem do Terminów (pełny stan dla czytnika) */
     /* problem z kalendarzem w Serwerze pokazuje sekcja Kalendarz: tu zostaje tylko dla czytnika i przycisk */
     /* pigułka tylko przy prawdziwym problemie albo z akcją; „tylko na Macu” (serwer) to stan stały: nic nie pokazujemy */
@@ -11130,7 +11205,7 @@ function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);n
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
   if(r.v==='odbior')return vOdbior(r);
-  return ({asystent:vAsystent,marketing:vMarketing,media:vMedia,agenci:vAgenci,koszty:vKoszty}[r.v]||vAsystent)();
+  return ({asystent:vAsystent,marketing:vMarketing,media:vMedia,agenci:vAgenci,koszty:vKoszty,informacje:vInformacje}[r.v]||vAsystent)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
@@ -11158,7 +11233,8 @@ function render(force){
     try{vh=viewHtml(r)}catch(e){console.error(e);vh='<div class="banner bad" role="alert">Nie udało się pokazać tego widoku ('+esc(String(e&&e.message||e))+'). Dane z serwera są aktualne; przejdź do innego widoku albo odśwież stronę.</div>'}
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
   if(r.go){try{history.replaceState(null,'',location.pathname+location.search+'#koszty')}catch(e){}
-    const n=document.getElementById('srv-'+r.go);if(n){n.scrollIntoView({block:'start'});n.focus({preventScroll:true})}}
+    if(r.go==='projekty')srvsAddOpen();else{
+    const n=document.getElementById('srv-'+r.go);if(n){n.scrollIntoView({block:'start'});n.focus({preventScroll:true})}}}
   odAfter(r.v==='odbior');
   renderDock(r);
   if(r.v==='projekt'){hsCur();pjGo();if(r.tab==='strona'&&wwCur(r.p))wwMount(wwCur(r.p))}
@@ -11467,7 +11543,7 @@ function addProject(){
   /* stan „Dodaję…” od razu w przycisku (bez przerysowania formularza); po odpowiedzi render przywraca „Dodaj projekt” */
   const sb=$('#padd [type=submit]');if(sb){sb.setAttribute('aria-disabled','true');sb.textContent='Dodaję…'}
   const body={path:path,files:$('#pfiles').checked};if(name)body.name=name;
-  agentPost('/api/project/add',body,'Nie dodano projektu.',()=>{const a=$('#ppath'),b=$('#pname');if(a)a.value='';if(b)b.value='';A.padd={};say('Dodano projekt.')});
+  agentPost('/api/project/add',body,'Nie dodano projektu.',()=>{const a=$('#ppath'),b=$('#pname');if(a)a.value='';if(b)b.value='';A.padd={};if(DR&&DR.kind==='padd')closeDrawer();say('Dodano projekt.')});
 }
 /* formularze w szufladzie zadania: odbiór z nowym zadaniem, poprawka, wynik */
 function submitForm(f){
@@ -11958,7 +12034,7 @@ document.addEventListener('keydown',ev=>{
       for(let c=j+st;c>=0&&c<cols.length;c+=st){const L=cards(cols[c]);if(L.length){n=L[Math.min(Math.max(i,0),L.length-1)];break}}}
     ev.preventDefault();if(n)n.focus();return}
   if(k==='/'){ev.preventDefault();const s=$('#q');if(s.offsetParent!==null)s.focus();else $('#mnav').focus();return}
-  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={s:'asystent',m:'marketing',e:'media',a:'agenci',k:'koszty'}[k];if(m){ev.preventDefault();location.hash=m}return}
+  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={s:'asystent',m:'marketing',e:'media',a:'agenci',k:'koszty',i:'informacje'}[k];if(m){ev.preventDefault();location.hash=m}return}
   if(k==='g'){gWait=Date.now();return}
 });
 document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dataset.prxdet){(A.prxDet||(A.prxDet={}))[el.dataset.prxdet]=el.open;return}if(el.dataset&&el.dataset.agdet){(A.agDet||(A.agDet={}))[el.dataset.agdet]=el.open;return}if(el.dataset&&el.dataset.tmdet){(A.tmDet||(A.tmDet={}))[el.dataset.tmdet]=el.open;return}if(el.classList&&el.classList.contains('bk-how')){A.bkHow=el.open;return}if(el.id==='stubox'){A.stuOpen=el.open;return}if(el.id==='stuall'){A.stuAll=el.open;return}if(el.classList&&el.classList.contains('ed-pl')){A.edPl=el.open;return}

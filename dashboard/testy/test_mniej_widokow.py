@@ -32,12 +32,13 @@ class Menu(unittest.TestCase):
 
     def test_tylko_pozostale_widoki(self):
         views = re.search(r"^const VIEWS=\[(.*?)\];", self.html, re.M).group(1)
-        self.assertEqual(re.findall(r"'(\w+)'", views), ["asystent", "marketing", "media", "agenci", "koszty"])
+        # Informacje (grupa serwer 2026-11-25): opis Księgi, standardu i zasad, dawniej w Serwerze
+        self.assertEqual(re.findall(r"'(\w+)'", views), ["asystent", "marketing", "media", "agenci", "koszty", "informacje"])
         self.assertIn("const MAINV=VIEWS;", self.html)
         self.assertIn("const BNAV=['asystent','marketing','media','agenci'];", self.html)
         self.assertNotIn("nav-more", self.html)                       # bez grupy „Więcej” w menu bocznym
         names = re.search(r"^const VNAME=\{(.*?)\};", self.html, re.M).group(1)
-        self.assertEqual(re.findall(r"(\w+):'", names), ["asystent", "marketing", "media", "agenci", "koszty", "odbior"])
+        self.assertEqual(re.findall(r"(\w+):'", names), ["asystent", "marketing", "media", "agenci", "koszty", "informacje", "odbior"])
         # licznik spraw dla Ciebie stoi przy Asystencie
         self.assertIn("C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']}", self.html)
 
@@ -59,7 +60,7 @@ class Menu(unittest.TestCase):
     def test_skroty_klawiszowe(self):
         m = re.search(r"const m=\{(s:'asystent'[^}]*)\}\[k\]", self.html)
         self.assertTrue(m)
-        self.assertEqual(re.findall(r":'(\w+)'", m.group(1)), ["asystent", "marketing", "media", "agenci", "koszty"])
+        self.assertEqual(re.findall(r":'(\w+)'", m.group(1)), ["asystent", "marketing", "media", "agenci", "koszty", "informacje"])
 
 
 @unittest.skipUnless(NODE, "brak node")
@@ -129,7 +130,7 @@ class Karty(unittest.TestCase):
                      '{"id": "raport-pm"}', "- panel: fragment panelu z przyciskami"):
             self.assertIn(part, karty.PROMPT)
         views = [v for v, _ in agents.Manager.ASSIST_VIEWS]
-        self.assertEqual(views, ["#asystent", "#marketing", "#media", "#agenci", "#koszty"])
+        self.assertEqual(views, ["#asystent", "#marketing", "#media", "#agenci", "#koszty", "#informacje"])
 
     def test_linki_powiadomien(self):
         self.assertEqual(agents.notify_link({"kind": "task", "taskId": "p|ZADANIA.md|3", "id": "r"}), "#asystent?z=p|ZADANIA.md|3")

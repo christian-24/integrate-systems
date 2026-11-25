@@ -2608,7 +2608,8 @@ class Manager:
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#asystent", "Asystent: ta strona, karty"), ("#marketing", "Marketing: publikacje i nagrania"),
                     ("#media", "Media"), ("#agenci", "Agenci: Teraz, plan dnia, uruchomienia"),
-                    ("#koszty", "Serwer: stan, kalendarz, projekty i Księga, koszty"))
+                    ("#koszty", "Serwer: stan, Google Drive, kalendarz, koszty, wdrażanie"),
+                    ("#informacje", "Informacje: Księga projektów, standard plików, zasady agentów"))
 
     def assistant_get(self):
         """Historia rozmowy z asystentem: (kod, błąd, {"messages", "pending", "error", "partial", "activity", "voice"}).
