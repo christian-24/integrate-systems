@@ -104,6 +104,32 @@ function pick(e){if(!on)return;e.preventDefault();e.stopPropagation();if(e.type!
 addEventListener('load',function(){window.parent.postMessage({pw:'gotowe',page:page()},'*')})})();"""
 
 
+BROWSER_TEXT = {"browser_navigate": "otwiera", "browser_navigate_back": "wraca", "browser_snapshot": "czyta stronę",
+                "browser_take_screenshot": "zrzut ekranu", "browser_click": "klika", "browser_hover": "wskazuje",
+                "browser_type": "wpisuje tekst", "browser_press_key": "naciska klawisz", "browser_resize": "szerokość",
+                "browser_wait_for": "czeka", "browser_tabs": "karty", "browser_close": "zamyka",
+                "browser_console_messages": "konsola", "browser_select_option": "wybiera opcję",
+                "browser_fill_form": "wypełnia formularz", "browser_find": "szuka", "browser_emulate_media": "motyw",
+                "browser_handle_dialog": "okno dialogowe", "browser_drag": "przeciąga"}
+
+
+def describe_browser(tool, data):
+    """Czynność agenta w przeglądarce (MCP) po polsku dla „Ostatnie czynności”: 'Przeglądarka: otwiera /kontakt'."""
+    data = data if isinstance(data, dict) else {}
+    what = BROWSER_TEXT.get(tool, tool)
+    detail = ""
+    if tool == "browser_navigate" and data.get("url"):
+        u = urllib.parse.urlsplit(str(data["url"]))
+        detail = (u.path or "/") if u.hostname == "127.0.0.1" else str(data["url"])
+    elif tool == "browser_resize" and data.get("width"):
+        detail = "%s×%s" % (data.get("width"), data.get("height", "?"))
+    elif tool in ("browser_click", "browser_hover", "browser_type", "browser_select_option", "browser_drag"):
+        detail = str(data.get("element") or data.get("startElement") or "")
+    elif tool == "browser_press_key":
+        detail = str(data.get("key") or "")
+    return _short("Przeglądarka: %s%s" % (what, " " + detail if detail else ""), 120)
+
+
 def now_iso(when=None):
     return datetime.datetime.fromtimestamp(when or time.time()).astimezone().isoformat(timespec="seconds")
 
@@ -180,6 +206,7 @@ class Site:
         self._lock = threading.RLock()
         self._cond = threading.Condition(self._lock)
         self._busy, self._again, self._finishing = set(), set(), set()
+        self._finishing_p = set()               # projekty, w których _after_site_run scala i buduje (stale() czeka)
         self._live = {}                         # id uruchomienia -> serwer podglądu wersji w budowie (dla agenta)
 
     # ---------- projekt i pliki stanu ----------
@@ -359,11 +386,33 @@ class Site:
         self._update(pid, build={"state": "error", "error": _short(error, 300), "at": now_iso(),
                                  "log": list(tail or [])[-LOG_TAIL:]})
 
+    def site_tree(self, folder, site):
+        """Skrót drzewa folderu strony w bieżącym commicie repozytorium (git rev-parse HEAD:./folder) albo ''.
+        Zmienia się tylko, gdy zmienią się zatwierdzone pliki strony (scalenie gałęzi, commit, pobranie z GitHuba)."""
+        if not folder or not site:
+            return ""
+        import agents
+        rel = "./" + str(site.get("dir") or ".").replace(os.sep, "/").strip("/")
+        code, out, _ = agents.git_run(folder, ["rev-parse", "-q", "--verify", "HEAD:" + (rel if rel != "./." else "./")],
+                                      timeout=15)
+        out = out.strip()
+        return out if code == 0 and re.fullmatch(r"[0-9a-f]{40,64}", out) else ""
+
+    def stale(self, pid, folder, site, build):
+        """Pliki strony w repozytorium są nowsze niż ostatni podgląd (budowany z innego drzewa): zbuduj sam.
+        Także po scaleniu ręcznym, po commicie właściciela i po pobraniu z GitHuba. Po błędzie budowania drzewo
+        też jest zapisane, więc ten sam błąd nie buduje się w kółko."""
+        if build.get("state") not in ("ok", "error"):
+            return False
+        tree = self.site_tree(folder, site)
+        return bool(tree) and build.get("tree") != tree
+
     def _build_once(self, pid):
         p, folder = self.project(pid)
         site = (p or {}).get("site")
         if not site:
             return self._fail(pid, "Karta projektu nie ma pola strona:.")
+        self._update(pid, build={"tree": self.site_tree(folder, site)})     # stale(): z jakiego drzewa ten podgląd
         ok, note = self.m.ensure_copy(p, folder)            # kopia usunięta z serwera: klon z GitHuba przed budowaniem
         if not ok:
             return self._fail(pid, note)
@@ -564,7 +613,7 @@ class Site:
         shots = os.path.join(cwd, ".zrzuty")
         args = [cli, "--headless", "--isolated", "--browser", "chromium",
                 "--allowed-origins", "http://127.0.0.1:%d" % port, "--block-service-workers",
-                "--output-dir", os.path.join(shots, "przegladarka"), "--viewport-size", "1440,900"]
+                "--output-dir", shots, "--viewport-size", "1440,900"]    # zrzuty przeglądarki widać w panelu
         chrome = self.mcp_chrome()
         if chrome:
             args[5:5] = ["--executable-path", chrome]
@@ -575,6 +624,22 @@ class Site:
     def mcp_args(self, priv, cwd):
         cfg = self.mcp_config(priv, cwd)
         return ["--mcp-config", json.dumps(cfg, ensure_ascii=False)] if cfg else []
+
+    def mcp_codex_args(self, priv, cwd):
+        """Ta sama przeglądarka dla Codex: -c mcp_servers.<nazwa>.… (TOML), tylko dozwolone narzędzia, bez pytania
+        o zgodę (codex exec nie ma kogo zapytać: „approval policy is never” odrzuca każde wywołanie MCP)."""
+        cfg = self.mcp_config(priv, cwd)
+        if not cfg:
+            return []
+        srv = cfg["mcpServers"][MCP_NAME]
+        key = "mcp_servers.%s." % MCP_NAME
+        args = ["-c", key + "command=" + json.dumps(srv["command"]),
+                "-c", key + "args=" + json.dumps(srv["args"], ensure_ascii=False),
+                "-c", key + "enabled_tools=" + json.dumps(list(MCP_TOOLS)),
+                "-c", key + 'default_tools_approval_mode="approve"']
+        for k, v in srv.get("env", {}).items():
+            args += ["-c", key + "env.%s=%s" % (k, json.dumps(v, ensure_ascii=False))]
+        return args
 
     @staticmethod
     def mcp_tools(priv):
@@ -596,8 +661,9 @@ class Site:
         return ["- Masz przeglądarkę (narzędzia mcp__%s__…). Pod http://127.0.0.1:%d/ widzisz swoją zbudowaną "
                 "stronę z tego katalogu roboczego (po każdym budowaniu od razu nowa wersja). Otwieraj tylko ten adres "
                 "(internet jest zablokowany). Sprawdzaj stronę w przeglądarce: browser_resize do 390x844 i 1440x900, "
-                "browser_navigate, browser_snapshot, browser_click (menu, przyciski, formularz), browser_take_screenshot. "
-                "Zrzuty z polecenia zrzutu nadal zapisz w .zrzuty/ (właściciel widzi je w panelu)."
+                "browser_navigate, browser_snapshot, browser_click (menu, przyciski, formularz), browser_take_screenshot "
+                "(zapisuje zrzut w .zrzuty/; właściciel widzi w panelu Twoje kroki w przeglądarce i zrzuty). "
+                "Zrzuty z polecenia zrzutu nadal zapisz w .zrzuty/."
                 % (MCP_NAME, pv["port"])]
 
     # ---------- dane dla zakładki Strona ----------
@@ -611,8 +677,11 @@ class Site:
         data = self._read(pid)
         build = dict(data["build"])
         with self._lock:
-            if pid in self._busy:
-                build["state"] = "building"
+            busy = pid in self._busy or pid in self._finishing_p
+        if not busy and self.stale(pid, folder, p["site"], build) and self.request_build(pid):
+            busy = True
+        if busy and pid in self._busy:
+            build["state"] = "building"
         has = os.path.isfile(os.path.join(self._dir(pid), "wynik", "index.html"))
         runs = self._runs(pid)
         notes = [self._note_view(n, runs) for n in data["notes"]]
@@ -872,15 +941,30 @@ class Site:
             return
         with self._lock:
             self._finishing.add(rec["title"])
+            self._finishing_p.add(rec.get("project", ""))
         threading.Thread(target=self._after_site_run, args=(dict(rec),), daemon=True).start()
 
     def after_merge(self, rec):
-        """Manager.merge: scalona gałąź innego zadania zmieniła pliki strony → nowy podgląd."""
+        """Manager.merge: scalona gałąź innego zadania zmieniła pliki strony → nowy podgląd. Gałąź zadania strony
+        scalona później ręcznie (np. po „Nie scalono zmian”): nowy podgląd i uwaga „zrobione”."""
         if str(rec.get("title", "")).startswith((SITE_TASK, CONCEPT_TASK)):
-            return              # zadania strony buduje _after_site_run
+            with self._lock:
+                mine = rec["title"] in self._finishing
+            if not mine and rec.get("project"):  # w trakcie _after_site_run buduje on sam
+                threading.Thread(target=self._merged_later, args=(rec["project"], rec["title"]), daemon=True).start()
+            return
         p, folder = self.project(rec.get("project"))
         if p and p.get("site") and self.touches(rec.get("changes"), self.site_prefix(folder, p["site"])):
             self.request_build(p["id"])
+
+    def _merged_later(self, pid, title):
+        p, _ = self.project(pid)
+        if not p or not p.get("site") or self.build_now(pid).get("state") != "ok":
+            return
+        for n in self._read(pid)["notes"]:
+            if n.get("title") == title and n.get("outcome") == "nie wyszło" and \
+                    str(n.get("error") or "").startswith("Nie scalono"):
+                self._update(pid, note={"id": n["id"], "outcome": "zrobione", "error": "", "doneAt": now_iso()})
 
     def _outcome(self, pid, title, state, error=""):
         """Wynik uruchomienia dla uwag tego zadania: pierwszej i przekazanych agentowi w trakcie pracy."""
@@ -899,6 +983,7 @@ class Site:
         finally:
             with self._lock:
                 self._finishing.discard(title)
+                self._finishing_p.discard(pid)
 
     def _site_run_end(self, rec, pid, title):
         if rec.get("state") != "done":

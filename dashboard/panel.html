@@ -1787,8 +1787,6 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pj-parts{margin:8px 0 2px;align-items:center}
 .pj-parts a{display:inline-flex;align-items:center;min-height:40px}
 .pj-pl{color:var(--ink-3);font-size:var(--fs-sm);font-weight:600;padding:8px 4px 8px 0}
-.ww-pick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
-.ww-pick>span{color:var(--ink-2);font-size:var(--fs-sm)}
 .ptag{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);white-space:nowrap;vertical-align:1px}
 /* karty Połączeń (dawniej „Kod i pliki”): wiersze stanu, „Szczegóły” rozwija działania */
 .pj-code{padding:0}
@@ -2210,8 +2208,6 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 /* Strona: podgląd strony WWW projektu (zakładka Strona, pole karty strona:); ramka w piaskownicy, skalowana do miejsca */
 .ww-root{display:grid;gap:var(--g-m);min-width:0}
 .ww-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
-.ww-stat{margin:0;font-size:var(--fs-sm);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
-.ww-stat details{flex-basis:100%}
 .ww-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ww-seg{display:inline-flex;gap:4px}
 .ww-main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--g-m);align-items:start}
@@ -2229,7 +2225,6 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-note p{margin:0;overflow-wrap:anywhere}
 .ww-err{color:var(--l-red);font-size:var(--fs-sm)}
 .ww-log{max-height:240px;overflow:auto;font-family:var(--mono);font-size:var(--fs-xs);white-space:pre-wrap;background:var(--sunk);padding:8px;border-radius:var(--r);margin:6px 0 0}
-.ww-con>summary{padding:12px 16px;cursor:pointer;font-weight:600}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
 .ww-lv{display:grid;gap:6px}
@@ -2243,6 +2238,25 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-shots figcaption{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
 .ww-lv .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:44px}}
+/* grupa strona: pasek z plakietką stanu budowania, przełącznik wersji przy pracującym agencie, jedna karta Uwagi */
+.ww-bw{display:inline-flex;align-items:center;gap:var(--g-xs);min-width:0}
+.ww-bst:empty{display:none}
+button.ww-bstb{border:0;cursor:pointer;font-family:inherit}
+.ww-src .seg[aria-disabled="true"]{opacity:.55;cursor:default}
+.ww-berr{border:1px solid var(--line);border-left:3px solid var(--l-red);border-radius:var(--r-lg);background:var(--surface);padding:var(--g-m) var(--g-p);display:grid;gap:var(--g-s);font-size:var(--fs-md)}
+.ww-berr p{margin:0;overflow-wrap:anywhere}
+.ww-uwp{display:grid;gap:var(--g-s)}
+.ww-uwp [data-wwsel]:empty{display:none}
+.ww-uw .ww-notes{padding-top:0}
+.ww-hint{color:var(--ink-3);font-size:var(--fs-xs)}
+.ww-more{border-top:1px solid var(--line)}
+.ww-more>summary{padding:var(--g-m) var(--g-p);cursor:pointer;font-size:var(--fs-md);color:var(--ink-2)}
+.ww-morep{display:grid;gap:var(--g-m);padding-top:0}
+.ww-morep p{margin:0}
+.ww-con{display:grid;gap:var(--g-s)}
+.ww-con h3,.ww-h3{margin:0;font-size:var(--fs-md);font-weight:650}
+.ww-h3{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+@media (max-width:620px){.ww-src{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-src .seg{min-height:44px}.ww-bw .btn{flex:1}}
 /* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
 .od{display:grid;gap:var(--g-m);min-width:0}
 .od-top{display:grid;gap:4px}
@@ -5780,11 +5794,10 @@ const WWV={};
 function wwSt(pid){return WWV[pid]||(WWV[pid]={d:null,err:'',view:innerWidth<760?'telefon':'komputer',pick:false,sel:null,page:'/',tm:null})}
 function wwView(p){
   if(!LIVE)return '<p class="empty">Podgląd strony działa w panelu na serwerze.</p>';
-  const L=wwSites(p),c=wwCur(p);if(!c)return '<p class="empty">Projekt nie ma strony.</p>';
-  /* „Całość”: podgląd strony części; przy kilku częściach ze stroną wybór części */
-  const pick=L.length>1?'<div class="ww-pick" role="group" aria-label="Strona której części"><span>Strona części:</span>'+L.map(x=>'<button type="button" class="seg" data-wwpart="'+esc(x.id)+'" data-wwtop="'+esc(p.id)+'" data-k="wwp:'+esc(x.id)+'" aria-pressed="'+(x===c)+'">'+esc(x.partLabel||x.name)+'</button>').join('')+'</div>':
-    c!==p&&c.partLabel?'<p class="note">Strona części <a href="'+wwHref(c)+'">'+esc(c.partLabel)+'</a>.</p>':'';
-  return pick+'<div class="ww-root" data-ww="'+esc(c.id)+'"></div>';
+  const c=wwCur(p);if(!c)return '<p class="empty">Projekt nie ma strony.</p>';
+  /* „Całość”: podgląd strony części; inną część ze stroną wybiera przełącznik części w nagłówku projektu
+     (grupa strona 25.11: bez wiersza „Strona części …” nad podglądem) */
+  return '<div class="ww-root" data-ww="'+esc(c.id)+'"></div>';
 }
 /* zadanie właściciela o ocenie strony: tytuł z „zakładce Strona” (albo „podgląd strony”) albo materiał: w folderze
    strony projektu; zwraca widok ze stroną (własny projekt zadania, a bez strony jedyną stronę projektu głównego) */
@@ -5820,25 +5833,30 @@ function wwLinks(h,text,p){
   const u=wwHrefFor(text,p);if(!u)return h;
   return h.split(/(<a\b[^>]*>[\s\S]*?<\/a>)/).map((x,i)=>i%2?x:x.replace(new RegExp(WWT.source,'gi'),m=>'<a href="'+esc(u)+'" data-k="wwlink">'+m+'</a>')).join('');
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwpart]');if(!b)return;ev.preventDefault();
-  WWC[b.dataset.wwtop]=b.dataset.wwpart;render(true)});
 const wwAgo=iso=>{const d=tOf(iso);if(!d)return '';const m=Math.round((Date.now()-d.getTime())/60000);return m<1?'przed chwilą':m<60?m+' min temu':m<1440?Math.round(m/60)+' h temu':whenT(iso)};
 function wwRoot(pid){return document.querySelector('.ww-root[data-ww="'+CSS.escape(pid)+'"]')}
 function wwMount(p){
   const root=wwRoot(p.id);if(!root)return;
+  /* grupa strona 25.11: pasek tylko Telefon, Komputer, Wskaż, Zbuduj podgląd (stan budowania jako plakietka przy
+     przycisku); przy pracującym agencie przełącznik „Wersja w budowie / Ostatnia zbudowana”; jedna karta Uwagi */
   if(!root._m){root._m=1;
-    root.innerHTML='<div class="ww-bar"><p class="ww-stat" data-wwstat role="status"></p><div class="ww-acts">'+
+    root.innerHTML='<div class="ww-bar">'+
+      '<span class="ww-seg ww-src" role="group" aria-label="Która wersja strony" data-wwsrc hidden><button type="button" class="seg" data-wwlv="live" data-k="wwlv-l" title="Z katalogu roboczego pracującego agenta">Wersja w budowie</button><button type="button" class="seg" data-wwlv="built" data-k="wwlv-b">Ostatnia zbudowana</button></span>'+
+      '<div class="ww-acts">'+
       '<span class="ww-seg" role="group" aria-label="Szerokość podglądu"><button type="button" class="seg" data-wwview="telefon" data-k="wwv-t" title="390 px">Telefon</button><button type="button" class="seg" data-wwview="komputer" data-k="wwv-k" title="1440 px">Komputer</button></span>'+
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
-      '<button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild">Zbuduj podgląd</button></div></div>'+
+      '<span class="ww-bw"><button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild" title="Podgląd buduje się sam po pracy agenta i po scaleniu zmian">Zbuduj podgląd</button><span class="ww-bst" data-wwbst></span></span></div></div>'+
+      '<div class="ww-berr" data-wwberr hidden></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
-      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
-      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div></section>'+
-      '<section class="panel"><h2>Uwagi <small data-wwn></small></h2><ol class="ww-notes" data-wwnotes></ol></section>'+
-      '<details class="panel ww-con" data-wwcondet><summary>Nowa wersja według koncepcji</summary><form class="pad" data-wwcon="'+esc(p.id)+'">'+
+      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div>'+
+      '<section class="panel ww-uw"><h2>Uwagi <small data-wwn></small></h2><div class="pad ww-uwp"><div data-wwsel></div>'+
+      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div>'+
+      '<ol class="ww-notes" data-wwnotes></ol>'+
+      '<details class="ww-more" data-wwcondet><summary data-k="wwmore">Więcej</summary><div class="pad ww-morep"><p class="ww-open" data-wwopen hidden></p>'+
+      '<form class="ww-con" data-wwcon="'+esc(p.id)+'"><h3>Nowa wersja według koncepcji</h3>'+
       '<label class="note" for="ww-cp">Plik albo folder koncepcji w repozytorium</label><input class="fi" id="ww-cp" name="path" list="ww-docs" autocomplete="off" placeholder="np. docs/koncepcja.md" data-k="wwcp"><datalist id="ww-docs"></datalist>'+
       '<textarea class="fi" rows="2" maxlength="1000" name="text" data-k="wwct" placeholder="Uwagi (opcjonalnie)" aria-label="Uwagi do koncepcji"></textarea>'+
-      '<div class="row"><button class="btn" type="submit">Zleć wykonanie według koncepcji</button></div></form></details></aside></div>';
+      '<div class="row"><button class="btn" type="submit">Zleć wykonanie według koncepcji</button></div></form></div></details></section></aside></div>';
     const fr=root.querySelector('[data-wwframe]');
     if(window.ResizeObserver){const ro=new ResizeObserver(()=>wwFit(p.id));ro.observe(fr)}
     wwLoad(p.id);
@@ -5860,13 +5878,18 @@ async function wwLoad(pid){
       if(was&&(was.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka')&&!(j.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'))load()}
     else s.err=String(j.error||'Podgląd jest niedostępny.')}catch(e){s.err='Brak połączenia z serwerem.'}
   const q=CUR,qc=q&&q.v==='projekt'&&q.p&&q.tab==='strona'&&wwCur(q.p);if(!(qc&&qc.id===pid))return;
+  /* podgląd nigdy nie budowany: pierwsze budowanie samo przy otwarciu zakładki (potem buduje serwer: po pracy agenta
+     strony, po scaleniu gałęzi i gdy pliki strony w repozytorium są nowsze niż ostatni podgląd) */
+  if(s.d&&!s.d.url&&!(s.d.build||{}).state&&!s.auto&&LIVE){s.auto=1;wwBuild(pid)}
   wwPaint(pid);
   const live=s.d&&(s.d.build.state==='building'||!!s.d.live||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
   s.tm=setTimeout(()=>wwLoad(pid),live?4000:30000);
 }
-/* budowa strony na żywo: agent strony pracuje (d.live): kroki, ostatnie czynności, zrzuty z jego .zrzuty/,
-   „Pokaż wersję w budowie” (podgląd z jego katalogu roboczego, odświeżany po każdym budowaniu) i wiadomość do agenta */
-const wwLiveOn=s=>!!(s.liveView&&s.d&&s.d.live&&s.d.live.url);
+/* budowa strony na żywo: agent strony pracuje (d.live): wersja w budowie (z jego katalogu roboczego, odświeżana po
+   każdym budowaniu) jest domyślnym podglądem; s.src = 'built' przełącza na ostatnią zbudowaną. Obok: kroki, ostatnie
+   czynności (także w przeglądarce MCP), zrzuty z jego .zrzuty/ i wiadomość do agenta */
+const wwRun=s=>!!(s.d&&s.d.live&&s.d.live.state==='running');
+const wwLiveOn=s=>wwRun(s)&&!!s.d.live.url&&s.src!=='built';
 function wwLiveHtml(pid,s){
   const L=s.d.live;
   if(L.state==='queued')return '<h2>Agent strony czeka w kolejce</h2><div class="pad"><p class="note">'+esc(L.title)+'</p></div>';
@@ -5875,24 +5898,25 @@ function wwLiveHtml(pid,s){
   return '<h2>Agent pracuje nad stroną <small>'+esc(wwAgo(L.startedAt))+'</small></h2><div class="pad ww-lv">'+
     '<p><b>'+esc(L.title)+'</b></p>'+(L.activity?'<p class="note">Teraz: '+esc(L.activity)+'</p>':'')+
     (plan.length?'<p class="note">Kroki: '+done+' z '+plan.length+'</p>':'')+
-    (st.length?'<ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
-    (rc.length?'<details><summary class="note">Ostatnie czynności</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
-    ((L.shots||[]).length?'<div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
-    '<div class="row">'+(L.url?'<button type="button" class="btn sm" data-wwlv data-k="wwlv" aria-pressed="'+wwLiveOn(s)+'">'+(wwLiveOn(s)?'Pokaż ostatni podgląd':'Pokaż wersję w budowie')+'</button>':
-      '<span class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</span>')+
-    '<button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
-    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div>'+
-    (L.browser?'<p class="note">Agent ogląda stronę w przeglądarce (tylko swój podgląd).</p>':'')+'</div>';
+    (L.url?'':'<p class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</p>')+
+    (st.length?'<h3 class="ww-h3">Ostatnie czynności</h3><ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
+    (rc.length?'<details><summary class="note">Szczegóły</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
+    ((L.shots||[]).length?'<h3 class="ww-h3">Zrzuty agenta</h3><div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
+    (L.browser?'<p class="note">Agent sprawdza stronę w przeglądarce: jego kroki i zrzuty są powyżej.</p>':'')+
+    '<div class="row"><button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
+    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div></div>';
 }
-function wwBuildHtml(s){
-  const d=s.d;if(!d)return s.err?'<span class="ww-err">'+esc(s.err)+'</span>':'Wczytuję…';
-  if(wwLiveOn(s))return '<span class="lz blue">Wersja w budowie</span><span>z katalogu agenta, zbudowana '+esc(wwAgo(d.live.builtAt))+'</span>';
-  const b=d.build||{},open=d.url?' <a href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">Otwórz w nowej karcie</a>':'';
-  if(b.state==='building')return '<span class="lz blue">Buduję…</span><span>'+(d.url?'Pokazuję poprzednią wersję.':'')+'</span>';
-  if(b.state==='error')return '<span class="lz red">Błąd budowania</span><span>'+esc(b.error||'')+'</span>'+open+
+/* plakietka przy „Zbuduj podgląd”: tylko „buduję…” i „błąd” (błąd rozwija opis i dziennik pod paskiem) */
+function wwBadge(s){
+  const d=s.d;if(!d)return s.err?'<span class="lz red" title="'+esc(s.err)+'">brak połączenia</span>':'';
+  const b=d.build||{};
+  if(b.state==='building')return '<span class="lz blue" role="status" title="'+(d.url?'Do końca budowania widać poprzednią wersję':'')+'">buduję…</span>';
+  if(b.state==='error')return '<button type="button" class="lz red ww-bstb" data-wwerr data-k="wwerr" aria-expanded="'+!!s.errOpen+'" title="'+esc(b.error||'Błąd budowania')+'">błąd</button>';
+  return '';
+}
+function wwErrHtml(b){
+  return '<p><b>Podgląd się nie zbudował.</b> '+esc(b.error||'')+'</p>'+
     ((b.log||[]).length?'<details><summary>Dziennik budowania</summary><pre class="ww-log">'+esc(b.log.join('\n'))+'</pre></details>':'');
-  if(b.state==='ok')return '<span>Zbudowano '+esc(wwAgo(b.at))+'</span>'+open;
-  return '<span>Podgląd nie był jeszcze budowany.</span>';
 }
 function wwNoteHtml(n){
   const st=WWS[n.state]||WWS.czeka,what=n.kind==='koncepcja'?'Według koncepcji: '+(n.path||''):'';
@@ -5905,29 +5929,38 @@ function wwNoteHtml(n){
     (n.result?'<details><summary class="note">Odpowiedź agenta</summary><p class="note">'+esc(n.result)+'</p></details>':'')+'</li>';
 }
 function wwPaint(pid){
-  const root=wwRoot(pid);if(!root||!root._m)return;const s=wwSt(pid),d=s.d,q=x=>root.querySelector(x);
-  setHtml(q('[data-wwstat]'),wwBuildHtml(s));
-  root.querySelectorAll('[data-wwview]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.wwview===s.view)));
+  const root=wwRoot(pid);if(!root||!root._m)return;const s=wwSt(pid),d=s.d,q=x=>root.querySelector(x),b=d&&d.build||{};
+  root.querySelectorAll('[data-wwview]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.wwview===s.view)));
   const pk=q('[data-wwpick]');pk.setAttribute('aria-pressed',String(s.pick));pk.textContent=s.pick?'Wskazywanie: kliknij element':'Wskaż';
-  const bb=q('[data-wwbuild]');if(d&&d.build.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
+  const bb=q('[data-wwbuild]');if(b.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
+  setHtml(q('[data-wwbst]'),wwBadge(s));
+  if(b.state!=='error')s.errOpen=false;
+  const be=q('[data-wwberr]');be.hidden=!s.errOpen;if(s.errOpen)setHtml(be,wwErrHtml(b));
+  if(!wwRun(s))s.src='';                                   /* agent skończył: następnym razem znów domyślnie wersja w budowie */
+  const sw=q('[data-wwsrc]'),on=wwLiveOn(s);sw.hidden=!wwRun(s);
+  if(wwRun(s)){sw.querySelectorAll('[data-wwlv]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.wwlv==='live'?on:!on)));
+    const lb=sw.querySelector('[data-wwlv="live"]');if(d.live.url){lb.removeAttribute('aria-disabled');lb.title='Z katalogu roboczego pracującego agenta, zbudowana '+wwAgo(d.live.builtAt)}
+    else{lb.setAttribute('aria-disabled','true');lb.title='Pojawi się po pierwszym budowaniu agenta'}}
   const fit=q('.ww-fit'),ifr=fit.querySelector('iframe'),em=q('[data-wwempty]');
-  if(s.liveView&&!wwLiveOn(s))s.liveView=false;           /* agent skończył: wracamy do zbudowanego podglądu */
   const lv=q('[data-wwlive]');lv.hidden=!(d&&d.live);if(d&&d.live)setHtml(lv,wwLiveHtml(pid,s));
   const rb=q('[data-wwrepo]');rb.hidden=!(d&&d.repo);if(d&&d.repo){const pp=P(pid);const n=d.repo.count|0,F=d.repo.files||[];
     setHtml(rb,'<div class="ww-repo" role="status"><p><b>'+(n?n+' '+pl(n,'plik czeka','pliki czekają','plików czeka'):'Pliki czekają')+' na zatwierdzenie.</b> Do tego czasu podgląd się nie odświeży.</p>'+
       '<div class="row">'+(pp?'<a class="btn sec sm" href="'+esc(phref(pp))+'" data-pjgo="pcode" title="Zatwierdź jako zmiany agenta albo odłóż na bok">Kod i pliki</a>':'')+
       (F.length?'<details><summary>Pliki</summary><ul>'+F.map(f=>'<li><code>'+esc(f)+'</code></li>').join('')+'</ul></details>':'')+'</div></div>')}
-  if(wwLiveOn(s)){const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
-  else if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
-  else{fit.hidden=true;em.hidden=false;setHtml(em,d?(d.build.state==='building'?'<p>Buduję pierwszy podgląd…</p>':'<p>Podglądu jeszcze nie ma.</p><button type="button" class="btn" data-wwbuild data-k="wwbuild2">Zbuduj podgląd</button><p class="note">Bez strony: „Nowa wersja według koncepcji” obok.</p>'):'<p>Wczytuję…</p>')}
-  setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
-    '<p class="note" title="Uwaga trafia do Rozmowy z podstroną i widokiem jako załącznikiem">Kliknij „Wskaż” i element w podglądzie albo od razu napisz uwagę.</p>');
+  let shown='';
+  if(on){shown=d.live.url;const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else if(d&&d.url){shown=d.url;const src=d.url+'?v='+(b.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else{fit.hidden=true;em.hidden=false;setHtml(em,!d?'<p>'+(s.err?esc(s.err):'Wczytuję…')+'</p>':b.state==='building'||!b.state?'<p>Buduję pierwszy podgląd…</p>':
+    '<p>Podglądu jeszcze nie ma.</p>'+(b.state==='error'?'<p class="ww-err">'+esc(b.error||'')+'</p>':'')+'<p class="note">Bez strony: „Nowa wersja według koncepcji” w karcie Uwagi, pod „Więcej”.</p>')}
+  const op=q('[data-wwopen]');op.hidden=!shown;setHtml(op,shown?'<a href="'+esc(shown)+'" target="_blank" rel="noopener noreferrer" data-k="wwopen">Otwórz podgląd w nowej karcie</a>':'');
+  setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':'');
   const L=d?d.notes||[]:[];
   const sb=q('[data-k="wwnote"]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
-  setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
+  const nl=q('[data-wwnotes]');nl.hidden=!L.length&&!d;
+  setHtml(nl,L.length?L.map(wwNoteHtml).join(''):'<li class="ww-hint note" title="Uwaga trafia do Rozmowy projektu z podstroną i widokiem jako załącznikiem">Kliknij „Wskaż” i element w podglądzie albo od razu napisz uwagę.</li>');
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
-  const cd=q('[data-wwcondet]');if(d&&!cd._set){cd._set=1;if(!d.url&&!L.length)cd.open=true}
+  const cd=q('[data-wwcondet]');if(d&&!cd._set){cd._set=1;if(!d.url&&!L.length&&b.state==='error')cd.open=true}
   wwFit(pid);
 }
 function wwPost(pid,msg){const root=wwRoot(pid),ifr=root&&root.querySelector('.ww-fit iframe');if(ifr&&ifr.contentWindow)ifr.contentWindow.postMessage(msg,'*')}
@@ -5946,9 +5979,10 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv]');if(!b)return;
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv],[data-wwerr]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
-  if(b.dataset.wwlv!=null){s.liveView=!s.liveView;wwPaint(pid);focusK('wwlv');return}
+  if(b.dataset.wwlv){if(b.getAttribute('aria-disabled')==='true')return;s.src=b.dataset.wwlv;wwPaint(pid);return}
+  if(b.dataset.wwerr!=null){s.errOpen=!s.errOpen;wwPaint(pid);focusK('wwerr');return}
   if(b.dataset.wwnote!=null){if(!LIVE){say(PRV);return}pjdAttach(pid,s);return}
   if(b.dataset.wwview){s.view=b.dataset.wwview;wwPaint(pid);return}
   if(b.dataset.wwpick!=null){s.pick=!s.pick;wwPost(pid,{pw:'wskaz',on:s.pick});wwPaint(pid);return}
