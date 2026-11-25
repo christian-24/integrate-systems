@@ -1668,6 +1668,7 @@ class Manager:
             priv = {"folder": folder, "client": project.get("client") is True,
                     "label": project.get("alias") or project.get("name") or task["project"],
                     "task": {"tool": tool, "path": path, "name": rec["projectName"], "file": task["file"],
+                             "project": task["project"],
                              "line": task["line"], "title": title, "stage": stage,
                              "detail": with_answers(task, data["tasks"]),
                              "site": self.site.task_site(project, title)},
@@ -1688,6 +1689,9 @@ class Manager:
             return True, ""
         return kopie.clone(folder, github, project.get("githubBranch") or "")
 
+    def drive_mount(self, pid, folder):
+        return drive_dir(folder)
+
     def _task_command(self, priv, git=None):
         """Polecenie, katalog i prompt zadania. git (z _worktree_open): praca w katalogu roboczym gałęzi
         uruchomienia, pliki standardu w folderze projektu przez --add-dir i ścieżki bezwzględne."""
@@ -1702,7 +1706,7 @@ class Manager:
         else:
             cwd, extra, info = folder, _card_dirs(folder), None
         site = t.get("site")
-        mnt = drive_dir(folder)
+        mnt = self.drive_mount(t.get("project"), folder)
         if mnt and mnt not in extra:
             extra = extra + ["--add-dir", mnt]       # odczyt plików z Drive (Claude czyta tylko w podanych folderach)
         parts = [x for x in priv.get("parts") or [] if x.get("worktree")]
