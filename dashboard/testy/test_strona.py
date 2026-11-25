@@ -71,7 +71,7 @@ class Strona(Serwer):
         return next(n for n in self.info()["notes"] if n["title"] == title)
 
     def wait_note(self, title):
-        self.wait_for(lambda: self.note(title)["state"] in ("zrobione", "nie wyszło"), timeout=30)
+        self.wait_for(lambda: self.note(title)["doneAt"], timeout=30)  # po zapisaniu wyniku uwagi
         return self.note(title)
 
 

@@ -956,6 +956,12 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .fl{display:grid;gap:3px;font-size:12.5px;color:var(--ink-3);min-width:0;flex:1}
 .fl .fi{width:100%;color:var(--ink);font-size:14px}
 .abox .row .fl{min-width:140px}
+.abox.own .dform{gap:10px}
+.own-chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;color:var(--ink);cursor:pointer;min-height:var(--ctl-h-sm);padding:4px 0}
+.own-chk input{flex:0 0 auto;margin:2px 0 0;width:20px;height:20px;accent-color:var(--accent)}
+.own-chk .ok{color:var(--ink-3);text-decoration:line-through}
+.own-steps{display:grid;gap:2px}
+.own-pw{margin:0}
 
 /* Dziś: liczniki, pasek serwera */
 .ycnt{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 16px 10px;max-width:600px}
@@ -1667,6 +1673,11 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .gh-dl dt{color:var(--ink-2)}.gh-dl dd{margin:0;overflow-wrap:anywhere}
 .gh-sel{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:4px 14px}.gh-sel legend{color:var(--ink-2);padding:0;margin-bottom:2px}
 .gh-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gh-dirty{border-left:3px solid var(--l-yellow);background:var(--l-yellow-bg);padding:8px 10px;border-radius:var(--r-sm);margin:8px 0}
+.gh-dirty p{margin:0 0 8px}
+.gh-stash ul{list-style:none;margin:4px 0 8px;padding:0}
+.gh-stash li{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:4px 0;border-bottom:1px solid var(--line)}
+.gh-stash li>span{min-width:0;overflow-wrap:anywhere}
 @media (max-width:600px){.gh-dl{grid-template-columns:1fr}.gh-dl dd{margin-bottom:4px}}
 .prx-menu{position:absolute;right:0;top:calc(100% + 4px);width:min(300px,80vw);background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-lg);box-shadow:var(--shadow-2);padding:10px 12px;display:grid;gap:6px;z-index:5}
 .prx-more .pf{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere;margin:6px 0 4px}
@@ -1829,6 +1840,7 @@ body.pjd-on #view{padding-bottom:96px}
 .pjd-f .row{display:flex;align-items:center;gap:10px}
 .pjd-f .note{margin:0;font-size:var(--fs-xs)}
 .pjd-f .row{flex-wrap:wrap}
+.pjd-f .as-mic{min-width:44px;min-height:44px;touch-action:manipulation}
 .pjd-chips{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .pjd-chip{display:flex;align-items:center;gap:2px;width:100%;min-width:0;padding:2px 0 2px 10px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:var(--fs-xs);line-height:1.35}
 .pjd-chip>span{flex:1;min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
@@ -2020,6 +2032,9 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 #ag-view .panel h2{flex-wrap:wrap}
 #ag-view .ag-ac{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #ag-view .ag-ac button{min-height:36px;white-space:normal}
+#ag-view .ag-par{display:inline-flex;gap:4px;align-items:center;color:var(--ink-2)}
+#ag-view .ag-par button{min-width:36px}
+#ag-view .ag-par [aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
 #ag-view .ag-tools summary small{min-width:0}
 #ag-view .ag-gh{font-size:var(--fs-sm);margin:16px 0 4px;color:var(--ink-2)}
 #ag-view .ag-gh button{padding:4px 0;font:inherit;color:inherit}
@@ -2240,6 +2255,16 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-con>summary{padding:12px 16px;cursor:pointer;font-weight:600}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
+.ww-lv{display:grid;gap:6px}
+.ww-lv p{margin:0;overflow-wrap:anywhere}
+.ww-steps,.ww-rc{margin:0;padding:0;list-style:none;display:grid;gap:3px;font-size:var(--fs-sm);max-height:220px;overflow:auto}
+.ww-steps li,.ww-rc li{overflow-wrap:anywhere}
+.ww-steps .num{color:var(--ink-3);font-size:var(--fs-xs)}
+.ww-shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.ww-shots figure{margin:0;display:grid;gap:2px}
+.ww-shots img{width:100%;height:90px;object-fit:cover;object-position:top;border:1px solid var(--line);border-radius:var(--r-sm)}
+.ww-shots figcaption{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
+.ww-lv .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:44px}}
 /* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
 .od{display:grid;gap:var(--g-m);min-width:0}
@@ -2972,8 +2997,19 @@ function normDetail(d){
     changes:L(d.changes).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),     /* zmiany: (co agent zmienił po poprawce) */
     pins:L(d.pins).filter(x=>x&&typeof x==='object'),                                     /* znaczniki poprawki ({n,file,x,y,t,note}) */
     scheduled:s(d.scheduled),
-    branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,6),
+    branch:/^agent\/[\w.\/-]+$/.test(s(d.branch))?s(d.branch):'',asks:L(d.asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()).slice(0,8),
+    fields:normFields(d.fields,d.asks),
     answers:L(d.answers).filter(a=>a&&typeof a.label==='string'&&a.label.trim()).map(a=>({label:a.label.trim(),value:s(a.value)}))};
+}
+/* pola formularza z „pyta:” ({label,type,hint,options,where}); starszy serwer bez fields: same etykiety jako tekst */
+const FTYPES=['tekst','tak/nie','liczba','wybór','data','link','hasło'],SECRET_RE=/hasł|hasel|haseł|password|\btoken|\bsekret|\bsecret|\bklucz(a|e|em|y|u)?\b|\bapi[ _-]?key|\bPIN\b/i;
+function normFields(F,asks){
+  const s=v=>typeof v==='string'?v.trim():'',L=v=>Array.isArray(v)?v:[];
+  let o=L(F).filter(f=>f&&typeof f.label==='string'&&f.label.trim()).map(f=>({label:f.label.trim(),type:FTYPES.indexOf(f.type)>=0?f.type:'tekst',hint:s(f.hint),
+    options:L(f.options).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()),where:s(f.where)}));
+  if(!o.length)o=L(asks).filter(x=>typeof x==='string'&&x.trim()).map(x=>({label:x.trim(),type:'tekst',hint:'',options:[],where:''}));
+  o.forEach(f=>{if(f.type==='wybór'&&f.options.length<2)f.type='tekst';if(f.type!=='hasło'&&SECRET_RE.test(f.label))f.type='hasło'});
+  return o.slice(0,8);
 }
 const STATK={'wyświetlenia':'views','wyswietlenia':'views','kliknięcia':'clicks','klikniecia':'clicks','konta':'accounts','link':'link'};
 const hasStats=s=>!!(s&&(s.views||s.clicks||s.accounts||s.link));
@@ -3201,7 +3237,7 @@ function normAgents(a){
   const tl=x=>({found:!!(x&&x.found),version:(x&&x.version)||'',loggedIn:!!(x&&x.loggedIn),subscription:(x&&x.subscription)||'',loginCmd:(x&&typeof x.loginCmd==='string'&&x.loginCmd)||''});
   const t=a.tools||{},td=a.today||{};
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
-    maxParallel:+a.maxParallel||0,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
+    maxParallel:+a.maxParallel||0,parallelMax:+a.parallelMax||0,deployHold:!!a.deployHold,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
     usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[],queueEstimate:a.queueEstimate||{}};
 }
@@ -3242,6 +3278,9 @@ function normRun(r){
       steps:(r.steps||[]).map(s=>{const d=relT(s.t);return {t:d?isoL(d).slice(11):String(s.t||''),text:String(s.text||'')}}),denials:r.denials||[],
       /* praca w git worktree: gałąź, baza i pliki zmienione względem bazy (git diff --numstat) */
       branch:typeof r.branch==='string'?r.branch:'',base:typeof r.base==='string'?r.base:'',merged:!!r.merged,
+      /* części projektu: gałęzie w repozytoriach części (własny katalog roboczy agenta) */
+      parts:(Array.isArray(r.parts)?r.parts:[]).filter(x=>x&&x.branch&&x.project).map(x=>({project:String(x.project),label:String(x.label||x.project),branch:String(x.branch),commits:+x.commits||0,
+        changes:(Array.isArray(x.changes)?x.changes:[]).filter(c=>c&&c.path)})),
       changes:(Array.isArray(r.changes)?r.changes:[]).filter(c=>c&&typeof c.path==='string'&&c.path).map(c=>({path:c.path,
         added:Number.isFinite(+c.added)&&c.added!==''&&c.added!=null?+c.added:null,removed:Number.isFinite(+c.removed)&&c.removed!==''&&c.removed!=null?+c.removed:null}))});
 }
@@ -5472,22 +5511,26 @@ function dockHtml(r){
     (att?'<span class="pjd-chip"><span>Załącznik: '+esc(attLabel(att))+'</span><button type="button" class="pjd-x" data-pjdatt="0" data-k="pjd:attx" aria-label="Usuń załącznik">×</button></span>':'');
   const dis=c.pending&&!att?' aria-disabled="true"':'';
   h+='<form class="pjd-f" data-pchat="'+esc(g.id)+'">'+(chips?'<div class="pjd-chips">'+chips+'</div>':'')+
-    '<textarea class="fi" rows="2" maxlength="2000" data-cq data-k="pjd:ta" aria-label="'+esc((att?'Uwaga do strony: ':'Wiadomość: ')+g.label)+'" placeholder="'+
+    '<textarea class="fi" rows="2" maxlength="'+(att?1000:2000)+'" data-cq data-k="pjd:ta" aria-label="'+esc((att?'Uwaga do strony: ':'Wiadomość: ')+g.label)+'" placeholder="'+
       (att?'Co zmienić? Np. większy nagłówek, inny kolor przycisku':t?(live?'Np. pytanie albo polecenie dla pracującego agenta':'Np. po co to zadanie? Albo polecenie dla agenta'):'Np. co mam zrobić jutro?')+'"></textarea>'+
-    '<div class="row"><button class="btn sm" data-k="pjd:send"'+dis+'>'+(att?'Wyślij uwagę':'Wyślij')+'</button>'+
+    '<div class="row">'+voiceButton(g.id)+'<button class="btn sm" data-k="pjd:send"'+dis+'>'+(att?'Wyślij uwagę':'Wyślij')+'</button>'+
     (ag&&!att?'<button type="button" class="btn sec sm" data-pjdx="1" data-k="pjd:exec"'+(c.exec?' aria-disabled="true"':'')+' title="Zapisuje polecenie pod zadaniem (poprawka:) i uruchamia agenta albo przekazuje je pracującemu agentowi">'+(cx?'Zapisz poprawkę':live?'Wyślij do agenta':'Wyślij i wykonaj')+'</button>':'')+
-    '<span class="note">'+(att?'Uwaga trafi do agenta strony (zadanie albo pracujący agent).':ag?(live?'Agent pracuje: „Wyślij do agenta” przekazuje mu polecenie.':'„Wyślij i wykonaj”: agent wykonuje polecenie.'):'Prośba o pracę zakłada zadanie agenta i je uruchamia.')+'</span></div></form>';
+    (VOICE?.pid===g.id?'<span class="note" role="status">'+({start:'Włączam mikrofon…',rec:'Słucham…',stt:'Rozpoznaję…'}[VOICE.state])+'</span>':
+    '<span class="note">'+(att?'Uwaga trafi do agenta strony (zadanie albo pracujący agent).':ag?(live?'Agent pracuje: „Wyślij do agenta” przekazuje mu polecenie.':'„Wyślij i wykonaj”: agent wykonuje polecenie.'):'Prośba o pracę zakłada zadanie agenta i je uruchamia.')+'</span>')+'</div></form>';
   return h+'</section>';
 }
 function renderDock(r){
   const el=$('#pjdock');if(!el)return;
   const ta=el.querySelector('textarea'),cid=ta&&ta.closest('form')?ta.closest('form').dataset.pchat:'',v=ta?ta.value:'',ss=ta?ta.selectionStart:0,se=ta?ta.selectionEnd:0;
   const ms=el.querySelector('[data-pjdm]'),stick=!ms||ms.scrollHeight-ms.scrollTop-ms.clientHeight<40;
+  if(VOICE?.pid&&(!PF.more['pj-chat']||dockTarget(r)?.id!==VOICE.pid||VOICE.att!==PJD.att||
+      VOICE.ref!==PJD.ref||VOICE.route!==location.hash))voiceStop(true,false);
   const h=dockHtml(r),open=!!h&&!!PF.more['pj-chat'];
   document.body.classList.toggle('pjd-on',!!h);document.body.classList.toggle('pjd-open',open);el.classList.toggle('open',open);
   el.classList.toggle('over-dr',!!(DR&&h));
   if(!setHtml(el,h))return;
-  const t=el.querySelector('textarea');if(t&&v&&t.closest('form').dataset.pchat===cid){t.value=v;try{t.setSelectionRange(ss,se)}catch(e){}}
+  const t=el.querySelector('textarea');if(t&&v&&t.form.dataset.pchat===cid){t.value=v;try{t.setSelectionRange(ss,se)}catch(e){}}
+  else if(cid&&PJC[cid])PJC[cid].spoken=false;
   const m=el.querySelector('[data-pjdm]');if(m&&stick)m.scrollTop=m.scrollHeight;
   pjdKb();scrollLockSync();
 }
@@ -5532,7 +5575,8 @@ document.addEventListener('keydown',ev=>{
   const inside=el.contains(document.activeElement);
   if(!inside&&(DR||A.bnMore||(typeof SC!=='undefined'&&SC.cur)||(typeof ED!=='undefined'&&ED.cur)||(typeof OD!=='undefined'&&OD.ov)))return;
   if(!inside&&/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||''))return;
-  ev.preventDefault();ev.stopPropagation();pjdSet(false)},true);
+  ev.preventDefault();ev.stopPropagation();
+  if(VOICE?.pid)voiceStop(true);else pjdSet(false)},true);
 async function loadPChat(pid){
   const c=PJC[pid]||(PJC[pid]={messages:[],pending:false,error:''}),was=c.pending;
   try{const r=await fetch('/api/project/chat?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
@@ -5556,16 +5600,34 @@ async function sendPChat(f,exec){
   const ag=t&&['agent','claude','codex'].includes(t.executor)&&t.kind!=='publikacja';
   exec=!att&&ag&&(!!exec||CH_EXEC.test(text));
   if(c.pending&&!exec&&!att){say('Czekam jeszcze na odpowiedź.');return}
+  if(VOICE?.pid===pid){say('Zakończ nagrywanie i poczekaj na transkrypcję.');return}
   if(c.exec){say('Czekam jeszcze na odpowiedź.');return}
   if(!LIVE){say(PRV);return}
   const body={project:pid,message:text};if(t)body.task=t.id;if(exec)body.execute=true;
   if(att)body.attach={kind:'strona',project:att.project,page:att.page,view:att.view,selector:att.selector,elementText:att.elementText};
-  const mine={role:'ty',text:text};if(t)mine.task={id:t.id,title:t.title};if(att)mine.attach=att;
+  const spoken=!!c.spoken,mine={role:'ty',text:text};
+  if(spoken){
+    body.spoken=true;mine.spoken=true;mine.at=new Date().toISOString();
+  }
+  c.spoken=false;
+  if(t)mine.task={id:t.id,title:t.title};if(att)mine.attach=att;
   ta.value='';ta.blur();c.messages.push(mine);c.error='';if(exec||att)c.exec=true;else c.pending=true;render(true);
   const x=await post('/api/project/chat',body);
   c.exec=false;
-  if(!x.ok&&x.status!==202){if(!exec&&!att)c.pending=false;c.error=x.error||'Nie wysłano wiadomości.';render(true);return}
-  if(att){const s=wwSt(att.project);PJD.att=null;s.sel=null;if(s.pick){s.pick=false;wwPost(att.project,{pw:'wskaz',on:false})}wwPost(att.project,{pw:'czysc'});
+  if(!x.ok&&x.status!==202){
+    if(!exec&&!att)c.pending=false;
+    c.messages=c.messages.filter(m=>m!==mine);c.error=x.error||'Nie wysłano wiadomości.';render(true);
+    const draft=$('#pjdock textarea');
+    if(draft?.form.dataset.pchat===pid&&!draft.value&&pjdRef(g)?.id===t?.id&&pjdAtt(g)===att){draft.value=text;c.spoken=spoken}
+    return;
+  }
+  if(att){
+    const s=wwSt(att.project);
+    if(PJD.att===att){
+      PJD.att=null;s.sel=null;
+      if(s.pick){s.pick=false;wwPost(att.project,{pw:'wskaz',on:false})}
+      wwPost(att.project,{pw:'czysc'});
+    }
     const n=x.data&&x.data.note;if(s.d&&n)s.d.notes=[n].concat((s.d.notes||[]).filter(y=>y.id!==n.id));wwLoad(att.project)}
   if(exec||att){await load(true);loadPChat(pid);return}
   setTimeout(()=>loadPChat(pid),3000);
@@ -5631,7 +5693,7 @@ function wwMount(p){
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
       '<button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild">Zbuduj podgląd</button></div></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
-      '<aside class="ww-side"><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
+      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
       '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div></section>'+
       '<section class="panel"><h2>Uwagi <small data-wwn></small></h2><ol class="ww-notes" data-wwnotes></ol></section>'+
       '<details class="panel ww-con" data-wwcondet><summary>Nowa wersja według koncepcji</summary><form class="pad" data-wwcon="'+esc(p.id)+'">'+
@@ -5660,11 +5722,32 @@ async function wwLoad(pid){
     else s.err=String(j.error||'Podgląd jest niedostępny.')}catch(e){s.err='Brak połączenia z serwerem.'}
   const q=CUR,qc=q&&q.v==='projekt'&&q.p&&q.tab==='strona'&&wwCur(q.p);if(!(qc&&qc.id===pid))return;
   wwPaint(pid);
-  const live=s.d&&(s.d.build.state==='building'||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
+  const live=s.d&&(s.d.build.state==='building'||!!s.d.live||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
   s.tm=setTimeout(()=>wwLoad(pid),live?4000:30000);
+}
+/* budowa strony na żywo: agent strony pracuje (d.live): kroki, ostatnie czynności, zrzuty z jego .zrzuty/,
+   „Pokaż wersję w budowie” (podgląd z jego katalogu roboczego, odświeżany po każdym budowaniu) i wiadomość do agenta */
+const wwLiveOn=s=>!!(s.liveView&&s.d&&s.d.live&&s.d.live.url);
+function wwLiveHtml(pid,s){
+  const L=s.d.live;
+  if(L.state==='queued')return '<h2>Agent strony czeka w kolejce</h2><div class="pad"><p class="note">'+esc(L.title)+'</p></div>';
+  const st=(L.steps||[]).slice().reverse(),rc=(L.recent||[]).slice().reverse(),plan=L.plan||[];
+  const done=plan.filter(x=>x.done||x.status==='completed').length;
+  return '<h2>Agent pracuje nad stroną <small>'+esc(wwAgo(L.startedAt))+'</small></h2><div class="pad ww-lv">'+
+    '<p><b>'+esc(L.title)+'</b></p>'+(L.activity?'<p class="note">Teraz: '+esc(L.activity)+'</p>':'')+
+    (plan.length?'<p class="note">Kroki: '+done+' z '+plan.length+'</p>':'')+
+    (st.length?'<ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
+    (rc.length?'<details><summary class="note">Ostatnie czynności</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
+    ((L.shots||[]).length?'<div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
+    '<div class="row">'+(L.url?'<button type="button" class="btn sm" data-wwlv data-k="wwlv" aria-pressed="'+wwLiveOn(s)+'">'+(wwLiveOn(s)?'Pokaż ostatni podgląd':'Pokaż wersję w budowie')+'</button>':
+      '<span class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</span>')+
+    '<button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
+    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div>'+
+    (L.browser?'<p class="note">Agent ogląda stronę w przeglądarce (tylko swój podgląd).</p>':'')+'</div>';
 }
 function wwBuildHtml(s){
   const d=s.d;if(!d)return s.err?'<span class="ww-err">'+esc(s.err)+'</span>':'Wczytuję…';
+  if(wwLiveOn(s))return '<span class="lz blue">Wersja w budowie</span><span>z katalogu agenta, zbudowana '+esc(wwAgo(d.live.builtAt))+'</span>';
   const b=d.build||{},open=d.url?' <a href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">Otwórz w nowej karcie</a>':'';
   if(b.state==='building')return '<span class="lz blue">Buduję…</span><span>'+(d.url?'Pokazuję poprzednią wersję.':'')+'</span>';
   if(b.state==='error')return '<span class="lz red">Błąd budowania</span><span>'+esc(b.error||'')+'</span>'+open+
@@ -5689,12 +5772,16 @@ function wwPaint(pid){
   const pk=q('[data-wwpick]');pk.setAttribute('aria-pressed',String(s.pick));pk.textContent=s.pick?'Wskazywanie: kliknij element':'Wskaż';
   const bb=q('[data-wwbuild]');if(d&&d.build.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
   const fit=q('.ww-fit'),ifr=fit.querySelector('iframe'),em=q('[data-wwempty]');
-  if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  if(s.liveView&&!wwLiveOn(s))s.liveView=false;           /* agent skończył: wracamy do zbudowanego podglądu */
+  const lv=q('[data-wwlive]');lv.hidden=!(d&&d.live);if(d&&d.live)setHtml(lv,wwLiveHtml(pid,s));
+  const rb=q('[data-wwrepo]');rb.hidden=!(d&&d.repo);if(d&&d.repo){const pp=P(pid);setHtml(rb,'<div class="gh-dirty" role="status"><p>'+esc(d.repo.text)+'</p>'+(pp?'<a class="navlk inl" href="'+esc(phref(pp))+'" data-pjgo="pcode">Kod i pliki →</a>':'')+'</div>')}
+  if(wwLiveOn(s)){const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else{fit.hidden=true;em.hidden=false;setHtml(em,d?(d.build.state==='building'?'<p>Buduję pierwszy podgląd…</p>':'<p>Podglądu jeszcze nie ma.</p><button type="button" class="btn" data-wwbuild data-k="wwbuild2">Zbuduj podgląd</button><p class="note">Strony jeszcze nie ma? Zleć wykonanie według koncepcji (pole obok).</p>'):'<p>Wczytuję…</p>')}
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
     '<p class="note">Uwagę piszesz w Rozmowie (prawy dolny róg); podstrona i widok idą jako załącznik. Kliknij „Wskaż” i element w podglądzie, żeby dołączyć też element.</p>');
   const L=d?d.notes||[]:[];
-  const sb=q('[data-wwnote]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
+  const sb=q('[data-k="wwnote"]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
   setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
@@ -5717,8 +5804,9 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote]');if(!b)return;
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
+  if(b.dataset.wwlv!=null){s.liveView=!s.liveView;wwPaint(pid);focusK('wwlv');return}
   if(b.dataset.wwnote!=null){if(!LIVE){say(PRV);return}pjdAttach(pid,s);return}
   if(b.dataset.wwview){s.view=b.dataset.wwview;wwPaint(pid);return}
   if(b.dataset.wwpick!=null){s.pick=!s.pick;wwPost(pid,{pw:'wskaz',on:s.pick});wwPaint(pid);return}
@@ -6114,10 +6202,14 @@ function agBarHtml(){
   else if(no&&!a.tools.codex.found)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
   /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
-  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+
+  /* ile agentów naraz (różne projekty; w jednym projekcie po kolei): ustawienie w panelu, stan.json */
+  const pm=a.parallelMax||0,par=pm&&a.canRunTasks?'<span class="ag-par" role="group" aria-label="Agenci naraz">Naraz:'+
+    Array.from({length:pm},(_,i)=>i+1).map(n=>'<button type="button" class="btn sec sm" data-ag="par" data-v="'+n+'" data-k="par:'+n+'" aria-pressed="'+(a.maxParallel===n)+'" title="'+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+' naraz, z różnych projektów">'+n+'</button>').join('')+'</span>':'';
+  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+par+
     (no?'':pmBtn('pm'))+
     (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
   if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
+  if(a.deployHold)h+='<p class="ahint">Wdrożenie panelu czeka, aż agenci skończą pracę (najwyżej 30 min). Nowe zadania czekają w kolejce.</p>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
   const windowLabel=k=>pct(u[k])+(u[k+'New']?' (nowe okno)':'')+
@@ -6342,9 +6434,34 @@ function ghLoad(pid,fetch){
   if(fetch)A.busy['gh:'+pid]='check';else if(GHS[pid]===undefined)GHS[pid]=null;
   post('/api/github/stan',{project:pid,fetch:!!fetch}).then(r=>{if(r.status===401)return;ghSet(pid,r);if(fetch)A.busy['gh:'+pid]='';render(true)});
 }
-function ghAct(a,pid){
+/* zmiany niezatwierdzone w kopii: skąd są (przebiegi agentów), „Zatwierdź jako zmiany agenta”, „Odłóż na bok”,
+   odłożone zmiany z „Przywróć” (POST /api/repo/zatwierdz | odloz | przywroc, wykonuje konto panelu) */
+function ghDirty(pid,s,busy){
+  const id=esc(pid),dis=busy?' aria-disabled="true"':'';let h='';
+  if(s.dirtyCount){
+    const src=s.sources||[];
+    h+='<div class="gh-dirty" role="group" aria-label="Zmiany niezatwierdzone"><p>'+(src.length?'Zmiany zapisał agent w zadaniu '+
+      src.map(x=>'„'+esc(x.title)+'”'+(x.projectName?' ('+esc(x.projectName)+(x.at?', '+esc(whenT(x.at)):'')+')':'')).join('; ')+', poza swoją gałęzią.':
+      'Nie wiadomo, skąd są te zmiany: żaden agent nie zapisywał tych plików w ostatnich dniach.')+
+      ' Dopóki są, panel nie scali pracy agentów w tym repozytorium.</p><div class="gh-acts">'+
+      '<button type="button" class="btn sm" data-ag="gh-commit" data-id="'+id+'" data-k="ghcm:'+id+'"'+dis+' title="Jeden commit na gałęzi '+esc(s.branch||'')+' z opisem, z którego zadania są zmiany">'+(busy==='commit'?'Zatwierdzam…':'Zatwierdź jako zmiany agenta')+'</button>'+
+      '<button type="button" class="btn sec sm" data-ag="gh-stash" data-id="'+id+'" data-k="ghst:'+id+'"'+dis+' title="Schowek git z opisem; przywrócisz je tutaj">'+(busy==='stash'?'Odkładam…':'Odłóż na bok')+'</button></div></div>';
+  }
+  const st=s.stashes||[];
+  if(st.length)h+='<div class="gh-stash"><div class="sub">Odłożone zmiany</div><ul>'+st.map(x=>'<li><span>'+esc(x.message)+' <span class="muted">· '+esc(whenT(x.at))+' · '+kpN(x.files.length,'plik','pliki','plików')+'</span></span>'+
+    '<button type="button" class="btn sec sm" data-ag="gh-restore" data-id="'+id+'" data-ref="'+esc(x.ref)+'" data-k="ghrs:'+id+':'+esc(x.ref)+'"'+dis+(s.dirtyCount?' aria-disabled="true" title="Najpierw zatwierdź albo odłóż obecne zmiany"':'')+'>'+(busy==='restore'?'Przywracam…':'Przywróć')+'</button></li>').join('')+'</ul></div>';
+  return h;
+}
+function ghRepo(a,pid,ref){
+  const act={'gh-commit':'commit','gh-stash':'stash','gh-restore':'restore'}[a];
+  A.busy['gh:'+pid]=act;GHM[pid]=null;render(true);
+  post('/api/repo/'+({commit:'zatwierdz',stash:'odloz',restore:'przywroc'}[act]),{project:pid,ref:ref||''}).then(r=>{if(r.status===401)return;
+    A.busy['gh:'+pid]='';ghSet(pid,r);render(true);if(GHM[pid])say(GHM[pid].text,10000);load(true)});
+}
+function ghAct(a,pid,el){
   if(!LIVE){say(PRV);return}
   if(A.busy['gh:'+pid])return;
+  if(a==='gh-commit'||a==='gh-stash'||a==='gh-restore'){ghRepo(a,pid,el&&el.dataset.ref);return}
   if(a==='gh-check'){ghLoad(pid,true);render(true);return}
   if(a==='gh-rm'){A.ghConf=pid;render(true);focusK('ghn:'+pid);return}
   if(a==='gh-rm-no'){A.ghConf='';render(true);focusK('ghr:'+pid);return}
@@ -6389,6 +6506,7 @@ function ghBody(p){
     s.dirty.slice(0,8).map(d=>'<code>'+esc(d.path)+'</code>').join(', ')+(s.dirtyCount>8?', …':''):'wszystkie zatwierdzone <span class="muted">(bez .agent/, node_modules/, wyników budowania i .zrzuty/)</span>']);
   rows.push(['Sprawdzono na GitHubie',s.fetchedAt?esc(whenT(s.fetchedAt)):'jeszcze nie (kliknij „Sprawdź”)']);
   h+='<dl class="gh-dl">'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('')+'</dl>';
+  h+=ghDirty(pid,s,busy);
   /* inne gałęzie do wysłania: wybór zapamiętany w GHSEL (odświeżanie danych go nie kasuje) */
   const opt=s.branches.filter(b=>!b.current&&b.unpushed),sel=GHSEL[pid]||(GHSEL[pid]=new Set());
   if(opt.length)h+='<fieldset class="gh-sel"><legend>Wyślij też</legend>'+opt.map(b=>'<label class="prx-chk"><input type="checkbox" data-ghb="'+id+'" value="'+esc(b.name)+'"'+(sel.has(b.name)?' checked':'')+'> '+esc(b.name)+' <span class="muted num">('+b.unpushed+')</span></label>').join('')+'</fieldset>';
@@ -6761,6 +6879,7 @@ function taskHtml(t){
     mv+='<div class="abox you"><b>'+(pub?'Zatwierdź publikację':'Agent czeka na Twoją zgodę')+'</b>'+dec+'<div class="row"><button class="btn sm" data-act="ok" data-id="'+esc(t.id)+'"'+db+'>Zatwierdź</button><button class="btn sec sm" data-act="hold" data-id="'+esc(t.id)+'">Wstrzymaj</button></div></div>'}
   /* odbiór: krótko „Wynik do odbioru · wersja N” i przejście na stronę odbioru; formularze z list (nowe zadanie, poprawka) zostają */
   else if(od&&!dForm(t,'done')){mv=(pday?postBox(t,pday,false):'')+(dForm(t,'accept')||dForm(t,'fix')?accBox(t,d,db,dec):odDrawerBox(t));shown.post=1}
+  else if(ownForm(t,br,ftask)){mv=ownBox(t);shown.own=1}
   else if(d.asks.length&&!d.answers.length){mv=askBox(t);shown.ask=1}
   else if(br){mv='<div class="abox you"><b>Przejrzyj zmiany agenta i połącz je z projektem</b><p class="move">Połączenie zamyka to zadanie.</p>'+chgBlock(br,true,t)+'</div>'}
   else if(pub&&t.channel&&isDay(t.date)){mv='<div class="move-box"><b>Opublikuj ten post.</b></div>'+postBox(t,t.date.slice(0,10),true);shown.post=1}
@@ -6783,7 +6902,7 @@ function taskHtml(t){
   h+=mv;
   /* zadanie o ocenie strony: „Otwórz podgląd” w ramce ruchu (wyżej) albo pod nią */
   {const wb=wwBtn(t,'');if(wb&&mv.indexOf('data-k="wwgo:')<0)h+='<div class="row ww-go">'+wb+'</div>'}
-  if(!hasResult&&t.state!=='done'&&needsMe(t)){const ns=firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
+  if(!hasResult&&t.state!=='done'&&needsMe(t)&&!(shown.own&&(d.steps.length||d.fields.length))){const ns=shown.own?'':firstStep(t);h+=(ns&&mv.indexOf(esc(ns))<0?'<div class="gw w">następny krok: '+mdInl(ns)+'</div>':'')+(t.detail&&t.detail.doneWhen?doneLine({t:t,need:t.needsYou||''}).replace('class="gw','class="gw w'):'')}
   const liveRun=D.agents?runOf(t):null;
   const progress=(()=>{const r=liveRun;
     if(r&&isAct(r))return '<div class="dbox lv-wrap"><h3>'+(r.state==='running'?'Agent pracuje':'Agent w kolejce')+'</h3>'+lvPh(r.id)+
@@ -6795,7 +6914,7 @@ function taskHtml(t){
   if(hasResult)h+=odVersionList(ODR[t.id],rv,true)+progress;
   h+='<label class="fl"><span>Tytuł</span><textarea class="fi ttl" rows="2" maxlength="160" data-f="title" aria-label="Tytuł">'+esc(t.title)+'</textarea></label>';
   h+=checkBox(t);
-  h+=planBlock(t);
+  h+=planBlock(t,!!shown.own);
   if(pub&&t.channel&&isDay(t.date)&&!shown.post)h+=postBox(t,t.date.slice(0,10),false,shown.film?'text':'');
   h+=wynBlock(t,d,zg,!!dForm(t,'accept')||!!dForm(t,'fix'),t.executor==='ty',readUp||!!rv);
   if(pday&&!shown.post)h+=postBox(t,pday,false,shown.film&&pday===fday?'text':'');
@@ -6851,7 +6970,7 @@ function pnMsg(m,here){const l=String(m.label||''),c=PNL[l]||(/^(blokada|błąd|
     (m.restart&&(m.live==='running'||m.live==='queued')?'<div class="row"><button type="button" class="btn sec sm" data-restart="'+esc(m.restart)+'">Zatrzymaj i uruchom z poprawką</button></div>':'')+'</div></div>'}
 const chatRef=m=>(m.task&&m.task.title?'<small class="cm-ref">O zadaniu: '+(m.task.id&&m.task.id!==(DR&&DR.id)?'<button type="button" class="lk" data-task="'+esc(m.task.id)+'">'+esc(shortT(m.task.title,70))+'</button>':esc(shortT(m.task.title,70)))+(m.exec?' · polecenie dla agenta':'')+'</small>':m.exec?'<small class="cm-ref">Polecenie dla agenta</small>':'')+
   (m.attach?'<small class="cm-ref">Załącznik: '+esc(attLabel(m.attach))+'</small>':'');
-const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+(m.role==='ty'?chatRef(m):'')+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
+const chatMsg=(m,here,p)=>m.role==='panel'?pnMsg(m,here):'<div class="cm '+(m.role==='ty'?'me':'ai')+'"><b>'+(m.role==='ty'?'Ty':'Claude')+'</b>'+(m.spoken?'<small class="cm-ref">mówione · '+esc(whenT(m.at))+'</small>':'')+(m.role==='ty'?chatRef(m):'')+chatText(m.text,m.role==='ty'?null:{p:p||null})+'</div>';
 /* czy któreś uruchomienie z rozmowy jest w kolejce albo w toku (wtedy rozmowa odświeża się co 5 s) */
 const pnLive=L=>(L||[]).some(m=>m.role==='panel'&&(m.live==='queued'||m.live==='running'));
 async function loadChat(id){
@@ -6866,13 +6985,13 @@ async function loadChat(id){
 const MV={};
 const matKey=(t,r)=>t.project+'|'+r.path+'#'+r.anchor;
 const refLabel=r=>(r.path.split('/').pop()||r.path)+(r.anchor?' #'+r.anchor:'');
-function planBlock(t){
+function planBlock(t,noSteps){
   const d=t.detail||normDetail(null);
   if(!hasPlan(d))return '<div class="dbox"><h3>Co zrobić</h3><p class="note">Brak szczegółów: cel, warunek ukończenia, kroki, materiały.</p>'+editBlock(t)+'</div>';
   const nd=d.steps.filter(x=>x.done).length;
   let h='<div class="dbox"><h3><span>Co zrobić</span>'+(d.steps.length?'<small class="num">kroki '+nd+' z '+d.steps.length+'</small>':'')+'</h3>';
   if(d.goal)h+='<p>'+esc(d.goal)+'</p>';
-  if(d.steps.length)h+='<ul class="steps-ro">'+d.steps.map(x=>'<li><label><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label></li>').join('')+'</ul>';
+  if(d.steps.length&&!noSteps)h+='<ul class="steps-ro">'+d.steps.map(x=>'<li><label><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label></li>').join('')+'</ul>';
   if(d.doneWhen)h+='<div class="sub">Gotowe, gdy</div><p>'+esc(d.doneWhen)+'</p>';
   if(d.refs.length)h+='<div class="sub">Materiały</div>'+matButtons(t,'p');
   if(d.notes.length)h+='<div class="sub">Notatki</div><ul class="notes">'+d.notes.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
@@ -7000,8 +7119,12 @@ function chgBlock(r,bare,t){
   }
   h+='<div class="row">'+b.join('')+'</div>'+cf;
   if(open)h+=diffView(r);
+  if(!r.pseudo&&r.parts&&r.parts.length)h+=r.parts.map(x=>'<div class="sub">Część: '+esc(x.label)+'</div>'+chgBlock(partRun(r,x),true)).join('');
   return h+'</div>';
 }
+/* gałąź agenta w repozytorium części (zadanie projektu z częściami): przyciski jak przy gałęzi z pola „gałąź:” */
+function partRun(r,x){const id='b:'+x.project+'|'+x.branch;
+  return BR[id]||(BR[id]={id:id,pseudo:true,project:x.project,branch:x.branch,base:'',changes:x.changes,merged:'',task:''});}
 function diffView(r){
   if(!LIVE)return '<p class="note">Podgląd zmian działa w panelu na serwerze.</p>';
   const d=DF[r.id];
@@ -7021,6 +7144,78 @@ function branchRun(t){
   return BR[id]||(BR[id]={id:id,pseudo:true,project:t.project,branch:b,base:'',changes:[],merged:'',task:t.id});
 }
 const diffUrl=id=>{const b=BR[id];return '/api/agent/diff?'+(b?'project='+encodeURIComponent(b.project)+'&branch='+encodeURIComponent(b.branch):'id='+encodeURIComponent(id))};
+/* ---------- formularz zadania właściciela: cel, pola z „pyta:” (typy), kroki, „Zrobione” ----------
+   Zrobione zapisuje odpowiedzi (odpowiedź:) i zamyka zadanie jednym żądaniem POST /api/task/finish; zadania z po:
+   na tym zadaniu przestają czekać. Zadanie bez pyta: raz prosi serwer o propozycję pól (POST /api/task/pola). */
+const ownForm=(t,br,ftask)=>{const d=t.detail;
+  return t.state!=='done'&&(t.executor==='ty'||!t.executor)&&t.kind!=='publikacja'&&!t.needsYou&&(d.fields.length>0||(!br&&!ftask))};
+const ownInputs=t=>t.detail.fields.filter(f=>f.type!=='hasło');
+/* zadanie, dla którego serwer może zaproponować pola (jak pola.needs_fields) */
+const fieldsDue=t=>t.executor==='ty'&&t.state!=='done'&&t.kind!=='publikacja'&&!t.needsYou&&!t.counter&&!t.detail.asks.length&&!t.detail.branch&&!/^kampanie\//.test(t.file||'');
+const FLD={};
+function askFields(t){
+  if(!LIVE||FLD[t.id]||!fieldsDue(t))return;
+  FLD[t.id]='wait';const ref=refOf(t);
+  /* bez kolejki zapisów: wywołanie modelu trwa do ok. minuty, a „Zrobione” ma działać od razu */
+  post('/api/task/pola',{id:ref.id,title:ref.title}).then(r=>{FLD[t.id]=r.ok?'done':'fail';
+    if(r.ok&&r.data&&r.data.asks&&!pending)load(true);else if(DR&&DR.kind==='task'&&DR.id===t.id)renderDrawer()},()=>{FLD[t.id]='fail'});
+}
+/* wartość pola: wpisana w tej sesji (DR.fv), zapisana odpowiedź albo pusta */
+function ownVal(t,f,i){
+  if(DR&&DR.fv&&DR.fv['a'+i]!=null)return DR.fv['a'+i];
+  const a=t.detail.answers.find(x=>x.label===f.label||x.label===f.label.replace(/=/g,'-'));return a?a.value:'';
+}
+function fieldHtml(t,f,i){
+  const v=ownVal(t,f,i),k='a'+i,at=' data-fv="'+k+'" data-k="fv:'+k+'" autocomplete="off"',lab='<span>'+esc(f.label)+'</span>';
+  if(f.type==='hasło')return '<p class="note own-pw">'+esc(f.label)+' wpisujesz sam '+(f.where?esc(f.where.replace(/\.$/,'')):'w serwisie, którego dotyczy')+', nie w panelu.</p>';
+  if(f.type==='tak/nie')return '<label class="own-chk"><input type="checkbox"'+at+(v==='tak'?' checked':'')+'>'+lab+'</label>';
+  if(f.type==='wybór')return '<label class="fl">'+lab+'<select class="fi"'+at+'>'+opt([['','wybierz']].concat(f.options.map(o=>[o,o])),f.options.indexOf(v)>=0?v:'')+'</select></label>';
+  const ty=f.type==='liczba'?' inputmode="decimal"':f.type==='data'?' type="date"':f.type==='link'?' type="url" inputmode="url" autocapitalize="none" spellcheck="false"':'';
+  const ph=f.hint||(f.type==='link'?'https://…':'');
+  return '<label class="fl">'+lab+'<input class="fi'+(f.type==='liczba'?' num':'')+'"'+ty+at+' maxlength="200"'+(ph?' placeholder="'+esc(ph)+'"':'')+' value="'+esc(v)+'"></label>';
+}
+function ownBox(t){
+  const d=t.detail,L=(t.unlocksL||[]).filter(u=>!u.done),goal=d.goal?cap(d.goal.replace(/\.$/,''))+'.':'';
+  askFields(t);
+  let h='<div class="abox you own"><b>Twój ruch</b>'+(goal?'<p class="move">'+esc(goal)+'</p>':'')+'<form class="dform" data-dform="own" novalidate>';
+  h+=d.fields.map((f,i)=>fieldHtml(t,f,i)).join('');
+  if(d.steps.length)h+='<div class="own-steps" role="group" aria-label="Kroki">'+d.steps.map(x=>'<label class="own-chk"><input type="checkbox" data-step="'+x.i+'" data-k="step:'+x.i+'"'+(x.done?' checked':'')+'><span'+(x.done?' class="ok"':'')+'>'+esc(x.text)+'</span></label>').join('')+'</div>';
+  if(needsCount(t))h+=countField(t);
+  if(FLD[t.id]==='wait'&&!d.fields.length)h+='<p class="note" role="status">Sprawdzam, czy to zadanie potrzebuje danych od Ciebie…</p>';
+  const ww=wwBtn(t,'');
+  h+='<div class="row">'+ww+'<button class="btn sm" data-k="fv:own">Zrobione</button>'+(L.length?'<span class="rsn">Potem: '+esc(L.map(u=>u.title).join('; '))+'</span>':'')+'</div></form></div>';
+  return h;
+}
+/* sprawdzenie jak projekt.answer_of: komunikat albo '' */
+const NUM_RE=/^-?\d{1,3}(?:[  ]\d{3})+(?:[.,]\d+)?$|^-?\d+(?:[.,]\d+)?$/;
+function ownCheck(f,v){
+  if(f.type==='tak/nie')return '';
+  if(!v)return 'Wpisz: '+f.label+'.';
+  if(f.type==='liczba'&&!NUM_RE.test(v))return f.label+': wpisz liczbę.';
+  if(f.type==='data'&&!/^\d{4}-\d\d-\d\d$/.test(v))return f.label+': wybierz datę.';
+  if(f.type==='link'&&!/^https?:\/\/\S+$/.test(v))return f.label+': adres zaczyna się od https://.';
+  if(f.type==='wybór'&&f.options.indexOf(v)<0)return f.label+': wybierz jedną z opcji.';
+  return '';
+}
+function saveOwn(t,f){
+  const d=t.detail,vals=[];let n=null;
+  for(let i=0;i<d.fields.length;i++){const fl=d.fields[i];if(fl.type==='hasło'){vals.push(null);continue}
+    const x=f.querySelector('[data-fv="a'+i+'"]');const v=fl.type==='tak/nie'?!!(x&&x.checked):cleanT(x?x.value:'').slice(0,200);
+    const e=ownCheck(fl,v);if(e){say(e);focusK('fv:a'+i);return}vals.push(v)}
+  if(f.querySelector('[data-fv="count"]')){const c=String((f.querySelector('[data-fv="count"]')||{}).value||'').replace(/\s/g,'');
+    if(c&&!/^\d{1,6}$/.test(c)){say('Liczba całkowita od 0.');focusK('fv:count');return}n=c?+c:null}
+  const prev={answers:d.answers,state:t.state};
+  d.answers=d.fields.map((fl,i)=>fl.type==='hasło'?null:{label:fl.label,value:fl.type==='tak/nie'?(vals[i]?'tak':'nie'):vals[i]}).filter(Boolean);
+  t.state='done';if(DR){DR.form='';DR.fv=null}derive(D);render(true);
+  if(!LIVE){say(PRV);return}
+  const ref=refOf(t),body={id:ref.id,title:ref.title,values:vals};if(n!=null)body.count=n;
+  enqueue(async()=>{
+    const r=await post('/api/task/finish',body);
+    if(!r.ok){Object.assign(d,{answers:prev.answers});t.state=prev.state;derive(D);render(true);if(r.status!==401)say(failMsg(r,'Nie zamknięto zadania.'));return}
+    const L=(t.unlocksL||[]).filter(u=>!u.done);
+    say((vals.some(v=>v!=null)?'Zapisano odpowiedzi i zamknięto zadanie.':'Zamknięto zadanie.')+(L.length?' Odblokowane: '+shortT(L[0].title,60)+(L.length>1?' (+'+(L.length-1)+')':'')+'.':''));
+  });
+}
 /* formularz „pyta:”: właściciel wpisuje kilka wartości, resztę robi agent w zadaniu z po: na tym zadaniu */
 function askBox(t){
   const d=t.detail,n=d.asks.length,L=(t.unlocksL||[]).filter(u=>!u.done);
@@ -7164,8 +7359,8 @@ function wynBlock(t,d,decIn,leftIn,own,readUp){
       (ra.length?'<div class="mats">'+ra.map(r=>'<a class="btn sec sm" href="'+esc(assetUrl(t,r))+'" target="_blank" rel="noopener">'+esc(r.path.split('/').pop())+'</a>').join('')+'</div>':''):'')+'</div>';
 }
 const nextText=n=>esc(n.title)+(n.executor?' · '+esc(WHO[n.executor].n):'')+(isDay(n.date)?' · '+ddl(n.date):'');
-/* zadanie kto: ty z warunkiem „gotowe gdy”: przy „Zrobione” najpierw pole na wynik */
-const needsResult=t=>t.executor==='ty'&&!t.needsYou&&t.state!=='done'&&t.kind!=='publikacja'&&!!t.detail.doneWhen;
+/* zadanie właściciela z polami do wpisania (pyta:): „Zrobione” w listach otwiera szczegóły z formularzem */
+const needsResult=t=>t.state!=='done'&&ownForm(t,t.detail.branch?1:null,false)&&ownInputs(t).length>0;
 /* odbiór z resztą pracy albo z propozycją następnego zadania: „Odebrane” pokazuje formularz nowego zadania */
 const hasFollow=t=>!!(t.detail.left||t.detail.next);
 const dForm=(t,k)=>DR&&DR.kind==='task'&&DR.id===t.id&&DR.form===k;
@@ -7252,6 +7447,7 @@ function openForm(id,k){
   const t=D.tasks.find(x=>x.id===id);if(!t)return;
   if(!(DR&&DR.kind==='task'&&DR.id===id))openDrawer('task',id);
   if(!DR||DR.kind!=='task')return;
+  if(k==='done'&&needsResult(t)){renderDrawer(true);focusK('fv:a'+t.detail.fields.findIndex(f=>f.type!=='hasło'));return}
   DR.form=k;DR.fv=formInit(t,k);renderDrawer(true);
   focusK(k==='accept'?'fv:title':k==='fix'?'fv:fix':needsCount(t)?'fv:count':'fv:result');
 }
@@ -9053,7 +9249,7 @@ function renderDrawer(force){
 /* ---------- asystent: rozmowa, głos i sterowanie panelem w każdym widoku ---------- */
 /* mic: ''|'start' (zgoda na mikrofon)|'rec' (nagrywanie)|'stt' (rozpoznawanie na serwerze); voice: serwer rozpoznaje mowę */
 const AS={messages:[],pending:false,error:'',loaded:false,partial:'',activity:'',voice:false,
-  mic:'',rec:null,stream:null,chunks:[],t0:0,tick:0,cancel:false,keyAt:0,pressAt:0,skipClick:false,poll:0,boot:false,hist:false,mcount:-1};
+  mic:'',t0:0,keyAt:0,poll:0,boot:false,hist:false,mcount:-1};
 /* działania na końcu odpowiedzi asystenta, każde w osobnym wierszu (prompt w agents.py, assistant_prompt):
    Pokaż: #adres · Otwórz: <id zadania albo tytuł> · Przewiń: <nagłówek> · Zamknij: szczegóły. Nie są pokazywane. */
 /*asActs:start*/
@@ -9103,8 +9299,12 @@ function asMsgs(){let h='';
   if(AS.error)h+='<p class="warn">'+esc(AS.error)+'</p>';
   return h}
 const AS_MICI='<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg>';
-function asMicHtml(){if(!AS.voice)return '';const on=AS.mic==='rec'||AS.mic==='start';
-  return '<button type="button" class="btn sec as-mic" data-asmic="1" aria-pressed="'+on+'"'+(AS.mic==='stt'?' disabled':'')+' title="Mów (przytrzymaj spację)">'+(on?'Stop':AS_MICI+'Mów')+'</button>'}
+function asMicHtml(){return AS.voice?voiceButton(''):''}
+function voiceButton(pid){
+  const state=VOICE?.pid===pid?VOICE.state:'',on=state==='rec'||state==='start';
+  return '<button type="button" class="btn sec as-mic" data-voice="'+esc(pid)+'" data-k="voice" aria-pressed="'+on+'"'+
+    (state==='stt'?' disabled':'')+' title="'+(pid?'Kliknij albo przytrzymaj, aby mówić':'Mów (przytrzymaj spację)')+'">'+(on?'Stop':AS_MICI+'Mów')+'</button>';
+}
 function asRender(){
   const h0=$('#asys');if(!h0||!D)return;
   if(LIVE&&!AS.boot){AS.boot=true;asLoad();apLibLoad()}
@@ -9116,7 +9316,11 @@ function asRender(){
   const host=sc?$('#asdock'):h0;
   if(sc&&h0.firstChild)h0.innerHTML='';
   /* rozmowa jest tylko na stronie Asystent; po wyjściu nagrywanie się kończy */
-  if(!page){if(h0.firstChild){if(AS.mic)asRecStop(true);h0.innerHTML=''}return}
+  if(!page){
+    if((AS.mic==='start'||AS.mic==='rec')&&VOICE?.route!==location.hash)voiceStop(true);
+    if(h0.firstChild)h0.innerHTML='';
+    return;
+  }
   if(!host)return;
   if(!host.querySelector('.ap-dock'))host.innerHTML='<section class="ap-dock" aria-label="Rozmowa z asystentem"><div class="ap-dh"><h2>Rozmowa</h2>'+
     '<button type="button" class="btn sec sm ap-hist" data-ashist="1" aria-controls="asms"></button><button type="button" class="btn sec sm" data-asnew="1" title="Nowa rozmowa; przypięte karty zostają">Nowa</button></div>'+
@@ -9157,72 +9361,143 @@ async function asSend(text){
   if(!x.ok&&x.status!==202){AS.pending=false;AS.error=x.error||'Nie wysłano wiadomości.';asRender();return}
   asPoll(300);
 }
-/* mikrofon: nagranie w przeglądarce (MediaRecorder), rozpoznawanie na serwerze (POST /api/asystent/glos) */
-const AS_TYPES=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
-const AS_MAXS=60;
-function asRelease(){clearInterval(AS.tick);AS.tick=0;if(AS.stream){AS.stream.getTracks().forEach(t=>t.stop());AS.stream=null}}
-async function asRecStart(){
-  if(AS.mic)return;
+/* Wspólne nagrywanie i rozpoznawanie mowy dla Asystenta i Rozmowy projektu. */
+const VOICE_TYPES=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+let VOICE=null,voicePress=null;
+function voicePaint(v){
+  if(v.pid)renderDock(CUR);
+  else{AS.mic=VOICE===v?v.state:'';AS.t0=v.t0;asRender()}
+}
+function voiceRelease(v){
+  clearInterval(v.tick);
+  if(v.stream){v.stream.getTracks().forEach(t=>t.stop());v.stream=null}
+}
+function voiceFinish(v,paint=true){
+  if(VOICE!==v)return;
+  VOICE=null;voiceRelease(v);if(paint)voicePaint(v);
+}
+function voiceStop(cancel=false,paint=true){
+  const v=VOICE;if(!v)return;
+  if(cancel||v.state==='start'){
+    voiceFinish(v,paint);
+    try{if(v.rec&&v.rec.state!=='inactive')v.rec.stop()}catch(e){}
+    return;
+  }
+  if(v.state!=='rec')return;
+  v.state='stt';
+  try{v.rec.stop()}catch(e){voiceFinish(v);say('Nie udało się zakończyć nagrania.');return}
+  voiceRelease(v);voicePaint(v);
+}
+async function voiceStart(pid=''){
+  if(VOICE)return;
   if(!LIVE){say(PRV);return}
-  if(AS.pending){say('Czekam jeszcze na odpowiedź.');return}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){say('Ta przeglądarka nie nagrywa dźwięku. Napisz wiadomość.');return}
-  AS.mic='start';AS.cancel=false;AS.error='';asRender();
-  post('/api/asystent/glos/start',{}).then(x=>{if(x.status===409&&x.data&&x.data.voice===false){AS.voice=false;asRender()}});
-  let st;
-  try{st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
-  catch(e){AS.mic='';asRender();say(e&&(e.name==='NotAllowedError'||e.name==='SecurityError')?'Zezwól przeglądarce na mikrofon.':'Mikrofon jest niedostępny.');return}
-  if(AS.mic!=='start'){st.getTracks().forEach(t=>t.stop());return}
-  const type=AS_TYPES.find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'';
-  let rec;try{rec=type?new MediaRecorder(st,{mimeType:type}):new MediaRecorder(st)}catch(e){st.getTracks().forEach(t=>t.stop());AS.mic='';asRender();say('Nie udało się włączyć nagrywania.');return}
-  AS.stream=st;AS.rec=rec;AS.chunks=[];
-  rec.ondataavailable=e=>{if(e.data&&e.data.size)AS.chunks.push(e.data)};
-  rec.onstop=()=>asRecDone(rec.mimeType||type);
-  rec.start();AS.mic='rec';AS.t0=Date.now();asRender();
-  AS.tick=setInterval(()=>{const s=Math.floor((Date.now()-AS.t0)/1000),el=$('#asrec');if(el)el.textContent=asFmt(s);if(s>=AS_MAXS)asRecStop()},250);
+  if(!pid&&AS.pending){say('Czekam jeszcze na odpowiedź.');return}
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say('Przeglądarka nie udostępnia mikrofonu. Napisz wiadomość.');return}
+  const v=VOICE={pid,state:'start',att:PJD.att,ref:PJD.ref,route:location.hash};
+  if(!pid)AS.error='';
+  voicePaint(v);
+  post('/api/asystent/glos/start',{}).then(x=>{
+    if(VOICE!==v||x.status!==409||x.data?.voice!==false)return;
+    if(!pid)AS.voice=false;
+    voiceStop(true);say(x.error||'Rozpoznawanie mowy jest niedostępne na serwerze.');
+  });
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}})}
+  catch(e){
+    if(VOICE!==v)return;
+    voiceFinish(v);
+    say(['NotAllowedError','SecurityError'].includes(e.name)?'Zezwól przeglądarce na mikrofon.':'Mikrofon jest niedostępny.');
+    return;
+  }
+  if(VOICE!==v){stream.getTracks().forEach(t=>t.stop());return}
+  v.stream=stream;
+  const type=VOICE_TYPES.find(m=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))||'',chunks=[];
+  try{
+    const rec=v.rec=type?new MediaRecorder(stream,{mimeType:type}):new MediaRecorder(stream);
+    rec.ondataavailable=e=>{if(VOICE===v&&e.data?.size)chunks.push(e.data)};
+    rec.onstop=()=>voiceTranscribe(v,rec.mimeType||type,chunks);
+    rec.onerror=()=>{if(VOICE===v){voiceFinish(v);say('Nagrywanie zostało przerwane.')}};
+    rec.start();
+  }catch(e){voiceFinish(v);say('Nie udało się włączyć nagrywania.');return}
+  v.state='rec';v.t0=Date.now();voicePaint(v);
+  v.tick=setInterval(()=>{
+    const s=Math.floor((Date.now()-v.t0)/1000),el=$('#asrec');
+    if(!pid&&el)el.textContent=asFmt(s);
+    if(s>=60)voiceStop();
+  },250);
 }
-function asRecStop(cancel){
-  if(AS.mic==='start'){AS.mic='';asRender();return}
-  if(AS.mic!=='rec'||!AS.rec)return;
-  AS.cancel=!!cancel;AS.mic='stt';asRelease();asRender();
-  try{AS.rec.stop()}catch(e){AS.mic='';asRender()}
-}
-async function asRecDone(type){
-  const rec=AS.rec,ms=Date.now()-AS.t0;AS.rec=null;asRelease();
-  if(AS.cancel||!rec){AS.mic='';AS.cancel=false;asRender();return}
-  const ct=String(type||'audio/webm').split(';')[0],blob=new Blob(AS.chunks,{type:ct});AS.chunks=[];
-  if(ms<500||blob.size<800){AS.mic='';asRender();say('Nagranie za krótkie. Przytrzymaj Mów albo spację i mów.');return}
-  let j={},st=0;
-  try{const r=await fetch('/api/asystent/glos?view='+encodeURIComponent(location.hash||'#asystent')+'&open='+encodeURIComponent(asOpenId()),
-      {method:'POST',headers:{'Content-Type':ct},body:blob});st=r.status;if(st===401){location.assign('/wejscie');return}j=await r.json().catch(()=>({}))}
-  catch(e){AS.mic='';AS.error='Brak połączenia z serwerem.';asRender();return}
-  AS.mic='';
+async function voiceTranscribe(v,type,chunks){
+  if(VOICE!==v)return;
+  voiceRelease(v);
+  const ct=(type||'audio/webm').split(';')[0],blob=new Blob(chunks,{type:ct});
+  chunks.length=0;
+  if(Date.now()-v.t0<500||blob.size<800){voiceFinish(v);say('Nagranie za krótkie. Kliknij Mów i spróbuj ponownie.');return}
+  v.state='stt';voicePaint(v);
+  const q=new URLSearchParams(v.pid?{draft:'1'}:{view:location.hash||'#asystent',open:asOpenId()});
+  let j={},ok=false;
+  try{
+    const r=await fetch('/api/asystent/glos?'+q,{method:'POST',headers:{'Content-Type':ct},body:blob});
+    if(r.status===401){location.assign('/wejscie');return}
+    ok=r.ok;j=await r.json().catch(()=>({}));
+  }catch(e){j.error='Brak połączenia z serwerem.'}
+  if(VOICE!==v)return;
+  voiceFinish(v);
+  if(v.pid){
+    if(!ok||!j.text){say(j.error||'Nie udało się rozpoznać nagrania.');return}
+    const ta=$('#pjdock textarea');
+    if(!ta||ta.form.dataset.pchat!==v.pid)return;
+    const prefix=ta.value.trimEnd();
+    const head=prefix?prefix+'\n':'';
+    if(head.length>=ta.maxLength){say('Brak miejsca na transkrypcję w polu wiadomości.');return}
+    ta.value=(head+j.text).slice(0,ta.maxLength);
+    PJC[v.pid].spoken=true;
+    if(head.length+j.text.length>ta.maxLength)say('Transkrypcja została skrócona do limitu wiadomości.');
+    return;
+  }
   if(j.voice===false)AS.voice=false;
-  if(j.text&&(st===202||j.ok)){AS.messages.push({role:'ty',text:j.text});AS.pending=true;AS.partial='';AS.activity='';AS.error='';asRender();asPoll(300);return}
+  if(ok&&j.text){AS.messages.push({role:'ty',text:j.text});AS.pending=true;AS.partial='';AS.activity='';AS.error='';asRender();asPoll(300);return}
   AS.error=j.error||'Nie udało się rozpoznać nagrania.';
   if(j.text){const ta=$('.ap-dock textarea');if(ta&&!ta.value)ta.value=j.text}
   asRender();
 }
+function voiceToggle(pid){
+  if(VOICE){if(VOICE.pid===pid)voiceStop();return}
+  voiceStart(pid);
+}
+/* Mysz: przytrzymanie kończy po puszczeniu. Dotyk i klawiatura: klik przełącza. */
+document.addEventListener('pointerdown',ev=>{
+  const b=ev.target.closest?.('[data-voice]');
+  if(!b||ev.pointerType!=='mouse'||ev.button!==0||b.disabled)return;
+  ev.preventDefault();
+  const was=VOICE;b._voiceMouse=true;voiceToggle(b.dataset.voice);
+  voicePress={at:Date.now(),started:was?null:VOICE};
+});
+document.addEventListener('pointerup',()=>{
+  const press=voicePress;voicePress=null;
+  if(press?.started&&VOICE===press.started&&Date.now()-press.at>600)voiceStop();
+});
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest?.('[data-voice]');if(!b)return;
+  ev.preventDefault();
+  if(b._voiceMouse&&ev.detail){b._voiceMouse=false;return}
+  voiceToggle(b.dataset.voice);
+});
 /* spacja (fokus poza polem, przyciskiem i linkiem): przytrzymaj i mów albo naciśnij, mów i naciśnij jeszcze raz; Esc przerywa nagranie */
 const asKeyFree=()=>{const a=document.activeElement;
   return !a||a===document.body||!a.closest('input,textarea,select,button,a[href],summary,[contenteditable],[role=button],[role=checkbox],[role=switch],[role=tab],[role=option],[role=menuitem],[role=slider]')};
 document.addEventListener('keydown',ev=>{
-  if(ev.key==='Escape'&&(AS.mic==='rec'||AS.mic==='start')){ev.preventDefault();ev.stopPropagation();asRecStop(true);return}
-  if(ev.key!==' '||ev.ctrlKey||ev.metaKey||ev.altKey||!D||!LIVE||!AS.voice||!asKeyFree())return;
+  if(ev.key==='Escape'&&(AS.mic==='rec'||AS.mic==='start')){ev.preventDefault();ev.stopPropagation();voiceStop(true);return}
+  if(VOICE?.pid||ev.key!==' '||ev.ctrlKey||ev.metaKey||ev.altKey||!D||!LIVE||!AS.voice||!asKeyFree())return;
   ev.preventDefault();ev.stopPropagation();if(ev.repeat)return;
-  if(AS.mic==='rec'||AS.mic==='start'){asRecStop();return}
-  AS.keyAt=Date.now();if(!asPage())location.hash='#asystent';asRecStart()},true);
-document.addEventListener('keyup',ev=>{if(ev.key!==' '||!AS.keyAt)return;const held=Date.now()-AS.keyAt;AS.keyAt=0;if(held>600&&AS.mic)asRecStop()},true);
-/* myszka: naciśnięcie zaczyna, przytrzymanie ponad 0,6 s kończy po puszczeniu; dotyk i klawiatura: klik przełącza */
-document.addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.target.closest('[data-asmic]');if(!b||ev.pointerType!=='mouse'||ev.button!==0||b.disabled)return;
-  ev.preventDefault();AS.skipClick=true;if(AS.mic==='rec'||AS.mic==='start'){asRecStop();return}AS.pressAt=Date.now();asRecStart()});
-document.addEventListener('pointerup',()=>{if(!AS.pressAt)return;const held=Date.now()-AS.pressAt;AS.pressAt=0;if(held>600&&AS.mic)asRecStop()});
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-ashist],[data-asnew],[data-asmic],[data-ascancel],[data-asq]');if(!b)return;
+  if(AS.mic==='rec'||AS.mic==='start'){voiceStop();return}
+  AS.keyAt=Date.now();if(!asPage())location.hash='#asystent';voiceStart()},true);
+document.addEventListener('keyup',ev=>{if(ev.key!==' '||!AS.keyAt)return;const held=Date.now()-AS.keyAt;AS.keyAt=0;if(held>600&&AS.mic)voiceStop()},true);
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-ashist],[data-asnew],[data-ascancel],[data-asq]');if(!b)return;
   ev.preventDefault();
   if(b.dataset.ashist!=null){AS.hist=!AS.hist;asRender()}
   else if(b.dataset.asnew!=null){if(AS.pending)return;if(!LIVE){say(PRV);return}
     post('/api/asystent/nowa',{}).then(async()=>{AS.messages=[];AS.error='';AS.hist=false;AS.mcount=0;await apLibLoad();render()})}
-  else if(b.dataset.asmic!=null){if(AS.skipClick){AS.skipClick=false;return}if(AS.mic==='rec'||AS.mic==='start')asRecStop();else asRecStart()}
-  else if(b.dataset.ascancel!=null)asRecStop(true);
+  else if(b.dataset.ascancel!=null)voiceStop(true);
   else if(b.dataset.asq!=null){if(asMode()==='sceny'){ASC.ask(b.dataset.asq);return}if(!asPage())location.hash='#asystent';asSend(b.dataset.asq)}
 });
 document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset||f.dataset.asform==null)return;ev.preventDefault();ev.stopPropagation();
@@ -10956,6 +11231,12 @@ function runCheck(){
   if(!LIVE){simRun({kind:'check',tool:'claude',title:KIND.check});return}
   A.busy.check=true;render();agentPost('/api/agent/check',{tool:'claude'},'Test nie ruszył.');
 }
+function setParallel(n){
+  const a=D.agents;if(!a||!n||a.maxParallel===n)return;
+  a.maxParallel=n;render(true);focusK('par:'+n);
+  if(!LIVE){say(PRV);return}
+  agentPost('/api/agent/rownolegle',{value:n},'Nie zmieniono liczby agentów naraz.',()=>say(n+' '+pl(n,'agent','agentów','agentów')+' naraz, w jednym projekcie po kolei.'));
+}
 function setAutomat(){
   const a=D.agents;if(!a)return;
   a.automat=!a.automat;render();
@@ -11027,6 +11308,7 @@ function submitForm(f){
   else if(k==='edit')saveEdit(t);
   else if(k==='pub')savePub(t);
   else if(k==='ask')saveAsks(t,t.detail.asks.map((_,i)=>val('a'+i)));
+  else if(k==='own')saveOwn(t,f);
 }
 function agentAct(el){
   const a=el.dataset.ag,id=el.dataset.id||'';
@@ -11042,13 +11324,14 @@ function agentAct(el){
     });
   }
   else if(a==='automat')setAutomat();
+  else if(a==='par')setParallel(+el.dataset.v);
   else if(a==='copy')copyCmd();
   else if(a==='login')openLogin();
   else if(a==='recheck')recheckLogin();
   else if(a==='prm'){A.confirm=id;render(true);focusK('pn:'+id)}
   else if(a==='prm-no'){A.confirm='';render(true);focusK('pr:'+id)}
   else if(a==='prm-yes')removeProject(id);
-  else if(a.startsWith('gh-'))ghAct(a,id);
+  else if(a.startsWith('gh-'))ghAct(a,id,el);
   else if(a==='padd-go'){const d=$('#padd-d');if(d&&!d.open){d.open=true;(A.prxDet||(A.prxDet={})).add=true}const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
   else if(a==='prx-zl')prxDelegate(id);
   else if(a==='plan-go')acceptPlan(id);
@@ -11348,7 +11631,7 @@ document.addEventListener('change',ev=>{
   if(el.dataset.pch&&DR){const f=PL[DR.id];if(f)f.ch[el.dataset.pch]=el.checked;return}
   if((el.dataset.pday!=null||el.dataset.ptime!=null)&&DR){const f=PL[DR.id];if(f){if(el.dataset.pday!=null)f.day=el.value;else f.time=el.value}return}
   if(el.dataset.fbmap){if(!LIVE){say(PRV);return}enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.dataset.fbmap,project:el.value});say(x.ok?'Zapisano projekt strony.':failMsg(x,'Nie zapisano.'))});return}
-  if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.value;return}
+  if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.type==='checkbox'?(el.checked?'tak':'nie'):el.value;return}
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
   if(el.dataset.psel){const m=A.psel[el.dataset.psel]||(A.psel[el.dataset.psel]={});m[el.dataset.pid]=el.checked;render(true);return}
   if(el.id==='tyfp'){const F=tyFlt();F.p=el.value;tyStore(TY_F_KEY,F);render(true);focusK('tyfp');return}
@@ -11396,6 +11679,8 @@ document.addEventListener('submit',ev=>{
   else if(f.dataset.addc){ti.value='';addTask(f.dataset.pid,{campaign:f.dataset.addc},v);ti.focus()}
 });
 document.addEventListener('input',ev=>{
+  const ta=ev.target.closest?.('.pjd-f textarea'),chat=ta&&PJC[ta.form.dataset.pchat];
+  if(chat&&!ta.value.trim())chat.spoken=false;
   if(ev.target.dataset&&ev.target.dataset.edtxt!=null){edInput(ev.target);return}
   if(ev.target.dataset&&ev.target.dataset.drq!=null){const pid=ev.target.dataset.drq,P0=(A.drp||(A.drp={}))[pid]||(A.drp[pid]={});P0.q=ev.target.value.trim();
     const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);return}

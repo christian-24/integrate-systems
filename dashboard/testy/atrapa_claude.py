@@ -18,6 +18,11 @@ Tryb pracy: zawartość pliku wskazanego w ATRAPA_TRYB_PLIK albo zmienna ATRAPA_
   scenariusz  jak ok, a pisze plik posty/<folder>/scenariusz.md z promptu (SCRIPT); przy poprawce dopisuje ujęcie
   strona   jak ok, a w folderze strony z promptu („Folder strony: …”) dopisuje akapit do index.html
   strona-bez-zmian  jak ok, plików strony nie zmienia
+  czekaj   zadanie stream-json: zapisuje praca.txt w katalogu roboczym, tworzy ATRAPA_CZEKA_PLIK i czeka (do 40 s)
+           na plik ATRAPA_DALEJ_PLIK, potem jak ok (restart panelu w trakcie pracy)
+  czekaj-commit  jak czekaj, a praca.txt zatwierdza sam przed czekaniem
+  czesc    jak ok, a w każdym katalogu roboczym części z promptu („katalog roboczy … (gałąź”) zapisuje z-czesci.txt
+  pola     propozycja pól formularza (prompt „Zaproponuj pola”): JSON z jednym polem [liczba]; inne tryby: kod 1
 Rozmowa o zadaniu (argumenty `--output-format json`): jeden obiekt JSON z polami result i session_id
   (sesja-1), odpowiedź „Odpowiedź atrapy: <40 znaków ostatniego wiersza promptu>”; wiersze „Uruchom: …” (rozdzielone
   „;”) z ostatniego wiersza wracają na końcu odpowiedzi (rozmowa o projekcie uruchamia zadania). Tryby: czat-wolno (odpowiedź
@@ -314,6 +319,13 @@ def main(argv):
             out({"type": "result", "result": json.dumps({"wykonawca": "claude", "powód": "Praca nad stroną"})})
             return 0
         return 1
+    if "--no-session-persistence" in argv and prompt.startswith("Zaproponuj pola"):
+        journal({"argv": argv, "prompt": prompt})
+        if mode() == "pola":
+            out({"type": "result", "result": "```json\n" + json.dumps({"zadania": [{"n": 1, "pyta": "Liczba kont [liczba]"}]})
+                 + "\n```", "usage": {"input_tokens": 40, "output_tokens": 12}})
+            return 0
+        return 1
     return task(argv, prompt)
 
 
@@ -433,6 +445,26 @@ def task(argv, prompt, inbox=None):
                 inbox.get(timeout=15)            # test ogląda zrzuty, potem wysyła wiadomość
             except queue.Empty:
                 pass
+    if how in ("czekaj", "czekaj-commit"):
+        with open("praca.txt", "w", encoding="utf-8") as f:
+            f.write("praca agenta\n")
+        tool("Write", {"file_path": os.path.join(os.getcwd(), "praca.txt")})
+        if how == "czekaj-commit":
+            ident = ["-c", "user.name=atrapa", "-c", "user.email=atrapa@example.invalid"]
+            subprocess.run(["git", "add", "praca.txt"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["git"] + ident + ["commit", "-q", "-m", "Praca agenta"], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        signal_file = os.environ.get("ATRAPA_CZEKA_PLIK")
+        if signal_file:
+            open(signal_file, "w").close()
+        flag, end = os.environ.get("ATRAPA_DALEJ_PLIK"), time.time() + float(os.environ.get("ATRAPA_CZEKAJ_S") or 40)
+        while flag and not os.path.exists(flag) and time.time() < end:
+            time.sleep(0.05)
+    if how == "czesc":
+        for m in re.finditer(r"katalog roboczy (\S+) \(gałąź", prompt):
+            with open(os.path.join(m.group(1), "z-czesci.txt"), "w", encoding="utf-8") as f:
+                f.write("zmiana w części\n")
+            tool("Write", {"file_path": os.path.join(m.group(1), "z-czesci.txt")})
     if how == "wolno":
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(120)"])
         pid_file = os.environ.get("ATRAPA_PID_PLIK")

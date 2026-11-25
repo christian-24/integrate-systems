@@ -37,6 +37,9 @@ Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj
 
 0. Automat pomija commit, którego wdrożenie już się nie udało; następny commit na `rozwoj` próbuje ponownie.
 1. Testy na zatwierdzonym commicie gałęzi `rozwoj` (jako `agent`, w osobnej kopii).
+1a. Agenci w trakcie pracy: wdrożenie czeka, aż skończą (najwyżej 30 min; stan „Czekam, aż agenci skończą pracę”),
+   panel w tym czasie nie zaczyna nowych zadań. Potem wdraża i tak: uruchomienie przeżywa restart (nakładka usługi
+   `panel-agenci.conf`, `KillMode=process`) albo panel po starcie je dokańcza (AGENCI.md, „Restart panelu”).
 2. `git pull` produkcji, scalenie `rozwoj` do `main`.
 3. Restart panelu, kontrola: `/api/data` odpowiada, strona pokazuje widok bez błędu JavaScript (Playwright).
 4. Push `main` do GitHuba.

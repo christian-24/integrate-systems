@@ -40,7 +40,7 @@ Mały serwer, tylko biblioteka standardowa Pythona:
                                czyści rozmowę
   GET  /api/asystent/karty     biblioteka kart asystenta (zapisane, wbudowane, przypięte, ukryte);
   POST /api/asystent/karty     {"zapisz": karta} | {"usun": id} | {"przypiete": [id]} | {"ukryj": id} | {"pokaz": id}
-  POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> rozpoznany tekst -> wiadomość do asystenta;
+  POST /api/asystent/glos      nagranie (audio/webm, audio/mp4) -> wiadomość do asystenta albo tekst (?draft=1);
                                POST /api/asystent/glos/start wczytuje model mowy w tle
   GET  /api/drive             Google Drive projektu: połączony, zamontowany, logowanie w toku (?project=)
   POST /api/drive/start|finish|montuj|anuluj|odlacz   podłączenie Drive tylko do odczytu (drive.py)
@@ -50,6 +50,9 @@ Mały serwer, tylko biblioteka standardowa Pythona:
   POST /api/drive/konto/start|finish|anuluj|usun|przypisz|odlacz|migracja   konta i przypisania
   POST /api/drive/wybierz    wybór folderu dla projektu
   POST /api/agent/merge       scala gałąź uruchomienia do bazy (git merge --no-ff, bez push)
+  POST /api/repo/zatwierdz    zatwierdza niezatwierdzone zmiany w repozytorium projektu jako zmiany agenta
+  POST /api/repo/odloz        odkłada niezatwierdzone zmiany do schowka git (z opisem); /api/repo/przywroc przywraca
+  POST /api/agent/rownolegle  ile uruchomień agentów naraz (1–4), zapis w stan.json
   GET  /api/agent/diff        diff gałęzi uruchomienia względem bazy (?id=, najwyżej 200 KB)
   POST /api/agent/automat     włącza i wyłącza Automat
   POST /api/project/add       dopisuje folder do rejestru projektów (opcjonalnie zakłada pliki standardu)
@@ -129,6 +132,7 @@ import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela: scenariusz.md w folderze posta)
+import pola  # noqa: E402  (pola formularza zadań właściciela: propozycja modelu, przejście)
 import zasoby  # noqa: E402  (pamięć, dysk i rozmiary folderów serwera)
 import drive  # noqa: E402  (Google Drive projektu tylko do odczytu, rclone)
 import glos  # noqa: E402  (rozpoznawanie mowy dla asystenta, pracownik glos_stt.py)
@@ -265,6 +269,50 @@ def change_task(body):
     if ok and body.get("state") == "done":
         note_closed(parts[0], parts[1], str(body.get("title", "")))
     return (200, "") if ok else (409, "Plik zmienił się od ostatniego odczytu. Odświeżam listę.")
+
+
+def finish_task(body):
+    """POST /api/task/finish {id, title, values, steps?, count?}: „Zrobione” w formularzu zadania właściciela.
+    values: odpowiedzi w kolejności pól `pyta:` (tak/nie jako true/false), sprawdzane według typu
+    (projekt.answer_lines); steps: stan kroków [true, false, …]. Zapisuje `odpowiedź:` i kroki, potem stan [x]
+    (zadania z `po:` na tym zadaniu przestają czekać); z count przez count_task, jak /api/task/state."""
+    t, data, where = _find_task(body.get("id", ""), body.get("title", ""))
+    if t is None:
+        return where
+    if t["state"] == "done":
+        return CONFLICT
+    folder, file, line = where, t["file"], t["line"]
+    try:
+        lines = projekt.answer_lines(t["detail"].get("fields") or [], body.get("values"))
+    except ValueError as e:
+        return 400, "Nie zapisano: %s." % e
+    steps = body.get("steps") if isinstance(body.get("steps"), list) else []
+    if any(not isinstance(x, bool) for x in steps):
+        return 400, "Nie zapisano: kroki to true albo false."
+    have = t["detail"].get("steps") or []
+    try:
+        with _write_lock:
+            ok = True
+            if lines:
+                ok = projekt.set_detail(folder, file, line, t["title"], "odpowiedź", lines)
+            for i, done in enumerate(steps[:len(have)]):
+                if ok and done != have[i]["done"]:
+                    ok = projekt.set_detail(folder, file, line, t["title"], projekt.STEP_KEY, {"index": i, "done": done})
+            if ok and body.get("count") is None:
+                ok = projekt.set_state(folder, file, line, t["title"], "done")
+    except (ValueError, OSError):
+        return 400, "Nie udało się zapisać zmiany."
+    if not ok:
+        return CONFLICT
+    if body.get("count") is not None:
+        return count_task(body, state="done")
+    note_closed(t["project"], file, t["title"])
+    return 200, ""
+
+
+def task_fields(body):
+    """POST /api/task/pola {id, title}: pola formularza dla zadania właściciela bez `pyta:` (pola.Fields.for_task)."""
+    return get_fields().for_task(body.get("id", ""), body.get("title", ""))
 
 
 COUNT_MAX = 1000000
@@ -2001,6 +2049,21 @@ def get_agents():
         return _agents
 
 
+_fields = None
+_fields_lock = threading.Lock()
+
+
+def get_fields():
+    """Propozycje pól formularza zadań właściciela (pola.py); model przez zarządcę agentów."""
+    global _fields
+    with _fields_lock:
+        if _fields is None:
+            m = get_agents()
+            _fields = pola.Fields(m.runs_dir, lambda: load_projects(resolve=False),
+                                  lambda pid: load_projects(resolve=False)[1].get(pid), m.ask_fields, _write_lock)
+        return _fields
+
+
 def cached_counts():
     """Liczby spraw z ostatniej odpowiedzi /api/data (te same, które widzi panel) albo None, gdy jeszcze jej nie ma."""
     with _data_lock:
@@ -2018,12 +2081,17 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/task/count": lambda b: count_task(b),
           "/api/task/close-checked": lambda b: close_checked(b),
           "/api/task/detail": lambda b: update_detail(b),
+          "/api/task/finish": lambda b: finish_task(b), "/api/task/pola": lambda b: task_fields(b),
           "/api/task/add": lambda b: add_task(b), "/api/stage/update": lambda b: update_stage(b),
           "/api/campaign/update": lambda b: update_campaign(b),
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
           "/api/project/meta": lambda b: update_meta(b),
           "/api/github/stan": lambda b: github_state(b), "/api/github/wyslij": lambda b: github_push(b),
           "/api/github/usun-kopie": lambda b: github_remove(b),
+          "/api/repo/zatwierdz": lambda b: repo_change(b, "commit"),
+          "/api/repo/odloz": lambda b: repo_change(b, "stash"),
+          "/api/repo/przywroc": lambda b: repo_change(b, "restore"),
+          "/api/agent/rownolegle": lambda b: get_agents().set_parallel(b.get("value")),
           "/api/agent/run": lambda b: get_agents().run_task(b.get("id", ""), b.get("title", "")),
           "/api/strona/zbuduj": lambda b: get_agents().site.build_api(b.get("project", "")),
           "/api/strona/uwaga": lambda b: get_agents().site.add_note(b),
@@ -2054,7 +2122,7 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
                                                              b.get("folder", ""), b.get("path", "")),
           "/api/project/chat": lambda b: get_agents().project_chat_send(
               b.get("project", ""), b.get("message", ""), str(b.get("task") or ""), b.get("execute") is True,
-              b.get("attach") if isinstance(b.get("attach"), dict) else None),
+              b.get("attach") if isinstance(b.get("attach"), dict) else None, b.get("spoken") is True),
           "/api/asystent": lambda b: get_agents().assistant_send(b.get("message", ""), b.get("view", ""),
                                                                  b.get("open", "")),
           "/api/asystent/nowa": lambda b: get_agents().assistant_reset(),
@@ -2853,6 +2921,9 @@ def _gh_view(p, folder):
             st["blocks"].append("Projekt ze zbieracza: kopię usuwasz na komputerze, z którego pochodzi")
     st.update(agentLive=live, removable=st["repo"] and not st["blocks"], folder=short_path(folder),
               project=p["id"])
+    if st["repo"]:
+        st["stashes"] = kopie.stash_list(folder)
+        st["sources"] = m.dirty_sources(folder, [d["path"] for d in st["dirty"]]) if st["dirtyCount"] else []
     if st["removed"].get("trash"):
         st["removed"]["trash"] = short_path(st["removed"]["trash"])
     return st
@@ -2949,6 +3020,19 @@ def github_remove(body):
                      % short_path(dest)}
 
 
+def repo_change(body, action):
+    """POST /api/repo/zatwierdz | odloz | przywroc {"project", "ref"?}: zmiany niezatwierdzone w kopii projektu
+    (zatwierdzenie jako zmiany agenta, odłożenie do schowka, przywrócenie); potem stan kopii od nowa."""
+    p, folder, err = _gh_project(body)
+    if err:
+        return err
+    code, msg, extra = get_agents().repo_action(p["id"], action, str(body.get("ref") or ""))
+    _gh_forget(folder)
+    data_invalidate()
+    extra = dict(extra or {}, state=_gh_view(p, folder))
+    return (code, msg, extra) if code != 200 else (200, "", extra)
+
+
 def build_data():
     out, index = load_projects()
     for p in out["projects"]:
@@ -3004,6 +3088,7 @@ def build_data():
     out["publish"] = part("publikacje", lambda: get_publisher().status(), None)
     out["resources"] = part("zasoby", resources_state, None)
     out["deploy"] = part("wdrożenie", deploy_state, None)
+    out["fieldsMigration"] = part("pola zadań", lambda: get_fields().summary(), {})
     out["film"] = part("nagrywarka", lambda: {"available": get_recorder().available(), "account": film.account_email(),
                                               "explainer": get_recorder().available("objasnienie")},
                        {"available": False, "account": "", "explainer": False})
@@ -4071,7 +4156,7 @@ class Handler(BaseHTTPRequestHandler):
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
                                                          "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
-                                                         "/api/scenariusz/tekst", "/api/drive/klient") else 4096)
+                                                         "/api/scenariusz/tekst", "/api/drive/klient", "/api/task/finish") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
@@ -4109,7 +4194,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _voice_upload(self, query):
         """POST /api/asystent/glos?view=&open=: nagranie z mikrofonu (audio/webm z Chrome, audio/mp4 z Safari, do
-        4 MB) -> rozpoznany tekst -> wiadomość do asystenta. Odpowiedź: {"text"} i stan jak POST /api/asystent."""
+        4 MB) -> rozpoznany tekst. draft=1 zwraca sam tekst, w pozostałych przypadkach wysyła go do asystenta."""
         q = parse_qs(query)
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         if not (ctype.startswith("audio/") or ctype in ("video/webm", "video/mp4")):
@@ -4121,7 +4206,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, json.dumps({"ok": False, "error": err.replace("Plik", "Nagranie")},
                                               ensure_ascii=False), "application/json; charset=utf-8")
         code, err, extra = get_agents().assistant_voice(ctype, data, (q.get("view") or [""])[0],
-                                                        (q.get("open") or [""])[0])
+                                                        (q.get("open") or [""])[0], q.get("draft") == ["1"])
         return self._send(code, json.dumps(dict(extra, ok=200 <= code < 300, error=err), ensure_ascii=False),
                           "application/json; charset=utf-8")
 
@@ -4336,6 +4421,7 @@ if __name__ == "__main__":
         print("Brak PANEL_TOKEN: połączenia z innych urządzeń będą odrzucane.")
 
     def _stop(signum, frame):
+        get_agents()._closing = True            # uruchomienia za pośrednikiem pracują dalej (AGENCI.md)
         raise KeyboardInterrupt
 
     for name in ("SIGTERM", "SIGBREAK"):       # zatrzymanie usługi ma zakończyć także procesy agentów
@@ -4349,9 +4435,10 @@ if __name__ == "__main__":
     except Exception:  # noqa: BLE001  (stan filmów nie może zatrzymać startu panelu)
         pass
     threading.Thread(target=auto_record_loop, daemon=True).start()
+    threading.Thread(target=get_fields().migration_loop, args=(get_agents().claude_free, time.sleep), daemon=True).start()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
-        get_agents().shutdown()
+        get_agents().shutdown(keep=True)

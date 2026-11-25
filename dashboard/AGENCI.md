@@ -33,7 +33,12 @@ Zmienne środowiska albo plik `dashboard/panel.env` (wiersze `NAZWA=wartość`, 
 | `PANEL_ZDROWIE_STAN` | `/home/panel/.zdrowie-stan` | wynik kontroli zdrowia serwera (`server.checks` w `/api/data`) |
 | `PANEL_KOPIA_STAN` | `/home/panel/kopie/ostatnia.json` | stan ostatniej kopii (`server.backupAt`, `server.backupOff`) |
 | `PANEL_CLAUDE`, `PANEL_CODEX` | z `PATH` (Claude także `~/.local/bin/claude`) | ścieżki poleceń |
-| `PANEL_AGENTS_MAX` | `2` | ile uruchomień naraz |
+| `PANEL_AGENTS_MAX` | `2` | ile uruchomień naraz, gdy w panelu nie ma ustawienia (Agenci → „Naraz”, `parallel` w `stan.json` wygrywa) |
+| `PANEL_PRZEBIEG` | `1` | `0`: zadanie i raport PM bez pośrednika `przebieg.py` (proces z potokiem do panelu, ginie z panelem) |
+| `PANEL_WDROZENIE_DIR` | `~/dane/wdrozenie` | stan wdrożenia (`stan.json`); stan `waiting` wstrzymuje start nowych zadań |
+| `PANEL_PRZEGLADARKA_MCP` | `/home/agent/narzedzia/mcp/node_modules/@playwright/mcp/cli.js` | Playwright MCP dla agenta strony; brak pliku albo `0`: bez przeglądarki |
+| `PANEL_PRZEGLADARKA_CHROME` | `/opt/ms-playwright/chromium-*/…/chrome` | przeglądarka dla Playwright MCP |
+| `PANEL_NAPRAWY` | `1` | `0`: bez jednorazowych napraw po starcie (`naprawy.py`, tylko węzeł `cloud`) |
 | `PANEL_AGENT_TIMEOUT` | `3600` | limit czasu jednego uruchomienia, sekundy |
 | `PANEL_AGENT_MODEL`, `PANEL_PM_MODEL` | model domyślny CLI | model dla zadań i dla raportu PM |
 | `PANEL_PM_HOUR` | `7` | godzina dziennego raportu PM w Automacie |
@@ -131,8 +136,36 @@ Pliki: `../uruchomienia/<id>.json` (rekord), `../uruchomienia/<id>.log` (surowy 
 na odbiór, `{"projekt|plik|tytuł": {"s": "doing|review", "d": "RRRR-MM-DD"}}`; `marks`: od kiedy zadanie jest
 zrobione albo zablokowane, `{"projekt|plik|tytuł": {"s": "done|blocked", "d": "RRRR-MM-DD"}}`, tylko znane daty,
 zrobione starsze niż 90 dni usuwane; `sessionKey`: klucz sesji panelu;
-`rytmDone`: publikacje, dla których powstało już zadanie wpisania wyniku). Serwer trzyma 200 ostatnich rekordów.
-Po restarcie serwera uruchomienia `queued` i `running` dostają stan `stopped`.
+`rytmDone`: publikacje, dla których powstało już zadanie wpisania wyniku; `parallel`: ile uruchomień naraz;
+`naprawy`: wykonane jednorazowe naprawy). Serwer trzyma 200 ostatnich rekordów.
+Po restarcie serwera uruchomienia `queued` dostają stan `stopped`; `running` niżej, „Restart panelu”.
+
+### Restart panelu (wdrożenie) nie przerywa agentów
+
+- Zadanie i raport PM idą przez pośrednika `dashboard/przebieg.py` (własna sesja procesów, bez potoków do panelu):
+  wyjście agenta pisze do `<id>.log`, wejście bierze z `<id>.wej` (panel dopisuje wiersze JSON), kod końca zapisuje
+  w `<id>.koniec`. Dane robocze uruchomienia (folder, katalog roboczy, gałąź, części, podgląd) są w `<id>.przebieg`.
+  Rekord ma `runner` (`pid` pośrednika) i `logPos` (ile bajtów przebiegu panel już przeczytał); w `/api/data` tych pól nie ma.
+- Panel kończący pracę (SIGTERM) nie zatrzymuje tych uruchomień i nie zamyka ich rekordów. Po starcie: pośrednik żyje
+  albo zapisał koniec → panel czyta przebieg dalej od `logPos` (krok „Panel uruchomił się ponownie; agent pracował
+  dalej”), limit czasu liczy się od startu uruchomienia.
+- Uruchomienie przerwane mimo to (pośrednik zniknął, agent zabity sygnałem bez zdarzenia `result`): zadanie z pracą
+  zatwierdzoną na gałęzi uruchomienia (commity od `startCommit`, bez commita panelu z końca) kończy się jak zwykle
+  (stan `done`, `recovered: "commit"`, `wymaga: odbiór` albo scalenie i podgląd strony); bez commita: stan `stopped`
+  (`recovered: "restart"`), panel zatwierdza resztę zmian na gałęzi, dopisuje do `poprawka:` „Poprzednie uruchomienie
+  przerwał restart panelu…” i uruchamia zadanie ponownie od tej gałęzi (`recoveredFrom`, `recoverN`, najwyżej 2 razy z rzędu).
+- Usługa: `uruchom/serwer/panel-agenci.conf` (`KillMode=process`, instaluje `zainstaluj-rozwoj.sh`): systemd zabija przy
+  restarcie tylko proces panelu. Bez tej nakładki restart zabija agentów, a panel po starcie dokańcza zadania jak wyżej.
+- `wdroz-panel` po testach czeka, aż nie będzie uruchomień `running` zadań i raportu PM (najwyżej `WDROZ_CZEKAJ_AGENCI`,
+  1800 s), ze stanem wdrożenia `waiting`; panel w tym czasie nie startuje nowych zadań z kolejki (`agents.deployHold`).
+
+### Ile naraz
+
+Najwyżej `maxParallel` uruchomień naraz (domyślnie 2, Agenci → „Naraz” 1–4, `POST /api/agent/rownolegle {"value": n}`),
+zadania najwyżej jedno na projekt (część projektu liczy się z projektem głównym, pole rekordu `family`); kolejne zadanie
+tego projektu czeka w kolejce, Automat bierze je w następnym obiegu. Bezpiecznik zużycia liczy sumę: przy n pracujących
+uruchomieniach Claude próg to n × `PANEL_RUN_BUDGET_PROC`, mierzony od startu najdłużej pracującego, i to ono jest
+zatrzymywane. Próg Automatu (`PANEL_AUTOMAT_DO_PROC`) dotyczy zużycia całego okna 5 h.
 
 ### Polecenia
 
@@ -235,7 +268,25 @@ repozytorium to nie jest sam folder IntegrateSystems:
    gałęzi); `baseCommit` to punkt rozejścia (`git merge-base`), więc `changes` obejmuje całą gałąź. Prompt mówi
    agentowi, że gałąź ma już jego wcześniejszą pracę. Gałąź scalona albo bez commitów: nowa gałąź jak w punkcie 1.
 
+6. **Części projektu** (pole karty `część projektu:`): zadanie projektu głównego dostaje dla każdej części z własnym
+   repozytorium git (innym niż repozytorium zadania; najwyżej 4) gałąź `agent/RRRR-MM-DD-nazwa` i katalog roboczy
+   `<repozytorium części>/.agent/<id>` (`--add-dir`, prompt: „katalog roboczy … (gałąź …)”). Folder części jest dla
+   agenta tylko do odczytu: `--disallowedTools` z `Edit(//<folder części>/<wpis>)` (i `/**` dla folderów) dla każdego
+   wpisu poza `.agent` i `.git`. Po zakończeniu panel zatwierdza zmiany w katalogu części na jej gałęzi, usuwa katalog,
+   gałąź bez commitów kasuje; rekord ma `parts` [{project, label, branch, base, baseCommit, changes, commits}]. Panel
+   pokazuje te gałęzie przy zmianach agenta z przyciskiem „Połącz zmiany” (`/api/agent/merge {project, branch}`).
+
 Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty) i bez podpisywania commitów.
+
+### Zmiany niezatwierdzone w repozytorium projektu
+
+„Kod i pliki” (stan z `/api/github/stan`) pokazuje pliki niezatwierdzone, `sources` (uruchomienia z ostatnich 3 dni,
+które zapisywały te pliki narzędziem Edit/Write poza swoim katalogiem roboczym) i `stashes` (schowek git). Działania
+wykonuje proces panelu: `POST /api/repo/zatwierdz {project}` (jeden commit na bieżącej gałęzi, autor „Panel projektów”,
+opis z tytułem zadania i id uruchomienia), `POST /api/repo/odloz {project}` (`git stash push -u` z opisem),
+`POST /api/repo/przywroc {project, ref}` (`git stash apply` i `drop`; tylko przy czystym repozytorium, przy kolizji
+schowek zostaje). Bez katalogów `.agent/`, `node_modules/`, wyników budowania i dowiązań karty. Scalanie przy takich
+zmianach odpowiada 409 z listą plików i nazwą przycisków; zakładka Strona pokazuje to samo (`repo` w `/api/strona`).
 Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w folderze projektu, krok w rekordzie to opisuje.
 
 ### Kopia projektu i GitHub
@@ -397,6 +448,14 @@ Gałąź bez uruchomienia (pole `gałąź:` zadania): `/api/agent/merge` z `{"pr
 `/api/agent/diff?project=&branch=`; tylko gałęzie `agent/…`, baza to gałąź wybrana teraz w repozytorium.
 Zasada w poleceniu agenta: bez zlecania właścicielowi kroków technicznych; potrzebne dane jako pytanie w `KARTA.md`.
 Odpowiedzi z formularza `pyta:` poprzedników (`po:`) trafiają do polecenia jako „Dane od właściciela”.
+Zadanie `kto: ty`, które wymaga danych od właściciela, dostaje od razu `pyta:` z typami (`Etykieta [tekst, np. …]`,
+`[tak/nie]`, `[liczba]`, `[wybór: A | B]`, `[data]`, `[link]`; format w STANDARD.md); dotyczy Asystenta, Rozmowy
+w projekcie, PM i agentów. Pól na hasła nie ma: `Hasło do X [hasło: gdzie je wpisać]` daje tylko zdanie.
+Zadanie właściciela bez `pyta:` panel pokazuje raz Claude Haiku (`POST /api/task/pola`, `dashboard/pola.py`),
+a przy pierwszym starcie po wdrożeniu robi to jednorazowo dla wszystkich otwartych zadań właściciela z rejestru;
+lista dopisanych pól jest w `pola-zadan.json` (katalog uruchomień) i w danych panelu (`fieldsMigration`).
+„Zrobione” w formularzu to `POST /api/task/finish {id, title, values, count?}`: odpowiedzi sprawdzone według typu,
+`odpowiedź:`, kroki, stan `[x]` w jednym zapisie.
 
 `GET /api/agent/diff?id=<runId>`: `text/plain`, diff `baseCommit...branch` (najwyżej 200 KB, dłuższy obcięty z dopiskiem);
 błąd jako JSON `{"ok": false, "error"}` z kodem 404 albo 409 jak przy scaleniu.
@@ -673,9 +732,28 @@ taki zapis i słowa „zakładka Strona” w odpowiedzi na link.
    Uwaga „zrobione” dopiero po udanym budowaniu. Scalenie innej gałęzi, która zmieniła pliki strony, też przebudowuje
    podgląd.
 
+6. **Budowa na żywo.** Gdy agent strony pracuje, `/api/strona` ma `live`: `runId`, `title`, `state` (`queued`,
+   `running`), `activity`, `steps` (ostatnie 8), `recent` (ostatnie wypowiedzi i narzędzia), `plan`, `shots` (zrzuty
+   z `.zrzuty/` jego katalogu roboczego), `builtAt` (czas `index.html` wyniku budowania w katalogu roboczym), `url`
+   (`/podglad/<projekt>/<klucz>/~budowa/`: wersja w budowie prosto z katalogu agenta, te same zasady serwowania;
+   bez agenta 404) i `browser`. Zakładka pokazuje to w sekcji „Agent pracuje nad stroną” z przyciskami „Pokaż wersję
+   w budowie” (ramka odświeża się po każdym budowaniu agenta), „Wiadomość do agenta” (Rozmowa, jak „Napisz do
+   pracującego agenta”) i „Cały przebieg”. Pole `repo` (niezatwierdzone zmiany w repozytorium strony) daje ostrzeżenie
+   z odnośnikiem do „Kod i pliki”.
+7. **Przeglądarka dla agenta strony** (Claude, gdy jest `PANEL_PRZEGLADARKA_MCP`): panel uruchamia na czas pracy
+   serwer plików wyniku budowania z katalogu roboczego agenta na `127.0.0.1:<port>` (port zapamiętany w danych
+   uruchomienia, także po restarcie panelu) i daje agentowi `--mcp-config` z Playwright MCP (`--headless --isolated`,
+   `--allowed-origins http://127.0.0.1:<port>`, zrzuty do `.zrzuty/przegladarka`, pamięć podręczna w `.zrzuty/.pamiec`),
+   `--allowedTools` z `mcp__przegladarka__browser_navigate`, `…_snapshot`, `…_click`, `…_resize`,
+   `…_take_screenshot` i innymi bez wykonywania kodu, `--disallowedTools` z `…_run_code_unsafe`, `…_evaluate`,
+   `…_file_upload`, `…_drop`, oraz `--strict-mcp-config`. Polecenie podaje adres i każe oglądać stronę w 390 i 1440 px;
+   inne adresy przeglądarka blokuje (`ERR_BLOCKED_BY_CLIENT`). Instalacja bez sudo:
+   `cd /home/agent/narzedzia/mcp && npm install @playwright/mcp` (przeglądarka z `/opt/ms-playwright`). Agent strony
+   ma też `Bash(git merge:*)` (scalenie bieżącej wersji strony do swojej gałęzi przy konflikcie).
+
 Stany uwagi: `czeka` (w kolejce albo nieuruchomione), `pracuje` (agent albo scalenie i budowanie), `zrobione`,
-`nie wyszło` (z jednym zdaniem powodu). Zrzuty przez MCP Playwright: nie, bo wymagają pakietów npm i osobnego procesu
-w uruchomieniu; skrypt Pythona korzysta z Playwright, który jest już na serwerze, i daje agentowi plik PNG do Read.
+`nie wyszło` (z jednym zdaniem powodu). Zrzuty skryptem Pythona (`zrzut-strony.py`) zostają: właściciel widzi je
+w panelu, a agent ogląda plik PNG narzędziem Read.
 
 ### Grafiki (Codex)
 

@@ -49,6 +49,8 @@ zadanie właściciela, nie decyzja.
   albo w pliku kampanii, w formacie ze `standard/STANDARD.md`.
 - Terminów, zakresu i kart projektów nie zmieniasz. Proponujesz zmianę i czekasz na decyzję.
 - Zgody nie udzielasz w imieniu właściciela.
+- Gdy na polecenie właściciela zakładasz zadanie `kto: ty`, które wymaga od niego danych, dopisz pod nim `pyta:` z typami
+  (`Etykieta [tekst, np. …]; Etykieta [tak/nie]`, format w `standard/STANDARD.md`); bez pól na hasła.
 - Proponujesz zmianę zadań przez pytanie w karcie tylko na polecenie właściciela; wtedy pod `propozycja:` dopisujesz
   wiersze `skutek:` w formacie ze `standard/STANDARD.md` (sekcja o pytaniach).
 
