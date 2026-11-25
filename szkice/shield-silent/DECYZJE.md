@@ -1,5 +1,11 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-25: Google Ads: kampania Wygłuszanie opublikowana
+- Kontekst: konto Google Ads 434-771-1860 założone, karta i wizytówka podpięte. Kampania budowana z właścicielem krok po kroku w przeglądarce.
+- Decyzja: kampania `SNS – Wygłuszanie` tylko w wyszukiwarce Google, Wrocław + 50 km (opcja „Obecność”), 18 zł dziennie, maks. 6 zł za kliknięcie, AI Max wyłączone, 10 słów kluczowych (ścisłe i do wyrażenia), 12 wykluczeń, reklama z oceną „Świetna” bez długich myślników, 6 linków do podstron, 5 objaśnień, przycisk „Zadzwoń” pn-pt 9-18. Telefon z reklamy liczony jako konwersja po 30 s, raz na osobę; nagrywanie rozmów wyłączone (warunki odrzucone). Detailing na razie nie startuje. Do codziennych liczb skrypt Google Ads zamiast Google Ads API.
+- Skutki: reklama czeka na weryfikację Google (do 24 h). Cel „Prośba o wycenę” nic nie liczy do czasu wklejenia kodu Google na stronę. Oferta 1 200 zł wymaga wydania 1 200 zł do 23 sty; sama Wygłuszanie wyda ok. 1 060 zł, brakujące pokryją Ceramika i PPF od 4 sty (kontrola 12 sty). Szczegóły i strategia: `marketing/google-ads-wdrozenie.md`.
+- Kto: właściciel z agentem
+
 ## 2026-11-25: Zestaw zdjęć do Grand Silent Auto V / VI
 
 Kontekst: Trzy warianty wymagają różnych par zdjęć z realizacji.
