@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import threading
@@ -76,7 +77,7 @@ class Konto(unittest.TestCase):
         self.assertEqual(st["login"]["account"], "firma-lodz")
         self.assertEqual(st["accounts"], [])                                # przed zalogowaniem konta nie ma
         self.assertEqual(self.d.finish_account("http://127.0.0.1:%d/?state=zly&code=1" % self.port)[0], 400)
-        self.assertEqual(self.d.finish_account("https://zly.example/?state=St4te-xyz&code=1")[0], 400)
+        self.assertEqual(self.d.finish_account("https://zly.example/?state=St4te-xyz")[0], 400)
         code, err, _ = self.d.finish_account("http://127.0.0.1:%d/?state=St4te-xyz&code=4/0Ab" % self.port)
         self.assertEqual((code, err), (200, ""))
         st = self.d.accounts()[2]
@@ -87,6 +88,21 @@ class Konto(unittest.TestCase):
         self.assertEqual(self.d.start_account("firma łódź")[0], 409)        # ta sama nazwa
         self.assertEqual(self.connect("Prywatne"), "prywatne")                # drugie konto
         self.assertEqual(len(self.d.accounts()[2]["accounts"]), 2)
+
+    def test_kod_i_tekst_po_ponownej_probie(self):
+        for label, value in (("Firma", "4/0Ab"), ("Prywatne", "Google: code=4%2F0Ab&state=St4te-xyz gotowe")):
+            first = self.d.start_account(label)
+            self.assertEqual(self.d.start_account(label), first)  # drugie okno nie wymienia state
+            for wrong, hint in (("state=obcy&code=4/0Ab", "z innego logowania"),
+                                ("code=&state=St4te-xyz", "Brakuje kodu")):
+                code, error, _ = self.d.finish_account(wrong)
+                self.assertEqual(code, 400)
+                self.assertIn(hint, error)
+            proc = self.d.login["proc"]
+            with mock.patch.object(proc, "wait", side_effect=subprocess.TimeoutExpired("rclone", 2)):
+                self.assertEqual(self.d.finish_account(value), (202, "", {"pending": True}))
+            self.assertIsNotNone(self.d.accounts()[2]["login"])
+            self.assertEqual(self.d.finish_account(value)[:2], (200, ""))
 
     def test_anulowanie_konta(self):
         self.assertEqual(self.d.start_account("Firma")[0], 200)
@@ -190,24 +206,24 @@ class Konto(unittest.TestCase):
                 self.wfile.write(body)
         srv = http.server.HTTPServer(("127.0.0.1", 0), H)
         threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
         self.addCleanup(srv.shutdown)
         self.d.token_url = "http://127.0.0.1:%d/token" % srv.server_port
         self.assertFalse(self.d.accounts()[2]["ownClient"])
         red = "https://2-29-181-133.sslip.io/api/drive/powrot"
-        with open(self.oauth, "w") as f:
-            json.dump({"client_id": "123-abc.apps.googleusercontent.com", "client_secret": "SEKRET-KLIENTA",
-                       "redirect_uri": red}, f)
+        self.assertEqual(self.d.save_client({"client_id": "123-abc.apps.googleusercontent.com",
+                                             "client_secret": "SEKRET-KLIENTA"})[0], 200)
         st = self.d.accounts()[2]
         self.assertTrue(st["ownClient"])
         self.assertNotIn("SEKRET-KLIENTA", json.dumps(st))
-        code, _, extra = self.d.start_account("Firma")
+        code, _, extra = self.d.start_account("Firma", return_to="#projekt/test?tab=plan")
         self.assertEqual((code, extra["mode"]), (200, "own"))
         q = urllib.parse.parse_qs(urllib.parse.urlsplit(extra["loginUrl"]).query)
         self.assertEqual((q["redirect_uri"], q["scope"], q["access_type"]), ([red], [drive.SCOPE], ["offline"]))
         self.assertNotIn("SEKRET-KLIENTA", extra["loginUrl"])
         self.assertEqual(self.d.oauth_back("state=zly&code=1")[0], 409)
-        code, text = self.d.oauth_back("state=%s&code=4/0Ab" % q["state"][0])
-        self.assertEqual(code, 200, text)
+        code, text = self.d.oauth_back("state=%s&code=4/0Ab" % q["state"][0], redirect=True)
+        self.assertEqual((code, text), (303, "/#projekt/test?tab=plan"))
         self.assertNotIn(SECRET, text)
         self.assertEqual((got["code"], got["redirect_uri"], got["grant_type"]), (["4/0Ab"], [red], ["authorization_code"]))
         self.assertEqual(oct(os.stat(self.conf).st_mode & 0o777), "0o600")
