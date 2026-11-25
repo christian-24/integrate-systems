@@ -433,6 +433,145 @@ def count_of(value):
     return int(text) if text.isdigit() else None
 
 
+# ---------- pola formularza właściciela (pyta:) ----------
+# „pyta: Etykieta [typ]; Etykieta [typ]”. Typy: tekst (domyślny; „[tekst, np. 1, 2]” daje podpowiedź), tak/nie, liczba,
+# wybór: A | B (2–8 opcji), data, link; „[hasło: gdzie]” to nie pole, tylko zdanie, gdzie właściciel wpisuje hasło sam.
+# Etykieta bez nawiasu albo z nieznanym nawiasem = pole tekstowe z całym tekstem (zgodnie z dawnym zapisem).
+FIELD_TYPES = ("tekst", "tak/nie", "liczba", "wybór", "data", "link", "hasło")
+FIELD_MAX = 8                # pól w formularzu
+FIELD_VALUE_MAX = 200        # znaków odpowiedzi na pole
+SECRET_LABEL = re.compile(r"hasł|hasel|haseł|has[lł]o|password|passw|\btoken|\bsekret|\bsecret"
+                          r"|\bklucz(?:a|e|em|y|u|om|ami)?\b|\bapi[ _-]?key|\bPIN\b"
+                          r"|kod(?:u|y)? (?:2fa|sms|weryfik|dostęp)|\bcvv\b|numer karty", re.I)
+_FIELD = re.compile(r"^(.*?\S)\s*\[([^\[\]]*)\]\s*$")
+_FIELD_TYPE = re.compile(r"^(tekst|tak\s*/\s*nie|liczba|wyb[oó]r|lista|data|link|adres|has[lł]o)(?![\w/])\s*[:,]?\s*(.*)$", re.I)
+NUMBER = re.compile(r"^-?\d{1,3}(?:[  ]\d{3})+(?:[.,]\d+)?$|^-?\d+(?:[.,]\d+)?$")
+
+
+def parse_field(text):
+    """Pole formularza z jednego elementu „pyta:”: {"label", "type", "hint", "options", "where"}.
+    Etykieta o haśle, kluczu albo tokenie zawsze daje typ "hasło" (bez pola do wpisania)."""
+    text = re.sub(r"\s+", " ", str(text or "")).strip()
+    label, kind, hint, options, where = text, "tekst", "", [], ""
+    m = _FIELD.match(text)
+    spec = _FIELD_TYPE.match(m.group(2).strip()) if m else None
+    if spec:
+        label, name, rest = m.group(1).strip(), re.sub(r"\s", "", spec.group(1).lower()), spec.group(2).strip()
+        if name in ("tekst", "liczba"):
+            kind, hint = name, rest
+        elif name == "tak/nie":
+            kind = "tak/nie"
+        elif name in ("wybór", "wybor", "lista"):
+            options = list(dict.fromkeys(o.strip() for o in rest.split("|") if o.strip()))[:FIELD_MAX]
+            kind = "wybór" if len(options) >= 2 else "tekst"
+            if kind == "tekst":
+                options = []
+        elif name in ("link", "adres"):
+            kind = "link"
+        elif name == "data":
+            kind = "data"
+        else:
+            kind, where = "hasło", rest
+    if kind != "hasło" and SECRET_LABEL.search(label):
+        kind, hint, options = "hasło", "", []
+    return {"label": label, "type": kind, "hint": hint, "options": options, "where": where}
+
+
+def field_text(f):
+    """Zapis pola w „pyta:” (odwrotność parse_field)."""
+    kind, label = f.get("type") or "tekst", str(f.get("label") or "").strip()
+    if kind == "wybór":
+        return "%s [wybór: %s]" % (label, " | ".join(f.get("options") or []))
+    if kind == "hasło":
+        return "%s [hasło%s]" % (label, ": " + f["where"] if f.get("where") else "")
+    if kind in ("tekst", "liczba") and f.get("hint"):
+        return "%s [%s, %s]" % (label, kind, f["hint"])
+    if kind == "tekst":
+        return label
+    return "%s [%s]" % (label, kind)
+
+
+def parse_fields(value):
+    """Pola z wartości „pyta:” (elementy rozdzielone „;”), najwyżej FIELD_MAX, bez powtórzonych etykiet."""
+    out, seen = [], set()
+    for part in str(value or "").split(";"):
+        if not part.strip():
+            continue
+        f = parse_field(part)
+        if f["label"].lower() in seen:
+            continue
+        seen.add(f["label"].lower())
+        out.append(f)
+    return out[:FIELD_MAX]
+
+
+def asks_value(value, strict=True):
+    """Tekst do zapisu w „pyta:” z tekstu („a [liczba]; b”) albo listy elementów.
+    strict: ValueError, gdy pole dotyczy hasła, klucza albo tokenu, a nie ma zapisu „[hasło: …]” (zakaz pól na hasła).
+    Bez strict takie pole zamienia się w „[hasło]” (propozycja modelu)."""
+    parts = value if isinstance(value, list) else str(value or "").split(";")
+    fields = []
+    for p in parts:
+        raw = str(p or "").strip()
+        if not raw:
+            continue
+        f = parse_field(raw)
+        if strict and f["type"] == "hasło" and not re.search(r"\[\s*has[lł]o\b", raw, re.I):
+            raise ValueError("pyta: bez pól na hasła i klucze; zapisz „%s [hasło: gdzie je wpisać]”" % f["label"])
+        if len(f["label"]) > 120 or "=" in f["label"]:
+            raise ValueError("pyta: etykieta do 120 znaków, bez znaku =")
+        fields.append(field_text(f))
+    text = "; ".join(field_text(f) for f in parse_fields("; ".join(fields)))
+    if len(text) > 1000:
+        raise ValueError("pyta: najwyżej 1000 znaków")
+    return text
+
+
+def answer_of(f, value):
+    """Odpowiedź na pole sprawdzona według typu: tekst do zapisu albo ValueError z komunikatem dla właściciela."""
+    kind, label = f["type"], f["label"]
+    if kind == "hasło":
+        raise ValueError("%s: hasła nie wpisujesz w panelu" % label)
+    if kind == "tak/nie":
+        if value is True or value in ("tak", "true", "1"):
+            return "tak"
+        if value is False or value is None or value in ("", "nie", "false", "0"):
+            return "nie"
+        raise ValueError("%s: tak albo nie" % label)
+    text = re.sub(r"\s+", " ", str(value if value is not None else "")).strip()
+    if not text:
+        raise ValueError("wpisz: %s" % label)
+    if len(text) > FIELD_VALUE_MAX:
+        raise ValueError("%s: najwyżej %d znaków" % (label, FIELD_VALUE_MAX))
+    if kind == "liczba" and not NUMBER.match(text):
+        raise ValueError("%s: liczba" % label)
+    if kind == "data":
+        try:
+            datetime.date.fromisoformat(text)
+        except ValueError:
+            raise ValueError("%s: data RRRR-MM-DD" % label) from None
+    if kind == "link" and (not LINK.match(text) or len(text) > 500):
+        raise ValueError("%s: adres http:// albo https://" % label)
+    if kind == "wybór" and text not in f["options"]:
+        raise ValueError("%s: jedna z opcji (%s)" % (label, ", ".join(f["options"])))
+    return text
+
+
+def answer_lines(fields, values):
+    """Wiersze „etykieta = wartość” do „odpowiedź:” w kolejności pól (pola „hasło” pomijane).
+    values: lista w kolejności pól albo słownik etykieta → wartość. ValueError przy pierwszym złym polu."""
+    if isinstance(values, dict):
+        pick = lambda i, f: values.get(f["label"])  # noqa: E731
+    elif isinstance(values, list):
+        pick = lambda i, f: values[i] if i < len(values) else None  # noqa: E731
+    elif values is None:
+        pick = lambda i, f: None  # noqa: E731
+    else:
+        raise ValueError("odpowiedzi: lista albo słownik")
+    return ["%s = %s" % (f["label"].replace("=", "-"), answer_of(f, pick(i, f)))
+            for i, f in enumerate(fields) if f["type"] != "hasło"]
+
+
 def parse_detail(lines):
     """Wcięte wiersze pod zadaniem -> {"goal", "doneWhen", "refs", "steps", "result", "decision", "left", "fix", "next",
     "notes"}. „następne” to jeden wiersz (pierwszy wygrywa); pozostałe klucze łączą kolejne wiersze spacją.
@@ -477,8 +616,10 @@ def parse_detail(lines):
                 d["notes"].append(s)
         elif key == "scheduled":              # plan publikacji: „RRRR-MM-DD GG:MM; kanał, kanał”
             d["scheduled"] = value.strip()
-        elif key == "asks":                   # pola formularza dla właściciela: „pyta: etykieta; etykieta”
-            d["asks"] = d.get("asks", []) + [a.strip() for a in value.split(";") if a.strip()]
+        elif key == "asks":                   # pola formularza dla właściciela: „pyta: Etykieta [typ]; Etykieta”
+            fields = parse_fields("; ".join(field_text(f) for f in d.get("fields", [])) + ";" + value)
+            d["fields"] = fields
+            d["asks"] = [f["label"] for f in fields]
         elif key == "answers":                # „odpowiedź: etykieta = wartość”, wiersz na pole
             label, _, val = value.partition("=")
             d.setdefault("answers", []).append({"label": label.strip(), "value": val.strip()})
@@ -1432,6 +1573,8 @@ def set_detail(root, file_rel, line_no, title, key, value, pins=None):
         values = [v.strip() for v in raw[:1] if v.strip()]
         if values and (not BRANCH.match(values[0]) or ".." in values[0]):
             raise ValueError("gałąź: agent/nazwa (litery, cyfry, . _ - /)")
+    elif field == "asks":                     # pola z typami; zakaz pól na hasła i klucze
+        values = [v for v in [asks_value("; ".join(raw))] if v]
     elif field == "answers":
         values = [_clean(v, 300) for v in raw if v.strip()]
         if any("=" not in v for v in values):
