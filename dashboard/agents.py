@@ -3558,7 +3558,9 @@ class Manager:
                             ev = json.loads(raw.decode("utf-8", "replace"))
                         except ValueError:
                             continue
-                        for b in (ev.get("message") or {}).get("content") or []:
+                        msg = ev.get("message") if isinstance(ev, dict) else None
+                        body = msg.get("content") if isinstance(msg, dict) else None
+                        for b in body if isinstance(body, list) else []:
                             if isinstance(b, dict) and b.get("type") == "tool_use" and \
                                     b.get("name") in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
                                 fp = str((b.get("input") or {}).get("file_path") or "")
