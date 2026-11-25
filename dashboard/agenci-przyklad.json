@@ -22,6 +22,8 @@
  "loginWeb": false,
  "login": {"active": false},
  "maxParallel": 2,
+ "parallelMax": 4,
+ "deployHold": false,
  "usage": {"five": null, "codexFive": null, "seven": null, "at": "", "budget": 0.2, "reserve": 0.8},
  "canRunTasks": true,
  "today": {

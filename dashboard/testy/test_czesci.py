@@ -172,13 +172,14 @@ class Widok(unittest.TestCase):
     def run_view(self, body):
         code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "wwSites", "partSw", "kpN",
                                                          "ghLine", "drWhere", "driveLine", "codeBox", "shortT", "PJD", "pjChatOf",
-                                                         "taskChatOf", "dockTarget", "pjdRef", "pjdAtt", "attLabel", "dockHtml"])
+                                                         "taskChatOf", "dockTarget", "pjdRef", "pjdAtt", "attLabel", "AS_MICI",
+                                                         "voiceButton", "dockHtml"])
         js = """let LIVE=true;const PF={more:{}},GHS={},DRV={x:{connected:true,mounted:true,files:3,folder:'1AbCdEfGhIjK'}},A={busy:{}};
 const D={projectsSource:'registry'},loaded=[];
 const ghLoad=id=>loaded.push(id),loadDrive=()=>{},loadPChat=id=>loaded.push('chat:'+id);
 const ghBody=p=>'<div class="gh">GH:'+p.id+'</div>',driveBody=p=>'<div class="dv">DRV:'+p.id+'</div>';
 const chatMsg=m=>'<div class="cm">'+m.text+'</div>';
-let PJC={},DR=null;const runOf=()=>null,isAct=()=>false;
+let PJC={},DR=null,VOICE=null;const runOf=()=>null,isAct=()=>false;
 %s
 const top={id:'x',name:'Oprogramowani',partOf:'',partLabel:'Integracje',github:'f/x',git:{repo:true,remote:'github',branch:'main',unpushed:0}};
 const part={id:'s',name:'Oprogramowani · Strona WWW',partOf:'x',partLabel:'Strona WWW',site:{dir:'site'},github:'',git:{repo:true,remote:'github',branch:'nowa',unpushed:2},mem:new Set(['s']),partsL:[]};
@@ -255,6 +256,8 @@ out.inny=dockHtml({v:'start'});""")
         self.assertIn('data-pchat="x"', otw)                              # wysyłka jak dotąd: /api/project/chat
         self.assertIn('data-pjd="close"', otw)
         self.assertIn("Odpowiedź", otw)
+        self.assertIn('data-voice="x"', otw)
+        self.assertIn("Mów</button>", otw)
         self.assertNotIn("nowa odpowiedź", o["po"])                       # po otwarciu odpowiedź przeczytana
         self.assertIn('data-pchat="s"', o["czesc"])                       # część: własna rozmowa
         self.assertIn("Oprogramowani · Strona WWW", o["czesc"])

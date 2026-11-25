@@ -121,7 +121,8 @@ class Galaz(Repo):
             f.write("\nzmiana\n")
         code, err, _ = self.manager.merge(rec["id"])
         self.assertEqual(code, 409)
-        self.assertIn("Niezatwierdzone zmiany w repozytorium: CLAUDE.md", err)
+        self.assertIn("niezatwierdzone zmiany w repozytorium (1: CLAUDE.md)", err)
+        self.assertIn("Zatwierdź jako zmiany agenta", err)
         self.git("checkout", "--", "CLAUDE.md")
         # inna gałąź wybrana w repozytorium
         self.git("switch", "-q", "-c", "inna")
@@ -225,7 +226,8 @@ class UzytkownikAgenta(Baza):
         finally:
             agents.subprocess.Popen = original
         self.assertEqual(rec["state"], "error")
-        self.assertEqual(seen[-1][:5], ["sudo", "-n", "-u", "agent", "--"])
+        cmd = seen[-1][seen[-1].index("--") + 1:] if seen[-1][1].endswith("przebieg.py") else seen[-1]
+        self.assertEqual(cmd[:5], ["sudo", "-n", "-u", "agent", "--"])      # pośrednik uruchamia agenta przez sudo
         self.assertIn("--allowedTools", seen[-1])
         self.assertEqual(self.manager.as_agent(["claude"]), ["claude"])            # bez zmiennej jak dotąd
         self.assertTrue(self.row("Zadanie A").startswith("- [ ] Zadanie A"))

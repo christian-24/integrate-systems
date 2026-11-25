@@ -427,13 +427,16 @@ class Trwalosc(Baza):
         self.record("20261110-100000-aaaa", "running", taskId=t["id"], startedAt="2026-11-10T10:00:00")
         self.record("20261110-100500-bbbb", "queued", title="Zadanie B")
         m = self.new_manager()
-        for rid in ("20261110-100000-aaaa", "20261110-100500-bbbb"):
-            rec = m.get(rid)
-            self.assertEqual((rec["state"], rec["error"]), ("stopped", "Serwer został zatrzymany."))
-            with open(os.path.join(self.runs, rid + ".json"), encoding="utf-8") as f:
-                self.assertEqual(json.load(f)["state"], "stopped")
+        rec = m.get("20261110-100500-bbbb")                                 # w kolejce: zatrzymane jak dotąd
+        self.assertEqual((rec["state"], rec["error"]), ("stopped", "Serwer został zatrzymany."))
+        with open(os.path.join(self.runs, "20261110-100500-bbbb.json"), encoding="utf-8") as f:
+            self.assertEqual(json.load(f)["state"], "stopped")
+        m._relaunch_recovered = lambda rec, n, wait=3: None                # wznowienie: osobny test (test_nieprzerywani)
         m.tick_seconds = 0.05
         m.start()
+        rec = m.get("20261110-100000-aaaa")                                 # w toku, bez pośrednika i bez commita
+        self.assertEqual(rec["state"], "stopped")
+        self.assertIn("uruchomi się ponownie", rec["error"])
         self.assertTrue(self.row("Zadanie A").startswith("- [ ] Zadanie A"))
         self.assertEqual(m.run_task(t["id"], "Zadanie A")[0], 200)         # zadanie znów można uruchomić
 
