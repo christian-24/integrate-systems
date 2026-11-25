@@ -35,6 +35,14 @@ elif rest[:2] == ["config", "delete"]:
     keep = [r for r in remotes() if r != rest[2]]
     with open(state_file, "w") as f:
         f.write("\n".join(keep))
+elif rest[0] == "lsd":
+    remote = rest[1].split(":")[0]
+    error = os.environ.get("ATRAPA_RCLONE_BLAD", "")
+    if "," not in remote and os.environ.get("ATRAPA_RCLONE_ALIAS_BLAD"):
+        error = "didn't find section in config file"
+    if error or remote.split(",")[0] not in remotes():
+        sys.stderr.write('Failed to lsd: %s TAJNY-TOKEN\n' % (error or "didn't find section in config file"))
+        sys.exit(1)
 elif rest[0] == "lsjson":
     blad = os.environ.get("ATRAPA_RCLONE_BLAD", "")
     if blad or rest[1].split(":")[0] not in remotes():

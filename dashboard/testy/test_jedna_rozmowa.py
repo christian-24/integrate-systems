@@ -183,6 +183,10 @@ with sync_playwright() as p:
     go("#odbior?z=erp%7CZADANIA.md%7C20"); pg.wait_for_timeout(800)
     out["odbior"] = pg.evaluate(M, "")
     out["odbior"]["ask"] = pg.locator("#view [data-askt]").count()
+    d = pg.locator("#view .od-det")
+    out["odbior"]["details"] = d.evaluate("el=>el.open")
+    d.locator("summary").first.click()
+    out["odbior"]["after"] = d.evaluate("el=>el.open")
     b.close()
 print(json.dumps({"out": out, "errs": errs}, ensure_ascii=False))
 """
@@ -250,6 +254,8 @@ class Iphone15(Duzy):
         self.assertLessEqual(z["kb"][1], 359)                             # pole nad klawiaturą ekranową
         self.assertFalse(out["zamknij"]["lock"])                          # po zamknięciu nic nie blokuje strony
         self.assertIn("Załącznik: Strona", out["strona"]["att"])
+        self.assertFalse(out["odbior"]["details"])
+        self.assertTrue(out["odbior"]["after"])
         self.assertEqual(out["odbior"]["ask"], 1)                         # odbiór: „Zapytaj o to zadanie”
 
 
