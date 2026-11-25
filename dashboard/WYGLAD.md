@@ -25,7 +25,7 @@ Innych wartości nie używamy. Odstęp daje `gap` rodzica, nie marginesy dzieci.
 ## Karta
 
 Jedna karta: tło `--surface`, ramka 1 px `--line`, promień `--r-lg` (8 px), wnętrze 12/16 px. Ten sam wygląd mają
-sekcje Planu, „Kod i pliki”, ramki w szczegółach zadania („Twój ruch”, zgoda, praca agenta) i karty Agentów.
+sekcja Decyzje w Zadaniach, karty Połączeń, ramki w szczegółach zadania („Twój ruch”, zgoda, praca agenta) i karty Agentów.
 Wyróżnienie tylko lewą krawędzią 3 px: niebieska = Twój ruch, żółta = coś czeka (np. pliki do zatwierdzenia).
 Bez kolorowego tła całej karty (wyjątek: błąd).
 
@@ -53,15 +53,16 @@ miejsca; cel dotyku 44 px.
 
 1. Nazwa (20 px) i stan projektu; po prawej „Szczegóły” i „Rozmowa”.
 2. Jedna linia faktów: faza · postęp · bieżący etap.
-3. Przełącznik części (gdy są) jako przyciski segmentowe w jednym wierszu.
-4. Zakładki w jednym wierszu (wszystkie, bez „Więcej”).
+3. Wybór części (gdy są) jako mała lista „Część” przy nazwie, domyślnie „Całość”.
+4. Zakładki w jednym wierszu (wszystkie, bez „Więcej”): Zadania (domyślna, Decyzje na górze), Strona, Marketing,
+   Etapy, Wskaźniki, Księga, Połączenia.
 
-Szczegóły techniczne (GitHub, gałąź, pliki) nie są na wierzchu: są pod „Szczegóły” i w „Kod i pliki”, zwykłymi
+Szczegóły techniczne (GitHub, gałąź, pliki) nie są na wierzchu: są pod „Szczegóły” i w zakładce Połączenia, zwykłymi
 słowami („nie połączono z GitHubem”, „3 zmiany do wysłania”), bez „origin”, „commit”, „pole github:”.
 
 ## Telefon (do 820 px)
 
-- Zakładki i przełącznik części w jednym wierszu, przewijane w poziomie (`.hscroll`), bez zawijania; wybrana pozycja
+- Zakładki w jednym wierszu, przewijane w poziomie (`.hscroll`), bez zawijania; wybrana pozycja
   przewija się do widoku.
 - Bez awatara projektu w nagłówku; etap w osobnej linii.
 - Strona bez poziomego przewijania od 393 do 1920 px.

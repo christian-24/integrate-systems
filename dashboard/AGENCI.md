@@ -280,7 +280,7 @@ Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty)
 
 ### Zmiany niezatwierdzone w repozytorium projektu
 
-„Kod i pliki” (stan z `/api/github/stan`) pokazuje pliki niezatwierdzone, `sources` (uruchomienia z ostatnich 3 dni,
+Połączenia → GitHub na stronie projektu (stan z `/api/github/stan`) pokazuje pliki niezatwierdzone, `sources` (uruchomienia z ostatnich 3 dni,
 które zapisywały te pliki narzędziem Edit/Write poza swoim katalogiem roboczym) i `stashes` (schowek git). Działania
 wykonuje proces panelu: `POST /api/repo/zatwierdz {project}` (jeden commit na bieżącej gałęzi, autor „Panel projektów”,
 opis z tytułem zadania i id uruchomienia), `POST /api/repo/odloz {project}` (`git stash push -u` z opisem),
@@ -741,7 +741,7 @@ taki zapis i słowa „zakładka Strona” w odpowiedzi na link.
    bez agenta 404) i `browser`. Zakładka pokazuje to w sekcji „Agent pracuje nad stroną” z przyciskami „Pokaż wersję
    w budowie” (ramka odświeża się po każdym budowaniu agenta), „Wiadomość do agenta” (Rozmowa, jak „Napisz do
    pracującego agenta”) i „Cały przebieg”. Pole `repo` (niezatwierdzone zmiany w repozytorium strony) daje ostrzeżenie
-   z odnośnikiem do „Kod i pliki”.
+   z odnośnikiem do Połączeń projektu (karta GitHub).
 7. **Przeglądarka dla agenta strony** (Claude, gdy jest `PANEL_PRZEGLADARKA_MCP`): panel uruchamia na czas pracy
    serwer plików wyniku budowania z katalogu roboczego agenta na `127.0.0.1:<port>` (port zapamiętany w danych
    uruchomienia, także po restarcie panelu) i daje agentowi `--mcp-config` z Playwright MCP (`--headless --isolated`,
