@@ -376,7 +376,9 @@ def _command(path):
 
 
 def describe_tool(name, data, cwd=""):
-    """Czynność agenta w jednym wierszu: 'Edit: src/api.py', 'Bash: npm test'."""
+    """Czynność agenta w jednym wierszu: 'Edit: src/api.py', 'Bash: npm test', 'Przeglądarka: otwiera /'."""
+    if str(name).startswith("mcp__przegladarka__"):
+        return strona.describe_browser(str(name)[len("mcp__przegladarka__"):], data)
     if name in ("TodoWrite", "TaskCreate", "TaskUpdate"):
         return {"TodoWrite": "Aktualizuje listę kroków", "TaskCreate": "Dodaje krok", "TaskUpdate": "Aktualizuje krok"}[name]
     detail = ""
@@ -1717,7 +1719,8 @@ class Manager:
         parts = [x for x in priv.get("parts") or [] if x.get("worktree")]
         for x in parts:
             extra = extra + ["--add-dir", x["worktree"]]
-        mcp = self.site.mcp_args(priv, cwd) if site and t["tool"] == "claude" else []
+        mcp = (self.site.mcp_args(priv, cwd) if t["tool"] == "claude" else self.site.mcp_codex_args(priv, cwd)) \
+            if site else []
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
                                   git=info, site_rules=(self.site.rules(site, cwd) + self.site.mcp_rules(priv))
                                   if site else (), drive=mnt, parts=parts)
@@ -1725,7 +1728,7 @@ class Manager:
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-c", "sandbox_workspace_write.network_access=false",
                                           "-c", "features.multi_agent=false", "-c", "features.multi_agent_v2=false",
-                                          "-C", cwd] + (extra if git or parts else []) + ["-"]
+                                          "-C", cwd] + mcp + (extra if git or parts else []) + ["-"]
         else:
             render = self.render_command()
             tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
@@ -5594,6 +5597,9 @@ class Manager:
                 self._say(rec, st["last"])
             elif what == "command_execution" and kind == "item.started":
                 self._did(rec, "Bash: %s" % item.get("command", ""))
+            elif what == "mcp_tool_call" and kind == "item.started":       # np. przeglądarka agenta strony
+                self._did(rec, describe_tool("mcp__%s__%s" % (item.get("server", "?"), item.get("tool", "?")),
+                                             item.get("arguments"), cwd))
             elif what == "file_change" and kind == "item.completed":
                 for ch in item.get("changes") or []:
                     if isinstance(ch, dict) and ch.get("path"):

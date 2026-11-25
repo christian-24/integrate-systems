@@ -307,14 +307,16 @@ out.two=wwView(top);WWC.x='s2';out.two2=wwView(top);LIVE=false;out.off=wwView(to
         self.assertNotIn("strona", o["own"])                                     # część bez strony: bez zakładki
         self.assertIn("strona", o["part"])
         self.assertIn('data-ww="s"', o["view"])                                  # podgląd części ze stroną
-        self.assertIn('href="#p-x-strona?cz=s"', o["view"])
+        self.assertNotIn('href="#p-x-strona?cz=s"', o["view"])                 # bez „Strona części …” (grupa strona)
         self.assertIn('class="pj-parts hscroll"', o["sw"])                         # przełącznik w jednym wierszu (WYGLAD.md)
         self.assertIn('href="#p-x-strona"', o["sw"])                             # „Całość” zostaje na zakładce Strona
         self.assertIn('href="#p-x?cz=x"', o["sw"])                               # część bez strony: Plan
-        self.assertEqual(o["two"].count("data-wwpart="), 2)                      # dwie części ze stroną: wybór
+        # dwie części ze stroną: bez wiersza „Strona części” nad podglądem (właściciel 25.11, grupa strona);
+        # inną stronę wybiera przełącznik części w nagłówku (partSw), WWC zostaje dla adresów z wyborem
+        self.assertEqual(o["two"].count("data-wwpart="), 0)
+        self.assertNotIn("Strona części", o["two"] + o["view"])
         self.assertIn('data-ww="s"', o["two"])
         self.assertIn('data-ww="s2"', o["two2"])
-        self.assertIn('data-wwpart="s2" data-wwtop="x" data-k="wwp:s2" aria-pressed="true"', o["two2"])
         self.assertNotIn("data-ww=", o["off"])
 
     def test_przycisk_otworz_podglad(self):
