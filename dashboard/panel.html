@@ -5173,11 +5173,11 @@ function drAccBox(compact){
   if(a.loading&&!a.done)return '<p class="note" role="status">Sprawdzam konta Google…</p>';
   let h=a.err?'<p class="warn">'+esc(a.err)+'</p>':'';
   if(a.available===false)return h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
-  const L=a.accounts||[],busy=!!A.busy['dra'],lg=a.login;
+  const L=a.accounts||[],busy=!!A.busy['dra'],lg=a.login,noC=!a.ownClient;
   if(L.length&&!compact)h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
     (x.connected?(x.projects.length?'foldery w '+kpN(x.projects.length,'projekcie','projektach','projektach'):'bez folderów w projektach'):'<span class="kp-warn">połączenie zniknęło z serwera, połącz ponownie</span>')+'</div></div>'+
-    '<div class="r"><button type="button" class="btn sec sm" data-dra="ponow" data-acc="'+esc(x.id)+'" data-k="dra-p:'+esc(x.id)+'"'+(busy||lg?' aria-disabled="true"':'')+'>Połącz ponownie</button>'+(x.projects.length?'':'<button type="button" class="btn sec sm" data-dra="usun" data-acc="'+esc(x.id)+'" data-k="dra-u:'+esc(x.id)+'"'+(busy?' aria-disabled="true"':'')+'>Odłącz konto</button>')+'</div></li>').join('')+'</ul>';
-  if(lg){
+    '<div class="r">'+(noC?'':'<button type="button" class="btn sec sm" data-dra="ponow" data-acc="'+esc(x.id)+'" data-k="dra-p:'+esc(x.id)+'"'+(busy||lg?' aria-disabled="true"':'')+'>Połącz ponownie</button>')+(x.projects.length?'':'<button type="button" class="btn sec sm" data-dra="usun" data-acc="'+esc(x.id)+'" data-k="dra-u:'+esc(x.id)+'"'+(busy?' aria-disabled="true"':'')+'>Odłącz konto</button>')+'</div></li>').join('')+'</ul>';
+  if(lg&&lg.mode==='own'){
     const own=lg.mode==='own';
     h+='<div class="dra-lg"><p><b>Łączenie: '+esc(lg.label)+'</b></p><ol class="dv-st"><li><a class="btn sm" href="'+esc(lg.url)+'"'+
       (own?'':' target="_blank" rel="noopener noreferrer"')+' data-k="dra-go">Zaloguj się w Google</a> Wybierz konto i zatwierdź dostęp tylko do odczytu.</li>'+
@@ -5189,6 +5189,11 @@ function drAccBox(compact){
       '<button class="btn sm">Połącz</button>'+
       (navigator.clipboard&&navigator.clipboard.readText?'<button type="button" class="btn sec sm" data-dra="schowek" data-k="dra-clip">Wklej ze schowka</button>':''))+
       '<button type="button" class="btn sec sm" data-dra="anuluj" data-k="dra-a">Anuluj</button></div>'+(own?'':'</form>')+'</div>';
+  }else if(lg){
+    h+='<div class="dra-lg"><p class="note">Łączenie z wklejaniem adresu jest wyłączone.</p><div class="row"><button type="button" class="btn sec sm" data-dra="anuluj" data-k="dra-a">Anuluj</button></div></div>';
+  }else if(noC){
+    h+=compact?'<p class="note">Najpierw ustaw logowanie Google: <a href="#koszty">Serwer</a> → Google Drive → „Logowanie jednym kliknięciem” (raz, ok. 10 minut). Potem łączysz jednym kliknięciem, także z telefonu.</p>':
+      '<p class="note">Najpierw ustaw klienta Google poniżej (raz, ok. 10 minut). Potem „Połącz Google Drive” działa jednym kliknięciem, także z telefonu.</p>';
   }else{
     h+='<form class="dform" data-drastart="1">'+(L.length||!compact?'<input class="fi" name="label" autocomplete="off" maxlength="60" placeholder="Nazwa konta, np. Firma albo Prywatne" aria-label="Nazwa konta Google">':'')+
       '<div class="row"><button class="btn sm"'+(busy?' aria-disabled="true"':'')+' data-k="dra-start">'+(L.length?'Połącz kolejne konto':'Połącz Google Drive')+'</button></div></form>'+
