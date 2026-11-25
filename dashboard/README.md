@@ -65,9 +65,10 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
   folderu”), „Zmień folder”, „Odłącz”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
   i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
 - **Google Drive** (Serwer → Google Drive, albo „Kod i pliki”, gdy żadne konto nie jest połączone): jedno logowanie
-  na konto Google (można połączyć kilka, każde z nazwą nadaną przy łączeniu), tylko do odczytu. Z wbudowanym
-  klientem rclone po zalogowaniu wkleja się raz adres strony, która się nie otwiera („Wklej ze schowka” albo
-  wklejenie w pole od razu łączy); z własnym klientem OAuth (INSTALACJA.md, „Google Drive”) Google wraca do panelu.
+  na konto Google (można połączyć kilka, każde z nazwą nadaną przy łączeniu), tylko do odczytu. Łączenie idzie
+  tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Logowanie jednym kliknięciem”,
+  INSTALACJA.md, „Google Drive”): Google wraca do panelu. Bez klienta panel pokazuje, jak go ustawić; dawne łączenie
+  z wklejaniem adresu (klient rclone) jest w interfejsie wyłączone (decyzja właściciela 2026-11-25).
   Folder projektu montuje się w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`), agent dostaje tę ścieżkę
   w instrukcji zadania. Połączenia sprzed kont (osobne logowanie na folder) działają dalej; „Zmień folder” przenosi
   je na konto.
