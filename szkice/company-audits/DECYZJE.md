@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-25: Strona: film w sekcji „Kto to robi”, kod zmieniony przed buildem
+- Kontekst: poprawka właściciela „Zrób to” do zadania „Dodaj na stronie miejsca na zdjęcia, LinkedIn, dane firmy i film”. Agent znów nie miał uprawnień do `npm` (build, zrzuty) ani gita w repozytorium strony. W karcie jest otwarte pytanie, więc nowego nie zadaję.
+- Decyzja: (1) zmieniam kod strony mimo braku builda (zmiana poprzedniej decyzji punkt 1), bo właściciel kazał to zrobić; zmiana jest mała i odwracalna, a na produkcję nie wyjdzie bez builda i obejrzenia; (2) film nie dostaje osobnej sekcji z tłem, tylko blok pod kartami osób w „Kto to robi”, żeby nie zmieniać rytmu jasnych i ciemnych sekcji na komputerze; (3) nagłówek „Poznaj nas, zanim zadzwonisz”, zdanie bez czasu trwania i bez obietnic; w DE, EN i IT dopisek, że film jest po polsku; napisy .vtt jako ścieżka „Polski”.
+- Skutki: kolejne zadanie z uprawnieniami do `npm` buduje wersję roboczą, robi zrzuty 390 i 1440 px i zatwierdza zmianę w repozytorium strony. Produkcyjne `npm run build` nadal nie przejdzie bez 23 wymaganych pól w dane.js.
+- Kto: agent
+
 ## 2026-11-25: Strona: miejsce na film jako pole opcjonalne, bez zmian w kodzie przed buildem
 - Kontekst: zadanie „Dodaj na stronie miejsca na zdjęcia, LinkedIn, dane firmy i film”. Zdjęcia, LinkedIn, NIP, adres i link CEIDG mają już miejsca w kodzie strony (oprogramowani-onepager), brakuje sekcji filmu. Agent nie miał uprawnień do builda, zrzutów ani gita w repozytorium strony. W karcie jest otwarte pytanie 9, więc nowego pytania nie zadaję.
 - Decyzja: (1) kodu strony nie zmieniam, dopóki nie da się go zbudować i obejrzeć, bo strona idzie na produkcję; (2) film to pole opcjonalne `DANE.film` (plik MP4, plakat, napisy .vtt z własnego serwera, bez YouTube, więc bez zmian w CSP), bez autoodtwarzania; bez pliku w produkcji sekcji nie ma; (3) plan zmian w strona-www/miejsca-wiarygodnosci.md.
