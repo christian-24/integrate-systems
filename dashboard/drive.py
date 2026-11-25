@@ -15,6 +15,7 @@ Moduł nigdy nie wypisuje wyjścia rclone ani tokenów: błędy zamienia na jedn
 """
 import configparser
 import datetime
+import html
 import http.client
 import json
 import os
@@ -22,6 +23,7 @@ import re
 import secrets
 import shutil
 import subprocess
+import tempfile
 import threading
 import time
 import unicodedata
@@ -35,6 +37,7 @@ PID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 ACC_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,30}$")
 ACC_PREFIX = "gdrive-"              # wpis rclone konta Google: gdrive-<id>
 BACK_KEYS = {"state", "code", "scope", "authuser", "prompt", "hd", "iss"}
+REDIRECT_URI = "https://2-29-181-133.sslip.io/api/drive/powrot"
 SCOPE = "https://www.googleapis.com/auth/drive.readonly"
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -89,6 +92,29 @@ def back_query(url, state, port=PORT):
     if not state or q.get("state", [""])[0] != state or not q.get("code", [""])[0]:
         return None
     return urllib.parse.urlencode({k: v[0] for k, v in q.items()})
+
+
+def account_back_query(value, state):
+    """Kod albo wartości z tekstu. Do rclone zawsze trafia zapytanie dla bieżącego logowania."""
+    value = html.unescape(str(value or "").strip())
+    fields = {}
+    for key, data in re.findall(r'(?<![\w-])((?:code|state|error))=([^&\s<>"\']*)', value):
+        if key in fields:
+            return None, "Wklej jeden adres albo jeden kod logowania."
+        fields[key] = urllib.parse.unquote_plus(data)
+    if fields.get("error"):
+        return None, "Google nie przekazał zgody. Otwórz logowanie i zatwierdź dostęp."
+    if "state" in fields and fields["state"] != state:
+        return None, "Ten adres pochodzi z innego logowania. Wklej adres z aktualnego linku."
+    code = fields.get("code", value if not fields else "")
+    if not re.fullmatch(r"[A-Za-z0-9/_+.%=-]{1,2048}", code):
+        return None, "Brakuje kodu Google. Wklej cały adres lub sam kod."
+    return urllib.parse.urlencode({"state": state, "code": code}), ""
+
+
+def return_page(value):
+    value = str(value or "")
+    return "/" + value if re.fullmatch(r"#[A-Za-z0-9_/?&=.%+~:-]{1,500}", value) else "/#koszty?k=drive"
 
 
 def account_id(label, taken=()):
@@ -241,7 +267,8 @@ class Drive:
     def _login_alive(self):
         """Wywołanie pod self.lock: bieżące logowanie albo None (wygasłe i zakończone sprząta)."""
         lg = self.login
-        if lg and ((lg.get("proc") and lg["proc"].poll() is not None) or time.time() - lg["at"] > LOGIN_TTL):
+        if lg and (time.time() - lg["at"] > LOGIN_TTL
+                   or (lg.get("proc") and not lg.get("sent") and lg["proc"].poll() is not None)):
             self._stop_login()
             lg = None
         return lg
@@ -258,9 +285,12 @@ class Drive:
         """Wywołanie pod self.lock: `rclone config create` z logowaniem na 127.0.0.1:<port>.
         (proces, state, adres Google) albo (None, '', komunikat błędu)."""
         os.makedirs(os.path.dirname(self.conf), mode=0o700, exist_ok=True)
-        proc = subprocess.Popen([self.rclone, "--config", self.conf, "config", "create", remote, *params],
-                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                errors="replace")
+        try:
+            proc = subprocess.Popen([self.rclone, "--config", self.conf, "config", "create", remote, *params],
+                                    stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                    text=True, errors="replace")
+        except OSError:
+            return None, "", "Nie udało się uruchomić rclone."
         found = {}
         pat = re.compile(r"http://127\.0\.0\.1:%d/auth\?state=([\w-]+)" % self.port)
 
@@ -335,9 +365,42 @@ class Drive:
             return None
         return {"client_id": cid, "client_secret": sec, "redirect_uri": red}
 
+    def save_client(self, body):
+        """Zapis ustawień klienta z formularza panelu."""
+        supplied = body.get("json")
+        if supplied:
+            try:
+                web = json.loads(supplied).get("web")
+                if not isinstance(web, dict) or REDIRECT_URI not in (web.get("redirect_uris") or []):
+                    return 400, "Wybierz JSON klienta typu Aplikacja internetowa z adresem powrotu podanym wyżej.", {}
+            except (TypeError, ValueError, AttributeError):
+                return 400, "Nie udało się odczytać pliku JSON klienta Google.", {}
+        else:
+            web = body
+        cid, secret = (str(web.get(k) or "").strip() for k in ("client_id", "client_secret"))
+        if not re.fullmatch(r"[A-Za-z0-9_-]+\.apps\.googleusercontent\.com", cid) or not re.fullmatch(
+                r"[A-Za-z0-9_-]{1,256}", secret):
+            return 400, "Podaj identyfikator i sekret klienta z Google Cloud.", {}
+        with self.lock:
+            tmp = None
+            try:
+                parent = os.path.dirname(os.path.abspath(self.oauth_file))
+                os.makedirs(parent, mode=0o700, exist_ok=True)
+                with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=parent, delete=False) as f:
+                    tmp = f.name
+                    json.dump({"client_id": cid, "client_secret": secret, "redirect_uri": REDIRECT_URI}, f)
+                os.replace(tmp, self.oauth_file)
+            except OSError:
+                return 500, "Nie udało się zapisać klienta na serwerze.", {}
+            finally:
+                if tmp and os.path.exists(tmp):
+                    os.unlink(tmp)
+        return 200, "", {"ownClient": True}
+
     # ---------- konta Google ----------
     def accounts(self):
-        out = {"available": bool(self.rclone), "ownClient": False, "accounts": [], "login": None}
+        out = {"available": bool(self.rclone), "ownClient": False, "redirectUri": REDIRECT_URI, "scope": SCOPE,
+               "accounts": [], "login": None}
         if not self.rclone:
             return 200, "", out
         out["ownClient"] = self.own_client() is not None
@@ -352,7 +415,7 @@ class Drive:
                 out["login"] = {"account": lg["acc"], "label": lg["label"], "url": lg["url"], "mode": lg["mode"]}
         return 200, "", out
 
-    def start_account(self, label, account=""):
+    def start_account(self, label, account="", return_to=""):
         """Logowanie nowego konta (label) albo ponowne istniejącego (account: cofnięty albo wygasły dostęp)."""
         if not self.rclone:
             return 409, "Na serwerze brakuje rclone (uruchom/serwer/zainstaluj-drive.sh).", {}
@@ -373,6 +436,11 @@ class Drive:
             lg = self._login_alive()
             if lg and lg["kind"] == "project":
                 return 409, "Trwa logowanie Drive w projekcie. Spróbuj za kilka minut.", {}
+            if lg:
+                if lg["mode"] == "paste" and (lg["acc"] == acc or (not account and lg["label"] == label)):
+                    return 200, "", {"loginUrl": lg["url"], "mode": "paste", "account": lg["acc"]}
+                if lg["mode"] == "paste":
+                    return 409, "Trwa logowanie innego konta. Dokończ je albo anuluj.", {}
             self._stop_login()
             own = self.own_client()
             if own:
@@ -381,7 +449,8 @@ class Drive:
                     "client_id": own["client_id"], "redirect_uri": own["redirect_uri"], "response_type": "code",
                     "scope": SCOPE, "access_type": "offline", "prompt": "consent select_account", "state": state})
                 self.login = {"key": "konto:" + acc, "kind": "account", "mode": "own", "proc": None, "state": state,
-                              "url": url, "at": time.time(), "acc": acc, "label": label}
+                              "url": url, "at": time.time(), "acc": acc, "label": label,
+                              "return": return_page(return_to), "client": own}
             else:
                 if account:
                     self._drop_remote(ACC_PREFIX + acc)      # wpis z cofniętym tokenem; aliasy projektów zostają
@@ -390,7 +459,7 @@ class Drive:
                     return 500, url, {}
                 self.login = {"key": "konto:" + acc, "kind": "account", "mode": "paste", "proc": proc,
                               "state": state, "url": url, "at": time.time(), "acc": acc, "label": label}
-        return 200, "", {"loginUrl": url, "mode": self.login["mode"], "account": acc}
+            return 200, "", {"loginUrl": url, "mode": self.login["mode"], "account": acc}
 
     def _account_done(self, acc, label):
         try:
@@ -412,33 +481,50 @@ class Drive:
             lg = self._login_alive()
             if not lg or lg["kind"] != "account" or lg["mode"] != "paste":
                 return 409, "Logowanie wygasło. Kliknij „Połącz Google Drive” jeszcze raz.", {}
-            err = self._rclone_finish(lg, url)
+            query, err = account_back_query(url, lg["state"])
             if err:
                 return 400, err, {}
+            proc = lg["proc"]
+            if not lg.get("sent"):
+                conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=8)
+                try:
+                    conn.request("GET", "/?" + query)
+                    lg["sent"] = True
+                    with conn.getresponse() as response:
+                        if response.status >= 400:
+                            lg["sent"] = False
+                            return 400, "rclone odrzucił kod. Sprawdź adres i spróbuj ponownie.", {}
+                except (OSError, http.client.HTTPException):
+                    if not lg.get("sent"):
+                        return 503, "Nie udało się przekazać kodu do rclone. Spróbuj ponownie w tym samym oknie.", {}
+                finally:
+                    conn.close()
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                return 202, "", {"pending": True}
             acc, label = lg["acc"], lg["label"]
-            if lg["proc"].returncode != 0 or (ACC_PREFIX + acc) not in self._remotes():
-                self._stop_login()                      # usuwa niedokończony wpis
-                return 500, "Google nie potwierdził logowania. Spróbuj jeszcze raz.", {}
+            if proc.returncode != 0 or (ACC_PREFIX + acc) not in self._remotes():
+                self._stop_login()
+                return 409, "rclone zakończył logowanie bez dostępu. Otwórz nowe logowanie.", {}
+            self._account_done(acc, label)
             self._stop_login(drop=False)
-        self._account_done(acc, label)
         return 200, "", {"account": acc}
 
-    def oauth_back(self, query):
+    def oauth_back(self, query, redirect=False):
         """GET /api/drive/powrot (własny klient OAuth): (kod HTTP, zdanie dla właściciela)."""
         q = urllib.parse.parse_qs(str(query or ""))
         state, code = (q.get("state") or [""])[0], (q.get("code") or [""])[0]
         with self.lock:
             lg = self._login_alive()
             if not lg or lg["kind"] != "account" or lg["mode"] != "own" or not state \
-                    or not secrets.compare_digest(state, lg["state"]):
+                    or not secrets.compare_digest(state.encode(), lg["state"].encode()):
                 return 409, "Logowanie wygasło albo adres jest nieprawidłowy. Połącz konto jeszcze raz w panelu."
             if not code:
                 self._stop_login()
                 return 400, "Google nie przekazał zgody. Połącz konto jeszcze raz w panelu."
-            own = self.own_client()
+            own = lg["client"]
             self._stop_login(drop=False)
-            if not own:
-                return 409, "Brak pliku klienta OAuth na serwerze."
             try:
                 data = urllib.parse.urlencode({"code": code, "client_id": own["client_id"],
                                                "client_secret": own["client_secret"],
@@ -461,6 +547,8 @@ class Drive:
         if not ok:
             return 500, "Nie zapisano połączenia na serwerze."
         self._account_done(lg["acc"], lg["label"])
+        if redirect:
+            return 303, lg["return"]
         return 200, "Google Drive połączony (%s). Wróć do panelu." % lg["label"]
 
     def _conf_section(self, name, values):

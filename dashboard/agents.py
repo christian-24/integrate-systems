@@ -114,6 +114,13 @@ VARIANTS_LABEL = "odebrane warianty"    # odpowiedź: odebrane warianty = a, b (
 REVIEW_FIX_DEFAULT = "Popraw według znaczników poniżej."
 
 
+def publication_task_title(pub, projekt):
+    """Stały tytuł zadania z Marketingu, niezależny od numeru wiersza w kampanii."""
+    day = str(pub["date"])[:10]
+    key = hashlib.sha256((projekt.task_key(pub) + "|" + day).encode()).hexdigest()[:16]
+    return projekt._clean("Przygotuj publikację na %s (%s): %s" % (day, key, pub["title"]), 120)
+
+
 def version_paths(text, refs=()):
     """Ścieżki plików z tekstu wyniku jak resFiles w panelu: bez .., bez ZADANIA.md i materiałów zadania, do 12."""
     skip = {r.get("path") for r in refs if isinstance(r, dict) and not r.get("anchor")}
@@ -3608,7 +3615,8 @@ class Manager:
                 if t.get("kind") != "publikacja" or t["state"] == "done" or not scenariusz.is_film(t) \
                         or not (today.isoformat() <= day <= horizon):
                     continue
-                if any(x.startswith(scenariusz.PREP_TASK + day) for x in titles):
+                if publication_task_title(t, self.projekt) in titles or any(
+                        x.startswith(scenariusz.PREP_TASK + day) for x in titles):
                     continue                    # zadanie już jest (także zrobione: agent nie zostawił pliku)
                 post = scenariusz.post_dir(cards, day)
                 if post and os.path.isfile(os.path.join(post, scenariusz.FILE)):
@@ -3627,6 +3635,8 @@ class Manager:
                     continue                    # ten film nagrywa panel (studio), bez scenariusza dla właściciela
                 try:
                     with self.write_lock:
+                        if self._has_publication_task(folder, pid, t):
+                            continue
                         post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(t))
                         title = self.projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day,
                                                                    scenariusz.pub_title(t)), 120)
@@ -3647,6 +3657,11 @@ class Manager:
         self.projekt.update_task(folder, task["file"], task["line"], title, changes)
         for key, value in (detail or {}).items():
             self.projekt.set_detail(folder, task["file"], task["line"], title, key, value)
+
+    def _has_publication_task(self, folder, pid, pub):
+        name = publication_task_title(pub, self.projekt)
+        return any(t["file"] == "ZADANIA.md" and t["title"] == name
+                   for t in self.projekt.read_project(folder, pid)["tasks"])
 
     def _plan_rhythm(self, data, index, today):
         """Rytm marketingu z kampanie/staly-rytm.md (każdy projekt z tym plikiem):
@@ -3684,7 +3699,7 @@ class Manager:
                         and not any((n == day or n.startswith(day + "-")) and has_post(os.path.join(posts, n))
                                     for n in folders):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
-                    if title not in titles:
+                    if title not in titles and publication_task_title(t, self.projekt) not in titles:
                         new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
                                        "minutes": POST_REVIEW_MINUTES},
                                self.post_detail(folder, day, t.get("channel") or "", t["title"]))
@@ -3701,6 +3716,8 @@ class Manager:
                     continue
                 try:
                     with self.write_lock:
+                        if new[0].startswith(POST_TASK) and self._has_publication_task(folder, pid, t):
+                            continue
                         self._add_task(folder, pid, *new)
                     titles.add(new[0])
                     added = True

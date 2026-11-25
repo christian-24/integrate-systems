@@ -884,6 +884,106 @@ def _script_ctx(body):
     return data, index[pid], proj, pub, day
 
 
+def publication_material(pub, post, film_owner=False):
+    """Brakujący materiał i miejsce zapisu zgodne z edytorem posta."""
+    day = str(pub.get("date") or "")[:10]
+    rel = "posty/" + (os.path.basename(post) if post else day + "-publikacja")
+    if scenariusz.is_film(pub):
+        if post and (scenariusz.read(post) or os.path.isfile(os.path.join(post, film.SCENARIO))
+                     or publikacja.Publisher.film(post)):
+            return None
+        filename = scenariusz.FILE if film_owner else film.SCENARIO
+        return "scenariusz filmu", rel + "/" + filename
+    if re.search(r"\b(?:grafik\w*|infografik\w*|ilustracj\w*|karuzel\w*)\b", pub["title"], re.I):
+        if post and any(os.path.isfile(os.path.join(post, name)) for name in ("grafika.png", "grafika.svg")):
+            return None
+        return "plik grafiki", rel + "/grafika.png"
+    if post and any(v for k, v in post_text(post)[1].items() if k.casefold() != "alt"):
+        return None
+    return "tekst posta", rel + "/post.md"
+
+
+def publication_job(pub, jobs):
+    """Zadanie z przycisku lub istniejące otwarte zadanie przygotowania tego materiału."""
+    pid, day = pub["project"], str(pub["date"])[:10]
+    job = jobs.get((pid, agents.publication_task_title(pub, projekt)))
+    if job:
+        return job
+    title = projekt._clean("%s%s: %s" % (agents.POST_TASK, day, pub["title"]), 160)
+    if scenariusz.is_film(pub):
+        title = projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day, scenariusz.pub_title(pub)), 120)
+    job = jobs.get((pid, title))
+    return job if job and job["state"] != "done" else None
+
+
+def publication_jobs(data, index):
+    owners = {p["id"] for p in data["projects"] if p.get("filmOwner")}
+    posts = {}
+    jobs = {(t["project"], t["title"]): t for t in data["tasks"] if t["file"] == "ZADANIA.md"
+            and t["title"].startswith(("Przygotuj publikację na ", agents.POST_TASK, scenariusz.PREP_TASK))}
+    for pub in data["tasks"]:
+        day = str(pub.get("date") or "")[:10]
+        if pub.get("kind") != "publikacja" or pub["state"] == "done" or not POST_DAY.fullmatch(day):
+            continue
+        job = publication_job(pub, jobs)
+        pid = pub["project"]
+        if (pid, day) not in posts:
+            posts[pid, day] = post_folder(pid, day, index)
+        material = publication_material(pub, posts[pid, day], pid in owners)
+        if material:
+            pub["missingMaterial"] = material[0]
+        if job:
+            pub["materialTask"] = job["id"]
+
+
+def assign_publication(body):
+    tid, title = body.get("id"), body.get("title")
+    manager = get_agents()
+    with _write_lock:
+        data, index = load_projects()
+        pub = next((t for t in data["tasks"] if t["id"] == tid and t["title"] == title
+                    and t.get("kind") == "publikacja" and t["state"] != "done"), None)
+        if not pub:
+            return 409, "Publikacja się zmieniła. Odśwież Marketing.", {}
+        pid, day = pub["project"], str(pub.get("date") or "")[:10]
+        if not POST_DAY.fullmatch(day):
+            return 400, "Publikacja musi mieć termin.", {}
+        if data["projectsSource"] != "registry":
+            return 409, "Wybierz projekt z rejestru.", {}
+        name = agents.publication_task_title(pub, projekt)
+        folder = index[pid]
+
+        job = publication_job(pub, {(pid, t["title"]): t for t in data["tasks"]
+                                    if t["project"] == pid and t["file"] == "ZADANIA.md"})
+        if job:
+            return 200, "", {"task": job["id"]}
+        owner = next((p.get("filmOwner") for p in data["projects"] if p["id"] == pid), False)
+        material = publication_material(pub, post_folder(pid, day, index), owner)
+        if not material:
+            return 409, "Materiał do tej publikacji jest już gotowy.", {}
+        kind, destination = material
+        goal = "Przygotuj %s do publikacji „%s” (%s), termin %s. Pozostaw publikację właścicielowi." % (
+            kind, pub["title"], pub.get("channel") or "kanał z kampanii", day)
+        done_when = "%s jest w %s, zgodny z wpisem w %s i gotowy do odbioru przed publikacją %s." % (
+            kind.capitalize(), destination, pub["file"], day)
+        today = datetime.date.today().isoformat()
+        rows = ["- [ ] %s | kto: agent | kiedy: %s" % (name, today)]
+        rows.extend(projekt.DETAIL_INDENT + "%s: %s" % (field, projekt._clean(value, 1000))
+                    for field, value in (("cel", goal), ("gotowe gdy", done_when), ("materiał", pub["file"])))
+        try:
+            projekt._insert_inbox(projekt._task_file(folder, "ZADANIA.md"), rows)
+        except (ValueError, OSError):
+            return 409, "Nie udało się zapisać zadania publikacji.", {}
+        job = next((t for t in projekt.read_project(folder, pid)["tasks"]
+                    if t["file"] == "ZADANIA.md" and t["title"] == name), None)
+    if not job:
+        return 409, "Nie udało się odczytać zapisanego zadania.", {}
+    code, error, run = manager.run_task(job["id"], job["title"])
+    record = manager.get(run.get("id", "")) if code == 200 else None
+    state = (record or {}).get("state", "running" if code == 200 else "")
+    return 200, "", {"task": job["id"], "state": state, "reason": error}
+
+
 def _script_tasks(data, pid, day, prefix):
     return [t for t in data["tasks"] if t["project"] == pid and t["title"].startswith(prefix + day)]
 
@@ -950,6 +1050,10 @@ def script_prepare(body):
     title = projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day, scenariusz.pub_title(pub)), 120)
     try:
         with _write_lock:
+            name = agents.publication_task_title(pub, projekt)
+            if any(t["title"] == name and t["state"] != "done"
+                   for t in projekt.read_project(folder, proj["id"])["tasks"]):
+                return 409, "Agent już przygotowuje ten scenariusz."
             post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(pub))
             detail = get_agents().script_detail(folder, pub, "posty/" + os.path.basename(post),
                                                 scenariusz.rec_day(day))
@@ -1927,8 +2031,10 @@ WRITES = {"/api/task/state": lambda b: change_task(b), "/api/task/update": lambd
           "/api/drive/montuj": lambda b: get_drive().mount(b.get("project", "")),
           "/api/drive/anuluj": lambda b: get_drive().cancel(b.get("project", "")),
           "/api/drive/odlacz": lambda b: get_drive().disconnect(b.get("project", "")),
+          "/api/post/zlec": lambda b: assign_publication(b),
+          "/api/drive/klient": lambda b: get_drive().save_client(b),
           "/api/drive/konto/start": lambda b: get_drive().start_account(b.get("label", ""),
-                                                                         b.get("account", "")),
+                                                                         b.get("account", ""), b.get("returnTo", "")),
           "/api/drive/konto/finish": lambda b: get_drive().finish_account(b.get("url", "")),
           "/api/drive/konto/anuluj": lambda b: get_drive().cancel_account(),
           "/api/drive/konto/usun": lambda b: get_drive().remove_account(b.get("account", "")),
@@ -2859,6 +2965,7 @@ def build_data():
     today = datetime.date.fromisoformat(out["today"])
     manager = get_agents()
     manager.annotate(out["tasks"], out["projectsSource"], today)
+    publication_jobs(out, index)
     for t in out["tasks"]:
         t["ownerNeeds"] = projekt.owner_needs(t)
     out.update(projekt.owner_counts(out["projects"], out["stages"], out["tasks"], today))
@@ -3049,6 +3156,9 @@ DRIVE_BACK_PAGE = ('<!doctype html><html lang="pl"><head><meta charset="utf-8"><
                    'content="width=device-width,initial-scale=1"><title>Google Drive</title></head><body '
                    'style="font:16px system-ui,sans-serif;padding:24px"><p>%s</p><p><a href="/#koszty?k=drive">Panel</a></p>'
                    '</body></html>')
+DRIVE_BACK_REDIRECT = ('<!doctype html><html lang="pl"><meta charset="utf-8"><title>Google Drive</title>'
+                       '<meta http-equiv="refresh" content="0;url=%s">'
+                       '<p>Google Drive połączony. <a href="%s">Wróć do panelu</a>.</p></html>')
 _drive = {"obj": None}
 
 
@@ -3407,11 +3517,12 @@ def media_file(pid, rel):
     return path
 
 
-def post_folder(pid, day):
+def post_folder(pid, day, index=None):
     """Folder posta: <karta projektu>/posty/<dzień>-<nazwa>/. None, gdy go nie ma albo dane są niepoprawne."""
     if not POST_DAY.match(day or ""):
         return None
-    _, index = load_projects(resolve=False)
+    if index is None:
+        _, index = load_projects(resolve=False)
     folder = index.get(pid)
     if not folder:
         return None
@@ -3428,13 +3539,13 @@ def post_folder(pid, day):
     return None
 
 
-def post_info(folder):
-    """Tytuł i teksty z post.md: sekcje „## Facebook”, „## LinkedIn”, „## Alt” (pozostałe sekcje też, pod swoją nazwą)."""
-    out = {"title": "", "sections": {}, "image": False, "folder": os.path.basename(folder)}
+def post_text(folder):
+    """Tytuł i teksty kanałów z post.md."""
+    out = {"title": "", "sections": {}}
     try:
         with open(os.path.join(folder, "post.md"), encoding="utf-8") as f:
             text = f.read()
-    except OSError:
+    except (OSError, UnicodeDecodeError):
         text = ""
     name = None
     for line in text.split("\n"):
@@ -3446,7 +3557,14 @@ def post_info(folder):
         elif name is not None:
             out["sections"][name] += line + "\n"
     out["sections"] = {k: v.strip() for k, v in out["sections"].items()}
-    out["image"] = bool(os.path.exists(os.path.join(folder, "grafika.png")) or os.path.exists(os.path.join(folder, "grafika.svg")))
+    return out["title"], out["sections"]
+
+
+def post_info(folder):
+    """Treści i pliki, które można otworzyć w edytorze posta."""
+    title, sections = post_text(folder)
+    out = {"title": title, "sections": sections, "folder": os.path.basename(folder),
+           "image": any(os.path.exists(os.path.join(folder, name)) for name in ("grafika.png", "grafika.svg"))}
     # imageAt: wersja grafiki (najnowszy z grafika.png i grafika.svg) do odświeżenia podglądu po zmianie
     out["imageAt"] = max([int(os.path.getmtime(os.path.join(folder, n))) for n in ("grafika.png", "grafika.svg")
                           if os.path.exists(os.path.join(folder, n))] or [0])
@@ -3546,6 +3664,11 @@ def export_preview(path):
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "PanelProjektow/1.0"
+
+    def log_request(self, code="-", size="-"):
+        if urlparse(getattr(self, "path", "")).path == "/api/drive/powrot":
+            return
+        super().log_request(code, size)
 
     def log_message(self, fmt, *args):
         agents.log(fmt % args)
@@ -3757,8 +3880,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
         if path == "/api/drive/powrot":         # powrót z Google (własny klient OAuth); bez sesji: chroni state
-            code, text = get_drive().oauth_back(url.query)
-            return self._send(code, DRIVE_BACK_PAGE % (html.escape(text)), "text/html; charset=utf-8")
+            code, text = get_drive().oauth_back(url.query, redirect=True)
+            if code == 303:
+                # Nowy dokument panelu kończy przekierowanie z obcej domeny. Kolejne żądanie
+                # do własnej witryny dostanie ciasteczko sesji SameSite=Strict.
+                target = html.escape(text, quote=True)
+                return self._send(200, DRIVE_BACK_REDIRECT % (target, target), "text/html; charset=utf-8",
+                                  [("Referrer-Policy", "no-referrer")])
+            return self._send(code, DRIVE_BACK_PAGE % (html.escape(text)), "text/html; charset=utf-8",
+                              [("Referrer-Policy", "no-referrer")])
         if path == "/api/asystent/karty":
             code, err, extra = get_agents().assistant_cards_get()
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
@@ -3899,7 +4029,7 @@ class Handler(BaseHTTPRequestHandler):
         if path in WRITES:
             body = self._json_body(CHAT_BODY if path in ("/api/task/chat", "/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
                                                          "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
-                                                         "/api/scenariusz/tekst") else 4096)
+                                                         "/api/scenariusz/tekst", "/api/drive/klient") else 4096)
             if body is None:
                 return self._send(400, json.dumps({"ok": False, "error": "Nieprawidłowe żądanie."}),
                                   "application/json; charset=utf-8")
