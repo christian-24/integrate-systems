@@ -6,6 +6,7 @@
 - nagrywa: ty
 - repozytorium: /home/panel/projekty/shield-silent (lokalne, bez GitHuba)
 - założono: 2026-11-20
+- grafiki: tylko zdjęcia
 
 Karta jest umową między właścicielem a agentami pracującymi w tym projekcie. Agent czyta ją na początku każdej sesji.
 

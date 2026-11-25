@@ -164,5 +164,10 @@ termin: 2026-12-05
   gotowe gdy: pliki z Drive widoczne w Media projektu; agent projektu je czyta; pamięć podręczna do 1 GB; kopia nocna i Zasoby nie liczą plików z Drive
 
 ## Do rozplanowania
+- [ ] Zdecyduj: zlecić rozwojowi panelu odczyt wyników postów i reklam (5 etapów) | kto: ty | kiedy: 2026-11-27 | czas: 10
+  cel: decyzja, czy i kiedy panel ma odczytywać wyniki (dziennik klientów, statystyki FB/IG, reklamy Meta, widok Wyniki, połączenia Meta, LinkedIn i Google Ads osobno dla każdego projektu)
+  gotowe gdy: odpowiedź w formularzu; przy „tak” sesja z Maca puszcza zlecenie rozwoju według pliku materiału
+  pyta: Zlecić teraz (tak/nie); Od którego etapu zacząć (1–5)
+  materiał: zlecenia/Tracking-wynikow-panel.md
 - [ ] Uzupełnić pliki projektu według standardu | kto: claude
   cel: Uzupełnić według standard/STANDARD.md: Zadania (6 braków), README (brak pliku), Architektura (brak pliku), Uruchomienie (brak pliku), Instrukcje agentów (brak pliku). Niczego nie nadpisywać; na końcu python3 standard/projekt.py sprawdz bez braków w tym projekcie.
