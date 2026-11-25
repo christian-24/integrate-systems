@@ -159,6 +159,25 @@ class Konto(unittest.TestCase):
         self.assertNotIn("gdrive-firma", self.d._remotes())
         self.assertEqual(self.d.accounts()[2]["accounts"], [])
 
+    def test_diagnoza_aliasu_i_ponowne_montowanie(self):
+        acc = self.connect()
+        self.assertEqual(self.d.choose("proj", acc, "1CupraFolderId")[0], 200)
+        with mock.patch.dict(os.environ, {"ATRAPA_RCLONE_ALIAS_BLAD": "1"}):
+            status = self.d.status("proj")[2]
+            self.assertEqual(status["repair"], "alias")
+            self.assertIn("wpis Drive projektu", status["reason"])
+            self.assertNotIn(SECRET, repr(status))
+            self.assertEqual(self.d.mount("proj")[:2], (200, ""))
+        self.assertEqual(self.aliases()[-2:], [self.aliases()[0]] * 2)
+        self.assertEqual(self.calls(), ["proj " + self.cards["proj"]] * 2)
+        with mock.patch.dict(os.environ, {"ATRAPA_RCLONE_BLAD": "invalid_grant"}):
+            status = self.d.status("proj")[2]
+            self.assertEqual(status["repair"], "reconnect")
+            code, message, _ = self.d.mount("proj")
+            self.assertEqual(code, 409)
+            self.assertNotIn(SECRET, message)
+        self.assertEqual(len(self.calls()), 2)
+
     def test_ponowne_polaczenie_konta(self):
         acc = self.connect()
         self.assertEqual(self.d.choose("proj", acc, "1CupraFolderId")[:2], (200, ""))
