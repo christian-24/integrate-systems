@@ -131,6 +131,16 @@ class Trasa(Baza):
         prompt = [c for c in self.calls() if c.get("stream")][0]["prompt"]
         self.assertIn("[ekran: #ty]", prompt)
 
+    def test_transkrypcja_do_pola_rozmowy(self):
+        self.use(PANEL_GLOS_PYTHON=sys.executable, GLOS_ATRAPA="1")
+        text = "Zmień kolor nagłówka."
+        status, body = self.post_audio(MP4 + ("|" + text).encode(), ctype="audio/mp4", query="?draft=1")
+        self.assertEqual(status, 200, body)
+        self.assertEqual(body["text"], text)
+        self.assertTrue(self.manager.voice.running())
+        self.assertEqual(self.get()["messages"], [])
+        self.assertEqual(self.calls(), [])
+
     def test_typ_rozmiar_i_puste(self):
         self.use(PANEL_GLOS_PYTHON=sys.executable, GLOS_ATRAPA="1")
         self.assertEqual(self.post_audio(WEBM + b"|x", ctype="application/json")[0], 400)
