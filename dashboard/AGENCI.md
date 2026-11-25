@@ -489,16 +489,18 @@ Obie mają te same uprawnienia i tę samą drogę działania (`Manager.chat_tool
   plików projektu i jego części. Asystent działa w stałej sesji stream-json, Rozmowa w projekcie jednym wywołaniem
   `--output-format json` z `--resume`;
 - zasady w promptach z jednego źródła (`chat_rules`): zmiany tylko w ZADANIA.md, DECYZJE.md i kampanie/ na prośbę
-  właściciela, anulowanie przez `[x]` i `wynik: anulowane`, wiersz „Zmieniono:”, link do podglądu strony, bez kart,
+  właściciela, wiersz „Zmieniono:” po edycji pliku, link do podglądu strony, bez kart,
   kodu, poleceń, publikacji i próśb o hasła;
 - wiersze działań na końcu odpowiedzi (`take_actions`; panel wykonuje je i usuwa z odpowiedzi):
   - `Uruchom: <id projektu> | <tytuł>`: `launch_task` → `run_task`;
+  - `Anuluj zadanie: <id projektu> | <tytuł> | <opcjonalny powód>`: `server.cancel_task` zatrzymuje agenta i zapisuje
+    `[-]` oraz datę anulowania, tak samo jak przycisk w szczegółach zadania;
   - `Polecenie: <id projektu> | <tytuł> | <polecenie>`: `_execute_order` (poprawka pod zadaniem, uruchomienie albo
     wiadomość do pracującego agenta, jak „Wyślij i wykonaj”);
   - `Odpowiedź na pytanie: <id projektu> | <numer> | <odpowiedź>`: `server.answer_question` (ta sama droga co
     przycisk przy pytaniu, ze skutkami `skutek:`);
 
-  najwyżej 3 uruchomienia i polecenia razem oraz 3 odpowiedzi w jednej odpowiedzi; Rozmowa w projekcie działa tylko
+  najwyżej 3 uruchomienia, anulowania i polecenia razem oraz 3 odpowiedzi w jednej odpowiedzi; Rozmowa w projekcie działa tylko
   na zadaniach swojego projektu i jego części;
 - twarde zasady bez zmian w obu: `wymaga: zgoda` czeka na kliknięcie, `kto: ty` i publikacje nie ruszają, nic nie
   publikują, bez powłoki; uruchamia zawsze serwer.
