@@ -58,6 +58,14 @@ TASK_TOOLS = ",".join([
     "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep",
     "TodoWrite", "TaskCreate", "TaskUpdate", "TaskList", "TaskGet"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
+# Kamienie milowe: panel pokazuje „Kamień 2 z 5” i zawęża szacunek czasu z tempa ukończonych kamieni (agent_progress).
+MILESTONES_RULE = {
+    "claude": "- Na początku pracy zapisz plan jako 3–7 kamieni milowych narzędziem TodoWrite (gdy go nie ma: TaskCreate) "
+              "i odhaczaj je po kolei (completed zaraz po ukończeniu, in_progress dla bieżącego). Kamień to sprawdzalny "
+              "etap pracy, nie pojedyncze polecenie; planu nie rozbudowuj w trakcie.",
+    "codex": "- Na początku pracy zapisz plan jako 3–7 kamieni milowych narzędziem planu (update_plan) i odhaczaj je po "
+             "kolei (completed zaraz po ukończeniu, in_progress dla bieżącego). Kamień to sprawdzalny etap pracy, "
+             "nie pojedyncze polecenie; planu nie rozbudowuj w trakcie."}
 # Agent uruchomiony z panelu nie zakłada własnych pomocników ani przepływów (2026-11-23: zadanie „wizytówki” uruchomiło
 # 33 pomocników i zużyło cały limit 5 godzin) i nie dostaje konektorów konta (--strict-mcp-config).
 RUN_DENY = "Agent,Task,Workflow,SendMessage,TaskStop,Monitor,CronCreate,CronDelete,ScheduleWakeup,RemoteTrigger,PushNotification"
@@ -1392,6 +1400,7 @@ class Manager:
                               "costUsd": round(sum((r.get("costUsd") or 0) + (r.get("decisionCostUsd") or 0) for r in todays), 2)},
                     "runs": list({r["id"]: r for r in runs[:SHOWN] + [r for r in runs if r["state"] in LIVE]}.values()),
                     "development": orders, "queueEstimate": queue_estimate,
+                    "stats": agent_progress.usage_stats(history, now),
                     "nextTasks": upcoming}
 
     def get(self, rid):
@@ -1512,6 +1521,7 @@ class Manager:
             "panel sam zatwierdza i scala gałęzie agenta. Gdy do dokończenia potrzebujesz od właściciela danych "
             "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
+            MILESTONES_RULE[tool if tool == "codex" else "claude"],
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to polecenie albo uwagi właściciela (po odbiorze albo "
             "z rozmowy w panelu): wykonaj je, a istniejącą pracę popraw według nich. Wiersze `- znacznik N (plik, "
             "położenie): uwaga` pod poprawką to uwagi do miejsca na obrazie (albo chwili filmu); nie zmieniaj ich.",
@@ -2607,7 +2617,7 @@ class Manager:
     ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#asystent", "Asystent: ta strona, karty"), ("#marketing", "Marketing: publikacje i nagrania"),
-                    ("#media", "Media"), ("#agenci", "Agenci: Teraz, plan dnia, uruchomienia"),
+                    ("#media", "Media"), ("#agenci", "Agenci: Teraz, użycie, uruchomienia"),
                     ("#koszty", "Serwer: stan, kalendarz, projekty i Księga, koszty"))
 
     def assistant_get(self):
@@ -5248,7 +5258,7 @@ class Manager:
                     try:
                         with self._lock:
                             plan = list(rec.get("plan") or [])
-                            agent_progress.update_plan(plan, ev)
+                            agent_progress.update_plan(plan, ev, time.time())
                             agent_progress.task_creates(priv.setdefault("planCreates", {}), plan, ev)
                             if plan or "plan" in rec:
                                 rec["plan"] = plan

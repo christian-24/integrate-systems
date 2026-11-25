@@ -25,7 +25,7 @@ lista projektów z wyszukiwarką; na telefonie dolny pasek (Asystent, Marketing,
 | Asystent | `#asystent` | strona startowa: sprawy dla Ciebie na dziś (liczba i 3 najważniejsze, z przyciskami), notatka PM, „Pokaż” kart; rozmowa głosem i tekstem, odpowiedzi jako karty |
 | Marketing | `#marketing` | tydzień postów i filmów, kampanie w toku z „Wpisz wynik”, kanały publikacji, studio filmów |
 | Media | `#media` | zdjęcia i filmy ze wszystkich projektów |
-| Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, publikacje, ostatnie 24 h), plan dnia, uruchomienia |
+| Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, kamienie, szacunek), użycie Claude i Codex, publikacje, ostatnie 24 h, uruchomienia (zwinięte) |
 | Serwer | `#koszty` | stan i zasoby, kopie na GitHubie, kalendarz (połączenie, subskrypcja ICS), Projekty (rejestr, dodanie i usunięcie, Księga projektów), koszty, rozwój panelu, sesje |
 | Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing; projekt z częściami: `#p-<id>?cz=<id części>` |
 | Odbiór pracy | `#odbior?z=<id zadania>` | wersje wyniku, porównanie, Akceptuję, Popraw |
@@ -263,7 +263,8 @@ pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzn
 
 ### Co dziś robimy
 
-Sekcja „Plan dnia” w Agentach. Piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
+Plan dnia układasz w Asystencie („plan dnia”, „co mam dziś”). Sekcji „Plan dnia” w Agentach już nie ma (2026-11-25);
+trasy `/api/plan/ask` i `/api/plan/accept` zostały na serwerze bez przycisku w panelu. Opis trasy: piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
 dostaje listę otwartych zadań wszystkich projektów i układa plan: najwyżej 6 zadań dla agentów i 5 dla Ciebie.
 Zadania dla agentów są zaznaczone; „Uruchom zaznaczone” uruchamia je jak „Uruchom agenta” (te same reguły i kolejka).
 Plan bierze tylko zadania z kart: id spoza listy i zadania, których agent nie może wykonać, są odrzucane.
