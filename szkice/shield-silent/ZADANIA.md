@@ -69,8 +69,9 @@ termin: 2026-11-29
 ## Etap: Tydzień 30 lis – 6 gru: kontrola 1
 termin: 2026-12-06
 
-- [ ] Meta: podmienić film w reklamie na puk-puk Cupry: lewe vs prawe tylne drzwi (nd 22 lis) | kto: ty | kiedy: 2026-11-30 | czas: 10
+- [x] Meta: podmienić film w reklamie na puk-puk Cupry: lewe vs prawe tylne drzwi (nd 22 lis) | kto: ty | kiedy: 2026-11-30 | czas: 10
   cel: 30 lis: Meta: podmienić film w reklamie na puk-puk Cupry: lewe vs prawe tylne drzwi (nd 22 lis)
+  wynik: zastąpione kampanią kampanie/meta-statyczne.md (decyzja 25.11: reklamy statyczne)
 - [ ] KONTROLA 1: co najmniej 12 zapytań z reklam (od 19 lis) i koszt zapytania do 60 zł? Jeśli nie, zmieniamy… | kto: ty | kiedy: 2026-12-06 | czas: 20
   cel: 6 gru, KONTROLA 1: co najmniej 12 zapytań z reklam (od 19 lis) i koszt zapytania do 60 zł? Jeśli nie, zmieniamy film na Meta i słowa kluczowe
 - [ ] Nagraj filmy tygodnia 30 lis – 6 gru | kto: ty | kiedy: 2026-12-06 | czas: 90
@@ -90,8 +91,9 @@ termin: 2026-12-13
 ## Etap: Tydzień 14 gru – 20 gru: ostatni tydzień przed świętami
 termin: 2026-12-20
 
-- [ ] W reklamie Meta podmienić film na ten, który ma najwięcej wyświetleń organicznie | kto: ty | kiedy: 2026-12-14 | czas: 10
+- [x] W reklamie Meta podmienić film na ten, który ma najwięcej wyświetleń organicznie | kto: ty | kiedy: 2026-12-14 | czas: 10
   cel: 14 gru: w reklamie Meta podmienić film na ten, który ma najwięcej wyświetleń organicznie
+  wynik: zastąpione kampanią kampanie/meta-statyczne.md (decyzja 25.11: reklamy statyczne)
 - [ ] Bony: ostatnie zamówienia do 21 gru | kto: ty | kiedy: 2026-12-20 | czas: 10
 - [ ] Nagraj filmy tygodnia 14 gru – 20 gru | kto: ty | kiedy: 2026-12-20 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
@@ -127,8 +129,9 @@ termin: 2027-01-10
 
 - [ ] Google: Wygłuszanie zostaje na 18 zł. Detailing schodzi do 5 zł. Nowe kampanie Ceramika 5 zł i PPF 5 zł,… | kto: ty | kiedy: 2027-01-04 | czas: 20
   cel: 4 sty, Google: Wygłuszanie zostaje na 18 zł. Detailing schodzi do 5 zł. Nowe kampanie Ceramika 5 zł i PPF 5 zł, promień 30 km od studia
-- [ ] Meta: nowy film (najlepszy z grudnia) | kto: ty | kiedy: 2027-01-04 | czas: 10
+- [x] Meta: nowy film (najlepszy z grudnia) | kto: ty | kiedy: 2027-01-04 | czas: 10
   cel: 4 sty, Meta: nowy film (najlepszy z grudnia)
+  wynik: zastąpione kampanią kampanie/meta-statyczne.md (decyzja 25.11: reklamy statyczne)
 - [ ] Nagraj filmy tygodnia 4 sty – 10 sty | kto: ty | kiedy: 2027-01-10 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
@@ -143,8 +146,9 @@ termin: 2027-01-17
 ## Etap: Tydzień 18 sty – 24 sty
 termin: 2027-01-24
 
-- [ ] Podmienić film w reklamie Meta na najlepszy ze stycznia | kto: ty | kiedy: 2027-01-18 | czas: 10
+- [x] Podmienić film w reklamie Meta na najlepszy ze stycznia | kto: ty | kiedy: 2027-01-18 | czas: 10
   cel: 18 sty: podmienić film w reklamie Meta na najlepszy ze stycznia
+  wynik: zastąpione kampanią kampanie/meta-statyczne.md (decyzja 25.11: reklamy statyczne)
 - [ ] Nagraj filmy tygodnia 18 sty – 24 sty | kto: ty | kiedy: 2027-01-24 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
