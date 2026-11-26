@@ -91,7 +91,7 @@ termin: 2026-12-13
   cel: treść polityki, wersja HTML i odpowiedzi do Play Console gotowe do publikacji
   gotowe gdy: właściciel odebrał treść i odpowiedzi; commit w zadaniu „Zacommituj poprawki polityki prywatności”
   wynik: treść przyjęta 19.11 (Claude za właściciela); dane wydawcy i zapis na gałęzi w kolejnych zadaniach
-- [ ] Spisz listę 15 kandydatów na testerów zamkniętego testu | kto: ty | kiedy: 2026-11-20 | czas: 20
+- [ ] Spisz listę 15 kandydatów na testerów zamkniętego testu | kto: ty | kiedy: 2026-11-27 | czas: 20
   cel: lista co najmniej 15 osób z kontem Google (zapas na rezygnacje do progu 12)
   gotowe gdy: lista 15 kandydatów zapisana poza repozytorium (adresy to dane osobowe)
   - [ ] znajomi z telefonem z Androidem i kontem Google

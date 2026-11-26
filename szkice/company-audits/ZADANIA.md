@@ -32,7 +32,7 @@
 termin: 2026-12-18
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
-- [ ] Podłącz dysk z kopią PC do Maca (folder Reaserch) | kto: ty | gdzie: mac | kiedy: 2026-11-20 | czas: 2
+- [ ] Podłącz dysk z kopią PC do Maca (folder Reaserch) | kto: ty | gdzie: mac | kiedy: 2026-11-27 | czas: 2
   cel: lista LeadyV2 trafia na serwer, żeby agent wybrał 10 firm
   gotowe gdy: dysk z folderem Migracja-PC-2026-11 jest podłączony do Maca, a Claude wgrał folder Reaserch na serwer
   Podłącz dysk i napisz w rozmowie z Claude: „dysk podłączony”. Wgranie (bez plików .env i kluczy) i commit robi Claude.

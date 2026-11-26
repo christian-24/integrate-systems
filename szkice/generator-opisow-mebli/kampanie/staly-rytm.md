@@ -33,14 +33,14 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
   Post kieruje do rejestracji: publikacja po „Potwierdź DPA…” w ZADANIA.md (pytanie 13 w KARTA.md).
   link: https://www.facebook.com/1416011748262183_122115016131539109
   wynik: opublikowane 22.11 22:14: facebook https://www.facebook.com/1416011748262183_122115016131539109
-- [ ] Obejrzyj film A nagrany przez panel: opis mebla PL i DE w 10 s | kto: ty | kiedy: 2026-11-20 | czas: 5
+- [x] Obejrzyj film A nagrany przez panel: opis mebla PL i DE w 10 s | kto: ty | kiedy: 2026-11-20 | czas: 5
   cel: gotowy film do slotu A, do 60 sekund
   gotowe gdy: film.mp4 w posty/2026-11-20-film-a-opis-pl-de nagrany przez panel ze scenariusza posta i obejrzany w całości
   materiał: posty/2026-11-20-film-a-opis-pl-de/scenariusz.json
   materiał: marketing/plan-10-kont.md#6
   - [ ] obejrzyj film nagrany przez panel (Marketing → post z 20.11) i zamknij zadanie albo napisz w „Co poprawić”, co zmienić
   Film nagrywa panel ze scenariusza posta (studio filmów, szablon „Pokaz generatora”); nie nagrywasz ekranu ręcznie. Film o zmianie modelu nie nadaje się na slot A.
-- [ ] Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: ty | kanał: linkedin, facebook, reels | kiedy: 2026-11-20 | czas: 15 | po: Obejrzyj film A, Potwierdź DPA
+- [ ] Opublikuj film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: linkedin, facebook, reels | po: Obejrzyj film A, Potwierdź DPA
   cel: pokazać w krótkim filmie (do 60 s) drogę od atrybutów mebla do opisu PL i DE
   gotowe gdy: film opublikowany w kanałach z wiersza, opis pod filmem z linkiem opisarnia.pl
   materiał: posty/2026-11-20-film-a-opis-pl-de/post.md
@@ -103,3 +103,4 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
 
 ## Wyniki i wnioski
 Liczniki z zadań w ZADANIA.md (zaproszenia, przyjęte, rozmowy, linki, konta) dopisuje panel przy zamknięciu zadania.
+- 2026-11-26 · linki 2 · Wyślij wiadomość do 10–15 znajomych z branży (wariant B)

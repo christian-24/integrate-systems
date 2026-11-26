@@ -30,13 +30,14 @@ termin: 2026-11-22
 - [x] Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry | kto: ty | kiedy: 2026-11-19 | czas: 90
   cel: Statyw z lampą, ceramika na pół maski Cupry (czw 19 lis) i puk-puk na tylnych drzwiach Cupry. Szczegóły: Plan-filmow-do-28-stycznia.md, sekcja 1
 - [ ] Usunąć „Piława” z opisów na Instagramie | kto: ty | kiedy: 2026-11-22 | czas: 10
-- [ ] Google: włączyć Wygłuszanie 18 zł + Detailing 10 zł. Ceny w reklamach (drzwi od 1 590 zł, pakiet 2 790 zł,… | kto: ty | kiedy: 2026-11-19 | czas: 10
+- [x] Google: włączyć Wygłuszanie 18 zł + Detailing 10 zł. Ceny w reklamach (drzwi od 1 590 zł, pakiet 2 790 zł,… | kto: ty | kiedy: 2026-11-19 | czas: 10
   cel: Google: włączyć Wygłuszanie 18 zł + Detailing 10 zł. Ceny w reklamach (drzwi od 1 590 zł, pakiet 2 790 zł, korekta od 750 zł) zgadzają się z obecną stroną
-- [ ] Meta: reklama z celem „Wiadomości”, 12 zł/dzień, wybrany film z Instagrama, Wrocław + 40 km, wiek 25–60.… | kto: ty | kiedy: 2026-11-19 | czas: 15
+- [ ] Meta: reklama z celem „Wiadomości”, 12 zł/dzień, wybrany film z Instagrama, Wrocław + 40 km, wiek 25–60.… | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: Meta: reklama z celem „Wiadomości”, 12 zł/dzień, wybrany film z Instagrama, Wrocław + 40 km, wiek 25–60. Bez rabatów i gratisów (cały okres)
-- [ ] Od tego dnia każdego pytającego zapisujesz | kto: ty | kiedy: 2026-11-19 | czas: 5
+- [x] Od tego dnia każdego pytającego zapisujesz | kto: ty | kiedy: 2026-11-19 | czas: 5
   cel: Od tego dnia każdego pytającego zapisujesz: skąd przyszedł (Google, Instagram, TikTok, polecenie)
   pyta: Źródło pytania [wybór: Google | Instagram | TikTok | polecenie]
+  odpowiedź: Źródło pytania = polecenie
 - [ ] Konto TikTok i kanał YouTube | kto: ty | kiedy: 2026-11-22 | czas: 20
 - [ ] Wizytówka: logo, zdjęcie w tle, 8+ zdjęć prac, prośba o opinię do dotychczasowych klientów | kto: ty | kiedy: 2026-11-22 | czas: 30
   materiał: google-wizytowka/README.md

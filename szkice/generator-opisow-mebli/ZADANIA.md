@@ -192,7 +192,7 @@ termin: 2026-11-30
   - [ ] MGK Meble
   Możesz rozłożyć na 3 dni po 8. W większych firmach (od Meble Emilia) szukaj osoby od e-commerce lub marketingu.
   Porządki 2026-11-21 (DECYZJE.md): STIPA zaznacz jako pominiętą (ma niemiecką wersję sklepu); Ramaro i pozostałe firmy dostają zaproszenie.
-- [ ] Wyślij wiadomość do 10–15 znajomych z branży (wariant B) | kto: ty | kiedy: 2026-11-20 | czas: 30 | licznik: linki
+- [x] Wyślij wiadomość do 10–15 znajomych z branży (wariant B) | kto: ty | kiedy: 2026-11-20 | czas: 30 | licznik: linki
   cel: osoby z branży, które znasz osobiście, dostają link do darmowego konta
   gotowe gdy: 10–15 osób z branży dostało wiadomość z linkiem opisarnia.pl/rejestracja
   materiał: marketing/plan-10-kont.md#5
