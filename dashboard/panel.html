@@ -5826,7 +5826,7 @@ function pjxConView(p){
      (panel przykładowy, stary serwer) dawna karta Meta i ręczne połączenia (wyConnCard) */
   const K=typeof kaCard==='function'&&(D.wyniki||{}).konta;
   if(K)return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+kaCard(p,'meta')+kaCard(p,'google')+kaCard(p,'linkedin')+'</div>';
-  return pjxKan(p)+'<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
+  return (typeof pjxKan==='function'?pjxKan(p):'')+'<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
     (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
 }
 /* przypisanie strony Facebook do projektu z karty Meta (ten sam zapis co w Kanałach publikacji) */
