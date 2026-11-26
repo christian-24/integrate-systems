@@ -31,6 +31,8 @@ ALERT_DAYS = 7              # najwyżej jedno zadanie na reklamę na tydzień
 GOOGLE_LIMITS = (150.0, None, 20.0)  # „- google progi: 150; 4; 20”: zł bez konwersji (7 dni), maks. średni CPC, zł za hasło bez konwersji
 LI_REMIND_DAYS = 7          # przypomnienie o tokenie LinkedIn tyle dni przed wygaśnięciem
 LI_STATES = ("nie złożony", "złożony", "przyznany")
+AD_CACHE_HOURS = 6         # połączona reklama bez dziennych wierszy: odczyt z API najwyżej co 6 h
+AD_LIST = 50               # tyle ostatnich reklam konta w wyborze „Połącz z reklamą”
 
 
 def _norm_metric(text):
@@ -654,6 +656,8 @@ class Wyniki:
             day = str(t.get("date") or "")[:10]
             if t.get("project") != pid or t.get("kind") != "publikacja" or t.get("state") != "done" or not inr(day):
                 continue
+            if t.get("row") == "reklama":
+                continue                      # reklama z harmonogramu: wynik z Meta albo Google Ads niżej, nie post
             if camp and t.get("campaign") != camp["id"]:
                 continue
             rec = (self.organic_record(t, day, index or {}).get("kanaly") or {}) if index is not None else {}
@@ -669,8 +673,15 @@ class Wyniki:
                 interakcje=sum(n.get("interakcje") or 0 for n in nums) or (d.get("clicks") or 0))
         ads = self.ads(pid)
         no_code = {}
+        linked = self.linked_ads(pid, data)
         for r in (ads.get("meta") or {}).get("rows") or []:
             if not inr(r["data"]):
+                continue
+            lt = linked.get(str(r.get("ad") or ""))
+            if lt:                            # pozycja osi połączona z tą reklamą: kod pozycji (albo nazwa reklamy)
+                row(ad_task_code(lt) or "Meta · %s" % r["nazwa"][:60], tytul=r["nazwa"], data=r["data"], kanal="Meta",
+                    rodzaj="reklama", zadanie=lt.get("id", ""), wydano=r["wydano"], rozmowy=r["rozmowy"], zasieg=r["zasieg"],
+                    wyswietlenia=r["wyswietlenia"], interakcje=r["klikniecia"])
                 continue
             if not r["kod"]:
                 no_code[r["nazwa"]] = no_code.get(r["nazwa"], 0) + r["wydano"]
@@ -804,6 +815,8 @@ class Wyniki:
                     if name and name not in links:
                         links[name] = (v["link"], str(v.get("at") or ""))
             link = str((t.get("detail") or {}).get("link") or "")
+            if meta.ad_link_id(link):
+                link = ""                                   # połączona reklama Meta: wyniki z Marketing API, nie z posta
             for name, host in (("facebook", "facebook.com/"), ("instagram", "instagram.com/"), ("linkedin", "linkedin.com/")):
                 if name not in links and host in link:
                     links[name] = (link, "")
@@ -1003,7 +1016,108 @@ class Wyniki:
         for k, a in out.items():
             a["wydano"] = round(a["wydano"], 2)
             a["dni"] = [{"data": d["data"], "wyswietlenia": d.get("wyswietlenia", 0)} for d in self.history(pid, k)]
-        return {"posty": posts, "reklamy": out}
+        return {"posty": posts, "reklamy": out, "reklamyId": self.linked_stats(pid, data, ads)}
+
+    # ---------- połączenie pozycji osi z istniejącą reklamą Meta (link Menedżera reklam w polu link:) ----------
+    def linked_ads(self, pid, data):
+        """{id reklamy: zadanie}: pozycje osi projektu z linkiem do reklamy w polu link: (pierwsza wygrywa)."""
+        out = {}
+        for t in data.get("tasks") or []:
+            if t.get("project") == pid and t.get("state") != "cancelled":
+                aid = meta.ad_link_id((t.get("detail") or {}).get("link"))
+                if aid and aid not in out:
+                    out[aid] = t
+        return out
+
+    def _meta_token(self, pid):
+        """(konto act_… projektu, token z ads_read albo None) jak przy codziennym odczycie reklam."""
+        pub = self._pub()
+        conn = self.connections().get(pid) or {} if pub else {}
+        act = conn.get("metaAct") or ""
+        if not act:
+            return "", None
+        m = pub._read("meta-reklamy.json", {})
+        token = (self.konta.token_for("meta", conn.get("metaLogin"), act) if self.konta else None) or m.get("token")
+        return act, token
+
+    def linked_stats(self, pid, data, ads=None):
+        """{id reklamy: {nazwa, wyświetlenia, zasięg, wydano, rozmowy, kliknięcia, dni}} dla połączonych reklam.
+        Z dziennych wierszy odczytu Meta; bez wierszy: jeden odczyt reklamy z API (cache AD_CACHE_HOURS)."""
+        linked = self.linked_ads(pid, data)
+        if not linked:
+            return {}
+        ads = self.ads(pid) if ads is None else ads
+        out = {}
+        for r in (ads.get("meta") or {}).get("rows") or []:
+            aid = str(r.get("ad") or "")
+            if aid not in linked:
+                continue
+            a = out.setdefault(aid, {"zrodlo": "meta", "nazwa": r.get("nazwa", ""), "wyswietlenia": 0, "zasieg": 0,
+                                     "wydano": 0.0, "rozmowy": 0, "klikniecia": 0, "dni": {}})
+            for k in ("wyswietlenia", "zasieg", "rozmowy", "klikniecia"):
+                a[k] += int(r.get(k) or 0)
+            a["wydano"] += r.get("wydano") or 0
+            a["dni"][r["data"]] = a["dni"].get(r["data"], 0) + int(r.get("wyswietlenia") or 0)
+        for a in out.values():
+            a["wydano"] = round(a["wydano"], 2)
+            a["dni"] = [{"data": d, "wyswietlenia": v} for d, v in sorted(a["dni"].items())]
+        missing = [aid for aid in linked if aid not in out]
+        if missing:
+            out.update(self._ad_cache(pid, missing))
+        return out
+
+    def _ad_cache(self, pid, ids):
+        """Wyniki reklam bez dziennych wierszy: odczyt GET /<id reklamy> z insights, zapamiętany na AD_CACHE_HOURS."""
+        path = self._ads_path("reklamy-polaczone.json")
+        cache, now, changed, out = self._read_json(path, {}), self.now(), False, {}
+        act, token = None, None
+        for aid in ids:
+            c = cache.get(aid) or {}
+            fresh = False
+            try:
+                fresh = now - datetime.datetime.fromisoformat(c.get("at", "")) < datetime.timedelta(hours=AD_CACHE_HOURS)
+            except ValueError:
+                pass
+            if not fresh:
+                if act is None:
+                    act, token = self._meta_token(pid)
+                if not token:
+                    continue
+                try:
+                    c = dict(meta.ad_totals(aid, token, self.http), error="")
+                except ApiError as e:
+                    c = {"error": str(e)[:200]}
+                c["at"] = now.isoformat(timespec="seconds")
+                cache[aid], changed = c, True
+            if c.get("error"):
+                out[aid] = {"zrodlo": "meta", "nazwa": "", "error": c["error"], "dni": []}
+            elif "nazwa" in c:
+                out[aid] = dict({k: v for k, v in c.items() if k not in ("at", "error", "stan")}, zrodlo="meta", dni=[],
+                                stan=c.get("stan", ""))
+        if changed:
+            self._write_json(path, cache)
+        return out
+
+    def api_ads(self, pid):
+        """Ostatnie reklamy konta reklamowego projektu (GET /act_…/ads, ads_read) do połączenia pozycji osi z reklamą."""
+        if not self._pub():
+            return 409, {"ok": False, "error": "Reklamy Meta działają w panelu na serwerze."}
+        act, token = self._meta_token(pid)
+        if not act:
+            return 409, {"ok": False, "error": "Projekt nie ma przypisanego konta reklamowego Meta (Połączenia projektu → Meta)."}
+        if not token:
+            return 409, {"ok": False, "error": "Brak logowania Meta z dostępem do konta %s (ads_read). Zaloguj się w Połączeniach → Meta." % act}
+        try:
+            items = meta.ad_list(act, token, self.http, AD_LIST)
+        except meta.PermError as e:
+            return 409, {"ok": False, "error": "Meta: brak dostępu do reklam konta %s (ads_read): %s" % (act, str(e)[:160])}
+        except ApiError as e:
+            return 502, {"ok": False, "error": "Meta: %s" % str(e)[:200]}
+        data, _ = self.load_projects(resolve=False)
+        used = {aid: t.get("title", "") for aid, t in self.linked_ads(pid, data).items()}
+        for x in items:
+            x["polaczona"] = used.get(x["id"], "")
+        return 200, {"ok": True, "konto": act, "reklamy": items}
 
     def api_posts(self, pid):
         """Ostatnie posty strony Facebook i konta Instagram projektu z API (do połączenia publikacji z postem)."""
@@ -1062,12 +1176,14 @@ class Wyniki:
     def api_get(self, path, query):
         """GET: (kod, obiekt) albo None, gdy ścieżka nie należy do wyników."""
         one = lambda k: (query.get(k) or [""])[0]
-        if path in ("/api/wyniki/os", "/api/wyniki/posty-api"):
+        if path in ("/api/wyniki/os", "/api/wyniki/posty-api", "/api/wyniki/reklamy-api"):
             p, _ = self._project(one("project"))
             if not p:
                 return 404, {"ok": False, "error": "Nie ma takiego projektu."}
             if path == "/api/wyniki/posty-api":
                 return self.api_posts(p["id"])
+            if path == "/api/wyniki/reklamy-api":
+                return self.api_ads(p["id"])
             data, index = self.load_projects(resolve=False)
             return 200, dict(self.timeline(p["id"], data, index), ok=True)
         if path in ("/api/wyniki", "/api/wyniki/historia"):
@@ -1161,6 +1277,12 @@ def fmt(v):
     return ("%d" % v if v == int(v) else ("%.2f" % v).rstrip("0")).replace(".", ",")
 
 CODE = re.compile(r"(?<![A-Za-z0-9])([A-Z]{1,2}\d{1,2})(?![A-Za-z0-9])")
+
+
+def ad_task_code(t):
+    """Kod pozycji osi z tytułu (np. „Przygotuj reklamę S1 …” -> "S1") albo ""."""
+    m = CODE.search(str((t or {}).get("title") or ""))
+    return m.group(1) if m else ""
 
 
 def post_code(t):
