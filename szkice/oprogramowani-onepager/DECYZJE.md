@@ -2,6 +2,13 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-27: Kalendarz i ntfy dla rezerwacji: minimum danych, osobny temat ntfy, bez nowego pytania w karcie
+
+Kontekst: koncepcja koncepcja-rezerwacje-kalendarz.md (rezerwacje ze strony do kalendarza Apple i ntfy). W karcie czeka pytanie o ryczałt, więc nowego pytania nie wolno dodać. Przy czytaniu kodu wyszło, że od zmiany „Repairs” (19.08.2026) contact.sh nie zapisuje rezerwacji do rezerwacje.jsonl i nie obsługuje GET /api/terminy.
+Decyzja: domyślnie wydarzenie w kalendarzu i powiadomienie ntfy bez danych osobowych gościa (tylko termin, forma, temat, ID rezerwacji; e-mail i telefon zostają w mailu). Osobny, losowy temat ntfy dla strony (nie temat panelu), adres w .env mailhooka. Osobny kalendarz iCloud „Oprogramowani – rozmowy”. Rekomendowany wariant A (CalDAV) + ntfy, poprzedzony przywróceniem zapisu rezerwacji; wybór A albo C i zakres danych właściciel zatwierdza przy odbiorze (wiersz decyzja:).
+Skutki: przy minimalnym zakresie polityka prywatności nie wymaga dopisania Apple; wariant pełny (e-mail i telefon w kalendarzu) wymaga dopisania Apple jako odbiorcy w 4 językach. Wdrożenie to osobne zadanie (proponowane w następne:).
+- Kto: agent
+
 ## 2026-11-26: Jedna sekcja „Jak to działa” z kafelkami oferty, zdanie o licencji zamiast „Wszystko zostaje u Ciebie”
 
 Kontekst: uwagi właściciela po obejrzeniu strony 26.11: dwie czwórki („4 rzeczy” i „4 kroki”) mylą, sekcja „Zamiast raportów na 20 stron” jest za duża, a „Wszystko zostaje u Ciebie” jest nieprawdziwe, bo program jest na licencji (company-audits/DECYZJE.md, 2026-05-25).

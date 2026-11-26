@@ -1,0 +1,11 @@
+{
+ "szablon": "porownanie-przed-po",
+ "parametry": {
+  "pytanie": "Ile razy przepisujesz jedno *zamówienie*?",
+  "przed": "*Dziś*: Allegro, Excel, magazyn, kartka na halę",
+  "podpis_przed": "Cztery ręczne kroki, cztery okazje do pomyłki",
+  "po": "*Po integracji*: zamówienie samo idzie do magazynu i na halę",
+  "podpis_po": "Jeden krok: ktoś w biurze sprawdza i zatwierdza",
+  "zysk": "Biuro odpisuje *klientom*, zamiast przepisywać"
+ }
+}
