@@ -5825,7 +5825,8 @@ function pjxConView(p){
   /* Meta, Google Ads i LinkedIn: logowanie na stronie serwisu i konto dla projektu (kaCard); bez stanu logowań
      (panel przykładowy, stary serwer) dawna karta Meta i ręczne połączenia (wyConnCard) */
   const K=typeof kaCard==='function'&&(D.wyniki||{}).konta;
-  if(K)return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+kaCard(p,'meta')+kaCard(p,'google')+kaCard(p,'linkedin')+'</div>';
+  const KN=typeof pjxKan==='function'?pjxKan(p):'';
+  if(K)return KN+'<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+kaCard(p,'meta')+kaCard(p,'google')+kaCard(p,'linkedin')+'</div>';
   return (typeof pjxKan==='function'?pjxKan(p):'')+'<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
     (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
 }
