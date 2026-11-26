@@ -2,6 +2,13 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-26: Adresy podstron DE, IT i EN w języku wersji
+
+Kontekst: wersje DE, IT i EN dostały nową strukturę z PL, w tym cztery podstrony linii oferty. Polskie adresy (/en/planowanie-produkcji) byłyby dla obcojęzycznego gościa i wyszukiwarki niezrozumiałe; regulamin i prywatność już mają adresy w języku wersji (/de/agb, /en/terms).
+Decyzja: adresy podstron w języku wersji: /de/produktionsplanung, /de/integrationen, /de/excel, /de/it; /it/pianificazione-produzione, /it/integrazioni, /it/excel, /it/informatica; /en/production-planning, /en/integrations, /en/excel, /en/it. Polskie adresy bez zmian. Podstrona z cennikiem integracji, kalkulatorem i listą programów rozpoznawana po polu `ceny` w treści, nie po adresie „integracje”. KSeF w DE/IT/EN objaśniony raz jako polski system e-faktur; kwoty i braki ([UZUPEŁNIJ]) jak w PL.
+Skutki: podstrony nie mają jeszcze hreflangów między językami (adresy się różnią); dodanie ich to osobna, mała zmiana w prerenderze. Zmiana adresu = zmiana klucza w podstrony i adres w kafelkach oraz cenniku danego języka.
+- Kto: agent
+
 ## 2026-11-26: Wizytówka 2026-11: telefon i rola z poprzedniej wizytówki
 
 Kontekst: nowa wizytówka i stopka e-mail pod strategię „Najpierw demo. Potem płacisz.”; telefon i rola pod nazwiskiem mają pochodzić od właściciela, a w karcie jest już otwarte pytanie (ryczałt opieki), więc nowego pytania nie wolno dodać. Poprzednia wizytówka (23.11) leży tylko na swojej gałęzi i ma pliki o tych samych nazwach (przod.png, tyl.png).

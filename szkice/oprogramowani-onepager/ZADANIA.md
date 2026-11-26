@@ -164,7 +164,7 @@
   gotowe gdy: jest plik koncepcja-rezerwacje-kalendarz.md z sekcjami: (1) jak dziś działa rezerwacja (mailhook: contact.sh, rezerwacje.sh, lib-rezerwacje.sh, listener.sh) i gdzie trafiają dane; (2) 2–3 sposoby połączenia z kalendarzem Apple z zaletami i wadami, m.in. zapis wydarzenia przez CalDAV iCloud (hasło aplikacji wpisuje właściciel sam do pliku 0600 na serwerze), zaproszenie .ics wysłane e-mailem na adres Apple ID, kalendarz subskrybowany (adres .ics); (3) powiadomienie ntfy z tego samego miejsca (jaki temat, co w treści, bez danych osobowych w treści); (4) RODO: jakie dane klienta idą do kalendarza i powiadomienia, jak długo zostają; (5) rekomendacja i szacunek pracy; nic nie zmieniasz w kodzie, nie tworzysz kont ani haseł
   materiał: mailhook/
   materiał: site/src/dane.js
-- [!] Strona: polski ma pierwszeństwo, gdy przeglądarka zna polski | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | blokada: nie mogłem sprawdzić w przeglądarce list [en-US, pl-PL], [de-DE], [fr-FR] (brak narzędzia do zmiany języków przeglądarki)
+- [x] Strona: polski ma pierwszeństwo, gdy przeglądarka zna polski | kto: agent | gdzie: chmura | kiedy: 2026-11-26
   wykonawca: tylko claude
   cel: właściciel ma w przeglądarce najpierw angielski, a dalej polski, więc adres główny i podgląd w panelu pokazują wersję EN i nie da się przejść na PL (przełącznika nie ma); wybór języka w site/src/i18n.js ma brać polski, jeśli jest gdziekolwiek na liście navigator.languages, w pozostałych przypadkach jak dotąd (pierwszy z de, it, en; domyślnie PL)
   gotowe gdy: w i18n.js wybór języka działa według celu; wersja robocza buduje się (npm run build:panel); w wynik: sprawdzenie w przeglądarce z listą języków [en-US, pl-PL] → /pl/, [de-DE] → /de/, [fr-FR] → /pl/; nic poza wyborem języka się nie zmienia
@@ -172,7 +172,7 @@
   wynik: site/src/i18n.js: polski wygrywa, gdy jest gdziekolwiek na liście języków przeglądarki; poza tym jak dotąd (pierwszy z de, it, en; brak → PL); zmieniona tylko ta jedna funkcja; wersja robocza buduje się (npm run build:panel), nowy kod jest w zbudowanej stronie; w przeglądarce z samym angielskim (bez polskiego) adres główny prowadzi do /en/, zrzuty (telefon, komputer) pokazują wersję EN bez zmian w wyglądzie
   zostało: nie sprawdziłem w przeglądarce trzech list z warunku ([en-US, pl-PL] → /pl/, [de-DE] → /de/, [fr-FR] → /pl/), bo przeglądarka agenta ma stałą listę języków, a skrypt, który ją zmienia, został odrzucony (brak uprawnień); według kodu wyniki będą zgodne z celem
   następne: Strona: sprawdzić wybór języka dla list [en-US, pl-PL], [de-DE], [fr-FR] | kto: agent | kiedy: 2026-11-27
-- [ ] Strona: przenieś nową strukturę do DE, IT i EN | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | po: Strona: polski ma pierwszeństwo
+- [x] Strona: przenieś nową strukturę do DE, IT i EN | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | po: Strona: polski ma pierwszeństwo
   wykonawca: tylko claude
   wygląd: bez zmian; ten sam układ i komponenty co w nowej wersji PL
   cel: wersje DE, IT i EN mają tę samą strukturę i treść co nowa wersja PL z 26.11 (nagłówek „Najpierw demo. Potem płacisz.”, 4 kafelki i 4 podstrony, „Jak to działa”, kontakt@oprogramowani.com); dziś EN pokazuje jeszcze starą stronę
@@ -180,3 +180,21 @@
   materiał: site/src/jezyki/tresc-pl.js
   materiał: site/src/jezyki/
   materiał: site/src/Strona.jsx
+  wynik: site/src/jezyki/tresc-de.js, tresc-it.js, tresc-en.js przepisane na układ PL: „Erst die Demo. Dann zahlen Sie.” / „Prima la demo. Poi paghi.” / „Demo first. Then you pay.”, 4 kafelki, „Jak to działa” (4 kroki + wiadomość), ceny jak w PL, „To programy dla Ciebie”, kontakt z kontakt@oprogramowani.com; podstrony: DE /de/produktionsplanung, /de/integrationen, /de/excel, /de/it; IT /it/pianificazione-produzione, /it/integrazioni, /it/excel, /it/informatica; EN /en/production-planning, /en/integrations, /en/excel, /en/it; tytuły podstron z frazą w języku wersji (np. „Software für Produktionsplanung”, „Integrazione Optima, Subiekt, BaseLinker e KSeF”, „Excel macros and automation”); kwot nie dodano, brakujące dane jako żółte [UZUPEŁNIJ] jak w PL; site/src/Strona.jsx rozpoznaje podstronę z cennikiem po polu w treści, nie po polskim adresie; wersja robocza buduje się (npm run build:panel, 12 podstron DE/IT/EN); zrzuty 390 i 1440 px /de, /it, /en oraz /en/integrations i /it/pianificazione-produzione obejrzane: układ jak w PL; jedną usterkę (DE, „Produktionsplanung” łamane w środku słowa na komputerze) poprawiłem
+  zostało: zrzutami obejrzałem 2 z 12 podstron DE/IT/EN (pozostałe mają ten sam układ, zbudowały się, ale ich nie oglądałem); tłumaczenia zrobione przeze mnie, nikt mówiący tymi językami od urodzenia ich nie sprawdzał
+  następne: Strona: hreflang między podstronami PL/DE/IT/EN | kto: agent | kiedy: 2026-11-28
+- [~] Strona: cała strona główna według nowej strategii (stare sekcje ERP, cennik, projekty) | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+  wykonawca: tylko claude
+  wygląd: bez zmian; te same kolory, czcionki, komponenty; sekcje usuwasz albo zmieniasz treść, nie przebudowujesz interfejsu
+  cel: po zadaniu „Strona: nowa strategia” nagłówek, kafelki, kroki i podstrony są nowe, ale niżej na stronie głównej zostały sekcje ze starej strategii (integracje ERP, ceny, usługi doradcze); właściciel 26.11: strona ma w całości mówić nową strategią z /home/panel/projekty/company-audits/strategia-2026-11-26.md, we wszystkich językach (PL, DE, IT, EN)
+  gotowe gdy: na stronie głównej i podstronach w PL, DE, IT i EN nie ma: sekcji z nazwami ERP (systemy: Subiekt, Optima, WAPRO jako „zamówienia do ERP”), kalkulatora przepisywania zamówień, starego cennika z kwotami (integracja ERP od 3 500 zł, koniec przepisywania od 2 000 zł, mały automat od 2 000 zł, przegląd oferty innego wykonawcy 290 zł, karta projektu 690 zł, prowadzenie cudzego projektu od 490 zł/mies.) ani listy usług doradczych; słowo „ERP” zostaje tylko w sekcji „Nie kupuj wielkiego ERP-a” na podstronie /integracje; wersja robocza buduje się (npm run build:panel); zrzuty całej strony głównej (wszystkie sekcje, w częściach, jeśli zrzut się ucina) w 390 i 1440 px w każdym języku obejrzane; w wynik: lista sekcji strony głównej od góry do dołu (było → jest)
+  materiał: site/src/Strona.jsx
+  materiał: site/src/jezyki/
+  materiał: site/src/dane.js
+  - [ ] Usuń sekcję „systemy” (lista ERP) i sekcję kalkulatora („policz”) ze strony głównej
+  - [ ] Zastąp stary cennik krótką sekcją „Ile to kosztuje”: wycena 0 zł, demo 0 zł, wdrożenie za stałą cenę ustaloną po demie; bez kwot (nowych nie wymyślaj)
+  - [ ] Usuń usługi doradcze (przegląd oferty innego wykonawcy, karta projektu, prowadzenie cudzego projektu) ze wszystkich sekcji i stopki
+  - [ ] Sekcję „pewność” przepisz pod demo przed płatnością i cztery linie oferty, bez ERP
+  - [ ] Pytania (FAQ): 5 pytań pod nową strategię: ile trwa demo; co, jeśli demo mi nie pasuje; jak liczycie cenę wdrożenia; czy muszę zmieniać program, którego używam; czy robicie też IT i sprzęt
+  - [ ] Teksty prawne i warunki: „producent ERP” zmień na „producent programu”; sens warunków bez zmian
+  - [ ] To samo w DE, IT i EN; zbuduj, zrób zrzuty całej strony, obejrzyj każdą sekcję, popraw
