@@ -6596,7 +6596,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* ---------- Połączenia projektu: logowanie do Meta, Google Ads i LinkedIn (konta.py, prefiks ka) ----------
    „Zaloguj” otwiera oficjalną stronę logowania serwisu (w tym samym oknie), serwis wraca do tej zakładki.
    Jedno logowanie może widzieć wiele kont (np. 3 konta reklamowe Meta); konto wybiera się osobno w każdym projekcie.
-   Dane aplikacji (App ID, Client ID, sekret, token dewelopera) wpisuje się raz; sekretów panel nie pokazuje. */
+   Dane aplikacji (App ID, Client ID, sekret) wpisuje się raz; sekretów panel nie pokazuje. */
 const KA={setup:{}};
 const KANM={meta:['Meta Business','Facebook, Instagram, reklamy','Facebooka'],google:['Google Ads','','Google'],linkedin:['LinkedIn','','LinkedIn']};
 function kaCur(p,prov){
@@ -6621,7 +6621,7 @@ function kaCard(p,prov){
     if(prov==='linkedin')L.forEach(l=>o.push([l.id+'|','Profil prywatny: '+l.name]));
     const v=hit?hit.l.id+'|'+hit.a.id:(prov==='linkedin'&&cur.profil&&cur.login?cur.login+'|':'');
     lead=(all.length||prov==='linkedin'?'<label class="fl"><span>Konto tego projektu</span><select class="fi" data-kaacc="'+prov+'" data-pid="'+esc(p.id)+'" data-k="ka:acc:'+prov+'">'+opt(o,v)+'</select></label>':
-      '<p class="note">'+esc(prov==='google'?(A.devToken?'Logowanie nie widzi kont Google Ads.':'Lista kont Google Ads wymaga tokenu dewelopera (Szczegóły).'):'Logowanie nie widzi kont reklamowych. Zaloguj się ponownie i zaznacz konta.')+'</p>')+
+      '<p class="note">'+esc(prov==='google'?'Logowanie nie widzi kont Google Ads. Sprawdź poziom dostępu projektu w Google Cloud (Szczegóły) i odśwież listę.':'Logowanie nie widzi kont reklamowych. Zaloguj się ponownie i zaznacz konta.')+'</p>')+
       (cur.acc&&!hit?'<p class="note">Zapisane konto '+esc(cur.acc)+' nie należy do żadnego logowania.</p>':'')+
       (cur.err?'<p class="warn">Odczyt: '+esc(cur.err)+'</p>':'')+
       (L.some(l=>l.expired)?'<p class="warn">Logowanie wygasło. Zaloguj się ponownie.</p>':'');
@@ -6654,8 +6654,8 @@ function kaSetup(prov,K,A){
   if(prov==='meta')h+='<ol class="steps"><li><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Meta for Developers</a> → aplikacja panelu → Logowanie do Facebooka → Ustawienia → „Prawidłowe URI przekierowania OAuth”: wklej adres.</li><li>Ustawienia → Podstawowe: skopiuj App ID i Klucz tajny aplikacji.</li></ol>'+
     '<form class="dform" data-kaapp="meta">'+f('appId','App ID','cyfry',A.appId)+f('secret','App Secret',A.ready?'zapisany (wpisz, aby zmienić)':'32 znaki','')+f('configId','Konfiguracja logowania (aplikacja typu Firma, opcjonalnie)','cyfry','')+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
   else if(prov==='google')h+=(A.ready?'':'<p class="warn">Brak klienta Google. Ustaw go raz w karcie Google Drive (własny klient OAuth); logowanie Google Ads korzysta z tego samego.</p>')+
-    '<ol class="steps"><li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud</a> → klient OAuth panelu → „Autoryzowane identyfikatory URI przekierowania”: dodaj adres.</li><li>W tym samym projekcie włącz „Google Ads API”.</li><li>Token dewelopera: Google Ads (konto menedżera) → Narzędzia → Centrum API. Bez niego logowanie działa, ale panel nie widzi listy kont.</li></ol>'+
-    '<form class="dform" data-kaapp="google">'+f('developerToken','Token dewelopera',A.devToken?'zapisany (wpisz, aby zmienić)':'z Centrum API','')+f('loginCustomer','Konto menedżera (opcjonalnie)','np. 123-456-7890',A.loginCustomer)+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
+    '<ol class="steps"><li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud</a> → klient OAuth panelu → „Autoryzowane identyfikatory URI przekierowania”: dodaj adres.</li><li>W tym samym projekcie włącz „Google Ads API”.</li><li>Google Cloud → Google Ads API → Poziomy dostępu → „Zarządzaj”: poproś o poziom „Eksplorator” (prawdziwe konta reklamowe). Token dewelopera nie jest już potrzebny.</li></ol>'+
+    '<form class="dform" data-kaapp="google">'+f('loginCustomer','Konto menedżera (opcjonalnie)','np. 123-456-7890',A.loginCustomer)+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
   else h+='<ol class="steps"><li><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">LinkedIn Developers</a> → aplikacja panelu → Auth → „Authorized redirect URLs”: dodaj adres.</li><li>Products: „Sign In with LinkedIn using OpenID Connect” i „Share on LinkedIn”.</li><li>Skopiuj Client ID i Primary Client Secret z zakładki Auth.</li></ol>'+
     '<form class="dform" data-kaapp="linkedin">'+f('clientId','Client ID','',A.ready?'':'')+f('secret','Client Secret',A.ready?'zapisany (wpisz, aby zmienić)':'','')+
     '<label class="chk"><input type="checkbox" name="org"'+(A.org?' checked':'')+'> Aplikacja ma Community Management API (strony firmowe, statystyki)</label><div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
