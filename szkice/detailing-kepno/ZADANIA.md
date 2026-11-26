@@ -6,7 +6,7 @@
 termin: 2027-01-15
 
 - [x] Przygotuj analizę rynku Kępna dla Shield & Silent (15.11.2026)
-- [~] Przygotuj listę poprawek cennika i strony shieldnsilent.pl | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | wymaga: odbiór
+- [x] Przygotuj listę poprawek cennika i strony shieldnsilent.pl | kto: claude | gdzie: chmura | kiedy: 2026-11-24
   cel: strona gotowa na pierwszą weryfikację przez klientów z Kępna
   gotowe gdy: plik faza-0/poprawki-strony.md: niespójne ceny między podstronami (z adresami), brak opinii i liczby realizacji, social media, rok założenia, dwa pakiety poniżej 1 500 zł
   materiał: analiza-rynku-kepno-shieldnsilent.md#2
@@ -14,7 +14,7 @@ termin: 2027-01-15
   wynik: lista poprawek dla Shield & Silent w faza-0/poprawki-strony.md: rozbieżność ceny PROTECT & SOUND (6 490 i 6 990 zł, uslugi.html i cennik.html) plus arkusz do porównania pozostałych cen, opinie i liczba realizacji, social media, rok założenia, propozycja dwóch pakietów poniżej 1 500 zł, uzupełnienia pod Kępno (dojazd, polskie podtytuły, marka mat)
   decyzja: czy jako dwa pakiety poniżej 1 500 zł pokazać DETAIL 1 290 zł i ceramikę roczną 1 390 zł (obecne ceny, bez obniżek); ostatecznie zatwierdza Shield & Silent razem z wyborem obowiązujących cen
   zostało: strona nie została dziś otwarta (brak dostępu do sieci), lista opiera się na analizie z 15.11.2026; potwierdzona jest jedna rozbieżność cen, pozostałe (analiza mówi o różnicach 300–500 zł) trzeba znaleźć porównaniem obu podstron według arkusza w pliku; nie sprawdzono nazwy i ceny drugiego pakietu od dołu
-- [~] Przygotuj opis wizytówki Google „Shield & Silent Kępno” | kto: claude | gdzie: chmura | kiedy: 2026-11-24 | wymaga: odbiór
+- [x] Przygotuj opis wizytówki Google „Shield & Silent Kępno” | kto: claude | gdzie: chmura | kiedy: 2026-11-24
   cel: wizytówka z obszarem działania Kępno–Ostrzeszów–Syców
   gotowe gdy: plik faza-0/wizytowka-google.md: nazwa, kategorie, opis do 750 znaków, usługi z cenami, obszar działania; nic nie opublikowane
   materiał: analiza-rynku-kepno-shieldnsilent.md#11

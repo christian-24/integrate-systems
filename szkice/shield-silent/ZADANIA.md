@@ -43,7 +43,7 @@ termin: 2026-11-22
   materiał: google-wizytowka/README.md
 - [ ] Zapisać, ilu klientów było przed startem reklam (punkt odniesienia) | kto: ty | kiedy: 2026-11-22 | czas: 10
   pyta: Liczba klientów przed startem reklam [liczba]
-- [ ] Nagraj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-22 | czas: 90
+- [ ] Nagraj filmy tygodnia 16 lis – 22 lis | kto: ty | kiedy: 2026-11-27 | czas: 90
   cel: filmy z planu na ten tydzień nagrane i zmontowane, CTA „Napisz model auta”; publikację (18:00–20:00) odhaczasz osobno przy każdym filmie w harmonogramie kampanii „Zima bez kompromisów”
   materiał: Plan-filmow-do-28-stycznia.md
 - [x] Przygotuj post „Tak wygląda wygłuszenie od środka” | kto: claude | gdzie: chmura | kiedy: 2026-11-22 | czas: 30
@@ -58,9 +58,9 @@ termin: 2026-11-22
 ## Etap: Tydzień 23 lis – 29 lis: pierwszy tydzień reklam i seria dB
 termin: 2026-11-29
 
-- [ ] Meta, bony świąteczne | kto: ty | kiedy: 2026-11-23 | czas: 15
+- [ ] Meta, bony świąteczne | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: Pn 23 lis: Meta, bony świąteczne: 5 zł/dzień do 21 gru, cel „Wiadomości”. Bon sprzedajesz przez wiadomość lub telefon. Ustaw datę końca kampanii 21 gru 23:59, wtedy wyłączy się sama
-- [ ] W Google Ads otworzyć „Wyszukiwane hasła” i wykluczyć to, co nie pasuje („jak”, „samemu”, „maty sklep”,… | kto: ty | kiedy: 2026-11-23 | czas: 10
+- [ ] W Google Ads otworzyć „Wyszukiwane hasła” i wykluczyć to, co nie pasuje („jak”, „samemu”, „maty sklep”,… | kto: ty | kiedy: 2026-11-27 | czas: 10
   cel: Pn 23 lis: w Google Ads otworzyć „Wyszukiwane hasła” i wykluczyć to, co nie pasuje („jak”, „samemu”, „maty sklep”, „kosmetyki”)
 - [ ] Ceny na stronie poprawione do 27 lis | kto: ty | kiedy: 2026-11-27 | czas: 30
 - [ ] Usunąć adres z kodu strony (stopka, mapa, opis Kontaktu, dane dla Google) | kto: ty | kiedy: 2026-11-29 | czas: 30
@@ -175,7 +175,7 @@ termin: 2027-01-28
   materiał: Plan-filmow-do-28-stycznia.md
 
 ## Do rozplanowania
-- [~] Przygotuj 3 warianty grafiki „Grand Silent Auto V / VI” (przed i po) | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | wymaga: odbiór
+- [x] Przygotuj 3 warianty grafiki „Grand Silent Auto V / VI” (przed i po) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: 3 zabawne grafiki w formacie memu „GTA V kontra GTA VI”: po lewej albo u góry „V” = auto przed, po prawej albo na dole „VI” = to samo auto po Shield & Silent; do posta na Instagram i Facebook
   gotowe gdy: w posty/2026-11-25-grand-silent-auto/ są 3 pliki PNG 1080×1350 (wariant-1.png, wariant-2.png, wariant-3.png), każdy z innej pary zdjęć przed/po, oraz opis.md z 3 krótkimi podpisami do posta (po jednym na wariant, najwyżej 2 zdania, bez cen i obietnic spoza karty)
   wykonawca: tylko codex
@@ -192,7 +192,7 @@ termin: 2027-01-28
   wynik: posty/2026-11-25-grand-silent-auto/wariant-1.png, posty/2026-11-25-grand-silent-auto/wariant-2.png, posty/2026-11-25-grand-silent-auto/wariant-3.png, posty/2026-11-25-grand-silent-auto/opis.md
   decyzja: wybór wariantu posta przy odbiorze.
   zostało: skrypt dashboard/html-do-pdf.py nie uruchomił Chromium. PNG przygotowano lokalnie z tych samych zdjęć i tekstów.
-- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
+- [x] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
   - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
   - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
@@ -254,7 +254,7 @@ termin: 2027-01-28
   materiał: Plan-filmow-iteracje.md
   wynik: posty/2026-12-02-film-auto-klienta-archiwum-2/scenariusz.md — ujęcia przed i po, dogrywka telefonem, tekst lektora AI i wariant zapasowy Z1.
   zostało: dobór konkretnego auta i potwierdzenie zakresu usługi na podstawie archiwum Media.
-- [~] Przygotuj publikację na 2026-11-29 (b21821b2c9ff6928): Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59) | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | wymaga: odbiór
+- [x] Przygotuj publikację na 2026-11-29 (b21821b2c9ff6928): Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: Przygotuj tekst posta do publikacji „Wgraj B1 do kampanii „Wiadomości – Bon” (koniec 21.12 23:59)” (meta ads), termin 2026-11-29. Pozostaw publikację właścicielowi.
   gotowe gdy: Tekst posta jest w posty/2026-11-29-publikacja/post.md, zgodny z wpisem w kampanie/meta-statyczne.md i gotowy do odbioru przed publikacją 2026-11-29.
   materiał: kampanie/meta-statyczne.md

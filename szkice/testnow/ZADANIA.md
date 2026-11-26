@@ -17,7 +17,7 @@
   materiał: KARTA.md#Zakres
   Nazwa notatki dla testu: test-<numer>-requirements.md.
 - [x] Limit: najwyżej 3 h tygodniowo (2026-11-14)
-- [ ] Sprawdź nagrywanie ekranu na Macu przed kolejnym testem | kto: ty | gdzie: mac | kiedy: 2026-11-22 | czas: 15
+- [ ] Sprawdź nagrywanie ekranu na Macu przed kolejnym testem | kto: ty | gdzie: mac | kiedy: 2026-11-27 | czas: 15
   cel: zgłoszenia mają zrzuty i nagrania ekranu z naturalnym ruchem kursora
   gotowe gdy: próbne nagranie 1 minuty z widocznym kursorem i kliknięciami zapisane i odtworzone
   materiał: KARTA.md#Zasoby i ograniczenia

@@ -58,11 +58,11 @@
   wynik: przełącznika języków nie ma w nagłówku ani na dole strony (site/src/Strona.jsx, site/src/strona.css); adres główny przenosi na język przeglądarki: pl, de, it, en, każdy inny → PL (site/src/main.jsx, site/src/i18n.js); /pl/, /de/, /it/, /en/ działają osobno i każda ma znaczniki hreflang do czterech wersji, x-default → /pl/ (site/scripts/prerender.mjs). Wersja robocza buduje się (poprawiony błąd w kalkulatorze, przez który wcześniej się nie budowała). Na zrzutach 390 i 1440 px nagłówek ma tylko logo, menu sekcji (na komputerze), telefon i „Wycena”; przeglądarka testowa po angielsku trafiła z adresu głównego na /en/.
   zostało: w przeglądarce sprawdzony tylko język angielski; pl/de/it/inny język i domyślne PL sprawdzone w kodzie, nie na żywo.
 
-- [ ] Podaj dane firmy do strony: prawo i RODO | kto: ty | kiedy: 2026-11-25 | czas: 15
+- [ ] Podaj dane firmy do strony: prawo i RODO | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: dane prawne, bez których strona nie może wyjść na produkcję
   materiał: site/src/dane.js
   pyta: Ceny netto plus VAT czy zwolnienie z VAT; Sprzedajecie tylko firmom czy także konsumentom; Adres dokładnie jak w CEIDG; Link do wpisu w CEIDG; Data wejścia regulaminu w życie; Dostawca serwera i kraj; Narzędzie do rozmów online i kraj dostawcy; Brevo trzyma dane w EOG czy poza EOG; Ile miesięcy trzymamy rozmowy bez umowy; Ile dni trzymamy logi serwera; Po ilu dniach dane znikają z kopii zapasowych
-- [ ] Podaj warunki współpracy do strony: płatności, ceny, godziny | kto: ty | kiedy: 2026-11-25 | czas: 15
+- [ ] Podaj warunki współpracy do strony: płatności, ceny, godziny | kto: ty | kiedy: 2026-11-27 | czas: 15
   cel: warunki, które strona obiecuje klientom
   materiał: site/src/dane.js
   pyta: Zaliczka w procentach (0 = bez zaliczki); Termin płatności faktury w dniach; Gwarancja w dniach po odbiorze; Stawka opieki po wdrożeniu w zł za godzinę; Czas reakcji na awarię w dniach roboczych; Godziny prac przy projektach; Godziny odbierania telefonu; Zasada bezpłatnej rozmowy jednym zdaniem; Górna cena integracji ERP w zł; Górna cena końca przepisywania w zł; Górna cena małego automatu w zł; Obniżka ceny etapu za tydzień opóźnienia w procentach; Po ilu tygodniach opóźnienia klient może odstąpić; Subiekt GT czy Subiekt nexo; Platformy sklepów, z którymi łączycie

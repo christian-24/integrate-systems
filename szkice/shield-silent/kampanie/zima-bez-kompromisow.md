@@ -22,11 +22,11 @@ To samo auto, dwa dźwięki: drzwi wygłuszone i fabryczne. Jawne ceny (drzwi pr
 ## Harmonogram
 - [x] Opublikuj post „Tak wygląda wygłuszenie od środka” | kto: ty | kanał: instagram, facebook | kiedy: 2026-11-22 | czas: 10 | po: Przygotuj post „Tak wygląda wygłuszenie od środka”
   Post ze zdjęć wygłuszenia od środka (zdjęcia właściciela z 22.11).
-- [ ] Opublikuj film Wygłuszanie: „To samo auto. Lewe drzwi: fabryka. Prawe: wygłuszone.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-11-22 | czas: 15
+- [ ] Opublikuj film Wygłuszanie: „To samo auto. Lewe drzwi: fabryka. Prawe: wygłuszone.” | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: reels, tiktok, youtube
   materiał: Plan-filmow-do-28-stycznia.md#6
-- [ ] Opublikuj film Wygłuszanie: „Ten sam puk. Miernik nie kłamie.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-11-23 | czas: 15
+- [ ] Opublikuj film Wygłuszanie: „Ten sam puk. Miernik nie kłamie.” | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: reels, tiktok, youtube
   materiał: Plan-filmow-do-28-stycznia.md#6
-- [ ] Opublikuj film Auto klienta (archiwum 1) | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-11-25 | czas: 15
+- [ ] Opublikuj film Auto klienta (archiwum 1) | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: reels, tiktok, youtube
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Wygłuszanie: „Zdjąłem boczek z drzwi Cupry. Tyle izolacji dała fabryka.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-11-30 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6

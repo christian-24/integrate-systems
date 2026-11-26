@@ -46,13 +46,13 @@ Opis mebla po polsku i niemiecku w 10 sekund; 10 opisów miesięcznie za darmo, 
   materiał: posty/2026-11-20-film-a-opis-pl-de/post.md
   materiał: marketing/plan-10-kont.md#6
   Opis pod filmem ze slotu A (punkt 6) jest w post.md.
-- [ ] Opublikuj post „Cztery elementy opisu mebla na Allegro” | kto: ty | kanał: linkedin | kiedy: 2026-11-23 | czas: 15 | po: Potwierdź DPA
+- [ ] Opublikuj post „Cztery elementy opisu mebla na Allegro” | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: linkedin | po: Potwierdź DPA
   cel: pokazać sprzedawcy, z czego składa się dobry opis na Allegro, i skierować do darmowego konta
   gotowe gdy: post opublikowany w kanałach z wiersza, link do opisarnia.pl w pierwszym komentarzu
   materiał: marketing/linkedin/drafts/2026-06-10-opis-pod-allegro-jak-pisac.md
   materiał: marketing/plan-10-kont.md#4
   Post 2 z planu. Agent przy przygotowaniu: ostatni akapit zamiast „Buduję narzędzie…” zdanie z punktu 4 planu (post 2), grafika z listą 4 punktów.
-- [ ] Opublikuj post „Rachunek ryzyka eksportu mebli do Niemiec” | kto: ty | kanał: linkedin | kiedy: 2026-11-25 | czas: 15 | po: Potwierdź DPA
+- [ ] Opublikuj post „Rachunek ryzyka eksportu mebli do Niemiec” | kto: ty | kiedy: 2026-11-27 | czas: 15 | kanał: linkedin | po: Potwierdź DPA
   cel: pokazać ryzyko opisu tylko po polsku przy eksporcie do DE i zaprosić do sprawdzenia na jednym meblu
   gotowe gdy: post opublikowany w kanałach z wiersza, link do opisarnia.pl w pierwszym komentarzu
   materiał: marketing/linkedin/drafts/2026-06-26-eksport-de-rachunek-ryzyka.md

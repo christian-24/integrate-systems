@@ -60,7 +60,7 @@
   - [ ] `sudo bash /home/panel/IntegrateSystems/uruchom/serwer/zainstaluj-uzytkownika-agenta.sh --sprawdz`: „Wszystko w porządku.”
   Bez panelu: przez ssh jako ops `sudo -u agent -H /home/agent/.local/bin/claude auth login`.
   zamknięte na podstawie kontroli serwera z 2026-11-19 17:38
-- [ ] Załóż Storage Box i konto tylko do zapisu | kto: ty | gdzie: chmura | kiedy: 2026-11-21 | czas: 15
+- [ ] Załóż Storage Box i konto tylko do zapisu | kto: ty | gdzie: chmura | kiedy: 2026-11-27 | czas: 15
   cel: Storage Box z kontem pomocniczym tylko dla serwera i codziennymi migawkami, których kod z serwera nie może usunąć
   gotowe gdy: w Hetzner Console Storage Box (inna lokalizacja niż serwer) ma plan migawek codziennie, 14 sztuk, i konto pomocnicze z katalogiem integrate-serwer i samym SSH; login i hasło konta pomocniczego oraz konta głównego są w menedżerze haseł
   pyta: Numer Storage Boxa [tekst, np. uXXXXXX]; Login konta pomocniczego [tekst, np. uXXXXXX-subN]
@@ -151,7 +151,7 @@ termin: 2026-12-05
   Uwaga do logowania Drive: zgoda Google obejmuje odczyt całego dysku konta, a do jednego folderu zawęża ją dopiero serwer. Jeśli folder leży na koncie studia, najlepiej zalogować konto, które widzi tylko ten folder.
   wynik: Lista powyżej: jeden konektor, Google Drive tylko do odczytu dla Shield & Silent – marketing (jeden folder ze zdjęciami i filmami); pozostałe 10 projektów oraz raport PM, Asystent i „Rozwój panelu” bez konektorów, z powodem przy każdym. Zatwierdzasz ją w zadaniu „Zatwierdź konektory projektów”. Bez zmian w kodzie, bez gałęzi i commita (zmiana tylko w ZADANIA.md).
   zostało: Nie czytano rozmów z folderów `rozmowy/` projektów (leżą poza kopią dostępną agentowi); lista opiera się na kartach i zadaniach. Nie wiadomo, na czyim koncie Google leży folder Shield & Silent (Twoim czy studia).
-- [ ] Zatwierdź konektory projektów | kto: ty | kiedy: 2026-11-26 | czas: 10 | po: Zaproponuj konektory dla każdego projektu
+- [ ] Zatwierdź konektory projektów | kto: ty | kiedy: 2026-11-27 | czas: 10 | po: Zaproponuj konektory dla każdego projektu
   cel: decyzja właściciela, które projekty i jacy agenci dostają który konektor
   materiał: ZADANIA.md
   pyta: Lista zatwierdzona (tak albo co zmienić); Link do folderu Shield & Silent na Google Drive

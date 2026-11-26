@@ -22,7 +22,7 @@
 
 - [x] Rozdział: szukanie auta osobno, Useme do Oprogramowani (2026-11-14)
 - [x] Część aut w osobnym repozytorium szukanie-auta (2026-11-16)
-- [~] Opisz uruchomienie i harmonogram w README repozytorium szukanie-auta | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
+- [x] Opisz uruchomienie i harmonogram w README repozytorium szukanie-auta | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: README pozwala uruchomić narzędzie na Macu bez PC
   gotowe gdy: README ma sekcje „Jak uruchomić” (backend, rozszerzenie Chrome, Codex CLI) i „Harmonogram” (kiedy i jak działa przegląd)
   materiał: README.md

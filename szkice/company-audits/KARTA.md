@@ -91,3 +91,4 @@ Projekt to działalność konsultingowo-wdrożeniowa dla firm meblarskich zatrud
 9. Wizytówki: czy ma powstać także imienna wizytówka Pawła? Jeśli tak, podaj nazwisko, rolę do wpisania pod nazwiskiem i numer telefonu (własny czy wspólny 663 206 373). W plikach tych danych nie ma. Gotowe są dwa warianty: imienna Krystiana Stryjakiewicza i firmowa bez nazwiska (wizytowki/podglad.png).
    termin: 2026-11-30
    propozycja: na razie bez wizytówki Pawła; Paweł rozdaje wersję firmową bez nazwiska, a imienną dorobimy, gdy poda dane
+   Odpowiedź: na razie bez wizytówki Pawła; Paweł rozdaje wersję firmową bez nazwiska, a imienną dorobimy, gdy poda dane

@@ -162,7 +162,7 @@ termin: 2026-11-30
   Firma bez draftu w marketing/outreach/drafts/: zdanie z punktu 5 planu (kolumna „Dlaczego te”) i dopisek „bez draftu” w sekcji.
   wynik: wiadomosci/wiadomosc-1-partie-1-3.md (folder karty): 24 sekcje (firma, partia, draft, wiadomość 1 według szablonu z punktu 5 planu ze zdaniem z pierwszego akapitu draftu); wszystkie 24 firmy miały draft; bez nazwisk, adresów i linków; nic nie wysłane
   Rozstrzygnięte przy porządkach 2026-11-21 (agent, DECYZJE.md): STIPA pominięta (ma niemiecką wersję sklepu, reguła z punktu 5 planu); Ramaro dostaje zaproszenie, a wiadomość 1 tylko wtedy, gdy opisy produktów nie są po niemiecku; Alan Meble, Meble North, Miloni i VERYSIMPL zostają z szablonem. Fakty pochodzą z researchu z czerwca i lipca, bez ponownego sprawdzenia.
-- [ ] Wyślij zaproszenia LinkedIn do 24 firm z partii 1–3 | kto: ty | kiedy: 2026-11-21 | czas: 45 | licznik: zaproszenia
+- [ ] Wyślij zaproszenia LinkedIn do 24 firm z partii 1–3 | kto: ty | kiedy: 2026-11-27 | czas: 45 | licznik: zaproszenia
   cel: 24 zaproszenia do osób decyzyjnych w firmach z partii 1–3, bez oferty
   gotowe gdy: przy każdej firmie krok zaznaczony: zaproszenie wysłane albo pominięta (nie działa, ma już opisy po niemiecku)
   materiał: marketing/plan-10-kont.md#5
@@ -254,7 +254,7 @@ termin: 2026-11-30
 - [x] Oznacz definicję konta aktywnego w metryki.md jako przyjętą | kto: claude | gdzie: chmura | kiedy: 2026-11-23
   z pytania 9, 2026-11-19
   wynik: w metryki.md definicja „konta aktywnego” (co najmniej 1 udana generacja w ostatnich 14 dniach) ma status „przyjęta 2026-11-19”; zaktualizowane punkty 2 i 7, zapytanie pomiarowe bez zmian (już tak liczyło)
-- [ ] Podaj identyfikatory kont własnych i testowych do pomiaru | kto: ty | kiedy: 2026-11-23 | czas: 5
+- [ ] Podaj identyfikatory kont własnych i testowych do pomiaru | kto: ty | kiedy: 2026-11-27 | czas: 5
   cel: pomiar kont nie liczy kont właściciela ani testowych
   gotowe gdy: identyfikatory podane przy zamknięciu zadania (pole notatki), np. „1, 2”, albo „brak”
   materiał: metryki.md#6
@@ -306,9 +306,18 @@ termin: 2026-11-30
   gotowe gdy: w kampanii są nowe wiersze publikacji z filmem z datami w grudniu, kto: ty, każda z kanałem; scenariuszy nie zakładasz (panel przygotuje je sam 7 dni przed publikacją według podziału)
   wynik: w kampanie/staly-rytm.md (folder karty) jest 6 nowych wierszy „Opublikuj film …”, każdy kto: ty, z kanałem i czasem 15 min: 3.12 „Zwrot z Niemiec przez nieprecyzyjny opis” (panel), 7.12 „Szafa, która nie weszła po schodach: 5 wymiarów w opisie” (AI), 10.12 „Pierwszy opis w 2 minuty” (panel), 12.12 „Pierwsze zdanie opisu decyduje…” (AI), 15.12 „Od miarki do opisu: prawdziwy mebel w 60 sekund” (Ty, telefon), 17.12 „Ten sam mebel, trzy opisy” (panel); podział 3 panel, 2 AI, 1 Ty; scenariuszy nie zakładałem; decyzja o datach i podziale w DECYZJE.md
   zostało: sposób nagrania w wierszach to propozycja, ostatecznie przydziela go panel przy scenariuszu (może wyjść inaczej niż w wierszu); filmy B (24.11) i C (28.11) z planu 10 kont nadal nie mają wierszy w kampanii, temat B wszedł jako film z 3.12; film z 15.12 wymaga prawdziwego mebla i miarki do nagrania 14.12
-- [~] Przygotuj publikację na 2026-11-25 (771bded7d129dd9e): Opublikuj post „Rachunek ryzyka eksportu mebli do Niemiec” | kto: agent | gdzie: chmura | kiedy: 2026-11-25 | wymaga: odbiór
+- [x] Przygotuj publikację na 2026-11-25 (771bded7d129dd9e): Opublikuj post „Rachunek ryzyka eksportu mebli do Niemiec” | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: Przygotuj tekst posta do publikacji „Opublikuj post „Rachunek ryzyka eksportu mebli do Niemiec”” (linkedin), termin 2026-11-25. Pozostaw publikację właścicielowi.
   gotowe gdy: Tekst posta jest w posty/2026-11-25-publikacja/post.md, zgodny z wpisem w kampanie/staly-rytm.md i gotowy do odbioru przed publikacją 2026-11-25.
   materiał: kampanie/staly-rytm.md
   wynik: tekst posta na LinkedIn w posty/2026-11-25-publikacja/post.md (z pierwszym komentarzem z linkiem i tekstem alternatywnym) oraz grafika posty/2026-11-25-publikacja/grafika.svg z szablonu; podstawa to draft z 26.06 z ostatnim akapitem według planu 10 kont (post 3); zdanie o 38% zwrotów poprawione zgodnie ze źródłem (dotyczy zdjęcia, nie opisu), wpis w DECYZJE.md
   zostało: publikujesz Ty na LinkedIn po „Potwierdź DPA” (tak stoi w wierszu kampanii); PNG grafiki zrobi panel, wyrenderowanej grafiki nie oglądałem
+- [x] Przygotuj scenariusz nagrania na 2026-11-27: Film A „Opis mebla po polsku i niemiecku w 10 sekund” | kto: claude | gdzie: chmura | kiedy: 2026-11-26
+  cel: scenariusz filmu do publikacji „Film A „Opis mebla po polsku i niemiecku w 10 sekund”” z 2026-11-27 (linkedin, facebook, reels), który właściciel zrobi 2026-11-26 w narzędziu AI do wideo (np. CapCut, Runway, Kling): dla każdej sceny gotowe polecenie do skopiowania (co widać, ruch kamery, styl, długość), tekst lektora i napisy, muzyka; bez prawdziwych ludzi i bez udawania prawdziwego produktu — ujęcia, które muszą pokazać prawdziwy produkt albo ekran, oznacz „nagraj telefonem” albo „zrzut ekranu” (przeczytaj kampanię, plan filmów i dokumenty projektu)
+  gotowe gdy: obok KARTA.md jest plik posty/2026-11-27-film-a-opis-mebla-po-polsku-i-niemiecku/scenariusz.md w układzie: „# Scenariusz nagrania: <tytuł>”, pola „- stan: propozycja”, „- publikacja: 2026-11-27”, „- nagranie: 2026-11-26”, „- sposób: ai”, sekcje ## Po co (cel, dla kogo), ## Co nagrać (wiersze „- [ ] polecenie dla AI / 5 s”), ## Jak (narzędzie, format pionowy albo poziomy, styl i spójność scen), ## Co powiedzieć (tekst albo punkty), ## Na koniec (wezwanie do działania), ## Gotowe gdy; każda sekcja wypełniona; post.md i zadania nagrania bez zmian
+  materiał: kampanie/staly-rytm.md
+  materiał: STYL.md
+  materiał: marketing/plan-10-kont.md
+  wynik: scenariusz w posty/2026-11-27-film-a-opis-mebla-po-polsku-i-niemiecku/scenariusz.md: 8 scen po 5 s (40 s, pion 9:16); 3 sceny AI z gotowymi poleceniami (ilustracyjna komoda, bez ludzi, napisów i logo), 4 sceny „zrzut ekranu” wycięte z filmu panelu z 20.11 (posty/2026-11-20-film-a-opis-pl-de/film.mp4, czasy podane), plansza końcowa w kolorach marki; lektor i napisy w tabeli, muzyka i narzędzia (Kling albo Runway + CapCut); opis pod filmem zostaje z post.md z 20.11 (bez zmian); wpis w DECYZJE.md
+  decyzja: który film publikujesz 27.11: gotowy film panelu z 20.11 czy wersję AI według scenariusza (propozycja: wersja AI na Reels, bo ma hak w pierwszej sekundzie; film z 20.11 na LinkedIn)
+  zostało: nie sprawdzałem aktualnych limitów darmowych kredytów w Kling, Runway i CapCut ani tego, czy kadry z filmu z 20.11 są czytelne po przycięciu do pionu (scenariusz podaje zastępstwo: zrzut ekranu z telefonu)

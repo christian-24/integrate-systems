@@ -3,6 +3,12 @@
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 Szkic z kopii na Macu; źródła: decyzje/decyzje.json i docs/adr/ (ADR 0001–0030). Uzupełnione danymi z PC (audyt 2026-11-14).
 
+## 2026-11-26: Film A w wersji AI: ekran z filmu z 20.11, polecenia AI po angielsku
+- Kontekst: zadanie zleciło scenariusz filmu A (publikacja 27.11) do zrobienia w narzędziu AI, a ten sam film panel nagrał już 20.11 jako nagranie ekranu (posty/2026-11-20-film-a-opis-pl-de/film.mp4, obejrzane przez właściciela). AI nie może pokazać prawdziwej Opisarni, a udawanie ekranu jest zakazane.
+- Decyzja: wersja AI ma 8 scen po 5 s: 3 sceny AI (hak, problem, efekt) z ilustracyjną komodą bez ludzi, napisów i logo; 4 sceny ekranu wycięte z filmu z 20.11 (oznaczone „zrzut ekranu”); plansza końcowa w edytorze w kolorach studio/marka.json. Polecenia dla AI po angielsku (narzędzia wideo rozumieją je dokładniej), napisy i lektor po polsku. Opis pod filmem zostaje z post.md z 20.11.
+- Skutki: właściciel nie nagrywa ekranu na nowo; do publikacji 27.11 może wybrać film z 20.11 albo wersję AI. Odwracalne: scenariusz ma stan „propozycja”.
+- Kto: agent
+
 ## 2026-11-25: Post 3 (rachunek ryzyka eksportu): poprawione zdanie o 38% zwrotów
 - Kontekst: draft z 26.06 pisał, że 38% zwrotów mebli to rozbieżność między opisem a tym, co klient rozpakował. W danych projektu (CLAUDE.md, dane rynkowe) 38% to rozbieżność zdjęcie–rzeczywistość, nie opis.
 - Decyzja: w poście zdanie mówi o zdjęciu, a opis przedstawia jako drugą połowę tej samej oferty. Usunięte też uogólnienie „niemiecki kupujący czyta dokładniej i mniej wybacza” (brak źródła w repozytorium). Ostatni akapit według planu 10 kont, punkt 4 (post 3). Post tylko w wersji LinkedIn, bo tylko ten kanał ma wiersz w kampanii.

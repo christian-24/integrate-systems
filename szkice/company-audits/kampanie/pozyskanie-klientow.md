@@ -25,7 +25,7 @@ Pierwszy krok to krótki audyt procesów; cena dopiero po rozmowie.
 Oferty na Useme są tutaj; kontakt z 10 firmami, rozmowy i oferty po rozmowach są w ZADANIA.md (etap „Walidacja rynku”).
 Filmy na grudzień (dopisane 2026-11-24): 6 publikacji, podział z karty „nagrywa: ai 50, ty 30, panel 20”, czyli 3 filmy w narzędziu AI, 2 nagrane telefonem, 1 nagranie ekranu strony przez panel. Scenariusz każdego filmu panel zakłada sam 7 dni przed publikacją. Filmy z zadań w ZADANIA.md (objaśnienie do wpisu 1.12 i pokaz integracji 4.12) są osobno i tu się nie powtarzają.
 
-- [ ] Wyślij oferty na pasujące zlecenia z Useme (tydzień 1) | kto: ty | kanał: Useme | kiedy: 2026-11-24 | czas: 30 | licznik: oferty
+- [ ] Wyślij oferty na pasujące zlecenia z Useme (tydzień 1) | kto: ty | kiedy: 2026-11-27 | czas: 30 | kanał: Useme | licznik: oferty
   cel: na każde pasujące zlecenie z Useme z 19–24.11 wysłana oferta
   gotowe gdy: każde pasujące zlecenie z 19–24.11 (integracje, automatyzacja, ERP) ma wysłaną ofertę albo w notatce pod zadaniem powód odrzucenia
   materiał: KARTA.md#Zakres

@@ -131,7 +131,7 @@ termin: 2026-12-13
   wynik: odtworzony docs/testing/plan-testow-mvp.md: 20 przypadków TC-01..TC-20, każdy z krokami i oczekiwanym wynikiem, na końcu tabela wyników (kolumny Android, iOS, Notes). Commit źródłowy: 35cc410 (2026-05-12, „Add”, plik docs/testing/v1.0.0-mvp-test-plan.md); plik usunięty commitem 3daa56f (2026-05-29, „Clean backlog”), treść pobrana z 3daa56f^. Treść przypadków bez zmian, po angielsku jak w oryginale; dopisana tylko 6-wierszowa nota o pochodzeniu. Plik niezatwierdzony w gałęzi agenta (agent nie ma prawa zapisu do indeksu git), zatwierdzi go panel.
   zostało: planu nie porównano z RC1: opisuje aplikację z maja 2026, więc nazwy przycisków, ekranów i limit jednostek w TC-13 mogą się różnić. Plan odsyła do plików, których nie ma w repozytorium: docs/testing/bugs-v1.0.0.md, docs/testing/web-platform-notes.md, naulikapp/integration_test/mvp_smoke_test.dart.
   następne: Zaktualizuj plan testów MVP do stanu RC1 (nazwy ekranów i przycisków, TC-13) | kto: claude | kiedy: 2026-11-24
-- [ ] Wygeneruj keystore do podpisu wydania | kto: ty | gdzie: mac | kiedy: 2026-11-21 | czas: 20
+- [ ] Wygeneruj keystore do podpisu wydania | kto: ty | gdzie: mac | kiedy: 2026-11-27 | czas: 20
   cel: klucz podpisu wydania gotowy do budowania AAB
   gotowe gdy: keystore i hasła zapisane w menedżerze haseł z kopią zapasową; plik keystore poza repozytorium
   pyta: Hasło do keystore [hasło: gdzie właściciel wpisuje je sam]
@@ -141,7 +141,7 @@ termin: 2026-12-13
   - [ ] hasło keystore i hasło klucza w menedżerze haseł, plik .jks jako załącznik tego wpisu (kopia)
   - [x] `android/app/build.gradle.kts` czyta key.properties w signingConfigs.release (sprawdził agent 2026-11-21)
   Play App Signing: przy pierwszym wgraniu AAB Google tworzy klucz aplikacji, a ten keystore zostaje kluczem przesyłania (można go odnowić u Google).
-- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-21 | czas: 2
+- [ ] Uzupełnij dane wydawcy w polityce prywatności | kto: ty | kiedy: 2026-11-27 | czas: 2
   cel: polityka prywatności ma dane wydawcy wymagane przez Google Play
   pyta: Wydawca (imię i nazwisko albo firma); Adres wydawcy; E-mail kontaktowy
   Wpisz trzy pola i „Zapisz i zakończ”. Resztę zrobi agent w zadaniu „Zapisz politykę prywatności…”.
@@ -234,7 +234,7 @@ termin: 2026-12-13
   cel: wiadomo, które zadania T54–T66 zostały zamknięte w RC1, a które są otwarte
   gotowe gdy: w wynik: lista T54–T66 ze stanem; w decyzja: które otwarte są potrzebne przed 13.12
   materiał: docs/backlog/STATUS.md
-- [~] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | wymaga: odbiór
+- [x] Porządki spraw właściciela: pytania w karcie i Twoje zadania | kto: claude | gdzie: chmura | kiedy: 2026-11-21
   cel: zostawić właścicielowi tylko sprawy, których nie rozstrzygnie nikt inny (pieniądze, dane prawne i firmowe, działania nieodwracalne albo na zewnątrz, zakres i terminy, rzeczy fizyczne, fakty znane tylko jemu); w tym zadaniu wolno zmieniać inne wiersze ZADANIA.md (bez terminów i tytułów) i dopisywać odpowiedzi w KARTA.md
   - [x] Pytania w „Pytania do właściciela”: każde, które rozstrzygniesz sam albo sprawdzisz w plikach i repozytorium, opatrz wierszem `   Odpowiedź: … (agent, DECYZJE.md)` i zapisz decyzję w DECYZJE.md z `- Kto: agent`; powtórzone pytanie połącz z pierwszym
   - [x] Zadania kto: ty: te, które może zrobić agent, przepisz na kto: claude; zbędne i zdublowane zamknij `[x]` z `wynik: zamknięte przy porządkach 2026-11-21 (powód)`; podobne połącz w jedno
