@@ -1,4 +1,4 @@
-"""Projekt z częściami (pole karty „część projektu:”), rozmowa w prawym dolnym rogu i sekcja „Kod i pliki”.
+"""Projekt z częściami (pole karty „część projektu:”), rozmowa w prawym dolnym rogu i zakładka Połączenia (dawniej „Kod i pliki”).
 
 Dane i raport PM: zawsze. Funkcje widoku z panel.html: w node (bez przeglądarki). Cała strona w Chromium (Playwright):
 bez PANEL_TESTY_BEZ_RENDERU.
@@ -167,15 +167,17 @@ def d_all(f):
 
 @unittest.skipUnless(NODE, "brak node")
 class Widok(unittest.TestCase):
-    """Funkcje strony projektu z panel.html w node: adresy części, przełącznik, „Kod i pliki”, okno rozmowy."""
+    """Funkcje strony projektu z panel.html w node: adresy części, wybór części, Połączenia, okno rozmowy."""
 
     def run_view(self, body):
         code = panel_parts(read(PANEL).decode("utf-8"), ["esc", "pl", "pid2", "phref", "inP", "topP", "ptag", "wwSites", "partSw", "kpN",
-                                                         "ghLine", "drWhere", "driveLine", "codeBox", "shortT", "PJD", "pjChatOf",
+                                                         "ghLine", "drWhere", "driveLine", "projName", "pjxRepos", "pjxCard",
+                                                         "pjxRows", "pjxGh", "pjxDrive", "pjxPages", "pjxMembers", "pjxMetaHas",
+                                                         "pjxIg", "pjxMeta", "pjxConView", "shortT", "PJD", "pjChatOf",
                                                          "taskChatOf", "dockTarget", "pjdRef", "pjdAtt", "attLabel", "AS_MICI",
                                                          "voiceButton", "dockHtml"])
         js = """let LIVE=true;const PF={more:{}},GHS={},DRV={x:{connected:true,mounted:true,files:3,folder:'1AbCdEfGhIjK'}},A={busy:{}};
-const D={projectsSource:'registry'},loaded=[];
+const D={projectsSource:'registry',campaigns:[],tasks:[],publish:null},loaded=[];
 const ghLoad=id=>loaded.push(id),loadDrive=()=>{},loadPChat=id=>loaded.push('chat:'+id);
 const ghBody=p=>'<div class="gh">GH:'+p.id+'</div>',driveBody=p=>'<div class="dv">DRV:'+p.id+'</div>';
 const chatMsg=m=>'<div class="cm">'+m.text+'</div>';
@@ -197,50 +199,73 @@ JSON.stringify(out);
 
     def test_adresy_i_przelacznik(self):
         o = self.run_view("""out.top=phref(top,'tablica');out.part=phref(part,'strona');out.own=phref(top.own);
-const sw=partSw(part,'strona');out.sw=[...sw.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)</g)].map(m=>[m[1],m[2]]);
-out.cur=(sw.match(/aria-current="page">([^<]+)/)||[])[1];out.none=partSw(by.s&&{id:'z',partsL:[]},'plan');
+const sw=partSw(part,'strona');out.sw=[...sw.matchAll(/<option value="([^"]+)"[^>]*>([^<]+)</g)].map(m=>[m[1],m[2]]);
+out.cur=(sw.match(/ selected>([^<]+)/)||[])[1];out.none=partSw(by.s&&{id:'z',partsL:[]},'tablica');out.sel=sw;
 out.tag=ptag(top,'s');out.tagOwn=ptag(top,'x');out.tagPart=ptag(part,'s');""")
         self.assertEqual(o["top"], "#p-x-tablica")
         self.assertEqual(o["part"], "#p-x-strona?cz=s")                 # część: adres projektu głównego
         self.assertEqual(o["own"], "#p-x?cz=x")
-        # „Całość” ma zakładkę Strona (strona części), część bez strony przechodzi na Plan
-        self.assertEqual(o["sw"], [["#p-x-strona", "Całość"], ["#p-x?cz=x", "Integracje"], ["#p-x-strona?cz=s", "Strona WWW"]])
+        # „Całość” ma zakładkę Strona (strona części), część bez strony przechodzi na Zadania (zakładki Plan już nie ma);
+        # wybór części to mała lista przy nazwie, nie osobne zakładki
+        self.assertEqual(o["sw"], [["#p-x-strona", "Całość"], ["#p-x-tablica?cz=x", "Integracje"], ["#p-x-strona?cz=s", "Strona WWW"]])
+        self.assertIn('<label class="pjx-cz">', o["sel"])
+        self.assertIn('data-pjxcz="1"', o["sel"])
+        self.assertNotIn("<a ", o["sel"])
         self.assertEqual(o["cur"], "Strona WWW")
         self.assertEqual(o["none"], "")
         self.assertIn("Strona WWW", o["tag"])
         self.assertEqual((o["tagOwn"], o["tagPart"]), ("", ""))
 
-    def test_kod_i_pliki_zwiniety_i_rozwiniety(self):
-        o = self.run_view("""out.zw=codeBox(top);out.ld=loaded.slice();PF.more['pj-code']=true;out.rw=codeBox(top);out.ld2=loaded.slice();
-out.cz=codeBox(part);LIVE=false;out.off=codeBox(part);""")
+    def test_polaczenia_zwiniete_i_rozwiniete(self):
+        o = self.run_view("""out.zw=pjxConView(top);out.ld=loaded.slice();PF.more['pj-con-gh']=true;PF.more['pj-con-dr']=true;out.rw=pjxConView(top);
+out.ld2=loaded.slice();out.cz=pjxConView(part);LIVE=false;out.off=pjxConView(part);""")
         zw, rw = o["zw"], o["rw"]
-        self.assertIn('aria-expanded="false"', zw)
+        # jedna karta na usługę; bez kanałów (kampanie, publikacje, profile w karcie, strona Facebook) bez karty Meta
+        self.assertEqual(re.findall(r'<h2 id="pcon-[a-z]+-h">([^<]+)', zw), ["GitHub", "Google Drive"])
+        self.assertEqual(zw.count('aria-expanded="false"'), 2)
         self.assertIn(">Szczegóły<", zw)
-        self.assertIn('id="pcode-det" hidden', zw)
+        self.assertIn('id="pcon-gh-det" hidden', zw)
         self.assertNotIn("GH:", zw)
         self.assertEqual(o["ld"], [])                                     # zwinięte: bez zapytań o stan kopii
-        # wiersz na każdą część z obydwoma stanami (WYGLAD.md), zwykłe słowa zamiast „commit”, „origin”, „pole github:”
-        self.assertEqual(zw.count('<span class="kp-k">GitHub</span>'), 2)
-        self.assertIn("<dt>Integracje</dt>", zw)
-        self.assertIn("<dt>Strona WWW</dt>", zw)
+        # wiersz na każdą część (WYGLAD.md), zwykłe słowa zamiast „commit”, „origin”, „pole github:”
+        self.assertEqual(zw.count("<dt>Integracje</dt>"), 2)
+        self.assertEqual(zw.count("<dt>Strona WWW</dt>"), 2)
         self.assertIn("zgodne z GitHubem", zw)
         self.assertIn("2 zmiany do wysłania", zw)
         self.assertNotIn("brak pola github:", zw)
         self.assertNotIn("commit", zw)
         self.assertIn("<a href=\"https://drive.google.com/drive/folders/1AbCdEfGhIjK\"", zw)
-        self.assertEqual(zw.count('<span class="kp-k">Google Drive</span>'), 2)   # folder Drive na każdą część
         self.assertIn("3 pozycje", zw)
         self.assertIn('aria-expanded="true"', rw)
         self.assertIn(">Zwiń<", rw)
-        self.assertIn("GH:x", rw)
-        self.assertIn("GH:s", rw)
-        self.assertIn("DRV:x", rw)
-        self.assertIn("DRV:s", rw)
+        for k in ("GH:x", "GH:s", "DRV:x", "DRV:s"):
+            self.assertIn(k, rw)
         self.assertEqual(o["ld2"], ["x", "s"])
-        self.assertEqual(o["cz"].count("<dt>GitHub"), 1)                  # wybrana część: tylko jej repozytorium
-        self.assertEqual(o["cz"].count("<dt>Google Drive"), 1)
+        self.assertNotIn("<dt>", o["cz"])                                 # wybrana część: tylko jej repozytorium
         self.assertIn("GH:s", o["cz"])
+        self.assertNotIn("GH:x", o["cz"])
         self.assertNotIn("GH:", o["off"])                                 # poza serwerem bez działań na kopii
+
+    def test_polaczenia_meta(self):
+        o = self.run_view("""PF.more['pj-con-meta']=true;
+D.campaigns=[{project:'s'}];out.bez=pjxConView(top);out.inny=pjxConView(top.own);
+D.campaigns=[];part.instagram='marka';out.karta=pjxConView(top);part.instagram='';out.nic=pjxConView(top);
+D.publish={fb:{connected:true,pages:[{id:'1',name:'Strona Marki',project:'s',instagram:'marka'},{id:'2',name:'Inna',project:'',instagram:''}]}};
+out.pol=pjxConView(part);top.facebook='Marka';out.wolne=pjxConView(top.own);""")
+        bez = o["bez"]
+        self.assertIn("Meta Business", bez)                               # kampania w części: karta w „Całość”
+        self.assertIn("Niepołączone", bez)
+        self.assertIn('data-nwchan="1"', bez)                             # ta sama droga co Kanały publikacji
+        self.assertNotIn("Meta Business", o["inny"])                      # część główna bez kanałów: bez karty
+        self.assertIn("Instagram @marka", o["karta"])                     # profil z karty projektu
+        self.assertNotIn("Meta Business", o["nic"])
+        self.assertIn("połączone", o["pol"])
+        self.assertIn("Strona Marki", o["pol"])
+        self.assertIn("Instagram @marka", o["pol"])
+        self.assertNotIn("Niepołączone", o["pol"])
+        self.assertIn('data-pjxfb="x"', o["wolne"])                       # wybór strony dla projektu bez strony
+        self.assertIn("Facebook „Marka”", o["wolne"])                     # profil z karty (pole facebook:)
+        self.assertIn(">Inna<", o["wolne"])
 
     def test_rozmowa_w_rogu(self):
         o = self.run_view("""const r={v:'projekt',p:top};out.zam=dockHtml(r);out.ld=loaded.slice();
@@ -298,23 +323,26 @@ JSON.stringify(out);
         return json.loads(r.stdout)
 
     def test_zakladka_strona_w_calosci(self):
-        o = self.run_js("""const T=p=>ptabsOf(p).map(x=>x[0]);out.top=T(top);out.own=T(top.own);out.part=T(part);out.main=ptMain(top);
+        o = self.run_js("""const T=p=>ptabsOf(p).map(x=>x[0]);out.top=T(top);out.own=T(top.own);out.part=T(part);out.main=ptMain(top);out.n=T(top).length;
 out.view=wwView(top);out.sw=partSw(top,'strona');
 const s2={id:'s2',name:'Oprogramowani · Sklep',partOf:'x',partLabel:'Sklep',site:{dir:'sklep'},partsL:[]};by.s2=s2;top.partsL=[part,s2];
 out.two=wwView(top);WWC.x='s2';out.two2=wwView(top);LIVE=false;out.off=wwView(top);""")
-        self.assertEqual(o["top"][:3], ["plan", "tablica", "strona"])           # „Całość”: Strona jako trzecia główna
-        self.assertEqual(o["main"], 4)
+        # grupa projekt: bez Planu, Zadania pierwsze, Strona druga, Połączenia na końcu; wszystkie zakładki główne (bez „Więcej”)
+        self.assertEqual(o["top"], ["tablica", "strona", "marketing", "etapy", "wskazniki", "ksiega", "polaczenia"])
+        self.assertEqual(o["main"], o["n"])
         self.assertNotIn("strona", o["own"])                                     # część bez strony: bez zakładki
         self.assertIn("strona", o["part"])
         self.assertIn('data-ww="s"', o["view"])                                  # podgląd części ze stroną
-        self.assertIn('href="#p-x-strona?cz=s"', o["view"])
-        self.assertIn('class="pj-parts hscroll"', o["sw"])                         # przełącznik w jednym wierszu (WYGLAD.md)
-        self.assertIn('href="#p-x-strona"', o["sw"])                             # „Całość” zostaje na zakładce Strona
-        self.assertIn('href="#p-x?cz=x"', o["sw"])                               # część bez strony: Plan
-        self.assertEqual(o["two"].count("data-wwpart="), 2)                      # dwie części ze stroną: wybór
+        self.assertNotIn('href="#p-x-strona?cz=s"', o["view"])                 # bez „Strona części …” (grupa strona)
+        self.assertIn('class="pjx-cz"', o["sw"])                                 # wybór części przy nazwie (WYGLAD.md)
+        self.assertIn('value="#p-x-strona"', o["sw"])                            # „Całość” zostaje na zakładce Strona
+        self.assertIn('value="#p-x-tablica?cz=x"', o["sw"])                      # część bez strony: Zadania
+        # dwie części ze stroną: bez wiersza „Strona części” nad podglądem (właściciel 25.11, grupa strona);
+        # inną stronę wybiera przełącznik części w nagłówku, WWC zostaje dla adresów z wyborem
+        self.assertEqual(o["two"].count("data-wwpart="), 0)
+        self.assertNotIn("Strona części", o["two"] + o["view"])
         self.assertIn('data-ww="s"', o["two"])
         self.assertIn('data-ww="s2"', o["two2"])
-        self.assertIn('data-wwpart="s2" data-wwtop="x" data-k="wwp:s2" aria-pressed="true"', o["two2"])
         self.assertNotIn("data-ww=", o["off"])
 
     def test_przycisk_otworz_podglad(self):
@@ -356,7 +384,7 @@ out.sklep=chatText('Stronę Sklep zobaczysz w zakładce Strona.',{p:null});out.w
 
 @unittest.skipUnless(NODE, "brak node")
 class Kod(unittest.TestCase):
-    """Strona projektu bez sekcji rozmowy i osobnej sekcji Google Drive; Esc zwija rozmowę; Serwer bez działań."""
+    """Strona projektu bez sekcji rozmowy, „Kod i pliki” i zakładki Plan; Esc zwija rozmowę; Serwer bez działań."""
 
     @classmethod
     def setUpClass(cls):
@@ -364,7 +392,14 @@ class Kod(unittest.TestCase):
 
     def test_bez_starych_sekcji(self):
         v = panel_parts(self.html, ["vProjekt"])
-        self.assertIn("codeBox(p)", v)
+        self.assertIn("pjxConView(p)", v)                                 # „Kod i pliki” → zakładka Połączenia
+        self.assertIn("pjxDecyzje(p)+projBoard(p)", v)                    # Decyzje na górze Zadań
+        self.assertNotIn("codeBox", self.html)
+        self.assertNotIn("planView", self.html)
+        self.assertNotIn("['plan','Plan']", self.html)
+        # stary adres zakładki Plan prowadzi do Zadań; domyślna zakładka to Zadania
+        self.assertIn("let p=P(rest),tab='tablica';", self.html)
+        self.assertIn("if(tab==='plan'){tab='tablica';", self.html)
         self.assertNotIn("projChatBox", self.html)
         self.assertNotIn("pjFold('pj-drive'", self.html)
         self.assertIn('<div id="pjdock" class="pjd"></div>', self.html)
@@ -388,20 +423,23 @@ with sync_playwright() as p:
         pg = b.new_page(viewport={"width": w, "height": 900})
         pg.on("pageerror", lambda e: errs.append(str(e)))
         r = out[str(w)] = {}
-        pg.goto(U + "#p-oprogramowani-onepager-strona"); pg.wait_for_selector(".pj-parts")
+        SEL = "document.querySelector('[data-pjxcz]').selectedOptions[0].textContent"
+        pg.goto(U + "#p-oprogramowani-onepager-strona"); pg.wait_for_selector("[data-pjxcz]")
         r["redirect"] = pg.evaluate("location.hash")
-        r["cur"] = pg.locator(".pj-parts a[aria-current]").inner_text()
+        r["cur"] = pg.evaluate(SEL)
         r["tabs"] = pg.locator(".ptabs > a").all_inner_texts()
         pg.goto(U + "#p-projekt-testowy-strona"); pg.wait_for_selector(".ww-root")
         r["calosc"] = [pg.evaluate("location.hash"), pg.locator(".ptabs > a[aria-current]").inner_text(),
-                       pg.locator(".pj-parts a[aria-current]").inner_text(), pg.locator(".ww-root").get_attribute("data-ww")]
-        pg.goto(U + "#p-projekt-testowy"); pg.wait_for_selector(".pj-parts"); pg.wait_for_timeout(500)
+                       pg.evaluate(SEL), pg.locator(".ww-root").get_attribute("data-ww")]
+        pg.goto(U + "#p-projekt-testowy"); pg.wait_for_selector("[data-pjxcz]"); pg.wait_for_timeout(500)
         r["list"] = pg.locator("#plist a .nm").all_inner_texts()
-        r["tag"] = pg.locator("#pplan .ptag").all_inner_texts()
-        pg.click("[data-pjcode]"); pg.wait_for_timeout(300)
-        r["det"] = pg.locator("#pcode-det").is_visible()
-        pg.click("[data-pjcode]"); pg.wait_for_timeout(300)
-        r["det2"] = pg.locator("#pcode-det").is_visible()
+        r["tabCur"] = pg.locator(".ptabs > a[aria-current]").inner_text()
+        r["tag"] = pg.locator("#view").inner_text()
+        pg.goto(U + "#p-projekt-testowy-polaczenia"); pg.wait_for_selector("#pcon-gh")
+        pg.click("#pcon-gh [data-pjcon]"); pg.wait_for_timeout(300)
+        r["det"] = pg.locator("#pcon-gh-det").is_visible()
+        pg.click("#pcon-gh [data-pjcon]"); pg.wait_for_timeout(300)
+        r["det2"] = pg.locator("#pcon-gh-det").is_visible()
         pg.click("[data-pjd=open]"); pg.wait_for_selector("#pjdock .pjd-win")
         box = pg.locator("#pjdock .pjd-win").bounding_box()
         r["box"] = [round(box["width"]), round(box["height"]), round(box["x"] + box["width"])]
@@ -419,7 +457,7 @@ print(json.dumps({"out": out, "errs": errs}))
 
 @unittest.skipUnless(PW and not os.environ.get("PANEL_TESTY_BEZ_RENDERU"), "brak Playwright albo PANEL_TESTY_BEZ_RENDERU")
 class Strona(ZCzesciami):
-    """Cała strona w Chromium: stary adres części, jeden projekt na liście, „Kod i pliki”, rozmowa (Enter, Esc)."""
+    """Cała strona w Chromium: stary adres części, jeden projekt na liście, Połączenia, rozmowa (Enter, Esc)."""
 
     def test_strona_projektu(self):
         self.set_mode("ok")
@@ -447,6 +485,7 @@ class Strona(ZCzesciami):
                 self.assertIn("Strona", o["tabs"])
                 self.assertEqual(o["calosc"], ["#p-projekt-testowy-strona", "Strona", "Całość", "oprogramowani-onepager"])
                 self.assertEqual(o["list"], ["Oprogramowani"])
+                self.assertEqual(o["tabCur"], "Zadania")                  # domyślna zakładka
                 self.assertIn("Strona WWW", o["tag"])
                 self.assertEqual((o["det"], o["det2"]), (True, False))
                 self.assertEqual(o["focus"], "TEXTAREA")

@@ -332,21 +332,6 @@ tbody tr[data-go]:focus-visible td{background:var(--hover)}
 .check .ic{width:18px;height:18px;margin-top:1px}
 .check .f{font-size:12px;color:var(--ink-3);overflow-wrap:anywhere}
 .check ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--ink-2)}
-.plan{padding:0 16px 14px}
-.plan form{display:flex;gap:8px;align-items:flex-start}
-.plan textarea{flex:1;min-width:0;min-height:44px;resize:vertical;font:inherit;font-size:14px}
-.plan .ask{margin:12px 0 4px;font-size:13px;color:var(--ink-3)}
-.plan .pmt{font-size:14px;line-height:1.5;margin:4px 0 8px}
-.plan h3{font-size:12.5px;font-weight:600;color:var(--ink-3);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.03em}
-.plan ul{list-style:none;margin:0;padding:0}
-.plan li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
-.plan li:first-child{border-top:0}
-.plan li label{display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0;cursor:pointer}
-.plan li input{margin-top:3px}
-.plan .pp{font-size:12.5px;color:var(--ink-3)}
-.plan .row{margin-top:10px}
-.plan .pp.pp-note{margin-top:8px}
-.plan .pp-sm{font-size:var(--fs-xs)}
 .post{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--r-lg);display:grid;gap:10px}
 .post img{width:100%;max-width:420px;border-radius:8px;border:1px solid var(--line)}
 .kpis{display:flex;flex-wrap:wrap;gap:12px 28px}
@@ -997,8 +982,6 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .mdx a,.pmn a,.pmt a{overflow-wrap:anywhere}
 .mdpre{font:12px/1.45 var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0;overflow-x:auto;white-space:pre;max-width:100%}
 .mdq{border-left:3px solid var(--line-2);padding-left:8px;color:var(--ink-3)}
-.plan .pmt ul,.plan .pmt ol{list-style:revert;padding-left:20px}
-.plan .pmt li{display:list-item;border-top:0;padding:2px 0}
 /* zmiany agenta: pliki, diff, scalanie */
 .chg{display:grid;gap:6px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 10px}
 .chg .sub{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
@@ -1134,11 +1117,6 @@ summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-
 .nw-idle .linkbtn,.nw-idle a{margin-left:4px}
 .nw-sub{display:flex;justify-content:space-between;align-items:center;gap:4px 8px;flex-wrap:wrap;margin:0;padding:10px 16px 2px;border-top:1px solid var(--line);font-size:13.5px;font-weight:650;color:var(--ink)}
 #ag-view .nw-sub{min-height:48px;padding:4px 16px;border-top:0}
-#ag-view .ag-plan>details{padding:0}
-#ag-view .ag-plan summary{list-style:none;cursor:pointer}
-#ag-view .ag-plan summary::before{content:none}
-#ag-view .ag-plan summary .nw-car::before{content:'▸'}
-#ag-view .ag-plan details[open] summary .nw-car::before{content:'▾'}
 .nw-sub small{font-size:12px;font-weight:500;color:var(--ink-3)}
 .nw-sub small a{color:var(--ink-3)}
 .nw-tog{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
@@ -1809,10 +1787,8 @@ video.md-m{background:var(--media-bg);object-fit:cover}
 .pj-parts{margin:8px 0 2px;align-items:center}
 .pj-parts a{display:inline-flex;align-items:center;min-height:40px}
 .pj-pl{color:var(--ink-3);font-size:var(--fs-sm);font-weight:600;padding:8px 4px 8px 0}
-.ww-pick{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
-.ww-pick>span{color:var(--ink-2);font-size:var(--fs-sm)}
 .ptag{display:inline-block;margin-left:6px;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:var(--fs-xs);font-weight:600;color:var(--ink-2);white-space:nowrap;vertical-align:1px}
-/* Kod i pliki: wiersze stanu, „Szczegóły” rozwija działania */
+/* karty Połączeń (dawniej „Kod i pliki”): wiersze stanu, „Szczegóły” rozwija działania */
 .pj-code{padding:0}
 .kp-h{display:flex;align-items:center;gap:12px;justify-content:space-between}
 .kp-h h2{margin:0;padding:0}
@@ -2056,7 +2032,6 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 .ag-now-card ol{margin:6px 0;padding-left:20px}
 .ag-now-card .row{gap:8px;flex-wrap:wrap}
 .ag-queue{margin:6px 0 0;padding-left:20px}
-.ag-limit{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0;padding:8px 16px;color:var(--ink-2)}
 #ag-view .ag-body .ahint{padding:0;margin:8px 0}
 .ag-none{padding-top:8px}
 .tm-blk{font-size:var(--fs-sm);color:var(--ink-3)}
@@ -2233,8 +2208,6 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 /* Strona: podgląd strony WWW projektu (zakładka Strona, pole karty strona:); ramka w piaskownicy, skalowana do miejsca */
 .ww-root{display:grid;gap:var(--g-m);min-width:0}
 .ww-bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
-.ww-stat{margin:0;font-size:var(--fs-sm);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;min-width:0}
-.ww-stat details{flex-basis:100%}
 .ww-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ww-seg{display:inline-flex;gap:4px}
 .ww-main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--g-m);align-items:start}
@@ -2252,7 +2225,6 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-note p{margin:0;overflow-wrap:anywhere}
 .ww-err{color:var(--l-red);font-size:var(--fs-sm)}
 .ww-log{max-height:240px;overflow:auto;font-family:var(--mono);font-size:var(--fs-xs);white-space:pre-wrap;background:var(--sunk);padding:8px;border-radius:var(--r);margin:6px 0 0}
-.ww-con>summary{padding:12px 16px;cursor:pointer;font-weight:600}
 @media (max-width:900px){.ww-main{grid-template-columns:minmax(0,1fr)}.ww-side{position:static}}
 .ww-note .linkbtn{text-align:left}
 .ww-lv{display:grid;gap:6px}
@@ -2266,6 +2238,25 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-shots figcaption{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
 .ww-lv .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (max-width:620px){.ww-acts{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-seg{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.ww-acts .btn,.ww-seg .seg{min-height:44px}}
+/* grupa strona: pasek z plakietką stanu budowania, przełącznik wersji przy pracującym agencie, jedna karta Uwagi */
+.ww-bw{display:inline-flex;align-items:center;gap:var(--g-xs);min-width:0}
+.ww-bst:empty{display:none}
+button.ww-bstb{border:0;cursor:pointer;font-family:inherit}
+.ww-src .seg[aria-disabled="true"]{opacity:.55;cursor:default}
+.ww-berr{border:1px solid var(--line);border-left:3px solid var(--l-red);border-radius:var(--r-lg);background:var(--surface);padding:var(--g-m) var(--g-p);display:grid;gap:var(--g-s);font-size:var(--fs-md)}
+.ww-berr p{margin:0;overflow-wrap:anywhere}
+.ww-uwp{display:grid;gap:var(--g-s)}
+.ww-uwp [data-wwsel]:empty{display:none}
+.ww-uw .ww-notes{padding-top:0}
+.ww-hint{color:var(--ink-3);font-size:var(--fs-xs)}
+.ww-more{border-top:1px solid var(--line)}
+.ww-more>summary{padding:var(--g-m) var(--g-p);cursor:pointer;font-size:var(--fs-md);color:var(--ink-2)}
+.ww-morep{display:grid;gap:var(--g-m);padding-top:0}
+.ww-morep p{margin:0}
+.ww-con{display:grid;gap:var(--g-s)}
+.ww-con h3,.ww-h3{margin:0;font-size:var(--fs-md);font-weight:650}
+.ww-h3{font-size:var(--fs-xs);color:var(--ink-3);font-weight:600}
+@media (max-width:620px){.ww-src{width:100%;display:grid;grid-template-columns:1fr 1fr}.ww-src .seg{min-height:44px}.ww-bw .btn{flex:1}}
 /* strona Odbiór pracy (#odbior?z=): podgląd wyniku, wersje i porównanie, decyzja w kolumnie po prawej (telefon: przyklejona do dołu) */
 .od{display:grid;gap:var(--g-m);min-width:0}
 .od-top{display:grid;gap:4px}
@@ -2808,7 +2799,7 @@ details.psec>.empty{padding:var(--g-m) var(--g-p)}
 /* jeden znacznik terminu: zwykły tekst; po terminie czerwony */
 .due{font-weight:600;color:var(--ink-2)}
 .due.late{color:var(--l-red)}
-/* Kod i pliki: nagłówek jak w sekcjach, wiersze stanu */
+/* karty Połączeń: nagłówek jak w sekcjach, wiersze stanu */
 .pj-code .kp-h{padding:var(--g-s) var(--g-p);min-height:48px;border-bottom:1px solid var(--line)}
 .pj-code .kp-h h2{font-size:var(--fs-md);font-weight:650}
 .pj-code .kp{margin:0;padding:var(--g-m) var(--g-p);gap:var(--g-s) var(--g-p);font-size:var(--fs-md)}
@@ -2838,8 +2829,39 @@ details.psec>.empty{padding:var(--g-m) var(--g-p)}
 #ag-view{display:grid;gap:var(--g-m)}
 #ag-view>.pagehead{margin-bottom:var(--g-xs)}
 #ag-view>.panel{margin:0}
-#ag-view .nw-sub,#ag-view .ag-plan summary,#ag-view .ag-sum{font-size:var(--fs-md);font-weight:650;color:var(--ink)}
+#ag-view .nw-sub,#ag-view .ag-sum{font-size:var(--fs-md);font-weight:650;color:var(--ink)}
 #ag-view .pv-ft{font-size:var(--fs-md)}
+/* grupa agenci: kamienie i szacunek w Teraz, sekcja Użycie, zwinięte Uruchomienia */
+#ag-view .ag-ms{margin:var(--g-s) 0 var(--g-xs)}
+#ag-view .ag-est{margin:var(--g-xs) 0 var(--g-s)}
+#ag-view #ag-use h2 small{font-size:var(--fs-xs);font-weight:500}
+#ag-use .ag-body{padding:0 var(--g-p) var(--g-p);min-width:0}
+.ag-use-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:var(--g-m)}
+.ag-use-card{border:1px solid var(--line);border-radius:var(--r-lg);padding:var(--g-m) var(--g-p);min-width:0}
+.ag-use-card h3{margin:0 0 var(--g-s);font-size:var(--fs-md);font-weight:650}
+.ag-use-card h3 .muted{font-weight:500;font-size:var(--fs-xs)}
+.ag-kv{display:grid;gap:var(--g-xs);margin:0}
+.ag-kv>div{display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 var(--g-s);padding:var(--g-xs) 0;border-top:1px solid var(--line)}
+.ag-kv>div:first-child{border-top:0}
+.ag-kv dt{color:var(--ink-3);font-size:var(--fs-xs);align-self:center}
+.ag-kv dd{margin:0;min-width:0;text-align:right;overflow-wrap:anywhere}
+.ag-use-card .ag-usetop{margin-top:var(--g-s)}
+.ag-use-card .ag-usetop li{align-items:flex-start;padding:var(--g-xs) 0}
+.ag-use-card .ag-ut{display:grid;min-width:0}
+.ag-use-card .ag-ut .muted{font-size:var(--fs-xs)}
+.ag-use-card .ag-usetop .num{font-size:var(--fs-xs);text-align:right;flex-shrink:0;max-width:45%}
+.ag-use-act{display:flex;flex-wrap:wrap;gap:var(--g-s) var(--g-m);align-items:flex-start;margin-top:var(--g-m)}
+.ag-usehow{flex:1 1 260px;min-width:0}
+.ag-usehow summary{cursor:pointer;min-height:36px;display:flex;align-items:center}
+.ag-usehow ul{margin:var(--g-xs) 0 0;padding-left:var(--g-p);color:var(--ink-2)}
+#ag-runs>.ag-body{padding-top:var(--g-s)}
+#ag-view #ag-runs>summary{flex-wrap:wrap}
+#ag-view #ag-runs>summary h2{flex-wrap:nowrap}
+@media (max-width:620px){
+  .ag-use-card .ag-usetop li{flex-direction:column;gap:var(--g-xs)}
+  .ag-use-card .ag-usetop .num{text-align:left;max-width:none}
+}
+#ag-runs>summary .warn{color:var(--l-red)}
 /* Rozmowa: na stronie projektu przycisk w nagłówku, pływający ukryty; nad szufladą tylko otwarte okno */
 .pjd.in-head:not(.open),.pjd.over-dr:not(.open){display:none}
 body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
@@ -2864,6 +2886,79 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 }
 .task-lifecycle{margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--line)}
 .task-cancel-reason{overflow-wrap:anywhere}
+/* grupa serwer: „+” przy Projektach w menu, okno „Dodaj projekt”, Google Drive w Serwerze, widok Informacje */
+.srvs-sh{display:inline-flex;align-items:center;gap:var(--g-s)}
+.srvs-add{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:1px solid var(--ctl-line);border-radius:var(--r);background:var(--surface);color:var(--accent);font:600 16px/1 var(--font,inherit);cursor:pointer}
+.srvs-add:hover{background:var(--accent-soft)}
+.bs-add{display:flex;align-items:center;width:100%;min-height:44px;padding:6px 10px;border:0;border-radius:var(--r);background:none;color:var(--accent);font:inherit;font-weight:600;text-align:left;cursor:pointer}
+.drawer .srvs-padd-f{grid-template-columns:minmax(0,1fr);margin:var(--g-m) 0 0;padding:0;border-top:0}
+.srvs-reg{margin-top:var(--g-p)}
+.srvs-regl{padding:0}
+.srvs-regl li .r{display:flex;flex-wrap:wrap;gap:var(--g-s);justify-content:flex-end;align-items:center}
+.srvs-regl code{font-size:var(--fs-xs)}
+.srvs-regl li:has(.prx-cf){grid-template-columns:minmax(0,1fr)}
+.srvs-regl li .r.prx-cf{justify-content:flex-start}
+.srvs-drv .dform[data-drastart]{display:flex;flex-wrap:wrap;gap:var(--g-s);align-items:flex-end}
+.srvs-drv .dform[data-drastart] .fl,.srvs-drv .dform[data-drastart]>.fi{flex:1 1 200px}
+.srvs-drv .dform[data-drastart] .row{flex:none}
+.srvs-inf{display:grid;grid-template-columns:minmax(220px,280px) minmax(0,1fr);gap:var(--g-m);align-items:start}
+.srvs-inf-l{position:sticky;top:var(--g-m);max-height:calc(100vh - 24px);overflow-y:auto}
+.srvs-inf-l h2{font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:var(--g-m) var(--g-p) var(--g-xs)}
+.srvs-inf-l ul{list-style:none;margin:0;padding:0 var(--g-s) var(--g-s)}
+.srvs-inf-i{display:grid;gap:2px;width:100%;min-height:44px;padding:6px var(--g-s);border:0;border-radius:var(--r);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.srvs-inf-i:hover{background:var(--sunk)}
+.srvs-inf-i[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+.srvs-inf-i .t{font-size:var(--fs-md);font-weight:500}
+.srvs-inf-i .s{font-size:var(--fs-xs);color:var(--ink-3);overflow-wrap:anywhere}
+.srvs-inf-p{min-width:0}
+.srvs-inf-p>h2 small code{font-size:var(--fs-xs)}
+.srvs-inf-b{padding:0 var(--g-p) var(--g-p);min-width:0;overflow-wrap:anywhere}
+.srvs-inf-b .pmn{padding:0}
+.srvs-inf-b .prx-sum,.srvs-inf-b .prx-gaps{padding-left:0;padding-right:0}
+.srvs-md h3{font-size:var(--fs-md);font-weight:650;text-transform:none;letter-spacing:0;color:var(--ink);margin:var(--g-p) 0 var(--g-xs)}
+@media (max-width:820px){
+  .srvs-inf{grid-template-columns:minmax(0,1fr)}
+  .srvs-inf-l{position:static;max-height:none}
+  .srvs-inf-b{padding:0 var(--g-m) var(--g-m)}
+}
+/* grupa projekt: wybór części przy nazwie, Decyzje nad Zadaniami, karty Połączeń */
+.pjx-cz{display:inline-flex;align-items:center;gap:var(--g-xs);font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;min-width:0;max-width:100%}
+.pjx-cz select.fi{width:auto;max-width:200px;min-height:32px;padding:var(--g-xs) var(--g-s);font-size:var(--fs-md);font-weight:600;text-overflow:ellipsis}
+.pjx-dec{margin:0 0 var(--g-m)}
+.pjx-wyh{margin:var(--g-xl) 0 var(--g-s)}
+.pjx-con{display:grid;gap:var(--g-m)}
+.pjx-card h2 small{font-size:var(--fs-xs);font-weight:500;color:var(--ink-3);margin-left:var(--g-xs)}
+.pjx-lead{padding:var(--g-m) var(--g-p);font-size:var(--fs-md)}
+.pjx-lead>p,.pjx-lead>.kp{margin:0;padding:0;overflow-wrap:anywhere}
+.pjx-lead .kp{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--g-s) var(--g-p)}
+.pjx-pg{list-style:none;margin:0;padding:0;display:grid;gap:var(--g-s)}
+.pjx-pg li{overflow-wrap:anywhere}
+.pjx-off{display:flex;flex-wrap:wrap;align-items:center;gap:var(--g-s)}
+.pjx-card .kp-det .fl{display:grid;gap:var(--g-xs);margin:var(--g-s) 0}
+.pjx-card .kp-det .row{display:flex;flex-wrap:wrap;gap:var(--g-s)}
+.pjx-card .kp-det>p{margin:var(--g-s) 0 0}
+@media (max-width:820px){
+  .pjx-cz select.fi{min-height:44px;max-width:220px}
+  .pjx-lead{padding:var(--g-m)}
+  .pjx-lead .kp{grid-template-columns:minmax(0,1fr);gap:var(--g-xs)}
+  .pjx-lead .kp dd{margin-bottom:var(--g-s)}
+}
+/* grupa wskazniki: praca agentów w menu, w nagłówku projektu i na zakładkach; kropka w kolorze „w toku” (--bar-wip),
+   spokojne pulsowanie (2,4 s), przy prefers-reduced-motion bez animacji */
+@keyframes ws-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.ws-dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--bar-wip);animation:ws-pulse 2.4s ease-in-out infinite}
+.ws-b{display:inline-flex;align-items:center;gap:var(--g-xs);flex:none;font-size:11px;font-weight:600;color:var(--l-blue);white-space:nowrap}
+.nav .count.ws-live::before,.bnav .count.ws-live::before,.bn-sheet .count.ws-live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:4px;vertical-align:1px;animation:ws-pulse 2.4s ease-in-out infinite}
+/* wiersz w nagłówku projektu: zwykły tekst w linii (na telefonie zawija się jak zdanie, kropka zostaje przy tekście) */
+.ws-row{display:block;margin:0;font-size:var(--fs-sm);line-height:1.5;color:var(--ink-2);min-width:0;overflow-wrap:anywhere}
+.ws-row>.ws-dot{margin-right:var(--g-s);vertical-align:1px}
+.ws-row b{color:var(--ink);font-weight:600}
+.ws-row .ws-sep{color:var(--ink-3);margin:0 6px}
+.ws-row .lk,.ws-row a{display:inline;font-size:var(--fs-sm);color:var(--accent);font-weight:600;white-space:nowrap}
+/* telefon: cel dotyku 44 px bez zmiany wysokości linii (wypełnienie elementu w linii nie przesuwa tekstu) */
+@media (max-width:820px){.ws-row .lk,.ws-row a{padding:12px 4px;margin:0 -4px}}
+.ptabs a .ws-dot{width:7px;height:7px;margin-left:6px;vertical-align:2px}
+@media (prefers-reduced-motion:reduce){.ws-dot,.nav .count.ws-live::before,.bnav .count.ws-live::before,.bn-sheet .count.ws-live::before{animation:none}}
 /* Wyniki marketingu (prefiks wy-): Klienci, Wyniki, połączenia */
 .wy-sub{gap:var(--g-xs);margin-bottom:var(--g-s)}
 .wy-script{width:100%;font-family:ui-monospace,monospace;font-size:12px}
@@ -2897,7 +2992,7 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
     <div class="brand"><div class="mark">IS</div><div><b>Projekty</b><small>IntegrateSystems</small></div></div>
     <nav class="nav" id="nav" aria-label="Widoki"></nav>
     <div class="side-proj">
-      <div class="sidehead"><span>Projekty</span><span id="pcount"></span></div>
+      <div class="sidehead"><span>Projekty</span><span class="srvs-sh"><span id="pcount"></span><button type="button" class="srvs-add" id="srvs-add" data-srvs="padd" data-k="srvs-add" aria-label="Dodaj projekt" title="Dodaj projekt" hidden>+</button></span></div>
       <label class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" type="search" placeholder="Szukaj projektu  /" aria-label="Szukaj projektu" autocomplete="off"></label>
       <div class="plist" id="plist"></div>
     </div>
@@ -2976,25 +3071,27 @@ const AVINK=[1,2,3,4,5,6,7,8].map(i=>'var(--av-ink'+i+')');
 const INBOX='Do rozplanowania';
 /* widoki: Asystent (strona startowa) i cztery stałe; dawne Start, Dla Ciebie, Przegląd, Wskaźniki, Tablica, Terminy,
    Blokady i Projekty pokazuje Asystent kartami (OLDV: stary adres → karta), rejestr projektów jest w Serwerze */
-const VIEWS=['asystent','marketing','media','agenci','koszty'];
-const VNAME={asystent:'Asystent',marketing:'Marketing',media:'Media',agenci:'Agenci',koszty:'Serwer',odbior:'Odbiór pracy'};
+const VIEWS=['asystent','marketing','media','agenci','koszty','informacje'];
+const VNAME={asystent:'Asystent',marketing:'Marketing',media:'Media',agenci:'Agenci',koszty:'Serwer',informacje:'Informacje',odbior:'Odbiór pracy'};
 /* pełny opis widoku: title i aria-label (krótka nazwa z VNAME w menu, pasku, h1 i okruszkach) */
 const VDESC={asystent:'Asystent: sprawy dla Ciebie, terminy, blokady, wskaźniki i raport PM jako karty; rozmowa głosem i tekstem',
   marketing:'Marketing: tydzień postów i filmów',media:'Media: zdjęcia i filmy ze wszystkich projektów',
-  agenci:'Agenci: kto pracuje teraz, plan dnia i historia uruchomień',koszty:'Serwer: stan, kalendarz, projekty i Księga, koszty i wdrażanie'};
+  agenci:'Agenci: kto pracuje teraz, użycie Claude i Codex, historia uruchomień',koszty:'Serwer: stan, zasoby, Google Drive, kalendarz, koszty i wdrażanie',
+  informacje:'Informacje: jak działa Księga, standard plików, zasady agentów i opis panelu'};
 /* stare adresy → strona Asystent z kartą (pusty: sama strona) */
 const OLDV={start:'',przeglad:'',ty:'sprawy',wskazniki:'wskazniki',tablica:'zadania',terminy:'terminy',blokady:'blokady',projekty:''};
 /* dolny pasek (telefon): 4 widoki + „Więcej” (Serwer, lista projektów, Odśwież, Motyw) */
 const BNAV=['asystent','marketing','media','agenci'];
 /* menu boczne: wszystkie widoki */
 const MAINV=VIEWS;
-const PTABS=[['plan','Plan'],['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga']];
-const PTMAIN=3;
+/* grupa projekt: bez zakładki Plan (Decyzje są na górze Zadań, domyślnej zakładki); wszystkie zakładki widoczne, Połączenia na końcu */
+const PTABS=[['tablica','Zadania'],['marketing','Marketing'],['etapy','Etapy'],['wskazniki','Wskaźniki'],['ksiega','Księga'],['polaczenia','Połączenia']];
+const PTMAIN=PTABS.length;
 /* strony (pole karty strona:) widoczne z widoku p: „Całość” projektu z częściami ma strony swoich części (własnej części
    projektu głównego i części z polem strona:); część i projekt bez części: tylko własną */
 const wwSites=p=>!p?[]:p.partsL&&p.partsL.length&&p.own&&!p.isOwn?[p.own].concat(p.partsL).filter(x=>x.site):p.site?[p]:[];
-/* zakładka Strona w projektach z którąkolwiek stroną (także „Całość”), jako trzecia główna */
-const ptabsOf=p=>wwSites(p).length?PTABS.slice(0,2).concat([['strona','Strona']],PTABS.slice(2)):PTABS;
+/* zakładka Strona w projektach z którąkolwiek stroną (także „Całość”), jako druga, zaraz po Zadaniach */
+const ptabsOf=p=>wwSites(p).length?PTABS.slice(0,1).concat([['strona','Strona']],PTABS.slice(1)):PTABS;
 const ptMain=p=>wwSites(p).length?PTMAIN+1:PTMAIN;
 /* wybrana strona w „Całość” przy kilku częściach ze stroną (WWC[id projektu głównego] = id części) */
 const WWC={};
@@ -3372,7 +3469,7 @@ function normAgents(a){
   return {machine:a.machine||'',tools:{claude:tl(t.claude),codex:tl(t.codex)},needsLogin:!!a.needsLogin,limitUntil:absT(a.limitUntil),automat:!!a.automat,
     maxParallel:+a.maxParallel||0,parallelMax:+a.parallelMax||0,deployHold:!!a.deployHold,canRunTasks:a.canRunTasks!==false,loginWeb:!!a.loginWeb,
     login:{active:!!(a.login&&a.login.active),url:(a.login&&/^https:\/\/(claude\.com|claude\.ai|platform\.claude\.com)\//.test(a.login.url||'')&&a.login.url)||''},today:{runs:+td.runs||0,tokens:+td.tokens||0,costUsd:+td.costUsd||0},
-    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[],queueEstimate:a.queueEstimate||{}};
+    usage:normUsage(a.usage),runs:(a.runs||[]).map(normRun),development:(a.development||[]).map(normRun),nextTasks:a.nextTasks||[],queueEstimate:a.queueEstimate||{},stats:agStats(a.stats)};
 }
 /* zużycie limitów subskrypcji (agents.usage: ułamki 0–1 albo null) i bezpiecznik jednego uruchomienia */
 const frac=v=>v==null||v===''||!Number.isFinite(+v)?null:Math.max(0,Math.min(1,+v));
@@ -3384,23 +3481,31 @@ const minutes=s=>Math.round(s/60)+' min';
 const estimatePercent=n=>Math.round(n*100)+'%';
 const tokenText=n=>Math.round(n).toLocaleString('pl-PL')+' tokenów';
 const estimateTime=n=>new Date(n*1000).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
+/* grupa agenci: szacunek jedną liczbą. W toku przed pierwszym kamieniem: mediana z historii („ok. N min”, zakres
+   w podpowiedzi); po kamieniu: „zostało ok. N min (± M)” z tempa kamieni (agent_progress.estimate_running).
+   W kolejce: ruszy, potrwa, koniec */
+const agMin=s=>Math.max(1,Math.round((+s||0)/60));
 function estimateHtml(r){
-  const e=r.estimate||{},n=e.examples||0;
-  const tip='Szacunek z '+n+' '+pl(n,'zlecenia','zleceń','zleceń');
-  if(e.seconds==null)return '<p class="muted" title="'+esc(tip)+'">Brak danych do szacunku</p>';
-  const running=r.state==='running',used=runUse(r),tokens=(r.tokensIn||0)+(r.tokensOut||0)+
-    (r.decisionTokensIn||0)+(r.decisionTokensOut||0);
-  const parts=[running?'ok. '+minutes(e.elapsed)+' z ~'+minutes(e.seconds):
-    (e.start!=null?'ruszy ok. '+estimateTime(e.start)+', ':'')+'potrwa ~'+minutes(e.seconds)+
-    (e.end!=null?', koniec ok. '+estimateTime(e.end):''),
-    e.limit==null?'':(running&&used!=null?'zużyte '+used+'% z ':'')+'~'+estimatePercent(e.limit)+' limitu 5 h',
-    e.tokens==null?'':(running&&tokens?Math.round(tokens).toLocaleString('pl-PL')+' z ':'')+'~'+tokenText(e.tokens)];
-  return '<p class="muted" title="'+esc(tip)+'">Szacunek · '+parts.filter(Boolean).join(' · ')+'</p>';
+  const e=r.estimate||{},n=e.examples||0,from=n+' '+pl(n,'zakończonego zlecenia','zakończonych zleceń','zakończonych zleceń');
+  const range=e.low!=null&&e.high!=null?'zwykle '+agMin(e.low)+'–'+agMin(e.high)+' min':'';
+  const running=r.state==='running',m=e.milestones;
+  if(running&&e.basis==='milestones'){
+    const tip='Tempo: ok. '+agMin(e.pace)+' min na kamień, ukończone '+m.done+' z '+m.total+(e.typical!=null?'; korekta z historii ('+from+')':'')+'.';
+    return '<p class="ag-est" title="'+esc(tip)+'">'+(m.done>=m.total||e.remaining<30?'Szacunek: agent kończy pracę':
+      'Zostało ok. <b>'+agMin(e.remaining)+' min</b> <span class="muted">(± '+agMin(e.margin)+' min)</span>')+'</p>';
+  }
+  if(e.seconds==null)return '<p class="muted ag-est" title="'+esc('Szacunek wymaga 3 zakończonych podobnych zleceń; jest '+n+'.')+'">Szacunek: brak danych'+(running&&m?', dokładniej po pierwszym kamieniu':'')+'</p>';
+  const tip='Mediana z '+from+(range?'; '+range:'')+(running?'. Dokładniej po pierwszym ukończonym kamieniu.':'.');
+  if(running){const t=e.typical!=null?e.typical:e.seconds,late=e.elapsed>t;
+    return '<p class="ag-est" title="'+esc(tip)+'">Szacunek: ok. <b>'+agMin(t)+' min</b>'+(late?' <span class="muted">· trwa dłużej niż zwykle</span>':'')+'</p>'}
+  const parts=[(e.start!=null?'ruszy ok. '+estimateTime(e.start)+' · ':'')+'potrwa ok. '+minutes(e.seconds)+(e.end!=null?' · koniec ok. '+estimateTime(e.end):''),
+    e.limit==null?'':'ok. '+estimatePercent(e.limit)+' limitu 5 h',e.tokens==null?'':'ok. '+tokenText(e.tokens)];
+  return '<p class="muted ag-est" title="'+esc(tip)+'">'+parts.filter(Boolean).join(' · ')+'</p>';
 }
 function queueEstimateHtml(e){
-  const parts=[e.seconds==null?'':'~'+minutes(e.seconds),e.limit==null?'':'~'+estimatePercent(e.limit)+' limitu 5 h',
-    e.tokens==null?'':'~'+tokenText(e.tokens)].filter(Boolean);
-  return '<p class="muted">Cała kolejka · '+(parts.length?'szacunek '+parts.join(' · '):'brak danych do szacunku')+'</p>';
+  const parts=[e.seconds==null?'':'ok. '+minutes(e.seconds),e.limit==null?'':'ok. '+estimatePercent(e.limit)+' limitu 5 h',
+    e.tokens==null?'':'ok. '+tokenText(e.tokens)].filter(Boolean);
+  return '<p class="muted">Cała kolejka · '+(parts.length?parts.join(' · '):'brak danych do szacunku')+'</p>';
 }
 /* uruchomienie z /api/data (agents.runs i activity.runs) */
 function normRun(r){
@@ -3971,68 +4076,6 @@ function board(list,showProj,bk){
       (cut?'<p class="tb-more"><button class="btn sec sm" data-tbmore="'+esc(b)+'" data-k="tbmore" data-first="'+esc(L[TB_DONE].id)+'" aria-expanded="'+all+'" aria-controls="tb-col-done">'+(all?'Zwiń starsze':'Pokaż starsze ('+(L.length-TB_DONE)+')')+'</button></p>':'')+'</div>'}).join('')+'</div>'+archive;
 }
 
-/* ---------- plan dnia ---------- */
-const planRun=()=>runs().find(r=>r.kind==='plan');
-function planBox(){
-  const a=D.agents;if(!a)return '';
-  if(!a.tools.claude.found)return '';
-  const r=planRun(),live=r&&isAct(r),no=!a.tools.claude.found,today=!!(r&&String(r.queuedAt||'').slice(0,10)===D.todayKey);
-  /* bez logowania Claude plan nie ruszy: przycisk wyłączony, pole zostaje (można przygotować treść) */
-  const lg=!!a.needsLogin||(a.tools.claude.found&&!a.tools.claude.loggedIn);
-  const dis=no||live||A.busy.plan||lg;
-  /* przycisk, który nie może zadziałać, jest ukryty; zamiast niego jedno zdanie z powodem */
-  const why=no?'Plan dnia niedostępny: na tym komputerze nie ma Claude.':lg?'Plan dnia ruszy po zalogowaniu Claude (instrukcja na górze strony).':'';
-  /* bez Claude: zamiast wyłączonego pola samo zdanie z powodem */
-  let h='<div class="plan">'+(no?'':
-    '<form id="plan"><textarea class="fi" name="t" rows="2" maxlength="1500" data-qd="plan" data-k="plan" aria-label="Co dziś robimy"'+(no?' disabled':'')+' placeholder="Np. Opisarnia marketing i 10 firm dla Oprogramowani">'+esc(QD.plan||'')+'</textarea>'+
-    (why?'':'<button class="btn"'+(dis?' disabled':'')+'>'+(live||A.busy.plan?'Układam…':'Ułóż plan')+'</button>')+'</form>')+(why?'<p class="pmt muted">'+esc(why)+'</p>':'');
-  if(r&&(today||live)){
-    if(r.ask)h+='<p class="ask">Ty: „'+esc(r.ask)+'”</p>';
-    if(live)h+='<p class="pmt muted">PM układa plan'+(r.activity?': '+nwStep(r.activity):'…')+'</p>';
-    else if(r.state!=='done'||!r.plan)h+='<p class="pmt">Nie udało się ułożyć planu: '+esc(r.error||(RS[r.state]||[])[1]||r.state)+'</p>';
-    else{
-      const p=r.plan,acc=r.accepted||[],sel=A.psel[r.id]||(A.psel[r.id]={});
-      h+=(r.result?'<div class="pmt">'+md(r.result)+'</div>':'');
-      if(p.agents.length){
-        const free=p.agents.filter(x=>acc.indexOf(x.id)<0);
-        free.forEach(x=>{if(!(x.id in sel))sel[x.id]=true});
-        const n=free.filter(x=>sel[x.id]).length;
-        h+='<h3>Dla agentów</h3><ul>'+p.agents.map(x=>{const done=acc.indexOf(x.id)>=0,t=D.tasks.find(y=>y.id===x.id),ar=t?runOf(t):null;
-          return '<li><label><input type="checkbox" data-psel="'+esc(r.id)+'" data-pid="'+esc(x.id)+'"'+(done?' disabled checked':sel[x.id]?' checked':'')+'><span>'+esc(x.title)+'<br><span class="pp">'+esc(x.project)+(done?' · '+(ar?(ar.state==='running'?'agent pracuje':'w kolejce'):'uruchomione'):'')+'</span></span></label></li>'}).join('')+'</ul>'+
-          (free.length?'<div class="row"><button class="btn" data-ag="plan-go" data-id="'+esc(r.id)+'" data-k="plan-go"'+(n&&!A.busy.go?'':' disabled')+'>'+(A.busy.go?'Uruchamiam…':'Uruchom zaznaczone ('+n+')')+'</button><span class="muted pp-sm">Agenci pracują '+(MACHL[a.machine]||'na komputerze panelu')+'; wdrożenia i wysyłki czekają na Twoją zgodę.</span></div>':'');
-      }else h+='<p class="pmt muted">Brak zadań dla agentów w tym planie.</p>';
-      if(p.you.length)h+='<h3>Dla Ciebie</h3><ul>'+p.you.map(x=>'<li><span><button class="lk" data-task="'+esc(x.id)+'">'+esc(x.title)+'</button><br><span class="pp">'+esc(x.project)+(x.needsYou?' · wymaga: '+esc(x.needsYou):'')+'</span></span></li>').join('')+'</ul>';
-      if(p.note)h+='<p class="pp pp-note">Uwagi: '+esc(p.note)+'</p>';
-    }
-  }
-  /* zwinięty w Agentach; otwarty, gdy dzisiejszy plan jest w toku albo gotowy */
-  const count=r&&r.plan?(r.plan.agents||[]).length+(r.plan.you||[]).length:0;
-  return '<details data-pvdet="pv-plan"'+(live||PF.more['pv-plan']?' open':'')+'><summary class="nw-sub">'+
-    '<span class="nw-tog"><span class="nw-car" aria-hidden="true"></span>Plan dnia</span><small>'+
-    count+' '+pl(count,'zadanie','zadania','zadań')+'</small></summary>'+h+'</div></details>';
-}
-function askPlan(text){
-  text=String(text||'').replace(/\s+/g,' ').trim();
-  if(!text){say('Napisz, co chcesz dziś robić.');return}
-  if(!LIVE){say(PRV);return}
-  const fa=document.activeElement;if(fa&&fa.blur)fa.blur();
-  A.busy.plan=true;render(true);
-  enqueue(async()=>{const r=await post('/api/plan/ask',{text:text});A.busy.plan=false;
-    if(r.ok){delete QD.plan;say('PM układa plan.')}else if(r.status!==401)say(failMsg(r,'Plan nie ruszył.'))});
-}
-function acceptPlan(rid){
-  const r=runById(rid);if(!r||!r.plan)return;
-  const acc=r.accepted||[],sel=A.psel[rid]||{},ids=r.plan.agents.map(x=>x.id).filter(i=>sel[i]&&acc.indexOf(i)<0);
-  if(!ids.length){say('Zaznacz zadania do uruchomienia.');return}
-  if(!LIVE){say(PRV);return}
-  A.busy.go=true;ids.forEach(i=>A.starting[i]=1);render(true);
-  enqueue(async()=>{const x=await post('/api/plan/accept',{id:rid,ids:ids});A.busy.go=false;
-    const d=x.data||{},st=(d.started||[]).length,fl=d.failed||[];
-    if(x.status===401)return;
-    if(st)say('Uruchomiono '+st+' '+pl(st,'zadanie','zadania','zadań')+(fl.length?'; nie ruszyło '+fl.length+': '+fl[0].error:'')+'.');
-    else say(failMsg(x,'Nic nie uruchomiono.'))});
-}
-
 /* ---------- widoki ---------- */
 /* notatka PM: „## Proponuję” widoczne, „## Najważniejsze” (powtarza Dziś i Ryzyka) zwinięte */
 function pmNoteHtml(text){
@@ -4058,7 +4101,7 @@ function pmBody(short){
   return '<div class="pv-pm"><p class="pv-pmb">'+(when?'<span class="muted">Notatka: '+when+'</span> ':'')+(a&&!a.tools.claude.found?'<span class="muted">Odświeżanie niedostępne: na serwerze nie ma Claude.</span>':pmBtn('pmr'))+'</p>'+st+
     (has?txt:'<p class="empty">Brak notatki PM.'+(a?' Uruchom raport przyciskiem wyżej.':'')+'</p>')+'</div>';
 }
-/* zwijana sekcja (Agenci: plan dnia; Marketing: kampanie): <details> ze stanem w PF.more (data-pvdet) */
+/* zwijana sekcja (Marketing: kampanie): <details> ze stanem w PF.more (data-pvdet) */
 const pvFold=(k,title,small,body,tip,open)=>'<details class="pv-fold" data-pvdet="'+k+'"'+(open||PF.more[k]?' open':'')+'><summary'+(tip?' title="'+esc(tip)+'"':'')+'><span class="pv-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
 /* ---------- Teraz: jedna sekcja nad Dziś. Trwa (uruchomienia, filmy, rozmowy, publikacje w tej chwili),
    Zaplanowane publikacje (24 h wstecz i naprzód), Ostatnie 24 h (zrobione, osobno to, co się nie udało) ---------- */
@@ -4250,7 +4293,7 @@ function nwPlanPanel(compact){
   if(pb.old)rows.push('<li class="nw-old"><span>'+nwLz('red','zaległe')+'</span><div><a class="t" href="#marketing" data-k="nw:plan:old">Starsze niż 24 h: '+pb.old+' '+pl(pb.old,'publikacja','publikacje','publikacji')+' bez wyniku</a><div class="s"><span>szczegóły i ponowienie: dzień posta w Marketingu</span></div></div><span class="wh"></span></li>');
   return '<h3 class="nw-sub">Zaplanowane publikacje <small>'+(pb.soon.length?'24 h'+(more>0?' · jeszcze '+more:'')+' · ':'')+'<a href="#marketing">Marketing</a></small></h3><ul class="rows runs nw-rows">'+rows.join('')+'</ul>';
 }
-/* przycisk naprawy przy nieudanej pozycji: ponowne uruchomienie (zadanie, raport PM, test, plan dnia), logowanie,
+/* przycisk naprawy przy nieudanej pozycji: ponowne uruchomienie (zadanie, raport PM, test), logowanie,
    nagranie, publikacja; bez przycisku krótkie zdanie, dlaczego (limit, zadanie zamknięte, coś wstrzymuje uruchomienie) */
 const nwHint=t=>'<span class="nw-hint">'+esc(t)+'</span>';
 function nwRetryRun(r){
@@ -4260,7 +4303,7 @@ function nwRetryRun(r){
   if((D.agents||{}).needsLogin&&r.tool!=='codex')return nwLogin;
   if(r.kind==='pm')return pmOn()?nwHint('Raport PM już się układa.'):'<button class="btn sec sm" data-ag="pm" data-k="nw:re:pm">Uruchom ponownie</button>';
   if(r.kind==='check')return '<button class="btn sec sm" data-ag="check" data-k="nw:re:check">Sprawdź ponownie</button>';
-  if(r.kind==='plan')return '<button class="btn sec sm" data-nwfocus="plan" data-k="nw:re:plan">Ułóż plan ponownie</button>';
+  if(r.kind==='plan')return nwHint('Plan dnia układasz w Asystencie.');
   const t=taskOfRun(r);if(!t)return nwHint('Zadania nie ma już w pliku.');
   if(taskClosed(t))return nwHint('Zadanie jest już zamknięte.');
   const why=blockOf(t);if(why)return nwHint(why+'.');
@@ -5199,17 +5242,17 @@ function mkDay(day){
 }
 
 /* ---------- strona projektu ----------
-   Nagłówek zwarty na każdej zakładce: nazwa, stan i jedna linia (faza · postęp · bieżący etap). Na zakładce Plan ta linia
-   rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
+   Nagłówek zwarty na każdej zakładce: nazwa, stan, wybór części (przy nazwie) i jedna linia (faza · postęp · bieżący etap).
+   „Szczegóły” rozwija pasek faz i kafle (domyślnie zwinięte; stan w PF.more['pj-ov']).
    Pod zakładkami jedno zdanie, co jest na zakładce (PTD); Marketing ma własne zdanie w mktView. */
-const PTD={plan:'Co czeka w projekcie przez 7 dni: Twoje sprawy, publikacje i praca agentów.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
+const PTD={polaczenia:'GitHub, Google Drive i Meta Business projektu: stan połączenia i działania.',tablica:'Zadania projektu według stanu. Kliknij zadanie, aby zobaczyć szczegóły.',
   wskazniki:'Postęp projektu i tempo pracy.',etapy:'Etapy projektu na osi czasu i ich terminy.',
   ksiega:'Księga to dokumenty, które każdy projekt powinien mieć. Poniżej widać, czego brakuje.',
   strona:'Podgląd strony WWW projektu. Wskaż element, opisz zmianę, a agent poprawi stronę.'};
 /* GitHub projektu (p.git z serwera): link w nowej karcie albo „Brak GitHuba”, plus niewypchnięte commity */
 function gitTag(p){
   const g=p.git;if(!g)return '';
-  if(!g.repo&&p.github)return '<span class="pj-git"><a href="#koszty" title="Kopia projektu jest tylko na GitHubie ('+esc(p.github)+'); panel sklonuje ją przy następnym zadaniu">Kopia na GitHubie</a></span>';
+  if(!g.repo&&p.github)return '<span class="pj-git"><a href="'+esc(pjxConHref(phref(p)))+'" title="Kopia projektu jest tylko na GitHubie ('+esc(p.github)+'); panel sklonuje ją przy następnym zadaniu">Kopia na GitHubie</a></span>';
   const u=/^https:\/\//.test(g.url||'')?g.url:'',n=g.unpushed|0;
   let h=g.remote==='github'&&u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">GitHub</a>'
     :g.remote==='inny'?(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(g.host||'Repozytorium')+'</a>':'<span title="Repozytorium poza GitHubem">'+esc(g.host||'Repozytorium lokalne')+'</span>')
@@ -5221,8 +5264,8 @@ function vProjekt(p,tab){
   const c=p.c,s=p.cur,pct=c.all?Math.round(100*c.done/c.all):0,pi=PHI[p.phase],cm=canMeta(p);
   const ds=p.stagesL.filter(x=>isDay(x.date)),a=ds.length?ds.map(x=>x.start).sort()[0]:'',b=ds.length?ds.map(x=>x.date).sort().slice(-1)[0]:'';
   let body='';
-  if(tab==='plan')body=planView(p)+codeBox(p);   /* rozmowa w prawym dolnym rogu (#pjdock), poza treścią strony */
-  else if(tab==='tablica')body=projBoard(p);
+  if(tab==='tablica')body=pjxDecyzje(p)+projBoard(p);   /* grupa projekt: Decyzje na górze Zadań */
+  else if(tab==='polaczenia')body=pjxConView(p);
   else if(tab==='wskazniki')body=metrics([p],p);
   else if(tab==='etapy')body=stagesView(p);
   else if(tab==='ksiega')body=bookView(p);
@@ -5240,15 +5283,15 @@ function vProjekt(p,tab){
     '<div class="fact"><span class="l">Bieżący etap</span><span class="v">'+(s?esc(s.title):'—')+'</span><span class="d">'+(s?(isDay(s.date)?ddl(s.date)+' · '+rel(s.date):'bez terminu'):'brak etapów')+'</span></div>'+
     '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+wyFact(p)+
     '<div class="fact" title="Księga: dokumenty, które każdy projekt powinien mieć"><span class="l">Księga</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+'</span></div>'+
-    '<div class="fact"><span class="l">Kod</span><span class="v">'+gitPlain(p)+'</span><span class="d"><a href="'+phref(p,'plan')+'" data-pjgo="pcode">Kod i pliki</a></span></div></div>';
+    '<div class="fact"><span class="l">Kod</span><span class="v">'+gitPlain(p)+'</span><span class="d"><a href="'+phref(p,'polaczenia')+'">Połączenia</a></span></div></div>';
   /* „Szczegóły” w wierszu nazwy na każdej zakładce (stan w PF.more['pj-ov']); „Rozmowa” w nagłówku zamiast pływającego
      przycisku (WYGLAD.md: przycisk nie zasłania treści); znacznik stanu rozmowy uzupełnia renderDock */
   const open=PF.more['pj-ov']===true,tp=topP(p);
   const btns='<div class="pj-hb"><button type="button" class="btn sec sm" data-more="pj-ov" data-k="more:pj-ov" aria-expanded="'+open+'" aria-controls="pj-ovb">'+(open?'Zwiń':'Szczegóły')+'</button>'+
     '<button type="button" class="btn sm pjh-chat" data-pjd="open" data-k="pjh:open" aria-controls="pchat">Rozmowa<span class="pjd-b" data-pjhb hidden></span></button></div>';
-  return '<div class="phead"><div class="ptitle">'+av(p)+'<div class="pt-nm"><h1>'+esc(tp.name)+'</h1>'+(tp.alias?'<span class="muted">'+esc(tp.alias)+'</span>':'')+lz(p.pst)+'</div>'+btns+'</div>'+
-    '<p class="pj-sum">'+sum+'</p>'+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+partSw(p,tab)+'</div>'+
-    '<nav class="tabs ptabs hscroll" aria-label="Widoki projektu">'+ptabsOf(p).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+'</a>').join('')+'</nav>'+body;
+  return '<div class="phead"><div class="ptitle">'+av(p)+'<div class="pt-nm"><h1>'+esc(tp.name)+'</h1>'+(tp.alias?'<span class="muted">'+esc(tp.alias)+'</span>':'')+lz(p.pst)+partSw(p,tab)+'</div>'+btns+'</div>'+
+    '<p class="pj-sum">'+sum+'</p>'+wsProjRow(p)+(open?'<div class="pj-ovb" id="pj-ovb">'+ov+'</div>':'')+'</div>'+
+    '<nav class="tabs ptabs hscroll" aria-label="Widoki projektu">'+ptabsOf(p).map(([k,n])=>'<a href="'+phref(p,k)+'"'+(tab===k?' aria-current="page"':'')+'>'+n+wsTabDot(p,k)+'</a>').join('')+'</nav>'+body;
 }
 /* GitHub zwykłymi słowami (Szczegóły projektu): bez „origin”, „pola github:” i „niewypchniętych” */
 function gitPlain(p){
@@ -5257,96 +5300,29 @@ function gitPlain(p){
   if(g.remote!=='github')return 'tylko na serwerze, bez GitHuba';
   return (u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">GitHub</a>':'GitHub')+(n?', '+n+' '+pl(n,'zmiana','zmiany','zmian')+' do wysłania':', wysłane');
 }
-/* przełącznik części projektu („Całość · Integracje · Strona WWW”): przyciski segmentowe w jednym wierszu, przewijane
-   w poziomie na telefonie; bez części pusty. Zakładka, której część nie ma (Strona), przechodzi na Plan */
+/* grupa projekt: wybór części projektu („Całość”, części) jako mała lista rozwijana przy nazwie, nie jak osobne całości;
+   domyślnie „Całość”, bez części pusty. Wartość opcji to adres części na tej samej zakładce; zakładka, której część nie ma
+   (Strona), przechodzi na Zadania. Zmiana wyboru: pjxCz (zdarzenie change) */
 function partSw(p,tab){
   const t=topP(p);if(!t.partsL||!t.partsL.length||!t.own)return '';
   const L=[[t,'Całość'],[t.own,t.partLabel]].concat(t.partsL.map(x=>[x,x.partLabel]));
-  return '<nav class="pj-parts hscroll" aria-label="Części projektu">'+L.map(([x,n])=>'<a href="'+phref(x,tab==='strona'&&!wwSites(x).length?'plan':tab)+'" data-k="cz:'+esc(x.isOwn?'*':x.id)+'" title="'+esc(n)+'"'+(x===p?' aria-current="page"':'')+'>'+esc(n)+'</a>').join('')+'</nav>';
+  return '<label class="pjx-cz"><span class="pjx-czl">Część</span><select class="fi" data-pjxcz="1" data-k="cz" aria-label="Część projektu">'+
+    L.map(([x,n])=>'<option value="'+esc(phref(x,tab==='strona'&&!wwSites(x).length?'tablica':tab))+'"'+(x===p?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select></label>';
 }
-/* ---------- Plan projektu: sekcje rozwijane (WYGLAD.md) ----------
-   „Decyzje” i „Dla Ciebie dziś” otwarte; „Po terminie”, „Agenci” i „Później” (do 7 dni) zwinięte. Stan każdej sekcji
-   w PF.more (pp-*), pamiętany na urządzeniu. W wierszu jeden znacznik terminu (po terminie: czerwony tekst), tytuł
-   i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same zadania co grupa
-   „Po terminie” w Zadaniach (pjLate); publikacje po terminie są w „Dla Ciebie dziś” z czerwonym znacznikiem. */
-const isAgT=t=>['agent','claude','codex'].includes(t.executor);
-/* Twoje zadania po terminie: ta sama reguła co grupa „Po terminie” w kolumnie Do zrobienia (tbTodo) */
-const pjLate=p=>D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.kind!=='publikacja'&&t.col==='todo'&&tbMine(t)&&!t.waits.length&&tbPer(t)==='late');
-/* „Decyzje”: decyzje projektu (zgody, odbiory, pytania) z tym samym wierszem i przyciskiem co w sprawach dla Ciebie;
-   zadanie po terminie jest raz, w „Po terminie” */
+function pjxCz(el){const h=el.value;if(h&&h!==location.hash)location.hash=h}
+/* ---------- grupa projekt: Decyzje na górze zakładki Zadania (zakładka Plan usunięta) ----------
+   Decyzje projektu (pytania, zgody, odbiory) z tym samym wierszem i przyciskiem co w sprawach dla Ciebie (todayRow);
+   sekcja rozwijana jak w WYGLAD.md, domyślnie otwarta, stan w PF.more['pp-dec']; bez decyzji nic. */
 function planDec(p){
-  const ys=youState(),lt={};pjLate(p).forEach(t=>{lt[t.id]=1});
-  const of=x=>inP(p,x.q?x.q.p.id:x.t.project)&&(x.q||x.need)&&!(x.t&&lt[x.t.id]);
+  const ys=youState(),of=x=>inP(p,x.q?x.q.p.id:x.t.project)&&(x.q||x.need);
   return ys.youToday.concat(ys.youWeek,ys.youLater).filter(of);
-}
-const ppOpen=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind==='rec'&&scOwn(t)&&d)return 'data-scopen="'+esc(t.project+'|'+d+'|'+t.id)+'"';
-  const sk=scRecKey(t);if(sk)return 'data-scopen="'+esc(sk)+'"';return (x.kind==='pub'||x.kind==='rec')&&t.channel&&d?'data-medit="'+esc(t.project+'|'+d+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"'};
-/* publikacja z kanałem i datą: stan i akcja jak na karcie w Marketingu (mkState, mkAct) */
-const ppPub=x=>{const t=x.t,d=isDay(t.date)?t.date.slice(0,10):'';if(x.kind!=='pub'||!t.channel||!d)return null;
-  const k=t.project+'|'+d;if(PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,d)}
-  const st=mkState(t,d);return {st:st,act:mkAct(t,d,st,'')}};
-/* przycisk działania wiersza: Zrobione / Zatwierdź / Obejrzyj (odbiór, publikacja, nagranie); agent: bez przycisku */
-function ppAct(x){
-  const t=x.t,id=esc(t.id),lab=s=>' aria-label="'+esc(s+': '+t.title)+'"';
-  if(x.kind==='agent')return '';
-  if(x.kind==='pub'||x.kind==='rec'){const s=ppPub(x);if(s&&s.act)return s.act;return '<button type="button" class="btn sec sm" '+ppOpen(x)+' data-k="ppa:'+id+'"'+lab('Obejrzyj')+'>Obejrzyj</button>'}
-  if(t.waits&&t.waits.length)return '<button type="button" class="btn sec sm" data-task="'+id+'" data-k="ppa:'+id+'"'+lab('Otwórz')+'>Otwórz</button>';
-  if(t.needsYou==='odbiór')return '<a class="btn sec sm" href="'+esc(odHref(t.id))+'" data-k="ppa:'+id+'"'+lab('Obejrzyj i odbierz')+'>Obejrzyj</a>';
-  if(t.needsYou==='zgoda'&&t.kind==='publikacja'&&isDay(t.date))return '<button type="button" class="btn sec sm" data-medit="'+esc(t.project+'|'+String(t.date).slice(0,10)+'|'+t.id)+'" data-k="ppa:'+id+'"'+lab('Obejrzyj i zatwierdź')+'>Zatwierdź</button>';
-  const a=ACTB(t);return '<button type="button" class="btn sec sm" data-act="'+a[0]+'" data-id="'+id+'" data-k="ppa:'+id+'"'+lab(a[1])+'>'+a[1]+'</button>';
-}
-function ppRow(p,x){
-  const t=x.t,T=D.todayKey,d=t.date.slice(0,10),late=d<T,pub=x.kind==='pub'||x.kind==='rec';
-  const due='<span class="due'+(late?' late':'')+'">'+(late?rel(d):d===T?'dziś':d===addK(T,1)?'jutro':esc(ddl(d)))+'</span>';
-  const chan=String(t.channel||'').split(/,\s*/).filter(Boolean).map(c=>PUBN[c.toLowerCase()]||cap(c)).join(', ');
-  const m=[];
-  if(x.kind==='rec')m.push('nagranie do publikacji '+(d===T?'dziś':ddl(d))+(scOwn(t)?', scenariusz: '+(SCST[t.script.state||'']||SCST[''])[1]:''));
-  else if(x.kind==='pub')m.push('publikacja'+(chan?' · '+esc(chan):''));
-  if(x.kind==='agent')m.push(esc((WHO[t.executor]||WHO.agent).n)+(t.state==='doing'?' · w toku':t.state==='blocked'?' · zablokowane':''));
-  else if(t.needsYou&&!pub)m.push(esc(t.needsYou));
-  if(t.waits&&t.waits.length&&t.state!=='done')m.push('czeka na '+t.waits.length+' '+pl(t.waits.length,'zadanie','zadania','zadań'));
-  if(+t.minutes>0&&x.kind!=='agent')m.push('<span class="num">'+(+t.minutes)+' min</span>');
-  const s=ppPub(x),name=pub?cap(t.title.replace(/^Opublikuj\s+/,'')):t.title;
-  return '<li><div class="pr-m"><button type="button" class="lk t" '+ppOpen(x)+' data-k="pp:'+esc(t.id)+'">'+esc(name)+'</button>'+
-    '<div class="pr-s">'+due+ptag(p,t.project)+m.map(v=>'<span>'+v+'</span>').join('')+(s?'<span class="lz '+s.st[0]+'">'+esc(s.st[1])+'</span>':'')+'</div></div>'+
-    '<div class="pr-a">'+ppAct(x)+'</div></li>';
 }
 /* sekcja rozwijana: nagłówek z licznikiem (WYGLAD.md), stan w PF.more[k]; domyślnie otwarta albo zwinięta */
 const ppSec=(k,id,title,n,open0,body,small,bad)=>{const open=PF.more[k]!=null?!!PF.more[k]:open0;
   return '<details class="panel psec" id="'+id+'" data-pvdet="'+k+'"'+(open?' open':'')+'><summary><h2>'+title+' <span class="cnt num'+(bad&&n?' bad':'')+'">'+n+'</span></h2>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>'};
-function planView(p){
-  const T=D.todayKey,end=addK(T,6),S={today:[],late:[],ag:[],later:[]};
-  const dec=planDec(p),decT={};dec.forEach(x=>{if(x.t)decT[x.t.id]=1});
-  const LT=pjLate(p),lt={};LT.forEach(t=>{lt[t.id]=1});
-  LT.forEach(t=>S.late.push({kind:'you',t:t}));
-  D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&!decT[t.id]&&!lt[t.id]).forEach(t=>{
-    const d=isDay(t.date)?t.date.slice(0,10):'';
-    if(!d)return;
-    if(t.kind==='publikacja'){
-      if(d<=end)(d<=T?S.today:S.later).push({kind:'pub',t:t});
-      const r=addK(d,-1)<T?T:addK(d,-1);
-      const rec=scOwn(t)?t.script.state!=='nagrane'&&r<=end&&!scTasks(t.project,d,'rec').some(x=>!taskClosed(x)):mkIsFilm(t)?(()=>{const fd=PD[t.project+'|'+d];return !(fd&&fd.ok&&fd.film)&&r<=end})():false;
-      if(rec)(r===T?S.today:S.later).push({kind:'rec',t:t,at:r});
-      return}
-    if(d>end)return;
-    if(isAgT(t)&&!needsMe(t)){S.ag.push({kind:'agent',t:t});return}
-    (d<=T&&!(t.waits&&t.waits.length)?S.today:S.later).push({kind:'you',t:t});
-  });
-  const at=x=>x.at||x.t.date.slice(0,10);
-  Object.keys(S).forEach(k=>S[k].sort((a,b)=>at(a).localeCompare(at(b))||a.t.title.localeCompare(b.t.title)));
-  const ul=L=>'<ul class="prow">'+L.map(x=>ppRow(p,x)).join('')+'</ul>';
-  /* minuty Twoich spraw na dziś (dziś i po terminie) wobec limitu dnia (dayMinutes); bez minut nic */
-  const cap0=D.dayMinutes||120,min=S.today.concat(S.late).filter(x=>x.kind==='you'&&+x.t.minutes>0).reduce((s,x)=>s+(+x.t.minutes),0);
-  const minS=min?'<span class="num'+(min>cap0?' pp-over':'')+'">'+min+' min na dziś'+(min>cap0?', limit '+cap0:'')+'</span>':'';
-  let h='';
-  if(dec.length)h+=ppSec('pp-dec','pdec','Decyzje',dec.length,true,'<ul class="rows">'+dec.map(x=>todayRow(x,{prio:false,tag:ptag(p,x.q?x.q.p.id:x.t.project)})).join('')+'</ul>');
-  h+=ppSec('pp-dzis','pplan','Dla Ciebie dziś',S.today.length,true,S.today.length?ul(S.today):'<p class="empty">Na dziś nic.</p>',minS);
-  if(S.late.length)h+=ppSec('pp-late','plate','Po terminie',S.late.length,false,ul(S.late),'',true);
-  if(S.ag.length)h+=ppSec('pp-ag','pag','Agenci',S.ag.length,false,ul(S.ag),'7 dni');
-  if(S.later.length)h+=ppSec('pp-pozn','plater','Później',S.later.length,false,ul(S.later),'do '+esc(ddl(end)));
-  const nd=D.tasks.filter(t=>inP(p,t.project)&&!taskClosed(t)&&t.kind!=='publikacja'&&!isDay(t.date)&&!isAgT(t)).length;
-  if(nd)h+='<p class="note pp-nd">'+nZ(nd,'Twoje zadanie','Twoje zadania','Twoich zadań')+' bez terminu · <a href="'+phref(p,'tablica')+'">Zadania</a></p>';
-  return '<div class="pplan">'+h+'</div>';
+function pjxDecyzje(p){
+  const dec=planDec(p);if(!dec.length)return '';
+  return '<div class="pjx-dec">'+ppSec('pp-dec','pdec','Decyzje',dec.length,true,'<ul class="rows">'+dec.map(x=>todayRow(x,{prio:false,tag:ptag(p,x.q?x.q.p.id:x.t.project)})).join('')+'</ul>')+'</div>';
 }
 /* Google Drive tylko do odczytu: logowanie przypisuje konto do projektu i jego części. Potem folder z listy
    folderów konta dla projektu albo części (GET /api/drive/konta, /api/drive/foldery, POST /api/drive/wybierz).
@@ -5384,20 +5360,22 @@ async function loadDrF(pid,acc,refresh){
 /* powrót z logowania Google w innej karcie: stan kont od nowa */
 window.addEventListener('focus',()=>{if(LIVE)Object.keys(DRA).filter(pid=>DRA[pid].login).forEach(loadDrA)});
 /* konta Google: lista, łączenie (nazwa konta → logowanie → przy kliencie rclone jedno pole na adres) */
-function drAccBox(pid=""){
+function drAccBox(pid="",part=""){
   const a=drA(pid),compact=!!pid,scope=' data-pid="'+esc(pid)+'"';
-  if(a.loading&&!a.done)return '<p class="note" role="status">Sprawdzam konta Google…</p>';
-  let h=a.err?'<p class="warn">'+esc(a.err)+'</p>':'';
-  if(a.available===false)return h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
+  if(a.loading&&!a.done)return part==='list'?'':'<p class="note" role="status">Sprawdzam konta Google…</p>';
+  /* part (Serwer → Google Drive): 'top' bez listy kont, 'list' tylko lista kont */
+  let h=a.err&&part!=='list'?'<p class="warn">'+esc(a.err)+'</p>':'';
+  if(a.available===false)return part==='list'?'':h+'<p class="empty">Na serwerze brakuje narzędzia do Google Drive. <span class="muted" title="uruchom/serwer/zainstaluj-drive.sh">Instalacja: Serwer.</span></p>';
   const L=a.accounts||[],busy=!!A.busy['dra'],lg=a.login,noC=!a.ownClient;
-  if(a.migrationAmbiguous)h+='<p class="warn">Nie udało się ustalić, które konto z 25.11 należy do Shield &amp; Silent.</p>';
-  if(L.some(x=>x.migration?.pending.length))h+='<button type="button" class="btn sec sm" data-dra="migracja">Ponów odłączanie folderów</button>';
-  if(L.length&&!compact)h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
+  if(a.migrationAmbiguous&&part!=='top')h+='<p class="warn">Nie udało się ustalić, które konto z 25.11 należy do Shield &amp; Silent.</p>';
+  if(part!=='top'&&L.some(x=>x.migration?.pending.length))h+='<button type="button" class="btn sec sm" data-dra="migracja">Ponów odłączanie folderów</button>';
+  if(L.length&&!compact&&part!=='top')h+='<ul class="rows dra-l">'+L.map(x=>'<li><div><b>'+esc(x.label)+'</b><div class="s">'+
     (x.connected?(x.projects.length?'Przypisane projekty':'Brak przypisań'):'<span class="kp-warn">połączenie zniknęło z serwera, połącz ponownie</span>')+'</div>'+
     x.projects.map(p=>'<div class="row"><span>'+esc(drName(p))+'</span><button type="button" class="btn sec sm" data-dra="odlacz" data-pid="'+esc(p)+'" data-acc="'+esc(x.id)+'">Odłącz od projektu</button></div>').join('')+
     (x.migration?'<div class="s">Przed wdrożeniem konto było dostępne we wszystkich projektach. Wybrane foldery: '+esc(x.migration.before.map(drName).join(', ')||'brak')+'. Przypisanie po migracji: '+esc(x.migration.after.map(drName).join(', '))+'.'+
       (x.migration.pending.length?' Do odłączenia: '+esc(x.migration.pending.map(drName).join(', '))+'.':'')+'</div>':'')+'</div>'+
     '<div class="r">'+(noC?'':'<button type="button" class="btn sec sm" data-dra="ponow" data-acc="'+esc(x.id)+'" data-k="dra-p:'+esc(x.id)+'"'+(busy||lg?' aria-disabled="true"':'')+'>Połącz ponownie</button>')+(x.projects.length?'':'<button type="button" class="btn sec sm" data-dra="usun" data-acc="'+esc(x.id)+'" data-k="dra-u:'+esc(x.id)+'"'+(busy?' aria-disabled="true"':'')+'>Odłącz konto</button>')+'</div></li>').join('')+'</ul>';
+  if(part==='list')return h;
   if(lg&&lg.mode==='own'){
     const own=lg.mode==='own';
     h+='<div class="dra-lg"><p><b>Łączenie: '+esc(lg.label)+'</b></p><ol class="dv-st"><li><a class="btn sm" href="'+esc(lg.url)+'"'+
@@ -5494,12 +5472,6 @@ async function draSave(form){
   }catch(e){say('Nie udało się zapisać klienta Google.')}
   finally{button.disabled=false}
 }
-/* Serwer: konta Google Drive */
-function drvPanel(){
-  if(!LIVE)return '';
-  return '<section class="panel" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>konta tylko do odczytu</small></h2><div class="pad dv">'+drAccBox()+draClient()+
-    '<p class="note">Folder dla projektu wybierasz na stronie projektu, w sekcji „Kod i pliki”.</p></div></section>';
-}
 /* zwinięta sekcja pod treścią Planu (stan w PF.more['pj-drive']); w podsumowaniu stan połączenia */
 const pjFold=(k,id,title,small,body,open)=>'<details class="panel pj-fold" id="'+id+'" data-pvdet="'+k+'"'+(open||PF.more[k]?' open':'')+'><summary><span class="pj-ft">'+title+'</span>'+(small?'<small>'+small+'</small>':'')+'</summary>'+body+'</details>';
 /* wybór folderu z konta: drzewo (rozwijanie) i wyszukiwanie po nazwie; link do folderu jako druga droga */
@@ -5585,9 +5557,7 @@ async function driveAct(pid,path,body,okMsg){
   await loadDrive(pid);if(x.ok&&DRA[""])loadDrA();
 }
 const PJC={};
-/* ---------- Kod i pliki: GitHub (każde repozytorium projektu i jego części) i Google Drive ----------
-   Na wierzchu po jednym wierszu stanu; „Szczegóły” rozwija pełny stan i działania (ghBody: Sprawdź, Wyślij na GitHub,
-   Usuń kopię z serwera; driveBody: połącz, odłącz). Stan zwinięcia w PF.more['pj-code'] */
+/* ---------- stan GitHuba i Google Drive w jednym wierszu (zakładka Połączenia, pjxGh i pjxDrive) ---------- */
 const kpN=(n,a,b,c)=>n+' '+pl(n,a,b,c);
 function ghLine(x){
   const g=x.git||{};
@@ -5613,23 +5583,64 @@ function driveLine(p){
   }
   return drWhere(d)+(d.files!=null?', '+kpN(d.files,'pozycja','pozycje','pozycji'):'')+repair;
 }
-function codeBox(p){
-  const t=topP(p),own=p.isOwn?P(p.id):p,repos=p===t&&t.partsL.length?[t].concat(t.partsL):[own],multi=repos.length>1;
-  const op=!!PF.more['pj-code'],reg=LIVE&&D.projectsSource==='registry';
-  const lab=x=>multi?' <span class="ptag">'+esc(x.partLabel||t.partLabel)+'</span>':'';
-  let h='<section class="panel pj-code" id="pcode" aria-labelledby="pcode-h"><div class="kp-h"><h2 id="pcode-h">Kod i pliki</h2>'+
-    '<button type="button" class="btn sec sm" data-pjcode="1" data-k="pjcode" aria-expanded="'+op+'" aria-controls="pcode-det">'+(op?'Zwiń':'Szczegóły')+'</button></div>'+
-    /* jedna część: wiersze GitHub i Google Drive; kilka części: wiersz na część z obydwoma stanami (WYGLAD.md) */
-    (multi?'<dl class="kp kp-m">'+repos.map(x=>'<dt>'+esc(x.partLabel||t.partLabel)+'</dt><dd><div><span class="kp-k">GitHub</span> '+ghLine(x)+'</div><div><span class="kp-k">Google Drive</span> '+driveLine(x)+'</div></dd>').join('')+'</dl>':
-      '<dl class="kp"><dt>GitHub</dt><dd>'+ghLine(own)+'</dd><dt>Google Drive</dt><dd>'+driveLine(own)+'</dd></dl>');
-  h+='<div class="kp-det" id="pcode-det"'+(op?'':' hidden')+'>';
-  if(op){
-    h+=repos.map(x=>{if(reg&&GHS[x.id]===undefined)ghLoad(x.id,false);
-      return '<h3 class="kp-sh">GitHub'+lab(x)+'</h3>'+(reg?ghBody(x):'<p class="note">Stan kopii i wysyłanie na GitHub działają w panelu na serwerze, przy projektach z rejestru.</p>')}).join('')+
-      repos.map(x=>'<h3 class="kp-sh">Google Drive'+lab(x)+'</h3>'+driveBody(x)).join('');
-  }
-  return h+'</div></section>';
+/* ---------- grupa projekt: zakładka Połączenia (zastępuje sekcję „Kod i pliki”) ----------
+   Jedna karta na usługę: GitHub (stan kopii, wyślij, zatwierdź/odłóż zmiany: ghBody), Google Drive (konto projektu, wybór
+   folderu: driveBody) i Meta Business (strona Facebook i konto Instagram z Kanałów publikacji, D.publish). Na wierzchu
+   jeden wiersz stanu (przy częściach: wiersz na część), „Szczegóły” rozwija działania; stan w PF.more['pj-con-<klucz>'].
+   Karta Meta tylko w projektach, które mają albo mogą mieć kanały (pjxMetaHas). */
+const pjxRepos=p=>{const t=topP(p),own=p.isOwn?P(p.id):p;return {t:t,L:p===t&&t.partsL.length?[t].concat(t.partsL):[own]}};
+function pjxCard(k,title,lead,det){
+  const op=!!PF.more['pj-con-'+k],id='pcon-'+k;
+  return '<section class="panel pj-code pjx-card" id="'+id+'" tabindex="-1" aria-labelledby="'+id+'-h"><div class="kp-h"><h2 id="'+id+'-h">'+title+'</h2>'+
+    '<button type="button" class="btn sec sm" data-pjcon="'+k+'" data-k="pjcon:'+k+'" aria-expanded="'+op+'" aria-controls="'+id+'-det">'+(op?'Zwiń':'Szczegóły')+'</button></div>'+
+    '<div class="pjx-lead">'+lead+'</div><div class="kp-det" id="'+id+'-det"'+(op?'':' hidden')+'>'+(op?det():'')+'</div></section>';
 }
+/* przy częściach: wiersz na część z jej etykietą; jedna część: sam stan */
+const pjxRows=(R,line)=>R.L.length>1?'<dl class="kp">'+R.L.map(x=>'<dt>'+esc(x.partLabel||R.t.partLabel)+'</dt><dd>'+line(x)+'</dd>').join('')+'</dl>':'<p>'+line(R.L[0])+'</p>';
+function pjxGh(p){
+  const R=pjxRepos(p),reg=LIVE&&D.projectsSource==='registry';
+  return pjxCard('gh','GitHub',pjxRows(R,ghLine),()=>R.L.map(x=>{if(reg&&GHS[x.id]===undefined)ghLoad(x.id,false);
+    return (R.L.length>1?'<h3 class="kp-sh">'+esc(x.partLabel||R.t.partLabel)+'</h3>':'')+(reg?ghBody(x):'<p class="note">Stan kopii i wysyłanie na GitHub działają w panelu na serwerze, przy projektach z rejestru.</p>')}).join(''));
+}
+function pjxDrive(p){
+  const R=pjxRepos(p);
+  return pjxCard('dr','Google Drive',pjxRows(R,driveLine),()=>R.L.map(x=>(R.L.length>1?'<h3 class="kp-sh">'+esc(x.partLabel||R.t.partLabel)+'</h3>':'')+driveBody(x)).join(''));
+}
+/* Meta: strony Facebook przypisane do projektu (albo jego części) w Kanałach publikacji, z kontem Instagram strony */
+const pjxPages=p=>{const P0=D.publish;return P0&&P0.fb?P0.fb.pages.filter(g=>g.project&&inP(p,g.project)):[]};
+const pjxMembers=p=>p.mem?[...p.mem].map(P).filter(Boolean):[p];
+/* projekt ma albo może mieć kanały: strona przypisana w Kanałach publikacji, profil w karcie (facebook:, instagram:),
+   kampania albo publikacja w zadaniach */
+const pjxMetaHas=p=>pjxPages(p).length>0||pjxMembers(p).some(x=>x.facebook||x.instagram)||
+  D.campaigns.some(c=>inP(p,c.project))||D.tasks.some(t=>t.kind==='publikacja'&&inP(p,t.project));
+const pjxIg=g=>g.instagram?'Instagram '+(g.instagram==='tak'?'połączony':'@'+esc(g.instagram)):'<span class="muted">Instagram niepołączony</span>';
+function pjxMeta(p){
+  const G=pjxPages(p),P0=D.publish,fb=!!(P0&&P0.fb&&P0.fb.connected);
+  const go='<button type="button" class="btn sm" data-nwchan="1" data-k="pjx:meta-go">Połącz</button>';
+  const lead=G.length?'<ul class="pjx-pg">'+G.map(g=>'<li><span class="lz green">połączone</span> <b>'+esc(g.name)+'</b> <span class="muted">Facebook</span> · '+pjxIg(g)+'</li>').join('')+'</ul>':
+    '<div class="row pjx-off"><span class="lz yellow">Niepołączone</span>'+go+'</div>';
+  return pjxCard('meta','Meta Business <small>Facebook i Instagram</small>',lead,()=>{
+    const free=fb?P0.fb.pages.filter(g=>!G.includes(g)):[],card=pjxMembers(p).filter(x=>x.facebook||x.instagram);
+    let h='<p class="note">Panel publikuje sam posty, które zaplanujesz w poście (Facebook, Reels, Instagram). Połączenie jest wspólne dla panelu: Marketing → Kanały publikacji.</p>';
+    if(!G.length&&free.length)h+='<label class="fl">Strona Facebook tego projektu<select class="fi" data-pjxfb="'+esc(p.id)+'" data-k="pjx:fb"><option value="">Wybierz stronę</option>'+
+      free.map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name+(g.project?' · teraz: '+projName(g.project):''))+'</option>').join('')+'</select></label>';
+    if(card.length)h+='<p>W karcie projektu: '+card.map(x=>[x.facebook?'Facebook „'+esc(x.facebook)+'”':'',x.instagram?'Instagram @'+esc(x.instagram):''].filter(Boolean).join(', ')).join('; ')+
+      ' <span class="muted">(do „Udostępnij na …”)</span></p>';
+    return h+'<div class="row"><button type="button" class="btn sec sm" data-nwchan="1" data-k="pjx:meta-pub">'+(fb?'Kanały publikacji':'Połącz Facebook i Instagram')+'</button></div>';
+  });
+}
+function pjxConView(p){
+  /* wyniki reklam i statystyk (wyConnCard: konto reklamowe Meta, LinkedIn, Google Ads) pod kartami połączeń */
+  return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
+    (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
+}
+/* przypisanie strony Facebook do projektu z karty Meta (ten sam zapis co w Kanałach publikacji) */
+function pjxFb(el){
+  if(!el.value)return;if(!LIVE){say(PRV);return}
+  enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.value,project:el.dataset.pjxfb});say(x.ok?'Zapisano stronę projektu.':failMsg(x,'Nie zapisano.'))});
+}
+/* stare odnośniki do „Kod i pliki” (data-pjgo="pcode", np. w Serwerze i na Stronie): zakładka Połączenia, karta GitHub rozwinięta */
+const pjxConHref=h=>{const m=/^(#p-[^?]*?)(?:-(?:plan|tablica|wskazniki|etapy|ksiega|marketing|strona|polaczenia))?(\?.*)?$/.exec(h||'');return m?m[1]+'-polaczenia'+(m[2]||''):h};
 /* ---------- Rozmowa w projekcie: przycisk „Rozmowa” w prawym dolnym rogu i okno czatu (#pjdock, poza #view) ----------
    Jedno z dwóch miejsc rozmowy z agentem (drugie: Asystent). Widać ją na stronie projektu, w szczegółach zadania
    (szuflada) i w odbiorze pracy; dotyczy projektu (przy projekcie z częściami całości albo wybranej części) albo projektu
@@ -5812,11 +5823,10 @@ const WWV={};
 function wwSt(pid){return WWV[pid]||(WWV[pid]={d:null,err:'',view:innerWidth<760?'telefon':'komputer',pick:false,sel:null,page:'/',tm:null})}
 function wwView(p){
   if(!LIVE)return '<p class="empty">Podgląd strony działa w panelu na serwerze.</p>';
-  const L=wwSites(p),c=wwCur(p);if(!c)return '<p class="empty">Projekt nie ma strony.</p>';
-  /* „Całość”: podgląd strony części; przy kilku częściach ze stroną wybór części */
-  const pick=L.length>1?'<div class="ww-pick" role="group" aria-label="Strona której części"><span>Strona części:</span>'+L.map(x=>'<button type="button" class="seg" data-wwpart="'+esc(x.id)+'" data-wwtop="'+esc(p.id)+'" data-k="wwp:'+esc(x.id)+'" aria-pressed="'+(x===c)+'">'+esc(x.partLabel||x.name)+'</button>').join('')+'</div>':
-    c!==p&&c.partLabel?'<p class="note">Strona części <a href="'+wwHref(c)+'">'+esc(c.partLabel)+'</a>.</p>':'';
-  return pick+'<div class="ww-root" data-ww="'+esc(c.id)+'"></div>';
+  const c=wwCur(p);if(!c)return '<p class="empty">Projekt nie ma strony.</p>';
+  /* „Całość”: podgląd strony części; inną część ze stroną wybiera przełącznik części w nagłówku projektu
+     (grupa strona 25.11: bez wiersza „Strona części …” nad podglądem) */
+  return '<div class="ww-root" data-ww="'+esc(c.id)+'"></div>';
 }
 /* zadanie właściciela o ocenie strony: tytuł z „zakładce Strona” (albo „podgląd strony”) albo materiał: w folderze
    strony projektu; zwraca widok ze stroną (własny projekt zadania, a bez strony jedyną stronę projektu głównego) */
@@ -5852,25 +5862,30 @@ function wwLinks(h,text,p){
   const u=wwHrefFor(text,p);if(!u)return h;
   return h.split(/(<a\b[^>]*>[\s\S]*?<\/a>)/).map((x,i)=>i%2?x:x.replace(new RegExp(WWT.source,'gi'),m=>'<a href="'+esc(u)+'" data-k="wwlink">'+m+'</a>')).join('');
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwpart]');if(!b)return;ev.preventDefault();
-  WWC[b.dataset.wwtop]=b.dataset.wwpart;render(true)});
 const wwAgo=iso=>{const d=tOf(iso);if(!d)return '';const m=Math.round((Date.now()-d.getTime())/60000);return m<1?'przed chwilą':m<60?m+' min temu':m<1440?Math.round(m/60)+' h temu':whenT(iso)};
 function wwRoot(pid){return document.querySelector('.ww-root[data-ww="'+CSS.escape(pid)+'"]')}
 function wwMount(p){
   const root=wwRoot(p.id);if(!root)return;
+  /* grupa strona 25.11: pasek tylko Telefon, Komputer, Wskaż, Zbuduj podgląd (stan budowania jako plakietka przy
+     przycisku); przy pracującym agencie przełącznik „Wersja w budowie / Ostatnia zbudowana”; jedna karta Uwagi */
   if(!root._m){root._m=1;
-    root.innerHTML='<div class="ww-bar"><p class="ww-stat" data-wwstat role="status"></p><div class="ww-acts">'+
+    root.innerHTML='<div class="ww-bar">'+
+      '<span class="ww-seg ww-src" role="group" aria-label="Która wersja strony" data-wwsrc hidden><button type="button" class="seg" data-wwlv="live" data-k="wwlv-l" title="Z katalogu roboczego pracującego agenta">Wersja w budowie</button><button type="button" class="seg" data-wwlv="built" data-k="wwlv-b">Ostatnia zbudowana</button></span>'+
+      '<div class="ww-acts">'+
       '<span class="ww-seg" role="group" aria-label="Szerokość podglądu"><button type="button" class="seg" data-wwview="telefon" data-k="wwv-t" title="390 px">Telefon</button><button type="button" class="seg" data-wwview="komputer" data-k="wwv-k" title="1440 px">Komputer</button></span>'+
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
-      '<button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild">Zbuduj podgląd</button></div></div>'+
+      '<span class="ww-bw"><button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild" title="Podgląd buduje się sam po pracy agenta i po scaleniu zmian">Zbuduj podgląd</button><span class="ww-bst" data-wwbst></span></span></div></div>'+
+      '<div class="ww-berr" data-wwberr hidden></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
-      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div><section class="panel"><h2>Uwaga do strony</h2><div class="pad"><div data-wwsel></div>'+
-      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div></section>'+
-      '<section class="panel"><h2>Uwagi <small data-wwn></small></h2><ol class="ww-notes" data-wwnotes></ol></section>'+
-      '<details class="panel ww-con" data-wwcondet><summary>Nowa wersja według koncepcji</summary><form class="pad" data-wwcon="'+esc(p.id)+'">'+
+      '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div>'+
+      '<section class="panel ww-uw"><h2>Uwagi <small data-wwn></small></h2><div class="pad ww-uwp"><div data-wwsel></div>'+
+      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div>'+
+      '<ol class="ww-notes" data-wwnotes></ol>'+
+      '<details class="ww-more" data-wwcondet><summary data-k="wwmore">Więcej</summary><div class="pad ww-morep"><p class="ww-open" data-wwopen hidden></p>'+
+      '<form class="ww-con" data-wwcon="'+esc(p.id)+'"><h3>Nowa wersja według koncepcji</h3>'+
       '<label class="note" for="ww-cp">Plik albo folder koncepcji w repozytorium</label><input class="fi" id="ww-cp" name="path" list="ww-docs" autocomplete="off" placeholder="np. docs/koncepcja.md" data-k="wwcp"><datalist id="ww-docs"></datalist>'+
       '<textarea class="fi" rows="2" maxlength="1000" name="text" data-k="wwct" placeholder="Uwagi (opcjonalnie)" aria-label="Uwagi do koncepcji"></textarea>'+
-      '<div class="row"><button class="btn" type="submit">Zleć wykonanie według koncepcji</button></div></form></details></aside></div>';
+      '<div class="row"><button class="btn" type="submit">Zleć wykonanie według koncepcji</button></div></form></div></details></section></aside></div>';
     const fr=root.querySelector('[data-wwframe]');
     if(window.ResizeObserver){const ro=new ResizeObserver(()=>wwFit(p.id));ro.observe(fr)}
     wwLoad(p.id);
@@ -5892,13 +5907,18 @@ async function wwLoad(pid){
       if(was&&(was.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka')&&!(j.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'))load()}
     else s.err=String(j.error||'Podgląd jest niedostępny.')}catch(e){s.err='Brak połączenia z serwerem.'}
   const q=CUR,qc=q&&q.v==='projekt'&&q.p&&q.tab==='strona'&&wwCur(q.p);if(!(qc&&qc.id===pid))return;
+  /* podgląd nigdy nie budowany: pierwsze budowanie samo przy otwarciu zakładki (potem buduje serwer: po pracy agenta
+     strony, po scaleniu gałęzi i gdy pliki strony w repozytorium są nowsze niż ostatni podgląd) */
+  if(s.d&&!s.d.url&&!(s.d.build||{}).state&&!s.auto&&LIVE){s.auto=1;wwBuild(pid)}
   wwPaint(pid);
   const live=s.d&&(s.d.build.state==='building'||!!s.d.live||(s.d.notes||[]).some(n=>n.state==='pracuje'||n.state==='czeka'));
   s.tm=setTimeout(()=>wwLoad(pid),live?4000:30000);
 }
-/* budowa strony na żywo: agent strony pracuje (d.live): kroki, ostatnie czynności, zrzuty z jego .zrzuty/,
-   „Pokaż wersję w budowie” (podgląd z jego katalogu roboczego, odświeżany po każdym budowaniu) i wiadomość do agenta */
-const wwLiveOn=s=>!!(s.liveView&&s.d&&s.d.live&&s.d.live.url);
+/* budowa strony na żywo: agent strony pracuje (d.live): wersja w budowie (z jego katalogu roboczego, odświeżana po
+   każdym budowaniu) jest domyślnym podglądem; s.src = 'built' przełącza na ostatnią zbudowaną. Obok: kroki, ostatnie
+   czynności (także w przeglądarce MCP), zrzuty z jego .zrzuty/ i wiadomość do agenta */
+const wwRun=s=>!!(s.d&&s.d.live&&s.d.live.state==='running');
+const wwLiveOn=s=>wwRun(s)&&!!s.d.live.url&&s.src!=='built';
 function wwLiveHtml(pid,s){
   const L=s.d.live;
   if(L.state==='queued')return '<h2>Agent strony czeka w kolejce</h2><div class="pad"><p class="note">'+esc(L.title)+'</p></div>';
@@ -5907,24 +5927,25 @@ function wwLiveHtml(pid,s){
   return '<h2>Agent pracuje nad stroną <small>'+esc(wwAgo(L.startedAt))+'</small></h2><div class="pad ww-lv">'+
     '<p><b>'+esc(L.title)+'</b></p>'+(L.activity?'<p class="note">Teraz: '+esc(L.activity)+'</p>':'')+
     (plan.length?'<p class="note">Kroki: '+done+' z '+plan.length+'</p>':'')+
-    (st.length?'<ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
-    (rc.length?'<details><summary class="note">Ostatnie czynności</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
-    ((L.shots||[]).length?'<div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
-    '<div class="row">'+(L.url?'<button type="button" class="btn sm" data-wwlv data-k="wwlv" aria-pressed="'+wwLiveOn(s)+'">'+(wwLiveOn(s)?'Pokaż ostatni podgląd':'Pokaż wersję w budowie')+'</button>':
-      '<span class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</span>')+
-    '<button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
-    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div>'+
-    (L.browser?'<p class="note">Agent ogląda stronę w przeglądarce (tylko swój podgląd).</p>':'')+'</div>';
+    (L.url?'':'<p class="note">Wersja w budowie pojawi się po pierwszym budowaniu agenta.</p>')+
+    (st.length?'<h3 class="ww-h3">Ostatnie czynności</h3><ol class="ww-steps">'+st.map(x=>'<li><span class="num">'+esc(String(x.t||'').slice(0,5))+'</span> '+esc(x.text)+'</li>').join('')+'</ol>':'')+
+    (rc.length?'<details><summary class="note">Szczegóły</summary><ul class="ww-rc">'+rc.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>':'')+
+    ((L.shots||[]).length?'<h3 class="ww-h3">Zrzuty agenta</h3><div class="ww-shots">'+lvShots(L,L.runId)+'</div>':'')+
+    (L.browser?'<p class="note">Agent sprawdza stronę w przeglądarce: jego kroki i zrzuty są powyżej.</p>':'')+
+    '<div class="row"><button type="button" class="btn sec sm" data-wwnote data-k="wwmsg" aria-controls="pchat">Wiadomość do agenta</button>'+
+    '<button type="button" class="linkbtn" data-run="'+esc(L.runId)+'">Cały przebieg</button></div></div>';
 }
-function wwBuildHtml(s){
-  const d=s.d;if(!d)return s.err?'<span class="ww-err">'+esc(s.err)+'</span>':'Wczytuję…';
-  if(wwLiveOn(s))return '<span class="lz blue">Wersja w budowie</span><span>z katalogu agenta, zbudowana '+esc(wwAgo(d.live.builtAt))+'</span>';
-  const b=d.build||{},open=d.url?' <a href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">Otwórz w nowej karcie</a>':'';
-  if(b.state==='building')return '<span class="lz blue">Buduję…</span><span>'+(d.url?'Pokazuję poprzednią wersję.':'')+'</span>';
-  if(b.state==='error')return '<span class="lz red">Błąd budowania</span><span>'+esc(b.error||'')+'</span>'+open+
+/* plakietka przy „Zbuduj podgląd”: tylko „buduję…” i „błąd” (błąd rozwija opis i dziennik pod paskiem) */
+function wwBadge(s){
+  const d=s.d;if(!d)return s.err?'<span class="lz red" title="'+esc(s.err)+'">brak połączenia</span>':'';
+  const b=d.build||{};
+  if(b.state==='building')return '<span class="lz blue" role="status" title="'+(d.url?'Do końca budowania widać poprzednią wersję':'')+'">buduję…</span>';
+  if(b.state==='error')return '<button type="button" class="lz red ww-bstb" data-wwerr data-k="wwerr" aria-expanded="'+!!s.errOpen+'" title="'+esc(b.error||'Błąd budowania')+'">błąd</button>';
+  return '';
+}
+function wwErrHtml(b){
+  return '<p><b>Podgląd się nie zbudował.</b> '+esc(b.error||'')+'</p>'+
     ((b.log||[]).length?'<details><summary>Dziennik budowania</summary><pre class="ww-log">'+esc(b.log.join('\n'))+'</pre></details>':'');
-  if(b.state==='ok')return '<span>Zbudowano '+esc(wwAgo(b.at))+'</span>'+open;
-  return '<span>Podgląd nie był jeszcze budowany.</span>';
 }
 function wwNoteHtml(n){
   const st=WWS[n.state]||WWS.czeka,what=n.kind==='koncepcja'?'Według koncepcji: '+(n.path||''):'';
@@ -5937,29 +5958,38 @@ function wwNoteHtml(n){
     (n.result?'<details><summary class="note">Odpowiedź agenta</summary><p class="note">'+esc(n.result)+'</p></details>':'')+'</li>';
 }
 function wwPaint(pid){
-  const root=wwRoot(pid);if(!root||!root._m)return;const s=wwSt(pid),d=s.d,q=x=>root.querySelector(x);
-  setHtml(q('[data-wwstat]'),wwBuildHtml(s));
-  root.querySelectorAll('[data-wwview]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.wwview===s.view)));
+  const root=wwRoot(pid);if(!root||!root._m)return;const s=wwSt(pid),d=s.d,q=x=>root.querySelector(x),b=d&&d.build||{};
+  root.querySelectorAll('[data-wwview]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.wwview===s.view)));
   const pk=q('[data-wwpick]');pk.setAttribute('aria-pressed',String(s.pick));pk.textContent=s.pick?'Wskazywanie: kliknij element':'Wskaż';
-  const bb=q('[data-wwbuild]');if(d&&d.build.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
+  const bb=q('[data-wwbuild]');if(b.state==='building')bb.setAttribute('aria-disabled','true');else bb.removeAttribute('aria-disabled');
+  setHtml(q('[data-wwbst]'),wwBadge(s));
+  if(b.state!=='error')s.errOpen=false;
+  const be=q('[data-wwberr]');be.hidden=!s.errOpen;if(s.errOpen)setHtml(be,wwErrHtml(b));
+  if(!wwRun(s))s.src='';                                   /* agent skończył: następnym razem znów domyślnie wersja w budowie */
+  const sw=q('[data-wwsrc]'),on=wwLiveOn(s);sw.hidden=!wwRun(s);
+  if(wwRun(s)){sw.querySelectorAll('[data-wwlv]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.wwlv==='live'?on:!on)));
+    const lb=sw.querySelector('[data-wwlv="live"]');if(d.live.url){lb.removeAttribute('aria-disabled');lb.title='Z katalogu roboczego pracującego agenta, zbudowana '+wwAgo(d.live.builtAt)}
+    else{lb.setAttribute('aria-disabled','true');lb.title='Pojawi się po pierwszym budowaniu agenta'}}
   const fit=q('.ww-fit'),ifr=fit.querySelector('iframe'),em=q('[data-wwempty]');
-  if(s.liveView&&!wwLiveOn(s))s.liveView=false;           /* agent skończył: wracamy do zbudowanego podglądu */
   const lv=q('[data-wwlive]');lv.hidden=!(d&&d.live);if(d&&d.live)setHtml(lv,wwLiveHtml(pid,s));
   const rb=q('[data-wwrepo]');rb.hidden=!(d&&d.repo);if(d&&d.repo){const pp=P(pid);const n=d.repo.count|0,F=d.repo.files||[];
     setHtml(rb,'<div class="ww-repo" role="status"><p><b>'+(n?n+' '+pl(n,'plik czeka','pliki czekają','plików czeka'):'Pliki czekają')+' na zatwierdzenie.</b> Do tego czasu podgląd się nie odświeży.</p>'+
-      '<div class="row">'+(pp?'<a class="btn sec sm" href="'+esc(phref(pp))+'" data-pjgo="pcode" title="Zatwierdź jako zmiany agenta albo odłóż na bok">Kod i pliki</a>':'')+
+      '<div class="row">'+(pp?'<a class="btn sec sm" href="'+esc(phref(pp))+'" data-pjgo="pcode" title="Zatwierdź jako zmiany agenta albo odłóż na bok">Połączenia</a>':'')+
       (F.length?'<details><summary>Pliki</summary><ul>'+F.map(f=>'<li><code>'+esc(f)+'</code></li>').join('')+'</ul></details>':'')+'</div></div>')}
-  if(wwLiveOn(s)){const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
-  else if(d&&d.url){const src=d.url+'?v='+(d.build.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
-  else{fit.hidden=true;em.hidden=false;setHtml(em,d?(d.build.state==='building'?'<p>Buduję pierwszy podgląd…</p>':'<p>Podglądu jeszcze nie ma.</p><button type="button" class="btn" data-wwbuild data-k="wwbuild2">Zbuduj podgląd</button><p class="note">Bez strony: „Nowa wersja według koncepcji” obok.</p>'):'<p>Wczytuję…</p>')}
-  setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':
-    '<p class="note" title="Uwaga trafia do Rozmowy z podstroną i widokiem jako załącznikiem">Kliknij „Wskaż” i element w podglądzie albo od razu napisz uwagę.</p>');
+  let shown='';
+  if(on){shown=d.live.url;const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else if(d&&d.url){shown=d.url;const src=d.url+'?v='+(b.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else{fit.hidden=true;em.hidden=false;setHtml(em,!d?'<p>'+(s.err?esc(s.err):'Wczytuję…')+'</p>':b.state==='building'||!b.state?'<p>Buduję pierwszy podgląd…</p>':
+    '<p>Podglądu jeszcze nie ma.</p>'+(b.state==='error'?'<p class="ww-err">'+esc(b.error||'')+'</p>':'')+'<p class="note">Bez strony: „Nowa wersja według koncepcji” w karcie Uwagi, pod „Więcej”.</p>')}
+  const op=q('[data-wwopen]');op.hidden=!shown;setHtml(op,shown?'<a href="'+esc(shown)+'" target="_blank" rel="noopener noreferrer" data-k="wwopen">Otwórz podgląd w nowej karcie</a>':'');
+  setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':'');
   const L=d?d.notes||[]:[];
   const sb=q('[data-k="wwnote"]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
-  setHtml(q('[data-wwnotes]'),L.length?L.map(wwNoteHtml).join(''):dsEmpty('Nie ma jeszcze uwag.',true));
+  const nl=q('[data-wwnotes]');nl.hidden=!L.length&&!d;
+  setHtml(nl,L.length?L.map(wwNoteHtml).join(''):'<li class="ww-hint note" title="Uwaga trafia do Rozmowy projektu z podstroną i widokiem jako załącznikiem">Kliknij „Wskaż” i element w podglądzie albo od razu napisz uwagę.</li>');
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
-  const cd=q('[data-wwcondet]');if(d&&!cd._set){cd._set=1;if(!d.url&&!L.length)cd.open=true}
+  const cd=q('[data-wwcondet]');if(d&&!cd._set){cd._set=1;if(!d.url&&!L.length&&b.state==='error')cd.open=true}
   wwFit(pid);
 }
 function wwPost(pid,msg){const root=wwRoot(pid),ifr=root&&root.querySelector('.ww-fit iframe');if(ifr&&ifr.contentWindow)ifr.contentWindow.postMessage(msg,'*')}
@@ -5978,9 +6008,10 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
-document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv]');if(!b)return;
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv],[data-wwerr]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
-  if(b.dataset.wwlv!=null){s.liveView=!s.liveView;wwPaint(pid);focusK('wwlv');return}
+  if(b.dataset.wwlv){if(b.getAttribute('aria-disabled')==='true')return;s.src=b.dataset.wwlv;wwPaint(pid);return}
+  if(b.dataset.wwerr!=null){s.errOpen=!s.errOpen;wwPaint(pid);focusK('wwerr');return}
   if(b.dataset.wwnote!=null){if(!LIVE){say(PRV);return}pjdAttach(pid,s);return}
   if(b.dataset.wwview){s.view=b.dataset.wwview;wwPaint(pid);return}
   if(b.dataset.wwpick!=null){s.pick=!s.pick;wwPost(pid,{pw:'wskaz',on:s.pick});wwPaint(pid);return}
@@ -6048,11 +6079,11 @@ function bookView(p){
   const meta=cm?'<div class="kv2"><label>Wymagania <select class="fi" data-meta="threshold" data-pid="'+esc(p.id)+'"><option value="lekka"'+(p.threshold==='lekka'?' selected':'')+'>podstawowe</option><option value="pelna"'+(p.threshold==='pelna'?' selected':'')+'>pełne</option></select></label>'+
     '<label>Rodzaj <select class="fi" data-meta="client" data-pid="'+esc(p.id)+'"><option value="tak"'+(p.client?' selected':'')+'>dla klienta</option><option value="nie"'+(p.client?'':' selected')+'>własny</option></select></label></div>':
     '<p class="kv2">Wymagania: <b>'+thr+'</b> · Rodzaj: <b>'+kind+'</b></p>';
-  /* pytania (też w Planie → Decyzje): nad Księgą; rozwinięte, gdy pytanie bez odpowiedzi ma termin */
+  /* pytania (też w Zadaniach → Decyzje): nad Księgą; rozwinięte, gdy pytanie bez odpowiedzi ma termin */
   const BKN={Karta:'Opis projektu',README:'README: opis dla programistów',Architektura:'Architektura: budowa systemu'};
   const tg=p.book.some(x=>x.key==='zadania'&&x.status==='gaps'),lab=x=>BKN[x.label]||x.label,qd=qa.some(x=>!x.answer&&x.date);
   const act=full?'<p class="note">Księga kompletna.</p>':'<div class="pj-bk"><span class="note">'+(pre?'Uzupełnij księgę przed rozpoczęciem budowy.':'Braki uzupełni Claude, gdy o to poprosisz.')+'</span>'+
-    '<a class="btn sec sm" href="'+phref(p,'plan')+'" data-pjgo="pchat" title="Otwiera rozmowę o projekcie">Poproś Claude o uzupełnienie</a>'+(tg?'<a class="pj-lk" href="'+phref(p,'tablica')+'">Zadania projektu →</a>':'')+'</div>';
+    '<a class="btn sec sm" href="'+phref(p,'ksiega')+'" data-pjgo="pchat" title="Otwiera rozmowę o projekcie">Poproś Claude o uzupełnienie</a>'+(tg?'<a class="pj-lk" href="'+phref(p,'tablica')+'">Zadania projektu →</a>':'')+'</div>';
   return (qa.length?pjFold('pj-q','pkq','Pytania',nq?nq+' bez odpowiedzi':'wszystkie z odpowiedzią','<ul class="qa">'+qa.map(x=>qRow(p,x,false)).join('')+'</ul>',qd):'')+'<section class="panel"><h2>Księga <small class="num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+' bez braków</small></h2>'+meta+
     (p.book.length?'<ul class="check">'+p.book.map(x=>'<li>'+CI[x.status]+'<div><div title="'+esc(x.file)+'">'+esc(lab(x))+(x.status==='ok'?'<span class="sr-only">: jest</span>':'')+'</div>'+(x.gaps.length&&x.status==='gaps'?'<ul>'+x.gaps.map(gapLi).join('')+'</ul>':'')+'</div><div>'+(x.status==='ok'?'':BOOKLZ[x.status])+'</div></li>').join('')+'</ul>':'<p class="empty">Brak danych o dokumentach.</p>')+
     act+'</section>';
@@ -6061,7 +6092,7 @@ function bookView(p){
    z tym samym stanem i akcją co karta w widoku Marketing (mkState, mkAct); wiersz otwiera edytor posta */
 function mktView(p){
   const cs=D.campaigns.filter(c=>inP(p,c.project));
-  if(!cs.length)return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (zakładka Plan).</div>';
+  if(!cs.length)return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (przycisk Rozmowa).</div>';
   const row=t=>{
     const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
     if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
@@ -6222,16 +6253,16 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* etap 5: karta połączeń projektu (Meta, LinkedIn, Google Ads). Wpięta jako część „Połączenia” zakładki Marketing;
    wyConnCard(p) da się wstawić w inną zakładkę bez zmian. Klucz projektu Google Ads widać tylko raz, w skrypcie. */
 const WYC={script:{},li:{}};
-function wyConnGo(pid){const p=P(pid);WY.sub[pid]='polaczenia';if(p)location.hash=phref(p,'marketing');render(true)}
-function wyConnCard(p){
+function wyConnGo(pid){const p=P(pid);if(p)location.hash=pjxConHref(phref(p,'marketing'));render(true)}
+function wyConnCard(p,inCon){
   const pid=p.id,W=D.wyniki||{},M=W.meta||{accounts:[]},C=(W.projects||{})[pid]||{},Pub=D.publish;
   const pages=Pub?Pub.fb.pages.filter(x=>x.project===pid):[],L=C.linkedin||{},G=C.google||{};
   const st=(ok,t)=>'<span class="lz '+(ok?'green':'grey')+'">'+esc(t)+'</span>';
-  let h='<p class="pj-tabd">Konta tego projektu. Panel tylko czyta wyniki: nie zmienia postów, reklam ani budżetów.</p>';
+  let h='<p class="pj-tabd">Panel tylko czyta wyniki: nie zmienia postów, reklam ani budżetów.</p>';
   /* Meta */
   const mLz=pages.length&&C.metaAct?st(true,'połączone'):pages.length||C.metaAct?'<span class="lz yellow">częściowo</span>':st(false,'brak połączenia');
-  h+='<section class="panel"><h2>Meta '+mLz+'</h2><div class="pad dform">'+
-    '<p>Strona Facebook: '+(pages.length?esc(pages.map(x=>x.name+(x.instagram?' · Instagram '+(x.instagram==='tak'?'':'@'+x.instagram):' · bez Instagrama')).join('; ')):'brak. <a href="#marketing" data-nwchan>Połącz w Kanałach publikacji</a>')+'</p>';
+  h+='<section class="panel"><h2>Meta – konto reklamowe '+mLz+'</h2><div class="pad dform">'+
+    (inCon?'':'<p>Strona Facebook: '+(pages.length?esc(pages.map(x=>x.name+(x.instagram?' · Instagram '+(x.instagram==='tak'?'':'@'+x.instagram):' · bez Instagrama')).join('; ')):'brak. <a href="#marketing" data-nwchan>Połącz w Kanałach publikacji</a>')+'</p>');
   if(M.connected)h+='<label class="fl"><span>Konto reklamowe</span><select class="fi" data-wyconnact="'+esc(pid)+'">'+opt([['','– brak']].concat(M.accounts.map(a=>[a.id,(a.name||a.id)+' ('+a.id+')'])),C.metaAct||'')+'</select></label>'+
     (C.metaAct?'<p class="note">'+(C.metaError?'<span class="wy-err">Błąd odczytu: '+esc(C.metaError)+'</span>':C.metaSync?'Ostatni odczyt '+esc(dd(C.metaSync.slice(0,10)))+' '+esc(C.metaSync.slice(11,16))+'.':'Pierwszy odczyt jutro od 6:00.')+'</p>':'');
   else h+='<p class="note">Konto reklamowe: brak tokenu Meta. Wklej token użytkownika systemowego w <a href="#marketing" data-nwchan>Kanałach publikacji</a> (Konto reklamowe Meta).</p>';
@@ -6287,14 +6318,14 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* ---------- Wyniki marketingu (wyniki.py, klienci.py): zakładka Marketing projektu z częściami Kampanie, Klienci, Wyniki.
    Dane klientów nie są w /api/data: GET /api/klienci?project=. Funkcje i klasy z prefiksem wy. ---------- */
 const WY={sub:{},kl:{},busy:{},f:{},imp:''};
-const WYSUB=[['kampanie','Kampanie'],['wyniki','Wyniki'],['klienci','Klienci'],['polaczenia','Połączenia']];
+const WYSUB=[['kampanie','Kampanie'],['wyniki','Wyniki'],['klienci','Klienci']];
 const wyZl=n=>{n=+n||0;return (Number.isInteger(n)?String(n):n.toFixed(2).replace('.',',')).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' zł'};
 function wyTab(p){
   const cur=WY.sub[p.id]||'kampanie';
   const nav='<div class="row wy-sub hscroll" role="group" aria-label="Część zakładki Marketing">'+WYSUB.map(([k,n])=>'<button type="button" class="seg" data-wysub="'+k+'" data-pid="'+esc(p.id)+'" aria-pressed="'+(cur===k)+'" data-k="wysub:'+k+'">'+n+'</button>').join('')+'</div>';
   if(cur==='klienci')return nav+wyKlienci(p);
   if(cur==='wyniki')return nav+wyWyniki(p);
-  if(cur==='polaczenia')return nav+wyConnCard(p);
+  if(cur==='polaczenia'){WY.sub[p.id]='kampanie';location.hash=pjxConHref(phref(p,'marketing'));return nav+mktView(p)}
   return nav+mktView(p);
 }
 async function wyLoad(pid,force){
@@ -6652,7 +6683,7 @@ function agBarHtml(){
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
   const swOn=a.canRunTasks&&Object.values(a.tools).some(t=>t.found);
   if(wait)h+='<p class="ag-wait">'+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Twoją decyzję w najbliższych 7 dniach. <a class="navlk inl" href="#asystent?k=sprawy">Sprawy dla Ciebie →</a></p>';
-  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <a class="navlk inl" href="#koszty?k=projekty">Dodaj projekt w Serwerze →</a></p>';
+  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <button type="button" class="navlk inl" data-srvs="padd" data-k="ag-padd">Dodaj projekt</button></p>';
   else if(no&&!a.tools.codex.found)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
   /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
@@ -6665,14 +6696,8 @@ function agBarHtml(){
   if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
   if(a.deployHold)h+='<p class="ahint">Wdrożenie panelu czeka, aż agenci skończą pracę (najwyżej 30 min). Nowe zadania czekają w kolejce.</p>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
+  /* limity 5 h i tygodniowe są w sekcji Użycie (agUseHtml) */
   const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
-  const windowLabel=k=>pct(u[k])+(u[k+'New']?' (nowe okno)':'')+
-    (u[k+'At']?(u[k]==null?' od ':' · odczyt ')+esc(hhmm(new Date(u[k+'At']))):'');
-  h+='<div class="ag-limit"><span>Claude · limit 5 h: <b>'+windowLabel('five')+'</b> · tygodniowy: '+windowLabel('seven')+
-    '</span><span>Codex · limit 5 h: <b>'+windowLabel('codexFive')+'</b>'+
-    (u.codexSevenAt||u.codexSeven!=null?' · tygodniowy: '+windowLabel('codexSeven'):'')+'</span>'+
-    (a.tools.claude.found||a.tools.codex.found?'<button class="btn sec sm" data-ag="limity"'+(ck?' disabled':'')+
-    '>Odczytaj limity</button>':'')+'</div>';
   if(u.five!=null)h+='<p class="ahint">Bezpiecznik Claude zatrzymuje uruchomienie po zużyciu '+pct(u.budget)+
     ' limitu 5 h. Automat pomija wykonawcę od '+pct(u.reserve)+' limitu.</p>';
   if(limitT())h+='<p class="ahint">'+limitHint()+'</p>';
@@ -6694,14 +6719,49 @@ function runShort(r){
   return nwStep(shortT(raw,90));
 }
 /* wiersz uruchomienia: tytuł pierwszy, stan i czas po prawej (telefon: pod tytułem); g = scalone kolejne o tym samym tytule i stanie */
-function usageBox(L){
-  const wk=Date.now()-7*864e5,top=L.filter(r=>runUse(r)!=null&&(+tOf(r.startedAt||r.queuedAt)||0)>=wk)
-    .sort((x,y)=>runUse(y)-runUse(x)).slice(0,5);
-  if(!top.length)return '';
-  return '<details class="ag-usetop" data-agdet="usage"'+(A.agDet&&A.agDet.usage?' open':'')+
-    '><summary>Najwięcej zużyły (7 dni)</summary><ul class="rows">'+top.map(r=>
-      '<li><button class="lk t" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button><span class="num">'+runUse(r)+
-      '% limitu 5 h</span></li>').join('')+'</ul></details>';
+/* grupa agenci: sekcja Użycie. Dla Claude i Codex: limit 5 h i tygodniowy (agents.usage), uruchomienia i tokeny
+   dziś i w 7 dni, średni czas, odsetek udanych, najdroższe zadania 7 dni (agents.stats z agent_progress.usage_stats) */
+function agStats(x){
+  x=x&&typeof x==='object'?x:{};const n=v=>Number.isFinite(+v)&&v!==null&&v!==''?+v:null;
+  const one=t=>{t=t&&typeof t==='object'?t:{};return {runsToday:n(t.runsToday)||0,runs7:n(t.runs7)||0,tokensToday:n(t.tokensToday)||0,
+    tokens7:n(t.tokens7)||0,costUsd7:n(t.costUsd7)||0,ok7:n(t.ok7)||0,finished7:n(t.finished7)||0,avgMs:n(t.avgMs),successRate:n(t.successRate),
+    top:(Array.isArray(t.top)?t.top:[]).filter(r=>r&&typeof r==='object').map(r=>({id:String(r.id||''),title:String(r.title||''),
+      projectName:String(r.projectName||''),tokens:n(r.tokens)||0,costUsd:n(r.costUsd)||0,limit:frac(r.limit),at:String(r.at||'')}))}};
+  return {claude:one(x.claude),codex:one(x.codex)};
+}
+function agUseCard(a,k){
+  const u=a.usage,S=a.stats[k],t=toolState(k),cx=k==='codex',pre=cx?'codex':'',key=w=>cx?pre+w.charAt(0).toUpperCase()+w.slice(1):w;
+  const win=w=>{const v=u[key(w)],at=u[key(w)+'At'];return (v==null?'brak odczytu':'<b>'+Math.round(v*100)+'%</b>')+(u[key(w)+'New']?' (nowe okno)':'')+
+    (at?' <span class="muted">· '+(v==null?'od ':'odczyt ')+esc(hhmm(new Date(at)))+'</span>':'')};
+  const row=(l,v,tip)=>'<div'+(tip?' title="'+esc(tip)+'"':'')+'><dt>'+l+'</dt><dd>'+v+'</dd></div>';
+  const sr=S.successRate==null?'brak zakończonych':'<b>'+Math.round(S.successRate*100)+'%</b> <span class="muted">('+S.ok7+' z '+S.finished7+')</span>';
+  let h='<article class="ag-use-card" aria-label="'+esc(TOOL[k])+'"><h3>'+esc(TOOL[k])+' <span class="muted">· '+esc(({ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'})[t.dot]||t.dot)+'</span></h3><dl class="ag-kv">'+
+    row('Limit 5 h',win('five'))+row('Limit tygodniowy',win('seven'))+
+    row('Uruchomienia','dziś <b>'+S.runsToday+'</b> · 7 dni <b>'+S.runs7+'</b>')+
+    row('Tokeny','dziś <b>'+fmtTok(S.tokensToday)+'</b> · 7 dni <b>'+fmtTok(S.tokens7)+'</b>'+(S.costUsd7?' <span class="muted">· '+fmtUsd(S.costUsd7)+'</span>':''),
+      S.costUsd7?'Koszt 7 dni według cen API; subskrypcja nie płaci za tokeny osobno.':'')+
+    row('Średni czas',S.avgMs==null?'brak danych':'<b>'+fmtDur(S.avgMs)+'</b>','Średnio dla zakończonych uruchomień z 7 dni.')+
+    row('Udane (7 dni)',sr,'Zakończone bez błędu i bez blokady zadania; zatrzymane ręcznie się nie liczą.')+'</dl>';
+  if(S.top.length){const dk='usetop:'+k;
+    h+='<details class="ag-usetop" data-agdet="'+dk+'"'+(A.agDet&&A.agDet[dk]?' open':'')+'><summary>Najdroższe zadania (7 dni)</summary><ul class="rows">'+S.top.map(r=>
+      '<li><span class="ag-ut"><button class="lk t" data-run="'+esc(r.id)+'">'+esc(r.title||'Uruchomienie')+'</button>'+
+      (r.projectName?'<span class="muted">'+esc(r.projectName)+(r.at?' · '+esc(whenT(r.at)):'')+'</span>':'')+'</span><span class="num">'+fmtTok(r.tokens)+' tok.'+
+      (r.limit!=null?' · '+Math.round(r.limit*100)+'% limitu 5 h':'')+(r.costUsd?' · '+fmtUsd(r.costUsd):'')+'</span></li>').join('')+'</ul></details>';
+  }
+  return h+'</article>';
+}
+function agUseHtml(a){
+  const ck=A.busy.check||runs().some(r=>r.kind==='check'&&isAct(r)),S=a.stats,n=S.claude.runs7+S.codex.runs7;
+  const how=!!(A.agDet&&A.agDet.usehow);
+  return '<section class="panel" id="ag-use" aria-labelledby="ag-use-h"><h2 id="ag-use-h">Użycie <small class="muted">'+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+' w 7 dni</small></h2><div class="ag-body">'+
+    '<div class="ag-use-grid">'+agUseCard(a,'claude')+agUseCard(a,'codex')+'</div>'+
+    '<div class="ag-use-act">'+(a.tools.claude.found||a.tools.codex.found?'<button class="btn sec sm" data-ag="limity"'+(ck?' disabled':'')+'>Odczytaj limity</button>':'')+
+    '<details class="ag-usehow" data-agdet="usehow"'+(how?' open':'')+'><summary>Jak pracują agenci</summary><ul>'+
+    '<li>Agent dostaje jedno zadanie z projektu i pracuje w osobnej kopii; panel sam zatwierdza i scala wynik.</li>'+
+    '<li>Na początku zapisuje plan z 3–7 kamieni milowych i odhacza je po kolei; w „Teraz” widać bieżący kamień.</li>'+
+    '<li>Szacunek czasu: przed pierwszym kamieniem z historii podobnych zleceń, potem z tempa ukończonych kamieni.</li>'+
+    '<li>Claude i Codex działają na subskrypcjach z limitem na 5 godzin i na tydzień. Panel wybiera wykonawcę według rodzaju zadania i wolnego limitu.</li>'+
+    '</ul></details></div></div></section>';
 }
 const historyState=r=>r.state==='done'?(r.outcome||'done'):r.state;
 function runOutcome(r){
@@ -6721,18 +6781,18 @@ function agentsNow(a){
     const steps=r.plan||[],done=steps.filter(s=>s.done).length;
     let i=steps.findIndex(s=>s.active&&!s.done);
     if(i<0)i=steps.findIndex(s=>!s.done);
-    const progress=steps.length?'<p>'+(i<0?'Kroki ukończone: '+done+' z '+steps.length:
-      'Krok '+(i+1)+' z '+steps.length+': '+esc(steps[i].text))+'</p>'+
-      '<progress aria-label="Ukończone kroki" max="'+steps.length+'" value="'+done+'"></progress>'+
-      '<p class="muted">Ukończone: '+done+' z '+steps.length+' · pozostało: '+(steps.length-done)+'</p>'+
+    /* grupa agenci: kamienie milowe (plan agenta z polecenia zadania) */
+    const progress=steps.length?'<p class="ag-ms">'+(i<0?'Kamienie ukończone: '+done+' z '+steps.length:
+      'Kamień '+(i+1)+' z '+steps.length+': <b>'+esc(steps[i].text)+'</b>')+'</p>'+
+      '<progress aria-label="Ukończone kamienie: '+done+' z '+steps.length+'" max="'+steps.length+'" value="'+done+'"></progress>'+
       '<details data-agdet="'+esc('plan:'+r.id)+'"'+(A.agDet&&A.agDet['plan:'+r.id]?' open':'')+
-      '><summary>Kroki</summary><ol>'+steps.map(s=>'<li>'+esc(s.text)+(s.done?' · zrobione':s.active?' · w toku':'')+'</li>').join('')+'</ol></details>':
+      '><summary>Kamienie ('+done+' z '+steps.length+')</summary><ol>'+steps.map(s=>'<li>'+esc(s.text)+(s.done?' · zrobione':s.active?' · w toku':'')+'</li>').join('')+'</ol></details>':
       '<p>'+(r.activity?'Ostatnia czynność: '+esc(r.activity):'Czeka na pierwsze zdarzenie')+'</p>';
-    const u=runUse(r),recent=r.recent||[];
+    const u=runUse(r),recent=r.recent||[],el=(r.estimate||{}).limit;
     return '<article class="ag-now-card"><h3>'+esc(r.title)+'</h3><p class="muted">'+
       [(TOOL[r.tool]||'Agent')+(r.choiceReason?' · '+r.choiceReason:''),(r.machine||a.machine)==='pc'?'PC':MACH[r.machine||a.machine]||'',r.projectName||'',r.observedStart?'od obserwacji '+fmtDur(runDur(r)):fmtDur(runDur(r))].filter(Boolean).map(esc).join(' · ')+
-      '</p>'+estimateHtml(r)+progress+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
-      '<p class="muted">Zużycie w tym uruchomieniu: '+(u==null?'brak odczytu':u+'% limitu 5 h')+'</p>'+
+      '</p>'+progress+estimateHtml(r)+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+      '<p class="muted">Zużycie w tym uruchomieniu: '+(u==null?'brak odczytu':u+'% limitu 5 h'+(el!=null?' (szacunek łącznie ok. '+estimatePercent(el)+')':''))+'</p>'+
       '<div class="row"><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="live:'+esc(r.id)+'">Przebieg na żywo</button>'+
       (!LIVE||r.kind==='development'?'':'<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop:'+esc(r.id)+'">Zatrzymaj</button>')+
       '</div></article>';
@@ -6791,11 +6851,10 @@ document.addEventListener('click',async ev=>{const b=ev.target.closest&&ev.targe
   render(true)});
 function vAgenci(){
   const a=D.agents;
-  let h='<div id="ag-view"><div class="pagehead"><div class="ph-main"><h1>Agenci</h1><p>Agenci (Claude, Codex) wykonują zadania z projektów. Tu widać, kto pracuje teraz, plan dnia i co zrobili.</p></div></div>';
+  let h='<div id="ag-view"><div class="pagehead"><div class="ph-main"><h1>Agenci</h1><p>Agenci (Claude, Codex) wykonują zadania z projektów. Tu widać, kto pracuje teraz, ile zużywają i co zrobili.</p></div></div>';
   if(!a)return h+'<section class="panel" id="abar">'+agBarHtml()+'</section></div>';
-  h+=agentsNow(a)+'<section class="panel" id="abar" aria-labelledby="abar-h"><h2 id="abar-h">Ustawienia</h2>'+agBarHtml()+'</section>'+cdxBox();
-  /* z dawnego Przeglądu: plan dnia, zaplanowane publikacje i ostatnie 24 h (praca w toku i kolejka są w Teraz wyżej) */
-  if(LIVE||a){const pb=planBox();if(pb)h+='<section class="panel ag-plan">'+pb+'</section>'}
+  h+=agentsNow(a)+'<section class="panel" id="abar" aria-labelledby="abar-h"><h2 id="abar-h">Ustawienia</h2>'+agBarHtml()+'</section>'+cdxBox()+agUseHtml(a);
+  /* z dawnego Przeglądu: zaplanowane publikacje i ostatnie 24 h (praca w toku i kolejka są w Teraz wyżej); plan dnia jest w Asystencie */
   try{
     const pp=nwPlanPanel(true);
     if(pp)h+='<section class="panel nw-panel" aria-label="Zaplanowane publikacje">'+pp+'</section>';
@@ -6806,14 +6865,17 @@ function vAgenci(){
   const isToday=r=>String(r.endedAt||r.startedAt||r.queuedAt||'').slice(0,10)===key(new Date());
   const isErr=r=>r.state==='error'||r.state==='timeout',er=L.filter(r=>isToday(r)&&isErr(r)).length;
   const fe=!!A.runErr&&er>0,F=fe?L.filter(isErr):L;
-  h+='<section class="panel" id="ag-runs"><h2>Uruchomienia</h2><div class="ag-body">'+
+  /* grupa agenci: Uruchomienia domyślnie zwinięte (stan w PF.more['ag-runs']), w nagłówku jedno zdanie podsumowania */
+  const nt=L.filter(r=>r.state!=='queued'&&isToday(r)).length,run=L.filter(r=>r.state==='running').length;
+  const sum=['dziś '+nt,run?'w toku '+run:'',er?'<span class="warn">'+er+' '+pl(er,'błąd','błędy','błędów')+'</span>':'',a.today.tokens?fmtTok(a.today.tokens)+' tokenów':''].filter(Boolean).join(' · ');
+  let b='<div class="ag-body">'+
     (a.today.tokens?'<p class="ahint">Dziś: '+fmtTok(a.today.tokens)+' tokenów · '+fmtUsd(a.today.costUsd)+' według cen API</p>':'')+
     (er?'<p class="ahint"><button class="chip ag-errf" data-agerr="1" data-k="agerr" aria-pressed="'+fe+'">Pokaż błędy ('+er+')</button></p>':'');
-  h+=runGroup('act','W toku',F.filter(r=>r.state==='running'))+
+  b+=runGroup('act','W toku',F.filter(r=>r.state==='running'))+
     runGroup('today','Dziś',F.filter(r=>!isAct(r)&&isToday(r)))+
     runGroup('old','Wcześniej',F.filter(r=>!isAct(r)&&!isToday(r)),true);
-  if(!L.some(r=>r.state!=='queued'))h+='<p class="muted">Brak uruchomień.</p>';
-  return h+usageBox(L)+'</div></section></div>';
+  if(!L.some(r=>r.state!=='queued'))b+='<p class="muted">Brak uruchomień.</p>';
+  return h+ppSec('ag-runs','ag-runs','Uruchomienia',L.filter(r=>r.state!=='queued').length,false,b+'</div>',sum)+'</div>';
 }
 /* serwer: stan z kontroli zdrowia i kopii; wylogowanie wszystkich urządzeń (nowy klucz sesji, sesje i tak wygasają po 30 dniach) */
 function srvPanel(o){
@@ -6974,15 +7036,15 @@ function ghBody(p){
   if(s.blocks.length)h+='<div class="note" id="gh-b-'+id+'">Usunięcie kopii blokuje:<ul>'+s.blocks.map(b=>'<li>'+esc(b)+'</li>').join('')+'</ul></div>';
   return h+msg+'</div>';
 }
-/* Serwer: krótki przegląd kopii projektów; stan i działania (Sprawdź, Wyślij, Usuń kopię) są w sekcji „Kod i pliki”
+/* Serwer: krótki przegląd kopii projektów; stan i działania (Sprawdź, Wyślij, Usuń kopię) są w zakładce Połączenia
    na stronie projektu */
 function ghPanel(){
   if(!LIVE||D.projectsSource!=='registry')return '';
   const L=D.allP.filter(p=>p.github||(p.git&&p.git.repo));
   if(!L.length)return '';
   return '<section class="panel" id="github"><h2>Projekty i GitHub <small>kopie na serwerze</small></h2><ul class="rows gh-ov">'+L.map(p=>
-    '<li><div><b>'+esc(p.name)+'</b><div class="s">'+ghLine(p)+'</div></div><div class="r"><a class="btn sec sm" href="'+esc(phref(p))+'" data-pjgo="pcode">Kod i pliki</a></div></li>').join('')+
-    '</ul><p class="note ds-pad">Wysyłanie na GitHub i usuwanie kopii: strona projektu, sekcja „Kod i pliki”.</p></section>';
+    '<li><div><b>'+esc(p.name)+'</b><div class="s">'+ghLine(p)+'</div></div><div class="r"><a class="btn sec sm" href="'+esc(phref(p))+'" data-pjgo="pcode">Połączenia</a></div></li>').join('')+
+    '</ul><p class="note ds-pad">Wysyłanie na GitHub i usuwanie kopii: strona projektu, zakładka Połączenia.</p></section>';
 }
 /* rozwój panelu na serwerze (ROZWOJ.md): zmiany na gałęzi rozwoj, panel testowy, przycisk „Wdróż” z potwierdzeniem */
 const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
@@ -7021,8 +7083,8 @@ function vKoszty(){
   /* podtytuł: czym jest strona; stan dopisany tylko, gdy wymaga uwagi (liczby są niżej, bez powtórzeń) */
   const k=D.costs,v=D.server?srvItems():null;
   let h='<div class="pagehead"><div class="ph-main"><h1>Serwer</h1><p>Stan serwera, na którym działają panel i agenci.'+(v&&v.lvl!=='ok'?' <b>'+({warn:'Do sprawdzenia.',bad:'Jest problem.'}[v.lvl])+'</b>':'')+'</p></div></div>';
-  /* kalendarz (połączenie i subskrypcja ICS) i rejestr projektów: dawniej w Terminach i w widoku Projekty */
-  h+=srvPanel()+resPanel()+ghPanel()+drvPanel()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>'+prjPanel();
+  /* kalendarz (połączenie i subskrypcja ICS); projekty dodaje „+” w menu, Księga i opis standardu są w widoku Informacje */
+  h+=srvPanel()+resPanel()+srvsDrv()+'<div id="srv-kalendarz" tabindex="-1">'+tmSet(calStatus(),true)+'</div>';
   const tail=devPanel()+srvPanel('ses');
   if(!k)return h+'<section class="panel"><p class="empty" role="status">Koszty liczy panel na serwerze w chmurze. Tu, poza serwerem, ich nie ma.</p></section>'+tail;
   if(k.configured&&!k.loading){
@@ -7140,7 +7202,6 @@ function runHtml(r){
 /* kotwica pozycji listy Braki (cel linków z komórek tabeli i kart): prx-b-<projekt>-<klucz> */
 const prxB=(pid,k)=>'prx-b-'+String(pid).replace(/[^\w-]/g,'_')+'-'+String(k).replace(/[^\w-]/g,'_');
 const PRX_CRIT={karta:1,zadania:1};
-const prxOpen=(k,def)=>A.prxDet&&k in A.prxDet?A.prxDet[k]:def;
 /* komórka macierzy: kropka stanu + zwykły tekst; z brakami link do pozycji listy Braki */
 function docCell(d,pid){
   if(!d)return '<span class="muted">–</span>';
@@ -7191,12 +7252,71 @@ function prxDelegate(pid){
   });
 }
 const prxFiles=(p,txt)=>'<span class="muted num">'+txt+'</span>';
-/* Serwer → Projekty (dawny widok Projekty): rejestr, dodanie i usunięcie projektu, Księga projektów, opis standardu */
-function prjPanel(){
-  const reg=D.projectsSource==='registry',canAdd=!LIVE||!!D.agents,docs=D.standard.filter(d=>d.key!=='kampania');
+/* ---------- grupa serwer: dodawanie projektu (okno z „+” w menu), widok Informacje ----------
+   Dawna sekcja Serwer → Projekty: formularz i rejestr (usuwanie) są w oknie „Dodaj projekt” (szuflada, DR.kind 'padd'),
+   Księga projektów (pliki wszystkich projektów, „Zleć agentowi uzupełnienie”) i opis standardu w widoku Informacje. */
+const srvsCanAdd=()=>!LIVE||!!D.agents;
+function srvsAddHtml(){
+  const reg=D.projectsSource==='registry',canAdd=srvsCanAdd(),F=A.padd||{},busy=!!A.busy.add;
   if(A.confirm&&!P(A.confirm))A.confirm='';
+  let h='<div class="dhead"><span class="muted">Projekty</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">Dodaj projekt</h2>';
+  if(!canAdd)return h+'<p class="empty">Serwer nie obsługuje dodawania projektów. Dodaj projekt w terminalu: <code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code></p>';
+  h+='<form class="padd srvs-padd-f" id="padd" aria-labelledby="dtitle">'+
+    '<label class="fl"><span>Folder projektu</span><input class="fi" id="ppath" placeholder="np. ~/Projekty/nazwa" autocomplete="off" spellcheck="false" value="'+esc(F.ppath||'')+'"'+(F.bad?' aria-invalid="true"':'')+'></label>'+
+    '<label class="fl"><span>Nazwa (opcjonalnie)</span><input class="fi" id="pname" autocomplete="off" value="'+esc(F.pname||'')+'"></label>'+
+    '<label class="prx-chk"><input type="checkbox" id="pfiles"'+(F.nofiles?'':' checked')+'> Załóż brakujące pliki (nic nie nadpisuje)</label>'+
+    '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj')+'</button></div></form>';
+  /* rejestr: folder i usuwanie z rejestru (pliki zostają); zwinięty, otwarty przy potwierdzaniu usunięcia */
+  if(!reg||!D.projects.length)return h;
+  const ro=!!A.confirm||!!(A.agDet&&A.agDet['srvs-reg']);
+  h+='<details class="ds-det srvs-reg" data-agdet="srvs-reg"'+(ro?' open':'')+'><summary>Projekty w panelu · '+D.projects.length+'</summary><ul class="rows srvs-regl">'+
+    D.projects.map(x=>{const id=esc(x.id),cf=A.confirm===x.id,full=String(x.folder||'');
+      let r='<li><div><a class="t" href="'+phref(x)+'">'+esc(x.name)+'</a>'+(LIVE&&full?'<div class="s"><code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'</div><div class="r'+(cf?' prx-cf':'')+'">';
+      if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu.">ze zbieracza</span>';
+      else r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
+        :'<button type="button" class="btn sec sm" data-ag="prm" data-id="'+id+'" data-k="pr:'+id+'" aria-label="'+esc('Usuń z rejestru: '+x.name)+'">Usuń z rejestru…</button>';
+      return r+'</div></li>'}).join('')+'</ul></details>';
+  return h;
+}
+function srvsAddOpen(){if(!D)return;A.confirm='';openDrawer('padd','');const i=$('#ppath');if(i)i.focus()}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-srvs]');if(!b)return;ev.preventDefault();const k=b.dataset.srvs;
+  if(k==='padd'){A.bnMore=false;renderSide(route());srvsAddOpen();return}
+  if(k==='drv-setup'){(A.agDet||(A.agDet={}))['srvs-drv']=true;PF.more['dra-client']=true;render(true);
+    const s=document.querySelector('#srv-drive .dra-client>summary');if(s){s.scrollIntoView({block:'center'});s.focus()}say('Najpierw ustaw klienta Google: Szczegóły → Logowanie jednym kliknięciem.');return}
+  if(k==='inf'){A.srvsInf=b.dataset.id;render(true);const n=$('#srvs-inf-p');if(n&&matchMedia('(max-width:820px)').matches){n.scrollIntoView({block:'start'})}if(n)n.focus({preventScroll:true});return}
+  if(k==='inf-retry'){delete SRVS_INF.files[b.dataset.id];SRVS_INF.list=null;render(true)}});
+
+/* Serwer → Google Drive: jeden wiersz stanu i „Połącz Google Drive”; konta, logowanie jednym kliknięciem i opis pod „Szczegóły” */
+function srvsDrv(){
+  if(!LIVE)return '';
+  const a=drA(''),L=a.accounts||[],n=L.filter(x=>x.connected).length,ld=a.loading&&!a.done;
+  const st=ld?'sprawdzam…':a.available===false?'brak narzędzia na serwerze':
+    (L.length?n+' '+pl(n,'konto połączone','konta połączone','kont połączonych'):'brak kont')+' · klient Google '+(a.ownClient?'ustawiony':'nieustawiony');
+  const top=ld||a.available===false||a.err?drAccBox('','top'):a.ownClient||a.login?drAccBox('','top'):
+    '<div class="row"><button type="button" class="btn sm" data-srvs="drv-setup" data-k="srvs-drv">Połącz Google Drive</button></div>';
+  const op=!!(A.agDet&&A.agDet['srvs-drv']);
+  return '<section class="panel srvs-drv" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>'+esc(st)+'</small></h2><div class="pad dv">'+top+
+    '<details class="ds-det srvs-det" data-agdet="srvs-drv"'+(op?' open':'')+'><summary>Szczegóły</summary>'+drAccBox('','list')+draClient()+
+    '<p class="note">Konta są tylko do odczytu. Folder dla projektu wybierasz na stronie projektu, w zakładce Połączenia.</p></details></div></section>';
+}
+
+/* ---------- widok Informacje: opis Księgi i standardu (z danych panelu) i pliki .md repozytorium (GET /api/informacje) ---------- */
+ICON.info='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.9v.1"/></svg>';
+const SRVS_INF={list:null,loading:false,err:'',files:{}};
+async function srvsInfLoad(id){
+  const one=!!id,o=one?(SRVS_INF.files[id]||(SRVS_INF.files[id]={})):SRVS_INF;if(o.loading)return;o.loading=true;o.err='';
+  try{const r=await fetch('/api/informacje'+(one?'?plik='+encodeURIComponent(id):''),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok!==false){if(one)o.text=String(j.text||'');else o.list=Array.isArray(j.files)?j.files:[]}
+    else o.err=String(j.error||'Nie odczytano pliku.')}catch(e){o.err='Brak połączenia z serwerem.'}
+  o.loading=false;if(!one&&!o.list&&!o.err)o.list=[];if(CUR&&CUR.v==='informacje')render(true);
+}
+/* Księga projektów: pliki standardu we wszystkich projektach (tabela, karty na telefonie, braki, „Zleć agentowi uzupełnienie”) */
+function srvsBook(){
+  const reg=D.projectsSource==='registry',canAdd=srvsCanAdd(),docs=D.standard.filter(d=>d.key!=='kampania');
   const nP=D.projects.length,okN=D.projects.filter(p=>p.docsOk===p.docsTotal).length;
-  /* braki pogrupowane po projekcie; liczba pozycji jak dawniej: dokument nie „ok” albo kampania z brakami */
+  if(!nP)return '<p class="empty">Pliki projektów pokażą się po dodaniu pierwszego projektu.</p>';
+  /* braki pogrupowane po projekcie; liczba pozycji: dokument nie „ok” albo kampania z brakami */
   const grp=[],gi={};
   const G=pid=>{if(!gi[pid]){gi[pid]={p:P(pid)||{id:pid,name:projName(pid)},crit:[],soft:[],camp:[],miss:[],n:0};grp.push(gi[pid])}return gi[pid]};
   D.projects.forEach(p=>{const g=G(p.id);
@@ -7207,74 +7327,56 @@ function prjPanel(){
   D.campaigns.forEach(c=>{if(!c.gaps.length)return;const g=G(c.project);g.n++;
     g.camp.push('<li id="'+prxB(c.project,'k-'+(c.id||c.name))+'"><b>Kampania „'+esc(c.name)+'”:</b>'+prxGaps(c.gaps)+'</li>')});
   const gN=grp.reduce((s,g)=>s+g.n,0);
-  /* nagłówek: opis, stan w pigułkach, skok do formularza */
-  /* nagłówek: liczby raz, jednym zdaniem; „Dodaj projekt” rozwija formularz pod listą */
-  let h='<div class="srv-sh" id="srv-projekty" tabindex="-1"><h2>Projekty</h2><p class="muted">Rejestr projektów i ich Księga: dokumenty, które każdy projekt powinien mieć.</p>'+
-    (canAdd?'<div class="prx-acts"><button type="button" class="btn" data-ag="padd-go" data-k="padd-go">Dodaj projekt</button></div>':'')+'</div>';
-  /* lista projektów */
-  /* kolejność: po terminie i zagrożone najpierw, wstrzymane, backlog i zakończone na końcu */
-  const PSO={late:0,risk:1,you:2,ok:3,none:4,paused:6,backlog:7,finished:8,done:8},PL=D.projects.map((p,i)=>[p,i]).sort((a,b)=>((PSO[a[0].pst]!=null?PSO[a[0].pst]:5)-(PSO[b[0].pst]!=null?PSO[b[0].pst]:5))||a[1]-b[1]).map(x=>x[0]);
-  h+='<section class="panel" aria-labelledby="prx-list-h"><h2 class="sr-only" id="prx-list-h">Lista projektów</h2>'+
-
-    (nP?'<ul class="rows plx">'+PL.map(x=>{const id=esc(x.id),cf=reg&&canAdd&&originOf(x)!=='collector'&&A.confirm===x.id;
-      const full=String(x.folder||''),last=full.replace(/\/+$/,'').split('/').pop()||full;
-      let r='<li class="prx-row"><div><a class="t" href="'+phref(x)+'" title="'+esc(x.name)+'"><span class="prx-nm">'+esc(x.name)+'</span></a><div class="s prx-s">'+av(x,'sm')+lz(x.pst)+'<span>Faza: '+esc(PHASES[PHI[x.phase]][1])+'</span>'+
-        '<span><a class="prx-files" href="'+phref(x,'ksiega')+'" aria-label="Księga: '+x.docsOk+' z '+x.docsTotal+' plików, otwiera Księgę">Księga '+x.docsOk+' z '+x.docsTotal+'</a></span>'+gitTag(x)+'</div>'+
-        '</div>';
-      /* cały wiersz prowadzi do strony projektu; folder i usuwanie w menu „⋯” (otwartym przy potwierdzaniu usunięcia) */
-      const mo=cf||prxOpen('m:'+x.id,false);
-      r+='<details class="prx-more" data-prxdet="'+esc('m:'+x.id)+'"'+(mo?' open':'')+'><summary aria-label="'+esc('Więcej o projekcie '+x.name)+'" title="Więcej o projekcie: folder i usuwanie z rejestru"><span aria-hidden="true">⋯</span></summary><div class="prx-menu">'+
-        (LIVE&&full?'<div class="pf"><span class="muted">Folder:</span> <code>'+esc(full).replace(/\//g,'/<wbr>')+'</code></div>':'')+'<div class="r'+(cf?' prx-cf':'')+'">';
-      if(originOf(x)==='collector')r+='<span class="lz out" title="Projekt dodany przez zbieracza. Aby go zdjąć, zmień decyzję w zbieraczu." aria-describedby="prx-col-'+id+'">ze zbieracza</span><span class="note prx-coln" id="prx-col-'+id+'">Aby zdjąć, zmień decyzję w zbieraczu.</span>';
-      else if(reg&&canAdd)r+=cf?'<span class="rsn" id="prx-q-'+id+'">Usunąć z rejestru? Pliki zostają.</span><button class="btn danger sm" data-ag="prm-yes" data-id="'+id+'" data-k="py:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Usuń projekt '+x.name+' z rejestru')+'">Usuń</button><button class="btn sec sm" data-ag="prm-no" data-id="'+id+'" data-k="pn:'+id+'" aria-describedby="prx-q-'+id+'" aria-label="'+esc('Anuluj usuwanie '+x.name)+'">Anuluj</button>'
-        :'<button type="button" class="linkbtn prx-rm" data-ag="prm" data-id="'+id+'" data-k="pr:'+id+'" aria-label="'+esc('Usuń z rejestru: '+x.name)+'">Usuń z rejestru…</button>';
-      return r+'</div></div></details></li>'}).join('')+'</ul>':'<p class="empty">'+(canAdd?'Nie masz jeszcze projektów. Wpisz ścieżkę folderu poniżej i kliknij Dodaj projekt.':'Brak projektów.')+'</p>');
-  const F=A.padd||{},busy=!!A.busy.add;
-  /* formularz zwinięty: otwiera go „Dodaj projekt” w nagłówku albo summary; otwarty, gdy nie ma projektów albo trwa wpisywanie */
-  const ao=!nP||busy||!!F.bad||!!F.ppath||prxOpen('add',false);
-  h+=(canAdd?'<details class="prx-add" id="padd-d" data-prxdet="add"'+(ao?' open':'')+'><summary id="prx-new-h">Nowy projekt <small>· zwiń</small></summary><form class="padd" id="padd" aria-labelledby="prx-new-h">'+
-      '<label class="fl"><span>Folder projektu</span><input class="fi" id="ppath" placeholder="np. ~/Projekty/nazwa" autocomplete="off" spellcheck="false" value="'+esc(F.ppath||'')+'"'+(F.bad?' aria-invalid="true"':'')+'></label>'+
-      '<label class="fl"><span>Nazwa (opcjonalnie)</span><input class="fi" id="pname" autocomplete="off" value="'+esc(F.pname||'')+'"></label>'+
-      '<label class="prx-chk"><input type="checkbox" id="pfiles"'+(F.nofiles?'':' checked')+'> Załóż brakujące pliki (nic nie nadpisuje)</label>'+
-      '<div class="prx-sub"><button class="btn" type="submit" data-k="padd-sub"'+(busy?' aria-disabled="true"':'')+'>'+(busy?'Dodaję…':'Dodaj')+'</button></div></form></details>'
-    :'<p class="empty">Serwer nie obsługuje dodawania projektów. Dodaj projekt w terminalu: <code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code></p>')+'</section>';
-  /* pliki projektów: zdanie podsumowania, tabela (karty na telefonie), braki pogrupowane */
-  if(!nP)h+='<p class="empty prx-none">Pliki projektów pokażą się po dodaniu pierwszego projektu.</p>';
-  else{
-    const allMiss=docs.filter(d=>D.projects.every(p=>{const x=p.docs.find(y=>y.key===d.key);return x&&x.status==='missing'}));
-    let m='<thead><tr><th scope="col">Projekt</th>'+docs.map(d=>'<th scope="col">'+esc(d.label)+'</th>').join('')+'<th scope="col" class="num">Pliki</th></tr></thead><tbody>';
-    let cards='';
-    D.projects.forEach(p=>{
-      m+='<tr><th scope="row" class="prx-rh"><span class="prx-rhi">'+av(p,'sm')+prxEnt(p)+'</span></th>'+docs.map(d=>'<td>'+docCell(p.docs.find(y=>y.key===d.key),p.id)+'</td>').join('')+
-        '<td class="num">'+prxFiles(p,p.docsOk+' z '+p.docsTotal)+'</td></tr>';
-      const miss=[],marks=[];
-      docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;const b=prxB(p.id,d.key),n=(x.gaps||[]).length;
-        if(x.status==='missing'&&!PRX_CRIT[d.key])miss.push(esc(d.label));
-        else marks.push('<a class="lz '+(x.status==='missing'?'red':'yellow')+'" href="#'+b+'" data-prxgo="'+b+'">'+esc(d.label)+': '+(x.status==='missing'?'brak pliku':n+' '+pl(n,'brak','braki','braków'))+'</a>')});
-      if(p.docsOk!==p.docsTotal)cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p,'',true)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
-        (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+(reg&&canAdd?'<div class="prx-zl">'+prxZl(p)+'</div>':'')+'</li>'});
-    const nC=D.projects.filter(p=>p.docsOk!==p.docsTotal).length;
-    const gl=grp.filter(g=>g.n).map(g=>'<div class="prx-gb"><h4>'+av(g.p,'sm')+prxEnt(g.p)+' <small>· '+g.n+'</small></h4><ul class="prx-gl">'+
-        g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul>'+(reg&&canAdd&&P(g.p.id)?'<div class="prx-zl">'+prxZl(g.p)+'</div>':'')+'</div>').join('');
-    /* jedno zdanie i akcja (zleć agentowi w kartach i w Brakach); na telefonie karty projektów zwinięte, na komputerze tabela */
-    h+='<details class="panel prx-kd" data-prxdet="ks"'+(prxOpen('ks',false)?' open':'')+'><summary><b>Księga projektów</b><span class="muted">'+(okN===nP?'wszystkie komplet':'brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy'))+'</span></summary>'+
-      ((allMiss.length||(nC&&reg&&canAdd))?'<p class="note prx-sum">'+(allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>':'')+
-      '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
-      (nC?'<div class="prx-cdet"><ul class="prx-cards">'+cards+'</ul></div>':'')+
-      (gN?'<div class="prx-gaps"><h3 class="prx-gh">Braki</h3>'+gl+'</div>':'<p class="empty">Wszystkie projekty mają komplet plików.</p>')+'</details>';
-  }
-  /* jak działa standard: dla osób, które edytują pliki ręcznie */
-  const D2=(k,s,body,cls)=>'<details data-prxdet="'+k+'"'+(cls?' class="'+cls+'"':'')+(prxOpen(k,false)?' open':'')+'><summary>'+s+'</summary>'+body+'</details>';
+  const allMiss=docs.filter(d=>D.projects.every(p=>{const x=p.docs.find(y=>y.key===d.key);return x&&x.status==='missing'}));
+  let m='<thead><tr><th scope="col">Projekt</th>'+docs.map(d=>'<th scope="col">'+esc(d.label)+'</th>').join('')+'<th scope="col" class="num">Pliki</th></tr></thead><tbody>';
+  let cards='';
+  D.projects.forEach(p=>{
+    m+='<tr><th scope="row" class="prx-rh"><span class="prx-rhi">'+av(p,'sm')+prxEnt(p)+'</span></th>'+docs.map(d=>'<td>'+docCell(p.docs.find(y=>y.key===d.key),p.id)+'</td>').join('')+
+      '<td class="num">'+prxFiles(p,p.docsOk+' z '+p.docsTotal)+'</td></tr>';
+    const miss=[],marks=[];
+    docs.forEach(d=>{const x=p.docs.find(y=>y.key===d.key);if(!x||x.status==='ok')return;const b=prxB(p.id,d.key),n=(x.gaps||[]).length;
+      if(x.status==='missing'&&!PRX_CRIT[d.key])miss.push(esc(d.label));
+      else marks.push('<a class="lz '+(x.status==='missing'?'red':'yellow')+'" href="#'+b+'" data-prxgo="'+b+'">'+esc(d.label)+': '+(x.status==='missing'?'brak pliku':n+' '+pl(n,'brak','braki','braków'))+'</a>')});
+    if(p.docsOk!==p.docsTotal)cards+='<li class="prx-card"><div class="prx-ch">'+av(p,'sm')+prxEnt(p,'',true)+prxFiles(p,p.docsOk+' z '+p.docsTotal+' plików')+'</div>'+
+      (miss.length?'<div class="prx-cm">Brak: '+miss.join(', ')+'</div>':'')+(marks.length?'<div class="prx-mk">'+marks.join('')+'</div>':'')+(reg&&canAdd?'<div class="prx-zl">'+prxZl(p)+'</div>':'')+'</li>'});
+  const nC=D.projects.filter(p=>p.docsOk!==p.docsTotal).length;
+  const gl=grp.filter(g=>g.n).map(g=>'<div class="prx-gb"><h4>'+av(g.p,'sm')+prxEnt(g.p)+' <small>· '+g.n+'</small></h4><ul class="prx-gl">'+
+      g.crit.join('')+g.soft.join('')+g.camp.join('')+(g.miss.length?'<li>Brak plików: '+g.miss.join(', ')+'</li>':'')+'</ul>'+(reg&&canAdd&&P(g.p.id)?'<div class="prx-zl">'+prxZl(g.p)+'</div>':'')+'</div>').join('');
+  return '<p class="note prx-sum">'+(okN===nP?'Wszystkie projekty mają komplet plików.':'Brakuje '+gN+' '+pl(gN,'rzeczy','rzeczy','rzeczy')+'.')+' '+
+      (allMiss.length?esc(allMiss.map(d=>d.label).join(', '))+': brak we wszystkich projektach. ':'')+(nC&&reg&&canAdd?'Uzupełnienie zlecisz agentowi przy projekcie.':'')+'</p>'+
+    '<div class="tw prx-tw" tabindex="0" role="region" aria-label="Księga projektów, tabela przewijana"><table class="mx">'+m+'</tbody></table></div>'+
+    (nC?'<div class="prx-cdet"><ul class="prx-cards">'+cards+'</ul></div>':'')+
+    (gN?'<div class="prx-gaps"><h3 class="prx-gh">Braki</h3>'+gl+'</div>':'');
+}
+/* wpisy z danych panelu (dawniej „Jak działa Księga” w Serwerze) */
+function srvsBuiltin(){
   const wf=f=>esc(f).replace(/\//g,'/<wbr>');
-  h+='<section class="panel prx-stdp"><details class="prx-stdall" data-prxdet="std"'+(prxOpen('std',false)?' open':'')+'><summary>Jak działa Księga <small>· dla osób, które edytują pliki ręcznie</small></summary>'+
-    D2('std-files','Jakie pliki ma mieć projekt <small>· '+D.standard.length+'</small>',
-      '<div class="tw prx-stdt"><table class="mx prx-std"><thead><tr><th scope="col">Dokument</th><th scope="col">Plik</th><th scope="col">Do czego służy</th><th scope="col">Stałe sekcje</th></tr></thead><tbody>'+
-      D.standard.map(d=>'<tr><td><b>'+esc(d.label)+'</b></td><td><code>'+wf(d.file)+'</code></td><td class="soft">'+esc(d.purpose)+'</td><td>'+esc((d.sections||[]).join(', '))+'</td></tr>').join('')+'</tbody></table></div>'+
-      '<dl class="prx-std-doc">'+D.standard.map(d=>'<dt>'+esc(d.label)+' → <code>'+wf(d.file)+'</code></dt><dd>'+esc(d.purpose)+'</dd>'+((d.sections||[]).length?'<dd class="prx-sec">Stałe sekcje: '+esc(d.sections.join(', '))+'</dd>':'')).join('')+'</dl>')+
-    D2('std-line','Zapis zadania w pliku','<pre class="prx-pre"><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></pre>'+
-      '<p class="note pj-legend prx-leg"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>')+
-    D2('std-cmd','Polecenia w terminalu <small>· 4</small>','<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul>')+
-    D2('std-keys','Skróty klawiszowe (klawiatura)','<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>s</kbd> Asystent, <kbd>m</kbd> Marketing, <kbd>e</kbd> Media, <kbd>a</kbd> Agenci, <kbd>k</kbd> Serwer</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>','prx-keysd')+'</details></section>';
+  return [
+    {id:'ksiega-projektow',title:'Księga projektów',desc:'Pliki standardu we wszystkich projektach i braki',body:srvsBook},
+    {id:'pliki-projektu',title:'Jakie pliki ma mieć projekt',desc:D.standard.length+' '+pl(D.standard.length,'dokument','dokumenty','dokumentów')+' Księgi',body:()=>
+      '<dl class="prx-std-doc srvs-std">'+D.standard.map(d=>'<dt>'+esc(d.label)+' → <code>'+wf(d.file)+'</code></dt><dd>'+esc(d.purpose)+'</dd>'+((d.sections||[]).length?'<dd class="prx-sec">Stałe sekcje: '+esc(d.sections.join(', '))+'</dd>':'')).join('')+'</dl>'},
+    {id:'zapis-zadania',title:'Zapis zadania w pliku',desc:'Wiersz zadania w ZADANIA.md',body:()=>'<pre class="prx-pre"><code>- [ ] Tytuł | kto: claude | gdzie: chmura | kiedy: RRRR-MM-DD | pora: noc | czas: 30 | wymaga: zgoda</code></pre>'+
+      '<p class="note pj-legend prx-leg"><code>[ ]</code> do zrobienia · <code>[~]</code> w toku · <code>[!]</code> zablokowane · <code>[x]</code> zrobione · etap: <code>## Etap: nazwa</code> i wiersz <code>termin:</code> · karta: <code>- faza:</code>, <code>- klient:</code>, <code>- próg:</code></p>'},
+    {id:'polecenia',title:'Polecenia w terminalu',desc:'Nowy projekt, kampania, sprawdzenie, raport PM',body:()=>'<ul><li><code>python3 standard/projekt.py nowy &lt;folder&gt; --nazwa "Nazwa" --rejestruj</code> nowy projekt</li><li><code>python3 standard/projekt.py kampania &lt;folder&gt; "Nazwa"</code> nowa kampania</li><li><code>python3 standard/projekt.py sprawdz</code> braki w dokumentach</li><li><code>python3 standard/pm.py</code> raport PM; w Claude Code: <code>/raport</code></li></ul>'},
+    {id:'skroty',title:'Skróty klawiszowe',desc:'Nawigacja z klawiatury',body:()=>'<ul class="prx-keys"><li><kbd>/</kbd> szukaj projektu</li><li><kbd>g</kbd> potem <kbd>s</kbd> Asystent, <kbd>m</kbd> Marketing, <kbd>e</kbd> Media, <kbd>a</kbd> Agenci, <kbd>k</kbd> Serwer, <kbd>i</kbd> Informacje</li><li><kbd>Esc</kbd> zamyka szczegóły; w szczegółach zadania <kbd>r</kbd> uruchamia agenta</li></ul>'}];
+}
+function vInformacje(){
+  if(LIVE&&!SRVS_INF.list&&!SRVS_INF.loading&&!SRVS_INF.err)srvsInfLoad();
+  const B=srvsBuiltin(),F=LIVE?(SRVS_INF.list||[]):[],all=B.concat(F.map(f=>({id:f.id,title:f.title,desc:f.desc,file:f.path})));
+  const cur=all.find(x=>x.id===A.srvsInf)||all[0];
+  const item=x=>'<li><button type="button" class="srvs-inf-i" data-srvs="inf" data-id="'+esc(x.id)+'" data-k="inf:'+esc(x.id)+'"'+(x.id===cur.id?' aria-current="true"':'')+'><span class="t">'+esc(x.title)+'</span><span class="s">'+esc(x.file||x.desc||'')+'</span></button></li>';
+  let h='<div class="pagehead"><div class="ph-main"><h1>Informacje</h1><p>Jak działa Księga, standard plików i zasady agentów. Tylko do czytania.</p></div></div><div class="srvs-inf">'+
+    '<nav class="panel srvs-inf-l" aria-label="Pliki informacyjne"><h2>Księga i standard</h2><ul>'+B.map(item).join('')+'</ul><h2>Pliki</h2>'+
+    (!LIVE?'<p class="empty sm">Pliki pokazuje panel na serwerze.</p>':SRVS_INF.err?'<p class="warn ds-pad">'+esc(SRVS_INF.err)+' <button type="button" class="lk" data-srvs="inf-retry" data-id="">Spróbuj ponownie</button></p>':
+      !SRVS_INF.list?'<p class="empty sm" role="status">Wczytuję listę…</p>':F.length?'<ul>'+F.map(x=>item({id:x.id,title:x.title,desc:x.desc,file:x.path})).join('')+'</ul>':'<p class="empty sm">Brak plików.</p>')+'</nav>';
+  let body='';
+  if(cur.body){try{body=cur.body()}catch(e){console.error(e);body='<p class="warn">Nie udało się pokazać tej pozycji.</p>'}}
+  else{const o=SRVS_INF.files[cur.id];
+    if(!o||(o.text==null&&!o.loading&&!o.err)){srvsInfLoad(cur.id);body='<p class="empty" role="status">Wczytuję plik…</p>'}
+    else if(o.loading)body='<p class="empty" role="status">Wczytuję plik…</p>';
+    else if(o.err)body='<p class="warn">'+esc(o.err)+' <button type="button" class="lk" data-srvs="inf-retry" data-id="'+esc(cur.id)+'">Spróbuj ponownie</button></p>';
+    else body='<div class="pmn srvs-md">'+md(o.text)+'</div>'}
+  h+='<article class="panel srvs-inf-p" id="srvs-inf-p" tabindex="-1" aria-labelledby="srvs-inf-h"><h2 id="srvs-inf-h"><span>'+esc(cur.title)+'</span>'+(cur.file?'<small><code>'+esc(cur.file)+'</code></small>':'')+'</h2><div class="srvs-inf-b">'+body+'</div></article></div>';
   return h;
 }
 
@@ -7989,6 +8091,7 @@ function openDrawer(kind,id){
   if(kind==='task'){const t=D.tasks.find(x=>x.id===id);if(!t)return;delete ODR[id];DR={kind:'task',id:id,ref:refOf(t),opener:opener,mat:''}}
   else if(kind==='q'){if(!qOf(id))return;DR={kind:'q',id:id,opener:opener}}
   else if(kind==='card'){if(!apDef(id,null)&&!apCards().some(x=>x.c.id===id))return;DR={kind:'card',id:id,opener:opener}}
+  else if(kind==='padd')DR={kind:'padd',id:'',opener:opener};
   else{if(!runById(id))return;DR={kind:'run',id:id,opener:opener}}
   renderDrawer(true);renderDock(CUR);
   const n=$('#drawer .x');if(n)n.focus();
@@ -9722,6 +9825,7 @@ function renderDrawer(force){
   let html,t=null;
   if(DR.kind==='task'){t=findTask(DR.ref,true);if(!t){closeDrawer();return}DR.id=t.id;DR.ref=refOf(t);html=taskHtml(t)}
   else if(DR.kind==='q'){const o=qOf(DR.id);if(!o){closeDrawer();return}html=qHtml(o)}
+  else if(DR.kind==='padd')html=srvsAddHtml();
   else if(DR.kind==='card'){const c=apCards().map(x=>x.c).find(x=>x.id===DR.id)||apDef(DR.id,null);if(!c){closeDrawer();return}
     let b;try{b=apBody(c,true)}catch(e){console.error(e);b=apEmpty('Nie udało się policzyć tej karty.')}
     html='<div class="dhead"><span class="muted">Karta</span><button class="x" data-close="1" data-k="close">Zamknij</button></div><h2 id="dtitle">'+esc(c.tytul)+'</h2><div class="ap-full">'+b+'</div>'}
@@ -11334,13 +11438,15 @@ function route(){
   if(h==='asystent'){const m=/(?:^|&)k=([^&]*)/.exec(qs);if(m)return {v:'asystent',old:h,k:m[1],qs:qs}}
   /* #koszty?k=projekty|kalendarz: Serwer przewinięty do sekcji */
   if(h==='koszty'){const m=/(?:^|&)k=([^&]*)/.exec(qs);if(m)return {v:'koszty',go:m[1]}}
-  if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='plan';
-    if(!p){const m=/^(.*)-(plan|tablica|wskazniki|etapy|ksiega|marketing|strona)$/.exec(rest);if(m){p=P(m[1]);tab=m[2]}}
+  if(h.slice(0,2)==='p-'&&D){const rest=h.slice(2);let p=P(rest),tab='tablica';
+    if(!p){const m=/^(.*)-(plan|tablica|wskazniki|etapy|ksiega|marketing|strona|polaczenia)$/.exec(rest);if(m){p=P(m[1]);tab=m[2]}}
+    /* grupa projekt: stary adres zakładki Plan (#p-<id>-plan) prowadzi do Zadań */
+    if(tab==='plan'){tab='tablica';if(p&&!p.partOf){try{history.replaceState(null,'',location.pathname+location.search+location.hash.replace(/-plan(?=\?|$)/,'-tablica'))}catch(e){}}}
     /* część projektu: stary adres (#p-<część>…) przechodzi na stronę projektu głównego z wybraną częścią */
-    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!wwSites(p).length?'plan':tab))}catch(e){}}
+    if(p&&p.partOf){try{history.replaceState(null,'',phref(p,tab==='strona'&&!wwSites(p).length?'tablica':tab))}catch(e){}}
     else if(p&&p.partsL&&p.partsL.length){const m=/(?:^|&)cz=([^&]*)/.exec(qs),cz=m?m[1]:'';
       if(cz&&cz===p.id&&p.own)p=p.own;else if(cz)p=p.partsL.find(x=>x.id===cz)||p}
-    if(p&&tab==='strona'&&!wwSites(p).length)tab='plan';
+    if(p&&tab==='strona'&&!wwSites(p).length)tab='tablica';
     if(p)return {v:'projekt',p:p,tab:tab}}
   return {v:VIEWS.indexOf(h)>=0?h:'asystent'};
 }
@@ -11351,7 +11457,7 @@ function oldRoute(r){
   if(r.k)apShowCard(r.k)}
 /* liczba w menu z modelu Blokad: błąd w modelu nie może wywrócić menu i dolnego paska we wszystkich widokach */
 const bkSafe=()=>{try{return bkYouN()}catch(e){console.error(e);return {tasks:0,n:0,all:0}}};
-const VICON={asystent:'you',marketing:'film',media:'photo',agenci:'agent',koszty:'money'};
+const VICON={asystent:'you',marketing:'film',media:'photo',agenci:'agent',koszty:'money',informacje:'info'};
 /* licznik przy nazwie: liczba z jednostką dla czytnika (bez „Dla Ciebie38”) */
 /* Blokady: ta sama nazwa liczby co w h1 Blokad (bkYouCntT), w title i dla czytnika */
 const navCnt=(c,cl,unit,ttl)=>c?'<span class="count '+(cl||'')+'"'+(ttl?' title="'+esc(ttl)+'"':'')+'><span class="sr-only">, </span>'+(ttl?'<span aria-hidden="true">'+c+'</span><span class="sr-only">'+esc(ttl)+'</span>':c+'<span class="sr-only"> '+unit+'</span>')+'</span>':'';
@@ -11361,10 +11467,67 @@ function youCnt(){const ys=youState(),n=v=>typeof v==='number'?v:null;
   return {today:n(D.youToday)??ys.youToday.length,late:n(D.youLate)??ys.youToday.filter(x=>x.late).length,
     week:n(D.youWeek)??ys.youWeek.length,later:n(D.youLater)??ys.youLater.length}}
 const youCntT=c=>'Sprawy dla Ciebie na dziś: '+c.today+(c.late?', w tym po terminie: '+c.late:'');
+/* grupa wskazniki: praca agentów widoczna w menu (projekty, licznik przy Agentach), w nagłówku projektu i na zakładce
+   z zadaniem w toku. Źródło: agents.runs (running), activity.chats i activity.films z /api/data; gdy coś trwa, panel
+   pobiera je co 3 s (nwBusy), a applyAgents rysuje menu i widok od nowa */
+const WS_WHO={claude:'Claude',codex:'Codex'};
+/* zakładka projektu z pracą: zadania strony („Strona: …”) → Strona, kampania, publikacja i grafika posta → Marketing,
+   pozostałe → Zadania */
+function wsTab(t,title,kind){
+  if(kind==='grafika')return 'marketing';
+  if(/^Strona:/i.test(t?t.title:String(title||'')))return 'strona';
+  return t&&(t.kind==='publikacja'||t.campaign)?'marketing':'tablica';
+}
+/* kamień milowy (bieżący krok planu agenta), a bez planu ostatnia czynność */
+function wsStep(r){
+  const s=r.plan||[];let i=s.findIndex(x=>x.active&&!x.done);
+  if(i<0&&s.some(x=>x.done))i=s.findIndex(x=>!x.done);
+  if(i>=0)return 'krok '+(i+1)+' z '+s.length+': '+s[i].text;
+  return r.activity?nwPlain(r.activity):'';
+}
+function wsWork0(){
+  const out=[],seen={},a=nwAct();
+  runs().filter(r=>r.state==='running'&&r.project).forEach(r=>{const t=taskOfRun(r),who=WS_WHO[r.tool]||'Agent';if(t)seen[t.id]=1;
+    out.push({pid:r.project,who:who,lead:who+' pracuje',title:t?t.title:r.title,tab:wsTab(t,r.title,r.kind),step:wsStep(r),run:r.id,task:''})});
+  a.chats.forEach(c=>{const t=nwTask(c.project,c.file,c.title)||D.tasks.find(x=>x.id===c.taskId)||null,pid=c.project||(t?t.project:'');
+    if(!pid||(t&&seen[t.id]))return;
+    out.push({pid:pid,who:'Claude',lead:'Claude odpowiada',title:c.title,tab:wsTab(t,c.title),step:'rozmowa o zadaniu',run:'',task:t?t.id:''})});
+  a.films.filter(f=>f.state==='running'&&f.project).forEach(f=>{const t=nwPostTask(f);
+    out.push({pid:f.project,who:'Film',lead:'Nagrywa się film',title:f.title,tab:'marketing',step:f.day?'post na '+dd(f.day):'',run:'',task:t?t.id:''})});
+  return out;
+}
+const wsWork=()=>D?nwMemo('ws',wsWork0):[];
+/* menu: projekt główny zbiera pracę swoich części */
+function wsSide(p){
+  const L=wsWork().filter(x=>topId(x.pid)===p.id);if(!L.length)return null;
+  return {t:p.name+'\n'+L.map(x=>x.lead+': '+x.title+(x.step?' ('+x.step+')':'')).join('\n'),
+    h:'<span class="ws-b"><i class="ws-dot" aria-hidden="true"></i>'+(L.length===1?'pracuje':L.length+' '+pl(L.length,'agent','agentów','agentów'))+
+      '<span class="sr-only">: '+esc(L.map(x=>x.who+', '+x.title).join('; '))+'</span></span>'};
+}
+/* licznik przy Agentach: pracujące uruchomienia (zadania i zlecenia rozwoju); bez pracy liczba czekających w kolejce */
+function wsAgCnt(){
+  const a=D.agents,R=a?a.runs.concat(a.development):[],n=R.filter(r=>r.state==='running').length,q=R.filter(r=>r.state==='queued').length;
+  if(n)return [n,'blue ws-live','Pracuje: '+n+(q?', w kolejce: '+q:'')];
+  return [q,'blue',q?'W kolejce: '+q:''];
+}
+/* nagłówek projektu: jeden wiersz o pracy (pierwsza pozycja; reszta „i jeszcze n” w Agentach) */
+function wsProjRow(p){
+  const L=wsWork().filter(x=>inP(p,x.pid));if(!L.length)return '';
+  const x=L[0],more=L.length-1,sep='<span class="ws-sep" aria-hidden="true">·</span>',k=esc(x.run||x.task||x.pid);
+  const show=x.run?'<button type="button" class="lk" data-run="'+esc(x.run)+'" data-k="ws:'+k+'" title="Przebieg na żywo">Pokaż</button>':
+    x.task?'<button type="button" class="lk" data-task="'+esc(x.task)+'" data-k="ws:'+k+'">Pokaż</button>':'<a href="'+phref(p,'marketing')+'">Pokaż</a>';
+  return '<p class="ws-row"><i class="ws-dot" aria-hidden="true"></i><span><b>'+esc(x.lead)+':</b> <span title="'+esc(x.title)+'">'+esc(shortT(x.title,80))+'</span>'+ptag(p,x.pid)+'</span>'+
+    (x.step?sep+'<span title="'+esc(x.step)+'">'+esc(shortT(x.step,70))+'</span>':'')+sep+show+(more?sep+'<a href="#agenci">i jeszcze '+more+'</a>':'')+'</p>';
+}
+/* kropka na zakładce projektu z pracą (Strona bez zakładki Strona: Zadania) */
+function wsTabDot(p,k){
+  const st=ptabsOf(p).some(x=>x[0]==='strona');
+  return wsWork().some(x=>inP(p,x.pid)&&(x.tab==='strona'&&!st?'tablica':x.tab)===k)?'<i class="ws-dot" aria-hidden="true"></i><span class="sr-only">, agent pracuje</span>':'';
+}
 function renderSide(r){
   /* licznik przy Asystencie: sprawy dla Ciebie na dziś, w tym po terminie (D.youToday z serwera: ta sama liczba na starcie
      Asystenta, w karcie spraw, w raporcie PM i w faktach rozmowy) */
-  const you=youCnt(),ag=runs().filter(isAct).length,C={asystent:[you.today,'',youCntT(you)],agenci:[ag,'blue']};
+  const you=youCnt(),C={asystent:[you.today,'',youCntT(you)],agenci:wsAgCnt()};
   const cnt=h=>C[h]?navCnt(C[h][0],C[h][1],NAVU[h],C[h][2]||''):'';
   const nvA=h=>'<a href="#'+h+'" title="'+esc(VDESC[h])+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+VNAME[h]+cnt(h)+'</a>';
   setHtml($('#nav'),MAINV.map(nvA).join(''));
@@ -11381,10 +11544,12 @@ function renderSide(r){
     /* arkusz „Więcej”: nagłówek z „Zamknij”, widoki spoza paska z tym samym licznikiem co menu, projekty, na dole Odśwież i Motyw.
        Zwykła nawigacja (lista linków), bez ról menu; Escape i dotknięcie tła zamykają */
     setHtml(sh,'<div class="bs-top"><h2 class="bs-t">Więcej</h2><button type="button" class="btn sec sm" data-bnmore="1" data-k="bnclose">Zamknij</button></div>'+VIEWS.filter(v=>BNAV.indexOf(v)<0).map(h=>'<a href="#'+h+'" aria-label="'+bnl(h)+'"'+(r.v===h?' aria-current="page"':'')+'>'+ICON[VICON[h]]+'<span class="bs-n">'+esc(VNAME[h])+'</span>'+(C[h]&&C[h][0]?'<span class="count '+(C[h][1]||'')+'" aria-hidden="true">'+C[h][0]+'</span>':'')+'</a>').join('')+
-      (D.projects.length?'<h3 class="bs-h">Przejdź do projektu</h3>'+D.projects.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span></a>').join(''):'')+
+      (srvsCanAdd()?'<button type="button" class="bs-add" data-srvs="padd" data-k="bs-add">'+esc('+ Dodaj projekt')+'</button>':'')+
+      (D.projects.length?'<h3 class="bs-h">Przejdź do projektu</h3>'+D.projects.map(p=>{const ws=wsSide(p);return '<a href="'+phref(p)+'" title="'+esc(ws?ws.t:p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p,'sm')+'<span class="bs-n">'+esc(pShort(p))+'</span>'+(ws?ws.h:'')+'</a>'}).join(''):'')+
       '<div class="bs-foot"><button type="button" class="btn sec" data-bnref="1" data-k="bnref">Odśwież</button><button type="button" class="btn sec" data-bntheme="1" data-k="bntheme">'+themeL()+'</button></div>')}
-  $('#pcount').textContent=D.projects.length;
-  setHtml($('#plist'),L.map(p=>'<a href="'+phref(p)+'" title="'+esc(p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span><span class="ph">'+PHASES[PHI[p.phase]][1]+'</span></a>').join('')||'<p class="muted side-empty">Brak wyników</p>');
+  $('#pcount').textContent=D.projects.length;$('#srvs-add').hidden=!srvsCanAdd();
+  /* grupa wskazniki: przy projekcie z pracą agenta znacznik „pracuje” zamiast fazy (faza jest w nagłówku projektu i w podpowiedzi) */
+  setHtml($('#plist'),L.map(p=>{const ws=wsSide(p);return '<a href="'+phref(p)+'" title="'+esc(ws?ws.t+'\nFaza: '+PHASES[PHI[p.phase]][1]:p.name)+'"'+(r.p&&topP(r.p)===p?' aria-current="page"':'')+'>'+av(p)+'<span class="nm">'+esc(p.name)+'</span>'+(ws?ws.h:'<span class="ph">'+PHASES[PHI[p.phase]][1]+'</span>')+'</a>'}).join('')||'<p class="muted side-empty">Brak wyników</p>');
   const opts=VIEWS.map(v=>['#'+v,VNAME[v]+(v==='asystent'&&you.today?' ('+you.today+')':'')]);
   const curH=r.v==='projekt'?phref(topP(r.p)):'#'+r.v,ms=$('#mnav');
   if(document.activeElement!==ms)setHtml(ms,opts.map(([h,n])=>'<option value="'+esc(h)+'"'+(h===curH?' selected':'')+'>'+esc(n)+'</option>').join('')+
@@ -11414,7 +11579,7 @@ function renderTop(){
   else{
     /* telefon: pasek „Projekty przykładowe” tylko na stronie Asystent (na innych stronach nie zajmuje pierwszego rzędu) */
     const smp=D.projectsSource!=='registry'&&(route().v==='asystent'||!(window.matchMedia&&matchMedia('(max-width:820px)').matches));
-    if(smp)h+='<a class="lz yellow" href="#koszty?k=projekty" title="Rejestr projektów jest pusty. Dodaj projekt w widoku Serwer, sekcja Projekty.">Projekty przykładowe</a>';
+    if(smp)h+='<a class="lz yellow" href="#koszty?k=projekty" title="Rejestr projektów jest pusty. Dodaj projekt przyciskiem + przy liście projektów.">Projekty przykładowe</a>';
     /* kalendarz w ramie tylko przy problemie; przy „połączony” kropka z odsyłaczem do Terminów (pełny stan dla czytnika) */
     /* problem z kalendarzem w Serwerze pokazuje sekcja Kalendarz: tu zostaje tylko dla czytnika i przycisk */
     /* pigułka tylko przy prawdziwym problemie albo z akcją; „tylko na Macu” (serwer) to stan stały: nic nie pokazujemy */
@@ -11437,7 +11602,7 @@ function say(t,ms){notice=String(t||'');setToast(notice);clearTimeout(noticeT);n
 function viewHtml(r){
   if(r.v==='projekt')return vProjekt(r.p,r.tab);
   if(r.v==='odbior')return vOdbior(r);
-  return ({asystent:vAsystent,marketing:vMarketing,media:vMedia,agenci:vAgenci,koszty:vKoszty}[r.v]||vAsystent)();
+  return ({asystent:vAsystent,marketing:vMarketing,media:vMedia,agenci:vAgenci,koszty:vKoszty,informacje:vInformacje}[r.v]||vAsystent)();
 }
 const typingIn=sel=>{const a=document.activeElement;return !!a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&!!a.closest(sel)};
 const editing=()=>{const a=document.activeElement;if(!a||!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return false;
@@ -11465,7 +11630,8 @@ function render(force){
     try{vh=viewHtml(r)}catch(e){console.error(e);vh='<div class="banner bad" role="alert">Nie udało się pokazać tego widoku ('+esc(String(e&&e.message||e))+'). Dane z serwera są aktualne; przejdź do innego widoku albo odśwież stronę.</div>'}
     if(setHtml($('#view'),vh))dsA11y($('#view'))}
   if(r.go){try{history.replaceState(null,'',location.pathname+location.search+'#koszty')}catch(e){}
-    const n=document.getElementById('srv-'+r.go);if(n){n.scrollIntoView({block:'start'});n.focus({preventScroll:true})}}
+    if(r.go==='projekty')srvsAddOpen();else{
+    const n=document.getElementById('srv-'+r.go);if(n){n.scrollIntoView({block:'start'});n.focus({preventScroll:true})}}}
   odAfter(r.v==='odbior');
   renderDock(r);
   if(r.v==='projekt'){hsCur();pjGo();if(r.tab==='strona'&&wwCur(r.p))wwMount(wwCur(r.p))}
@@ -11774,7 +11940,7 @@ function addProject(){
   /* stan „Dodaję…” od razu w przycisku (bez przerysowania formularza); po odpowiedzi render przywraca „Dodaj projekt” */
   const sb=$('#padd [type=submit]');if(sb){sb.setAttribute('aria-disabled','true');sb.textContent='Dodaję…'}
   const body={path:path,files:$('#pfiles').checked};if(name)body.name=name;
-  agentPost('/api/project/add',body,'Nie dodano projektu.',()=>{const a=$('#ppath'),b=$('#pname');if(a)a.value='';if(b)b.value='';A.padd={};say('Dodano projekt.')});
+  agentPost('/api/project/add',body,'Nie dodano projektu.',()=>{const a=$('#ppath'),b=$('#pname');if(a)a.value='';if(b)b.value='';A.padd={};if(DR&&DR.kind==='padd')closeDrawer();say('Dodano projekt.')});
 }
 /* formularze w szufladzie zadania: odbiór z nowym zadaniem, poprawka, wynik */
 function submitForm(f){
@@ -11825,7 +11991,6 @@ function agentAct(el){
   else if(a.startsWith('gh-'))ghAct(a,id,el);
   else if(a==='padd-go'){const d=$('#padd-d');if(d&&!d.open){d.open=true;(A.prxDet||(A.prxDet={})).add=true}const f=$('#padd'),i=$('#ppath');if(f)f.scrollIntoView({block:'center'});if(i)i.focus({preventScroll:true})}
   else if(a==='prx-zl')prxDelegate(id);
-  else if(a==='plan-go')acceptPlan(id);
   else if(a==='lo'){A.lo=true;render(true);focusK('lo-no')}
   else if(a==='lo-no'){A.lo=false;render(true);focusK('lo')}
   else if(a==='lo-yes')logoutAll();
@@ -11916,9 +12081,12 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   try{i.showPicker()}catch(e){dpkShow(i)}},true);
 /* bez showPicker (starsze przeglądarki): ukryte pole staje się widoczne i dostaje fokus */
 function dpkShow(i){i.removeAttribute('aria-hidden');i.tabIndex=0;i.style.cssText='position:static;opacity:1;pointer-events:auto;width:auto;height:auto';try{i.focus();i.click()}catch(e){}}
-/* Księga → „Poproś w rozmowie o projekcie”: Plan z rozwiniętą rozmową, kursor w polu */
+/* Księga → „Poproś w rozmowie o projekcie”: rozwinięta rozmowa, kursor w polu. „Kod i pliki” (data-pjgo="pcode", stare
+   odnośniki): zakładka Połączenia z rozwiniętą kartą GitHub (grupa projekt) */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
-  PF.more[a.dataset.pjgo==='pcode'?'pj-code':'pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;A.pjKeep=a.dataset.pjgo==='pchat'&&location.hash!==a.getAttribute('href');if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
+  if(a.dataset.pjgo==='pcode'){ev.preventDefault();PF.more['pj-con-gh']=true;savePF();A.pjGo='pcon-gh';const h=pjxConHref(a.getAttribute('href'));
+    if(location.hash===h)render(true);else location.hash=h;return}
+  PF.more['pj-chat']=true;savePF();A.pjGo=a.dataset.pjgo;A.pjKeep=a.dataset.pjgo==='pchat'&&location.hash!==a.getAttribute('href');if(location.hash===a.getAttribute('href')){ev.preventDefault();render(true)}},true);
 document.addEventListener('click',async ev=>{
   if(ev.target&&ev.target.id==='toast'){clearTimeout(noticeT);notice='';setToast('');return}
   if(!D)return;
@@ -11993,7 +12161,7 @@ document.addEventListener('click',async ev=>{
   if(el=qq('[data-stucancel]')){const pid=A.stuAsk&&A.stuAsk.pid;A.stuAsk=null;render(true);
     const b=pid&&document.querySelector('[data-stuask="'+CSS.escape(pid)+'"]');if(b)b.focus();return}
   if(el=qq('[data-nwfocus]')){const n=Array.prototype.find.call(document.querySelectorAll('[data-k]'),x=>x.dataset.k===el.dataset.nwfocus);
-    if(n){n.scrollIntoView({block:'center'});n.focus({preventScroll:true})}else say('Plan dnia jest w Agentach.');return}
+    if(n){n.scrollIntoView({block:'center'});n.focus({preventScroll:true})}return}
   if(el=qq('[data-nwall]')){A.nwAll=!A.nwAll;render(true);focusK('nwall');return}
   if(el=qq('[data-nwdone]')){A.nwDoneOpen=el.getAttribute('aria-expanded')!=='true';try{localStorage.setItem(NW_OPEN_KEY,A.nwDoneOpen?'1':'0')}catch(e){}render(true);focusK('nwdone');return}
   if(el=qq('[data-nwpub]')){nwRepub(el);return}
@@ -12045,7 +12213,7 @@ document.addEventListener('click',async ev=>{
     if(a==='migracja'){MDS.items=null;draAct('/api/drive/konto/migracja',{},'Sprawdzono odłączenia.');return}
     if(a==='odlacz'){const pid=el.dataset.pid;if(confirm('Odłączyć konto Google od projektu '+drName(pid)+'?'))draAct('/api/drive/konto/odlacz',{project:pid,account:el.dataset.acc},'Konto odłączone od projektu.');return}
     if(a==='anuluj'){draAct('/api/drive/konto/anuluj',{project:el.dataset.pid||''});return}
-    if(a==='ponow'){if(el.dataset.pid){PF.more['pj-code']=true;(A.drc||(A.drc={}))[el.dataset.pid]=true;render(true)}
+    if(a==='ponow'){if(el.dataset.pid){PF.more['pj-con-dr']=true;(A.drc||(A.drc={}))[el.dataset.pid]=true;render(true)}
       draAct('/api/drive/konto/start',{account:el.dataset.acc,project:el.dataset.pid||''});return}
     if(a==='usun'){if(confirm('Odłączyć konto Google od panelu? Pliki na Drive zostają.'))draAct('/api/drive/konto/usun',{account:el.dataset.acc},'Konto odłączone.');return}
     if(a==='schowek'){const f=el.closest('form'),i=f.elements.url;
@@ -12056,11 +12224,11 @@ document.addEventListener('click',async ev=>{
     const L=document.getElementById('drl-'+pid);if(L)L.innerHTML=drList(pid);focusK('drt:'+k);return}
   if(el=qq('[data-drw]')){const pid=el.dataset.pid,k=drKey(pid);driveAct(pid,'/api/drive/wybierz',{account:k.acc,folder:el.dataset.drw,path:el.dataset.path},'Folder wybrany: '+el.dataset.path+'.');return}
   if(el=qq('[data-drf]')){const k=drKey(el.dataset.pid);if(k.acc)loadDrF(el.dataset.pid,k.acc,true);return}
-  if(el=qq('[data-drc]')){if(el.getAttribute('aria-disabled')==='true')return;PF.more['pj-code']=true;(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
+  if(el=qq('[data-drc]')){if(el.getAttribute('aria-disabled')==='true')return;PF.more['pj-con-dr']=true;(A.drc||(A.drc={}))[el.dataset.pid]=el.dataset.drc==='1';render(true);focusK(el.dataset.drc==='1'?'drc0':'drc');return}
   if(el=qq('[data-drvmedia]')){(A.mf||(A.mf={p:'',k:'',s:''})).p=el.dataset.drvmedia;MDS.items=null}
   /* Rozmowa otwarta przy otwartym zadaniu: od razu z odnośnikiem do niego (bez osobnego „Zapytaj o to zadanie”) */
   if(el=qq('[data-pjd]')){if(el.dataset.pjd==='open'&&DR&&DR.kind==='task')pjdAsk(DR.id);else pjdSet(el.dataset.pjd==='open');return}
-  if(el=qq('[data-pjcode]')){PF.more['pj-code']=!PF.more['pj-code'];savePF();render(true);focusK('pjcode');return}
+  if(el=qq('[data-pjcon]')){const k='pj-con-'+el.dataset.pjcon;PF.more[k]=!PF.more[k];savePF();render(true);focusK('pjcon:'+el.dataset.pjcon);return}
   if(el=qq('[data-ag]')){agentAct(el);return}
   if(el=qq('[data-task-life]')){
     const t=D.tasks.find(x=>x.id===el.dataset.id),action=el.dataset.taskLife;
@@ -12132,10 +12300,11 @@ document.addEventListener('change',ev=>{
   if(el.dataset.filmmus!=null){setFilmMusic(el);return}
   if(el.dataset.pch&&DR){const f=PL[DR.id];if(f)f.ch[el.dataset.pch]=el.checked;return}
   if((el.dataset.pday!=null||el.dataset.ptime!=null)&&DR){const f=PL[DR.id];if(f){if(el.dataset.pday!=null)f.day=el.value;else f.time=el.value}return}
+  if(el.dataset.pjxcz!=null){pjxCz(el);return}
+  if(el.dataset.pjxfb!=null){pjxFb(el);return}
   if(el.dataset.fbmap){if(!LIVE){say(PRV);return}enqueue(async()=>{const x=await post('/api/publikacja/strona',{page:el.dataset.fbmap,project:el.value});say(x.ok?'Zapisano projekt strony.':failMsg(x,'Nie zapisano.'))});return}
   if(el.dataset.fv&&DR){(DR.fv||(DR.fv={}))[el.dataset.fv]=el.type==='checkbox'?(el.checked?'tak':'nie'):el.value;return}
   if(el.dataset.ev&&DR){(DR.ev||(DR.ev={}))[el.dataset.ev]=el.value;return}
-  if(el.dataset.psel){const m=A.psel[el.dataset.psel]||(A.psel[el.dataset.psel]={});m[el.dataset.pid]=el.checked;render(true);return}
   if(el.id==='tyfp'){const F=tyFlt();F.p=el.value;tyStore(TY_F_KEY,F);render(true);focusK('tyfp');return}
   /* filtry w kartach Asystenta (Terminy, Blokady, Wskaźniki, Zadania): stan na urządzeniu, adres bez zmian */
   if(el.id==='bp'){PF.bp=el.value;savePF();render(true);const b=$('#bp');if(b)b.focus();return}
@@ -12181,7 +12350,6 @@ document.addEventListener('submit',ev=>{
   if(f.dataset.pubf){const b=f.querySelector('button[type="submit"][data-pub]');if(b)pubAct(b);return}
   if(f.id==='padd'){addProject();return}
   if(f.dataset.lc){const i=f.querySelector('input');submitLoginCode(i?i.value:'');return}
-  if(f.id==='plan'){const t=f.querySelector('textarea');askPlan(t?t.value:'');return}
   if(f.dataset.qa){const t=f.querySelector('textarea');answerQ(f.dataset.qa,+f.dataset.n,t?t.value:'');return}
   if(f.dataset.campm){const i=f.querySelector('input');saveMeasure(f.dataset.campm,i?i.value:'');return}
   const ti=f.querySelector('[name="title"]');if(!ti)return;const v=ti.value;
@@ -12225,7 +12393,7 @@ document.addEventListener('keydown',ev=>{const svg=ev.target.closest&&ev.target.
   if(ev.key==='ArrowLeft'||ev.key==='ArrowRight'){ev.preventDefault();wkChartAt(svg,on&&svg.dataset.i!=null?+svg.dataset.i+(ev.key==='ArrowLeft'?-1:1):c.n-1)}
   else if(ev.key==='Escape'&&on){ev.preventDefault();ev.stopPropagation();wkChartOff()}},true);
 document.addEventListener('keydown',ev=>{
-  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form#plan textarea, form[data-dform] textarea[data-fv="fix"], form[data-pchat] textarea, form[data-edfix] textarea, form[data-scfix] textarea');
+  const qt=ev.target.closest&&ev.target.closest('form[data-qa] textarea, form[data-dform] textarea[data-fv="fix"], form[data-pchat] textarea, form[data-edfix] textarea, form[data-scfix] textarea');
   if(qt&&ev.key==='Enter'&&!ev.shiftKey&&!ev.isComposing){ev.preventDefault();const f=qt.form;if(f.requestSubmit)f.requestSubmit();else f.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));return}
   if(!D||ev.metaKey||ev.ctrlKey||ev.altKey)return;
   const a=document.activeElement,tg=a&&a.tagName,k=ev.key,inField=tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT';
@@ -12265,7 +12433,7 @@ document.addEventListener('keydown',ev=>{
       for(let c=j+st;c>=0&&c<cols.length;c+=st){const L=cards(cols[c]);if(L.length){n=L[Math.min(Math.max(i,0),L.length-1)];break}}}
     ev.preventDefault();if(n)n.focus();return}
   if(k==='/'){ev.preventDefault();const s=$('#q');if(s.offsetParent!==null)s.focus();else $('#mnav').focus();return}
-  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={s:'asystent',m:'marketing',e:'media',a:'agenci',k:'koszty'}[k];if(m){ev.preventDefault();location.hash=m}return}
+  if(gWait&&Date.now()-gWait<1500){gWait=0;const m={s:'asystent',m:'marketing',e:'media',a:'agenci',k:'koszty',i:'informacje'}[k];if(m){ev.preventDefault();location.hash=m}return}
   if(k==='g'){gWait=Date.now();return}
 });
 document.addEventListener('toggle',ev=>{const el=ev.target;if(el.dataset&&el.dataset.prxdet){(A.prxDet||(A.prxDet={}))[el.dataset.prxdet]=el.open;return}if(el.dataset&&el.dataset.agdet){(A.agDet||(A.agDet={}))[el.dataset.agdet]=el.open;return}if(el.dataset&&el.dataset.tmdet){(A.tmDet||(A.tmDet={}))[el.dataset.tmdet]=el.open;return}if(el.classList&&el.classList.contains('bk-how')){A.bkHow=el.open;return}if(el.id==='stubox'){A.stuOpen=el.open;return}if(el.id==='stuall'){A.stuAll=el.open;return}if(el.classList&&el.classList.contains('ed-pl')){A.edPl=el.open;return}

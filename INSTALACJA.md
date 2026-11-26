@@ -160,7 +160,7 @@ iPhone widzi panel tylko przy włączonym Tailscale.
 
 ## Projekty
 
-- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: „+” przy nagłówku Projekty w menu (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Z terminala, nowy projekt:
 
   ```bash
@@ -182,7 +182,7 @@ Panel nie wysyła zmian (`git push`); robisz to samodzielnie.
 
 Serwer → Google Drive → „Połącz Google Drive”: logowanie Google (wybór konta), dostęp tylko do odczytu
 (`drive.readonly`), jedno połączenie na całe konto. Folder dla projektu albo części wybierasz potem z listy
-w „Kod i pliki”; panel montuje go w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`).
+w zakładce Połączenia projektu; panel montuje go w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`).
 
 Bez dodatkowej konfiguracji panel używa klienta OAuth wbudowanego w rclone. Google odsyła wtedy przeglądarkę na
 `http://127.0.0.1:53682/…`, a tej strony na telefonie i Macu nie da się otworzyć: adres z paska wklejasz raz na

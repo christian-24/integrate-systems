@@ -280,7 +280,7 @@ Polecenia git panelu działają bez haków repozytorium (`core.hooksPath` pusty)
 
 ### Zmiany niezatwierdzone w repozytorium projektu
 
-„Kod i pliki” (stan z `/api/github/stan`) pokazuje pliki niezatwierdzone, `sources` (uruchomienia z ostatnich 3 dni,
+Połączenia → GitHub na stronie projektu (stan z `/api/github/stan`) pokazuje pliki niezatwierdzone, `sources` (uruchomienia z ostatnich 3 dni,
 które zapisywały te pliki narzędziem Edit/Write poza swoim katalogiem roboczym) i `stashes` (schowek git). Działania
 wykonuje proces panelu: `POST /api/repo/zatwierdz {project}` (jeden commit na bieżącej gałęzi, autor „Panel projektów”,
 opis z tytułem zadania i id uruchomienia), `POST /api/repo/odloz {project}` (`git stash push -u` z opisem),
@@ -293,8 +293,8 @@ Błąd git przy starcie (np. brak commita) nie blokuje zadania: praca idzie w fo
 
 Repozytorium na GitHubie (pole karty `- github: właściciel/repozytorium`, opcjonalnie `- github gałąź: nazwa`) jest
 źródłem prawdy. Kopia w folderze projektu na serwerze jest potrzebna tylko na czas pracy (zadania agentów,
-podgląd strony). Moduł `dashboard/kopie.py`, widok: Serwer → „Projekty i GitHub” (wiersz projektu z repozytorium git
-albo z polem `github:`; stan wczytuje się po rozwinięciu wiersza). Na stronie projektu kopia usunięta ma znacznik
+podgląd strony). Moduł `dashboard/kopie.py`, widok: strona projektu, sekcja „Kod i pliki” (projekt z repozytorium git
+albo z polem `github:`). Na stronie projektu kopia usunięta ma znacznik
 „Kopia na GitHubie”.
 
 - **Stan** (bez sieci): `origin` (bez danych logowania), bieżąca gałąź, commity przed/za `origin/<gałąź>`, lokalne
@@ -535,7 +535,7 @@ w odbiorze (`/api/odbior/popraw`) zapisują polecenie i stan w Rozmowie w projek
 **Przyciski jednego działania** nie rozmawiają z modelem: zakładają albo zmieniają zadanie i wołają `run_task` (te same
 reguły co „Uruchom”): Marketing „Zleć” (`/api/post/zlec`), „Co poprawić” w poście i filmie (`/api/post/popraw`),
 scenariusz „Przygotuj” i „Co zmienić?” (`/api/scenariusz/przygotuj|popraw`), studio filmów „Poproś”
-(`/api/studio/popros`), Strona „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`), Serwer → Projekty
+(`/api/studio/popros`), Strona „Zleć wykonanie według koncepcji” (`/api/strona/koncepcja`), Informacje → Księga projektów
 „Zleć agentowi uzupełnienie”, „Do poprawy” i odbiór. Wyjątki z własnym wywołaniem modelu, bez rozmowy: raport PM
 (`/api/agent/pm`, rola PM z `PM_TOOLS`, wiersze `Uruchom:` przez `launch_task`), plan dnia (`/api/plan/ask`, przyjęcie
 przez `run_task`) i grafika posta przez Codex (`/api/post/grafika-codex`, obróbka jednego obrazu w folderze posta).
@@ -741,7 +741,7 @@ taki zapis i słowa „zakładka Strona” w odpowiedzi na link.
    bez agenta 404) i `browser`. Zakładka pokazuje to w sekcji „Agent pracuje nad stroną” z przyciskami „Pokaż wersję
    w budowie” (ramka odświeża się po każdym budowaniu agenta), „Wiadomość do agenta” (Rozmowa, jak „Napisz do
    pracującego agenta”) i „Cały przebieg”. Pole `repo` (niezatwierdzone zmiany w repozytorium strony) daje ostrzeżenie
-   z odnośnikiem do „Kod i pliki”.
+   z odnośnikiem do Połączeń projektu (karta GitHub).
 7. **Przeglądarka dla agenta strony** (Claude, gdy jest `PANEL_PRZEGLADARKA_MCP`): panel uruchamia na czas pracy
    serwer plików wyniku budowania z katalogu roboczego agenta na `127.0.0.1:<port>` (port zapamiętany w danych
    uruchomienia, także po restarcie panelu) i daje agentowi `--mcp-config` z Playwright MCP (`--headless --isolated`,
@@ -834,8 +834,10 @@ poprzedniego uruchomienia i z pola `gałąź:`): `testy/test_na_zywo.py` (atrapa
 
 „Teraz” odświeża się co 3 sekundy. Karta pokazuje zadanie, projekt, komputer, upływ czasu,
 trzy ostatnie wpisy i zużycie limitu 5 h, gdy strumień je podaje. Postęp pochodzi z listy Claude
-(`TodoWrite`, `TaskCreate`, `TaskUpdate`) lub planu Codex (`todo_list`, zdarzenia planu). Gdy planu
-brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność. Pasek liczy ukończone kroki.
+(`TodoWrite`, `TaskCreate`, `TaskUpdate`) lub planu Codex (`todo_list`, zdarzenia planu). Polecenie zadania
+(`MILESTONES_RULE`) każe agentowi zapisać na początku 3–7 kamieni milowych i odhaczać je po kolei; karta pokazuje
+„Kamień 2 z 5: nazwa” z paskiem. Ukończony kamień dostaje w planie `doneAt` (chwila zdarzenia). Gdy planu
+brakuje, panel pokazuje kroki pod zadaniem, a bez kroków ostatnią czynność.
 „Przebieg na żywo” otwiera szczegóły uruchomienia. Pod kartami widać uruchomienia w kolejce, zadania
 gotowe dla włączonego Automatu oraz zlecenia rozwoju czekające na start (patrz `ROZWOJ.md`).
 
@@ -851,6 +853,12 @@ panel sprawdza najnowszą sesję konta `agent`. Katalog można wskazać przez `P
 0% do następnego odczytu.
 
 Szacunki czasu, tokenów i zużycia 5 h to mediany zakończonych uruchomień tego samego narzędzia i rodzaju.
-Każda wielkość wymaga przynajmniej trzech odczytów. Ukończone kroki pozwalają skorygować szacunek trwającej pracy.
+Każda wielkość wymaga przynajmniej trzech odczytów; kwartyle czasu (`low`, `high`) są w podpowiedzi. Przed pierwszym
+ukończonym kamieniem trwająca praca ma szacunek z historii („ok. N min”, `basis: history`). Po pierwszym kamieniu:
+„zostało ok. N min (± M)” z tempa kamieni (czas do ostatniego ukończonego / ukończone × pozostałe), ważone z historią
+(waga tempa n/(n+1) po n kamieniach); margines to ±50% / √n (`basis: milestones`, `agent_progress.estimate_running`).
+Sekcja „Użycie” (`stats` w `/api/data`, `agent_progress.usage_stats`): dla Claude i Codex limit 5 h i tygodniowy,
+uruchomienia i tokeny dziś i w 7 dni, średni czas, odsetek udanych i najdroższe zadania 7 dni, z zapisanych rekordów
+uruchomień i zleceń rozwoju.
 Godziny w kolejce uwzględniają przewidywany koniec uruchomień w toku oraz liczbę równoległych prac.
 Raport PM korzysta z rejestru lub zbieracza i może uruchomić gotowe zadania agentów zgodnie ze standardem PM.

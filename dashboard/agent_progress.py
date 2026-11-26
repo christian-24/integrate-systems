@@ -7,7 +7,7 @@ import math
 import os
 import re
 import stat
-from statistics import median
+from statistics import median, quantiles
 import time
 
 ORDER = re.compile(r"ZLECENIE-[\w-]+")
@@ -15,7 +15,24 @@ LOG_TAIL = 2 * 1024 * 1024
 STALE = 15 * 60
 
 
-def update_plan(plan, ev):
+def update_plan(plan, ev, now=None):
+    """Plan (kamienie milowe) ze zdarzenia strumienia. now: chwila zdarzenia (s); ukończony krok dostaje doneAt,
+    z którego liczy się tempo kamieni (estimate_running). Bez now nowy doneAt nie powstaje (wcześniejsze zostają)."""
+    before = {_step_key(s): s.get("doneAt") for s in plan if s.get("done")}
+    _apply_plan(plan, ev)
+    for step in plan:
+        if step.get("done") and "doneAt" not in step:
+            key = _step_key(step)
+            stamp = before[key] if key in before else now
+            if stamp is not None:
+                step["doneAt"] = stamp
+
+
+def _step_key(step):
+    return step.get("id") or step.get("text")
+
+
+def _apply_plan(plan, ev):
     msg = ev.get("msg")
     msg = msg if isinstance(msg, dict) else ev
     item = ev.get("item") or {}
@@ -322,7 +339,7 @@ class Orders:
                     ev = json.loads(line)
                     if not isinstance(ev, dict):
                         continue
-                    update_plan(plan, ev)
+                    update_plan(plan, ev, read_time(ev.get("timestamp"), None))
                     task_creates(pending, plan, ev)
                     kind = ev.get("type") or ""
                     msg = ev.get("msg") or ev
@@ -414,11 +431,16 @@ def token_count(run):
 
 
 def estimate(history, tool, kind):
+    """Typowy czas (mediana) z co najmniej 3 zakończonych uruchomień tego narzędzia i rodzaju; low i high: kwartyle
+    (zakres w podpowiedzi), limit i tokens: mediany."""
     runs = [r for r in history if tool and r.get("tool") == tool and category(r) == kind
             and r.get("state") == "done" and (r.get("durationMs") or 0) > 0]
     result = {"examples": len(runs)}
     if len(runs) >= 3:
-        result["seconds"] = median(r["durationMs"] for r in runs) / 1000
+        durations = [r["durationMs"] / 1000 for r in runs]
+        result["seconds"] = median(durations)
+        low, _, high = quantiles(durations, n=4, method="inclusive")
+        result.update(low=low, high=high)
         for key, getter in (("limit", consumed), ("tokens", lambda r: token_count(r) or None)):
             observations = [value for r in runs if (value := getter(r)) is not None]
             if len(observations) >= 3:
@@ -426,19 +448,45 @@ def estimate(history, tool, kind):
     return result
 
 
+MILESTONE_SPREAD = .5       # ± po pierwszym kamieniu; po n kamieniach .5/√n
+
+
 def estimate_running(typical, run, now):
+    """Szacunek uruchomienia w toku. Przed pierwszym ukończonym kamieniem: mediana z historii (basis history).
+    Potem tempo kamieni: czas na kamień × pozostałe, ważone z historią (waga tempa n/(n+1) po n kamieniach),
+    z marginesem ± malejącym z każdym kamieniem (basis milestones)."""
     elapsed = max(0, now - read_time(run.get("startedAt"), now))
-    result = dict(typical, elapsed=elapsed)
+    result = dict(typical, elapsed=elapsed, basis="history")
+    if "seconds" in typical:
+        result["typical"] = typical["seconds"]
+    plan = [s for s in run.get("plan") or [] if s.get("text")]
+    total, done = len(plan), sum(s.get("done") is True for s in plan)
+    if total:
+        result["milestones"] = {"done": done, "total": total}
+    if done and elapsed > 0:
+        start = read_time(run.get("startedAt"), now)
+        stamps = [s["doneAt"] - start for s in plan if s.get("done") is True and isinstance(s.get("doneAt"), (int, float))]
+        last = max(stamps) if len(stamps) == done else elapsed
+        last = min(elapsed, max(1, last))
+        pace = last / done
+        left = total - done
+        remaining = 0
+        if left:
+            since = elapsed - last
+            remaining = max(pace - since, .2 * pace) + pace * (left - 1)
+            if "seconds" in typical:
+                weight = done / (done + 1)
+                remaining = weight * remaining + (1 - weight) * typical["seconds"] * left / total
+        result.update(seconds=elapsed + remaining, remaining=remaining, pace=pace, basis="milestones",
+                      margin=remaining * MILESTONE_SPREAD / math.sqrt(done))
+        for key, amount in (("limit", consumed(run)), ("tokens", token_count(run) or None)):
+            if amount is not None:
+                result[key] = amount * total / done
+        return result
     if "seconds" not in typical:
         return result
-    plan = [s for s in run.get("plan") or [] if s.get("text")]
-    done = sum(s.get("done") is True for s in plan)
-    if done:
-        result["seconds"] = elapsed * len(plan) / done
-        for key, amount in (("limit", consumed(run)), ("tokens", token_count(run) or None)):
-            if key in result and amount is not None:
-                result[key] = amount * len(plan) / done
     result["seconds"] = max(elapsed, result["seconds"])
+    result["remaining"] = result["seconds"] - elapsed
     return result
 
 
@@ -459,3 +507,51 @@ def estimate_queue(active, queued, parallel, now):
             lanes.append(estimate["end"])
     return {key: sum(row["estimate"][key] for row in queued)
             for key in ("seconds", "tokens", "limit") if queued and all(key in row["estimate"] for row in queued)}
+
+
+FINISHED_OK = ("done",)
+FINISHED_BAD = ("error", "timeout", "login", "limit")
+TOP_SHOWN = 5
+
+
+def usage_stats(history, now):
+    """Użycie Claude i Codex z zapisanych uruchomień (bez nowych logów): liczba i tokeny dziś i w 7 dni, średni czas
+    zakończonych, odsetek udanych (zakończone bez błędu i bez blokady; zatrzymane ręcznie się nie liczą) i najdroższe
+    zadania 7 dni (tokeny). Dzień według czasu lokalnego tego komputera."""
+    midnight = datetime.datetime.fromtimestamp(now).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    week = now - 7 * 86400
+    result = {}
+    for tool in ("claude", "codex"):
+        stats = {"runsToday": 0, "runs7": 0, "tokensToday": 0, "tokens7": 0, "costUsd7": 0, "ok7": 0, "finished7": 0}
+        durations, top = [], []
+        for run in history:
+            if run.get("tool") != tool:
+                continue
+            at = read_time(run.get("startedAt") or run.get("queuedAt"), None)
+            if at is None or at < week:
+                continue
+            tokens = token_count(run)
+            stats["runs7"] += 1
+            stats["tokens7"] += tokens
+            stats["costUsd7"] += (run.get("costUsd") or 0) + (run.get("decisionCostUsd") or 0)
+            if at >= midnight:
+                stats["runsToday"] += 1
+                stats["tokensToday"] += tokens
+            state = run.get("state")
+            if state in FINISHED_OK or state in FINISHED_BAD:
+                stats["finished7"] += 1
+                if state in FINISHED_OK and run.get("outcome") != "blocked":
+                    stats["ok7"] += 1
+            if state == "done" and (run.get("durationMs") or 0) > 0:
+                durations.append(run["durationMs"])
+            if tokens and state not in ("queued", "running"):
+                top.append({"id": str(run.get("id") or ""), "title": str(run.get("title") or "")[:200],
+                            "projectName": str(run.get("projectName") or "")[:120], "tokens": tokens,
+                            "costUsd": round((run.get("costUsd") or 0) + (run.get("decisionCostUsd") or 0), 2),
+                            "limit": consumed(run), "at": run.get("startedAt") or run.get("queuedAt") or ""})
+        stats["costUsd7"] = round(stats["costUsd7"], 2)
+        stats["avgMs"] = round(sum(durations) / len(durations)) if durations else None
+        stats["successRate"] = stats["ok7"] / stats["finished7"] if stats["finished7"] else None
+        stats["top"] = sorted(top, key=lambda r: r["tokens"], reverse=True)[:TOP_SHOWN]
+        result[tool] = stats
+    return result

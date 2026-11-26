@@ -129,7 +129,22 @@ with sync_playwright() as p:
         page.route('**/api/data', data)
         page.goto(url + '#agenci')
         page.get_by_role('heading', name='Teraz', exact=True).wait_for()
-        assert page.get_by_text('Krok 2 z 3', exact=False).is_visible()
+        # grupa agenci (2026-11-25): kamienie milowe i zawężony szacunek, brak Planu dnia, Użycie, zwinięte Uruchomienia
+        assert page.get_by_text('Kamień 2 z 3', exact=False).is_visible()
+        assert page.get_by_text('Zostało ok. 8 min', exact=False).is_visible()
+        assert page.locator('#ag-view').get_by_text('Plan dnia').count() == 0
+        assert page.locator('#plan').count() == 0
+        use = page.locator('#ag-use')
+        assert use.get_by_role('heading', name='Claude', exact=False).is_visible()
+        assert use.get_by_role('heading', name='Codex', exact=False).is_visible()
+        assert use.get_by_text('Uruchomienia', exact=True).count() == 2
+        assert use.get_by_text('Udane (7 dni)', exact=True).count() == 2
+        runs = page.locator('#ag-runs')
+        assert runs.evaluate('el => el.tagName === "DETAILS" && !el.open')
+        assert not runs.locator('.wh').first.is_visible()
+        assert 'dziś' in runs.locator('summary').inner_text()
+        runs.locator('summary').click()
+        runs.locator('.wh').first.wait_for()
         assert page.get_by_text('Przygotuj zmianę w kolejce', exact=False).is_visible()
         for state in ['zrobione', 'do odbioru', 'blokada', 'zatrzymane', 'błąd']:
             assert page.locator('#ag-runs .wh').get_by_text(state, exact=True).is_visible(), state
@@ -166,6 +181,9 @@ class Widok(unittest.TestCase):
             "runs": [dict(base, id="live", state="running", title="Rozbuduj widok projektu",
                           plan=[{"text": "Przejrzyj kod", "done": True}, {"text": "Piszę testy", "active": True},
                                 {"text": "Sprawdź widok"}],
+                          estimate={"basis": "milestones", "remaining": 480, "margin": 240, "pace": 300,
+                                    "milestones": {"done": 1, "total": 3}, "elapsed": 300, "seconds": 780,
+                                    "examples": 4, "typical": 600},
                           limitStart=.18, limitNow=.21, recent=["Sprawdzono układ widoku", "Zapisano zmiany",
                                                                "Uruchomiono testy"])]
         }

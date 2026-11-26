@@ -75,11 +75,14 @@ class Szacunki(unittest.TestCase):
         row = {"startedAt": start, "plan": [{"text": text, "done": done} for text, done in
                 (("po pierwsze", True), ("po drugie", False), ("po trzecie", False))]}
         running = agent_progress.estimate_running(typical, row, 130)
-        self.assertEqual(running["seconds"], 90)
+        # 2026-11-25 (kamienie milowe): pozostałe kamienie z tempa (30 s na kamień → 60 s) ważone z historią
+        # (60 s × 2/3 = 40 s) wagą 1/2 po jednym kamieniu → zostało 50 s, razem 80 s (dawniej 30 s × 3/1 = 90 s)
+        self.assertEqual(running["seconds"], 80)
+        self.assertEqual(running["basis"], "milestones")
         queued = [{"estimate": dict(typical)}, {"estimate": dict(typical)}]
         total = agent_progress.estimate_queue([{"estimate": running}], queued, 1, 130)
-        self.assertEqual([r["estimate"]["start"] for r in queued], [190, 250])
-        self.assertEqual([r["estimate"]["end"] for r in queued], [250, 310])
+        self.assertEqual([r["estimate"]["start"] for r in queued], [180, 240])
+        self.assertEqual([r["estimate"]["end"] for r in queued], [240, 300])
         self.assertEqual((total["seconds"], total["tokens"]), (120, 500))
 
 
