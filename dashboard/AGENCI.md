@@ -366,6 +366,8 @@ wstrzymany i backlog), zadania trafiają do „Do rozplanowania”:
   wyniku, `materiał:` rytm i plan). Tylko raz: klucz publikacji trafia do `rytmDone` w `stan.json`, więc usunięte
   zadanie nie wraca.
 - `PANEL_RYTM` (dotychczasowy rytm) zakłada zadanie z tymi samymi szczegółami.
+- Rytm, scenariusze nagrania i „Zleć” (`/api/post/zlec`) dotyczą tylko reklam i publikacji (`row` w STANDARD.md,
+  „Rodzaje wierszy harmonogramu”); kroki właściciela („Wgraj B1 do kampanii…”) i przeglądy pomijają (`material_row`).
 
 ### Powiadomienia (ntfy)
 
