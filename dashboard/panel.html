@@ -6054,6 +6054,7 @@ function wwMount(p){
     root.innerHTML='<div class="ww-bar">'+
       '<span class="ww-seg ww-src" role="group" aria-label="Która wersja strony" data-wwsrc hidden><button type="button" class="seg" data-wwlv="live" data-k="wwlv-l" title="Z katalogu roboczego pracującego agenta">Wersja w budowie</button><button type="button" class="seg" data-wwlv="built" data-k="wwlv-b">Ostatnia zbudowana</button></span>'+
       '<div class="ww-acts">'+
+      '<span class="ww-seg ww-lang" role="group" aria-label="Język strony" data-wwlang hidden></span>'+
       '<span class="ww-seg" role="group" aria-label="Szerokość podglądu"><button type="button" class="seg" data-wwview="telefon" data-k="wwv-t" title="390 px">Telefon</button><button type="button" class="seg" data-wwview="komputer" data-k="wwv-k" title="1440 px">Komputer</button></span>'+
       '<button type="button" class="btn sec sm" data-wwpick data-k="wwpick" aria-pressed="false" title="Kliknij element w podglądzie, który chcesz zmienić">Wskaż</button>'+
       '<span class="ww-bw"><button type="button" class="btn sec sm" data-wwbuild data-k="wwbuild" title="Podgląd buduje się sam po pracy agenta i po scaleniu zmian">Zbuduj podgląd</button><span class="ww-bst" data-wwbst></span></span></div></div>'+
@@ -6153,9 +6154,12 @@ function wwPaint(pid){
       (F.length?'<details><summary>Pliki</summary><ul>'+F.map(f=>'<li><code>'+esc(f)+'</code></li>').join('')+'</ul></details>':'')+'</div></div>')}
   let shown='';
   if(on){shown=d.live.url;const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
-  else if(d&&d.url){shown=d.url;const src=d.url+'?v='+(b.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
+  else if(d&&d.url){const lg=s.lang&&(d.langs||[]).includes(s.lang)?s.lang+'/':'';shown=d.url+lg;const src=d.url+lg+'?v='+(b.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else{fit.hidden=true;em.hidden=false;setHtml(em,!d?'<p>'+(s.err?esc(s.err):'Wczytuję…')+'</p>':b.state==='building'||!b.state?'<p>Buduję pierwszy podgląd…</p>':
     '<p>Podglądu jeszcze nie ma.</p>'+(b.state==='error'?'<p class="ww-err">'+esc(b.error||'')+'</p>':''))}
+  /* strona wielojęzyczna: wybór wersji w podglądzie (Auto = język przeglądarki, jak u odwiedzającego) */
+  const wl=q('[data-wwlang]'),L0=(d&&d.langs)||[];if(wl){wl.hidden=L0.length<2;
+    setHtml(wl,L0.length<2?'':['',...L0].map(x=>'<button type="button" class="seg" data-wwlg="'+x+'" aria-pressed="'+((s.lang||'')===x)+'" data-k="wwlg-'+(x||'auto')+'"'+(x?'':' title="Język z przeglądarki, jak u odwiedzającego"')+'>'+(x?x.toUpperCase():'Auto')+'</button>').join(''))}
   const op=q('[data-wwopen]');if(op)op.hidden=!shown;setHtml(op,shown?'<a href="'+esc(shown)+'" target="_blank" rel="noopener noreferrer" data-k="wwopen">Otwórz podgląd w nowej karcie</a>':'');
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':'');
   const L=d?d.notes||[]:[];
@@ -6184,6 +6188,8 @@ async function wwConcept(f){
   f.elements.path.value='';f.elements.text.value='';const cd=f.closest('details');if(cd)cd.open=false;
   say('Zlecono agentowi nową wersję strony.');load();wwLoad(pid);
 }
+document.addEventListener('click',ev=>{const g=ev.target.closest&&ev.target.closest('[data-wwlg]');if(!g)return;
+  const root=g.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);s.lang=g.dataset.wwlg;wwPaint(pid)});
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wwview],[data-wwpick],[data-wwbuild],[data-wwclear],[data-wwshow],[data-wwnote],[data-wwlv],[data-wwerr]');if(!b)return;
   const root=b.closest('.ww-root');if(!root)return;const pid=root.dataset.ww,s=wwSt(pid);ev.preventDefault();
   if(b.dataset.wwlv){if(b.getAttribute('aria-disabled')==='true')return;s.src=b.dataset.wwlv;wwPaint(pid);return}
@@ -6601,7 +6607,7 @@ function kaDet(p,prov,K,A,L,login){
   let h='';
   if(L.length)h+='<ul class="pjx-pg">'+L.map(l=>'<li><b>'+esc(l.name)+'</b> <span class="muted">'+l.accounts.length+' '+(l.accounts.length===1?'konto':'kont')+
     (l.expiresAt?' · ważne do '+esc(dd(l.expiresAt.slice(0,10))):'')+'</span>'+(l.error?' <span class="lz red" title="'+esc(l.error)+'">błąd</span>':'')+
-    (prov==='google'?' <button type="button" class="btn sec sm" data-karef="'+esc(l.id)+'">Odśwież konta</button>':'')+
+    (prov==='google'?' <button type="button" class="btn sec sm" data-karef="'+esc(l.id)+'">Odśwież konta</button>':prov==='meta'?' <button type="button" class="btn sec sm" data-karef="'+esc(l.id)+'" data-kaprov="meta" title="Ponownie pobiera strony Facebook i konta Instagram z Meta">Odśwież strony</button>':'')+
     ' <button type="button" class="btn sec sm" data-kaout="'+prov+'" data-login="'+esc(l.id)+'">Wyloguj</button></li>').join('')+'</ul>'+
     '<div class="row"><button type="button" class="btn sec sm" data-kalogin="'+prov+'" data-pid="'+esc(p.id)+'">Zaloguj inne konto</button></div>';
   if(prov==='meta'&&typeof pjxPages==='function'){
@@ -6638,7 +6644,8 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
     post('/api/konta/start',{provider:prov,project:b.dataset.pid,return:location.hash}).then(x=>{if(x.ok&&x.data&&x.data.url)location.href=x.data.url;else say(failMsg(x,'Nie rozpoczęto logowania.'))});return}
   if(b.dataset.kaout){if(!confirm('Wylogować to konto z panelu? Projekty z jego kontami przestaną pobierać wyniki.'))return;
     enqueue(async()=>{const x=await post('/api/konta/odlacz',{provider:b.dataset.kaout,login:b.dataset.login});say(x.ok?'Wylogowano.':failMsg(x,'Nie wylogowano.'))});return}
-  if(b.dataset.karef)enqueue(async()=>{const x=await post('/api/konta/odswiez',{provider:'google',login:b.dataset.karef});say(x.ok?'Kont Google Ads: '+x.data.accounts+'.':failMsg(x,'Nie odświeżono.'))});
+  if(b.dataset.karef){const pv=b.dataset.kaprov||'google';enqueue(async()=>{const x=await post('/api/konta/odswiez',{provider:pv,login:b.dataset.karef});
+    say(x.ok?(pv==='meta'?'Stron Facebook: '+x.data.pages+'. Jeśli nowej strony nie ma, zaloguj się do Meta ponownie i zaznacz ją przy „Edytuj dostęp”.':'Kont Google Ads: '+x.data.accounts+'.'):failMsg(x,'Nie odświeżono.'))})}
 });
 document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.kaacc==null)return;
   if(!LIVE){say(PRV);return}
