@@ -45,6 +45,10 @@ Instalacja i aktualizacja skryptów: `sudo bash uruchom/serwer/zainstaluj-rozwoj
 4. Push `main` do GitHuba.
 5. Błąd w punkcie 3: produkcja wraca do poprzedniego commita (`git reset --keep`, zmiany kart na dysku zostają),
    panel startuje ponownie, właściciel dostaje powiadomienie. Dziennik: panel, Serwer → Rozwój panelu.
+6. Postęp w panelu: pasek „Wdrożenie: …” nad każdym widokiem (czeka na start, testy w toku, czeka na agentów,
+   scalanie i restart, gotowe, nieudane z liczbą testów). Źródło: pole `deploy.progress` w `/api/data`
+   (`server.deploy_progress`), liczone z `stan.json` i `ostatnie.log` w katalogu wdrożenia. Przy nieudanych testach
+   Serwer → Rozwój panelu pokazuje nazwy testów i komunikat błędu z dziennika (bez sekretów).
 
 ## Kontekst
 

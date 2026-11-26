@@ -3367,6 +3367,131 @@ def _test_password():
     return ""
 
 
+DEPLOY_STALE_MIN = 40      # stan „trwa” starszy niż tyle minut: wdrożenie przerwane (jak deploy_hold w agents.py)
+DEPLOY_WAIT_STALE_MIN = 5  # stan „waiting” bez odświeżenia przez tyle minut: wdrożenie przerwane
+DEPLOY_FAILED_MAX = 5      # tyle testów z błędem (nazwa i pierwsze linie) w bloku progress
+# sekrety w dzienniku: wartości po nazwach kluczy, nagłówki autoryzacji, znane przedrostki tokenów, długie ciągi
+_SECRET_RES = (
+    re.compile(r"(?i)\b(?![a-z_]*(?:error|exception)\b)((?:[a-z_]*(?:token|klucz|key|secret|sekret|password|passwd|"
+               r"haslo|hasło|cookie|auth)[a-z_]*)[\"']?\s*[:=]\s*[\"']?)[^\s\"',;]+"),
+    re.compile(r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"),
+    re.compile(r"\b(?:sk-|ghp_|gho_|github_pat_|xox[abp]-|AKIA|ya29\.|EAA)[A-Za-z0-9._-]{8,}"),
+    re.compile(r"\b(?=[A-Za-z0-9+_-]*\d)(?=[A-Za-z0-9+_-]*[A-Za-z])[A-Za-z0-9+_-]{40,}={0,2}"),
+)
+_TEST_HEAD = re.compile(r"^(FAIL|ERROR|UNEXPECTED SUCCESS): (\S+) \(([^)]*)\)(.*)$")
+_LOG_TIME = re.compile(r"^(\d\d):(\d\d):(\d\d) (.*)$")
+# etapy z tekstu stanu, który zapisuje uruchom/serwer/wdroz-panel.sh (stan running "…")
+_DEPLOY_STEPS = (("Sprawdzam", "check"), ("Testy", "tests"), ("Scalam", "merge"), ("Restart", "restart"))
+
+
+def _redact(line):
+    """Linia dziennika bez sekretów (wartości kluczy, tokeny, długie ciągi znaków)."""
+    s = _SECRET_RES[1].sub(lambda m: m.group(1) + " ***", str(line))
+    s = _SECRET_RES[0].sub(lambda m: m.group(1) + "***", s)
+    for r in _SECRET_RES[2:]:
+        s = r.sub("***", s)
+    return s
+
+
+def _log_at(hms, start):
+    """Czas z linii dziennika (GG:MM:SS) jako ISO, z dniem i strefą z początku wdrożenia (po północy: dzień później)."""
+    base = None
+    try:
+        base = datetime.datetime.fromisoformat(str(start or ""))
+    except ValueError:
+        base = None
+    if base is None:
+        return ""
+    h, m, s = hms
+    dt = base.replace(hour=h, minute=m, second=s, microsecond=0)
+    if dt < base - datetime.timedelta(minutes=1):
+        dt += datetime.timedelta(days=1)
+    return dt.isoformat()
+
+
+def deploy_tests(lines):
+    """Wynik testów z dziennika wdrożenia (ostatnie linie unittest -q): liczba testów, liczba błędów, testy z błędem
+    z pierwszymi liniami błędu (komunikat wyjątku). None, gdy w dzienniku nie ma wyniku testów."""
+    ran = failed = None
+    ok = None
+    for line in lines:
+        m = re.match(r"^Ran (\d+) tests? in ", line)
+        if m:
+            ran = int(m.group(1))
+        m = re.match(r"^(OK|FAILED)\b(?: \((.*)\))?", line)
+        if m and ran is not None:
+            ok = m.group(1) == "OK"
+            counts = dict((k.strip(), int(v)) for k, _, v in (p.partition("=") for p in (m.group(2) or "").split(","))
+                          if v.strip().isdigit())
+            failed = counts.get("failures", 0) + counts.get("errors", 0) + counts.get("unexpected successes", 0)
+    items, cur = [], None
+    for line in lines:
+        m = _TEST_HEAD.match(line)
+        if m:
+            where = m.group(3)
+            test = where if where.endswith("." + m.group(2)) else (where + "." + m.group(2) if where else m.group(2))
+            cur = {"kind": m.group(1), "name": m.group(2), "test": test + m.group(4).rstrip(), "body": []}
+            items.append(cur)
+        elif cur is not None:
+            if re.match(r"^-{20,}$", line) and cur["body"] and any(x.strip() for x in cur["body"]):
+                cur = None                       # koniec bloku (separator przed „Ran N tests”)
+            elif not re.match(r"^[=-]{20,}$", line):
+                cur["body"].append(line)
+    out = []
+    for it in items[:DEPLOY_FAILED_MAX]:
+        body = [x for x in it["body"] if x.strip()]
+        tb = next((i for i, x in enumerate(body) if x.startswith("Traceback")), -1)
+        msg = [x for x in body[tb + 1:] if not x.startswith((" ", "\t"))] if tb >= 0 else []
+        msg = [x for x in msg if not x.startswith(("During handling", "The above exception"))]
+        lines_out = [(_redact(x)[:200]) for x in (msg or body)[:3]]
+        out.append({"kind": it["kind"], "name": it["name"], "test": it["test"], "lines": lines_out})
+    if ran is None and not out:
+        return None
+    if failed is None and ok is None:
+        failed = len(items)
+    return {"ran": ran, "ok": ok, "failed": failed or 0, "named": len(items), "items": out}
+
+
+def deploy_progress(last, ahead, head, log_text, now=None):
+    """Etap wdrożenia dla paska na górze panelu: stage (pending, queued, check, tests, agents, merge, restart, ok,
+    error, rolledback, stalled, running), since (ISO), agents (ile w toku), agentsMax (min), tests (deploy_tests)."""
+    now = now or datetime.datetime.now()
+    last = last if isinstance(last, dict) else {}
+    state, text = str(last.get("state") or ""), str(last.get("text") or "")
+    lines = [x.rstrip("\r") for x in (log_text or "").splitlines()]
+    out = {"stage": "", "since": str(last.get("at") or ""), "agents": 0, "agentsMax": 0, "tests": None,
+           "head": head or "", "sha": str(last.get("sha") or "")[:12]}
+    if state == "waiting":
+        out["stage"] = "agents"
+        m = re.search(r"\((\d+)\)", text)
+        out["agents"] = int(m.group(1)) if m else 0
+        for line in lines:
+            t = _LOG_TIME.match(line)
+            w = t and re.match(r"Agenci pracują \((\d+)\): czekam najwyżej (\d+) min", t.group(4))
+            if w:
+                out["since"] = _log_at(tuple(int(t.group(i)) for i in (1, 2, 3)), last.get("startedAt")) or out["since"]
+                out["agentsMax"] = int(w.group(2))
+                break
+    elif state == "running":
+        out["stage"] = next((k for p, k in _DEPLOY_STEPS if text.startswith(p)), "running")
+    elif state in ("queued", "ok", "error", "rolledback"):
+        out["stage"] = state
+    if out["stage"] not in ("ok", "error", "rolledback", "") and state:
+        # „waiting” skrypt zapisuje co 20 s: dłuższa cisza znaczy, że wdrożenie przerwano (np. limit czasu usługi)
+        at = _iso(last.get("at"))
+        limit = DEPLOY_WAIT_STALE_MIN if state == "waiting" else DEPLOY_STALE_MIN
+        if at and now - at > datetime.timedelta(minutes=limit):
+            out.update(stage="stalled", since=str(last.get("at") or ""))
+    if out["stage"] in ("agents", "merge", "restart", "ok", "error", "rolledback", "stalled"):
+        out["tests"] = deploy_tests(lines)
+    # nic nie trwa, a na gałęzi są nowe zmiany: czekają na start (automat) albo na przycisk „Wdróż”
+    failed_head = out["stage"] in ("error", "rolledback") and head and out["sha"].startswith(head)
+    if ahead and out["stage"] in ("", "ok", "error", "rolledback", "stalled") and not failed_head:
+        out["previous"] = out["stage"]
+        out["stage"] = "pending"
+    return out
+
+
 def deploy_state():
     """Blok "deploy" w /api/data albo None, gdy na tej maszynie nie ma kopii roboczej rozwoju."""
     if not os.path.isdir(os.path.join(DEV_REPO, ".git")):
@@ -3374,9 +3499,11 @@ def deploy_state():
     out = dict(_deploy_branch())
     last = load_json(os.path.join(DEPLOY_DIR, "stan.json"), None)
     out["last"] = last if isinstance(last, dict) else None
+    text = (projekt.read(os.path.join(DEPLOY_DIR, "ostatnie.log")) or "") if out["last"] else ""
     if out["last"] and out["last"].get("state") in ("error", "rolledback"):
-        text = projekt.read(os.path.join(DEPLOY_DIR, "ostatnie.log")) or ""
-        out["log"] = "\n".join(text.splitlines()[-40:])
+        out["log"] = "\n".join(_redact(x) for x in text.splitlines()[-40:])
+    cm = out.get("commits") or []
+    out["progress"] = deploy_progress(out["last"], out.get("ahead") or 0, cm[0]["sha"] if cm else "", text)
     out.update(branch=DEV_BRANCH, repo=DEV_REPO, testUrl=TEST_URL, testPassword=_test_password(),
                auto=os.path.exists(AUTO_UNIT))
     return out
@@ -3388,7 +3515,7 @@ def start_deploy(body):
     if st is None:
         return 400, "Rozwój na serwerze nie jest zainstalowany (uruchom/serwer/zainstaluj-rozwoj.sh)."
     last = st.get("last") or {}
-    if last.get("state") in ("queued", "running"):
+    if last.get("state") in ("queued", "running", "waiting"):     # waiting: wdrożenie czeka na koniec pracy agentów
         started = _iso(last.get("at"))
         if started and datetime.datetime.now() - started < datetime.timedelta(minutes=30):
             return 409, "Wdrożenie już trwa."
