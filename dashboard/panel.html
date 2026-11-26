@@ -6704,8 +6704,7 @@ function osPicker(){
 }
 document.addEventListener('click',ev=>{
   const b=ev.target.closest&&ev.target.closest('[data-osopen],[data-osclose],[data-ostab],[data-ospick],[data-ospickclose],[data-osset],[data-osold]');if(!b)return;
-  if(b.dataset.osclose!=null&&b!==ev.target&&!ev.target.closest('button'))return;   // klik w środek okna nie zamyka
-  if(b.dataset.ospickclose!=null&&b!==ev.target&&!ev.target.closest('button'))return;
+  if(b.classList.contains('os-ov')&&b!==ev.target)return;   // klik w środek okna (także w inne przyciski) nie zamyka
   if(b.dataset.osopen){OS.open=b.dataset.osopen;OS.tab='fb';render(true);return}
   if(b.dataset.osclose!=null){OS.open='';render(true);return}
   if(b.dataset.ostab){OS.tab=b.dataset.ostab;render(true);return}
