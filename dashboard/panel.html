@@ -6805,8 +6805,11 @@ function osModal(){
     '<div class="row os-tabs" role="group">'+tab('fb','Facebook')+tab('ig','Instagram')+tab('st','Story')+'</div>'+
     '<div class="os-phone">'+ph+'</div>'+
     '<div class="os-info">'+(S&&S.n!=null?'<p><b class="num">'+fmtN(S.n)+'</b> wyświetleń · '+esc(S.src)+(S.extra.length?' · '+esc(S.extra.join(' · ')):'')+'</p>'+osSpark(S.ser):'<p class="muted">Brak wyświetleń z API.</p>')+
-    '<div class="row"><button type="button" class="btn sm" data-oscopy="'+esc(t.id)+'" data-k="oscopy">Kopiuj obraz</button>'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Otwórz post</a>':'')+
-    (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+'</div></div></div></div>';
+    '<div class="row"><button type="button" class="btn sm" data-oscopy="'+esc(t.id)+'" data-k="oscopy">Kopiuj obraz</button>'+
+    '<button type="button" class="btn sec sm" data-ostxt="'+esc(t.id)+'" data-k="ostxt">Kopiuj tekst</button>'+
+    '<button type="button" class="btn sm" data-osdraft="'+esc(t.id)+'" data-k="osdraft">Wyślij jako draft do Meta</button>'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Otwórz post</a>':'')+
+    (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+'</div>'+
+    (OS.draft&&OS.draft[t.id]?'<p class="note">Szkic wysłany. <a href="'+esc(OS.draft[t.id])+'" target="_blank" rel="noopener noreferrer">Otwórz szkice w Meta Business Suite</a></p>':'')+'</div></div></div>';
 }
 const name0=t=>t.title.replace(/^(Opublikuj|Przygotuj)\s+\S+\s*/i,'');
 /* film bez nagrania: krótkie story ze scenariusza (hak, ujęcie, napis, wezwanie), plansze przełączane jak w Stories.
@@ -6891,6 +6894,22 @@ document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!fm.d
   if(!LIVE){say(PRV);return}
   OS.pick='';enqueue(async()=>{const r=await detailPost(t,'link',v);
     say(r.ok?'Połączono z postem. Wyświetlenia pojawią się po najbliższym odczycie.':failMsg(r,'Nie zapisano połączenia.'));if(r.ok)setTimeout(()=>osLoad(t.project,true),1500)});
+});
+/* „Kopiuj tekst”: tekst posta albo reklamy (tekst główny, nagłówek, opis) do schowka */
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-ostxt]');if(!b)return;
+  const X=OS.txt[b.dataset.ostxt],tx=osParse(X&&X.text);
+  const out=[tx.body,tx.head?'Nagłówek: '+tx.head:'',tx.desc?'Opis: '+tx.desc:''].filter(Boolean).join('\n\n');
+  if(!out){say('Ten post nie ma jeszcze tekstu.');return}
+  (navigator.clipboard?navigator.clipboard.writeText(out):Promise.reject()).then(()=>say('Skopiowano tekst.'),()=>say('Przeglądarka nie pozwoliła skopiować tekstu.'));
+});
+/* „Wyślij jako draft do Meta”: szkic na stronie Facebook projektu; przeglądasz i publikujesz w Meta Business Suite */
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-osdraft]');if(!b)return;
+  const t=D.tasks.find(x=>x.id===b.dataset.osdraft);if(!t)return;if(!LIVE){say(PRV);return}
+  b.disabled=true;b.textContent='Wysyłam szkic…';
+  post('/api/reklama/draft',{project:t.project,date:t.date.slice(0,10),kod:osCode(t)}).then(r=>{
+    if(r.ok){OS.draft=OS.draft||{};OS.draft[t.id]=r.data.link||'';say('Szkic jest w Meta Business Suite'+(r.data.page?' (strona '+r.data.page+')':'')+'. Przejrzyj i opublikuj sam.');render(true)}
+    else say(failMsg(r,'Nie udało się utworzyć szkicu.'));
+  }).finally(()=>{b.disabled=false;b.textContent='Wyślij jako draft do Meta'});
 });
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick)){OS.open='';OS.pick='';render(true)}});
 /* plansze story przełączają się same co 3,5 s (od ostatniego kliknięcia), z powrotem na początek po ostatniej */
