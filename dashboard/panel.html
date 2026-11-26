@@ -2925,6 +2925,7 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 .pjx-cz{display:inline-flex;align-items:center;gap:var(--g-xs);font-size:var(--fs-xs);color:var(--ink-3);font-weight:600;min-width:0;max-width:100%}
 .pjx-cz select.fi{width:auto;max-width:200px;min-height:32px;padding:var(--g-xs) var(--g-s);font-size:var(--fs-md);font-weight:600;text-overflow:ellipsis}
 .pjx-dec{margin:0 0 var(--g-m)}
+.pjx-wyh{margin:var(--g-xl) 0 var(--g-s)}
 .pjx-con{display:grid;gap:var(--g-m)}
 .pjx-card h2 small{font-size:var(--fs-xs);font-weight:500;color:var(--ink-3);margin-left:var(--g-xs)}
 .pjx-lead{padding:var(--g-m) var(--g-p);font-size:var(--fs-md)}
@@ -2958,6 +2959,31 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 @media (max-width:820px){.ws-row .lk,.ws-row a{padding:12px 4px;margin:0 -4px}}
 .ptabs a .ws-dot{width:7px;height:7px;margin-left:6px;vertical-align:2px}
 @media (prefers-reduced-motion:reduce){.ws-dot,.nav .count.ws-live::before,.bnav .count.ws-live::before,.bn-sheet .count.ws-live::before{animation:none}}
+/* Wyniki marketingu (prefiks wy-): Klienci, Wyniki, połączenia */
+.wy-sub{gap:var(--g-xs);margin-bottom:var(--g-s)}
+.wy-script{width:100%;font-family:ui-monospace,monospace;font-size:12px}
+.wy-err{color:var(--l-red)}
+.wy-form{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end}
+.wy-form .row{grid-column:1/-1}
+.wy-facts{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.wy-row{align-items:center}
+.rows .r.wy-ed{display:flex;gap:var(--g-s);align-items:end;flex-wrap:wrap;text-align:left;justify-content:flex-end}
+.wy-ed .fl{flex:0 0 auto}.wy-ed .fl .fi{width:110px}
+@media (max-width:820px){.rows li.wy-row{grid-template-columns:minmax(0,1fr)}.rows .r.wy-ed{width:100%;justify-content:flex-start}.wy-ed .fl{flex:1}.wy-ed .fl .fi{width:100%;min-height:44px}.wy-form .fi{min-height:44px}}
+.wy-bar{gap:var(--g-s);align-items:center;margin-bottom:var(--g-s);flex-wrap:wrap}
+.wy-res{padding:0 var(--g-p)}
+.rows li.wy-r{display:block}
+.wy-rb{display:flex;gap:var(--g-s);align-items:center;background:none;border:0;padding:0;width:100%;text-align:left;color:inherit;cursor:pointer;font:inherit;min-height:44px}
+.wy-rt{display:grid;gap:2px;min-width:0}.wy-rt span{overflow-wrap:anywhere}
+.wy-min{width:44px;height:44px;border-radius:6px;object-fit:cover;flex:none;border:1px solid var(--line)}
+.wy-nomin{display:grid;place-items:center;background:var(--sunk);color:var(--ink-3);font-size:12px}
+.wy-cells{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:var(--g-xs) var(--g-s);margin-top:var(--g-s)}
+.wy-c{display:grid;gap:2px;font-size:12px;min-width:0}.wy-c .l{color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wy-c b{font-size:14px;font-weight:600}
+.wy-more{margin-top:var(--g-s)}
+.wy-ch{display:block;max-width:none}.wy-bs{fill:var(--bar-wip)}.wy-bc{fill:var(--bar-done)}
+.wy-lg{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}.wy-lgs{background:var(--bar-wip)}.wy-lgc{background:var(--bar-done);border-radius:50%}
+@media (max-width:1100px){.wy-cells{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:420px){.wy-cells{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 
 <div class="app">
@@ -3160,6 +3186,7 @@ function normalize(raw){
     resources:normRes(raw.resources),
     deploy:raw.deploy&&typeof raw.deploy==='object'&&!Array.isArray(raw.deploy)?raw.deploy:null,
     publish:normPublish(raw.publish),
+    wyniki:raw.wyniki&&typeof raw.wyniki==='object'?raw.wyniki:null,   /* wyniki.py: połączenia, uprawnienia, miesiąc (bez tokenów) */
     film:raw.film&&typeof raw.film==='object'?{available:!!raw.film.available,explainer:!!raw.film.explainer,account:String(raw.film.account||'')}:null,
     studio:raw.studio&&typeof raw.studio==='object'&&!Array.isArray(raw.studio)?raw.studio:{},
     campaigns:(raw.campaigns||[]).map(c=>{
@@ -5225,7 +5252,7 @@ const PTD={polaczenia:'GitHub, Google Drive i Meta Business projektu: stan poł�
 /* GitHub projektu (p.git z serwera): link w nowej karcie albo „Brak GitHuba”, plus niewypchnięte commity */
 function gitTag(p){
   const g=p.git;if(!g)return '';
-  if(!g.repo&&p.github)return '<span class="pj-git"><a href="#koszty" title="Kopia projektu jest tylko na GitHubie ('+esc(p.github)+'); panel sklonuje ją przy następnym zadaniu">Kopia na GitHubie</a></span>';
+  if(!g.repo&&p.github)return '<span class="pj-git"><a href="'+esc(pjxConHref(phref(p)))+'" title="Kopia projektu jest tylko na GitHubie ('+esc(p.github)+'); panel sklonuje ją przy następnym zadaniu">Kopia na GitHubie</a></span>';
   const u=/^https:\/\//.test(g.url||'')?g.url:'',n=g.unpushed|0;
   let h=g.remote==='github'&&u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">GitHub</a>'
     :g.remote==='inny'?(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(g.host||'Repozytorium')+'</a>':'<span title="Repozytorium poza GitHubem">'+esc(g.host||'Repozytorium lokalne')+'</span>')
@@ -5243,7 +5270,7 @@ function vProjekt(p,tab){
   else if(tab==='etapy')body=stagesView(p);
   else if(tab==='ksiega')body=bookView(p);
   else if(tab==='strona')body=wwView(p);
-  else body=mktView(p);
+  else body=wyTab(p);
   const sLate=s&&isDay(s.date)&&s.date<D.todayKey&&!s.done;
   /* WYGLAD.md: jedna linia faktów pod nazwą (faza · postęp · etap); GitHub i szczegóły techniczne pod „Szczegóły” */
   const sum='<span>'+PHASES[pi][1]+'</span><span class="num">'+(c.all?pct+'% zrobione':'bez zadań')+'</span>'+
@@ -5254,7 +5281,7 @@ function vProjekt(p,tab){
     '<div class="facts">'+
     '<div class="fact"><span class="l">Postęp</span><span class="v num">'+(c.all?pct+'%':'—')+'</span><span class="d num">'+det+'</span></div>'+
     '<div class="fact"><span class="l">Bieżący etap</span><span class="v">'+(s?esc(s.title):'—')+'</span><span class="d">'+(s?(isDay(s.date)?ddl(s.date)+' · '+rel(s.date):'bez terminu'):'brak etapów')+'</span></div>'+
-    '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+
+    '<div class="fact"><span class="l">Czas trwania</span><span class="v num">'+(a?dd(a)+' – '+dd(b):'—')+'</span><span class="d">'+(b?'koniec '+rel(b):'bez terminów')+'</span></div>'+wyFact(p)+
     '<div class="fact" title="Księga: dokumenty, które każdy projekt powinien mieć"><span class="l">Księga</span><span class="v">'+bookText(p)+'</span><span class="d num">'+p.bookOk+' z '+p.bookTotal+' '+pl(p.bookTotal,'dokumentu','dokumentów','dokumentów')+'</span></div>'+
     '<div class="fact"><span class="l">Kod</span><span class="v">'+gitPlain(p)+'</span><span class="d"><a href="'+phref(p,'polaczenia')+'">Połączenia</a></span></div></div>';
   /* „Szczegóły” w wierszu nazwy na każdej zakładce (stan w PF.more['pj-ov']); „Rozmowa” w nagłówku zamiast pływającego
@@ -5603,7 +5630,9 @@ function pjxMeta(p){
   });
 }
 function pjxConView(p){
-  return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>';
+  /* wyniki reklam i statystyk (wyConnCard: konto reklamowe Meta, LinkedIn, Google Ads) pod kartami połączeń */
+  return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
+    (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
 }
 /* przypisanie strony Facebook do projektu z karty Meta (ten sam zapis co w Kanałach publikacji) */
 function pjxFb(el){
@@ -5945,7 +5974,7 @@ function wwPaint(pid){
   const lv=q('[data-wwlive]');lv.hidden=!(d&&d.live);if(d&&d.live)setHtml(lv,wwLiveHtml(pid,s));
   const rb=q('[data-wwrepo]');rb.hidden=!(d&&d.repo);if(d&&d.repo){const pp=P(pid);const n=d.repo.count|0,F=d.repo.files||[];
     setHtml(rb,'<div class="ww-repo" role="status"><p><b>'+(n?n+' '+pl(n,'plik czeka','pliki czekają','plików czeka'):'Pliki czekają')+' na zatwierdzenie.</b> Do tego czasu podgląd się nie odświeży.</p>'+
-      '<div class="row">'+(pp?'<a class="btn sec sm" href="'+esc(phref(pp))+'" data-pjgo="pcode" title="Zatwierdź jako zmiany agenta albo odłóż na bok">Kod i pliki</a>':'')+
+      '<div class="row">'+(pp?'<a class="btn sec sm" href="'+esc(phref(pp))+'" data-pjgo="pcode" title="Zatwierdź jako zmiany agenta albo odłóż na bok">Połączenia</a>':'')+
       (F.length?'<details><summary>Pliki</summary><ul>'+F.map(f=>'<li><code>'+esc(f)+'</code></li>').join('')+'</ul></details>':'')+'</div></div>')}
   let shown='';
   if(on){shown=d.live.url;const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
@@ -6071,7 +6100,7 @@ function mktView(p){
     const act=mkAssign(t)||(post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&!taskClosed(t)?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'');
     const open=post?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
     return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post?mkTitle(t):t.title)+'</button><div class="s">'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
-      (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+'</div></div>'+
+      (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+wyAuto(t)+'</div></div>'+
       '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+act+'</div></li>'};
   return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p>'+cs.map(c=>{
     const ps=D.tasks.filter(t=>t.campaign===c.id).sort((x,y)=>(x.date||'9999').localeCompare(y.date||'9999'));
@@ -6093,6 +6122,286 @@ function mktView(p){
       archived+(ps.length?'':'<p class="empty">Brak publikacji.</p>')+'</section>';
   }).join('');
 }
+
+/* etap 2: odczyt wyników posta (t.auto z wyniki.py): kiedy, albo błąd bez ponawiania */
+function wyAuto(t){
+  const a=t.auto;if(!a)return '';
+  const bad=Object.keys(a).filter(c=>a[c].error),at=Object.keys(a).map(c=>a[c].at).filter(Boolean).sort().pop()||'';
+  if(bad.length)return '<span class="wy-err" title="'+esc(bad.map(c=>(PUBN[c]||c)+': '+a[c].error).join('; '))+'">wyniki: błąd odczytu</span>';
+  return at?'<span class="muted" title="Liczby odczytuje panel z Facebooka i Instagrama">odczyt '+esc(dd(at.slice(0,10)))+' '+esc(at.slice(11,16))+'</span>':'';
+}
+/* brakujące uprawnienia do odczytu wyników (Kanały publikacji) */
+function wyPermNote(){
+  const P=(D.wyniki||{}).perm||{},k=Object.keys(P);if(!k.length)return '';
+  const need=[];if(P.facebook)need.push('read_insights');if(P.instagram)need.push('instagram_basic','instagram_manage_insights');
+  return '<p class="warn">Panel nie może odczytać wyników ('+esc(k.map(c=>PUBN[c]||c).join(', '))+'): '+esc(k.map(c=>P[c])[0])+'. Brakuje uprawnień: '+esc(need.join(', '))+'. Połącz Facebook ponownie z tymi uprawnieniami.</p>';
+}
+/* etap 3: Konto reklamowe Meta w Kanałach publikacji: token użytkownika systemowego (ads_read), konta widoczne dla tokenu,
+   przypisanie konta do projektu. Panel tylko czyta wyniki reklam. */
+function wyActOf(act){const P=(D.wyniki||{}).projects||{};return Object.keys(P).find(k=>P[k].metaAct===act)||''}
+function wyMetaBox(){
+  const W=D.wyniki||{},M=W.meta;if(!M)return '';
+  const tmp=M.kind==='tymczasowy',exp=M.expiresAt?M.expiresAt.slice(0,10):'';
+  const lz=!M.connected?'<span class="lz grey">niepołączone</span>':M.expired?'<span class="lz red">token wygasł</span>':tmp?'<span class="lz yellow">token do '+esc(dd(exp))+'</span>':'<span class="lz green">połączone</span>';
+  let h='<div><h3>Konto reklamowe Meta '+lz+'</h3><p class="note">Panel tylko czyta wyniki reklam (raz dziennie o 6:00). Nie tworzy, nie zmienia i nie wyłącza reklam.</p>';
+  if(tmp&&M.connected)h+='<p class="warn">Token z Graph API Explorer wygasa '+esc(ddl(exp))+'. Użyj tokenu użytkownika systemowego: nie wygasa.</p>';
+  if(M.accounts.length)h+='<table><tbody>'+M.accounts.map(a=>'<tr><td>'+esc(a.name||a.id)+' <span class="muted">'+esc(a.id)+'</span></td><td><select class="fi" data-wyact="'+esc(a.id)+'" aria-label="Projekt konta '+esc(a.name||a.id)+'">'+opt([['','– bez projektu']].concat(D.allP.map(p=>[p.id,p.name])),wyActOf(a.id))+'</select></td></tr>').join('')+'</tbody></table>';
+  const how='<details class="ds-det"><summary>Jak zdobyć token (5 kroków)</summary><ol class="steps"><li><a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener">Ustawienia firmy → Użytkownicy systemowi</a> → Dodaj (rola: pracownik).</li><li>Przypisz zasoby → Konta reklamowe → konto projektu, uprawnienie „Wyświetlanie wydajności”. Dla postów także strony (wyświetlanie statystyk).</li><li>Aplikacje → dodaj aplikację panelu (ta sama co dla Facebooka) do użytkownika systemowego.</li><li>Wygeneruj token: ta aplikacja, wygaśnięcie „Nigdy”, uprawnienia ads_read, read_insights, instagram_manage_insights.</li><li>Wklej token tutaj i przypisz konta do projektów.</li></ol></details>';
+  h+=(M.connected?'<details class="ds-det"><summary>Zmień token</summary>'+how:how)+
+    '<form class="dform" data-wymeta="1"><label class="fl"><span>Token</span><input class="fi" type="password" name="token" autocomplete="off"></label>'+
+    '<label class="fl"><span>Rodzaj tokenu</span><select class="fi" name="rodzaj">'+opt([['system','użytkownik systemowy (nie wygasa)'],['tymczasowy','Graph API Explorer (60 dni)']],'system')+'</select></label>'+
+    '<div class="row"><button type="submit" class="btn sm">Połącz konto reklamowe</button>'+(M.connected?'<button type="button" class="btn sec sm danger" data-wymetaoff="1">Odłącz</button>':'')+'</div></form>'+(M.connected?'</details>':'');
+  return h+'</div>';
+}
+document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!fm.dataset.wymeta)return;ev.preventDefault();ev.stopPropagation();
+  const body={token:fm.token.value.trim(),rodzaj:fm.rodzaj.value};fm.token.value='';
+  if(!LIVE){say(PRV);return}
+  enqueue(async()=>{const x=await post('/api/wyniki/meta',body);say(x.ok?'Połączono. Konta: '+((x.data.accounts||[]).map(a=>a.name||a.id).join(', '))+'. Przypisz je do projektów.':failMsg(x,'Nie połączono.'))});
+});
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wymetaoff]');if(!b)return;
+  if(!LIVE){say(PRV);return}if(!confirm('Odłączyć konto reklamowe Meta? Zapisane wyniki zostaną.'))return;
+  enqueue(async()=>{const x=await post('/api/wyniki/meta/odlacz',{});say(x.ok?'Odłączono.':failMsg(x,'Nie odłączono.'))});
+});
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.wyact==null)return;
+  if(!LIVE){say(PRV);return}
+  const act=el.dataset.wyact,pid=el.value,old=wyActOf(act);
+  enqueue(async()=>{let x={ok:true};if(old&&old!==pid)x=await post('/api/wyniki/meta/konto',{project:old,act:''});
+    if(x.ok&&pid)x=await post('/api/wyniki/meta/konto',{project:pid,act:act});
+    say(x.ok?(pid?'Konto przypisane do projektu.':'Konto bez projektu.'):failMsg(x,'Nie zapisano.'))});
+});
+/* etap 4: Marketing → Wyniki projektu. GET /api/wyniki?project=&okres=7|30|start&kampania= (wyniki.report); wiersz otwiera
+   post albo historię reklamy (GET /api/wyniki/historia: dzienny wydatek i rozmowy). */
+const WYR={f:{},d:{},busy:{},h:{},open:''};
+const wyKey=pid=>{const f=WYR.f[pid]||(WYR.f[pid]={okres:'30',kampania:''});return pid+'|'+f.okres+'|'+f.kampania};
+async function wyRep(pid,force){
+  const k=wyKey(pid),f=WYR.f[pid];if(WYR.busy[k]||(WYR.d[k]&&!force))return;WYR.busy[k]=true;
+  try{const r=await fetch('/api/wyniki?project='+encodeURIComponent(pid)+'&okres='+f.okres+'&kampania='+encodeURIComponent(f.kampania),{cache:'no-store'});
+    if(r.status===401){location.assign('/wejscie');return}const j=await r.json();WYR.d[k]=j.ok?j:{err:j.error||'Nie udało się wczytać wyników.'}}
+  catch(e){WYR.d[k]={err:'Nie udało się wczytać wyników.'}}
+  WYR.busy[k]=false;if(CUR&&CUR.v==='projekt')render(true);
+}
+const wyN=v=>v==null?'—':fmtN(Math.round(v*100)/100);
+const wyZ=v=>v==null?'—':wyZl(v);
+const wyX=v=>v==null?'—':String(Math.round(v*100)/100).replace('.',',')+' zł';
+function wyWyniki(p){
+  const pid=p.id;if(!LIVE)return '<p class="pj-tabd">Wyniki działają w panelu na serwerze.</p>';
+  const k=wyKey(pid),f=WYR.f[pid],R=WYR.d[k];
+  if(!R){wyRep(pid);return '<p class="pj-tabd">Wczytuję wyniki…</p>'}
+  if(R.err)return '<p class="warn">'+esc(R.err)+'</p>';
+  const seg=(v,n)=>'<button type="button" class="seg" data-wyok="'+v+'" data-pid="'+esc(pid)+'" aria-pressed="'+(f.okres===v)+'">'+n+'</button>';
+  let h='<p class="pj-tabd">Ile osób zobaczyło, ile napisało, ilu przyszło i ile zarobiliśmy na złotówce reklamy.</p>'+
+    '<div class="row wy-bar"><div class="row" role="group" aria-label="Okres">'+seg('7','7 dni')+seg('30','30 dni')+seg('start','Od startu')+'</div>'+
+    (R.campaigns.length?'<select class="fi" data-wycamp="'+esc(pid)+'" aria-label="Kampania">'+opt([['','Wszystkie kampanie']].concat(R.campaigns.map(c=>[c.id,c.name])),f.kampania)+'</select>':'')+'</div>';
+  const S=R.sum,C=R.polaczenia;
+  h+='<section class="panel"><h2>Razem <small>'+(R.since?esc(dd(R.since))+' – ':'do ')+esc(dd(R.until))+'</small></h2><div class="pad"><div class="facts wy-facts">'+
+    '<div class="fact"><span class="l">Przychód</span><span class="v num">'+wyZl(S.przychod)+'</span><span class="d num">'+S.wykonane+' wykonane · '+S.umowieni+' umówieni · '+S.zapytania+' zapytań</span></div>'+
+    '<div class="fact"><span class="l">Wydano na reklamy</span><span class="v num">'+wyZl(S.wydano)+'</span><span class="d num">rozmowy '+S.rozmowy+' · koszt rozmowy '+wyX(S.kosztRozmowy)+'</span></div>'+
+    '<div class="fact"><span class="l">Przychód na 1 zł reklamy</span><span class="v num">'+wyX(S.zwrot)+'</span><span class="d num">koszt klienta '+wyX(S.kosztKlienta)+'</span></div></div>';
+  const miss=[];if(!C.meta)miss.push('Meta');if(!C.google)miss.push('Google Ads');
+  if(miss.length)h+='<p class="note">Reklamy '+esc(miss.join(' i '))+': brak połączenia. <a href="#marketing" data-wyconn="'+esc(pid)+'">Połączenia projektu</a></p>';
+  if(C.metaError)h+='<p class="warn">Reklamy Meta: '+esc(C.metaError)+'</p>';
+  if(R.bezKoduKlienci.zapytania)h+='<p class="note">Klienci bez kodu: '+R.bezKoduKlienci.zapytania+' (przychód '+wyZl(R.bezKoduKlienci.przychod)+'). Wpisz kod w Klientach, żeby połączyć ich z postem albo reklamą.</p>';
+  if(R.bezKodu.length)h+='<p class="warn">Reklamy bez kodu w nazwie ('+R.bezKodu.length+'): '+esc(R.bezKodu.map(x=>x.nazwa).join('; '))+'. Zmień nazwę w Menedżerze reklam, np. „S1 · Drzwi od 1590”.</p>';
+  h+='</div></section>';
+  if(!R.rows.length)return h+'<p class="empty">Brak postów i reklam w tym okresie.</p>';
+  h+='<section class="panel"><h2>Posty i reklamy <small class="num">'+R.rows.length+'</small></h2><ul class="rows wy-res">'+R.rows.map(r=>wyResRow(pid,r)).join('')+'</ul></section>';
+  return h;
+}
+function wyResRow(pid,r){
+  const id=pid+'|'+r.kod,open=WYR.open===id,img=r.miniatura?'<img class="wy-min" src="'+esc(r.miniatura)+'" alt="" loading="lazy">':'<span class="wy-min wy-nomin" aria-hidden="true">'+esc(r.rodzaj==='reklama'?'R':'P')+'</span>';
+  const cell=(l,v)=>'<span class="wy-c"><span class="l">'+l+'</span><b class="num">'+v+'</b></span>';
+  let h='<li class="wy-r'+(open?' wy-open':'')+'"><button type="button" class="wy-rb" data-wyrow="'+esc(id)+'" data-k="wyr:'+esc(id)+'" aria-expanded="'+open+'">'+img+
+    '<span class="wy-rt"><b>'+esc(r.kod)+'</b> <span>'+esc(r.tytul.replace(/^Opublikuj\s+/,'').replace(new RegExp('^'+r.kod.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*[·\\-–:|]?\\s*','i'),''))+'</span><small class="muted">'+esc([r.data?dd(r.data):'',r.kanal,r.rodzaj].filter(Boolean).join(' · '))+'</small></span></button>'+
+    '<div class="wy-cells">'+cell('Zasięg',fmtN(r.zasieg))+cell('Wyświetlenia',fmtN(r.wyswietlenia))+cell('Interakcje',fmtN(r.interakcje))+cell('Wydano',wyZl(r.wydano))+
+      cell('Rozmowy',r.rozmowy)+cell('Koszt rozmowy',wyX(r.kosztRozmowy))+cell('Umówieni',r.umowieni)+cell('Wykonane',r.wykonane)+cell('Przychód',wyZl(r.przychod))+
+      cell('Koszt klienta',wyX(r.kosztKlienta))+cell('Na 1 zł',wyX(r.zwrot))+'</div>';
+  if(open){
+    if(r.rodzaj==='post')h+='<div class="wy-more row">'+(r.link?'<a class="btn sec sm" href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer">Otwórz post</a>':'')+
+      (r.zadanie?'<button type="button" class="btn sec sm" data-medit="'+esc(pid+'|'+r.data+'|'+r.zadanie)+'">Szczegóły posta</button>':'')+'</div>';
+    else h+='<div class="wy-more">'+wyChart(pid,r.kod)+'</div>';
+  }
+  return h+'</li>';
+}
+/* wykres dzienny reklamy: słupki wydatku, kropki rozmów (SVG, bez bibliotek) */
+function wyChart(pid,kod){
+  const k=pid+'|'+kod,H=WYR.h[k];
+  if(H===undefined){WYR.h[k]=null;fetch('/api/wyniki/historia?project='+encodeURIComponent(pid)+'&kod='+encodeURIComponent(kod),{cache:'no-store'}).then(r=>r.json()).then(j=>{WYR.h[k]=j.days||[];render(true)}).catch(()=>{WYR.h[k]=[]});return '<p class="note">Wczytuję historię…</p>'}
+  if(!H)return '<p class="note">Wczytuję historię…</p>';
+  if(!H.length)return '<p class="note">Brak dziennych danych.</p>';
+  const W=Math.max(240,H.length*18),mx=Math.max(1,...H.map(d=>d.wydano)),mc=Math.max(1,...H.map(d=>d.rozmowy)),bw=Math.max(4,W/H.length-4);
+  const bars=H.map((d,i)=>{const x=i*(W/H.length)+2,h=Math.round(80*d.wydano/mx),y=96-Math.round(80*d.rozmowy/mc);
+    return '<rect x="'+x.toFixed(1)+'" y="'+(96-h)+'" width="'+bw.toFixed(1)+'" height="'+h+'" class="wy-bs"><title>'+esc(dd(d.data)+': '+wyZl(d.wydano)+', rozmowy '+d.rozmowy)+'</title></rect>'+
+      (d.rozmowy?'<circle cx="'+(x+bw/2).toFixed(1)+'" cy="'+y+'" r="3.5" class="wy-bc"></circle>':'')}).join('');
+  return '<div class="tw"><svg class="wy-ch" viewBox="0 0 '+W+' 100" width="'+W+'" height="100" role="img" aria-label="Wydatek i rozmowy dzień po dniu">'+bars+'</svg></div>'+
+    '<p class="note"><span class="wy-lg wy-lgs"></span> wydatek (najwyżej '+wyZl(mx)+') · <span class="wy-lg wy-lgc"></span> rozmowy (najwyżej '+mc+') · '+esc(dd(H[0].data))+' – '+esc(dd(H[H.length-1].data))+'</p>';
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('[data-wyok],[data-wyrow],[data-wyconn]');if(!b)return;
+  if(b.dataset.wyok){const f=WYR.f[b.dataset.pid];f.okres=b.dataset.wyok;render(true);return}
+  if(b.dataset.wyrow){WYR.open=WYR.open===b.dataset.wyrow?'':b.dataset.wyrow;render(true);return}
+  if(b.dataset.wyconn!=null){ev.preventDefault();const pid=b.dataset.wyconn;
+    if(typeof wyConnGo==='function')wyConnGo(pid);else location.hash='#marketing'}
+});
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.wycamp==null)return;
+  WYR.f[el.dataset.wycamp].kampania=el.value;render(true)});
+/* Przegląd projektu: przychód z marketingu w tym miesiącu / wydatek na reklamy (wyniki.month) */
+function wyFact(p){
+  const M=((D.wyniki||{}).month||{})[p.id];if(!M)return '';
+  return '<a class="fact" href="'+phref(p,'marketing')+'" data-wysubgo="'+esc(p.id)+'"><span class="l">Marketing w tym miesiącu</span><span class="v num">'+wyZl(M.przychod)+'</span><span class="d num">przychód · wydatek na reklamy '+wyZl(M.wydatek)+'</span></a>';
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wysubgo]');if(b)WY.sub[b.dataset.wysubgo]='wyniki'});
+/* etap 5: karta połączeń projektu (Meta, LinkedIn, Google Ads). Wpięta jako część „Połączenia” zakładki Marketing;
+   wyConnCard(p) da się wstawić w inną zakładkę bez zmian. Klucz projektu Google Ads widać tylko raz, w skrypcie. */
+const WYC={script:{},li:{}};
+function wyConnGo(pid){const p=P(pid);if(p)location.hash=pjxConHref(phref(p,'marketing'));render(true)}
+function wyConnCard(p,inCon){
+  const pid=p.id,W=D.wyniki||{},M=W.meta||{accounts:[]},C=(W.projects||{})[pid]||{},Pub=D.publish;
+  const pages=Pub?Pub.fb.pages.filter(x=>x.project===pid):[],L=C.linkedin||{},G=C.google||{};
+  const st=(ok,t)=>'<span class="lz '+(ok?'green':'grey')+'">'+esc(t)+'</span>';
+  let h='<p class="pj-tabd">Panel tylko czyta wyniki: nie zmienia postów, reklam ani budżetów.</p>';
+  /* Meta */
+  const mLz=pages.length&&C.metaAct?st(true,'połączone'):pages.length||C.metaAct?'<span class="lz yellow">częściowo</span>':st(false,'brak połączenia');
+  h+='<section class="panel"><h2>Meta – konto reklamowe '+mLz+'</h2><div class="pad dform">'+
+    (inCon?'':'<p>Strona Facebook: '+(pages.length?esc(pages.map(x=>x.name+(x.instagram?' · Instagram '+(x.instagram==='tak'?'':'@'+x.instagram):' · bez Instagrama')).join('; ')):'brak. <a href="#marketing" data-nwchan>Połącz w Kanałach publikacji</a>')+'</p>');
+  if(M.connected)h+='<label class="fl"><span>Konto reklamowe</span><select class="fi" data-wyconnact="'+esc(pid)+'">'+opt([['','– brak']].concat(M.accounts.map(a=>[a.id,(a.name||a.id)+' ('+a.id+')'])),C.metaAct||'')+'</select></label>'+
+    (C.metaAct?'<p class="note">'+(C.metaError?'<span class="wy-err">Błąd odczytu: '+esc(C.metaError)+'</span>':C.metaSync?'Ostatni odczyt '+esc(dd(C.metaSync.slice(0,10)))+' '+esc(C.metaSync.slice(11,16))+'.':'Pierwszy odczyt jutro od 6:00.')+'</p>':'');
+  else h+='<p class="note">Konto reklamowe: brak tokenu Meta. Wklej token użytkownika systemowego w <a href="#marketing" data-nwchan>Kanałach publikacji</a> (Konto reklamowe Meta).</p>';
+  h+='</div></section>';
+  /* LinkedIn */
+  const lf=WYC.li[pid]||(WYC.li[pid]={rodzaj:L.rodzaj||'',organizacja:L.organizacja||'',wniosek:L.wniosek||'nie złożony',reklamy:!!L.reklamy});
+  const liLz=L.rodzaj==='organizacja'?(L.wniosek==='przyznany'?st(true,'statystyki automatycznie'):'<span class="lz yellow">wniosek: '+esc(L.wniosek||'nie złożony')+'</span>'):L.rodzaj==='profil'?st(false,'wpis ręczny'):st(false,'brak połączenia');
+  h+='<section class="panel"><h2>LinkedIn '+liLz+'</h2><form class="dform pad wy-form" data-wyli="'+esc(pid)+'">'+
+    '<label class="fl"><span>Konto</span><select class="fi" name="rodzaj">'+opt([['','– brak'],['organizacja','strona firmowa'],['profil','profil prywatny']],lf.rodzaj)+'</select></label>'+
+    (lf.rodzaj==='organizacja'?'<label class="fl"><span>Id strony firmowej</span><input class="fi" name="organizacja" inputmode="numeric" autocomplete="off" value="'+esc(lf.organizacja)+'" placeholder="liczba z linkedin.com/company/…/admin"></label>'+
+      '<label class="fl"><span>Wniosek o Community Management API</span><select class="fi" name="wniosek">'+opt([['nie złożony','nie złożony'],['złożony','złożony'],['przyznany','przyznany']],lf.wniosek)+'</select></label>':'')+
+    '<label class="chk"><input type="checkbox" name="reklamy"'+(lf.reklamy?' checked':'')+'> Projekt ma reklamy LinkedIn</label>'+
+    '<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form><div class="pad">';
+  if(lf.rodzaj==='organizacja'&&lf.wniosek!=='przyznany')h+='<p class="note">Do czasu zgody LinkedIn wyniki postów wpisujesz ręcznie w publikacji (wyświetlenia, kliknięcia).</p>'+
+    '<details class="ds-det"><summary>Jak złożyć wniosek (3 kroki)</summary><ol class="steps"><li><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">LinkedIn Developers</a> → aplikacja panelu → Products → Community Management API → Request access.</li><li>Opis użycia: odczyt statystyk postów własnej strony firmowej (r_organization_social, rw_organization_admin), bez publikowania.</li><li>Po zgodzie: nowy token z tymi zakresami w Kanałach publikacji i tutaj „przyznany”.</li></ol></details>';
+  if(lf.rodzaj==='profil')h+='<p class="note">Statystyk postów z profilu prywatnego API LinkedIn nie udostępnia: wpisujesz je ręcznie w publikacji.</p>';
+  if(lf.reklamy)h+='<p class="note">Reklamy LinkedIn: Advertising API (r_ads_reporting) wymaga osobnego wniosku; do czasu zgody wyniki wpisujesz ręcznie.</p>';
+  h+='</div></section>';
+  /* Google Ads */
+  const sc=WYC.script[pid];
+  h+='<section class="panel"><h2>Google Ads '+(G.ostatnio?st(true,'dane z '+dd(G.ostatnio.slice(0,10))):G.klucz?'<span class="lz yellow">czeka na skrypt</span>':st(false,'brak połączenia'))+'</h2><form class="dform pad wy-form" data-wygads="'+esc(pid)+'">'+
+    '<label class="fl"><span>Identyfikator klienta</span><input class="fi" name="klient" inputmode="numeric" autocomplete="off" placeholder="np. 434-771-1860" value="'+esc(G.klient||'')+'"></label>'+
+    '<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form><div class="pad dform">';
+  if(G.klient){
+    h+='<p class="note">Skrypt Google Ads raz dziennie wysyła do panelu wczorajsze wyniki. Klucz projektu: '+(G.klucz?'aktywny od '+esc(dd(G.kluczOd.slice(0,10))):'brak')+'.</p>'+
+      '<div class="row"><button type="button" class="btn sec sm" data-wygkey="'+esc(pid)+'">'+(G.klucz?'Nowy klucz i skrypt':'Pokaż skrypt')+'</button>'+(G.klucz?'<button type="button" class="btn sec sm danger" data-wygoff="'+esc(pid)+'">Unieważnij klucz</button>':'')+'</div>';
+    if(sc)h+='<p class="warn">Skrypt z kluczem widać tylko teraz. Skopiuj go i wklej w Google Ads: Narzędzia → Działania zbiorcze → Skrypty → +, autoryzuj, „Podgląd”, harmonogram „Codziennie”.</p>'+
+      '<textarea class="fi wy-script" readonly rows="10" aria-label="Skrypt Google Ads">'+esc(sc)+'</textarea><div class="row"><button type="button" class="btn sm" data-wygcopy="'+esc(pid)+'">Kopiuj skrypt</button></div>';
+  }
+  h+='</div></section>';
+  return h;
+}
+document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!(fm.dataset.wyli||fm.dataset.wygads))return;ev.preventDefault();ev.stopPropagation();
+  if(!LIVE){say(PRV);return}
+  const pid=fm.dataset.wyli||fm.dataset.wygads;
+  const body=fm.dataset.wyli?{project:pid,linkedin:{rodzaj:fm.rodzaj.value,organizacja:fm.organizacja?fm.organizacja.value.trim():'',wniosek:fm.wniosek?fm.wniosek.value:'nie złożony',reklamy:fm.reklamy.checked}}
+    :{project:pid,googleKlient:fm.klient.value.trim()};
+  enqueue(async()=>{const x=await post('/api/wyniki/polaczenie',body);say(x.ok?'Zapisano połączenie.':failMsg(x,'Nie zapisano.'));if(x.ok&&fm.dataset.wyli)delete WYC.li[pid]});
+});
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.closest)return;
+  const fm=el.closest('[data-wyli]');if(fm&&el.name){const f=WYC.li[fm.dataset.wyli];f[el.name]=el.type==='checkbox'?el.checked:el.value;if(el.name==='rodzaj')render(true);return}
+  if(el.dataset&&el.dataset.wyconnact!=null){if(!LIVE){say(PRV);return}
+    enqueue(async()=>{const x=await post('/api/wyniki/meta/konto',{project:el.dataset.wyconnact,act:el.value});say(x.ok?'Zapisano konto reklamowe.':failMsg(x,'Nie zapisano.'))})}
+});
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wygkey],[data-wygoff],[data-wygcopy]');if(!b)return;
+  if(!LIVE){say(PRV);return}
+  if(b.dataset.wygcopy){copyText(WYC.script[b.dataset.wygcopy]||'').then(ok=>say(ok?'Skopiowano skrypt.':'Zaznacz skrypt ręcznie.'));return}
+  if(b.dataset.wygkey){const pid=b.dataset.wygkey;if((D.wyniki.projects[pid]||{}).google&&D.wyniki.projects[pid].google.klucz&&!confirm('Nowy klucz unieważni skrypt wklejony wcześniej w Google Ads. Dalej?'))return;
+    post('/api/wyniki/google/klucz',{project:pid}).then(x=>{if(x.ok){WYC.script[pid]=x.data.skrypt;say('Skrypt gotowy. Skopiuj go teraz.')}else say(failMsg(x,'Nie utworzono klucza.'));load(true)});return}
+  if(b.dataset.wygoff){const pid=b.dataset.wygoff;if(!confirm('Unieważnić klucz? Skrypt w Google Ads przestanie wysyłać dane.'))return;
+    delete WYC.script[pid];enqueue(async()=>{const x=await post('/api/wyniki/google/uniewaznij',{project:pid});say(x.ok?'Klucz unieważniony.':failMsg(x,'Nie unieważniono.'))})}
+});
+/* ---------- Wyniki marketingu (wyniki.py, klienci.py): zakładka Marketing projektu z częściami Kampanie, Klienci, Wyniki.
+   Dane klientów nie są w /api/data: GET /api/klienci?project=. Funkcje i klasy z prefiksem wy. ---------- */
+const WY={sub:{},kl:{},busy:{},f:{},imp:''};
+const WYSUB=[['kampanie','Kampanie'],['wyniki','Wyniki'],['klienci','Klienci']];
+const wyZl=n=>{n=+n||0;return (Number.isInteger(n)?String(n):n.toFixed(2).replace('.',',')).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' zł'};
+function wyTab(p){
+  const cur=WY.sub[p.id]||'kampanie';
+  const nav='<div class="row wy-sub hscroll" role="group" aria-label="Część zakładki Marketing">'+WYSUB.map(([k,n])=>'<button type="button" class="seg" data-wysub="'+k+'" data-pid="'+esc(p.id)+'" aria-pressed="'+(cur===k)+'" data-k="wysub:'+k+'">'+n+'</button>').join('')+'</div>';
+  if(cur==='klienci')return nav+wyKlienci(p);
+  if(cur==='wyniki')return nav+wyWyniki(p);
+  if(cur==='polaczenia'){WY.sub[p.id]='kampanie';location.hash=pjxConHref(phref(p,'marketing'));return nav+mktView(p)}
+  return nav+mktView(p);
+}
+async function wyLoad(pid,force){
+  if(WY.busy[pid]||(WY.kl[pid]&&!force))return;
+  WY.busy[pid]=true;
+  try{const r=await fetch('/api/klienci?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json();WY.kl[pid]=j.ok?j:{err:j.error||'Nie udało się wczytać dziennika.'}}
+  catch(e){WY.kl[pid]={err:'Nie udało się wczytać dziennika.'}}
+  WY.busy[pid]=false;if(CUR&&CUR.v==='projekt')render(true);
+}
+function wySum(b,label){
+  return '<div class="fact"><span class="l">'+esc(label)+'</span><span class="v num">'+wyZl(b.przychod)+'</span><span class="d num">'+
+    b.zapytania+' '+pl(b.zapytania,'zapytanie','zapytania','zapytań')+' · umówieni '+b.umowieni+' · wykonane '+b.wykonane+'</span></div>';
+}
+function wyKlienci(p){
+  const pid=p.id,K=WY.kl[pid];
+  if(!LIVE)return '<p class="pj-tabd">Dziennik klientów działa w panelu na serwerze.</p>';
+  if(!K){wyLoad(pid);return '<p class="pj-tabd">Wczytuję dziennik klientów…</p>'}
+  if(K.err)return '<p class="warn">'+esc(K.err)+'</p>';
+  const S=K.summary,f=WY.f[pid]||(WY.f[pid]={data:D.todayKey,zrodlo:''}),L=K.entries||[];
+  let h='<p class="pj-tabd">Skąd przyszli klienci i ile zarobiliśmy. Bez imion i telefonów: tylko model auta.</p>';
+  h+='<section class="panel"><h2>Podsumowanie</h2><div class="pad"><div class="facts wy-facts">'+wySum(S.tydzien,'Ten tydzień')+wySum(S.odStartu,S.start?'Od startu kampanii ('+dd(S.start)+')':'Od początku dziennika')+'</div>'+
+    (S.zrodla.length?'<div class="tw"><table class="dt wy-src"><thead><tr><th>Źródło</th><th class="num">Zapytania</th><th class="num">Wykonane</th><th class="num">Przychód</th></tr></thead><tbody>'+
+      S.zrodla.map(z=>'<tr><td>'+esc(z.zrodlo)+'</td><td class="num">'+z.zapytania+'</td><td class="num">'+z.wykonane+'</td><td class="num">'+wyZl(z.przychod)+'</td></tr>').join('')+'</tbody></table></div>':'')+'</div></section>';
+  const codes=(K.codes||[]).map(c=>'<option value="'+esc(c.kod)+'">'+esc(c.opis)+'</option>').join('');
+  h+='<section class="panel"><h2>Nowy klient</h2><form class="dform wy-form pad" data-wyadd="'+esc(pid)+'">'+
+    '<label class="fl"><span>Data</span><input class="fi" type="date" name="data" value="'+esc(f.data||D.todayKey)+'"></label>'+
+    '<label class="fl"><span>Auto (model)</span><input class="fi" name="auto" maxlength="60" autocomplete="off" placeholder="np. Skoda Octavia" value="'+esc(f.auto||'')+'"></label>'+
+    '<label class="fl"><span>Źródło</span><select class="fi" name="zrodlo" required>'+opt([['','– wybierz']].concat(K.sources.map(s=>[s,s])),f.zrodlo||'')+'</select></label>'+
+    '<label class="fl"><span>Kod reklamy albo posta</span><input class="fi" name="kod" maxlength="40" list="wy-codes-'+esc(pid)+'" autocomplete="off" placeholder="np. S1" value="'+esc(f.kod||'')+'"><datalist id="wy-codes-'+esc(pid)+'">'+codes+'</datalist></label>'+
+    '<label class="fl"><span>Usługa</span><input class="fi" name="usluga" maxlength="80" autocomplete="off" value="'+esc(f.usluga||'')+'"></label>'+
+    '<label class="fl"><span>Wycena (zł)</span><input class="fi" name="wycena" inputmode="decimal" autocomplete="off" value="'+esc(f.wycena||'')+'"></label>'+
+    '<div class="row"><button type="submit" class="btn sm">Dodaj</button></div></form></section>';
+  h+='<section class="panel"><h2>Klienci <small class="num">'+L.length+'</small></h2>'+(L.length?'<ul class="rows wy-list">'+L.slice(0,WY.all===pid?2000:50).map(e=>wyRow(pid,e)).join('')+'</ul>'+
+    (L.length>50&&WY.all!==pid?'<div class="row pad"><button type="button" class="btn sec sm" data-wyall="'+esc(pid)+'">Pokaż wszystkich ('+L.length+')</button></div>':''):'<p class="empty">Brak wpisów. Dodaj pierwszego klienta albo zaimportuj CSV.</p>')+'</section>';
+  h+='<details class="pj-fold wy-imp"><summary>Import z CSV</summary><div class="pad dform"><p class="note">Plik z separatorem „;” i nagłówkiem: data, auto, źródło, kod, usługa, wycena, umówiony, wykonane. Kolumny z imieniem i telefonem panel pomija. Powtórzone wiersze nie wchodzą drugi raz.</p>'+
+    '<label class="btn sec sm fup">Wybierz plik CSV<input type="file" accept=".csv,text/csv,text/plain" data-wyimp="'+esc(pid)+'" hidden></label>'+(WY.imp?'<p class="note">'+esc(WY.imp)+'</p>':'')+'</div></details>';
+  return h;
+}
+function wyRow(pid,e){
+  const id=esc(e.id),k=esc(pid+'|'+e.id);
+  return '<li class="wy-row"><div><span class="t">'+esc(e.auto||'auto bez nazwy')+'</span><div class="s"><span class="num">'+[dd(e.data),e.zrodlo,e.kod,e.usluga].filter(Boolean).map(esc).join(' · ')+(e.wycena!=null?' · wycena '+wyZl(e.wycena):'')+'</span></div></div>'+
+    '<div class="r wy-ed"><label class="fl"><span>Umówiony</span><select class="fi" data-wyset="umowiony" data-wyk="'+k+'" aria-label="Umówiony">'+opt([['','—'],['tak','tak'],['nie','nie']],e.umowiony===true?'tak':e.umowiony===false?'nie':'')+'</select></label>'+
+    '<label class="fl"><span>Wykonane (zł)</span><input class="fi" inputmode="decimal" data-wyset="wykonane" data-wyk="'+k+'" value="'+(e.wykonane!=null?esc(String(e.wykonane).replace('.',',')):'')+'" aria-label="Wykonane, kwota w zł"></label>'+
+    '<button type="button" class="btn sec sm danger" data-wydel="'+k+'" aria-label="Usuń wpis '+esc(e.auto||'')+'">Usuń</button></div></li>';
+}
+async function wyPost(path,body,okMsg,pid){
+  if(!LIVE){say(PRV);return null}
+  const x=await post(path,body);
+  say(x.ok?(typeof okMsg==='function'?okMsg(x):okMsg):failMsg(x,'Nie zapisano.'));
+  if(pid)await wyLoad(pid,true);
+  return x;
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('[data-wysub],[data-wydel],[data-wyall]');if(!b)return;
+  if(b.dataset.wysub){WY.sub[b.dataset.pid]=b.dataset.wysub;render(true);return}
+  if(b.dataset.wyall){WY.all=b.dataset.wyall;render(true);return}
+  if(b.dataset.wydel){const [pid,id]=b.dataset.wydel.split('|');if(!confirm('Usunąć ten wpis z dziennika?'))return;
+    wyPost('/api/klienci/zmien',{project:pid,id:id,usun:true},'Wpis usunięty.',pid)}
+});
+document.addEventListener('change',ev=>{
+  const el=ev.target;if(!el||!el.dataset)return;
+  if(el.dataset.wyset){const i=el.dataset.wyk.lastIndexOf('|'),pid=el.dataset.wyk.slice(0,i),id=el.dataset.wyk.slice(i+1);
+    wyPost('/api/klienci/zmien',{project:pid,id:id,[el.dataset.wyset]:el.value.trim()},'Zapisano.',pid);return}
+  if(el.dataset.wyimp){const file=el.files&&el.files[0],pid=el.dataset.wyimp;if(!file)return;
+    if(file.size>2*1048576){say('Plik CSV do 2 MB.');return}
+    file.text().then(text=>wyPost('/api/klienci/import',{project:pid,csv:text},x=>{const d=x.data||{};WY.imp='Dodano '+(d.dodane|0)+', pominięto '+(d.pominiete|0)+'.'+((d.bledy||[]).length?' '+d.bledy.join('; ')+'.':'');return WY.imp},pid));
+    el.value='';return}
+});
+document.addEventListener('input',ev=>{const el=ev.target,fm=el&&el.closest&&el.closest('[data-wyadd]');if(!fm||!el.name)return;
+  (WY.f[fm.dataset.wyadd]||(WY.f[fm.dataset.wyadd]={}))[el.name]=el.value});
+document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!fm.dataset.wyadd)return;ev.preventDefault();ev.stopPropagation();
+  const pid=fm.dataset.wyadd,body={project:pid};new FormData(fm).forEach((v,k)=>{body[k]=String(v).trim()});
+  if(!body.zrodlo){say('Wybierz źródło.');return}
+  wyPost('/api/klienci/dodaj',body,'Dodano klienta.',pid).then(x=>{if(x&&x.ok){WY.f[pid]={data:body.data,zrodlo:''};render(true);const a=document.querySelector('[data-wyadd] [name="auto"]');if(a)a.focus()}});
+});
 
 /* ---------- wskaźniki (nowe klasy z prefiksem wk-) ---------- */
 /* kolory stanów jak w progCell i w zakładce Zadania: zrobione, do odbioru, w toku; do zrobienia jako tło */
@@ -6374,7 +6683,7 @@ function agBarHtml(){
   let h=lg?'<div class="ag-lgw">'+lgBan('copy','ag-lg')+'</div>':'';
   const swOn=a.canRunTasks&&Object.values(a.tools).some(t=>t.found);
   if(wait)h+='<p class="ag-wait">'+wait+' '+pl(wait,'zadanie agenta czeka','zadania agentów czekają','zadań agentów czeka')+' na Twoją decyzję w najbliższych 7 dniach. <a class="navlk inl" href="#asystent?k=sprawy">Sprawy dla Ciebie →</a></p>';
-  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <a class="navlk inl" href="#koszty?k=projekty">Dodaj projekt w Serwerze →</a></p>';
+  if(!a.canRunTasks)h+='<p class="ahint">W projektach przykładowych agenci nie pracują. <button type="button" class="navlk inl" data-srvs="padd" data-k="ag-padd">Dodaj projekt</button></p>';
   else if(no&&!a.tools.codex.found)h+='<p class="ahint" id="ag-noc" title="Instrukcja: INSTALACJA.md">Agenci nie są jeszcze zainstalowani na serwerze. Instaluje ich administrator serwera według instrukcji instalacji; potem zalogujesz tu Claude.</p>';
   const auT=a.automat?'Panel sam uruchamia zaplanowane zadania agentów.':'Zaplanowane zadania agentów czekają, aż uruchomisz je ręcznie.';
   /* przy projektach przykładowych albo bez narzędzi przełącznik nic nie zmienia: stan jest tekstem w pierwszym wierszu */
@@ -6988,7 +7297,7 @@ function srvsDrv(){
   const op=!!(A.agDet&&A.agDet['srvs-drv']);
   return '<section class="panel srvs-drv" id="srv-drive" tabindex="-1" aria-labelledby="srv-drive-h"><h2 id="srv-drive-h">Google Drive <small>'+esc(st)+'</small></h2><div class="pad dv">'+top+
     '<details class="ds-det srvs-det" data-agdet="srvs-drv"'+(op?' open':'')+'><summary>Szczegóły</summary>'+drAccBox('','list')+draClient()+
-    '<p class="note">Konta są tylko do odczytu. Folder dla projektu wybierasz na stronie projektu, w sekcji „Kod i pliki”.</p></details></div></section>';
+    '<p class="note">Konta są tylko do odczytu. Folder dla projektu wybierasz na stronie projektu, w zakładce Połączenia.</p></details></div></section>';
 }
 
 /* ---------- widok Informacje: opis Księgi i standardu (z danych panelu) i pliki .md repozytorium (GET /api/informacje) ---------- */
@@ -8753,10 +9062,10 @@ function pubPanel(){
   /* zwinięte (domyślnie): jedno zdanie stanu i jedna akcja, która rozwija sekcję */
   if(!open)return h+'<p class="ahint pub-sum">'+(fb?'Facebook połączony: panel może publikować sam.':'Facebook niepołączony: publikujesz ręcznie.')+(acc?'':' Nagrania demonstracji strony: brak konta.')+
       (fb&&acc?'':' <button class="btn sec sm" data-agpub="1" data-k="agpub2">'+(fb?'Ustaw konto':'Połącz Facebook')+'</button>')+'</p></section>';
-  h+='<div class="pad" id="pub-b"><p class="note">Panel publikuje sam tylko posty, które po odbiorze zaplanujesz (Facebook, Instagram). Bez planu nic nie publikuje się samo.</p><div class="pubc">';
+  h+='<div class="pad" id="pub-b">'+wyPermNote()+'<p class="note">Panel publikuje sam tylko posty, które po odbiorze zaplanujesz (Facebook, Instagram). Bez planu nic nie publikuje się samo.</p><div class="pubc">';
   h+='<div><h3>Facebook '+(fb?'<span class="lz green">połączony</span>':'<span class="lz yellow">niepołączony</span>')+'</h3>';
   if(fb)h+='<table><tbody>'+P.fb.pages.map(g=>'<tr><td>'+esc(g.name)+(g.instagram?' <span class="muted">· Instagram '+(g.instagram==='tak'?'':'@'+esc(g.instagram))+'</span>':'')+'</td><td><select class="fi" data-fbmap="'+esc(g.id)+'" aria-label="Projekt strony '+esc(g.name)+'">'+opt([['','– bez projektu']].concat(proj),g.project)+'</select></td></tr>').join('')+'</tbody></table>';
-  const how='<details class="ds-det" data-agdet="fbhow"'+(pubDet('fbhow')?' open':'')+'><summary>Jak zdobyć App ID i token (4 kroki)</summary><ol class="steps"><li><a href="https://developers.facebook.com" target="_blank" rel="noopener">developers.facebook.com</a> → Utwórz aplikację, przypadek użycia „Zarządzaj stroną”.</li><li>Ustawienia → Podstawowe: skopiuj App ID i App Secret.</li><li>Narzędzia → Graph API Explorer: ta aplikacja, „Token użytkownika”, uprawnienia pages_show_list, pages_read_engagement, pages_manage_posts, publish_video, a dla Instagrama też instagram_basic i instagram_content_publish → Generate Access Token, zaznacz obie strony.</li><li>Instagram: konto firmowe połączone ze stroną (Meta Business Suite → Ustawienia → Konta). Panel znajdzie je sam.</li></ol></details>';
+  const how='<details class="ds-det" data-agdet="fbhow"'+(pubDet('fbhow')?' open':'')+'><summary>Jak zdobyć App ID i token (4 kroki)</summary><ol class="steps"><li><a href="https://developers.facebook.com" target="_blank" rel="noopener">developers.facebook.com</a> → Utwórz aplikację, przypadek użycia „Zarządzaj stroną”.</li><li>Ustawienia → Podstawowe: skopiuj App ID i App Secret.</li><li>Narzędzia → Graph API Explorer: ta aplikacja, „Token użytkownika”, uprawnienia pages_show_list, pages_read_engagement, pages_manage_posts, publish_video, a dla Instagrama też instagram_basic i instagram_content_publish; do odczytu wyników read_insights i instagram_manage_insights → Generate Access Token, zaznacz obie strony.</li><li>Instagram: konto firmowe połączone ze stroną (Meta Business Suite → Ustawienia → Konta). Panel znajdzie je sam.</li></ol></details>';
   /* Enter w polu wysyła formularz (submit → pubAct), „Odłącz” to zwykły przycisk */
   const fbForm='<form class="dform" data-pubf="fb"><label class="fl"><span>App ID</span><input class="fi" data-pf="appId" inputmode="numeric" autocomplete="off"></label><label class="fl"><span>App Secret</span><input class="fi" type="password" data-pf="appSecret" autocomplete="off"></label><label class="fl"><span>Token użytkownika</span><input class="fi" type="password" data-pf="token" autocomplete="off"></label>'+
     '<div class="row"><button type="submit" class="btn sm" data-pub="fb">Połącz Facebook</button>'+(fb?'<button type="button" class="btn sec sm danger" data-pub="off" data-svc="facebook">Odłącz</button>':'')+'</div><p class="note">Panel zapisuje tylko tokeny stron (nie wygasają); App Secret służy raz, do wymiany tokenu.</p></form>';
@@ -8765,6 +9074,7 @@ function pubPanel(){
     '<div class="row"><button type="submit" class="btn sec sm" data-pub="film">Zapisz</button></div></form>';
   const fBox='<div><h3>Konto do nagrań demonstracji '+(acc?'<span class="lz green">ustawione</span>':'<span class="lz grey">brak</span>')+'</h3><p class="note">Potrzebne, żeby panel nagrywał filmy z demonstracją strony (logowanie na opisarnia.pl). Hasło zostaje na serwerze.</p>'+
     (acc?'<p>'+esc(F.account)+'</p><details class="ds-det" data-agdet="filmre"'+(pubDet('filmre')?' open':'')+'><summary>Zmień konto</summary>'+fForm+'</details>':fForm)+'</div>';
+  h+=wyMetaBox();
   h+='<div><h3>LinkedIn <span class="muted">publikujesz Ty</span></h3><p class="note">LinkedIn publikujesz sam: w poście zakładka LinkedIn → „Udostępnij na LinkedInie”.</p>'+
     '<details class="ds-det" data-agdet="lihow"'+(pubDet('lihow')?' open':'')+'><summary>Dlaczego?</summary><p class="note">Regulamin API LinkedIn zabrania automatycznego publikowania. „Udostępnij na LinkedInie” otwiera edytor LinkedIn z wpisanym opisem i pobiera grafikę (telefon: aplikacja LinkedIn przez menu udostępniania); godzinę ustawiasz w LinkedIn (ikona zegara).</p></details></div>';
   /* konto do nagrań to inna sprawa niż kanały: osobny blok pod kanałami */

@@ -134,6 +134,7 @@ import historia  # noqa: E402  (dzienny stan zadań projektów, PULPIT.md sekcja
 import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENCI.md)
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
+import wyniki  # noqa: E402  (wyniki marketingu: klienci, posty, reklamy; wyniki.py)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela: scenariusz.md w folderze posta)
 import pola  # noqa: E402  (pola formularza zadań właściciela: propozycja modelu, przejście)
@@ -2025,6 +2026,19 @@ def get_publisher():
         return _publisher
 
 
+_wyniki = {"obj": None}
+
+
+def get_wyniki():
+    """Wyniki marketingu (wyniki.py): dziennik klientów, odczyt postów i reklam; jeden na proces."""
+    with _agents_lock:
+        if _wyniki["obj"] is None:
+            _wyniki["obj"] = wyniki.Wyniki(load_projects, _write_lock, projekt, post_folder,
+                                           notify=lambda text, link="#marketing": get_agents()._send_ntfy(text, link),
+                                           publisher=get_publisher)
+        return _wyniki["obj"]
+
+
 # kanał zadania (pole kanał) → platforma pakietu udostępnienia; skróty jak CHAL w panel.html
 SHARE_CHANNELS = {"instagram": r"instagram|insta|\big\b", "facebook": r"facebook|\bfb\b|reels|rolki",
                   "linkedin": r"linkedin|\bli\b", "tiktok": r"tiktok|\btt\b"}
@@ -2256,6 +2270,7 @@ WRITES = {"/api/task/cancel": cancel_task, "/api/task/restore": lambda b: cancel
           "/api/session/logout-all": lambda b: logout_all(b),
           "/api/plan/ask": lambda b: get_agents().run_plan(b.get("text", "")),
           "/api/plan/accept": lambda b: get_agents().accept_plan(b.get("id", ""), b.get("ids"))}
+WRITES.update({k: (lambda key: lambda b: get_wyniki().post(key, b))(k) for k in wyniki.WRITE_PATHS})
 
 
 def pm_note(sample):
@@ -3177,6 +3192,7 @@ def build_data():
             return default
 
     out["publish"] = part("publikacje", lambda: get_publisher().status(), None)
+    part("wyniki", lambda: get_wyniki().annotate(out), None)
     out["resources"] = part("zasoby", resources_state, None)
     out["deploy"] = part("wdrożenie", deploy_state, None)
     out["fieldsMigration"] = part("pola zadań", lambda: get_fields().summary(), {})
@@ -4037,6 +4053,9 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/podglad/"):
             code, body, ctype, headers = get_agents().site.serve(path)
             return self._send(code, body, ctype, headers)
+        hit = get_wyniki().api_get(path, parse_qs(url.query)) if path.startswith("/api/") else None
+        if hit:
+            return self._send(hit[0], json.dumps(hit[1], ensure_ascii=False), "application/json; charset=utf-8")
         if path == "/api/strona":
             code, err, extra = get_agents().site.info((parse_qs(url.query).get("project") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
@@ -4239,6 +4258,8 @@ class Handler(BaseHTTPRequestHandler):
         if origin and urlparse(origin).netloc != self.headers.get("Host"):
             return self._send(403, "Niedozwolone źródło", "text/plain; charset=utf-8")
         path = urlparse(self.path).path
+        if path == wyniki.google.INGEST_PATH:     # skrypt Google Ads: bez sesji, tylko z kluczem projektu (wyniki_google.py)
+            return self._google_ads_ingest()
         if not self._allowed(path):
             return
         data_invalidate()
@@ -4260,7 +4281,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/asystent/glos":
             return self._voice_upload(urlparse(self.path).query)
         if path in WRITES:
-            body = self._json_body(CHAT_BODY if path in ("/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
+            body = self._json_body(wyniki.Wyniki.BODY_LIMITS[path]) if path in wyniki.Wyniki.BODY_LIMITS else self._json_body(CHAT_BODY if path in ("/api/odbior/popraw", "/api/odbior/akceptuj", "/api/project/chat", "/api/asystent", "/api/asystent/karty",
                                                          "/api/film/zmien", "/api/post/tekst", "/api/strona/uwaga", "/api/strona/koncepcja",
                                                          "/api/scenariusz/tekst", "/api/drive/klient", "/api/task/finish") else 4096)
             if body is None:
@@ -4278,6 +4299,20 @@ class Handler(BaseHTTPRequestHandler):
                 answer.update(result[2])            # np. id nowego uruchomienia
             return self._send(code, json.dumps(answer, ensure_ascii=False), "application/json; charset=utf-8")
         return self._send(404, "Nie znaleziono", "text/plain; charset=utf-8")
+
+    def _google_ads_ingest(self):
+        """POST /api/wyniki/google-ads: wiersze z wczoraj od skryptu Google Ads (JSON do 512 KB). Zły klucz: 403."""
+        key = self.headers.get(wyniki.google.KEY_HEADER) or ""
+        if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
+            self.close_connection = True
+            return self._send(400, "Złe dane.", "text/plain; charset=utf-8")
+        raw, err = self._raw_body(wyniki.google.MAX_BODY)
+        if raw is None:
+            return self._send(413 if "MB" in err else 400, "Za duże albo przerwane dane.", "text/plain; charset=utf-8")
+        code, text = get_wyniki().google_ingest(key, raw)
+        if code == 200:
+            data_invalidate()
+        return self._send(code, text, "text/plain; charset=utf-8")
 
     def _raw_body(self, limit):
         """(bajty, błąd): surowe ciało żądania do limit bajtów (wgranie pliku)."""
@@ -4536,6 +4571,7 @@ if __name__ == "__main__":
     get_drive().migrate_accounts()
     get_agents().start()                        # dopiero po zajęciu portu: drugi egzemplarz nie rusza rekordów
     get_publisher().start()
+    get_wyniki().start()
     try:
         mark_interrupted_films(load_projects(resolve=False)[1])
     except Exception:  # noqa: BLE001  (stan filmów nie może zatrzymać startu panelu)
