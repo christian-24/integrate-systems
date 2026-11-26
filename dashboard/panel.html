@@ -3043,6 +3043,26 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
   .mk-rev .fi,.mk-new .fi{min-height:44px}
   .mk-fs .chk{min-height:44px;display:inline-flex;align-items:center}
 }
+/* Agenci: ustawienia w wierszach, rola agenta (ikona i nazwa), prognoza tokenów */
+.ag-set{display:grid;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:var(--g-s) var(--g-p) var(--g-p)}
+.ag-set .ag-srow:last-of-type{border-bottom:0}
+.ag-srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--g-m);align-items:center;padding:var(--g-m) var(--g-p);border-bottom:1px solid var(--line)}
+.ag-sl{display:grid;gap:2px;min-width:0}.ag-sl b{font-size:var(--fs-md);font-weight:600}.ag-sl small{color:var(--ink-3);font-size:var(--fs-xs);line-height:1.45;overflow-wrap:anywhere}
+.ag-sc{display:flex;justify-content:flex-end;align-items:center;gap:var(--g-xs);flex-wrap:wrap}
+.ag-sc .ag-par{display:inline-flex;gap:4px}.ag-sc .ag-par .btn{min-width:40px}
+.ag-sv{font-size:18px;font-weight:650}.ag-sv small{font-size:var(--fs-xs);color:var(--ink-3);font-weight:500}
+.ag-sact{display:flex;flex-wrap:wrap;gap:var(--g-s);padding:var(--g-m) var(--g-p);background:var(--sunk)}
+@media (max-width:820px){.ag-srow{grid-template-columns:minmax(0,1fr);gap:var(--g-s)}.ag-sc{justify-content:flex-start}}
+.ag-ric{width:14px;height:14px;flex:none;vertical-align:-2px}
+.ag-role{display:inline-flex;align-items:center;gap:6px;margin:0 0 4px;font-size:var(--fs-xs);font-weight:700;color:var(--accent)}
+.ag-role.sm{margin:0;font-size:11px}
+.ag-cost{margin:var(--g-s) 0 0;display:grid;gap:4px}.ag-cost p{margin:0}.ag-cost .l{color:var(--ink-3)}
+.ag-cbar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.ag-cbar i{display:block;height:100%;background:var(--bar-wip)}
+.ws-role{display:inline-flex;color:var(--l-blue);margin-right:6px;vertical-align:-2px}
+.ws-b .ag-ric{width:12px;height:12px;margin-right:2px}
+.ws-tab{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:650;vertical-align:1px}
+.ws-tab .ws-dot{width:6px;height:6px;margin:0}
+@media (max-width:820px){.ws-tn{display:none}}
 /* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
 .os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
 .os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
@@ -3595,6 +3615,21 @@ const runUse=r=>r.limitStart!=null&&r.limitNow!=null?Math.max(0,Math.round(100*(
 const minutes=s=>Math.round(s/60)+' min';
 const estimatePercent=n=>Math.round(n*100)+'%';
 const tokenText=n=>Math.round(n).toLocaleString('pl-PL')+' tokenów';
+/* tokeny krótko: 950, 12 tys., 1,4 mln */
+const tokK=n=>{n=Math.round(+n||0);return n>=1e6?(n/1e6).toFixed(1).replace('.',',')+' mln':n>=1e4?Math.round(n/1e3)+' tys.':n>=1e3?(n/1e3).toFixed(1).replace('.',',')+' tys.':String(n)};
+const runTok=r=>['tokensIn','tokensOut','decisionTokensIn','decisionTokensOut'].reduce((a,k)=>a+(+r[k]||0),0);
+/* prognoza kosztu zadania: tokeny i część limitu 5 h, w toku z paskiem „zużyto / prognoza” */
+function agCost(r){
+  const e=r.estimate||{},used=runTok(r),run=r.state==='running',u=runUse(r);
+  if(e.tokens==null&&e.limit==null&&!used)return '<p class="ag-cost muted" title="Prognoza wymaga 3 zakończonych podobnych zleceń tego wykonawcy.">Koszt: brak danych do prognozy</p>';
+  const tot=e.tokens!=null?Math.max(e.tokens,used):null,pct=tot?Math.min(100,Math.round(100*used/tot)):0;
+  const lim=e.limit!=null?estimatePercent(e.limit)+' limitu 5 h':'';
+  let h='<div class="ag-cost"><p><span class="l">'+(run?'Zje łącznie':'Zje')+'</span> <b>'+(tot!=null?'ok. '+tokK(tot)+' tokenów':'—')+'</b>'+(lim?' <span class="muted">· ok. '+lim+'</span>':'')+'</p>';
+  if(run&&tot)h+='<div class="ag-cbar" role="img" aria-label="Zużyto '+tokK(used)+' z około '+tokK(tot)+' tokenów"><i style="width:'+pct+'%"></i></div>'+
+    '<p class="muted">Zużyto '+tokK(used)+' ('+pct+'%)'+(u!=null?' · '+u+'% limitu 5 h':'')+'</p>';
+  else if(run&&used)h+='<p class="muted">Zużyto dotąd '+tokK(used)+' tokenów'+(u!=null?' · '+u+'% limitu 5 h':'')+'</p>';
+  return h+'</div>';
+}
 const estimateTime=n=>new Date(n*1000).toLocaleTimeString('pl-PL',{hour:'2-digit',minute:'2-digit'});
 /* grupa agenci: szacunek jedną liczbą. W toku przed pierwszym kamieniem: mediana z historii („ok. N min”, zakres
    w podpowiedzi); po kamieniu: „zostało ok. N min (± M)” z tempa kamieni (agent_progress.estimate_running).
@@ -7097,21 +7132,27 @@ function agBarHtml(){
   /* ile agentów naraz (różne projekty; w jednym projekcie po kolei): ustawienie w panelu, stan.json */
   const pm=a.parallelMax||0,par=pm&&a.canRunTasks?'<span class="ag-par" role="group" aria-label="Agenci naraz">Naraz:'+
     Array.from({length:pm},(_,i)=>i+1).map(n=>'<button type="button" class="btn sec sm" data-ag="par" data-v="'+n+'" data-k="par:'+n+'" aria-pressed="'+(a.maxParallel===n)+'" title="'+n+' '+pl(n,'uruchomienie','uruchomienia','uruchomień')+' naraz, z różnych projektów">'+n+'</button>').join('')+'</span>':'';
-  const bar=(swOn?'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" title="'+esc(auT)+'">Samodzielne uruchamianie: '+(a.automat?'włączone':'wyłączone')+'</button>':'')+par+
-    (no?'':pmBtn('pm'))+
-    (no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
-  if(bar)h+='<div class="abar"><div class="ag-ac">'+bar+'</div></div>';
+  /* Ustawienia jako wiersze: nazwa i opis po lewej, przełącznik albo wybór po prawej; akcje na dole */
+  const row=(name,desc,ctl)=>'<div class="ag-srow"><div class="ag-sl"><b>'+name+'</b><small>'+desc+'</small></div><div class="ag-sc">'+ctl+'</div></div>';
+  const u0=a.usage,p0=n=>n==null?'—':Math.round(n*100)+'%';
+  let rows='';
+  if(swOn)rows+=row('Samodzielne uruchamianie',esc(auT),'<button class="sw" role="switch" aria-checked="'+a.automat+'" data-ag="automat" data-k="automat" aria-describedby="ag-auto" aria-label="Samodzielne uruchamianie">'+(a.automat?'Włączone':'Wyłączone')+'</button>');
+  if(par)rows+=row('Agenci naraz','Ile zadań z różnych projektów może trwać jednocześnie; w jednym projekcie po kolei.',par.replace('Naraz:',''));
+  if(u0.five!=null)rows+=row('Bezpiecznik limitu','Zatrzymuje uruchomienie po zużyciu '+p0(u0.budget)+' limitu 5 h. Automat pomija wykonawcę od '+p0(u0.reserve)+' limitu.',
+    '<span class="ag-sv">'+p0(u0.budget)+' <small>/ '+p0(u0.reserve)+'</small></span>');
+  const tc0=toolState('claude'),tx0=toolState('codex');
+  rows+=row('Wykonawcy','Claude decyduje przy każdym zadaniu, czy zrobi je sam, czy odda Codexowi (limity i złożoność).','<div class="ag-st">'+pill(tc0)+pill(tx0)+'</div>');
+  const acts=(no?'':pmBtn('pm'))+(no||lg?'':'<button class="btn sec sm" data-ag="check" data-k="check"'+(ck?' aria-disabled="true"':'')+'>'+(ck?'Sprawdzam…':'Sprawdź Claude')+'</button>');
+  if(rows||acts)h+='<div class="ag-set">'+rows+(acts?'<div class="ag-sact">'+acts+'</div>':'')+'</div>';
   if(a.deployHold)h+='<p class="ahint">Wdrożenie panelu czeka, aż agenci skończą pracę (najwyżej 30 min). Nowe zadania czekają w kolejce.</p>';
   h+='<p class="sr-only" id="ag-auto">'+esc(auT)+'</p>';
   /* limity 5 h i tygodniowe są w sekcji Użycie (agUseHtml) */
   const u=a.usage,pct=n=>n==null?'brak odczytu':Math.round(n*100)+'%';
-  if(u.five!=null)h+='<p class="ahint">Bezpiecznik Claude zatrzymuje uruchomienie po zużyciu '+pct(u.budget)+
-    ' limitu 5 h. Automat pomija wykonawcę od '+pct(u.reserve)+' limitu.</p>';
+
   if(limitT())h+='<p class="ahint">'+limitHint()+'</p>';
   const tc=toolState('claude'),tx=toolState('codex'),to=!!(A.agDet&&A.agDet.tools);
   const TSH={ok:'gotowy',off:'brak',warn:'logowanie',bad:'limit'},tsh=(n,x)=>n+': '+(TSH[x.dot]||x.dot);
-  h+='<details class="ag-tools ds-det" data-agdet="tools"'+(to?' open':'')+'><summary>Narzędzia <small>· '+(tc.dot==='off'&&tx.dot==='off'?'czy Claude i Codex są zainstalowane':esc(tsh('Claude',tc))+' · '+esc(tsh('Codex',tx)))+'</small></summary>'+
-    '<div class="ag-st">'+pill(tc)+pill(tx)+'<span class="pill">Działa na: <b>'+esc(MACH[a.machine]||a.machine||'brak')+'</b></span></div></details>';
+
   return h;
 }
 /* rodzaj uruchomienia w wierszu (krótko); pełna nazwa KIND w szufladzie */
@@ -7196,20 +7237,21 @@ function agentsNow(a){
       '><summary>Kamienie ('+done+' z '+steps.length+')</summary><ol>'+steps.map(s=>'<li>'+esc(s.text)+(s.done?' · zrobione':s.active?' · w toku':'')+'</li>').join('')+'</ol></details>':
       '<p>'+(r.activity?'Ostatnia czynność: '+esc(r.activity):'Czeka na pierwsze zdarzenie')+'</p>';
     const u=runUse(r),recent=r.recent||[],el=(r.estimate||{}).limit;
-    return '<article class="ag-now-card"><h3>'+esc(r.title)+'</h3><p class="muted">'+
+    const ro=agRole(taskOfRun(r),r.title,r.kind);
+    return '<article class="ag-now-card"><p class="ag-role">'+ro.ic+esc(ro.n)+'</p><h3>'+esc(r.title)+'</h3><p class="muted">'+
       [(TOOL[r.tool]||'Agent')+(r.choiceReason?' · '+r.choiceReason:''),(r.machine||a.machine)==='pc'?'PC':MACH[r.machine||a.machine]||'',r.projectName||'',r.observedStart?'od obserwacji '+fmtDur(runDur(r)):fmtDur(runDur(r))].filter(Boolean).map(esc).join(' · ')+
-      '</p>'+progress+estimateHtml(r)+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
-      '<p class="muted">Zużycie w tym uruchomieniu: '+(u==null?'brak odczytu':u+'% limitu 5 h'+(el!=null?' (szacunek łącznie ok. '+estimatePercent(el)+')':''))+'</p>'+
+      '</p>'+progress+estimateHtml(r)+agCost(r)+(recent.length?'<p class="muted">Ostatnie wpisy</p><ol>'+recent.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>':'')+
+
       '<div class="row"><button class="btn sec sm" data-run="'+esc(r.id)+'" data-k="live:'+esc(r.id)+'">Przebieg na żywo</button>'+
       (!LIVE||r.kind==='development'?'':'<button class="btn sec sm" data-ag="stop" data-id="'+esc(r.id)+'" data-k="stop:'+esc(r.id)+'">Zatrzymaj</button>')+
       '</div></article>';
   });
   return '<section class="panel" id="ag-now"><h2>Teraz</h2><div class="ag-body">'+
     (cards.length?'<div class="ag-now-grid">'+cards.join('')+'</div>':'<p class="muted">Brak widocznych uruchomień w toku.</p>')+
-    '<h3 class="ag-gh">W kolejce</h3>'+(queue.length?'<ul class="ag-queue">'+queue.map(r=>'<li>'+
+    '<h3 class="ag-gh">W kolejce</h3>'+(queue.length?'<ul class="ag-queue">'+queue.map(r=>'<li>'+(()=>{const ro=agRole(r.taskId?D.tasks.find(x=>x.id===r.taskId):taskOfRun(r),r.title,r.kind);return '<span class="ag-role sm">'+ro.ic+esc(ro.n)+'</span> '})()+
       (r.id?'<button class="lk" data-run="'+esc(r.id)+'">'+esc(r.title)+'</button>':
         '<button class="lk" data-task="'+esc(r.taskId)+'">'+esc(r.title)+'</button>')+
-      (r.projectName?' <span class="muted">· '+esc(r.projectName)+'</span>':'')+estimateHtml(r)+'</li>').join('')+'</ul>'+queueEstimateHtml(a.queueEstimate):
+      (r.projectName?' <span class="muted">· '+esc(r.projectName)+'</span>':'')+estimateHtml(r)+agCost(r)+'</li>').join('')+'</ul>'+queueEstimateHtml(a.queueEstimate):
       '<p class="muted">Kolejka jest pusta.</p>')+'</div></section>';
 }
 function runRow(r,g){
@@ -11851,6 +11893,25 @@ const youCntT=c=>'Sprawy dla Ciebie na dziś: '+c.today+(c.late?', w tym po term
    z zadaniem w toku. Źródło: agents.runs (running), activity.chats i activity.films z /api/data; gdy coś trwa, panel
    pobiera je co 3 s (nwBusy), a applyAgents rysuje menu i widok od nowa */
 const WS_WHO={claude:'Claude',codex:'Codex'};
+/* rola agenta z zadania: nazwa do menu, nagłówka projektu, zakładki i Agentów (np. „Agent UI”) */
+const ROLE_IC={ui:'<path d="M2.5 3.5h11v9h-11z"/><path d="M2.5 6h11M5 9h3"/>',www:'<circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c2 2 2 9 0 11M8 2.5c-2 2-2 9 0 11"/>',
+  mk:'<path d="M3 9.5V6.5l7-3v9l-7-3z"/><path d="M10 6h2.5v3H10M5 9.8l1 3"/>',gfx:'<rect x="2.5" y="3" width="11" height="10" rx="1"/><path d="M3 11l3.5-3.5 2.5 2.5 2-2 2.5 2.5"/><circle cx="10.5" cy="6" r="1"/>',
+  txt:'<path d="M3 4h10M3 7h10M3 10h7M3 13h5"/>',code:'<path d="M6 5L3 8l3 3M10 5l3 3-3 3"/>',pm:'<path d="M3 13V8M6.5 13V5M10 13v-3M13.5 13V3"/>',
+  dev:'<circle cx="8" cy="8" r="2"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.8 3.8l1.4 1.4M10.8 10.8l1.4 1.4M3.8 12.2l1.4-1.4M10.8 5.2l1.4-1.4"/>',
+  task:'<rect x="3" y="2.5" width="10" height="11" rx="1"/><path d="M5.5 6l1.2 1.2L9 5M5.5 10h5"/>'};
+function agRole(t,title,kind){
+  const x=String((t&&t.title)||title||''),ch=String((t&&t.channel)||'');
+  let k='task',n='Agent zadań';
+  if(kind==='pm'){k='pm';n='Agent PM'}
+  else if(kind==='development'){k='dev';n='Agent panelu'}
+  else if(kind==='grafika'||/grafik|baner|logo|wizytówk/i.test(x)){k='gfx';n='Agent grafiki'}
+  else if(/^Strona:|stron[aęy] www|landing|podstron/i.test(x)){k='www';n='Agent strony'}
+  else if(/\b(UI|UX)\b|interfejs|widok|makiet|panel|przycisk|ekran/i.test(x)){k='ui';n='Agent UI'}
+  else if((t&&(t.kind==='publikacja'||t.campaign))||ch||/reklam|kampani|post|film|scenariusz|marketing|Meta|Google Ads|instagram|facebook/i.test(x)){k='mk';n='Agent marketingu'}
+  else if(/kod|test|API|serwer|błąd|skrypt|wdroż|migracj|baz[aęy] danych/i.test(x)){k='code';n='Agent kodu'}
+  else if(/tekst|opis|artyku|treść|ofert|mail|wiadomoś|tłumacz/i.test(x)){k='txt';n='Agent treści'}
+  return {k,n,ic:'<svg class="ag-ric" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ROLE_IC[k]+'</svg>'};
+}
 /* zakładka projektu z pracą: zadania strony („Strona: …”) → Strona, kampania, publikacja i grafika posta → Marketing,
    pozostałe → Zadania */
 function wsTab(t,title,kind){
@@ -11868,12 +11929,13 @@ function wsStep(r){
 function wsWork0(){
   const out=[],seen={},a=nwAct();
   runs().filter(r=>r.state==='running'&&r.project).forEach(r=>{const t=taskOfRun(r),who=WS_WHO[r.tool]||'Agent';if(t)seen[t.id]=1;
-    out.push({pid:r.project,who:who,lead:who+' pracuje',title:t?t.title:r.title,tab:wsTab(t,r.title,r.kind),step:wsStep(r),run:r.id,task:''})});
+    const ro=agRole(t,r.title,r.kind);
+    out.push({pid:r.project,who:who,role:ro,lead:ro.n+' ('+who+') pracuje',title:t?t.title:r.title,tab:wsTab(t,r.title,r.kind),step:wsStep(r),run:r.id,task:''})});
   a.chats.forEach(c=>{const t=nwTask(c.project,c.file,c.title)||D.tasks.find(x=>x.id===c.taskId)||null,pid=c.project||(t?t.project:'');
     if(!pid||(t&&seen[t.id]))return;
-    out.push({pid:pid,who:'Claude',lead:'Claude odpowiada',title:c.title,tab:wsTab(t,c.title),step:'rozmowa o zadaniu',run:'',task:t?t.id:''})});
+    out.push({pid:pid,who:'Claude',role:agRole(t,c.title),lead:'Claude odpowiada',title:c.title,tab:wsTab(t,c.title),step:'rozmowa o zadaniu',run:'',task:t?t.id:''})});
   a.films.filter(f=>f.state==='running'&&f.project).forEach(f=>{const t=nwPostTask(f);
-    out.push({pid:f.project,who:'Film',lead:'Nagrywa się film',title:f.title,tab:'marketing',step:f.day?'post na '+dd(f.day):'',run:'',task:t?t.id:''})});
+    out.push({pid:f.project,who:'Film',role:{k:'mk',n:'Nagrywanie filmu',ic:agRole(null,'film').ic},lead:'Nagrywa się film',title:f.title,tab:'marketing',step:f.day?'post na '+dd(f.day):'',run:'',task:t?t.id:''})});
   return out;
 }
 const wsWork=()=>D?nwMemo('ws',wsWork0):[];
@@ -11881,7 +11943,7 @@ const wsWork=()=>D?nwMemo('ws',wsWork0):[];
 function wsSide(p){
   const L=wsWork().filter(x=>topId(x.pid)===p.id);if(!L.length)return null;
   return {t:p.name+'\n'+L.map(x=>x.lead+': '+x.title+(x.step?' ('+x.step+')':'')).join('\n'),
-    h:'<span class="ws-b"><i class="ws-dot" aria-hidden="true"></i>'+(L.length===1?'pracuje':L.length+' '+pl(L.length,'agent','agentów','agentów'))+
+    h:'<span class="ws-b"><i class="ws-dot" aria-hidden="true"></i>'+(L.length===1?L[0].role.ic+esc(L[0].role.n.replace(/^Agent /,'')):L.length+' '+pl(L.length,'agent','agentów','agentów'))+
       '<span class="sr-only">: '+esc(L.map(x=>x.who+', '+x.title).join('; '))+'</span></span>'};
 }
 /* licznik przy Agentach: pracujące uruchomienia (zadania i zlecenia rozwoju); bez pracy liczba czekających w kolejce */
@@ -11896,13 +11958,15 @@ function wsProjRow(p){
   const x=L[0],more=L.length-1,sep='<span class="ws-sep" aria-hidden="true">·</span>',k=esc(x.run||x.task||x.pid);
   const show=x.run?'<button type="button" class="lk" data-run="'+esc(x.run)+'" data-k="ws:'+k+'" title="Przebieg na żywo">Pokaż</button>':
     x.task?'<button type="button" class="lk" data-task="'+esc(x.task)+'" data-k="ws:'+k+'">Pokaż</button>':'<a href="'+phref(p,'marketing')+'">Pokaż</a>';
-  return '<p class="ws-row"><i class="ws-dot" aria-hidden="true"></i><span><b>'+esc(x.lead)+':</b> <span title="'+esc(x.title)+'">'+esc(shortT(x.title,80))+'</span>'+ptag(p,x.pid)+'</span>'+
+  return '<p class="ws-row"><i class="ws-dot" aria-hidden="true"></i><span class="ws-role">'+x.role.ic+'</span><span><b>'+esc(x.lead)+':</b> <span title="'+esc(x.title)+'">'+esc(shortT(x.title,80))+'</span>'+ptag(p,x.pid)+'</span>'+
     (x.step?sep+'<span title="'+esc(x.step)+'">'+esc(shortT(x.step,70))+'</span>':'')+sep+show+(more?sep+'<a href="#agenci">i jeszcze '+more+'</a>':'')+'</p>';
 }
 /* kropka na zakładce projektu z pracą (Strona bez zakładki Strona: Zadania) */
 function wsTabDot(p,k){
   const st=ptabsOf(p).some(x=>x[0]==='strona');
-  return wsWork().some(x=>inP(p,x.pid)&&(x.tab==='strona'&&!st?'tablica':x.tab)===k)?'<i class="ws-dot" aria-hidden="true"></i><span class="sr-only">, agent pracuje</span>':'';
+  const L=wsWork().filter(x=>inP(p,x.pid)&&(x.tab==='strona'&&!st?'tablica':x.tab)===k);if(!L.length)return '';
+  const ro=L[0].role;
+  return '<span class="ws-tab" title="'+esc(L.map(x=>x.lead+': '+x.title).join('\n'))+'"><i class="ws-dot" aria-hidden="true"></i>'+ro.ic+'<span class="ws-tn">'+esc(ro.n)+(L.length>1?' +'+(L.length-1):'')+'</span></span><span class="sr-only">, '+esc(ro.n)+' pracuje</span>';
 }
 function renderSide(r){
   /* licznik przy Asystencie: sprawy dla Ciebie na dziś, w tym po terminie (D.youToday z serwera: ta sama liczba na starcie
