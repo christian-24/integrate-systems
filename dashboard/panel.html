@@ -2,7 +2,7 @@
 <style>
 /* Pulpit projektów: panel boczny (widoki + lista projektów z wyszukiwarką), obszar główny, szuflada szczegółów.
    Wygląd według ksiega/pulpit-projektow.html, dane z /api/data. Kontrakt: dashboard/PULPIT.md. */
-:root{
+:root{/* podgląd jak w aplikacji Meta: zawsze jasny */--mx-blue:#1877f2;--mx-ink:#050505;--mx-line:#dadde1;--mx-mute:#65676b;--mx-sunk:#f0f2f5;--mx-btn:#e4e6eb;--mx-sep:#ced0d4;--mx-ig:#3797f0;--mx-gblue:#1a73e8;--mx-gline:#dadce0;--mx-av:#111;--mx-black:#000;--mx-white:#fff;--mx-ov:rgba(0,0,0,.55);--mx-shadow:0 20px 60px rgba(0,0,0,.4);--mx-st:rgba(255,255,255,.4);--mx-tsh:0 1px 2px rgba(0,0,0,.5);
   --bg:#f6f7f9; --surface:#ffffff; --sunk:#f0f2f5; --hover:#eef1f6; --line:#dde1e7; --line-2:#c9ced8;
   --ink:#1d2433; --ink-2:#465163; --ink-3:#5a6577; --accent:#2563c9; --accent-ink:#ffffff; --accent-soft:#e3ecfb;
   --l-grey-bg:#e4e7ec; --l-grey:#3b4454; --l-blue-bg:#dbe7fd; --l-blue:#1d4fa8; --l-green-bg:#d9f5e1; --l-green:#176a32;
@@ -3043,6 +3043,62 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
   .mk-rev .fi,.mk-new .fi{min-height:44px}
   .mk-fs .chk{min-height:44px;display:inline-flex;align-items:center}
 }
+/* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
+.os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
+.os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
+.os-film{background:color-mix(in srgb,var(--l-purple) 16%,transparent);color:var(--l-purple);border-color:color-mix(in srgb,var(--l-purple) 40%,transparent)}
+.os-post{background:color-mix(in srgb,var(--l-blue) 14%,transparent);color:var(--l-blue);border-color:color-mix(in srgb,var(--l-blue) 40%,transparent)}
+.os-meta{background:var(--mx-blue);color:var(--mx-white)}
+.os-google{background:var(--mx-white);color:var(--mx-gblue);border-color:var(--mx-gline)}
+.os-old{margin:0 0 var(--g-s)}
+.os-tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);display:grid;gap:var(--g-m)}
+.os-day{position:relative}
+.os-day::before{content:"";position:absolute;left:-25px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--ink-3)}
+.os-day.os-past::before{background:var(--ink-3)}
+.os-day.os-today::before{background:var(--accent);border-color:var(--accent)}
+.os-day h3{margin:0 0 var(--g-xs);font-size:var(--fs-sm);font-weight:650;color:var(--ink-2);text-transform:none;letter-spacing:0}
+.os-today h3{color:var(--accent)}
+.os-day ul{list-style:none;margin:0;padding:0;display:grid;gap:var(--g-xs)}
+.os-now{position:relative;margin:0 0 0 -18px;padding:0 0 0 18px;border-top:2px dashed var(--accent);height:0}
+.os-now span{position:absolute;top:-11px;left:24px;background:var(--bg);padding:0 8px;font-size:11px;font-weight:700;color:var(--accent)}
+.os-r{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--g-s);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--g-s) var(--g-m)}
+.os-main{display:flex;align-items:center;gap:var(--g-s);min-width:0;min-height:44px;background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.os-main:hover b{text-decoration:underline}
+.os-tt{display:grid;min-width:0}.os-tt b{overflow-wrap:anywhere}.os-tt small{color:var(--ink-3);font-size:var(--fs-xs)}
+.os-right{display:flex;align-items:center;gap:var(--g-s);justify-content:flex-end}
+.os-v{display:grid;text-align:right}.os-v b{font-size:18px}.os-v small{color:var(--ink-3);font-size:11px;white-space:nowrap}
+.os-sp{color:var(--l-green);flex:none}
+.os-err{grid-column:1/-1;margin:0}
+@media (max-width:820px){.os-r{grid-template-columns:minmax(0,1fr)}.os-right{justify-content:flex-start}.os-v{text-align:left}}
+.os-ov{position:fixed;inset:0;z-index:80;background:var(--mx-ov);display:grid;place-items:center;padding:16px;overflow:auto}
+.os-dlg{background:var(--surface);color:var(--ink);border-radius:14px;width:min(440px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:var(--g-m);display:grid;gap:var(--g-s);box-shadow:var(--mx-shadow)}
+.os-dh{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--g-s)}.os-dh b{overflow-wrap:anywhere}
+.os-tabs .seg{min-height:36px}
+.os-phone{background:var(--mx-white);color:var(--mx-ink);border-radius:12px;overflow:hidden;border:1px solid var(--mx-line);font:14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.os-hd{display:flex;align-items:center;gap:8px;padding:10px 12px}.os-hd b{display:block;font-size:14px}.os-hd small{display:block;color:var(--mx-mute);font-size:12px}
+.os-av{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--mx-av);color:var(--mx-white);font-size:12px;font-weight:700;flex:none}
+.os-dots{margin-left:auto;color:var(--mx-mute);font-weight:700}
+.os-txt{margin:0;padding:0 12px 10px;white-space:normal;overflow-wrap:anywhere}.os-more{color:var(--mx-mute);font-weight:600}
+.os-media{display:block;width:100%;height:auto;background:var(--mx-sunk)}
+.os-nomedia{display:grid;place-items:center;aspect-ratio:4/5;color:var(--mx-mute);font-size:13px}
+.os-cta{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--mx-sunk);padding:10px 12px}
+.os-cta small{display:block;color:var(--mx-mute);font-size:12px}.os-cta b{display:block;font-size:15px}
+.os-btn{background:var(--mx-btn);border-radius:6px;padding:8px 12px;font-weight:600;white-space:nowrap}
+.os-acts{display:flex;justify-content:space-around;padding:8px 6px;border-top:1px solid var(--mx-sep);color:var(--mx-mute);font-weight:600;font-size:13px}
+.os-igcta{display:flex;justify-content:space-between;background:var(--mx-ig);color:var(--mx-white);font-weight:600;padding:10px 12px}
+.os-igacts{justify-content:flex-start;gap:16px;border:0;font-size:20px;color:var(--mx-ink);padding:8px 12px}.os-sv{margin-left:auto}
+.os-st{position:relative;background:var(--mx-black);aspect-ratio:9/16;max-height:70vh;margin:0 auto}
+.os-stimg,.os-st .os-media{width:100%;height:100%;object-fit:cover;display:block}
+.os-stbar{position:absolute;top:8px;left:8px;right:8px;height:3px;background:var(--mx-st);border-radius:2px}.os-stbar i{display:block;width:35%;height:100%;background:var(--mx-white);border-radius:2px}
+.os-sthd{position:absolute;top:18px;left:10px;right:10px;display:flex;align-items:center;gap:8px;color:var(--mx-white);text-shadow:var(--mx-tsh)}.os-sthd small{opacity:.85}
+.os-stcta{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:var(--mx-white);color:var(--mx-ink);border-radius:999px;padding:8px 18px;font-weight:600;display:grid;justify-items:center;line-height:1}
+.os-stcta span{font-size:12px;color:var(--mx-mute)}
+.os-info p{margin:0}
+.os-pl{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.os-pi{display:flex;gap:10px;align-items:center;width:100%;min-height:56px;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:6px;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.os-pi:hover{border-color:var(--accent)}
+.os-pi img,.os-pn{width:56px;height:56px;object-fit:cover;border-radius:6px;flex:none;background:var(--line)}
+.os-pi span{display:grid;min-width:0}.os-pi small{color:var(--ink-3);overflow-wrap:anywhere}
 </style>
 
 <div class="app">
@@ -6505,14 +6561,164 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 const WY={sub:{},kl:{},busy:{},f:{},imp:''};
 const WYSUB=[['kampanie','Kampanie'],['wyniki','Wyniki'],['klienci','Klienci']];
 const wyZl=n=>{n=+n||0;return (Number.isInteger(n)?String(n):n.toFixed(2).replace('.',',')).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' zł'};
+/* zakładka Marketing projektu: tylko oś publikacji (decyzja właściciela 26.11: bez Kampanii, Wyników i Klientów) */
 function wyTab(p){
-  const cur=WY.sub[p.id]||'kampanie';
-  const nav='<div class="row wy-sub hscroll" role="group" aria-label="Część zakładki Marketing">'+WYSUB.map(([k,n])=>'<button type="button" class="seg" data-wysub="'+k+'" data-pid="'+esc(p.id)+'" aria-pressed="'+(cur===k)+'" data-k="wysub:'+k+'">'+n+'</button>').join('')+'</div>';
-  if(cur==='klienci')return nav+wyKlienci(p);
-  if(cur==='wyniki')return nav+wyWyniki(p);
-  if(cur==='polaczenia'){WY.sub[p.id]='kampanie';location.hash=pjxConHref(phref(p,'marketing'));return nav+mktView(p)}
-  return nav+mktView(p);
+  return '<p class="pj-tabd">Co i kiedy wychodzi albo wyszło, z wyświetleniami z API. Kliknij wiersz, żeby zobaczyć podgląd jak w aplikacji Meta.</p>'+
+    osView(p.mem?[...p.mem]:[p.id]);
 }
+/* ---------- Oś publikacji (prefiks os): jedyny widok Marketingu (projekt i menu). Wiersz = film, post, reklama Meta
+   albo reklama Google z dniem, stanem i wyświetleniami z API (GET /api/wyniki/os). Publikacja bez połączenia:
+   „Połącz z postem” wybiera post z API (GET /api/wyniki/posty-api) i zapisuje link w polu link: zadania.
+   Kliknięcie otwiera podgląd jak w aplikacji Meta (Facebook, Instagram, Story). ---------- */
+const OS={d:{},busy:{},open:'',tab:'fb',txt:{},pick:'',posts:{},old:{}};
+const OSTYP={film:['Film','os-film'],post:['Post','os-post'],meta:['Reklama Meta','os-meta'],google:['Reklama Google','os-google']};
+const osCode=t=>{const m=/(?:^|[^A-Za-z0-9])([A-Z]{1,2}\d{1,2})(?![A-Za-z0-9])/.exec(t.title||'');return m?m[1]:''};
+function osTyp(t){
+  const ch=String(t.channel||'').toLowerCase();
+  if(mkRow(t)==='reklama')return /google/.test(ch)?'google':'meta';
+  if(/google/.test(ch))return 'google';
+  if(/reels|youtube|tiktok|shorts|film/.test(ch)||/\bfilm|filmik|nagra/i.test(t.title||''))return 'film';
+  return 'post';
+}
+const osItems=pids=>D.tasks.filter(t=>t.state!=='cancelled'&&isDay(t.date)&&pids.includes(t.project)&&
+  (mkRow(t)==='reklama'||(t.kind==='publikacja'&&mkRow(t)==='publikacja'))).sort(mkByDate);
+async function osLoad(pid,force){
+  if(!LIVE||OS.busy[pid]||(OS.d[pid]&&!force))return;OS.busy[pid]=true;
+  try{const r=await fetch('/api/wyniki/os?project='+encodeURIComponent(pid),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}
+    const j=await r.json();OS.d[pid]=j.ok?j:{posty:{},reklamy:{},err:j.error||''}}
+  catch(e){OS.d[pid]={posty:{},reklamy:{},err:'Nie udało się wczytać wyników.'}}
+  OS.busy[pid]=false;render(true);
+}
+/* wyświetlenia i przebieg: posty z odczytów API (suma kanałów po kolejnych odczytach), reklamy z dni Meta/Google */
+function osStats(t){
+  const R=OS.d[t.project]||{},typ=osTyp(t);
+  if(typ==='meta'||typ==='google'){const a=(R.reklamy||{})[osCode(t).toLowerCase()];if(!a)return null;
+    let s=0;const ser=(a.dni||[]).map(d=>s+=d.wyswietlenia||0);
+    return {n:a.wyswietlenia,ser,extra:[wyZl(a.wydano),a.rozmowy+' '+pl(a.rozmowy,'rozmowa','rozmowy','rozmów')],src:a.zrodlo==='google'?'Google Ads':'Meta'}}
+  const ch=(R.posty||{})[t.id];
+  if(ch){const ev=[];Object.keys(ch).forEach(k=>(ch[k].odczyty||[]).forEach(o=>ev.push([o.at,k,+o.wyswietlenia||0])));ev.sort((x,y)=>x[0]<y[0]?-1:1);
+    const last={},ser=ev.map(([,k,w])=>{last[k]=w;return Object.values(last).reduce((a,b)=>a+b,0)});
+    const err=Object.keys(ch).map(k=>ch[k].error?k+': '+ch[k].error:'').filter(Boolean);
+    return {n:ser.length?ser[ser.length-1]:0,ser,extra:[],src:Object.keys(ch).map(k=>k==='instagram'?'Instagram':k==='linkedin'?'LinkedIn':'Facebook').join(' + '),err}}
+  const v=+(t.detail||{}).views;return v?{n:v,ser:[],extra:[],src:'wpisane ręcznie'}:null;
+}
+function osSpark(ser){
+  if(!ser||ser.length<2)return '';
+  const W=120,H=30,mx=Math.max(...ser),mn=Math.min(...ser),r=mx-mn||1;
+  const pts=ser.map((v,i)=>(i*W/(ser.length-1)).toFixed(1)+','+(H-2-((v-mn)/r)*(H-4)).toFixed(1)).join(' ');
+  return '<svg class="os-sp" viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" aria-hidden="true"><polyline points="'+pts+'" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+function osState(t){
+  const typ=osTyp(t),day=t.date.slice(0,10),st=osStats(t);
+  if(typ==='meta'||typ==='google'){
+    if(st&&st.n)return ['green','w reklamie'];
+    return t.state==='done'?['blue','gotowa do wgrania']:day<D.todayKey?['red','po terminie']:['grey','w przygotowaniu'];
+  }
+  if(t.state==='done')return ['green','opublikowane'];
+  return day<D.todayKey?['red','po terminie']:day===D.todayKey?['yellow','dziś']:['grey','zaplanowane'];
+}
+function osRow(t,many){
+  const typ=osTyp(t),T=OSTYP[typ],st=osState(t),S=osStats(t),pub=t.state==='done'&&(typ==='post'||typ==='film');
+  const name=t.title.replace(/^(Opublikuj|Przygotuj)\s+(post|film|reklamę|reklame)?\s*/i,'').replace(/^[:\s]+/,'');
+  let right;
+  if(S&&S.n!=null)right='<span class="os-v"><b class="num">'+fmtN(S.n)+'</b><small>wyświetleń · '+esc(S.src)+'</small>'+(S.extra.length?'<small>'+esc(S.extra.join(' · '))+'</small>':'')+'</span>'+osSpark(S.ser);
+  else if(pub&&LIVE)right='<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'" data-k="ospick:'+esc(t.id)+'">Połącz z postem</button>';
+  else right='<span class="os-v muted"><small>'+(typ==='meta'||typ==='google'?'brak danych z reklamy':'po publikacji')+'</small></span>';
+  return '<li class="os-r"><button type="button" class="os-main" data-osopen="'+esc(t.id)+'" data-k="os:'+esc(t.id)+'">'+
+    '<span class="os-b '+T[1]+'">'+T[0]+'</span><span class="os-tt"><b>'+esc(name||t.title)+'</b><small>'+
+    esc([many?pShort(P(t.project)):'',t.channel||'',osCode(t)].filter(Boolean).join(' · '))+'</small></span>'+
+    '<span class="lz '+st[0]+'">'+st[1]+'</span></button><span class="os-right">'+right+'</span>'+
+    (S&&S.err&&S.err.length?'<p class="warn os-err">'+esc(S.err.join('; '))+'</p>':'')+'</li>';
+}
+function osView(pids){
+  pids.forEach(pid=>osLoad(pid));
+  const all=osItems(pids),many=pids.length>1,from=addK(D.todayKey,-14),old=all.filter(t=>t.date.slice(0,10)<from),ok=OS.old[pids.join(',')];
+  const list=ok?all:all.filter(t=>t.date.slice(0,10)>=from);
+  let h='<div class="os-leg" aria-label="Rodzaje">'+Object.keys(OSTYP).map(k=>'<span class="os-b '+OSTYP[k][1]+'">'+OSTYP[k][0]+'</span>').join('')+'</div>';
+  if(!all.length)return h+'<p class="empty">Brak publikacji i reklam w planie.</p>';
+  if(old.length&&!ok)h+='<button type="button" class="btn sec sm os-old" data-osold="'+esc(pids.join(','))+'">Starsze ('+old.length+')</button>';
+  const days=[...new Set(list.map(t=>t.date.slice(0,10)))];let nowDone=false;
+  h+='<ol class="os-tl">';
+  days.forEach(d=>{
+    if(!nowDone&&d>=D.todayKey){nowDone=true;if(d>D.todayKey)h+='<li class="os-now" aria-label="Dziś"><span>Dziś · '+esc(ddl(D.todayKey))+'</span></li>'}
+    h+='<li class="os-day'+(d===D.todayKey?' os-today':'')+(d<D.todayKey?' os-past':'')+'"><h3>'+esc(d===D.todayKey?'Dziś · '+ddl(d):ddl(d))+'</h3><ul>'+
+      list.filter(t=>t.date.slice(0,10)===d).map(t=>osRow(t,many)).join('')+'</ul></li>';
+  });
+  if(!nowDone)h+='<li class="os-now"><span>Dziś · '+esc(ddl(D.todayKey))+'</span></li>';
+  return h+'</ol>'+osModal()+osPicker();
+}
+/* podgląd jak w aplikacji Meta: tekst z post.md (reklama: Tekst główny, Nagłówek, Opis, Przycisk) */
+function osParse(raw){
+  const g=k=>{const m=new RegExp('\\*\\*'+k+':\\*\\*\\s*([\\s\\S]*?)(?=\\n\\*\\*[^*]+:\\*\\*|$)').exec(raw||'');return m?m[1].trim():''};
+  let body=g('Tekst główny');
+  if(!body){const secs=String(raw||'').split(/\n## /);const pick=secs.find(x=>/^(Post|Tekst|Treść|Opis posta)/i.test(x));
+    body=(pick?pick.replace(/^[^\n]*\n/,''):String(raw||'').replace(/^# [^\n]*\n/,'')).replace(/^#+ .*$/gm,'').replace(/\*\*/g,'').trim()}
+  return {body:body.slice(0,900),head:g('Nagłówek'),desc:g('Opis'),cta:g('Przycisk')||'Wyślij wiadomość'};
+}
+function osModal(){
+  const t=OS.open&&D.tasks.find(x=>x.id===OS.open);if(!t)return '';
+  const typ=osTyp(t),ad=typ==='meta'||typ==='google',day=t.date.slice(0,10),kod=osCode(t),q='project='+encodeURIComponent(t.project)+'&date='+day+'&kod='+encodeURIComponent(kod);
+  const X=OS.txt[t.id];if(X===undefined&&LIVE){OS.txt[t.id]=null;fetch('/api/reklama/tekst?'+q,{cache:'no-store'}).then(r=>r.json()).then(j=>{OS.txt[t.id]=j;render(true)}).catch(()=>{OS.txt[t.id]={text:''}})}
+  const tx=osParse(X&&X.text),pg=((D.publish||{}).fb||{pages:[]}).pages.find(g=>g.project===t.project),nm=pg?pg.name:pShort(P(t.project));
+  const ini=esc(nm.split(/\s+/).filter(w=>/^[A-Za-zĄĆĘŁŃÓŚŹŻ&]/.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  const img='/api/reklama/grafika?'+q,story=X&&X.story?img+'&wersja=story':img;
+  const media=typ==='film'?'<video class="os-media" src="/api/post/film?project='+encodeURIComponent(t.project)+'&date='+day+'" controls playsinline preload="metadata"></video>':
+    '<img class="os-media" src="'+esc(img)+'" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'os-media os-nomedia\',textContent:\'Grafika jeszcze nie jest gotowa\'}))">';
+  const body=tx.body||'Tekst posta pojawi się po przygotowaniu.',short=body.length>125?esc(body.slice(0,125))+'… <span class="os-more">Wyświetl więcej</span>':esc(body);
+  const tab=(k,n)=>'<button type="button" class="seg" data-ostab="'+k+'" aria-pressed="'+(OS.tab===k)+'">'+n+'</button>';
+  let ph='';
+  if(OS.tab==='fb')ph='<div class="os-fb"><div class="os-hd"><span class="os-av">'+ini+'</span><span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':esc(ddl(day)))+' · 🌐</small></span><span class="os-dots">···</span></div>'+
+    '<p class="os-txt">'+short.replace(/\n/g,'<br>')+'</p>'+media+
+    (ad?'<div class="os-cta"><span><small>'+esc(tx.desc||'Messenger')+'</small><b>'+esc(tx.head||name0(t))+'</b></span><span class="os-btn">'+esc(tx.cta)+'</span></div>':'')+
+    '<div class="os-acts"><span>👍 Lubię to!</span><span>💬 Komentarz</span><span>↗ Udostępnij</span></div></div>';
+  else if(OS.tab==='ig')ph='<div class="os-ig"><div class="os-hd"><span class="os-av">'+ini+'</span><span><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b><small>'+(ad?'Sponsorowane':'')+'</small></span><span class="os-dots">···</span></div>'+media+
+    (ad?'<div class="os-igcta"><span>'+esc(tx.cta)+'</span><span>›</span></div>':'')+
+    '<div class="os-acts os-igacts"><span>♡</span><span>💬</span><span>➤</span><span class="os-sv">⌑</span></div><p class="os-txt"><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b> '+short.replace(/\n/g,' ')+'</p></div>';
+  else ph='<div class="os-st">'+(typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
+    (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':'')+'</div>';
+  const S=osStats(t),link=(t.detail||{}).link||'';
+  return '<div class="os-ov" data-osclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Podgląd w aplikacji Meta">'+
+    '<div class="os-dh"><b>'+esc(t.title)+'</b><button type="button" class="btn sec sm" data-osclose="1" aria-label="Zamknij">✕</button></div>'+
+    '<div class="row os-tabs" role="group">'+tab('fb','Facebook')+tab('ig','Instagram')+tab('st','Story')+'</div>'+
+    '<div class="os-phone">'+ph+'</div>'+
+    '<div class="os-info">'+(S&&S.n!=null?'<p><b class="num">'+fmtN(S.n)+'</b> wyświetleń · '+esc(S.src)+(S.extra.length?' · '+esc(S.extra.join(' · ')):'')+'</p>'+osSpark(S.ser):'<p class="muted">Brak wyświetleń z API.</p>')+
+    '<div class="row">'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Otwórz post</a>':'')+
+    (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+'</div></div></div></div>';
+}
+const name0=t=>t.title.replace(/^(Opublikuj|Przygotuj)\s+\S+\s*/i,'');
+/* wybór posta z API: lista ostatnich postów strony Facebook i konta Instagram projektu */
+function osPicker(){
+  const t=OS.pick&&D.tasks.find(x=>x.id===OS.pick);if(!t)return '';
+  const L=OS.posts[t.project];
+  if(L===undefined){OS.posts[t.project]=null;fetch('/api/wyniki/posty-api?project='+encodeURIComponent(t.project),{cache:'no-store'}).then(r=>r.json()).then(j=>{OS.posts[t.project]=j;render(true)}).catch(()=>{OS.posts[t.project]={ok:false,error:'Nie udało się wczytać postów.'}})}
+  let b;
+  if(!L)b='<p class="muted">Wczytuję posty z Facebooka i Instagrama…</p>';
+  else if(!L.ok)b='<p class="warn">'+esc(L.error||'Nie udało się wczytać postów.')+'</p>';
+  else if(!L.posty.length)b='<p class="muted">Brak postów na stronie.</p>';
+  else b=(L.bledy&&L.bledy.length?'<p class="warn">'+esc(L.bledy.join('; '))+'</p>':'')+'<ul class="os-pl">'+L.posty.map((x,i)=>'<li><button type="button" class="os-pi" data-osset="'+i+'">'+
+    (x.miniatura?'<img src="'+esc(x.miniatura)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="os-pn"></span>')+
+    '<span><b>'+esc(x.kanal==='instagram'?'Instagram':'Facebook')+(x.film?' · film':'')+' · '+esc(x.data?dd(x.data):'')+'</b><small>'+esc(x.tekst||'(bez tekstu)')+'</small></span></button></li>').join('')+'</ul>';
+  return '<div class="os-ov" data-ospickclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Wybierz post z API">'+
+    '<div class="os-dh"><b>Połącz: '+esc(t.title)+'</b><button type="button" class="btn sec sm" data-ospickclose="1" aria-label="Zamknij">✕</button></div>'+
+    '<p class="note">Wybierz post, z którego panel ma czytać wyświetlenia (odczyt co 6 h przez 3 dni, potem raz dziennie).</p>'+b+'</div></div>';
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('[data-osopen],[data-osclose],[data-ostab],[data-ospick],[data-ospickclose],[data-osset],[data-osold]');if(!b)return;
+  if(b.dataset.osclose!=null&&b!==ev.target&&!ev.target.closest('button'))return;   // klik w środek okna nie zamyka
+  if(b.dataset.ospickclose!=null&&b!==ev.target&&!ev.target.closest('button'))return;
+  if(b.dataset.osopen){OS.open=b.dataset.osopen;OS.tab='fb';render(true);return}
+  if(b.dataset.osclose!=null){OS.open='';render(true);return}
+  if(b.dataset.ostab){OS.tab=b.dataset.ostab;render(true);return}
+  if(b.dataset.ospick){OS.pick=b.dataset.ospick;render(true);return}
+  if(b.dataset.ospickclose!=null){OS.pick='';render(true);return}
+  if(b.dataset.osold){OS.old[b.dataset.osold]=true;render(true);return}
+  if(b.dataset.osset!=null){const t=D.tasks.find(x=>x.id===OS.pick),L=t&&OS.posts[t.project],x=L&&L.posty[+b.dataset.osset];if(!t||!x)return;
+    if(!LIVE){say(PRV);return}
+    OS.pick='';enqueue(async()=>{const r=await detailPost(t,'link',x.link);
+      say(r.ok?'Połączono z postem. Wyświetlenia pojawią się po najbliższym odczycie.':failMsg(r,'Nie zapisano połączenia.'));if(r.ok)setTimeout(()=>osLoad(t.project,true),1500)});}
+});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick)){OS.open='';OS.pick='';render(true)}});
+
 async function wyLoad(pid,force){
   if(WY.busy[pid]||(WY.kl[pid]&&!force))return;
   WY.busy[pid]=true;
@@ -9023,28 +9229,12 @@ function recPanel(fp){
 }
 /* Marketing: po terminie (na wierzchu, z akcją), do nagrania, 7 dni od dziś (strzałki: kolejne 7 dni), kanały publikacji, Studio filmów */
 function vMarketing(){
-  const off=A.mweek||0,start=addK(D.todayKey,7*off),days=[...Array(7)].map((_,i)=>addK(start,i));
   const fp=PF.mkp&&D.allP.some(p=>p.id===PF.mkp)?PF.mkp:'';
-  const pubAll=D.tasks.filter(t=>t.state!=='cancelled'&&t.kind==='publikacja'&&t.channel&&mkMat(t)&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
-  const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
-  const late=mine.filter(t=>!taskClosed(t)&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  const pids=[...new Set(D.tasks.filter(t=>t.state!=='cancelled'&&(t.kind==='publikacja'||mkRow(t)==='reklama')).map(t=>t.project))];
   let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.allP.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
-  /* kampanie w toku z celem liczbowym i „Wpisz wynik” (dawniej na Przeglądzie) */
-  h+=mkCampList(fp);
-  if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
-  h+=recPanel(fp);
-  const wk=items.filter(t=>!(!taskClosed(t)&&t.date.slice(0,10)<D.todayKey));
-  h+='<section class="panel" aria-labelledby="mk-wkn"><h2 id="mk-wkh"><span id="mk-wkn">'+(off?'7 dni':'Najbliższe 7 dni')+' <b class="wk num" aria-live="polite">'+esc(dd(days[0]))+' – '+esc(dd(days[6]))+'</b>'+(wk.length?' <small class="num">'+wk.length+'</small>':'')+'</span>'+
-    '<small class="mk-wnav"><button type="button" class="btn sec sm" data-mw="-1" data-k="mw-1" aria-label="Poprzednie 7 dni">←</button><button type="button" class="btn sec sm" data-mw="1" data-k="mw1" aria-label="Następne 7 dni">→</button>'+
-    (off?'<button type="button" class="btn sec sm" data-mw="0" data-k="mw0">Od dziś</button>':'')+'</small></h2>'+mkTodo(wk.concat(late));
-  if(!wk.length){
-    /* pusty zakres: jedno zdanie i przycisk do najbliższej publikacji poza nim */
-    const after=mine.filter(t=>t.date.slice(0,10)>days[6]).sort((a,b)=>a.date<b.date?-1:1)[0],before=mine.filter(t=>t.date.slice(0,10)<days[0]&&t.date.slice(0,10)>=D.todayKey).sort((a,b)=>a.date>b.date?-1:1)[0];
-    const nx=after||before;let go='';
-    if(nx){const k=nx.date.slice(0,10);go='<div class="row mk-next"><button type="button" class="btn sec sm" data-mwset="'+Math.floor(diff(k,D.todayKey)/7)+'" data-k="mwnext">Następna publikacja: '+esc(ddl(k))+'</button></div>'}
-    h+='<p class="empty">Brak publikacji w tych dniach. Publikacje dodaje agent z kampanii projektu (Projekt → Marketing).</p>'+go+'</section>';
-  }else h+='<ol class="mtl">'+mkDays(days,wk)+'</ol></section>';
+  h+=osView(fp?[fp]:pids);
+  const days=[...Array(7)].map((_,i)=>addK(D.todayKey,i));
   return h+'<details class="pj-fold mk-more" data-pvdet="mk-more"'+(PF.more['mk-more']?' open':'')+'><summary>Kanały i studio</summary>'+pubPanel()+studioHead(days)+'</details>';
 }
 /* stan posta: [kolor, stan, grupa]; ten sam w karcie (mCard), w liczniku (mkTodo) i na stronie projektu (mktView).
