@@ -4286,6 +4286,17 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
+        if path == "/api/reklama/podglad":         # jeden PNG: Facebook, Instagram i Story obok siebie („Kopiuj obraz”)
+            q = parse_qs(url.query)
+            one = lambda k: (q.get(k) or [""])[0]
+            folder = ad_folder(one("project"), one("date"), one("kod"))
+            try:
+                import podglad
+                png = podglad.render(folder, one("nazwa")[:80] or "Strona", one("tytul")[:120], one("ad") == "1",
+                                     one("kiedy")[:40])
+            except (OSError, RuntimeError, ValueError) as e:
+                return self._send(500, "Nie udało się zrobić obrazu: %s" % e, "text/plain; charset=utf-8")
+            return self._send(200, png, "image/png", [("Cache-Control", "no-store")])
         if path == "/api/reklama/tekst":           # treść post.md reklamy albo posta (podgląd jak w aplikacji Meta)
             q = parse_qs(url.query)
             folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
