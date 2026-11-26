@@ -607,14 +607,16 @@ class Wyniki:
         want = str(code or "").strip().lower()
         for r in (ads.get("meta") or {}).get("rows") or []:
             if (r["kod"] or "Meta · bez kodu").lower() == want:
-                d = days.setdefault(r["data"], {"data": r["data"], "wydano": 0.0, "rozmowy": 0})
+                d = days.setdefault(r["data"], {"data": r["data"], "wydano": 0.0, "rozmowy": 0, "wyswietlenia": 0})
                 d["wydano"] += r["wydano"]
                 d["rozmowy"] += r["rozmowy"]
+                d["wyswietlenia"] += int(r.get("wyswietlenia") or 0)
         for r in (ads.get("google") or {}).get("rows") or []:
             if google_code(r).lower() == want:
-                d = days.setdefault(r["data"], {"data": r["data"], "wydano": 0.0, "rozmowy": 0})
+                d = days.setdefault(r["data"], {"data": r["data"], "wydano": 0.0, "rozmowy": 0, "wyswietlenia": 0})
                 d["wydano"] += r["koszt"]
                 d["rozmowy"] += r["konwersje"]
+                d["wyswietlenia"] += int(r.get("wyswietlenia") or 0)
         return [dict(d, wydano=round(d["wydano"], 2)) for _, d in sorted(days.items())]
 
     def month(self, pid):
@@ -845,9 +847,96 @@ class Wyniki:
                 t["auto"] = {ch: {"at": r.get("at", ""), "error": r.get("error", "")} for ch, r in rec.items()}
 
     # ---------- API ----------
+    def timeline(self, pid, data, index):
+        """Oś publikacji (widok Marketing): odczyty postów z API po kanałach i wyniki reklam po kodzie.
+        {"posty": {id zadania: {kanał: {link, error, liczby, odczyty}}}, "reklamy": {kod małymi: {sumy, dni}}}"""
+        posts = {}
+        for t in data.get("tasks") or []:
+            if t.get("project") != pid or t.get("kind") != "publikacja" or t.get("state") == "cancelled":
+                continue
+            day = str(t.get("date") or "")[:10]
+            if not re.match(r"^\d{4}-\d\d-\d\d$", day):
+                continue
+            chans = (self.organic_record(t, day, index or {}).get("kanaly") or {}) if index is not None else {}
+            if chans:
+                posts[t.get("id", "")] = {ch: {"link": c.get("link", ""), "error": c.get("error", ""), "at": c.get("at", ""),
+                                               "liczby": c.get("liczby") or {},
+                                               "odczyty": [{"at": o.get("at", ""), "wyswietlenia": o.get("wyswietlenia")}
+                                                           for o in c.get("odczyty") or []]}
+                                          for ch, c in chans.items()}
+        ads, out = self.ads(pid), {}
+        for r in (ads.get("meta") or {}).get("rows") or []:
+            if r.get("kod"):
+                a = out.setdefault(r["kod"].lower(), {"zrodlo": "meta", "wyswietlenia": 0, "zasieg": 0, "wydano": 0.0, "rozmowy": 0})
+                a["wyswietlenia"] += int(r.get("wyswietlenia") or 0)
+                a["zasieg"] += int(r.get("zasieg") or 0)
+                a["wydano"] += r.get("wydano") or 0
+                a["rozmowy"] += r.get("rozmowy") or 0
+        for r in (ads.get("google") or {}).get("rows") or []:
+            k = google_code(r).lower()
+            if k:
+                a = out.setdefault(k, {"zrodlo": "google", "wyswietlenia": 0, "zasieg": 0, "wydano": 0.0, "rozmowy": 0})
+                a["wyswietlenia"] += int(r.get("wyswietlenia") or 0)
+                a["wydano"] += r.get("koszt") or 0
+                a["rozmowy"] += r.get("konwersje") or 0
+        for k, a in out.items():
+            a["wydano"] = round(a["wydano"], 2)
+            a["dni"] = [{"data": d["data"], "wyswietlenia": d.get("wyswietlenia", 0)} for d in self.history(pid, k)]
+        return {"posty": posts, "reklamy": out}
+
+    def api_posts(self, pid):
+        """Ostatnie posty strony Facebook i konta Instagram projektu z API (do połączenia publikacji z postem)."""
+        pub = self._pub()
+        page = pub._page(pid) if pub else None
+        if not page or not page.get("token"):
+            return 409, {"ok": False, "error": "Projekt nie ma połączonej strony Facebook (Marketing → Kanały i studio)."}
+        token, items, errs = page["token"], [], []
+        try:
+            d = meta.graph("%s/published_posts" % page["id"], {"fields": "permalink_url,created_time,message,full_picture",
+                                                                "limit": 30, "access_token": token}, self.http)
+            for p in d.get("data") or []:
+                items.append({"kanal": "facebook", "link": p.get("permalink_url", ""), "data": str(p.get("created_time") or "")[:10],
+                              "tekst": str(p.get("message") or "")[:140], "miniatura": p.get("full_picture", ""), "film": False})
+        except ApiError as e:
+            errs.append("Facebook: %s" % str(e)[:160])
+        try:
+            d = meta.graph("%s/videos" % page["id"], {"fields": "permalink_url,created_time,description,picture",
+                                                       "limit": 20, "access_token": token}, self.http)
+            for p in d.get("data") or []:
+                link = str(p.get("permalink_url") or "")
+                link = link if link.startswith("http") else "https://www.facebook.com" + link
+                if not any(i["link"] == link for i in items):
+                    items.append({"kanal": "facebook", "link": link, "data": str(p.get("created_time") or "")[:10],
+                                  "tekst": str(p.get("description") or "")[:140], "miniatura": p.get("picture", ""), "film": True})
+        except ApiError as e:
+            errs.append("Facebook (filmy): %s" % str(e)[:160])
+        ig = (page.get("ig") or {}).get("id")
+        if ig:
+            try:
+                d = meta.graph("%s/media" % ig, {"fields": "permalink,timestamp,caption,media_type,thumbnail_url,media_url",
+                                                  "limit": 30, "access_token": token}, self.http)
+                for p in d.get("data") or []:
+                    film = p.get("media_type") == "VIDEO"
+                    items.append({"kanal": "instagram", "link": p.get("permalink", ""), "data": str(p.get("timestamp") or "")[:10],
+                                  "tekst": str(p.get("caption") or "")[:140], "film": film,
+                                  "miniatura": p.get("thumbnail_url") if film else p.get("media_url", "")})
+            except ApiError as e:
+                errs.append("Instagram: %s" % str(e)[:160])
+        items = [i for i in items if str(i.get("link") or "").startswith("https://")]
+        items.sort(key=lambda i: i["data"], reverse=True)
+        return 200, {"ok": True, "posty": items[:60], "bledy": errs}
+
     def api_get(self, path, query):
         """GET: (kod, obiekt) albo None, gdy ścieżka nie należy do wyników."""
         one = lambda k: (query.get(k) or [""])[0]
+        if path in ("/api/wyniki/os", "/api/wyniki/posty-api"):
+            p, _ = self._project(one("project"))
+            if not p:
+                return 404, {"ok": False, "error": "Nie ma takiego projektu."}
+            if path == "/api/wyniki/posty-api":
+                return self.api_posts(p["id"])
+            data, index = self.load_projects(resolve=False)
+            return 200, dict(self.timeline(p["id"], data, index), ok=True)
         if path in ("/api/wyniki", "/api/wyniki/historia"):
             p, _ = self._project(one("project"))
             if not p:

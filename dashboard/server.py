@@ -4286,10 +4286,22 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
-        if path == "/api/reklama/grafika":         # miniatura reklamy w przeglądzie kampanii
+        if path == "/api/reklama/tekst":           # treść post.md reklamy albo posta (podgląd jak w aplikacji Meta)
+            q = parse_qs(url.query)
+            folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
+            text = ""
+            if folder and os.path.isfile(os.path.join(folder, "post.md")):
+                with open(os.path.join(folder, "post.md"), encoding="utf-8", errors="replace") as f:
+                    text = f.read(20000)
+            return self._send(200 if folder else 404, json.dumps({"ok": bool(folder), "text": text,
+                              "story": bool(folder and os.path.isfile(os.path.join(folder, "grafika-story.png")))},
+                              ensure_ascii=False), "application/json; charset=utf-8", [("Cache-Control", "no-store")])
+        if path == "/api/reklama/grafika":         # miniatura reklamy w przeglądzie kampanii; wersja=story: 9:16
             q = parse_qs(url.query)
             folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
             png = post_image(folder) if folder else None
+            if folder and (q.get("wersja") or [""])[0] == "story" and os.path.isfile(os.path.join(folder, "grafika-story.png")):
+                png = os.path.join(folder, "grafika-story.png")
             if not png:
                 return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")
             with open(png, "rb") as f:

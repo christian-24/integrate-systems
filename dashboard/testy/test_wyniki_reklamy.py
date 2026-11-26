@@ -171,7 +171,7 @@ class Reklamy(Baza):
         self.assertEqual(self.w.report(self.pid, "7")["rows"][0]["wydano"], 75.0)
         self.assertEqual(by["F2"]["kanal"], "Meta")
         hist = self.w.history(self.pid, "F2")
-        self.assertEqual((len(hist), hist[-2]), (9, {"data": "2026-11-23", "wydano": 10.0, "rozmowy": 1}))
+        self.assertEqual((len(hist), hist[-2]), (9, {"data": "2026-11-23", "wydano": 10.0, "rozmowy": 1, "wyswietlenia": 500}))  # wyświetlenia do osi publikacji
         self.assertEqual(self.w.month(self.pid), {"przychod": 2990.0, "wydatek": 232.5})
         # raport PM: te same liczby kampanii (klienci.marketing_numbers, pm.py --json)
         import klienci
