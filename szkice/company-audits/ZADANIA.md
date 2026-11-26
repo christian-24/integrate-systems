@@ -179,3 +179,14 @@ termin: 2026-12-18
   gotowe gdy: obaj audytorzy dają co najmniej 9/10 na zrzutach 390 i 1440 px, a po każdej rundzie poprawki są zbudowane i obejrzane; najwyżej 3 rundy; w wynik: ocena każdego audytora w każdej rundzie z powodami; ocena zakłada, że miejsca [UZUPEŁNIJ] zostaną wypełnione; czego nie da się poprawić bez danych właściciela, trafia do zostało:; nie dopisuje wymyślonych opinii, liczb ani klientów; nic nie publikuje
   materiał: strona-www/miejsca-wiarygodnosci.md
   materiał: DECYZJE.md
+- [~] Przygotuj plan marketingowy według strategii z 26.11 | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+  wykonawca: tylko claude
+  cel: gotowy do użycia plan marketingu Oprogramowani na grudzień zgodny ze strategią przyjętą 26.11 (strategia-2026-11-26.md): obietnica „Najpierw demo. Potem płacisz.”, cztery linie oferty, kanały w kolejności Google Ads (test), Useme, telefon i wizyta, LinkedIn/Facebook
+  gotowe gdy: jest plik marketing-plan-2026-12.md obok KARTA.md z sekcjami: (1) test Google Ads: 4 frazy („program do planowania produkcji”, „ksef integracja”, „makra excel”, „integracja baselinker”) z grupą reklam każda, 15 nagłówków do 30 znaków i 4 opisy do 90 znaków na grupę, wykluczające słowa, adres podstrony, dzienny budżet przy 300 zł na 14 dni (budżet czeka na decyzję właściciela, nic nie uruchamiasz); (2) Useme: szablon oferty z „demo przed płatnością” dla każdej linii (do 900 znaków) i lista słów, po których szukać zleceń z małą konkurencją; (3) telefon i wizyta: scenariusz rozmowy na 2 minuty i kartka do zostawienia, kryteria wyboru 20 firm z bazy (lista firm jest na dysku właściciela, nie zgaduj nazw); (4) posty: 6 karuzel scenek w miejsce postów z kampanii (temat, 4 plansze z tekstem, linia oferty) bez cen i bez nazw firm; (5) miary na 30 dni: 10 zapytań, 20 kontaktów, 3 dema, 1 płatne zlecenie i jak je liczyć w panelu
+  materiał: strategia-2026-11-26.md
+  materiał: kampanie/pozyskanie-klientow.md
+  materiał: DECYZJE.md
+  materiał: research/analiza-rynku-zlecen-2026-08.md
+  - [ ] Przeczytaj strategię, kampanię i decyzje z 26.11
+  - [ ] Napisz sekcje 1–5 planu; liczby tylko z materiałów, bez wymyślonych wyników
+  - [ ] W zostało: wypisz, co wymaga decyzji właściciela (budżet, publikacja, kontakt z firmami)

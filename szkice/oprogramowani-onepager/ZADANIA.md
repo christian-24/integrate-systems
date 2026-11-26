@@ -72,7 +72,7 @@
   materiał: site/src/dane.js
   - [ ] Wpisz odpowiedzi do site/src/dane.js; pola bez odpowiedzi zostaw puste i wypisz w zostało:
   - [ ] Zbuduj wersję produkcyjną i roboczą, zrób zrzuty, obejrzyj je
-- [ ] Strona: sprawdź stronę pięcioma audytami i popraw | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | po: wpisz dane firmy
+- [ ] Strona: sprawdź stronę pięcioma audytami i popraw | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | po: wpisz dane firmy, Strona: nowa strategia
   cel: strona gotowa do publikacji w ocenie pięciu audytorów: klient, krytyczny klient, prawnik, projektant interfejsu, specjalista od konwersji
   gotowe gdy: w wynik: ocena każdego audytora (1–10) z jednym powodem; poprawione wszystko, co nie wymaga danych właściciela; reszta w zostało:
   - [ ] Oceń stronę z perspektywy każdego audytora na zrzutach 390 i 1440 px
@@ -126,3 +126,35 @@
   - [x] W wynik: wpisz, co jest na karcie i gdzie leżą pliki
   wynik: w folderze wizytowka/ (gałąź agent/2026-11-23-przygotuj-wizytowke-oprogramowani-dla-kr, commit ae35241) są wizytowka.pdf (2 strony 91×61 mm: 85×55 mm plus 3 mm spadu, tekst 7 mm od cięcia), przod.png i tyl.png (1075 px, 300 dpi) oraz wizytowka.html. Przód: logo, „Budujemy integracje i małe automaty.”, „Pilnujemy projektu, który robi ktoś inny.” i zdanie o zamówieniach, stanach, fakturach i etykietach (teksty z sekcji oferty na stronie). Tył: Krystian Stryjakiewicz, „Procesy i rozmowa z klientem”, 663 206 373, kontakt@oprogramowani.com, oprogramowani.com, logo, NIP. Wszystkie dane ze strony.
   zostało: telefon i e-mail to ogólne dane firmy ze strony; osobnych dla Krystiana strona nie podaje.
+- [ ] Strona: nowa strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+  wykonawca: tylko claude
+  cel: strona oprogramowani.com zgodna ze strategią przyjętą przez właściciela 26.11 (/home/panel/projekty/company-audits/strategia-2026-11-26.md); różnice względem obecnej wersji opisane w krokach poniżej; najpierw PL, pozostałe języki w następnym zadaniu
+  gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel); zrzuty 390 i 1440 px strony głównej i każdej z 4 podstron obejrzane; w wynik: lista zmian sekcja po sekcji (było → jest); żadne dane firmy, ceny, opinie ani liczby nie są wymyślone; brakujące dane zostają jako [UZUPEŁNIJ]
+  materiał: site/src/Strona.jsx
+  materiał: site/src/jezyki/tresc-pl.js
+  materiał: site/src/jezyki/wspolne-pl.js
+  materiał: site/src/dane.js
+  - [ ] Nagłówek strony głównej: duże hasło „Najpierw demo. Potem płacisz.”, pod nim jedno zdanie „Proste programy i dodatki dla małych firm.” i jeden przycisk „Bezpłatna wycena”; usuń z nagłówka „Zamówienia same trafiają do ERP” i słowo ERP
+  - [ ] Pod nagłówkiem 4 kafelki linii oferty, każdy prowadzi do swojej podstrony: „Planowanie produkcji” (/planowanie-produkcji), „Optima · Subiekt · BaseLinker · KSeF” (/integracje), „Excel bez ręcznej pracy” (/excel), „IT i sprzęt w firmie” (/it)
+  - [ ] Podstrony: nagłówek H1 i tytuł strony z frazą, której ludzie szukają: „Program do planowania produkcji”, „Integracja Optima, Subiekt, BaseLinker i KSeF”, „Makra i automatyzacja Excela”, „IT i sprzęt w małej firmie”; na każdej: 3 typowe problemy (scenki z życia firmy, bez nazw firm), co robimy, jak wygląda demo, przycisk „Bezpłatna wycena”; meta description do 155 znaków z tą samą frazą
+  - [ ] Sekcja „Jak to działa” w 4 krokach: bezpłatna wycena w ciągu dnia; demo w 1–2 dni na przykładowych danych, nie płacisz, jeśli nie chcesz dalej; wdrożenie za stałą cenę; opieka, gdy chcesz
+  - [ ] Z oferty usuń ogólny „system CRM”, strony, sklepy i aplikacje, jeśli są; hasło „Nie kupuj wielkiego ERP-a” tylko jako jedna sekcja na podstronie /integracje dla szukających ERP
+  - [ ] Kontakt: e-mail kontakt@oprogramowani.com w dane.js, w stopce i przy formularzu „Bezpłatna wycena” (adres działa, potwierdził właściciel 26.11); telefon i inne dane tylko z dane.js
+  - [ ] Ceny: zostaw istniejące kwoty „od … zł” tylko tam, gdzie pasują do nowych linii; nowych kwot nie wymyślaj; gdzie brak ceny, zostaje „Bezpłatna wycena”
+  - [ ] Zbuduj, zrób zrzuty, obejrzyj, popraw; w zostało: co wymaga decyzji właściciela
+  następne: Strona: przenieś nową strukturę do DE, IT i EN | kto: agent | kiedy: 2026-11-28
+- [ ] Wizytówka i kontakt pod nową strategię | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+  wykonawca: tylko claude
+  cel: nowa wizytówka Oprogramowani i jednolite dane kontaktowe zgodne ze strategią z 26.11 (/home/panel/projekty/company-audits/strategia-2026-11-26.md), z działającym adresem kontakt@oprogramowani.com
+  gotowe gdy: w folderze wizytowka/ jest nowa wersja (wizytowka-2026-11.pdf, 2 strony, 85×55 mm plus 3 mm spadu; przod.png i tyl.png 300 dpi; podglad.png do obejrzenia): przód z logo i hasłem „Najpierw demo. Potem płacisz.”, tył z imieniem i nazwiskiem z poprzedniej wizytówki, cztery linie oferty jednym wierszem, kontakt@oprogramowani.com i oprogramowani.com; jest też stopka e-mail (stopka-email.html i stopka-email.txt) z tymi samymi danymi; telefon i inne dane tylko z odpowiedzi właściciela, bez wymyślania; poprzednia wizytówka zostaje bez zmian
+  materiał: wizytowka/
+  materiał: site/src/dane.js
+  - [ ] Obejrzyj poprzednią wizytówkę i styl strony; trzymaj ten sam wygląd
+  - [ ] Zrób przód, tył, PDF do druku i podgląd; zrób stopkę e-mail
+  - [ ] Jeśli brakuje telefonu albo roli pod nazwiskiem, zadaj pytanie w karcie (pyta:) zamiast zgadywać
+- [ ] Koncepcja: rezerwacje ze strony do kalendarza Apple i powiadomienie ntfy | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | wymaga: odbiór
+  wykonawca: tylko claude
+  cel: właściciel chce, żeby każda rezerwacja albo zgłoszenie ze strony oprogramowani.com pojawiało się jako wydarzenie w jego kalendarzu Apple (iCloud) i dawało powiadomienie ntfy; dziś rezerwacje (mailhook/rezerwacje.sh) nie są połączone z żadnym kalendarzem; to koncepcja do decyzji, bez wdrażania
+  gotowe gdy: jest plik koncepcja-rezerwacje-kalendarz.md z sekcjami: (1) jak dziś działa rezerwacja (mailhook: contact.sh, rezerwacje.sh, lib-rezerwacje.sh, listener.sh) i gdzie trafiają dane; (2) 2–3 sposoby połączenia z kalendarzem Apple z zaletami i wadami, m.in. zapis wydarzenia przez CalDAV iCloud (hasło aplikacji wpisuje właściciel sam do pliku 0600 na serwerze), zaproszenie .ics wysłane e-mailem na adres Apple ID, kalendarz subskrybowany (adres .ics); (3) powiadomienie ntfy z tego samego miejsca (jaki temat, co w treści, bez danych osobowych w treści); (4) RODO: jakie dane klienta idą do kalendarza i powiadomienia, jak długo zostają; (5) rekomendacja i szacunek pracy; nic nie zmieniasz w kodzie, nie tworzysz kont ani haseł
+  materiał: mailhook/
+  materiał: site/src/dane.js

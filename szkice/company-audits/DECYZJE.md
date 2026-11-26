@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-26: Strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty
+- Kontekst: od sierpnia integracje ERP dały 0 klientów; badanie rynku 26.11 (100 zleceń IT z Useme, 40 fraz z planera Google Ads) pokazało, że ludzie szukają funkcji („program do planowania produkcji”, „program magazynowy”, „ksef integracja”, „makra excel”), a nie „programu na zamówienie”, i że klienci sami proszą o działające demo.
+- Decyzja (właściciel): przyjęta strategia z pliku strategia-2026-11-26.md: obietnica „Najpierw demo. Potem płacisz.”, cztery linie (planowanie produkcji; integracje i dodatki Optima/Subiekt/enova/BaseLinker/Allegro/KSeF; Excel bez ręcznej pracy; IT i sprzęt jako usługa uzupełniająca), bez ogólnego CRM, stron i aplikacji. Kontakt: kontakt@oprogramowani.com.
+- Do decyzji: budżet testu Google Ads (propozycja 300 zł na 2 tygodnie); zakres karty bez zmian (IT i sprzęt tylko w strategii).
+- Skutki: zadania dla agentów: plan marketingowy, przebudowa strony, wizytówka i kontakt (26.11).
+
 ## 2026-11-26: Marketing: posty statyczne zamiast filmów
 - Kontekst: właściciel nie będzie nagrywał filmów; w kampanii „Pozyskanie klientów” było 6 filmów na 2–16.12 (decyzja z 24.11, podział z pola „nagrywa”) i ani jednego posta statycznego.
 - Decyzja (właściciel): wszystkie 6 filmów zamienione na posty statyczne na LinkedIn i Facebook, te same tematy i daty; grafikę i tekst przygotowuje agent, właściciel zatwierdza i publikuje. W karcie `nagrywa: panel` (bez nagrań właściciela i narzędzia AI) i pole `marketing: posty statyczne`.
