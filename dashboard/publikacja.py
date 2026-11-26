@@ -390,6 +390,32 @@ class Publisher:
                              {"Content-Type": "application/x-www-form-urlencoded"}, form)[::2], what="Post na Facebooku")
         return "https://www.facebook.com/%s" % d["id"]
 
+    def draft(self, project, folder, text):
+        """Szkic posta na stronie Facebook projektu (published=false, unpublished_content_type=DRAFT): widać go
+        w Meta Business Suite w Szkicach. Grafika jako zdjęcie tymczasowe dołączone do szkicu; film jako szkic filmu."""
+        page = self._page(project)
+        if not page or not page.get("token"):
+            raise ApiError("projekt nie ma połączonej strony Facebook (Marketing → Kanały i studio)")
+        tok = page["token"]
+        drafts = "https://business.facebook.com/latest/posts/drafts?asset_id=%s" % page["id"]
+        film = self.film(folder)
+        if film:
+            body, ctype = multipart({"description": text, "published": "false", "unpublished_content_type": "DRAFT",
+                                     "access_token": tok}, "source", film)
+            d = _json(*self.http("POST", "%s/%s/videos" % (FB_VIDEO, page["id"]), {"Content-Type": ctype}, body, 600)[::2],
+                      what="Szkic filmu na Facebooku")
+            return {"id": str(d.get("id") or ""), "link": drafts, "page": page.get("name", "")}
+        image = next((os.path.join(folder, n) for n in ("grafika.png", "grafika.jpg") if os.path.isfile(os.path.join(folder, n))), None)
+        form = {"message": text, "published": "false", "unpublished_content_type": "DRAFT", "access_token": tok}
+        if image:
+            body, ctype = multipart({"published": "false", "temporary": "true", "access_token": tok}, "source", image)
+            ph = _json(*self.http("POST", "%s/%s/photos" % (FB, page["id"]), {"Content-Type": ctype}, body)[::2],
+                       what="Grafika do szkicu")
+            form["attached_media[0]"] = json.dumps({"media_fbid": ph["id"]})
+        d = _json(*self.http("POST", "%s/%s/feed" % (FB, page["id"]), {"Content-Type": "application/x-www-form-urlencoded"},
+                             urllib.parse.urlencode(form).encode("utf-8"))[::2], what="Szkic posta na Facebooku")
+        return {"id": str(d.get("id") or ""), "link": drafts, "page": page.get("name", "")}
+
     def _reels(self, t, pf, info):
         page = self._page(t["project"])
         film = self.film(pf)
