@@ -19,15 +19,15 @@ Kierowcy z Wrocławia i okolic (do 40 km), 25–60 lat, którym przeszkadza hał
 Cena na wierzchu i prawdziwe zdjęcia z wnętrza drzwi: „Wygłuszanie drzwi od 1 590 zł”. Wezwanie: „Napisz model auta”.
 
 ## Harmonogram
-- [ ] Przygotuj reklamę S1: Drzwi od 1 590 zł | kto: codex | kiedy: 2026-11-26 | czas: 15
+- [x] Przygotuj reklamę S1: Drzwi od 1 590 zł | kto: codex | kiedy: 2026-11-26 | czas: 15
   cel: tryb „Zachowaj zdjęcie” (Pillow, bez $imagegen); grafika.png 1080×1350 i grafika-story.png 1080×1920 ze zdjęcia drzwi z matą (-3.jpg z 22.11), teksty z planu
   materiał: meta-ads/Reklamy-statyczne-Meta.md#2
   materiał: meta-ads/Styl-reklam-i-zasady.md
-- [ ] Przygotuj reklamę S4: Lepsze audio | kto: codex | kiedy: 2026-11-26 | czas: 15
+- [x] Przygotuj reklamę S4: Lepsze audio | kto: codex | kiedy: 2026-11-26 | czas: 15
   cel: tryb „Zachowaj zdjęcie” (bez $imagegen); zbliżenie na głośnik z matą, dwa formaty, teksty z planu
   materiał: meta-ads/Reklamy-statyczne-Meta.md#2
   materiał: meta-ads/Styl-reklam-i-zasady.md
-- [ ] Przygotuj reklamę S5: Cennik wyciszenia | kto: codex | kiedy: 2026-11-26 | czas: 15
+- [x] Przygotuj reklamę S5: Cennik wyciszenia | kto: codex | kiedy: 2026-11-26 | czas: 15
   cel: tryb „Zachowaj zdjęcie” (bez $imagegen); jasna plansza cennika z małym zdjęciem (-1.jpg z 22.11), dwa formaty
   materiał: meta-ads/Reklamy-statyczne-Meta.md#2
   materiał: meta-ads/Styl-reklam-i-zasady.md
