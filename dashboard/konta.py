@@ -28,7 +28,7 @@ RETURN_PATH = "/api/konta/powrot"
 STATE_TTL = 15 * 60
 FB_DIALOG = FB.replace("graph.facebook.com", "www.facebook.com") + "/dialog/oauth"
 META_SCOPES = ("ads_read,business_management,pages_show_list,pages_read_engagement,pages_manage_posts,publish_video,"
-               "read_insights,instagram_basic,instagram_content_publish,instagram_manage_insights")
+               "read_insights,instagram_basic,instagram_content_publish,instagram_manage_insights,pages_read_user_content")
 GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN = "https://oauth2.googleapis.com/token"
 GOOGLE_SCOPE = "https://www.googleapis.com/auth/adwords openid email"
@@ -366,8 +366,18 @@ class Konta:
     def refresh(self, body):
         """Ponowne odczytanie listy kont logowania (Google po dodaniu tokenu dewelopera)."""
         prov, lid = str(body.get("provider") or ""), str(body.get("login") or "")
+        if prov == "meta":                                   # strony i Instagram: ponowny odczyt /me/accounts tym samym tokenem
+            with self.lock:
+                rec = next((x for x in self.logins().get("meta") or [] if x.get("id") == lid), None)
+            if not rec or not rec.get("token"):
+                return 404, "Nie ma takiego logowania. Zaloguj się do Meta ponownie."
+            app_id = (self.apps().get("meta") or {}).get("appId") or self._pub()._read("facebook.json", {}).get("appId", "")
+            res = self._pub().adopt_facebook(app_id, rec["token"], merge=True)
+            if res[0] != 200:
+                return res[0], str(res[1])
+            return 200, "", {"pages": len(res[2]["pages"])}
         if prov != "google":
-            return 400, "Listę kont Meta i LinkedIn odświeża ponowne zalogowanie."
+            return 400, "Listę kont LinkedIn odświeża ponowne zalogowanie."
         with self.lock:
             L = self.logins()
             rec = next((x for x in L["google"] if x.get("id") == lid), None)
