@@ -891,14 +891,25 @@ class Wyniki:
         if not page or not page.get("token"):
             return 409, {"ok": False, "error": "Projekt nie ma połączonej strony Facebook (Marketing → Kanały i studio)."}
         token, items, errs = page["token"], [], []
-        try:
-            d = meta.graph("%s/published_posts" % page["id"], {"fields": "permalink_url,created_time,message,full_picture",
-                                                                "limit": 30, "access_token": token}, self.http)
+        perm = ("Facebook: aplikacja Meta panelu nie ma uprawnienia do odczytu postów strony (pages_read_user_content). "
+                "Wklej link do posta poniżej albo dodaj to uprawnienie w aplikacji Meta i połącz Facebook ponownie.")
+        fb_err = None
+        for edge in ("published_posts", "posts", "feed"):          # różne uprawnienia: pierwsza, która odpowie
+            try:
+                d = meta.graph("%s/%s" % (page["id"], edge), {"fields": "permalink_url,created_time,message,full_picture",
+                                                              "limit": 30, "access_token": token}, self.http)
+            except ApiError as e:
+                fb_err = e
+                continue
             for p in d.get("data") or []:
                 items.append({"kanal": "facebook", "link": p.get("permalink_url", ""), "data": str(p.get("created_time") or "")[:10],
                               "tekst": str(p.get("message") or "")[:140], "miniatura": p.get("full_picture", ""), "film": False})
-        except ApiError as e:
-            errs.append("Facebook: %s" % str(e)[:160])
+            fb_err = None
+            break
+        if fb_err is not None:
+            low = str(fb_err).lower()
+            errs.append(perm if ("permission" in low or "(#10)" in low or "uprawnie" in low)
+                        else "Facebook: %s" % str(fb_err)[:160])
         try:
             d = meta.graph("%s/videos" % page["id"], {"fields": "permalink_url,created_time,description,picture",
                                                        "limit": 20, "access_token": token}, self.http)
@@ -909,7 +920,8 @@ class Wyniki:
                     items.append({"kanal": "facebook", "link": link, "data": str(p.get("created_time") or "")[:10],
                                   "tekst": str(p.get("description") or "")[:140], "miniatura": p.get("picture", ""), "film": True})
         except ApiError as e:
-            errs.append("Facebook (filmy): %s" % str(e)[:160])
+            if fb_err is None:                                       # ten sam brak uprawnienia: jeden komunikat
+                errs.append("Facebook (filmy): %s" % str(e)[:160])
         ig = (page.get("ig") or {}).get("id")
         if ig:
             try:

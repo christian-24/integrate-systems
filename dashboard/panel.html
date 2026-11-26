@@ -3099,6 +3099,7 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
 .os-svar button[aria-pressed=true]{background:var(--mx-white);color:var(--mx-ink)}
 .os-snav{position:absolute;top:60px;bottom:90px;width:40%;background:transparent;border:0;cursor:pointer;z-index:1}.os-sprev{left:0}.os-snext{right:0}
 .os-snote{position:absolute;bottom:8px;left:8px;right:8px;margin:0;text-align:center;font-size:11px;opacity:.8}
+.os-lnk{display:flex;gap:var(--g-s);align-items:flex-end;flex-wrap:wrap}.os-lnk .fl{flex:1 1 220px;display:grid;gap:4px}.os-lnk .fl span{font-size:var(--fs-xs);color:var(--ink-3)}
 /* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
 .os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
 .os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
@@ -6796,8 +6797,8 @@ function osModal(){
   else if(OS.tab==='ig')ph='<div class="os-ig"><div class="os-hd"><span class="os-av">'+ini+'</span><span><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b><small>'+(ad?'Sponsorowane':'')+'</small></span><span class="os-dots">···</span></div>'+media+
     (ad?'<div class="os-igcta"><span>'+esc(tx.cta)+'</span><span>›</span></div>':'')+
     '<div class="os-acts os-igacts"><span>♡</span><span>💬</span><span>➤</span><span class="os-sv">⌑</span></div><p class="os-txt"><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b> '+short.replace(/\n/g,' ')+'</p></div>';
-  else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
-    (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':'')+'</div>';
+  else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+(noFilm?'':'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
+    (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':''))+'</div>';
   const S=osStats(t),link=(t.detail||{}).link||'';
   return '<div class="os-ov" data-osclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Podgląd w aplikacji Meta">'+
     '<div class="os-dh"><b>'+esc(t.title)+'</b><button type="button" class="btn sec sm" data-osclose="1" aria-label="Zamknij">✕</button></div>'+
@@ -6841,13 +6842,14 @@ function osPicker(){
   let b;
   if(!L)b='<p class="muted">Wczytuję posty z Facebooka i Instagrama…</p>';
   else if(!L.ok)b='<p class="warn">'+esc(L.error||'Nie udało się wczytać postów.')+'</p>';
-  else if(!L.posty.length)b='<p class="muted">Brak postów na stronie.</p>';
+  else if(!L.posty.length)b=(L.bledy&&L.bledy.length?'<p class="warn">'+esc(L.bledy.join('; '))+'</p>':'<p class="muted">Brak postów na stronie.</p>');
   else b=(L.bledy&&L.bledy.length?'<p class="warn">'+esc(L.bledy.join('; '))+'</p>':'')+'<ul class="os-pl">'+L.posty.map((x,i)=>'<li><button type="button" class="os-pi" data-osset="'+i+'">'+
     (x.miniatura?'<img src="'+esc(x.miniatura)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="os-pn"></span>')+
     '<span><b>'+esc(x.kanal==='instagram'?'Instagram':'Facebook')+(x.film?' · film':'')+' · '+esc(x.data?dd(x.data):'')+'</b><small>'+esc(x.tekst||'(bez tekstu)')+'</small></span></button></li>').join('')+'</ul>';
   return '<div class="os-ov" data-ospickclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Wybierz post z API">'+
     '<div class="os-dh"><b>Połącz: '+esc(t.title)+'</b><button type="button" class="btn sec sm" data-ospickclose="1" aria-label="Zamknij">✕</button></div>'+
-    '<p class="note">Wybierz post, z którego panel ma czytać wyświetlenia (odczyt co 6 h przez 3 dni, potem raz dziennie).</p>'+b+'</div></div>';
+    '<p class="note">Wybierz post, z którego panel ma czytać wyświetlenia (odczyt co 6 h przez 3 dni, potem raz dziennie).</p>'+
+    '<form class="os-lnk" data-oslink="'+esc(t.id)+'"><label class="fl"><span>Albo wklej link do posta</span><input class="fi" name="link" type="url" inputmode="url" autocomplete="off" placeholder="https://www.facebook.com/… albo https://www.instagram.com/p/…"></label><button class="btn sm" type="submit">Połącz</button></form>'+b+'</div></div>';
 }
 document.addEventListener('click',ev=>{
   const fr=ev.target.closest&&ev.target.closest('[data-osfr],[data-osv]');
@@ -6881,6 +6883,14 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   navigator.clipboard.write([new ClipboardItem({'image/png':blob})]).then(()=>say('Skopiowano obraz. Wklej go w Messengerze (Ctrl+V albo przytrzymaj pole wiadomości → Wklej).'))
     .catch(()=>{window.open(url,'_blank','noopener');say('Przeglądarka nie pozwoliła skopiować: obraz otwarty w nowej karcie, skopiuj go stamtąd.')})
     .finally(()=>{b.disabled=false;b.textContent='Kopiuj obraz'});
+});
+/* połączenie przez wklejony link (gdy lista z API jest niedostępna, np. brak uprawnienia strony) */
+document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!fm.dataset.oslink)return;ev.preventDefault();
+  const t=D.tasks.find(x=>x.id===fm.dataset.oslink),v=String(fm.link.value||'').trim();if(!t)return;
+  if(!/^https:\/\/([a-z0-9-]+\.)*(facebook\.com|fb\.watch|instagram\.com|linkedin\.com)\//i.test(v)){say('Wklej link do posta z Facebooka, Instagrama albo LinkedIn (https://…).');return}
+  if(!LIVE){say(PRV);return}
+  OS.pick='';enqueue(async()=>{const r=await detailPost(t,'link',v);
+    say(r.ok?'Połączono z postem. Wyświetlenia pojawią się po najbliższym odczycie.':failMsg(r,'Nie zapisano połączenia.'));if(r.ok)setTimeout(()=>osLoad(t.project,true),1500)});
 });
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick)){OS.open='';OS.pick='';render(true)}});
 /* plansze story przełączają się same co 3,5 s (od ostatniego kliknięcia), z powrotem na początek po ostatniej */
