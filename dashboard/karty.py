@@ -478,8 +478,8 @@ postęp projektów: {"id": "postep-projektow"}; nie twórz kart, które powtarza
 pokaż publikacje-tygodnia, dziś jest w niej wyróżniony); terminy etapów, zadań i publikacji: {"id": "terminy"}; co
 wstrzymuje ile zadań: {"id": "blokady"}; postęp, tempo, przepływ: {"id": "wskazniki"}; zadania ze wszystkich
 projektów z filtrem projektu i stanu: {"id": "zadania"}; raport i notatka PM: {"id": "raport-pm"}. Węższe pytania
-(np. terminy jednego projektu) odpowiadaj kartą z zapytaniem. Rejestr projektów, Księga i dodawanie projektu są
-w widoku Serwer (#koszty), Teraz i plan dnia w Agentach (#agenci).
+(np. terminy jednego projektu) odpowiadaj kartą z zapytaniem. Projekt dodaje się przyciskiem „+” przy liście projektów
+w menu, Księga projektów i standard plików są w widoku Informacje (#informacje), Teraz i plan dnia w Agentach (#agenci).
 Biblioteka: najpierw użyj gotowej karty z listy niżej, podając samo {"id": "…"}. Gdy żadna nie pasuje, opisz nową
 z zapytaniem i dodaj "zapisz": true (panel zapamięta ją do następnego razu; karty z danymi wprost się nie zapisują).
 Ten sam id w "pokaz" podmienia kartę. "usun" zdejmuje kartę z płótna. Przypina i usuwa z biblioteki właściciel.

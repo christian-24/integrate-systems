@@ -25,8 +25,9 @@ lista projektów z wyszukiwarką; na telefonie dolny pasek (Asystent, Marketing,
 | Asystent | `#asystent` | strona startowa: sprawy dla Ciebie na dziś (liczba i 3 najważniejsze, z przyciskami), notatka PM, „Pokaż” kart; rozmowa głosem i tekstem, odpowiedzi jako karty |
 | Marketing | `#marketing` | tydzień postów i filmów, kampanie w toku z „Wpisz wynik”, kanały publikacji, studio filmów |
 | Media | `#media` | zdjęcia i filmy ze wszystkich projektów |
-| Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, publikacje, ostatnie 24 h), plan dnia, uruchomienia |
-| Serwer | `#koszty` | stan i zasoby, kopie na GitHubie, kalendarz (połączenie, subskrypcja ICS), Projekty (rejestr, dodanie i usunięcie, Księga projektów), koszty, rozwój panelu, sesje |
+| Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, kamienie, szacunek), użycie Claude i Codex, publikacje, ostatnie 24 h, uruchomienia (zwinięte) |
+| Serwer | `#koszty` | stan i zasoby, Google Drive (jeden wiersz stanu, „Połącz Google Drive”, reszta w „Szczegóły”), kalendarz (połączenie, subskrypcja ICS), koszty, rozwój panelu, sesje |
+| Informacje | `#informacje` | Księga projektów (pliki standardu we wszystkich projektach, „Zleć agentowi uzupełnienie”), opis standardu, skróty i pliki opisowe repozytorium (`GET /api/informacje`, stała lista w `server.py` `INFO_FILES`) z podglądem, tylko odczyt |
 | Projekt | `#p-<id>` | opis, faza (zmiana z panelu), tablica, wskaźniki ze spalaniem etapu, etapy i terminy, księga, marketing; projekt z częściami: `#p-<id>?cz=<id części>` |
 | Odbiór pracy | `#odbior?z=<id zadania>` | wersje wyniku, porównanie, Akceptuję, Popraw |
 
@@ -47,7 +48,9 @@ Asystent kartami z tych samych danych i z tymi samymi przyciskami (typ karty `pa
 kartę bez pytania modelu: w trybie Sceny jako odpowiedź, w trybie Karty na górze płótna (`PF.apShow`). Stare adresy
 (`#start`, `#ty`, `#przeglad`, `#wskazniki`, `#tablica`, `#terminy`, `#blokady`, `#projekty`, także z `?p=` i `?z=`)
 prowadzą do Asystenta z pasującą kartą; `#asystent?k=<id karty>` robi to samo z odnośników panelu,
-`#koszty?k=projekty|kalendarz` przewija Serwer do sekcji. Naprawa brakującego poprzednika (pole `po:`) jest też
+`#koszty?k=kalendarz|drive` przewija Serwer do sekcji, `#koszty?k=projekty` otwiera okno „Dodaj projekt”.
+Projekt dodaje przycisk „+” przy nagłówku Projekty w menu (na telefonie: Więcej → „+ Dodaj projekt”); w tym samym
+oknie pod „Projekty w panelu” jest folder projektu i „Usuń z rejestru…”. Naprawa brakującego poprzednika (pole `po:`) jest też
 w szczegółach zadania.
 
 Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie agenta.
@@ -55,25 +58,28 @@ Karta zadania otwiera szufladę: stan, termin, wymaga, blokada, uruchomienie age
 ### Strona projektu
 
 - Układ według `dashboard/WYGLAD.md`. Wiersz nazwy: stan projektu, po prawej „Szczegóły” (fazy, kafle, Księga, GitHub
-  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Pod nazwą jedna linia: faza · postęp · bieżący etap. Przy projekcie
-  z częściami przełącznik „Całość · <część główna> · <części>” (domyślnie Całość) w jednym wierszu, przewijany
-  w poziomie. Całość pokazuje zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana
-  część pokazuje tylko swoje i swoje zakładki (np. Strona). Zakładki w jednym wierszu, na telefonie przewijane w poziomie.
-- Plan: sekcje rozwijane z licznikiem: **Decyzje** i **Dla Ciebie dziś** otwarte, **Po terminie**, **Agenci** i **Później**
-  (do 7 dni) zwinięte; stan każdej zapamiętany na urządzeniu (`pp-*`). W wierszu jeden znacznik terminu (po terminie
-  czerwony tekst) i przycisk działania (Zrobione, Zatwierdź, Obejrzyj, akcja publikacji). „Po terminie” liczy te same
-  zadania co grupa „Po terminie” w Zadaniach (Twoje, bez publikacji, bez czekających na poprzednika); publikacje po
-  terminie są w „Dla Ciebie dziś”. Na końcu sekcja **Kod i pliki**: na wierzchu GitHub („zgodne z GitHubem”, „N zmian
-  do wysłania”, „nie połączono z GitHubem”; przy projekcie z częściami wiersz na każdą część) i Google Drive (ścieżka
-  folderu z kontem, N pozycji, albo „bez folderu”). „Szczegóły” rozwija pełny stan i działania: dla GitHuba Sprawdź, Wyślij na GitHub, Usuń kopię z serwera,
-  gałęzie i pliki; dla Drive wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do
-  folderu”), „Zmień folder”, „Odłącz folder”. „Zwiń” chowa; stan zapamiętany na urządzeniu (`pj-code`). Serwer → „Projekty
-  i GitHub” to już tylko przegląd kopii z przyciskiem do tej sekcji.
-- **Google Drive** w „Kod i pliki” pokazuje konta przypisane do projektu lub części. Nowe połączenie
+  zwykłymi słowami; stan `pj-ov`) i „Rozmowa”. Przy projekcie z częściami przy nazwie mała lista „Część” (Całość,
+  <część główna>, <części>; domyślnie Całość). Pod nazwą jedna linia: faza · postęp · bieżący etap. Całość pokazuje
+  zadania, etapy i decyzje wszystkich części z etykietą części (np. „Strona WWW”); wybrana część pokazuje tylko swoje
+  i swoje zakładki (np. Strona). Zakładki (Zadania, Strona, Marketing, Etapy, Wskaźniki, Księga, Połączenia) zawsze
+  widoczne w jednym wierszu, na telefonie przewijane w poziomie. Bez zakładki Plan: stary adres `#p-<id>-plan` prowadzi
+  do Zadań.
+- Zadania (domyślna zakładka): na górze sekcja **Decyzje** (pytania, zgody, odbiory projektu; rozwijana, stan `pp-dec`),
+  pod nią „Dodaj zadanie” i tablica.
+- Połączenia: jedna karta na usługę, na wierzchu jeden wiersz stanu (przy projekcie z częściami wiersz na część),
+  „Szczegóły” rozwija działania (stan `pj-con-gh`, `pj-con-dr`, `pj-con-meta`). **GitHub**: „zgodne z GitHubem”, „N zmian
+  do wysłania”, „nie połączono z GitHubem”; w Szczegółach Sprawdź, Wyślij na GitHub, Usuń kopię z serwera, gałęzie,
+  pliki, zatwierdź/odłóż zmiany. **Google Drive**: ścieżka folderu z kontem, N pozycji, albo „bez folderu”; w Szczegółach
+  wybór folderu z listy folderów konta (drzewo z wyszukiwaniem; „Albo wklej link do folderu”), „Zmień folder”, „Odłącz
+  folder”. **Meta Business (Facebook i Instagram)**: strony Facebook przypisane do projektu w Kanałach publikacji
+  i konto Instagram strony; bez strony „Niepołączone” i „Połącz” (Marketing → Kanały publikacji). W Szczegółach wybór
+  strony dla projektu z połączonych i profile z karty (`facebook:`, `instagram:`). Karta Meta jest w projektach, które
+  mają albo mogą mieć kanały: strona przypisana, profil w karcie, kampania albo publikacja w zadaniach.
+- **Google Drive** w Połączeniach pokazuje konta przypisane do projektu lub części. Nowe połączenie
   przypisuje konto do wybranego projektu i jego obecnych części. „Użyj konta z innego projektu” pozwala
-  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive widać przypisania i można odłączyć konto
+  dodać istniejące konto po potwierdzeniu. W Serwer → Google Drive → „Szczegóły” widać przypisania i można odłączyć konto
   od wskazanej karty. Dostęp do Google Drive jest tylko do odczytu. Łączenie idzie
-  tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Logowanie jednym kliknięciem”,
+  tylko jednym kliknięciem, z własnym klientem OAuth (Serwer → Google Drive → „Szczegóły” → „Logowanie jednym kliknięciem”,
   INSTALACJA.md, „Google Drive”): Google wraca do panelu. Bez klienta panel pokazuje, jak go ustawić; dawne łączenie
   z wklejaniem adresu (klient rclone) jest w interfejsie wyłączone (decyzja właściciela 2026-11-25).
   Folder projektu montuje się w `szkice/<karta>/media/drive` (usługa `drive@<projekt>`), agent dostaje tę ścieżkę
@@ -103,7 +109,7 @@ części ma wiersz `- część projektu: <projekt główny>` (folder projektu g�
 nazwa folderu jego karty). Część dalej ma swój folder, repozytorium, `ZADANIA.md`, agentów i zakładkę Strona; nic
 się nie przenosi. W panelu:
 
-- listy projektów (menu, Serwer → Projekty, wybór projektu w filtrach kart Asystenta) mają jeden wpis;
+- listy projektów (menu, okno „Dodaj projekt”, wybór projektu w filtrach kart Asystenta) mają jeden wpis;
   filtr projektu obejmuje części; zadania i terminy części mają nazwę „Projekt · Część”;
 - nazwa części to tytuł jej karty bez nazwy projektu głównego („Oprogramowani – strona WWW” albo „Strona WWW” →
   „Strona WWW”); projekt główny traci nawias z tytułu („Oprogramowani (integracje ERP ↔ sprzedaż)” → nazwa
@@ -324,7 +330,8 @@ pokazuje; dokładne kwoty są na fakturach. Tokeny (Read, jeden na projekt Hetzn
 
 ### Co dziś robimy
 
-Sekcja „Plan dnia” w Agentach. Piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
+Plan dnia układasz w Asystencie („plan dnia”, „co mam dziś”). Sekcji „Plan dnia” w Agentach już nie ma (2026-11-25);
+trasy `/api/plan/ask` i `/api/plan/accept` zostały na serwerze bez przycisku w panelu. Opis trasy: piszesz, co chcesz dziś zrobić; PM (Claude, bez narzędzi, niczego nie zmienia)
 dostaje listę otwartych zadań wszystkich projektów i układa plan: najwyżej 6 zadań dla agentów i 5 dla Ciebie.
 Zadania dla agentów są zaznaczone; „Uruchom zaznaczone” uruchamia je jak „Uruchom agenta” (te same reguły i kolejka).
 Plan bierze tylko zadania z kart: id spoza listy i zadania, których agent nie może wykonać, są odrzucane.
@@ -333,7 +340,7 @@ Plan z dzisiejszego dnia zostaje widoczny do następnego.
 ## Projekty
 
 - Rejestr `../projekty.json`, osobny na każdym komputerze. Dopóki go nie ma, panel pokazuje trzy projekty przykładowe z `przyklad/`.
-- Z panelu: Serwer → Projekty → „Dodaj projekt” (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
+- Z panelu: „+” przy nagłówku Projekty w menu (ścieżka folderu; opcjonalnie założenie brakujących plików standardu).
 - Nowy projekt z terminala: `python3 ../standard/projekt.py nowy <folder> --nazwa "Nazwa" --rejestruj`
 - Istniejący folder z terminala: `python3 ../standard/projekt.py dodaj <folder>`
 - Na projektach przykładowych zadań nie da się uruchomić; raport PM i test połączenia działają.

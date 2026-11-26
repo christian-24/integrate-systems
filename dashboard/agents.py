@@ -58,6 +58,14 @@ TASK_TOOLS = ",".join([
     "Bash(python3 -m unittest:*)", "Read", "Edit", "Write", "Glob", "Grep",
     "TodoWrite", "TaskCreate", "TaskUpdate", "TaskList", "TaskGet"])
 CHECK_PROMPT = "Odpowiedz jednym słowem: ok"
+# Kamienie milowe: panel pokazuje „Kamień 2 z 5” i zawęża szacunek czasu z tempa ukończonych kamieni (agent_progress).
+MILESTONES_RULE = {
+    "claude": "- Na początku pracy zapisz plan jako 3–7 kamieni milowych narzędziem TodoWrite (gdy go nie ma: TaskCreate) "
+              "i odhaczaj je po kolei (completed zaraz po ukończeniu, in_progress dla bieżącego). Kamień to sprawdzalny "
+              "etap pracy, nie pojedyncze polecenie; planu nie rozbudowuj w trakcie.",
+    "codex": "- Na początku pracy zapisz plan jako 3–7 kamieni milowych narzędziem planu (update_plan) i odhaczaj je po "
+             "kolei (completed zaraz po ukończeniu, in_progress dla bieżącego). Kamień to sprawdzalny etap pracy, "
+             "nie pojedyncze polecenie; planu nie rozbudowuj w trakcie."}
 # Agent uruchomiony z panelu nie zakłada własnych pomocników ani przepływów (2026-11-23: zadanie „wizytówki” uruchomiło
 # 33 pomocników i zużyło cały limit 5 godzin) i nie dostaje konektorów konta (--strict-mcp-config).
 RUN_DENY = "Agent,Task,Workflow,SendMessage,TaskStop,Monitor,CronCreate,CronDelete,ScheduleWakeup,RemoteTrigger,PushNotification"
@@ -376,7 +384,9 @@ def _command(path):
 
 
 def describe_tool(name, data, cwd=""):
-    """Czynność agenta w jednym wierszu: 'Edit: src/api.py', 'Bash: npm test'."""
+    """Czynność agenta w jednym wierszu: 'Edit: src/api.py', 'Bash: npm test', 'Przeglądarka: otwiera /'."""
+    if str(name).startswith("mcp__przegladarka__"):
+        return strona.describe_browser(str(name)[len("mcp__przegladarka__"):], data)
     if name in ("TodoWrite", "TaskCreate", "TaskUpdate"):
         return {"TodoWrite": "Aktualizuje listę kroków", "TaskCreate": "Dodaje krok", "TaskUpdate": "Aktualizuje krok"}[name]
     detail = ""
@@ -1392,6 +1402,7 @@ class Manager:
                               "costUsd": round(sum((r.get("costUsd") or 0) + (r.get("decisionCostUsd") or 0) for r in todays), 2)},
                     "runs": list({r["id"]: r for r in runs[:SHOWN] + [r for r in runs if r["state"] in LIVE]}.values()),
                     "development": orders, "queueEstimate": queue_estimate,
+                    "stats": agent_progress.usage_stats(history, now),
                     "nextTasks": upcoming}
 
     def get(self, rid):
@@ -1512,6 +1523,7 @@ class Manager:
             "panel sam zatwierdza i scala gałęzie agenta. Gdy do dokończenia potrzebujesz od właściciela danych "
             "(nazwa, adres, wybór), zadaj pytanie w KARTA.md z propozycją; techniczną resztę zrobi kolejne zadanie agenta.",
             "- Wykonane kroki odhacz w ich wierszach (`  - [x] krok`).",
+            MILESTONES_RULE[tool if tool == "codex" else "claude"],
             "- Gdy pod zadaniem jest wiersz `poprawka:`, to polecenie albo uwagi właściciela (po odbiorze albo "
             "z rozmowy w panelu): wykonaj je, a istniejącą pracę popraw według nich. Wiersze `- znacznik N (plik, "
             "położenie): uwaga` pod poprawką to uwagi do miejsca na obrazie (albo chwili filmu); nie zmieniaj ich.",
@@ -1717,7 +1729,8 @@ class Manager:
         parts = [x for x in priv.get("parts") or [] if x.get("worktree")]
         for x in parts:
             extra = extra + ["--add-dir", x["worktree"]]
-        mcp = self.site.mcp_args(priv, cwd) if site and t["tool"] == "claude" else []
+        mcp = (self.site.mcp_args(priv, cwd) if t["tool"] == "claude" else self.site.mcp_codex_args(priv, cwd)) \
+            if site else []
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
                                   git=info, site_rules=(self.site.rules(site, cwd) + self.site.mcp_rules(priv))
                                   if site else (), drive=mnt, parts=parts)
@@ -1725,7 +1738,7 @@ class Manager:
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
                                           "-c", "sandbox_workspace_write.network_access=false",
                                           "-c", "features.multi_agent=false", "-c", "features.multi_agent_v2=false",
-                                          "-C", cwd] + (extra if git or parts else []) + ["-"]
+                                          "-C", cwd] + mcp + (extra if git or parts else []) + ["-"]
         else:
             render = self.render_command()
             tools = ",".join([TASK_TOOLS] + (["Bash(%s:*)" % render] if render else []) +
@@ -2607,8 +2620,9 @@ class Manager:
     ASSIST_WEB = ("WebSearch", "WebFetch")
     ASSIST_TABS = ("plan", "tablica", "marketing", "etapy", "wskazniki", "ksiega")
     ASSIST_VIEWS = (("#asystent", "Asystent: ta strona, karty"), ("#marketing", "Marketing: publikacje i nagrania"),
-                    ("#media", "Media"), ("#agenci", "Agenci: Teraz, plan dnia, uruchomienia"),
-                    ("#koszty", "Serwer: stan, kalendarz, projekty i Księga, koszty"))
+                    ("#media", "Media"), ("#agenci", "Agenci: Teraz, użycie, uruchomienia"),
+                    ("#koszty", "Serwer: stan, Google Drive, kalendarz, koszty, wdrażanie"),
+                    ("#informacje", "Informacje: Księga projektów, standard plików, zasady agentów"))
 
     def assistant_get(self):
         """Historia rozmowy z asystentem: (kod, błąd, {"messages", "pending", "error", "partial", "activity", "voice"}).
@@ -5250,7 +5264,7 @@ class Manager:
                     try:
                         with self._lock:
                             plan = list(rec.get("plan") or [])
-                            agent_progress.update_plan(plan, ev)
+                            agent_progress.update_plan(plan, ev, time.time())
                             agent_progress.task_creates(priv.setdefault("planCreates", {}), plan, ev)
                             if plan or "plan" in rec:
                                 rec["plan"] = plan
@@ -5596,6 +5610,9 @@ class Manager:
                 self._say(rec, st["last"])
             elif what == "command_execution" and kind == "item.started":
                 self._did(rec, "Bash: %s" % item.get("command", ""))
+            elif what == "mcp_tool_call" and kind == "item.started":       # np. przeglądarka agenta strony
+                self._did(rec, describe_tool("mcp__%s__%s" % (item.get("server", "?"), item.get("tool", "?")),
+                                             item.get("arguments"), cwd))
             elif what == "file_change" and kind == "item.completed":
                 for ch in item.get("changes") or []:
                     if isinstance(ch, dict) and ch.get("path"):

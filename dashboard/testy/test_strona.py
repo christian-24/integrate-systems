@@ -114,7 +114,7 @@ class Karta(Strona):
         with open(os.path.join(os.path.dirname(TESTY), "panel.html"), encoding="utf-8") as f:
             html = f.read()
         self.assertIn("const ptabsOf=p=>wwSites(p).length?", html)   # zakładka Strona tylko przy polu strona: (także części)
-        self.assertIn("if(p&&tab==='strona'&&!wwSites(p).length)tab='plan';", html)
+        self.assertIn("if(p&&tab==='strona'&&!wwSites(p).length)tab='tablica';", html)   # grupa projekt: bez zakładki Plan, domyślne Zadania
         self.assertNotIn("PTABS.filter(", html)                  # nawigacja projektu idzie przez ptabsOf
 
 
