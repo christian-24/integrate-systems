@@ -185,6 +185,9 @@ class Wyniki:
                 new_kinds.append("linkedin")
             c["linkedin"] = {"rodzaj": rodzaj, "organizacja": org if rodzaj == "organizacja" else "",
                              "wniosek": wniosek, "reklamy": bool(b.get("reklamy"))}
+        if "kanaly" in body:                       # kanały projektu wybrane przez właściciela (puste: wszystkie jak dotąd)
+            ks = body.get("kanaly") if isinstance(body.get("kanaly"), list) else []
+            c["kanaly"] = [k for k in CHANNELS if k in ks]
         if "googleKlient" in body:
             raw = str(body.get("googleKlient") or "").strip()
             cust = google.customer_ok(raw)
@@ -747,7 +750,7 @@ class Wyniki:
             m, g = ads.get("meta") or {}, ads.get("google") or {}
             gc = c.get("google") or {}
             out[pid] = {"metaAct": c.get("metaAct", ""), "metaLogin": c.get("metaLogin", ""), "metaSync": m.get("syncedAt", ""), "metaError": m.get("error", ""),
-                        "linkedin": c.get("linkedin") or {},
+                        "linkedin": c.get("linkedin") or {}, "kanaly": c.get("kanaly") if isinstance(c.get("kanaly"), list) else None,
                         "google": {"klient": gc.get("klient", ""), "login": gc.get("login", ""),
                                    "blad": gc.get("blad", ""), "klucz": bool(gc.get("keyHash")),
                                    "kluczOd": gc.get("keyAt", ""), "ostatnio": g.get("receivedAt", "")}}
@@ -837,6 +840,9 @@ class Wyniki:
             li_ok = bool(li.get("token") and lic.get("rodzaj") == "organizacja" and lic.get("organizacja")
                          and lic.get("wniosek") == "przyznany")
             links = {ch: v for ch, v in links.items() if (page if ch != "linkedin" else li_ok)}
+            used = (conns.get(t["project"]) or {}).get("kanaly")
+            if isinstance(used, list) and used:
+                links = {ch: v for ch, v in links.items() if ch in used}
             if not links:
                 continue                      # bez połączenia: wpis ręczny jak dotąd
             path, key = self._org_file(t, day, index)
@@ -1130,6 +1136,9 @@ WRITE_PATHS = ("/api/klienci/dodaj", "/api/klienci/zmien", "/api/klienci/import"
                "/api/wyniki/meta", "/api/wyniki/meta/odlacz", "/api/wyniki/meta/konto",
                "/api/wyniki/polaczenie", "/api/wyniki/google/klucz", "/api/wyniki/google/uniewaznij",
                "/api/konta/start", "/api/konta/aplikacja", "/api/konta/odlacz", "/api/konta/odswiez", "/api/konta/przypisz")
+
+
+CHANNELS = ("facebook", "instagram", "linkedin", "tiktok")
 
 
 def derive(r):
