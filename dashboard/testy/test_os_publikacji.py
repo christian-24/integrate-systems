@@ -38,6 +38,13 @@ class Os(unittest.TestCase):
         self.assertLess(body.index("'Google Ads'"), body.index("'Meta'"))
         self.assertIn("'facebook','instagram'", body)
 
+    def test_film_bez_nagrania_story_ze_scenariusza(self):
+        self.assertIn("osStory(t,X,nm,ini", HTML)
+        body = fn("osScen")
+        for k in ("Hak|Nagraj|Napis", "Na koniec"):
+            self.assertIn(k, body)
+        self.assertIn('"scenario"', open(os.path.join(HERE, "..", "server.py"), encoding="utf-8").read())
+
     def test_rodzaje_i_podglad(self):
         for txt in ("'Film'", "'Post'", "'Reklama Meta'", "'Reklama Google'", "data-ospick", "data-ostab", "Sponsorowane"):
             self.assertIn(txt, HTML)
