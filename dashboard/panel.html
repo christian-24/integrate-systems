@@ -3063,6 +3063,22 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
 .ws-tab{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:650;vertical-align:1px}
 .ws-tab .ws-dot{width:6px;height:6px;margin:0}
 @media (max-width:820px){.ws-tn{display:none}}
+/* Marketing: zakładki Oś czasu i Statystyki; statystyki reklam i postów */
+.mk-sub{gap:var(--g-xs);margin:0 0 var(--g-m)}.mk-sub .seg{min-height:40px;padding:0 18px;font-weight:600}
+.st-bar{gap:var(--g-xs);align-items:center;flex-wrap:wrap;margin:0 0 var(--g-s)}.st-bar small{margin-left:var(--g-s)}
+.st-ph{margin:var(--g-xl) 0 var(--g-s);font-size:var(--fs-lg)}
+.st-h{margin:var(--g-m) 0 var(--g-s);font-size:var(--fs-sm);font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--g-m)}
+.st-card h2{display:flex;align-items:center;justify-content:flex-start;gap:var(--g-s)}
+.st-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--g-s);margin:0 0 var(--g-m)}
+.st-kpi div{display:grid;gap:2px;padding:var(--g-s);background:var(--sunk);border-radius:var(--r)}
+.st-kpi span{font-size:11px;color:var(--ink-3)}.st-kpi b{font-size:18px;font-weight:650}
+.st-t{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.st-t th{text-align:right;font-weight:600;color:var(--ink-3);font-size:11px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.st-t th:first-child,.st-t td:first-child{text-align:left}
+.st-t td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+.st-t td small{color:var(--ink-3)}
+@media (max-width:820px){.st-grid{grid-template-columns:minmax(0,1fr)}.st-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
 .os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
 .os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
@@ -6454,7 +6470,7 @@ async function wyRep(pid,force){
   try{const r=await fetch('/api/wyniki?project='+encodeURIComponent(pid)+'&okres='+f.okres+'&kampania='+encodeURIComponent(f.kampania),{cache:'no-store'});
     if(r.status===401){location.assign('/wejscie');return}const j=await r.json();WYR.d[k]=j.ok?j:{err:j.error||'Nie udało się wczytać wyników.'}}
   catch(e){WYR.d[k]={err:'Nie udało się wczytać wyników.'}}
-  WYR.busy[k]=false;if(CUR&&CUR.v==='projekt')render(true);
+  WYR.busy[k]=false;if(CUR&&(CUR.v==='projekt'||CUR.v==='marketing'))render(true);
 }
 const wyN=v=>v==null?'—':fmtN(Math.round(v*100)/100);
 const wyZ=v=>v==null?'—':wyZl(v);
@@ -6598,14 +6614,69 @@ const WYSUB=[['kampanie','Kampanie'],['wyniki','Wyniki'],['klienci','Klienci']];
 const wyZl=n=>{n=+n||0;return (Number.isInteger(n)?String(n):n.toFixed(2).replace('.',',')).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' zł'};
 /* zakładka Marketing projektu: tylko oś publikacji (decyzja właściciela 26.11: bez Kampanii, Wyników i Klientów) */
 function wyTab(p){
-  return '<p class="pj-tabd">Co i kiedy wychodzi albo wyszło, z wyświetleniami z API. Kliknij wiersz, żeby zobaczyć podgląd jak w aplikacji Meta.</p>'+
-    osView(p.mem?[...p.mem]:[p.id]);
+  const pids=p.mem?[...p.mem]:[p.id];
+  return mkSub('p:'+p.id)+(OS.sub['p:'+p.id]==='st'?stView(pids):osView(pids));
 }
+/* Marketing: dwie zakładki, Oś czasu i Statystyki (decyzja właściciela 26.11) */
+function mkSub(key){
+  const cur=OS.sub[key]||'os',b=(k,n)=>'<button type="button" class="seg" data-mksub="'+k+'" data-mkkey="'+esc(key)+'" aria-pressed="'+(cur===k)+'" data-k="mksub:'+k+'">'+n+'</button>';
+  return '<div class="row mk-sub" role="group" aria-label="Marketing">'+b('os','Oś czasu')+b('st','Statystyki')+'</div>';
+}
+/* Statystyki: najpierw reklamy (Google Ads, Meta Ads) z /api/wyniki, potem posty Facebook i Instagram z odczytów API (/api/wyniki/os) */
+const stN=v=>v==null||v===''?'—':fmtN(Math.round(+v));
+function stView(pids){
+  if(!LIVE)return '<p class="note">Statystyki działają w panelu na serwerze.</p>';
+  return pids.map(pid=>(pids.length>1?'<h2 class="st-ph">'+esc(pShort(P(pid)))+'</h2>':'')+stOne(pid)).join('');
+}
+function stOne(pid){
+  osLoad(pid);
+  const k=wyKey(pid),f=WYR.f[pid],R=WYR.d[k],p=P(pid);
+  if(!R){wyRep(pid);return '<p class="muted">Wczytuję statystyki…</p>'}
+  if(R.err)return '<p class="warn">'+esc(R.err)+'</p>';
+  const seg=(v,n)=>'<button type="button" class="seg" data-wyok="'+v+'" data-pid="'+esc(pid)+'" aria-pressed="'+(f.okres===v)+'">'+n+'</button>';
+  const C=R.polaczenia||{},con=p?pjxConHref(phref(p,'marketing')):'#marketing';
+  let h='<div class="row st-bar" role="group" aria-label="Okres">'+seg('7','7 dni')+seg('30','30 dni')+seg('start','Od startu')+
+    '<small class="muted">'+(R.since?esc(dd(R.since))+' – ':'do ')+esc(dd(R.until))+'</small></div>';
+  /* reklamy */
+  h+='<h3 class="st-h">Reklamy</h3><div class="st-grid">';
+  [['Google Ads','Google Ads',C.google,'os-google'],['Meta','Meta Ads (Facebook i Instagram)',C.meta,'os-meta']].forEach(([kan,name,ok,cl])=>{
+    const L=R.rows.filter(r=>r.rodzaj==='reklama'&&r.kanal===kan);
+    const sum=x=>L.reduce((a,r)=>a+(+r[x]||0),0),wyd=sum('wydano'),roz=sum('rozmowy');
+    h+='<section class="panel st-card"><h2><span class="os-b '+cl+'">'+esc(kan==='Meta'?'Meta':'Google')+'</span> '+esc(name)+'</h2><div class="pad">';
+    if(!L.length&&!ok){h+='<p class="muted">Brak połączenia. <a class="navlk inl" href="'+esc(con)+'">Połącz w zakładce Połączenia →</a></p></div></section>';return}
+    if(!L.length){h+='<p class="muted">Brak wyników reklam w tym okresie.</p></div></section>';return}
+    h+='<div class="st-kpi"><div><span>Wydano</span><b>'+wyZl(wyd)+'</b></div><div><span>Wyświetlenia</span><b>'+stN(sum('wyswietlenia'))+'</b></div>'+
+      '<div><span>'+(kan==='Meta'?'Rozmowy':'Konwersje')+'</span><b>'+stN(roz)+'</b></div><div><span>Koszt '+(kan==='Meta'?'rozmowy':'konwersji')+'</span><b>'+(roz?wyX(wyd/roz):'—')+'</b></div></div>'+
+      '<table class="st-t"><thead><tr><th>Reklama</th><th>Wyświetlenia</th><th>Wydano</th><th>'+(kan==='Meta'?'Rozmowy':'Konw.')+'</th></tr></thead><tbody>'+
+      L.slice().sort((a,b)=>(+b.wydano||0)-(+a.wydano||0)).map(r=>'<tr><td><b>'+esc(r.kod)+'</b> <small>'+esc(shortT(r.tytul||'',50))+'</small></td><td class="num">'+stN(r.wyswietlenia)+'</td><td class="num">'+wyZl(r.wydano)+'</td><td class="num">'+stN(r.rozmowy)+'</td></tr>').join('')+
+      '</tbody></table></div></section>';
+  });
+  h+='</div>';
+  /* posty: Facebook, Instagram (i LinkedIn, gdy są odczyty) */
+  const O=(OS.d[pid]||{}).posty||{},chs=['facebook','instagram'].concat(Object.values(O).some(x=>x.linkedin)?['linkedin']:[]);
+  const NM={facebook:'Facebook',instagram:'Instagram',linkedin:'LinkedIn'};
+  h+='<h3 class="st-h">Posty i filmy</h3><div class="st-grid">';
+  chs.forEach(ch=>{
+    const L=Object.keys(O).filter(id=>O[id][ch]).map(id=>({t:D.tasks.find(x=>x.id===id),c:O[id][ch]})).filter(x=>x.t)
+      .sort((a,b)=>a.t.date<b.t.date?1:-1);
+    const sum=x=>L.reduce((a,r)=>a+(+(r.c.liczby||{})[x]||0),0);
+    h+='<section class="panel st-card"><h2>'+esc(NM[ch])+'</h2><div class="pad">';
+    if(!L.length){h+='<p class="muted">Brak postów połączonych z API. Na osi czasu kliknij „Połącz z postem” przy opublikowanym poście.</p></div></section>';return}
+    h+='<div class="st-kpi"><div><span>Wyświetlenia</span><b>'+stN(sum('wyswietlenia'))+'</b></div><div><span>Zasięg</span><b>'+stN(sum('zasieg'))+'</b></div>'+
+      '<div><span>Interakcje</span><b>'+stN(sum('interakcje'))+'</b></div><div><span>Posty</span><b>'+L.length+'</b></div></div>'+
+      '<table class="st-t"><thead><tr><th>Post</th><th>Wyświetlenia</th><th>Zasięg</th><th>Interakcje</th></tr></thead><tbody>'+
+      L.map(x=>{const n=x.c.liczby||{};return '<tr><td><small>'+esc(dd(x.t.date.slice(0,10)))+'</small> '+(x.c.link?'<a href="'+esc(x.c.link)+'" target="_blank" rel="noopener noreferrer">'+esc(shortT(name0(x.t),48))+'</a>':esc(shortT(name0(x.t),48)))+
+        (x.c.error?' <span class="lz red" title="'+esc(x.c.error)+'">błąd odczytu</span>':'')+'</td><td class="num">'+stN(n.wyswietlenia)+'</td><td class="num">'+stN(n.zasieg)+'</td><td class="num">'+stN(n.interakcje)+'</td></tr>'}).join('')+
+      '</tbody></table></div></section>';
+  });
+  return h+'</div>';
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-mksub]');if(!b)return;OS.sub[b.dataset.mkkey]=b.dataset.mksub;render(true)});
 /* ---------- Oś publikacji (prefiks os): jedyny widok Marketingu (projekt i menu). Wiersz = film, post, reklama Meta
    albo reklama Google z dniem, stanem i wyświetleniami z API (GET /api/wyniki/os). Publikacja bez połączenia:
    „Połącz z postem” wybiera post z API (GET /api/wyniki/posty-api) i zapisuje link w polu link: zadania.
    Kliknięcie otwiera podgląd jak w aplikacji Meta (Facebook, Instagram, Story). ---------- */
-const OS={d:{},busy:{},open:'',tab:'fb',txt:{},pick:'',posts:{},old:{}};
+const OS={d:{},busy:{},open:'',tab:'fb',txt:{},pick:'',posts:{},old:{},sub:{}};
 const OSTYP={film:['Film','os-film'],post:['Post','os-post'],meta:['Reklama Meta','os-meta'],google:['Reklama Google','os-google']};
 const osCode=t=>{const m=/(?:^|[^A-Za-z0-9])([A-Z]{1,2}\d{1,2})(?![A-Za-z0-9])/.exec(t.title||'');return m?m[1]:''};
 function osTyp(t){
@@ -9291,7 +9362,7 @@ function vMarketing(){
   const pids=[...new Set(D.tasks.filter(t=>t.state!=='cancelled'&&(t.kind==='publikacja'||mkRow(t)==='reklama')).map(t=>t.project))];
   let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.allP.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
-  h+=osView(fp?[fp]:pids);
+  const key='all';h+=mkSub(key)+(OS.sub[key]==='st'?stView(fp?[fp]:pids):osView(fp?[fp]:pids));
   const days=[...Array(7)].map((_,i)=>addK(D.todayKey,i));
   return h+'<details class="pj-fold mk-more" data-pvdet="mk-more"'+(PF.more['mk-more']?' open':'')+'><summary>Kanały i studio</summary>'+pubPanel()+studioHead(days)+'</details>';
 }
