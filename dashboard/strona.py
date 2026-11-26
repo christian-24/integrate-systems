@@ -685,7 +685,10 @@ class Site:
         has = os.path.isfile(os.path.join(self._dir(pid), "wynik", "index.html"))
         runs = self._runs(pid)
         notes = [self._note_view(n, runs) for n in data["notes"]]
-        return 200, "", {"site": p["site"], "build": build, "url": self.url(pid) if has else "",
+        out_dir = os.path.join(self._dir(pid), "wynik")
+        langs = sorted(n for n in (os.listdir(out_dir) if has else [])     # wersje językowe: podfoldery pl/, de/, … z index.html
+                       if re.fullmatch(r"[a-z]{2}", n) and os.path.isfile(os.path.join(out_dir, n, "index.html")))
+        return 200, "", {"site": p["site"], "build": build, "url": self.url(pid) if has else "", "langs": langs,
                          "notes": notes, "docs": self.docs(folder, p["site"]), "widths": WIDTH,
                          "live": self.live_info(pid), "repo": self.repo_block(pid, folder)}
 
