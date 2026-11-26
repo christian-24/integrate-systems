@@ -25,6 +25,8 @@ def idtoken(email):
     return "x." + body + ".y"
 
 
+DEV_SEEN = []      # nagłówki developer-token widziane przez udawane Google Ads API
+
 class Api:
     """Atrapa Facebooka, Google (OAuth i Google Ads API) i LinkedIn."""
 
@@ -61,7 +63,8 @@ class Api:
                            "id_token": idtoken("wlasciciel@example.com")})
             return ok({"access_token": "G-AT2", "expires_in": 3600})
         if url.startswith(konta.GADS):
-            assert headers.get("developer-token") == "DEV-TOKEN-12345"
+            assert headers.get("Authorization", "").startswith("Bearer ")
+            DEV_SEEN.append(headers.get("developer-token"))
             if url.endswith("customers:listAccessibleCustomers"):
                 return ok({"resourceNames": ["customers/1112223333", "customers/4347711860"]})
             query = json.loads(body.decode())["query"]
@@ -175,11 +178,15 @@ class Konta(Baza):
         self.assertEqual(len(self.api.calls), n)
 
     def test_google_bez_tokenu_dewelopera(self):
+        # Google wycofał tokeny dewelopera (9.09.2026): lista kont działa bez niego, nagłówka nie wysyłamy
+        del DEV_SEEN[:]
         self.login("google")
         L = self.k.status()["logins"]["google"][0]
-        self.assertEqual(L["accounts"], [])
-        self.assertIn("tokenu dewelopera", L["error"])
-        self.assertEqual(self.k.refresh({"provider": "google", "login": L["id"]})[0], 409)
+        self.assertEqual(L["error"], "")
+        self.assertIn("434-771-1860", [a["id"] for a in L["accounts"]])
+        self.assertTrue(DEV_SEEN)
+        self.assertEqual(set(DEV_SEEN), {None})
+        self.assertEqual(self.k.refresh({"provider": "google", "login": L["id"]})[0], 200)
 
     def test_linkedin_strona_firmowa_i_profil(self):
         self.assertEqual(self.k.save_app({"provider": "linkedin", "clientId": "77abcdefgh", "secret": "S3kret.123",

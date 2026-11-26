@@ -6596,7 +6596,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* ---------- Połączenia projektu: logowanie do Meta, Google Ads i LinkedIn (konta.py, prefiks ka) ----------
    „Zaloguj” otwiera oficjalną stronę logowania serwisu (w tym samym oknie), serwis wraca do tej zakładki.
    Jedno logowanie może widzieć wiele kont (np. 3 konta reklamowe Meta); konto wybiera się osobno w każdym projekcie.
-   Dane aplikacji (App ID, Client ID, sekret, token dewelopera) wpisuje się raz; sekretów panel nie pokazuje. */
+   Dane aplikacji (App ID, Client ID, sekret) wpisuje się raz; sekretów panel nie pokazuje. */
 const KA={setup:{}};
 const KANM={meta:['Meta Business','Facebook, Instagram, reklamy','Facebooka'],google:['Google Ads','','Google'],linkedin:['LinkedIn','','LinkedIn']};
 function kaCur(p,prov){
@@ -6621,7 +6621,7 @@ function kaCard(p,prov){
     if(prov==='linkedin')L.forEach(l=>o.push([l.id+'|','Profil prywatny: '+l.name]));
     const v=hit?hit.l.id+'|'+hit.a.id:(prov==='linkedin'&&cur.profil&&cur.login?cur.login+'|':'');
     lead=(all.length||prov==='linkedin'?'<label class="fl"><span>Konto tego projektu</span><select class="fi" data-kaacc="'+prov+'" data-pid="'+esc(p.id)+'" data-k="ka:acc:'+prov+'">'+opt(o,v)+'</select></label>':
-      '<p class="note">'+esc(prov==='google'?(A.devToken?'Logowanie nie widzi kont Google Ads.':'Lista kont Google Ads wymaga tokenu dewelopera (Szczegóły).'):'Logowanie nie widzi kont reklamowych. Zaloguj się ponownie i zaznacz konta.')+'</p>')+
+      '<p class="note">'+esc(prov==='google'?'Logowanie nie widzi kont Google Ads. Sprawdź poziom dostępu projektu w Google Cloud (Szczegóły) i odśwież listę.':'Logowanie nie widzi kont reklamowych. Zaloguj się ponownie i zaznacz konta.')+'</p>')+
       (cur.acc&&!hit?'<p class="note">Zapisane konto '+esc(cur.acc)+' nie należy do żadnego logowania.</p>':'')+
       (cur.err?'<p class="warn">Odczyt: '+esc(cur.err)+'</p>':'')+
       (L.some(l=>l.expired)?'<p class="warn">Logowanie wygasło. Zaloguj się ponownie.</p>':'');
@@ -6654,8 +6654,8 @@ function kaSetup(prov,K,A){
   if(prov==='meta')h+='<ol class="steps"><li><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Meta for Developers</a> → aplikacja panelu → Logowanie do Facebooka → Ustawienia → „Prawidłowe URI przekierowania OAuth”: wklej adres.</li><li>Ustawienia → Podstawowe: skopiuj App ID i Klucz tajny aplikacji.</li></ol>'+
     '<form class="dform" data-kaapp="meta">'+f('appId','App ID','cyfry',A.appId)+f('secret','App Secret',A.ready?'zapisany (wpisz, aby zmienić)':'32 znaki','')+f('configId','Konfiguracja logowania (aplikacja typu Firma, opcjonalnie)','cyfry','')+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
   else if(prov==='google')h+=(A.ready?'':'<p class="warn">Brak klienta Google. Ustaw go raz w karcie Google Drive (własny klient OAuth); logowanie Google Ads korzysta z tego samego.</p>')+
-    '<ol class="steps"><li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud</a> → klient OAuth panelu → „Autoryzowane identyfikatory URI przekierowania”: dodaj adres.</li><li>W tym samym projekcie włącz „Google Ads API”.</li><li>Token dewelopera: Google Ads (konto menedżera) → Narzędzia → Centrum API. Bez niego logowanie działa, ale panel nie widzi listy kont.</li></ol>'+
-    '<form class="dform" data-kaapp="google">'+f('developerToken','Token dewelopera',A.devToken?'zapisany (wpisz, aby zmienić)':'z Centrum API','')+f('loginCustomer','Konto menedżera (opcjonalnie)','np. 123-456-7890',A.loginCustomer)+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
+    '<ol class="steps"><li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud</a> → klient OAuth panelu → „Autoryzowane identyfikatory URI przekierowania”: dodaj adres.</li><li>W tym samym projekcie włącz „Google Ads API”.</li><li>Google Cloud → Google Ads API → Poziomy dostępu → „Zarządzaj”: poproś o poziom „Eksplorator” (prawdziwe konta reklamowe). Token dewelopera nie jest już potrzebny.</li></ol>'+
+    '<form class="dform" data-kaapp="google">'+f('loginCustomer','Konto menedżera (opcjonalnie)','np. 123-456-7890',A.loginCustomer)+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
   else h+='<ol class="steps"><li><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">LinkedIn Developers</a> → aplikacja panelu → Auth → „Authorized redirect URLs”: dodaj adres.</li><li>Products: „Sign In with LinkedIn using OpenID Connect” i „Share on LinkedIn”.</li><li>Skopiuj Client ID i Primary Client Secret z zakładki Auth.</li></ol>'+
     '<form class="dform" data-kaapp="linkedin">'+f('clientId','Client ID','',A.ready?'':'')+f('secret','Client Secret',A.ready?'zapisany (wpisz, aby zmienić)':'','')+
     '<label class="chk"><input type="checkbox" name="org"'+(A.org?' checked':'')+'> Aplikacja ma Community Management API (strony firmowe, statystyki)</label><div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
@@ -6820,8 +6820,12 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
 /* ---------- Oś publikacji (prefiks os): jedyny widok Marketingu (projekt i menu). Wiersz = film, post, reklama Meta
    albo reklama Google z dniem, stanem i wyświetleniami z API (GET /api/wyniki/os). Publikacja bez połączenia:
    „Połącz z postem” wybiera post z API (GET /api/wyniki/posty-api) i zapisuje link w polu link: zadania.
+   Reklama Meta: „Połącz z reklamą” wybiera reklamę z konta reklamowego projektu (GET /api/wyniki/reklamy-api)
+   i zapisuje w polu link: link Menedżera reklam (selected_ad_ids); wyniki tej reklamy po id (reklamyId z /api/wyniki/os).
    Kliknięcie otwiera podgląd jak w aplikacji Meta (Facebook, Instagram, Story). ---------- */
-const OS={d:{},busy:{},open:'',tab:'fb',txt:{},pick:'',posts:{},old:{},sub:{}};
+const OS={d:{},busy:{},open:'',tab:'fb',txt:{},pick:'',posts:{},old:{},sub:{},adpick:'',ads:{}};
+/* id połączonej reklamy Meta z pola link: (link Menedżera reklam) albo '' */
+const osAdId=t=>{const m=/^https:\/\/adsmanager\.facebook\.com\/adsmanager\/manage\/ads\?(?:[^#\s]*&)?selected_ad_ids=(\d{1,30})(?:[&#]|$)/.exec(String((t.detail||{}).link||'').trim());return m?m[1]:''};
 const OSTYP={film:['Film','os-film'],post:['Post','os-post'],meta:['Reklama Meta','os-meta'],google:['Reklama Google','os-google']};
 const osCode=t=>{const m=/(?:^|[^A-Za-z0-9])([A-Z]{1,2}\d{1,2})(?![A-Za-z0-9])/.exec(t.title||'');return m?m[1]:''};
 function osTyp(t){
@@ -6843,6 +6847,11 @@ async function osLoad(pid,force){
 /* wyświetlenia i przebieg: posty z odczytów API (suma kanałów po kolejnych odczytach), reklamy z dni Meta/Google */
 function osStats(t){
   const R=OS.d[t.project]||{},typ=osTyp(t);
+  const aid=typ==='meta'?osAdId(t):'';
+  if(aid){const a=(R.reklamyId||{})[aid];if(!a)return null;
+    if(a.error)return {n:null,ser:[],extra:[],src:'Meta',err:['Meta: '+a.error]};
+    let s=0;const ser=(a.dni||[]).map(d=>s+=d.wyswietlenia||0),k=+a.klikniecia||0;
+    return {n:a.wyswietlenia,ser,extra:[wyZl(a.wydano),fmtN(k)+' '+pl(k,'kliknięcie','kliknięcia','kliknięć'),a.rozmowy+' '+pl(a.rozmowy,'rozmowa','rozmowy','rozmów')],src:'Meta'+(a.nazwa?' · '+shortT(a.nazwa,40):'')}}
   if(typ==='meta'||typ==='google'){const a=(R.reklamy||{})[osCode(t).toLowerCase()];if(!a)return null;
     let s=0;const ser=(a.dni||[]).map(d=>s+=d.wyswietlenia||0);
     return {n:a.wyswietlenia,ser,extra:[wyZl(a.wydano),a.rozmowy+' '+pl(a.rozmowy,'rozmowa','rozmowy','rozmów')],src:a.zrodlo==='google'?'Google Ads':'Meta'}}
@@ -6874,6 +6883,8 @@ function osRow(t,many){
   let right;
   if(S&&S.n!=null)right='<span class="os-v"><b class="num">'+fmtN(S.n)+'</b><small>wyświetleń · '+esc(S.src)+'</small>'+(S.extra.length?'<small>'+esc(S.extra.join(' · '))+'</small>':'')+'</span>'+osSpark(S.ser);
   else if(pub&&LIVE)right='<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'" data-k="ospick:'+esc(t.id)+'">Połącz z postem</button>';
+  else if(typ==='meta'&&osAdId(t))right='<span class="os-v muted"><small>połączona · brak danych z reklamy</small></span>';
+  else if(typ==='meta'&&LIVE&&(t.state==='done'||t.date.slice(0,10)<=D.todayKey))right='<button type="button" class="btn sec sm" data-osadpick="'+esc(t.id)+'" data-k="osadpick:'+esc(t.id)+'">Połącz z reklamą</button>';
   else right='<span class="os-v muted"><small>'+(typ==='meta'||typ==='google'?'brak danych z reklamy':'po publikacji')+'</small></span>';
   return '<li class="os-r"><button type="button" class="os-main" data-osopen="'+esc(t.id)+'" data-k="os:'+esc(t.id)+'">'+
     '<span class="os-b '+T[1]+'">'+T[0]+'</span><span class="os-tt"><b>'+esc(name||t.title)+'</b><small>'+
@@ -6896,7 +6907,7 @@ function osView(pids){
       list.filter(t=>t.date.slice(0,10)===d).map(t=>osRow(t,many)).join('')+'</ul></li>';
   });
   if(!nowDone)h+='<li class="os-now"><span>Dziś · '+esc(ddl(D.todayKey))+'</span></li>';
-  return h+'</ol>'+osModal()+osPicker();
+  return h+'</ol>'+osModal()+osPicker()+osAdPicker();
 }
 /* podgląd jak w aplikacji Meta: tekst z post.md (reklama: Tekst główny, Nagłówek, Opis, Przycisk) */
 function osParse(raw){
@@ -6928,7 +6939,7 @@ function osModal(){
     '<div class="os-acts os-igacts"><span>♡</span><span>💬</span><span>➤</span><span class="os-sv">⌑</span></div><p class="os-txt"><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b> '+short.replace(/\n/g,' ')+'</p></div>';
   else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+(noFilm?'':'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
     (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':''))+'</div>';
-  const S=osStats(t),link=(t.detail||{}).link||'';
+  const S=osStats(t),link=(t.detail||{}).link||'',aid=typ==='meta'?osAdId(t):'',A=aid&&(OS.d[t.project]||{}).reklamyId?OS.d[t.project].reklamyId[aid]:null;
   return '<div class="os-ov" data-osclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Podgląd w aplikacji Meta">'+
     '<div class="os-dh"><b>'+esc(t.title)+'</b><button type="button" class="btn sec sm" data-osclose="1" aria-label="Zamknij">✕</button></div>'+
     '<div class="row os-tabs" role="group">'+tab('fb','Facebook')+tab('ig','Instagram')+tab('st','Story')+'</div>'+
@@ -6936,8 +6947,11 @@ function osModal(){
     '<div class="os-info">'+(S&&S.n!=null?'<p><b class="num">'+fmtN(S.n)+'</b> wyświetleń · '+esc(S.src)+(S.extra.length?' · '+esc(S.extra.join(' · ')):'')+'</p>'+osSpark(S.ser):'<p class="muted">Brak wyświetleń z API.</p>')+
     '<div class="row"><button type="button" class="btn sm" data-oscopy="'+esc(t.id)+'" data-k="oscopy">Kopiuj obraz</button>'+
     '<button type="button" class="btn sec sm" data-ostxt="'+esc(t.id)+'" data-k="ostxt">Kopiuj tekst</button>'+
-    '<button type="button" class="btn sm" data-osdraft="'+esc(t.id)+'" data-k="osdraft">Wyślij jako draft do Meta</button>'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">Otwórz post</a>':'')+
-    (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+'</div>'+
+    '<button type="button" class="btn sm" data-osdraft="'+esc(t.id)+'" data-k="osdraft">Wyślij jako draft do Meta</button>'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">'+(aid?'Otwórz w Menedżerze reklam':'Otwórz post')+'</a>':'')+
+    (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+
+    (typ==='meta'&&LIVE?'<button type="button" class="btn sec sm" data-osadpick="'+esc(t.id)+'" data-k="osadpick">'+(aid?'Zmień reklamę':'Połącz z reklamą')+'</button>'+
+      (aid?'<button type="button" class="btn sec sm" data-osadunlink="'+esc(t.id)+'" data-k="osadunlink">Odłącz</button>':''):'')+'</div>'+
+    (aid?'<p class="note">Połączona reklama: <b>'+esc(A&&A.nazwa?A.nazwa:'id '+aid)+'</b>'+(A&&A.stan?' · '+esc(A.stan):'')+'</p>':'')+
     (OS.draft&&OS.draft[t.id]?'<p class="note">Szkic wysłany. <a href="'+esc(OS.draft[t.id])+'" target="_blank" rel="noopener noreferrer">Otwórz szkice w Meta Business Suite</a></p>':'')+'</div></div></div>';
 }
 const name0=t=>t.title.replace(/^(Opublikuj|Przygotuj)\s+\S+\s*/i,'');
@@ -6983,6 +6997,35 @@ function osPicker(){
     '<p class="note">Wybierz post, z którego panel ma czytać wyświetlenia (odczyt co 6 h przez 3 dni, potem raz dziennie).</p>'+
     '<form class="os-lnk" data-oslink="'+esc(t.id)+'"><label class="fl"><span>Albo wklej link do posta</span><input class="fi" name="link" type="url" inputmode="url" autocomplete="off" placeholder="https://www.facebook.com/… albo https://www.instagram.com/p/…"></label><button class="btn sm" type="submit">Połącz</button></form>'+b+'</div></div>';
 }
+/* wybór reklamy z konta reklamowego Meta projektu (tylko odczyt, ads_read): miniatura, nazwa, stan, data */
+function osAdPicker(){
+  const t=OS.adpick&&D.tasks.find(x=>x.id===OS.adpick);if(!t)return '';
+  const L=OS.ads[t.project];
+  if(L===undefined){OS.ads[t.project]=null;fetch('/api/wyniki/reklamy-api?project='+encodeURIComponent(t.project),{cache:'no-store'}).then(r=>r.json()).then(j=>{OS.ads[t.project]=j;render(true)}).catch(()=>{OS.ads[t.project]={ok:false,error:'Nie udało się wczytać reklam.'};render(true)})}
+  const cur=osAdId(t);let b;
+  if(!L)b='<p class="muted">Wczytuję reklamy z konta reklamowego…</p>';
+  else if(!L.ok)b='<p class="warn">'+esc(L.error||'Nie udało się wczytać reklam.')+'</p>';
+  else if(!L.reklamy.length)b='<p class="muted">Brak reklam na koncie '+esc(L.konto||'')+'.</p>';
+  else b='<ul class="os-pl">'+L.reklamy.map((x,i)=>'<li><button type="button" class="os-pi" data-osadset="'+i+'"'+(x.id===cur?' aria-current="true"':'')+'>'+
+    (x.miniatura?'<img src="'+esc(x.miniatura)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'<span class="os-pn"></span>')+
+    '<span><b>'+esc(x.nazwa||'(bez nazwy)')+'</b><small>'+esc([x.stan,x.data?dd(x.data):'',x.kampania].filter(Boolean).join(' · '))+'</small>'+
+    (x.id===cur?'<small>połączona z tą pozycją</small>':x.polaczona?'<small>połączona z: '+esc(shortT(x.polaczona,60))+'</small>':'')+'</span></button></li>').join('')+'</ul>';
+  return '<div class="os-ov" data-osadclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Wybierz reklamę Meta">'+
+    '<div class="os-dh"><b>Połącz z reklamą: '+esc(t.title)+'</b><button type="button" class="btn sec sm" data-osadclose="1" aria-label="Zamknij">✕</button></div>'+
+    '<p class="note">Wybierz reklamę z konta reklamowego projektu. Panel pokaże jej wyświetlenia, kliknięcia i koszt z codziennego odczytu Meta.</p>'+b+'</div></div>';
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest&&ev.target.closest('[data-osadpick],[data-osadclose],[data-osadset],[data-osadunlink]');if(!b)return;
+  if(b.classList.contains('os-ov')&&b!==ev.target)return;
+  if(b.dataset.osadpick){OS.adpick=b.dataset.osadpick;const t=D.tasks.find(x=>x.id===OS.adpick);if(t&&OS.ads[t.project]&&!OS.ads[t.project].ok)delete OS.ads[t.project];render(true);return}
+  if(b.dataset.osadclose!=null){OS.adpick='';render(true);return}
+  const done=(t,msg)=>r=>{say(r.ok?msg:failMsg(r,'Nie zapisano połączenia.'));if(r.ok)setTimeout(()=>osLoad(t.project,true),1500)};
+  if(b.dataset.osadset!=null){const t=D.tasks.find(x=>x.id===OS.adpick),L=t&&OS.ads[t.project],x=L&&L.ok&&L.reklamy[+b.dataset.osadset];if(!t||!x)return;
+    if(!LIVE){say(PRV);return}
+    OS.adpick='';enqueue(async()=>done(t,'Połączono z reklamą „'+shortT(x.nazwa||x.id,60)+'”.')(await detailPost(t,'link',x.link)));return}
+  if(b.dataset.osadunlink){const t=D.tasks.find(x=>x.id===b.dataset.osadunlink);if(!t)return;if(!LIVE){say(PRV);return}
+    enqueue(async()=>done(t,'Odłączono reklamę.')(await detailPost(t,'link','')));}
+});
 document.addEventListener('click',ev=>{
   const fr=ev.target.closest&&ev.target.closest('[data-osfr],[data-osv]');
   if(fr){if(fr.dataset.osv){OS.sv=fr.dataset.osv;OS.sf=0}else OS.sf=Math.max(0,Math.min(3,(OS.sf||0)+(+fr.dataset.osfr)));osTick();render(true);return}
@@ -7040,7 +7083,7 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
     else say(failMsg(r,'Nie udało się utworzyć szkicu.'));
   }).finally(()=>{b.disabled=false;b.textContent='Wyślij jako draft do Meta'});
 });
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick)){OS.open='';OS.pick='';render(true)}});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick||OS.adpick)){if(OS.adpick)OS.adpick='';else{OS.open='';OS.pick=''}render(true)}});
 /* plansze story przełączają się same co 3,5 s (od ostatniego kliknięcia), z powrotem na początek po ostatniej */
 function osTick(){clearTimeout(OS.tm);OS.tm=setTimeout(()=>{if(!OS.open||!document.querySelector('.os-sfilm'))return;
   const n=document.querySelectorAll('.os-sfilm .os-sbars i').length||4;OS.sf=((OS.sf||0)+1)%n;osTick();render(true)},3500)}
