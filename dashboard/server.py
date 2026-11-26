@@ -1027,11 +1027,22 @@ def _script_ctx(body):
     return data, index[pid], proj, pub, day
 
 
+MATERIAL_ROWS = ("reklama", "publikacja")    # rodzaje wierszy kampanii z materiałem do przygotowania (projekt.row_kind)
+
+
 def publication_material(pub, post, film_owner=False):
-    """Brakujący materiał i miejsce zapisu zgodne z edytorem posta."""
+    """Brakujący materiał i miejsce zapisu zgodne z edytorem posta. Kroki właściciela i przeglądy nie mają materiału."""
+    if pub.get("row") and pub["row"] not in MATERIAL_ROWS:
+        return None
     day = str(pub.get("date") or "")[:10]
+    if pub.get("row") == "reklama" and pub.get("adFormat") != "film":
+        name = "%s-reklama-%s" % (day, projekt.slug(pub.get("adCode") or projekt.ad_title(pub))[:30])
+        rel = "posty/" + (os.path.basename(post) if post else name)
+        if post and any(os.path.isfile(os.path.join(post, n)) for n in ("grafika.png", "grafika.svg")):
+            return None
+        return "plik grafiki", rel + "/grafika.png"
     rel = "posty/" + (os.path.basename(post) if post else day + "-publikacja")
-    if scenariusz.is_film(pub):
+    if scenariusz.is_film(pub) or pub.get("adFormat") == "film":
         if post and (scenariusz.read(post) or os.path.isfile(os.path.join(post, film.SCENARIO))
                      or publikacja.Publisher.film(post)):
             return None
@@ -1070,9 +1081,15 @@ def publication_jobs(data, index):
             continue
         job = publication_job(pub, jobs)
         pid = pub["project"]
-        if (pid, day) not in posts:
-            posts[pid, day] = post_folder(pid, day, index)
-        material = publication_material(pub, posts[pid, day], pid in owners)
+        if pub.get("row") and pub["row"] not in MATERIAL_ROWS:
+            continue                    # krok właściciela albo przegląd: bez „Brak tekstu” i „Zleć”
+        if pub.get("row") == "reklama":
+            folder = ad_folder(pid, day, pub.get("adCode"), index)
+        else:
+            if (pid, day) not in posts:
+                posts[pid, day] = post_folder(pid, day, index)
+            folder = posts[pid, day]
+        material = publication_material(pub, folder, pid in owners)
         if material:
             pub["missingMaterial"] = material[0]
         if job:
@@ -1088,6 +1105,8 @@ def assign_publication(body):
                     and t.get("kind") == "publikacja" and t["state"] not in projekt.CLOSED_TASK_STATES), None)
         if not pub:
             return 409, "Publikacja się zmieniła. Odśwież Marketing.", {}
+        if pub.get("row") and pub["row"] not in MATERIAL_ROWS:
+            return 409, "To krok po Twojej stronie, nie publikacja: agent go nie przygotowuje.", {}
         pid, day = pub["project"], str(pub.get("date") or "")[:10]
         if not POST_DAY.fullmatch(day):
             return 400, "Publikacja musi mieć termin.", {}
@@ -1101,7 +1120,8 @@ def assign_publication(body):
         if job:
             return 200, "", {"task": job["id"]}
         owner = next((p.get("filmOwner") for p in data["projects"] if p["id"] == pid), False)
-        material = publication_material(pub, post_folder(pid, day, index), owner)
+        post = ad_folder(pid, day, pub.get("adCode"), index) if pub.get("row") == "reklama" else post_folder(pid, day, index)
+        material = publication_material(pub, post, owner)
         if not material:
             return 409, "Materiał do tej publikacji jest już gotowy.", {}
         kind, destination = material
@@ -2189,6 +2209,7 @@ WRITES = {"/api/task/cancel": cancel_task, "/api/task/restore": lambda b: cancel
           "/api/task/finish": lambda b: finish_task(b), "/api/task/pola": lambda b: task_fields(b),
           "/api/task/add": lambda b: add_task(b), "/api/stage/update": lambda b: update_stage(b),
           "/api/campaign/update": lambda b: update_campaign(b),
+          "/api/campaign/new": lambda b: create_campaign(b),
           "/api/project/add": lambda b: add_project(b), "/api/project/remove": lambda b: remove_project(b),
           "/api/project/meta": lambda b: update_meta(b),
           "/api/github/stan": lambda b: github_state(b), "/api/github/wyslij": lambda b: github_push(b),
@@ -3170,6 +3191,7 @@ def build_data():
     manager = get_agents()
     manager.annotate(out["tasks"], out["projectsSource"], today)
     publication_jobs(out, index)
+    campaign_ads(out, index)
     for t in out["tasks"]:
         t["ownerNeeds"] = projekt.owner_needs(t)
     out.update(projekt.owner_counts(out["projects"], out["stages"], out["tasks"], today))
@@ -3756,6 +3778,66 @@ def post_folder(pid, day, index=None):
     return None
 
 
+def ad_folder(pid, day, code, index=None):
+    """Folder grafiki reklamy: posty/<dzień>-…<kod>… (np. 2026-11-26-reklama-s1); bez kodu w nazwie jedyny folder
+    tego dnia. Kilka reklam tego samego dnia rozróżnia kod. None, gdy brak."""
+    if not POST_DAY.match(day or ""):
+        return None
+    if index is None:
+        _, index = load_projects(resolve=False)
+    folder = index.get(pid)
+    if not folder:
+        return None
+    base = os.path.join(os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))), "posty")
+    try:
+        names = sorted(n for n in os.listdir(base) if (n.startswith(day + "-") or n == day)
+                       and os.path.isdir(os.path.join(base, n)) and not os.path.islink(os.path.join(base, n)))
+    except OSError:
+        return None
+    key = projekt.slug(code or "")
+    hit = [n for n in names if key and key in n[len(day):].split("-")] if code else []
+    if not hit and len(names) == 1:
+        hit = names
+    return os.path.join(base, hit[0]) if hit else None
+
+
+def campaign_ads(out, index):
+    """Reklamy kampanii (projekt.ad_states) z grafiką z folderu posta: „grafika gotowa”, miniatura w panelu."""
+    by_camp = {}
+    for t in out["tasks"]:
+        if t.get("row") == "reklama":
+            by_camp.setdefault(t.get("campaign"), []).append(t)
+    for c in out["campaigns"]:
+        rows = [t for t in out["tasks"] if t.get("campaign") == c["id"]]
+        images = {}
+        for t in by_camp.get(c["id"], []):
+            folder = ad_folder(t["project"], str(t.get("date") or "")[:10], t.get("adCode"), index)
+            if folder and any(os.path.isfile(os.path.join(folder, n)) for n in ("grafika.png", "grafika.svg")):
+                images[t["id"]] = True
+        c["ads"] = projekt.ad_states(rows, images)
+
+
+def create_campaign(body):
+    """POST /api/campaign/new {project, name, channels, format, budget, start, end, target?, metric?, goal?}:
+    szkic kampanii (stan: plan) i zadanie agenta „Przygotuj plan kampanii …”. Panel niczego nie publikuje."""
+    pid = body.get("project")
+    data, index = load_projects(resolve=False)
+    if data["projectsSource"] != "registry":
+        return 409, "Wybierz projekt z rejestru."
+    folder = index.get(pid) if isinstance(pid, str) else None
+    if not folder:
+        return 404, "Nie ma takiego projektu."
+    card = projekt.read(os.path.join(folder, "KARTA.md")) or ""
+    try:
+        with _write_lock:
+            rel, title = projekt.new_campaign(folder, body, photos_only=agents.photos_only(card))
+    except ValueError as e:
+        return 400, "Nie zapisano: %s." % e
+    except OSError:
+        return 400, "Projekt nie ma pliku ZADANIA.md."
+    return 200, "", {"file": rel, "task": title}
+
+
 def post_text(folder):
     """Tytuł i teksty kanałów z post.md."""
     out = {"title": "", "sections": {}}
@@ -4204,6 +4286,14 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
+        if path == "/api/reklama/grafika":         # miniatura reklamy w przeglądzie kampanii
+            q = parse_qs(url.query)
+            folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
+            png = post_image(folder) if folder else None
+            if not png:
+                return self._send(404, "Brak grafiki", "text/plain; charset=utf-8")
+            with open(png, "rb") as f:
+                return self._send(200, f.read(), "image/png", [("Cache-Control", "no-store")])
         if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
             folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])

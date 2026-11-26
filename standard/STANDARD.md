@@ -117,6 +117,7 @@ Zadania w `ZADANIA.md` i publikacje w harmonogramie kampanii zapisujemy tak samo
 | `po` | fragmenty tytułów zadań tego projektu (po przecinku), które muszą być `[x]` wcześniej; najpierw z tego samego pliku |
 | `sprawdza` | kontrola, która potwierdza wykonanie: klucz kontroli serwera (`kopia`, `kopia-poza`, `claude`, `claude-agent`, `zapis-kart`, `panel`, `useme`, `dysk`) albo `plik <ścieżka>` (plik w folderze projektu albo karty) |
 | `licznik` | liczba podawana przy zamknięciu: zaproszenia, przyjęte, rozmowy, linki, konta, oferty, odpowiedzi |
+| `rodzaj` | rodzaj wiersza kampanii: reklama, reklama film, publikacja, zadanie, przegląd (bez pola: rozpoznanie, sekcja „Kampania”) |
 | `kampania` | plik kampanii, do której trafia licznik (`kampanie/nazwa.md`, `nazwa.md` albo `nazwa`); bez pola: pierwsza kampania w toku |
 
 Anulowany wiersz pozostaje w pliku, np. `- [-] Przygotuj szkic | kto: ty | anulowano: 2026-11-25 | powód: zmiana zakresu`.
@@ -253,6 +254,44 @@ Pod tytułem pliku kampanii są pola: `stan` (plan, w toku, zakończona, wstrzym
 `cel liczbowy` i `wynik` to liczby (pierwsza liczba w wierszu: „40 kont” → 40, „1 200” → 1200); w danych kampanii
 `target` i `result` (liczba albo `null`). Kampania w toku powinna mieć `cel liczbowy`.
 Sekcja „Wyniki i wnioski” jest wymagana dopiero po zakończeniu kampanii.
+`- rodzaj: grafiki statyczne` (albo `filmy`, `grafiki statyczne i filmy`): jakie reklamy ma kampania (`format` w danych).
+`budżet` to zwykły tekst (np. `12 zł/dzień` albo `ok. 500 zł/mies. (…)`), panel pokazuje go w przeglądzie kampanii.
+
+### Rodzaje wierszy harmonogramu
+
+Każdy wiersz harmonogramu ma w danych `row`: `reklama`, `publikacja`, `zadanie` albo `przegląd`. Pole `rodzaj:` wygrywa
+(`rodzaj: reklama`, `rodzaj: reklama film`, `rodzaj: publikacja`, `rodzaj: zadanie`, `rodzaj: przegląd`). Bez pola panel
+rozpoznaje rodzaj z wiersza, w tej kolejności:
+
+| Rodzaj | Rozpoznanie bez pola |
+|---|---|
+| przegląd | tytuł zaczyna się od „Przegląd”, „Przejrzyj wyniki” albo „Podsumuj” |
+| reklama | tytuł „Przygotuj reklamę …” albo „Reklama …”; film, gdy tytuł mówi o filmie (`adFormat`: grafika, film) |
+| zadanie | wiersz bez `kanał:`, z kanałem reklam (`kanał: meta ads`) albo zadanie właściciela z `licznik:` |
+| publikacja | pozostałe wiersze z kanałem (post, film organiczny) |
+
+Kod reklamy to pierwszy znacznik w tytule z wielkiej litery i cyfry (`S1`, `B1`, `R1`; `adCode`), `codes` to wszystkie
+kody w tytule. Dawne kampanie bez pola działają jak dotąd: wpisy z kanałem zostają publikacjami.
+
+- Reklama i publikacja: panel pokazuje brak materiału („Brak pliku grafiki”, „Brak tekstu posta”) i „Zleć”; tylko dla
+  nich Automat i „Zleć” zakładają zadanie przygotowania. Grafika reklamy leży w `posty/<kiedy>-reklama-<kod>/grafika.png`
+  (folder dnia z kodem w nazwie; bez kodu jedyny folder tego dnia).
+- Zadanie właściciela (`kto: ty`): „Zrobione”; agent go nie przygotowuje (np. „Wgraj B1 do kampanii…”).
+- Przegląd: formularz z liczbą `licznik:` (od 7 dni przed terminem), zapis jak przy zamknięciu zadania z licznikiem.
+
+Stan reklamy w przeglądzie kampanii (`ads` w danych kampanii: `code`, `title`, `price`, `state`, `format`, `taskId`,
+`date`, `image`): `do zrobienia`, `grafika gotowa` (wiersz reklamy `[x]` albo plik grafiki), `zatwierdzona` (zrobiony krok
+„Zatwierdź … S1”), `w reklamie` (zrobiony krok „Wgraj/Uruchom … S1”), `wyłączona` (zrobiony krok „Wyłącz … S1” albo
+wiersz reklamy `[-]`). Cena to pierwsza kwota „… zł” z tytułu albo z `cel:` wiersza reklamy.
+
+### Nowa kampania z panelu
+
+„Nowa kampania” (Marketing projektu i widok Marketing) zakłada `kampanie/<nazwa>.md` w stanie `plan` z polami z formularza
+(nazwa, kanały, rodzaj, budżet dzienny, okres, cel liczbowy, miernik) i w `ZADANIA.md` zadanie
+`Przygotuj plan kampanii „<nazwa>” | kto: agent | wymaga: odbiór` z celem, `gotowe gdy:` i materiałami (plik kampanii,
+styl reklam projektu, np. `meta-ads/Styl-reklam-i-zasady.md`). Przy polu karty `grafiki: tylko zdjęcia` cel zadania mówi
+„bez $imagegen”. Agent dopisuje grupę docelową, przekaz, reklamy i harmonogram; właściciel zatwierdza plan i dopiero potem
+zmienia stan kampanii na „w toku”. Panel niczego nie publikuje i nie tworzy kampanii w Meta.
 
 Wiersze `- RRRR-MM-DD · <licznik> <n> · <tytuł zadania>` w sekcji „Wyniki i wnioski” (dopisuje je panel przy zamknięciu
 zadania z `licznik:`) dają w danych kampanii `counters` = `{licznik: suma}`; pozostałe wiersze to wnioski.

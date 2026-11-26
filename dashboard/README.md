@@ -23,7 +23,7 @@ lista projektów z wyszukiwarką; na telefonie dolny pasek (Asystent, Marketing,
 | Widok | Adres | Do czego |
 |---|---|---|
 | Asystent | `#asystent` | strona startowa: sprawy dla Ciebie na dziś (liczba i 3 najważniejsze, z przyciskami), notatka PM, „Pokaż” kart; rozmowa głosem i tekstem, odpowiedzi jako karty |
-| Marketing | `#marketing` | tydzień postów i filmów, kampanie w toku z „Wpisz wynik”, kanały publikacji, studio filmów |
+| Marketing | `#marketing` | kampanie wszystkich projektów (karta: projekt, stan, okres, postęp, najbliższy krok, „Nowa kampania”), tydzień postów i filmów, kanały publikacji, studio filmów |
 | Media | `#media` | zdjęcia i filmy ze wszystkich projektów |
 | Agenci | `#agenci` | logowanie, limit, samodzielne uruchamianie, Raport PM, Teraz (co trwa, kamienie, szacunek), użycie Claude i Codex, publikacje, ostatnie 24 h, uruchomienia (zwinięte) |
 | Serwer | `#koszty` | stan i zasoby, Google Drive (jeden wiersz stanu, „Połącz Google Drive”, reszta w „Szczegóły”), kalendarz (połączenie, subskrypcja ICS), koszty, rozwój panelu, sesje |
@@ -245,6 +245,12 @@ podgląd i edycja opisu (`POST /api/post/tekst`: sekcja post.md) oraz grafiki (`
 (telefon i zakładka „Post”: strona tworzenia posta, opis w schowku i pobrane pliki). „Oznacz jako opublikowane” i odwrotnie w menu „⋯” (z „Cofnij”).
 
 Zakładka Marketing projektu ma części Kampanie, Wyniki i Klienci (`wyTab` w `panel.html`).
+- Kampanie (`mktView`): „Nowa kampania” (`POST /api/campaign/new`: szkic `stan: plan` i zadanie agenta „Przygotuj plan
+  kampanii …”, STANDARD.md „Nowa kampania z panelu”). Karta kampanii: na górze cel i postęp, okres, budżet, kanały,
+  tabela reklam (kod, hasło, cena, stan, miniatura z `GET /api/reklama/grafika?project=&date=&kod=`), plan filmów
+  (najbliższe 3, „Pełna lista” otwiera Marketing z filtrem projektu) i najbliższy krok; reszta wierszy pod zwiniętym
+  „Harmonogram”. Wiersz według rodzaju (`row`, STANDARD.md „Rodzaje wierszy harmonogramu”): reklama i publikacja z „Brak …”
+  i „Zleć”, krok właściciela z „Zrobione”, przegląd z polem „Ile …?”. `POST /api/post/zlec` odrzuca kroki i przeglądy.
 - Klienci (`klienci.py`): szybki formularz (data, auto, źródło z listy, kod reklamy albo posta, usługa, wycena), potem
   w wierszu „Umówiony” i „Wykonane (zł)”. Bez imion i telefonów (pole z numerem telefonu jest odrzucane). Dane poza
   repozytorium: `PANEL_KLIENCI_DIR` (domyślnie `~/dane/klienci/<projekt>.json`, 0600); wpisy czyta `GET /api/klienci`,

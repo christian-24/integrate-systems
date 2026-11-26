@@ -83,6 +83,28 @@ COUNTERS = {"zaproszenia": "zaproszenia", "przyjęte": "przyjęte", "przyjete": 
             "linki": "linki", "konta": "konta", "oferty": "oferty", "odpowiedzi": "odpowiedzi"}
 RESULTS_TITLE = "Wyniki i wnioski"
 CAMPAIGN_FILE = re.compile(r"^kampanie/[^/\\]+\.md$")
+# Rodzaj wiersza kampanii (pole „rodzaj:” albo rozpoznanie z wiersza, row_kind): reklama (grafika albo film),
+# publikacja organiczna, zadanie (krok właściciela albo agenta) i przegląd (liczby za okres).
+ROW_KINDS = {"reklama": ("reklama", "grafika"), "reklama statyczna": ("reklama", "grafika"),
+             "reklama grafika": ("reklama", "grafika"), "reklama film": ("reklama", "film"),
+             "publikacja": ("publikacja", ""), "post": ("publikacja", ""), "film": ("publikacja", ""),
+             "zadanie": ("zadanie", ""), "krok": ("zadanie", ""),
+             "przegląd": ("przegląd", ""), "przeglad": ("przegląd", "")}
+AD_TITLE = re.compile(r"^(?:Przygotuj|Przygotować|Zrób|Stwórz|Zaprojektuj)\s+reklam\w*\b|^Reklama\b", re.I)
+AD_CODE = re.compile(r"\b([A-Z]{1,2}\d{1,2})\b")
+REVIEW_TITLE = re.compile(r"^(?:Przegląd|Przeglad|Przejrzyj\s+wyniki|Podsumuj)\b", re.I)
+ADS_CHANNEL = re.compile(r"\bads\b|menedżer\w* reklam|reklam", re.I)
+FILM_WORD = re.compile(r"\b(?:film\w*|wideo|reel\w*)\b", re.I)
+PRICE = re.compile(r"(\d{1,3}(?:[ \u00a0]\d{3})+|\d+)(?:[.,]\d+)?\s*zł")
+# Stan reklamy z wierszy kampanii (ad_states): kroki właściciela z kodem reklamy w tytule po zrobieniu zmieniają stan.
+AD_STEP_STATE = (("wyłączona", re.compile(r"^(?:Wyłącz|Wstrzymaj|Zatrzymaj)\b", re.I)),
+                 ("w reklamie", re.compile(r"^(?:Wgraj|Uruchom|Włącz|Dodaj|Opublikuj)\b", re.I)),
+                 ("zatwierdzona", re.compile(r"^(?:Zatwierdź|Zaakceptuj|Akceptuj)\b", re.I)))
+AD_STATES = ("do zrobienia", "grafika gotowa", "zatwierdzona", "w reklamie", "wyłączona")
+# Nowa kampania z panelu (new_campaign): rodzaj reklam i zadanie agenta, które dopisuje plan.
+CAMPAIGN_FORMATS = {"grafiki": "grafiki statyczne", "filmy": "filmy", "oba": "grafiki statyczne i filmy"}
+CAMPAIGN_PLAN_TASK = "Przygotuj plan kampanii "
+STYLE_GLOBS = ("meta-ads/Styl-reklam*.md", "*/Styl-reklam*.md", "Styl-reklam*.md", "STYL.md", "marketing/STYL.md")
 
 TASK = re.compile(r"^\s*[-*]\s+\[([ xX~!-])\]\s+(.*\S)\s*$")
 DATE = re.compile(r"^(\d{4}-\d\d-\d\d|[+-]\d+)$")  # data albo liczba dni od dziś (tylko dane przykładowe)
@@ -205,7 +227,7 @@ def parse_task(line):
     parts = re.split(r"\s*\|\s*", m.group(2))
     t = {"title": parts[0], "state": STATE[m.group(1)], "executor": "", "machine": "", "date": "", "slot": "",
          "minutes": 0, "needsYou": "", "needs": [], "blocked": "", "channel": "", "after": [], "check": None,
-         "counter": "", "campaignFile": "", "errors": []}
+         "counter": "", "campaignFile": "", "rowKind": "", "errors": []}
     for p in parts[1:]:
         k, sep, v = p.partition(":")
         k, v = k.strip().lower(), v.strip()
@@ -259,6 +281,9 @@ def parse_task(line):
         elif k == "licznik":
             t["counter"] = COUNTERS.get(v.lower(), "")
             bad = None if t["counter"] else "licznik: %s (dozwolone: %s)" % (v, ", ".join(sorted(set(COUNTERS.values()))))
+        elif k == "rodzaj":
+            t["rowKind"] = v.lower() if v.lower() in ROW_KINDS else ""
+            bad = None if t["rowKind"] else "rodzaj: %s (dozwolone: reklama, reklama film, publikacja, zadanie, przegląd)" % v
         elif k == "kampania":
             t["campaignFile"] = campaign_rel(v)
             bad = None if t["campaignFile"] else "kampania: %s (plik kampanii, np. kampanie/nazwa.md)" % v
@@ -836,6 +861,7 @@ def parse_campaign(text, pid, file_rel):
         elif title == "Harmonogram":
             for no, t in task_rows(sec["body"]):
                 gaps += _task(t, pid, file_rel, no, "publikacja", campaign=cid, group=name)
+                t.update(row_kind(t))
                 for k in PUB_KEYS:
                     t["detail"].setdefault(k, "" if k == "link" else None)
                 tasks.append(t)
@@ -856,8 +882,75 @@ def parse_campaign(text, pid, file_rel):
             "result": result, "resultManual": manual, "counters": counters, "counterMetric": counter_metric,
             "start": dates["start"], "end": dates["koniec"],
             "channels": [c.strip() for c in meta.get("kanały", "").split(",") if c.strip()],
-            "budget": meta.get("budżet", ""), "file": file_rel, "gaps": gaps}
+            "budget": meta.get("budżet", ""), "format": meta.get("rodzaj", ""), "file": file_rel, "gaps": gaps,
+            "ads": ad_states(tasks)}
     return camp, tasks
+
+
+def row_kind(t):
+    """Rodzaj wiersza harmonogramu kampanii: {"row", "adFormat", "adCode", "codes"}.
+
+    Pole „rodzaj:” wygrywa. Bez niego: tytuł „Przegląd…”/„Podsumuj…” to przegląd; „Przygotuj reklamę…”/„Reklama…”
+    to reklama (film, gdy tytuł mówi o filmie); wiersz bez kanału, z kanałem reklam („meta ads”) albo zadanie
+    właściciela z „licznik:” to zadanie; reszta (wpis z kanałem) to publikacja. Dawne kampanie bez pola działają
+    jak dotąd: wpisy z kanałem zostają publikacjami."""
+    title, ch = t.get("title") or "", (t.get("channel") or "").strip()
+    codes = list(dict.fromkeys(AD_CODE.findall(title)))
+    if t.get("rowKind"):
+        row, fmt = ROW_KINDS[t["rowKind"]]
+        if row == "reklama" and t["rowKind"] == "reklama" and FILM_WORD.search(title):
+            fmt = "film"
+    elif REVIEW_TITLE.match(title):
+        row, fmt = "przegląd", ""
+    elif AD_TITLE.match(title):
+        row, fmt = "reklama", "film" if FILM_WORD.search(title) else "grafika"
+    elif not ch or ADS_CHANNEL.search(ch) or (t.get("executor") == "ty" and t.get("counter")):
+        row, fmt = "zadanie", ""
+    else:
+        row, fmt = "publikacja", ""
+    return {"row": row, "adFormat": fmt, "adCode": codes[0] if row == "reklama" and codes else "", "codes": codes}
+
+
+def ad_title(t):
+    """Hasło reklamy: tytuł bez „Przygotuj reklamę S1:”."""
+    rest = re.sub(r"^(?:Przygotuj|Przygotować|Zrób|Stwórz|Zaprojektuj)\s+reklam\w*\s*|^Reklama\s*", "", t["title"], flags=re.I)
+    if t.get("adCode"):
+        rest = re.sub(r"^%s\s*[:·\-–]?\s*" % re.escape(t["adCode"]), "", rest)
+    return rest.strip(" :·-–") or t["title"]
+
+
+def price_of(text):
+    """Pierwsza cena „1 590 zł” w tekście albo ""."""
+    m = PRICE.search(str(text or ""))
+    return re.sub(r"[ \u00a0]+", " ", m.group(0)).strip() if m else ""
+
+
+def ad_states(tasks, images=None):
+    """Reklamy kampanii z wierszy harmonogramu: [{"code", "title", "price", "state", "format", "taskId", "date", "image"}].
+
+    Stan (AD_STATES): wyłączona (wiersz reklamy anulowany albo zrobiony krok „Wyłącz <kod>”), w reklamie (zrobiony
+    krok „Wgraj/Uruchom … <kod>”), zatwierdzona (zrobiony krok „Zatwierdź … <kod>”), grafika gotowa (wiersz reklamy
+    zrobiony albo plik grafiki w folderze posta), do zrobienia. images: {id zadania: True}, gdy grafika istnieje (serwer)."""
+    images = images or {}
+    steps = [t for t in tasks if t.get("row") in ("zadanie", "przegląd") and t.get("state") == "done"]
+    out = []
+    for t in tasks:
+        if t.get("row") != "reklama":
+            continue
+        code = t.get("adCode") or ""
+        state = "do zrobienia"
+        if t["state"] == "done" or images.get(t["id"]):
+            state = "grafika gotowa"
+        if code:
+            for name, rx in reversed(AD_STEP_STATE):
+                if any(code in s.get("codes", []) and rx.match(s["title"]) for s in steps):
+                    state = name
+        if t["state"] == "cancelled":
+            state = "wyłączona"
+        out.append({"code": code, "title": ad_title(t), "price": price_of(t["title"]) or price_of(
+                    (t.get("detail") or {}).get("goal")), "state": state, "format": t.get("adFormat") or "grafika",
+                    "taskId": t["id"], "date": t.get("date") or "", "image": bool(images.get(t["id"]))})
+    return out
 
 
 COUNT_ROW = re.compile(r"^\s*[-*]\s+(\d{4}-\d\d-\d\d)\s*·\s*(\S+)\s+(\d+)\s*·\s*(.*?)\s*$")
@@ -2017,6 +2110,120 @@ def apply_effects(root, effects, qn, day):
         else:
             applied.append("%s (zadanie „%s”)" % (effect, title))
     return applied, failed
+
+
+# ---------- nowa kampania z panelu: szkic (stan: plan) i zadanie agenta „Przygotuj plan kampanii …” ----------
+def style_file(root):
+    """Styl reklam projektu (np. meta-ads/Styl-reklam-i-zasady.md, STYL.md): ścieżka względna albo ""."""
+    root = os.path.realpath(root)
+    bases = [root]
+    cards = os.path.dirname(os.path.realpath(os.path.join(root, "KARTA.md")))
+    if cards != root:
+        bases.append(cards)
+    for pattern in STYLE_GLOBS:
+        for b in bases:
+            for p in sorted(glob.glob(os.path.join(glob.escape(b), pattern))):
+                if os.path.isfile(p):
+                    return os.path.relpath(p, b).replace(os.sep, "/")
+    return ""
+
+
+def campaign_plan_title(name):
+    return _clean("%s„%s”" % (CAMPAIGN_PLAN_TASK, name), TITLE_MAX)
+
+
+def new_campaign(root, fields, today=None, photos_only=False):
+    """Zakłada kampanie/<nazwa>.md (stan: plan) i w ZADANIA.md zadanie agenta „Przygotuj plan kampanii „<nazwa>”” z odbiorem.
+
+    fields: name (tekst), channels (lista nazw kanałów), format (grafiki | filmy | oba), budget (zł dziennie, liczba > 0),
+    start, end (RRRR-MM-DD), target (liczba całkowita ≥ 0, opcjonalnie), metric (opcjonalnie, domyślnie „rozmowy”),
+    goal (opcjonalnie). photos_only: pole karty „grafiki: tylko zdjęcia” (zadanie mówi „bez $imagegen”).
+    Zwraca (plik kampanii, tytuł zadania); ValueError przy złych danych albo gdy kampania już jest."""
+    today = today or datetime.date.today()
+    name = _clean(fields.get("name") or "", 80).strip(" „”\"")
+    if len(name) < 3:
+        raise ValueError("podaj nazwę kampanii (co najmniej 3 znaki)")
+    chans = fields.get("channels") or []
+    if not isinstance(chans, list) or not all(isinstance(c, str) for c in chans):
+        raise ValueError("kanały: lista nazw")
+    chans = list(dict.fromkeys(c for c in (_clean(c, 30).replace(",", " ").strip() for c in chans) if c))[:8]
+    if not chans:
+        raise ValueError("wybierz co najmniej jeden kanał")
+    fmt = CAMPAIGN_FORMATS.get(str(fields.get("format") or ""))
+    if not fmt:
+        raise ValueError("rodzaj: grafiki, filmy albo oba")
+    budget = fields.get("budget")
+    if isinstance(budget, bool) or not isinstance(budget, (int, float)) or not 0 < budget <= 100000:
+        raise ValueError("budżet dzienny w zł, większy od 0")
+    start, end = _day(fields.get("start") or ""), _day(fields.get("end") or "")
+    if end < start:
+        raise ValueError("koniec przed startem")
+    target = fields.get("target")
+    if target in (None, ""):
+        target = None
+    elif isinstance(target, bool) or not isinstance(target, int) or not 0 <= target <= 10 ** 7:
+        raise ValueError("cel liczbowy: liczba całkowita od 0")
+    metric = _clean(fields.get("metric") or "rozmowy", 40) or "rozmowy"
+    goal = _clean(fields.get("goal") or "", 200)
+    rel = "kampanie/%s.md" % slug(name)
+    dst = os.path.join(os.path.realpath(root), rel)
+    if os.path.exists(dst):
+        raise ValueError("kampania o tej nazwie już jest (%s)" % rel)
+    tasks_path = _task_file(root, "ZADANIA.md")
+    if not os.path.isfile(tasks_path):
+        raise OSError("brak ZADANIA.md")
+    plan = campaign_plan_title(name)
+    if any(t["title"] == plan and t["state"] not in CLOSED_TASK_STATES
+           for t in parse_tasks("\n".join(_lines(tasks_path)), "x")[1]):
+        raise ValueError("zadanie „%s” już jest" % plan)
+    money = ("%g" % budget).replace(".", ",")
+    text = "\n".join([
+        "# Kampania: %s" % name, "",
+        "- stan: plan",
+        "- cel: %s" % (goal or "do uzupełnienia w planie"),
+        "- miernik: %s" % metric,
+        "- cel liczbowy: %s" % ("" if target is None else target),
+        "- wynik: 0",
+        "- kanały: %s" % ", ".join(chans),
+        "- rodzaj: %s" % fmt,
+        "- start: %s" % start,
+        "- koniec: %s" % end,
+        "- budżet: %s zł/dzień" % money, "",
+        "Szkic z panelu (%s). Reklamy i harmonogram dopisze agent; plan zatwierdzasz przed startem. Panel niczego "
+        "nie publikuje i nie tworzy kampanii w Menedżerze reklam." % today.isoformat(), "",
+        "## Grupa docelowa", "_Do uzupełnienia: do kogo mówimy i gdzie ta grupa jest._", "",
+        "## Przekaz", "_Do uzupełnienia: jedna główna obietnica i dwa, trzy argumenty._", "",
+        "## Harmonogram", "> Wiersze dopisze agent w zadaniu „%s”." % plan, "",
+        "## Wyniki i wnioski", "_Do uzupełnienia po zakończeniu: wynik wobec celu, co zadziałało, co zmienić._", ""])
+    style = style_file(root)
+    ads = {"grafiki statyczne": "reklamy statyczne (grafika + tekst)", "filmy": "reklamy z filmów",
+           "grafiki statyczne i filmy": "reklamy statyczne (grafika + tekst) i z filmów"}[fmt]
+    goal_txt = ("Ułóż plan kampanii „%s” (%s, %s, budżet %s zł/dzień, %s – %s%s): grupa docelowa, przekaz, %s jako wiersze "
+                "„Przygotuj reklamę S1: hasło z ceną | kto: codex | kiedy: …” (kod w nazwie reklamy), kroki właściciela "
+                "(zatwierdzenie, wgranie w Menedżerze reklam, kanał: meta ads) i przeglądy co tydzień z licznik: %s. "
+                "Nie publikuj i nie twórz kampanii w Meta." % (
+                    name, ", ".join(chans), fmt, money, start, end,
+                    ", cel %d %s" % (target, metric) if target is not None else "", ads, metric if metric in COUNTERS.values() else "rozmowy"))
+    if style:
+        goal_txt += " Styl i zasady: %s." % style
+    if photos_only:
+        goal_txt += " Grafiki tylko z prawdziwych zdjęć projektu, bez $imagegen (karta: grafiki: tylko zdjęcia)."
+    done_when = ("%s ma wypełnione sekcje Grupa docelowa, Przekaz i Harmonogram (reklamy z kodami, kroki właściciela, "
+                 "przeglądy), stan: plan; plan czeka na Twoje zatwierdzenie" % rel)
+    rows = ["- [ ] %s | kto: agent | kiedy: %s | wymaga: odbiór" % (plan, today.isoformat()),
+            DETAIL_INDENT + "cel: %s" % _clean(goal_txt, 1000),
+            DETAIL_INDENT + "gotowe gdy: %s" % _clean(done_when, 1000),
+            DETAIL_INDENT + "materiał: %s" % rel]
+    if style:
+        rows.append(DETAIL_INDENT + "materiał: %s" % style)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    write_atomic(dst, text)
+    try:
+        _insert_inbox(tasks_path, rows)
+    except (OSError, ValueError):
+        os.remove(dst)
+        raise
+    return rel, plan
 
 
 # ---------- liczniki zadań i kampanie (pole „licznik:”, sekcja „Wyniki i wnioski”) ----------

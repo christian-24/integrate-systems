@@ -133,6 +133,12 @@ VARIANTS_LABEL = "odebrane warianty"    # odpowiedź: odebrane warianty = a, b (
 REVIEW_FIX_DEFAULT = "Popraw według znaczników poniżej."
 
 
+def material_row(task):
+    """Czy wiersz kampanii ma materiał do przygotowania przez agenta: reklama albo publikacja (projekt.row_kind).
+    Kroki właściciela („Wgraj B1 do kampanii…”) i przeglądy nie; wiersz bez rozpoznania (stare dane) tak."""
+    return task.get("row", "publikacja") in ("reklama", "publikacja", "")
+
+
 def publication_task_title(pub, projekt):
     """Stały tytuł zadania z Marketingu, niezależny od numeru wiersza w kampanii."""
     day = str(pub["date"])[:10]
@@ -4358,7 +4364,7 @@ class Manager:
             for t in tasks:
                 day = str(t.get("date") or "")[:10]
                 if t.get("kind") != "publikacja" or t["state"] in self.projekt.CLOSED_TASK_STATES or not scenariusz.is_film(t) \
-                        or not (today.isoformat() <= day <= horizon):
+                        or not material_row(t) or not (today.isoformat() <= day <= horizon):
                     continue
                 if publication_task_title(t, self.projekt) in titles or any(
                         x.startswith(scenariusz.PREP_TASK + day) for x in titles):
@@ -4434,6 +4440,8 @@ class Manager:
                 if t.get("kind") != "publikacja" or t.get("file") != RYTM_FILE:
                     continue
                 day = str(t.get("date") or "")[:10]
+                if not material_row(t):
+                    continue                    # krok właściciela albo przegląd: bez posta i bez wyniku publikacji
                 if not re.match(r"^\d{4}-\d\d-\d\d$", day):
                     continue
                 new = None

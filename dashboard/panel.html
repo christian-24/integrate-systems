@@ -2065,8 +2065,7 @@ body.ed-open .app,body.ed-open .bnav{visibility:hidden}
 details.mk-done{padding:0}
 .mk-done>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .mk-crow .r{white-space:normal}
-.mk-cm{display:grid;grid-template-columns:minmax(80px,160px) auto;align-items:center;gap:8px}
-@media (max-width:640px){.mk-done>summary{padding-left:12px;padding-right:12px}.mk-crow .r{text-align:left;justify-items:start}.mk-cm{grid-template-columns:1fr}.mk-prow .r .btn{min-width:112px}.mk-act .btn{min-width:112px}}
+@media (max-width:640px){.mk-done>summary{padding-left:12px;padding-right:12px}.mk-crow .r{text-align:left;justify-items:start}.mk-prow .r .btn{min-width:112px}.mk-act .btn{min-width:112px}}
 /* poprawki UI runda 5: B (strona projektu) */
 .stg-in{position:absolute;right:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
 .stg-btn{min-width:112px}
@@ -2984,6 +2983,66 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 .wy-lg{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle}.wy-lgs{background:var(--bar-wip)}.wy-lgc{background:var(--bar-done);border-radius:50%}
 @media (max-width:1100px){.wy-cells{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:420px){.wy-cells{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Marketing → Kampanie (prefiks mk): przegląd kampanii, reklamy, filmy, harmonogram, nowa kampania, karty w widoku Marketing */
+.mk-nbar{justify-content:space-between;align-items:center;gap:var(--g-s);margin-bottom:var(--g-m)}
+.mk-nbar .pj-tabd{margin:0}
+.mk-cc .mk-camp{display:grid;gap:var(--g-m)}
+.mk-cc .mk-camp>p{margin:0}
+.mk-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--g-s) var(--g-p);margin:0}
+.mk-facts div{display:grid;gap:2px;min-width:0;align-content:start}
+.mk-facts dt{font-size:var(--fs-xs);color:var(--ink-3)}
+.mk-facts dd{margin:0;font-size:var(--fs-md);overflow-wrap:anywhere}
+.mk-blk{display:grid;gap:var(--g-s);min-width:0}
+.mk-h3{display:flex;align-items:center;gap:var(--g-s);margin:0;font-size:var(--fs-md);font-weight:650}
+.mk-h3 small{margin-left:auto;font-size:var(--fs-xs);font-weight:500;color:var(--ink-3);text-align:right}
+.mk-ads{list-style:none;margin:0;padding:0;display:grid;border:1px solid var(--line);border-radius:var(--r-lg)}
+.mk-ads li{display:grid;grid-template-columns:48px 48px minmax(0,1fr) 96px minmax(160px,240px);gap:var(--g-s) var(--g-m);align-items:center;padding:var(--g-s) var(--g-m);border-top:1px solid var(--line)}
+.mk-ads li:first-child{border-top:0}
+.mk-ads li.mk-adh{font-size:var(--fs-xs);color:var(--ink-3);padding-top:var(--g-xs);padding-bottom:var(--g-xs)}
+.mk-th{width:48px;height:60px;border-radius:6px;object-fit:cover;border:1px solid var(--line);display:block}
+.mk-noth{display:grid;place-items:center;background:var(--sunk);color:var(--ink-3);font-size:var(--fs-xs)}
+.mk-adt{display:grid;gap:2px;min-width:0}.mk-adt .lk{text-align:left;overflow-wrap:anywhere}
+.mk-st{display:flex;flex-wrap:wrap;gap:var(--g-xs) var(--g-s);align-items:center}
+.mk-fl{list-style:none;margin:0;padding:0;display:grid;gap:var(--g-xs)}
+.mk-fl li{display:flex;gap:var(--g-s);align-items:baseline;flex-wrap:wrap;min-width:0}
+.mk-fl .lk{text-align:left;overflow-wrap:anywhere}
+.mk-fd{min-width:72px;color:var(--ink-2);font-size:var(--fs-xs)}
+.mk-blk .mk-prow{margin:0;border:1px solid var(--line);border-radius:var(--r-lg)}
+details.mk-harm{border-top:1px solid var(--line);border-radius:0 0 var(--r-lg) var(--r-lg)}
+details.mk-harm>summary h2{font-size:var(--fs-md)}
+details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)}
+.mk-rev{display:flex;gap:var(--g-s);align-items:end;flex-wrap:wrap}
+.mk-rev .fl{display:grid;gap:2px;font-size:var(--fs-xs);color:var(--ink-3)}
+.mk-rev .fi{width:96px}
+.mk-new{display:grid;gap:var(--g-m);padding:var(--g-m) var(--g-p);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r-lg);background:var(--surface);margin-bottom:var(--g-m)}
+.mk-new>.fl{display:grid;gap:var(--g-xs)}
+.mk-new .note{margin:0}
+.mk-fs{border:0;margin:0;padding:0;display:grid;gap:var(--g-xs);min-width:0}
+.mk-fs legend{font-size:var(--fs-xs);color:var(--ink-3);padding:0;margin-bottom:var(--g-xs)}
+.mk-fs .row{flex-wrap:wrap;gap:var(--g-xs) var(--g-m)}
+.mk-nrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--g-s) var(--g-m)}
+.mk-nrow .fl{display:grid;gap:var(--g-xs);min-width:0}.mk-nrow .fi{width:100%}
+.mk-cl>h2{display:flex;align-items:center;justify-content:space-between;gap:var(--g-s)}
+.mk-cl>.pad .mk-new{margin:0}
+.mk-cards{list-style:none;margin:0;padding:var(--g-m) var(--g-p);display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:var(--g-m)}
+.mk-card{display:grid;gap:var(--g-s);align-content:start;padding:var(--g-m) var(--g-p);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);min-width:0}
+.mk-ch{display:flex;justify-content:space-between;align-items:center;gap:var(--g-s);min-width:0}
+.mk-card .mk-pj{display:flex;gap:var(--g-s);align-items:center;font-size:var(--fs-xs);color:var(--ink-2);min-width:0}
+.mk-card .mk-pn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-card .t{font-weight:650;overflow-wrap:anywhere}
+.mk-per,.mk-nx{font-size:var(--fs-xs);margin:0;overflow-wrap:anywhere}
+.mk-nx .lk{text-align:left}
+.mk-cmt{display:grid;gap:var(--g-xs);font-size:var(--fs-xs)}
+@media (max-width:820px){
+  .mk-cards{grid-template-columns:minmax(0,1fr);padding:var(--g-m)}
+  .mk-ads li{grid-template-columns:48px 56px minmax(0,1fr);grid-template-areas:"th code adt" "th pr st";padding:var(--g-s);align-items:start}
+  .mk-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mk-ads li.mk-adh{display:none}
+  .mk-ads .mk-th{grid-area:th}.mk-ads .mk-code{grid-area:code}.mk-ads .mk-adt{grid-area:adt}.mk-ads .mk-pr{grid-area:pr}.mk-ads .mk-st{grid-area:st}
+  .mk-ads .btn,.mk-rev .btn,.mk-nbar .btn,.mk-cl>h2 .btn,.mk-new .btn,.mk-new .seg{min-height:44px}
+  .mk-rev .fi,.mk-new .fi{min-height:44px}
+  .mk-fs .chk{min-height:44px;display:inline-flex;align-items:center}
+}
 </style>
 
 <div class="app">
@@ -3844,16 +3903,6 @@ function deferToday(){
   if(LIVE)say('Przesunięto na jutro: '+ids.length+' '+pl(ids.length,'zadanie','zadania','zadań')+'.');
 }
 /* kampanie w toku z celem liczbowym (Marketing): wynik przy pasku (jak w Wskaźnikach), liczniki pod paskiem, pomiar po kliknięciu */
-function campGoals(){
-  const L=D.campaigns.filter(c=>c.state==='active'&&+c.target>0&&P(c.project)&&P(c.project).state==='active');
-  if(!L.length)return '';
-  return pvFold('pv-camp','Kampanie w toku','','<ul class="rows pv-rows">'+L.map(c=>{
-    const p=P(c.project),tg=+c.target,rs=+c.result||0,pct=Math.min(100,Math.round(100*rs/tg));
-    return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s">'+pvPr(p)+(isDay(c.end)?'<span>do '+dd(c.end)+'</span><span>'+rel(c.end)+'</span>':'')+'</div>'+
-      '<div class="meter mk-meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span>'+
-      '<span class="pv-res"><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(shortT(mGen(c.metric),28))+' · <span class="num">'+pct+'%</span></span></span></div>'+
-      (cntTxt(c)?'<div class="pv-cnt">'+cntLine(c)+'</div>':'')+measureForm(c)+'</div></li>'}).join('')+'</ul>','Wynik wobec celu liczbowego');
-}
 /* liczniki kampanii (suma wierszy „- data · nazwa n · zadanie” w Wynikach i wnioskach) */
 const cntTxt=c=>Object.keys(c.counters||{}).map(k=>k+' '+fmtN(c.counters[k])).join(' · ');
 const cntLine=c=>{const s=cntTxt(c);return s?'<span class="muted num cnl" title="Liczniki z zamkniętych zadań">'+esc(s)+'</span>':''};
@@ -6090,37 +6139,173 @@ function bookView(p){
 }
 /* zakładka Marketing projektu: kampania (cel i wynik na wierzchu, reszta w „Szczegóły kampanii”) i jej publikacje
    z tym samym stanem i akcją co karta w widoku Marketing (mkState, mkAct); wiersz otwiera edytor posta */
+/* Marketing → Kampanie (prefiks mk): na górze karty przegląd kampanii (cel i postęp, okres, budżet, reklamy, plan filmów,
+   najbliższy krok), reszta wierszy zwinięta pod „Harmonogram”. Rodzaj wiersza z t.row (projekt.row_kind w STANDARD.md):
+   reklama i publikacja mają materiał („Brak …”, „Zleć”), krok właściciela „Zrobione”, przegląd formularz z liczbą. */
+const mkRow=t=>t.row||(t.channel?'publikacja':'zadanie');
+const mkMat=t=>{const r=mkRow(t);return r==='reklama'||r==='publikacja'};
+const ADST={'do zrobienia':'grey','grafika gotowa':'blue','zatwierdzona':'purple','w reklamie':'green','wyłączona':'out'};
+const mkByDate=(x,y)=>(x.date||'9999').localeCompare(y.date||'9999');
+/* okres: daty i ile zostało */
+function mkPeriod(c){
+  if(!(isDay(c.start)&&isDay(c.end)))return 'bez dat';
+  const T=D.todayKey,n=diff(c.end,T);
+  return esc(dd(c.start)+' – '+dd(c.end))+'<span class="muted"> · '+(c.start>T?'start '+esc(ddl(c.start)):n<0?'minął':n===0?'ostatni dzień':'zostało '+n+' '+pl(n,'dzień','dni','dni'))+'</span>';
+}
+/* najbliższy krok kampanii: pierwszy otwarty wiersz po terminie (bez daty na końcu) */
+const mkNext=ps=>ps.filter(t=>!taskClosed(t)).sort(mkByDate)[0]||null;
+/* zadanie agenta „Przygotuj plan kampanii „<nazwa>”” (nowa kampania z panelu) */
+const mkPlanTask=c=>D.tasks.find(t=>t.project===c.project&&t.title.indexOf('Przygotuj plan kampanii „'+c.name)===0&&t.state!=='cancelled')||null;
+function mkPlanNote(c){
+  if(c.state!=='plan')return '';
+  const j=mkPlanTask(c);if(!j)return '<p class="note">Kampania w planie. Po zatwierdzeniu planu zmień stan na „w toku” w Szczegółach kampanii.</p>';
+  const s=j.state==='done'?'gotowy':j.needsYou==='odbiór'?'czeka na Twoje zatwierdzenie':j.state==='doing'?'agent pracuje':'przygotuje agent';
+  return '<p class="note">Plan kampanii: <button type="button" class="lk" data-task="'+esc(j.id)+'">'+esc(s)+'</button>. Po zatwierdzeniu zmień stan na „w toku” w Szczegółach kampanii.</p>';
+}
+/* tabela reklam: miniatura z folderu posta, kod, hasło, cena, stan (projekt.ad_states) */
+function mkAds(c){
+  const L=c.ads||[];if(!L.length)return '';
+  const by={};L.forEach(a=>{by[a.state]=(by[a.state]||0)+1});
+  const sum=Object.keys(ADST).filter(k=>by[k]).map(k=>by[k]+' '+k).join(' · ');
+  return '<div class="mk-blk"><h3 class="mk-h3">Reklamy <span class="cnt">'+L.length+'</span><small>'+esc(sum)+'</small></h3><ul class="mk-ads" role="list">'+
+    '<li class="mk-adh" aria-hidden="true"><span></span><span>Kod</span><span>Hasło</span><span>Cena</span><span>Stan</span></li>'+L.map(a=>{
+    const t=D.tasks.find(x=>x.id===a.taskId),day=isDay(a.date)?a.date.slice(0,10):'';
+    const th=a.image&&LIVE?'<img class="mk-th" loading="lazy" alt="" src="/api/reklama/grafika?project='+encodeURIComponent(c.project)+'&date='+encodeURIComponent(day)+'&kod='+encodeURIComponent(a.code)+'">':'<span class="mk-th mk-noth" aria-hidden="true">'+(a.format==='film'?'▶':'—')+'</span>';
+    const zl=t&&a.state==='do zrobienia'&&LIVE?(t.materialTask?mkAssign(t):t.missingMaterial?'<button type="button" class="btn sec sm" data-mkassign="'+esc(t.id)+'" aria-label="'+esc('Zleć grafikę reklamy '+a.code)+'"'+(MKJ[t.id]?.busy?' disabled':'')+'>Zleć grafikę</button>':''):'';
+    return '<li>'+th+'<b class="mk-code">'+esc(a.code||'—')+'</b><span class="mk-adt">'+(t?'<button type="button" class="lk" data-task="'+esc(t.id)+'" data-k="mka:'+esc(t.id)+'">'+esc(a.title)+'</button>':esc(a.title))+
+      '<small class="muted">'+(a.format==='film'?'film':'grafika')+(day?' · '+esc(ddl(day)):'')+'</small></span><span class="num mk-pr">'+esc(a.price||'—')+'</span>'+
+      '<span class="mk-st"><span class="lz '+(ADST[a.state]||'grey')+'">'+esc(a.state)+'</span>'+zl+'</span></li>'}).join('')+'</ul></div>';
+}
+/* plan filmów: najbliższe 3 filmy kampanii (bez nich: filmy projektu przy kampanii z reklamami), link do pełnej listy */
+function mkFilms(c,p,ps){
+  const T=D.todayKey,fut=t=>!taskClosed(t)&&isDay(t.date)&&t.date.slice(0,10)>=T&&mkMat(t)&&(t.adFormat==='film'||mkIsFilm(t));
+  let L=ps.filter(fut),own=true;
+  if(!L.length&&(c.ads||[]).length){L=D.tasks.filter(t=>t.kind==='publikacja'&&inP(p,t.project)&&fut(t));own=false}
+  if(!L.length)return '';
+  L.sort(mkByDate);
+  return '<div class="mk-blk"><h3 class="mk-h3">'+(own?'Filmy':'Filmy projektu')+' <span class="cnt">'+L.length+'</span><small><button type="button" class="lk" data-mkfilms="'+esc(p.id)+'">Pełna lista</button></small></h3><ul class="mk-fl">'+
+    L.slice(0,3).map(t=>{const day=t.date.slice(0,10);return '<li><span class="num mk-fd">'+esc(ddl(day))+'</span><button type="button" class="lk" data-medit="'+esc(t.project+'|'+day+'|'+t.id)+'">'+esc(mkTitle(t))+'</button><small class="muted">'+mkChan(t)+'</small></li>'}).join('')+'</ul></div>';
+}
+/* przegląd: formularz z liczbą (licznik:), gdy termin najpóźniej za 7 dni */
+function mkRevForm(t){
+  const k='mkr:'+t.id;
+  if(isDay(t.date)&&diff(t.date.slice(0,10),D.todayKey)>7)return '<span class="muted">formularz od '+esc(ddl(addK(t.date.slice(0,10),-7)))+'</span>';
+  return '<form class="mk-rev" data-mkrev="'+esc(t.id)+'"><label class="fl"><span>Ile '+esc(cntG(t.counter))+'?</span><input class="fi num" type="number" inputmode="numeric" min="0" max="999999" step="1" data-k="'+esc(k)+'" data-qd="'+esc(k)+'" value="'+esc(QD[k]!=null?QD[k]:'')+'" aria-label="'+esc('Ile '+cntG(t.counter)+': '+t.title)+'"></label><button class="btn sec sm">Zapisz</button></form>';
+}
+function mktRow(t){
+  const r=mkRow(t),day=isDay(t.date)?t.date.slice(0,10):'',closed=taskClosed(t);
+  if(r==='zadanie'||r==='przegląd'){
+    const own=t.executor==='ty',w=WHO[t.executor]||WHO[''];
+    const st=t.state==='done'?['green','zrobione']:isLate(t)?['red','po terminie']:t.state==='doing'?['blue','w toku']:null;
+    const act=closed?'':own?(r==='przegląd'&&t.counter?mkRevForm(t):'<button type="button" class="btn sec sm" data-act="done" data-id="'+esc(t.id)+'" aria-label="'+esc('Zrobione: '+t.title)+'">Zrobione</button>'):'';
+    const waits=(t.waits||[]).length&&!closed?'<span>czeka na: '+esc(t.waits.join('; '))+'</span>':'';
+    return '<li class="mk-'+(r==='przegląd'?'rev':'step')+'"><div><button type="button" class="lk t" data-task="'+esc(t.id)+'" data-k="mkt:'+esc(t.id)+'">'+esc(t.title)+'</button><div class="s"><span>'+(r==='przegląd'?'przegląd':own?'Twój krok':'krok: '+esc(w.n))+(t.minutes?' · '+t.minutes+' min':'')+'</span>'+waits+'</div></div>'+
+      '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span>'+(st?'<span class="lz '+st[0]+'">'+st[1]+'</span>':'')+act+'</div></li>'}
+  const post=!!(t.channel&&day)||(r==='reklama'&&!!day),k=t.project+'|'+day;
+  if(post&&PD[k]===undefined&&LIVE&&r!=='reklama'){PD[k]=null;loadPost(t.project,day)}
+  const st=r==='reklama'?(t.state==='done'?['green','grafika gotowa']:isLate(t)?['red','po terminie']:['grey',mkState(t,day)[1]]):post?mkState(t,day):t.state==='done'?['green','opublikowane']:isLate(t)?['red','po terminie']:t.needsYou==='zgoda'?['purple','czeka na zgodę']:['grey','zaplanowane'];
+  const act=mkAssign(t)||(post&&r!=='reklama'?mkAct(t,day,st,''):t.needsYou==='zgoda'&&!closed?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'');
+  const open=post&&r!=='reklama'?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
+  return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post&&r!=='reklama'?mkTitle(t):t.title)+'</button><div class="s"><span>'+(r==='reklama'?'reklama'+(t.adFormat==='film'?' (film)':''):'publikacja')+'</span>'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
+    (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+wyAuto(t)+'</div></div>'+
+    '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+act+'</div></li>';
+}
 function mktView(p){
   const cs=D.campaigns.filter(c=>inP(p,c.project));
-  if(!cs.length)return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p><div class="hint"><b>Projekt nie ma kampanii.</b> Faza „Marketing” zaczyna się po wdrożeniu (teraz: '+PHASES[PHI[p.phase]][1]+'). Kampanię dodasz w rozmowie o projekcie (przycisk Rozmowa).</div>';
-  const row=t=>{
-    const day=isDay(t.date)?t.date.slice(0,10):'',post=!!(t.channel&&day),k=t.project+'|'+day;
-    if(post&&PD[k]===undefined&&LIVE){PD[k]=null;loadPost(t.project,day)}
-    const st=post?mkState(t,day):t.state==='done'?['green','opublikowane']:isLate(t)?['red','po terminie']:t.needsYou==='zgoda'?['purple','czeka na zgodę']:['grey','zaplanowane'];
-    const act=mkAssign(t)||(post?mkAct(t,day,st,''):t.needsYou==='zgoda'&&!taskClosed(t)?'<button type="button" class="btn sec sm" data-act="ok" data-id="'+esc(t.id)+'" aria-label="'+esc('Zatwierdź: '+t.title)+'">Zatwierdź</button>':'');
-    const open=post?'data-medit="'+esc(k+'|'+t.id)+'"':'data-task="'+esc(t.id)+'"';
-    return '<li><div><button type="button" class="lk t" '+open+' data-k="mkt:'+esc(t.id)+'">'+esc(post?mkTitle(t):t.title)+'</button><div class="s">'+(t.channel?'<span>'+mkChan(t)+'</span>':'')+
-      (hasStats(t.detail.stats)?'<span class="num">'+esc(statTxt(t.detail.stats))+'</span>'+(/^https?:\/\//i.test(t.detail.stats.link)?'<a href="'+esc(t.detail.stats.link)+'" target="_blank" rel="noopener noreferrer">link</a>':''):'')+wyAuto(t)+'</div></div>'+
-      '<div class="r"><span>'+(day?esc(ddl(day)):'bez daty')+'</span><span class="lz '+st[0]+'">'+esc(st[1])+'</span>'+act+'</div></li>'};
-  return '<p class="pj-tabd">Kampanie projektu i ich publikacje: obejrzyj, zatwierdź, opublikuj.</p>'+cs.map(c=>{
-    const ps=D.tasks.filter(t=>t.campaign===c.id).sort((x,y)=>(x.date||'9999').localeCompare(y.date||'9999'));
-    const dn=ps.filter(t=>t.state==='done').length,tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0,st=CST[c.state]||CST.plan;
-    const per=isDay(c.start)&&isDay(c.end),cid=esc(c.id),open=ps.filter(t=>!taskClosed(t)),done=ps.filter(t=>t.state==='done'),archived=cancelledTaskList(ps,false);
-    return '<section class="panel"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(per?dd(c.start)+' – '+dd(c.end)+' · ':'')+'opublikowane '+dn+' z '+(open.length+done.length)+'</small></h2><div class="pad mk-camp">'+
+  const bar='<div class="row mk-nbar"><p class="pj-tabd">Kampanie projektu: przegląd, reklamy i harmonogram.</p><button type="button" class="btn sec sm" data-mknew="'+esc('p:'+p.id)+'" data-k="mknew:p" aria-expanded="'+(A.mkNew==='p:'+p.id)+'">Nowa kampania</button></div>'+
+    (A.mkNew==='p:'+p.id?mkNewForm(p.id):'');
+  if(!cs.length)return bar+'<div class="hint"><b>Projekt nie ma kampanii.</b> Załóż ją przyciskiem „Nowa kampania”: panel zapisze szkic i zadanie agenta, który dopisze reklamy i harmonogram.</div>';
+  const ord={active:0,plan:1,paused:2,done:3};
+  return bar+cs.slice().sort((x,y)=>(ord[x.state]-ord[y.state])||String(x.start).localeCompare(String(y.start))).map(c=>{
+    const ps=D.tasks.filter(t=>t.campaign===c.id).sort(mkByDate);
+    const tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0,st=CST[c.state]||CST.plan;
+    const cid=esc(c.id),open=ps.filter(t=>!taskClosed(t)),done=ps.filter(t=>t.state==='done'),archived=cancelledTaskList(ps,false);
+    const live=ps.filter(t=>t.state!=='cancelled'),late=open.filter(isLate).length,nx=mkNext(ps),hk='mkh:'+c.id;
+    return '<section class="panel mk-cc"><h2><span>'+esc(c.name)+' <span class="lz '+st[0]+'">'+st[1]+'</span></span><small>'+(live.length?done.length+' z '+live.length+' zrobione':'')+'</small></h2><div class="pad mk-camp">'+
       (c.goal?'<p class="soft">Cel: '+esc(c.goal)+'</p>':'')+
       '<div class="mk-res">'+(tg?'<div class="meter"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b><span class="muted">'+esc(mGen(c.metric))+' · '+pct+'%</span></div>'
         :'<p class="note" title="Cel liczbowy: wiersz „- cel liczbowy: n” w pliku kampanii">Wynik: <b class="num">'+fmtN(rs)+'</b>'+(c.metric?' ('+esc(c.metric)+')':'')+'. Kampania nie ma celu liczbowego.</p>')+measureForm(c)+'</div>'+
-      (cntTxt(c)?'<p class="note">Liczniki z zadań: <span class="num">'+esc(cntTxt(c))+'</span></p>':'')+
+      '<dl class="mk-facts"><div><dt>Okres</dt><dd>'+mkPeriod(c)+'</dd></div><div><dt>Budżet</dt><dd>'+esc(c.budget||'nie podano')+'</dd></div>'+
+        '<div><dt>Kanały</dt><dd>'+esc(c.channels.join(', ')||'—')+'</dd></div>'+(cntTxt(c)?'<div><dt>Liczniki</dt><dd class="num">'+esc(cntTxt(c))+'</dd></div>':'')+'</dl>'+
+      mkPlanNote(c)+mkAds(c)+mkFilms(c,p,ps)+
+      (nx?'<div class="mk-blk"><h3 class="mk-h3">Najbliższy krok</h3><ul class="rows mk-prow">'+mktRow(nx)+'</ul></div>':'')+
       '<details class="mk-cdet"><summary>Szczegóły kampanii</summary><div class="mk-cdb">'+
         '<label class="fl"><span>Stan kampanii</span><select class="fi" data-camp="state" data-cid="'+cid+'">'+Object.keys(CST).map(k=>'<option value="'+k+'"'+(c.state===k?' selected':'')+'>'+CST[k][1]+'</option>').join('')+'</select></label>'+
-        (c.channels.length?'<p class="note">Kanały: '+esc(c.channels.join(', '))+'</p>':'')+(c.budget?'<p class="note">Budżet: '+esc(c.budget)+'</p>':'')+
+        (c.format?'<p class="note">Rodzaj: '+esc(c.format)+'</p>':'')+
         (c.gaps.length?'<p class="note">Braki w opisie kampanii: '+esc(c.gaps.join('; '))+'</p>':'')+(c.file?'<p class="note">Plik: <code>'+esc(c.file)+'</code></p>':'')+
         '<form class="addf" data-addc="'+cid+'" data-pid="'+esc(p.id)+'"><input class="fi" name="title" maxlength="160" placeholder="Tytuł nowej publikacji" aria-label="Tytuł nowej publikacji" autocomplete="off"><button class="btn sec sm" type="submit">Dodaj publikację</button></form>'+
       '</div></details></div>'+
-      (open.length?'<ul class="rows mk-prow">'+open.map(row).join('')+'</ul>':'')+
-      (done.length?'<details class="mk-done"><summary>Opublikowane:&nbsp;<span class="num">'+done.length+'</span></summary><ul class="rows mk-prow">'+done.map(row).join('')+'</ul></details>':'')+
-      archived+(ps.length?'':'<p class="empty">Brak publikacji.</p>')+'</section>';
+      '<details class="psec mk-harm" data-pvdet="'+esc(hk)+'"'+(PF.more[hk]?' open':'')+'><summary><h2>Harmonogram <span class="cnt">'+open.length+'</span>'+(late?' <span class="cnt bad">'+late+' po terminie</span>':'')+'</h2><small>'+(done.length?done.length+' zrobione':'')+'</small></summary>'+
+      (open.length?'<ul class="rows mk-prow">'+open.map(mktRow).join('')+'</ul>':'<p class="empty">Brak otwartych wierszy.</p>')+
+      (done.length?'<details class="mk-done"><summary>Zrobione:&nbsp;<span class="num">'+done.length+'</span></summary><ul class="rows mk-prow">'+done.map(mktRow).join('')+'</ul></details>':'')+
+      archived+'</details></section>';
   }).join('');
+}
+/* „Nowa kampania” (zakładka Marketing projektu i widok Marketing): POST /api/campaign/new zakłada szkic (stan: plan)
+   i zadanie agenta „Przygotuj plan kampanii …”. Panel niczego nie publikuje. Pola w QD (mkn:*), kanały i rodzaj w A.mkn. */
+const MKCH=['Facebook','Instagram','Messenger','Google Ads','TikTok','YouTube','LinkedIn'];
+const MKFMT=[['grafiki','Grafiki statyczne'],['filmy','Filmy'],['oba','Oba']];
+function mkNewForm(pid){
+  const F=A.mkn||(A.mkn={ch:{Facebook:true,Instagram:true},fmt:'grafiki'}),q=(k,d)=>QD['mkn:'+k]!=null?QD['mkn:'+k]:d;
+  const st=addK(D.todayKey,1),inp=(k,lab,attr,d)=>'<label class="fl"><span>'+lab+'</span><input class="fi" data-k="mkn:'+k+'" data-qd="mkn:'+k+'" value="'+esc(q(k,d||''))+'" '+attr+'></label>';
+  const projs=D.allP.filter(x=>x.state==='active');
+  return '<form class="dform mk-new" data-mknf="'+esc(pid)+'" aria-label="Nowa kampania">'+
+    (pid?'':'<label class="fl"><span>Projekt</span><select class="fi" data-k="mkn:project" data-qd="mkn:project">'+opt(projs.map(x=>[x.id,pShort(x)]),q('project',PF.mkp||(projs.find(x=>x.phase==='marketing')||projs[0]||{}).id||''))+'</select></label>')+
+    inp('name','Nazwa / temat','maxlength="80" autocomplete="off" placeholder="np. Wygłuszanie samochodu Wrocław"')+
+    '<fieldset class="mk-fs"><legend>Kanały</legend><div class="row">'+MKCH.map(c=>'<label class="chk"><input type="checkbox" data-mknch="'+esc(c)+'"'+(F.ch[c]?' checked':'')+'> '+esc(c)+'</label>').join('')+'</div></fieldset>'+
+    '<fieldset class="mk-fs"><legend>Rodzaj reklam</legend><div class="row" role="group">'+MKFMT.map(([k,n])=>'<button type="button" class="seg" data-mknfmt="'+k+'" aria-pressed="'+(F.fmt===k)+'">'+n+'</button>').join('')+'</div></fieldset>'+
+    '<div class="mk-nrow">'+inp('budget','Budżet dzienny (zł)','type="number" inputmode="decimal" min="1" step="any"')+inp('start','Start','type="date"',st)+inp('end','Koniec','type="date"',addK(st,30))+
+      inp('target','Cel liczbowy','type="number" inputmode="numeric" min="0" step="1" placeholder="np. 40"')+inp('metric','Miernik','maxlength="40" autocomplete="off"','rozmowy')+'</div>'+
+    '<p class="note">Panel zapisze szkic kampanii (stan: plan) i zadanie agenta „Przygotuj plan kampanii”: agent dopisze reklamy i harmonogram według stylu projektu, Ty zatwierdzasz plan przed startem. Panel niczego nie publikuje i nie tworzy kampanii w Meta.</p>'+
+    '<div class="row"><button class="btn sm" data-k="mkn:save"'+(A.mknBusy?' aria-disabled="true"':'')+'>'+(A.mknBusy?'Zapisuję…':'Zapisz szkic')+'</button><button type="button" class="btn sec sm" data-mknew="'+esc(pid?'p:'+pid:'v')+'">Anuluj</button></div></form>';
+}
+function mkNewSave(f){
+  if(A.mknBusy)return;
+  const F=A.mkn||{ch:{},fmt:'grafiki'},v=k=>String(QD['mkn:'+k]!=null?QD['mkn:'+k]:((f.querySelector('[data-qd="mkn:'+k+'"]')||{}).value||'')).trim();
+  const pid=f.dataset.mknf||v('project'),name=v('name'),budget=parseFloat(v('budget').replace(',','.')),tg=v('target');
+  const chans=MKCH.filter(c=>F.ch[c]);
+  if(!pid){say('Wybierz projekt.');return}
+  if(name.length<3){say('Podaj nazwę kampanii.');focusK('mkn:name');return}
+  if(!chans.length){say('Zaznacz co najmniej jeden kanał.');return}
+  if(!(budget>0)){say('Podaj budżet dzienny w zł.');focusK('mkn:budget');return}
+  if(!(isDay(v('start'))&&isDay(v('end'))&&v('end')>=v('start'))){say('Podaj okres: start i koniec (koniec nie przed startem).');focusK('mkn:start');return}
+  if(tg&&!/^\d{1,7}$/.test(tg)){say('Cel liczbowy: liczba całkowita.');focusK('mkn:target');return}
+  if(!LIVE){say(PRV);return}
+  const body={project:pid,name:name,channels:chans,format:F.fmt,budget:budget,start:v('start'),end:v('end'),target:tg?+tg:null,metric:v('metric')||'rozmowy'};
+  A.mknBusy=true;render(true);
+  enqueue(async()=>{const x=await post('/api/campaign/new',body);A.mknBusy=false;
+    if(x.ok){Object.keys(QD).forEach(k=>{if(k.indexOf('mkn:')===0)delete QD[k]});A.mkn=null;A.mkNew=null;say('Zapisano szkic kampanii „'+name+'” i zadanie agenta „Przygotuj plan kampanii”.')}
+    else say(failMsg(x,'Nie zapisano kampanii.'));render(true)});
+}
+document.addEventListener('submit',ev=>{const f=ev.target;if(!f.dataset)return;
+  if(f.dataset.mknf!=null){ev.preventDefault();ev.stopPropagation();mkNewSave(f);return}
+  if(f.dataset.mkrev!=null){ev.preventDefault();ev.stopPropagation();
+    const t=D.tasks.find(x=>x.id===f.dataset.mkrev),i=f.querySelector('input'),s=String(i?i.value:'').replace(/\s/g,'');
+    if(!t)return;if(!/^\d{1,6}$/.test(s)){say('Wpisz liczbę całkowitą od 0.');if(i)i.focus();return}
+    delete QD['mkr:'+t.id];finishTask(t,'',+s)}
+},true);
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.mknch==null)return;
+  const F=A.mkn||(A.mkn={ch:{Facebook:true,Instagram:true},fmt:'grafiki'});F.ch[el.dataset.mknch]=el.checked});
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-mknew],[data-mknfmt],[data-mkfilms]');if(!b)return;
+  if(b.dataset.mknfmt){const F=A.mkn||(A.mkn={ch:{Facebook:true,Instagram:true},fmt:'grafiki'});F.fmt=b.dataset.mknfmt;render(true);return}
+  if(b.dataset.mkfilms){PF.mkp=b.dataset.mkfilms;savePF();location.hash='#marketing';return}
+  const k=b.dataset.mknew;A.mkNew=A.mkNew===k?null:k;render(true);if(A.mkNew)focusK('mkn:name');else focusK('mknew:'+(k==='v'?'v':'p'));
+});
+/* widok Marketing: kampanie wszystkich projektów (projekt, nazwa, stan, okres, postęp, najbliższy krok) nad tygodniem publikacji */
+function mkCampList(fp){
+  const ord={active:0,plan:1,paused:2};
+  const L=D.campaigns.filter(c=>c.state!=='done'&&P(c.project)&&(!fp||c.project===fp)).sort((x,y)=>(ord[x.state]-ord[y.state])||String(x.end||'9999').localeCompare(String(y.end||'9999')));
+  let h='<section class="panel mk-cl" id="mk-camp"><h2><span>Kampanie <small class="num">'+L.length+'</small></span><button type="button" class="btn sec sm" data-mknew="v" data-k="mknew:v" aria-expanded="'+(A.mkNew==='v')+'">Nowa kampania</button></h2>';
+  if(A.mkNew==='v')h+='<div class="pad">'+mkNewForm('')+'</div>';
+  if(!L.length)return h+'<p class="empty">Brak kampanii w toku ani w planie. „Nowa kampania” zapisze szkic i zadanie dla agenta.</p></section>';
+  return h+'<ul class="mk-cards">'+L.map(c=>{
+    const p=P(c.project),ps=D.tasks.filter(t=>t.campaign===c.id&&t.state!=='cancelled'),dn=ps.filter(t=>t.state==='done').length,st=CST[c.state]||CST.plan;
+    const tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):Math.round(100*dn/(ps.length||1)),nx=mkNext(ps),w=nx?(WHO[nx.executor]||WHO['']).n:'';
+    return '<li class="mk-card"><div class="mk-ch"><span class="mk-pj" title="'+esc(p.name)+'">'+av(p,'sm')+'<span class="mk-pn">'+esc(pShort(p))+'</span></span><span class="lz '+st[0]+'">'+st[1]+'</span></div>'+
+      '<a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="mk-per">'+mkPeriod(c)+'</div>'+
+      '<div class="meter mk-cmt"><span class="track" role="img" aria-label="'+pct+'%"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span class="num">'+(tg?'<b>'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(mGen(c.metric))+'</span>':'<b>'+dn+' z '+ps.length+'</b> <span class="muted">kroków</span>')+'</span></div>'+
+      (nx?'<p class="mk-nx"><span class="muted">Najbliższy krok:</span> <button type="button" class="lk" data-task="'+esc(nx.id)+'">'+esc(nx.title)+'</button> <span class="muted">· '+(isDay(nx.date)?esc(ddl(nx.date.slice(0,10))):'bez daty')+' · '+esc(w)+'</span></p>':'<p class="mk-nx muted">'+(c.state==='plan'?'Plan przygotowuje agent.':'Brak otwartych kroków.')+'</p>')+
+      (c.state==='active'&&tg?measureForm(c):'')+'</li>'}).join('')+'</ul></section>';
 }
 
 /* etap 2: odczyt wyników posta (t.auto z wyniki.py): kiedy, albo błąd bez ponawiania */
@@ -8840,13 +9025,13 @@ function recPanel(fp){
 function vMarketing(){
   const off=A.mweek||0,start=addK(D.todayKey,7*off),days=[...Array(7)].map((_,i)=>addK(start,i));
   const fp=PF.mkp&&D.allP.some(p=>p.id===PF.mkp)?PF.mkp:'';
-  const pubAll=D.tasks.filter(t=>t.state!=='cancelled'&&t.kind==='publikacja'&&t.channel&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
+  const pubAll=D.tasks.filter(t=>t.state!=='cancelled'&&t.kind==='publikacja'&&t.channel&&mkMat(t)&&isDay(t.date)),pids=[...new Set(pubAll.map(t=>t.project))];
   const mine=pubAll.filter(t=>!fp||t.project===fp),items=mine.filter(t=>t.date.slice(0,10)>=days[0]&&t.date.slice(0,10)<=days[6]);
   const late=mine.filter(t=>!taskClosed(t)&&t.date.slice(0,10)<D.todayKey).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   let h='<div class="pagehead"><div class="ph-main"><h1 title="'+esc(VDESC.marketing)+'">Marketing</h1></div></div>'+
     (pids.length>1||fp?'<div class="row mk-bar"><select class="fi md-sel" data-mkp aria-label="Projekt">'+opt([['','Wszystkie projekty']].concat(D.allP.filter(p=>pids.includes(p.id)||p.id===fp).map(p=>[p.id,pShort(p)])),fp)+'</select></div>':'');
   /* kampanie w toku z celem liczbowym i „Wpisz wynik” (dawniej na Przeglądzie) */
-  {const cg=campGoals();if(cg)h+='<section class="panel mk-camp">'+cg+'</section>'}
+  h+=mkCampList(fp);
   if(late.length)h+='<section class="panel mk-late" id="mk-late"><h2>Po terminie <small class="num">'+late.length+'</small></h2><ol class="mtl">'+mkDays([...new Set(late.map(t=>t.date.slice(0,10)))],late,true)+'</ol></section>';
   h+=recPanel(fp);
   const wk=items.filter(t=>!(!taskClosed(t)&&t.date.slice(0,10)<D.todayKey));
@@ -8860,18 +9045,7 @@ function vMarketing(){
     if(nx){const k=nx.date.slice(0,10);go='<div class="row mk-next"><button type="button" class="btn sec sm" data-mwset="'+Math.floor(diff(k,D.todayKey)/7)+'" data-k="mwnext">Następna publikacja: '+esc(ddl(k))+'</button></div>'}
     h+='<p class="empty">Brak publikacji w tych dniach. Publikacje dodaje agent z kampanii projektu (Projekt → Marketing).</p>'+go+'</section>';
   }else h+='<ol class="mtl">'+mkDays(days,wk)+'</ol></section>';
-  return h+'<details class="pj-fold mk-more" data-pvdet="mk-more"'+(PF.more['mk-more']?' open':'')+'><summary>Kampanie, kanały i studio</summary>'+mkCamps(fp)+pubPanel()+studioHead(days)+'</details>';
-}
-/* Kampanie w toku (wynik kampanii, przeniesiony ze Wskaźników): wiersz na kampanię — nazwa, projekt, wynik X z Y z paskiem;
-   nazwa prowadzi do zakładki Marketing projektu (tam „Wpisz wynik”) */
-function mkCamps(fp){
-  const L=D.campaigns.filter(c=>c.state==='active'&&(!fp||c.project===fp)&&P(c.project));
-  if(!L.length)return '';
-  return '<section class="panel" id="mk-camp"><h2>Kampanie w toku <small class="num">'+L.length+'</small></h2><ul class="rows mk-crow">'+L.map(c=>{
-    const p=P(c.project),tg=+c.target||0,rs=+c.result||0,pct=tg?Math.min(100,Math.round(100*rs/tg)):0;
-    return '<li><div><a class="t" href="'+phref(p,'marketing')+'">'+esc(c.name)+'</a><div class="s"><span>'+esc(pShort(p))+'</span>'+(isDay(c.end)?'<span>do '+esc(dd(c.end))+'</span>':'')+'</div></div>'+
-      '<div class="r">'+(tg?'<span class="meter mk-cm"><span class="track" role="img" aria-label="'+pct+'% celu"><i style="width:'+pct+'%;background:var(--bar-done)"></i></span><span><b class="num">'+fmtN(rs)+' z '+fmtN(tg)+'</b> <span class="muted">'+esc(mGen(c.metric))+'</span></span></span>'
-        :'<span><b class="num">'+fmtN(rs)+'</b> <span class="muted">'+esc(c.metric||'wynik')+'</span></span>')+'</div></li>'}).join('')+'</ul></section>';
+  return h+'<details class="pj-fold mk-more" data-pvdet="mk-more"'+(PF.more['mk-more']?' open':'')+'><summary>Kanały i studio</summary>'+pubPanel()+studioHead(days)+'</details>';
 }
 /* stan posta: [kolor, stan, grupa]; ten sam w karcie (mCard), w liczniku (mkTodo) i na stronie projektu (mktView).
    grupa: late (po terminie), ok (czeka na zgodę), review (do obejrzenia), err (błąd), prep (agent przygotowuje), done (opublikowane), '' (reszta) */
