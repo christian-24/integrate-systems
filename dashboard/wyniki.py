@@ -48,6 +48,7 @@ class Wyniki:
         self.klienci = klienci.Klienci(klienci_dir, now=self.now)
         self.ads_dir = os.path.expanduser(ads_dir or os.environ.get("PANEL_REKLAMY_DIR", "").strip() or "~/dane/reklamy")
         self.http = http_call
+        self.konta = None           # konta.Konta (logowania OAuth); ustawia server.py
         self.lock = threading.Lock()
         self._stop = threading.Event()
 
@@ -100,6 +101,7 @@ class Wyniki:
         data, index = self.load_projects()
         self.organic_tick(data, index)
         self.meta_tick(data, index)
+        self.google_tick(data, index)
         self.linkedin_remind(data, index)
 
     # ---------- etap 5: LinkedIn ----------
@@ -299,6 +301,116 @@ class Wyniki:
         self._write_json(self.ads_file(pid), whole)
         return made
 
+    # ---------- konta z logowań (konta.py): wybór konta w projekcie, odczyt Google Ads przez API ----------
+    def assign_account(self, body):
+        """{"project", "provider", "login", "account"}: konto z logowania dla projektu ("" w account odłącza)."""
+        p, _ = self._project(body.get("project"))
+        if not p:
+            return 404, "Nie ma takiego projektu."
+        prov, lid, acc = (str(body.get(k) or "").strip() for k in ("provider", "login", "account"))
+        if prov not in ("meta", "google", "linkedin") or not self.konta:
+            return 400, "Nieznany serwis."
+        rec = self.konta.login(prov, lid) if lid else None
+        if lid and not rec:
+            return 404, "Nie ma takiego logowania. Zaloguj się jeszcze raz."
+        if acc and not (rec and any(a.get("id") == acc for a in rec.get("accounts") or [])):
+            return 409, "To logowanie nie widzi tego konta."
+        conns = self.connections()
+        if prov == "meta" and acc:
+            other = next((k for k, v in conns.items() if k != p["id"] and v.get("metaAct") == acc), None)
+            if other:
+                return 409, "To konto reklamowe jest już przypisane do innego projektu."
+        c = conns.setdefault(p["id"], {})
+        if prov == "meta":
+            c["metaAct"], c["metaLogin"] = acc, lid if acc else ""
+        elif prov == "google":
+            g = c.setdefault("google", {})
+            if acc and google.digits(acc) != google.digits(g.get("klient")):
+                g.pop("keyHash", None)
+            g["klient"], g["login"], g["blad"] = acc, lid if acc else "", ""
+        else:
+            old = c.get("linkedin") or {}
+            c["linkedin"] = {"rodzaj": "organizacja" if acc else ("profil" if lid else ""), "organizacja": acc,
+                             "wniosek": "przyznany" if acc else old.get("wniosek", "nie złożony"),
+                             "reklamy": bool(old.get("reklamy")), "login": lid}
+        self._save_connections(conns)
+        return 200, ""
+
+    GADS_ROWS = ("SELECT campaign.name, ad_group.name, metrics.impressions, metrics.clicks, metrics.cost_micros, "
+                 "metrics.conversions FROM ad_group WHERE segments.date = '%s' AND metrics.impressions > 0")
+    GADS_CONV = ("SELECT campaign.name, ad_group.name, segments.conversion_action_name, segments.conversion_action_category, "
+                 "metrics.conversions FROM ad_group WHERE segments.date = '%s' AND metrics.conversions > 0")
+    GADS_TERMS = ("SELECT search_term_view.search_term, campaign.name, ad_group.name, metrics.cost_micros, metrics.clicks, "
+                  "metrics.conversions FROM search_term_view WHERE segments.date = '%s' AND metrics.cost_micros > 0")
+
+    def google_day(self, rec, customer, day, via=""):
+        """Jeden dzień z Google Ads API w formacie skryptu ({konto, dzien, wiersze, hasla})."""
+        num = lambda v: float(v or 0)
+        rows, by = [], {}
+        for r in self.konta.gads_search(rec, customer, self.GADS_ROWS % day, via):
+            c, a, m = r.get("campaign") or {}, r.get("adGroup") or {}, r.get("metrics") or {}
+            w = {"kampania": c.get("name", ""), "grupa": a.get("name", ""), "wyswietlenia": num(m.get("impressions")),
+                 "klikniecia": num(m.get("clicks")), "koszt": num(m.get("costMicros")) / 1e6,
+                 "konwersje": num(m.get("conversions")), "telefony": 0}
+            by[(w["kampania"], w["grupa"])] = w
+            rows.append(w)
+        for r in self.konta.gads_search(rec, customer, self.GADS_CONV % day, via):
+            w = by.get(((r.get("campaign") or {}).get("name", ""), (r.get("adGroup") or {}).get("name", "")))
+            sg = r.get("segments") or {}
+            if w and (re.search(r"telefon|połącz|call", str(sg.get("conversionActionName") or ""), re.I)
+                      or "PHONE_CALL" in str(sg.get("conversionActionCategory") or "")):
+                w["telefony"] += num((r.get("metrics") or {}).get("conversions"))
+        terms = [{"haslo": (r.get("searchTermView") or {}).get("searchTerm", ""), "kampania": (r.get("campaign") or {}).get("name", ""),
+                  "grupa": (r.get("adGroup") or {}).get("name", ""), "koszt": num((r.get("metrics") or {}).get("costMicros")) / 1e6,
+                  "klikniecia": num((r.get("metrics") or {}).get("clicks")), "konwersje": num((r.get("metrics") or {}).get("conversions"))}
+                 for r in self.konta.gads_search(rec, customer, self.GADS_TERMS % day, via)]
+        return {"konto": customer, "dzien": day, "wiersze": rows, "hasla": terms}
+
+    def google_tick(self, data, index, force=False):
+        """Raz dziennie od 6:00: wyniki Google Ads przez API dla projektów z kontem z logowania (pierwszy raz 30 dni)."""
+        if not self.konta or not self._pub():
+            return
+        now = self.now()
+        today = now.date().isoformat()
+        st = self.state()
+        if not force and (now.hour < META_HOUR or st.get("googleDay") == today):
+            return
+        conns = self.connections()
+        for pid, c in conns.items():
+            g = c.get("google") or {}
+            rec = self.konta.login("google", g.get("login")) if g.get("login") else None
+            if not rec or not g.get("klient") or pid not in index:
+                continue
+            acc = next((a for a in rec.get("accounts") or [] if a.get("id") == g["klient"]), {})
+            have = sorted({r["data"] for r in (self.ads(pid).get("google") or {}).get("rows") or []})
+            first = now.date() - datetime.timedelta(days=META_BACK)
+            if have:
+                first = max(first, datetime.date.fromisoformat(have[-1]) + datetime.timedelta(days=1))
+            day, err = first, ""
+            while day < now.date():
+                try:
+                    body = self.google_day(rec, g["klient"], day.isoformat(), acc.get("via", ""))
+                    d, rows, terms = google.parse(body, g["klient"])
+                except (ApiError, ValueError) as e:
+                    err = str(e)[:200]
+                    break
+                with self.lock:
+                    whole = google.store(self.ads(pid), g["klient"], d, rows, terms, now)
+                    self._write_json(self.ads_file(pid), whole)
+                day += datetime.timedelta(days=1)
+            conns = self.connections()
+            gg = (conns.get(pid) or {}).get("google")
+            if isinstance(gg, dict) and gg.get("blad", "") != err:
+                if err and not gg.get("blad"):
+                    self.notify("Nie odczytano Google Ads (%s): %s" % (pid, err[:160]), "#marketing")
+                gg["blad"] = err
+                self._save_connections(conns)
+            if not err:
+                self.google_alerts(pid, index[pid], data)
+        st = self.state()
+        st["googleDay"] = today
+        self._save_state(st)
+
     # ---------- połączenia projektów (polaczenia.json obok tokenów publikacji; bez sekretów) ----------
     def connections(self):
         pub = self._pub()
@@ -393,12 +505,11 @@ class Wyniki:
         if not force and (now.hour < META_HOUR or st.get("metaDay") == today):
             return
         m = self._pub()._read("meta-reklamy.json", {}) if self._pub() else {}
-        if not m.get("token"):
-            return
         for pid, conn in self.connections().items():
             act = conn.get("metaAct")
-            if act and pid in index:
-                self.meta_sync(pid, act, m["token"], data)
+            token = (self.konta.token_for("meta", conn.get("metaLogin"), act) if self.konta else None) or m.get("token")
+            if act and token and pid in index:
+                self.meta_sync(pid, act, token, data)
                 self.meta_alerts(pid, index[pid], data)
         st = self.state()
         st["metaDay"] = today
@@ -635,9 +746,10 @@ class Wyniki:
             ads = self.ads(pid) if c.get("metaAct") or c.get("google") else {}
             m, g = ads.get("meta") or {}, ads.get("google") or {}
             gc = c.get("google") or {}
-            out[pid] = {"metaAct": c.get("metaAct", ""), "metaSync": m.get("syncedAt", ""), "metaError": m.get("error", ""),
+            out[pid] = {"metaAct": c.get("metaAct", ""), "metaLogin": c.get("metaLogin", ""), "metaSync": m.get("syncedAt", ""), "metaError": m.get("error", ""),
                         "linkedin": c.get("linkedin") or {},
-                        "google": {"klient": gc.get("klient", ""), "klucz": bool(gc.get("keyHash")),
+                        "google": {"klient": gc.get("klient", ""), "login": gc.get("login", ""),
+                                   "blad": gc.get("blad", ""), "klucz": bool(gc.get("keyHash")),
                                    "kluczOd": gc.get("keyAt", ""), "ostatnio": g.get("receivedAt", "")}}
         return out
 
@@ -758,7 +870,9 @@ class Wyniki:
                 stamp = now.isoformat(timespec="seconds")
                 try:
                     if ch == "linkedin":
-                        known, nums = self.read_linkedin(li["token"], lic["organizacja"], link)
+                        tok = (self.konta.token_for("linkedin", lic.get("login")) if self.konta and lic.get("login")
+                               else None) or li["token"]
+                        known, nums = self.read_linkedin(tok, lic["organizacja"], link)
                     else:
                         reader = meta.read_instagram if ch == "instagram" else meta.read_facebook
                         known, nums = reader(page, link, {"kind": r.get("kind"), "id": r.get("id"), "reels": r.get("reels")}
@@ -834,7 +948,8 @@ class Wyniki:
             c["result"] = n if manual is None else max(manual, n)
         st = self.state()
         out["wyniki"] = {"perm": st.get("perm") or {}, "meta": self.meta_status() if self._pub() else None,
-                         "projects": self.connection_status(), "month": {}}
+                         "projects": self.connection_status(), "month": {},
+                         "konta": self.konta.status() if self.konta and self._pub() else None}
         for p in out.get("projects") or []:
             pid = p.get("id")
             if pid and (os.path.isfile(self.klienci._path(pid)) or os.path.isfile(self.ads_file(pid))):
@@ -1000,6 +1115,11 @@ class Wyniki:
             "/api/wyniki/polaczenie": self.save_connection,
             "/api/wyniki/google/klucz": self.google_key,
             "/api/wyniki/google/uniewaznij": self.google_revoke,
+            "/api/konta/start": lambda b: self.konta.start(b),
+            "/api/konta/aplikacja": lambda b: self.konta.save_app(b),
+            "/api/konta/odlacz": lambda b: self.konta.logout(b),
+            "/api/konta/odswiez": lambda b: self.konta.refresh(b),
+            "/api/konta/przypisz": self.assign_account,
         }
 
     # rozmiar ciała żądania dla ścieżek większych niż domyślne 4 KB
@@ -1008,7 +1128,8 @@ class Wyniki:
 
 WRITE_PATHS = ("/api/klienci/dodaj", "/api/klienci/zmien", "/api/klienci/import",
                "/api/wyniki/meta", "/api/wyniki/meta/odlacz", "/api/wyniki/meta/konto",
-               "/api/wyniki/polaczenie", "/api/wyniki/google/klucz", "/api/wyniki/google/uniewaznij")
+               "/api/wyniki/polaczenie", "/api/wyniki/google/klucz", "/api/wyniki/google/uniewaznij",
+               "/api/konta/start", "/api/konta/aplikacja", "/api/konta/odlacz", "/api/konta/odswiez", "/api/konta/przypisz")
 
 
 def derive(r):

@@ -2933,6 +2933,7 @@ body.pjd-on #view:has(.pjh-chat){padding-bottom:var(--g-xl)}
 .pjx-lead .kp{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:var(--g-s) var(--g-p)}
 .pjx-pg{list-style:none;margin:0;padding:0;display:grid;gap:var(--g-s)}
 .pjx-pg li{overflow-wrap:anywhere}
+.ka-red{overflow-wrap:anywhere;font-size:13px;flex:1 1 200px}
 .pjx-off{display:flex;flex-wrap:wrap;align-items:center;gap:var(--g-s)}
 .pjx-card .kp-det .fl{display:grid;gap:var(--g-xs);margin:var(--g-s) 0}
 .pjx-card .kp-det .row{display:flex;flex-wrap:wrap;gap:var(--g-s)}
@@ -5807,7 +5808,10 @@ function pjxMeta(p){
   });
 }
 function pjxConView(p){
-  /* wyniki reklam i statystyk (wyConnCard: konto reklamowe Meta, LinkedIn, Google Ads) pod kartami połączeń */
+  /* Meta, Google Ads i LinkedIn: logowanie na stronie serwisu i konto dla projektu (kaCard); bez stanu logowań
+     (panel przykładowy, stary serwer) dawna karta Meta i ręczne połączenia (wyConnCard) */
+  const K=typeof kaCard==='function'&&(D.wyniki||{}).konta;
+  if(K)return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+kaCard(p,'meta')+kaCard(p,'google')+kaCard(p,'linkedin')+'</div>';
   return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
     (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
 }
@@ -6558,24 +6562,115 @@ function wyFact(p){
   return '<a class="fact" href="'+phref(p,'marketing')+'" data-wysubgo="'+esc(p.id)+'"><span class="l">Marketing w tym miesiącu</span><span class="v num">'+wyZl(M.przychod)+'</span><span class="d num">przychód · wydatek na reklamy '+wyZl(M.wydatek)+'</span></a>';
 }
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-wysubgo]');if(b)WY.sub[b.dataset.wysubgo]='wyniki'});
+/* ---------- Połączenia projektu: logowanie do Meta, Google Ads i LinkedIn (konta.py, prefiks ka) ----------
+   „Zaloguj” otwiera oficjalną stronę logowania serwisu (w tym samym oknie), serwis wraca do tej zakładki.
+   Jedno logowanie może widzieć wiele kont (np. 3 konta reklamowe Meta); konto wybiera się osobno w każdym projekcie.
+   Dane aplikacji (App ID, Client ID, sekret, token dewelopera) wpisuje się raz; sekretów panel nie pokazuje. */
+const KA={setup:{}};
+const KANM={meta:['Meta Business','Facebook, Instagram, reklamy','Facebooka'],google:['Google Ads','','Google'],linkedin:['LinkedIn','','LinkedIn']};
+function kaCur(p,prov){
+  const C=((D.wyniki||{}).projects||{})[p.id]||{};
+  if(prov==='meta')return {login:C.metaLogin||'',acc:C.metaAct||''};
+  if(prov==='google')return {login:(C.google||{}).login||'',acc:(C.google||{}).klient||'',err:(C.google||{}).blad||''};
+  const L=C.linkedin||{};return {login:L.login||'',acc:L.organizacja||'',profil:L.rodzaj==='profil'};
+}
+function kaCard(p,prov){
+  const K=(D.wyniki||{}).konta;if(!K)return '';
+  const A=K.apps[prov]||{},L=K.logins[prov]||[],cur=kaCur(p,prov),nm=KANM[prov];
+  const all=[];L.forEach(l=>l.accounts.forEach(a=>all.push({l:l,a:a})));
+  const hit=all.find(x=>x.a.id===cur.acc&&(!cur.login||x.l.id===cur.login));
+  const login='<button type="button" class="btn sm" data-kalogin="'+prov+'" data-pid="'+esc(p.id)+'" data-k="ka:in:'+prov+'">Zaloguj przez '+esc(nm[2])+'</button>';
+  let lead;
+  if(!L.length){
+    lead='<div class="row pjx-off">'+(cur.acc?'<span class="lz yellow">'+esc(cur.acc)+'</span> <span class="muted">bez logowania</span>':'<span class="lz yellow">Niepołączone</span>')+login+'</div>';
+  }else{
+    const o=[['','– wybierz konto dla projektu']];
+    all.forEach(x=>o.push([x.l.id+'|'+x.a.id,(x.a.name||x.a.id)+' ('+x.a.id+')'+(L.length>1||x.a.via?' · '+(x.a.via||x.l.name):'')]));
+    if(prov==='linkedin')L.forEach(l=>o.push([l.id+'|','Profil prywatny: '+l.name]));
+    const v=hit?hit.l.id+'|'+hit.a.id:(prov==='linkedin'&&cur.profil&&cur.login?cur.login+'|':'');
+    lead=(all.length||prov==='linkedin'?'<label class="fl"><span>Konto tego projektu</span><select class="fi" data-kaacc="'+prov+'" data-pid="'+esc(p.id)+'" data-k="ka:acc:'+prov+'">'+opt(o,v)+'</select></label>':
+      '<p class="note">'+esc(prov==='google'?(A.devToken?'Logowanie nie widzi kont Google Ads.':'Lista kont Google Ads wymaga tokenu dewelopera (Szczegóły).'):'Logowanie nie widzi kont reklamowych. Zaloguj się ponownie i zaznacz konta.')+'</p>')+
+      (cur.acc&&!hit?'<p class="note">Zapisane konto '+esc(cur.acc)+' nie należy do żadnego logowania.</p>':'')+
+      (cur.err?'<p class="warn">Odczyt: '+esc(cur.err)+'</p>':'')+
+      (L.some(l=>l.expired)?'<p class="warn">Logowanie wygasło. Zaloguj się ponownie.</p>':'');
+  }
+  const title=esc(nm[0])+(nm[1]?' <small>'+esc(nm[1])+'</small>':'');
+  return pjxCard('ka'+prov,title,lead,()=>kaDet(p,prov,K,A,L,login));
+}
+function kaDet(p,prov,K,A,L,login){
+  let h='';
+  if(L.length)h+='<ul class="pjx-pg">'+L.map(l=>'<li><b>'+esc(l.name)+'</b> <span class="muted">'+l.accounts.length+' '+(l.accounts.length===1?'konto':'kont')+
+    (l.expiresAt?' · ważne do '+esc(dd(l.expiresAt.slice(0,10))):'')+'</span>'+(l.error?' <span class="lz red" title="'+esc(l.error)+'">błąd</span>':'')+
+    (prov==='google'?' <button type="button" class="btn sec sm" data-karef="'+esc(l.id)+'">Odśwież konta</button>':'')+
+    ' <button type="button" class="btn sec sm" data-kaout="'+prov+'" data-login="'+esc(l.id)+'">Wyloguj</button></li>').join('')+'</ul>'+
+    '<div class="row"><button type="button" class="btn sec sm" data-kalogin="'+prov+'" data-pid="'+esc(p.id)+'">Zaloguj inne konto</button></div>';
+  if(prov==='meta'&&typeof pjxPages==='function'){
+    const G=pjxPages(p),P0=D.publish,free=P0&&P0.fb?P0.fb.pages.filter(g=>!G.includes(g)):[];
+    h+='<h3 class="kp-sh">Strona Facebook i Instagram (publikacja)</h3>'+(G.length?'<ul class="pjx-pg">'+G.map(g=>'<li><b>'+esc(g.name)+'</b> · '+pjxIg(g)+'</li>').join('')+'</ul>':'<p class="muted">Brak strony dla projektu.</p>');
+    if(free.length)h+='<label class="fl">'+(G.length?'Dodaj stronę':'Strona Facebook tego projektu')+'<select class="fi" data-pjxfb="'+esc(p.id)+'" data-k="pjx:fb"><option value="">Wybierz stronę</option>'+
+      free.map(g=>'<option value="'+esc(g.id)+'">'+esc(g.name+(g.project?' · teraz: '+projName(g.project):''))+'</option>').join('')+'</select></label>';
+  }
+  h+=kaSetup(prov,K,A);
+  if(typeof wyConnCard==='function')h+='<details class="ds-det"><summary>Ręcznie (token, identyfikator, skrypt)</summary>'+wyConnCard(p,true,prov)+'</details>';
+  return h;
+}
+function kaSetup(prov,K,A){
+  const op=!A.ready||KA.setup[prov],red=K.redirect||'';
+  const f=(n,l,ph,v)=>'<label class="fl"><span>'+l+'</span><input class="fi" name="'+n+'" autocomplete="off" spellcheck="false" placeholder="'+esc(ph)+'" value="'+esc(v||'')+'"></label>';
+  let h='<details class="ds-det"'+(op?' open':'')+'><summary>Dane aplikacji '+esc(KANM[prov][0])+(A.ready?' <span class="lz green">ustawione</span>':' <span class="lz yellow">do wpisania raz</span>')+'</summary>';
+  h+='<p class="note">Adres powrotu do wpisania w ustawieniach aplikacji:</p><div class="row"><code class="ka-red">'+esc(red)+'</code><button type="button" class="btn sec sm" data-kared="1">Kopiuj</button></div>';
+  if(prov==='meta')h+='<ol class="steps"><li><a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">Meta for Developers</a> → aplikacja panelu → Logowanie do Facebooka → Ustawienia → „Prawidłowe URI przekierowania OAuth”: wklej adres.</li><li>Ustawienia → Podstawowe: skopiuj App ID i Klucz tajny aplikacji.</li></ol>'+
+    '<form class="dform" data-kaapp="meta">'+f('appId','App ID','cyfry',A.appId)+f('secret','App Secret',A.ready?'zapisany (wpisz, aby zmienić)':'32 znaki','')+f('configId','Konfiguracja logowania (aplikacja typu Firma, opcjonalnie)','cyfry','')+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
+  else if(prov==='google')h+=(A.ready?'':'<p class="warn">Brak klienta Google. Ustaw go raz w karcie Google Drive (własny klient OAuth); logowanie Google Ads korzysta z tego samego.</p>')+
+    '<ol class="steps"><li><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud</a> → klient OAuth panelu → „Autoryzowane identyfikatory URI przekierowania”: dodaj adres.</li><li>W tym samym projekcie włącz „Google Ads API”.</li><li>Token dewelopera: Google Ads (konto menedżera) → Narzędzia → Centrum API. Bez niego logowanie działa, ale panel nie widzi listy kont.</li></ol>'+
+    '<form class="dform" data-kaapp="google">'+f('developerToken','Token dewelopera',A.devToken?'zapisany (wpisz, aby zmienić)':'z Centrum API','')+f('loginCustomer','Konto menedżera (opcjonalnie)','np. 123-456-7890',A.loginCustomer)+'<div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
+  else h+='<ol class="steps"><li><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">LinkedIn Developers</a> → aplikacja panelu → Auth → „Authorized redirect URLs”: dodaj adres.</li><li>Products: „Sign In with LinkedIn using OpenID Connect” i „Share on LinkedIn”.</li><li>Skopiuj Client ID i Primary Client Secret z zakładki Auth.</li></ol>'+
+    '<form class="dform" data-kaapp="linkedin">'+f('clientId','Client ID','',A.ready?'':'')+f('secret','Client Secret',A.ready?'zapisany (wpisz, aby zmienić)':'','')+
+    '<label class="chk"><input type="checkbox" name="org"'+(A.org?' checked':'')+'> Aplikacja ma Community Management API (strony firmowe, statystyki)</label><div class="row"><button type="submit" class="btn sm">Zapisz</button></div></form>';
+  return h+'</details>';
+}
+document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-kalogin],[data-kaout],[data-karef],[data-kared]');if(!b)return;
+  if(!LIVE){say(PRV);return}
+  const K=(D.wyniki||{}).konta||{};
+  if(b.dataset.kared){copyText(K.redirect||'').then(ok=>say(ok?'Skopiowano adres.':'Zaznacz adres ręcznie.'));return}
+  if(b.dataset.kalogin){const prov=b.dataset.kalogin;
+    if(!(K.apps&&K.apps[prov]&&K.apps[prov].ready)){KA.setup[prov]=true;PF.more['pj-con-ka'+prov]=true;render(true);say('Najpierw wpisz dane aplikacji (jeden raz).');return}
+    post('/api/konta/start',{provider:prov,project:b.dataset.pid,return:location.hash}).then(x=>{if(x.ok&&x.data&&x.data.url)location.href=x.data.url;else say(failMsg(x,'Nie rozpoczęto logowania.'))});return}
+  if(b.dataset.kaout){if(!confirm('Wylogować to konto z panelu? Projekty z jego kontami przestaną pobierać wyniki.'))return;
+    enqueue(async()=>{const x=await post('/api/konta/odlacz',{provider:b.dataset.kaout,login:b.dataset.login});say(x.ok?'Wylogowano.':failMsg(x,'Nie wylogowano.'))});return}
+  if(b.dataset.karef)enqueue(async()=>{const x=await post('/api/konta/odswiez',{provider:'google',login:b.dataset.karef});say(x.ok?'Kont Google Ads: '+x.data.accounts+'.':failMsg(x,'Nie odświeżono.'))});
+});
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.kaacc==null)return;
+  if(!LIVE){say(PRV);return}
+  const [login,account]=(el.value||'|').split('|');
+  enqueue(async()=>{const x=await post('/api/konta/przypisz',{provider:el.dataset.kaacc,project:el.dataset.pid,login:login||'',account:account||''});say(x.ok?'Zapisano konto projektu.':failMsg(x,'Nie zapisano.'))});
+});
+document.addEventListener('submit',ev=>{const fm=ev.target;if(!fm.dataset||!fm.dataset.kaapp)return;ev.preventDefault();ev.stopPropagation();
+  if(!LIVE){say(PRV);return}
+  const prov=fm.dataset.kaapp,b={provider:prov};
+  [...fm.elements].forEach(e=>{if(e.name)b[e.name]=e.type==='checkbox'?e.checked:e.value.trim()});
+  enqueue(async()=>{const x=await post('/api/konta/aplikacja',b);if(x.ok)KA.setup[prov]=false;say(x.ok?'Zapisano dane aplikacji. Teraz „Zaloguj”.':failMsg(x,'Nie zapisano.'))});
+});
 /* etap 5: karta połączeń projektu (Meta, LinkedIn, Google Ads). Wpięta jako część „Połączenia” zakładki Marketing;
    wyConnCard(p) da się wstawić w inną zakładkę bez zmian. Klucz projektu Google Ads widać tylko raz, w skrypcie. */
 const WYC={script:{},li:{}};
 function wyConnGo(pid){const p=P(pid);if(p)location.hash=pjxConHref(phref(p,'marketing'));render(true)}
-function wyConnCard(p,inCon){
+function wyConnCard(p,inCon,only){
   const pid=p.id,W=D.wyniki||{},M=W.meta||{accounts:[]},C=(W.projects||{})[pid]||{},Pub=D.publish;
   const pages=Pub?Pub.fb.pages.filter(x=>x.project===pid):[],L=C.linkedin||{},G=C.google||{};
   const st=(ok,t)=>'<span class="lz '+(ok?'green':'grey')+'">'+esc(t)+'</span>';
-  let h='<p class="pj-tabd">Panel tylko czyta wyniki: nie zmienia postów, reklam ani budżetów.</p>';
+  let h=only?'':'<p class="pj-tabd">Panel tylko czyta wyniki: nie zmienia postów, reklam ani budżetów.</p>';
   /* Meta */
+  if(!only||only==='meta'){
   const mLz=pages.length&&C.metaAct?st(true,'połączone'):pages.length||C.metaAct?'<span class="lz yellow">częściowo</span>':st(false,'brak połączenia');
   h+='<section class="panel"><h2>Meta – konto reklamowe '+mLz+'</h2><div class="pad dform">'+
     (inCon?'':'<p>Strona Facebook: '+(pages.length?esc(pages.map(x=>x.name+(x.instagram?' · Instagram '+(x.instagram==='tak'?'':'@'+x.instagram):' · bez Instagrama')).join('; ')):'brak. <a href="#marketing" data-nwchan>Połącz w Kanałach publikacji</a>')+'</p>');
   if(M.connected)h+='<label class="fl"><span>Konto reklamowe</span><select class="fi" data-wyconnact="'+esc(pid)+'">'+opt([['','– brak']].concat(M.accounts.map(a=>[a.id,(a.name||a.id)+' ('+a.id+')'])),C.metaAct||'')+'</select></label>'+
     (C.metaAct?'<p class="note">'+(C.metaError?'<span class="wy-err">Błąd odczytu: '+esc(C.metaError)+'</span>':C.metaSync?'Ostatni odczyt '+esc(dd(C.metaSync.slice(0,10)))+' '+esc(C.metaSync.slice(11,16))+'.':'Pierwszy odczyt jutro od 6:00.')+'</p>':'');
   else h+='<p class="note">Konto reklamowe: brak tokenu Meta. Wklej token użytkownika systemowego w <a href="#marketing" data-nwchan>Kanałach publikacji</a> (Konto reklamowe Meta).</p>';
-  h+='</div></section>';
+  h+='</div></section>';}
   /* LinkedIn */
+  if(!only||only==='linkedin'){
   const lf=WYC.li[pid]||(WYC.li[pid]={rodzaj:L.rodzaj||'',organizacja:L.organizacja||'',wniosek:L.wniosek||'nie złożony',reklamy:!!L.reklamy});
   const liLz=L.rodzaj==='organizacja'?(L.wniosek==='przyznany'?st(true,'statystyki automatycznie'):'<span class="lz yellow">wniosek: '+esc(L.wniosek||'nie złożony')+'</span>'):L.rodzaj==='profil'?st(false,'wpis ręczny'):st(false,'brak połączenia');
   h+='<section class="panel"><h2>LinkedIn '+liLz+'</h2><form class="dform pad wy-form" data-wyli="'+esc(pid)+'">'+
@@ -6588,8 +6683,9 @@ function wyConnCard(p,inCon){
     '<details class="ds-det"><summary>Jak złożyć wniosek (3 kroki)</summary><ol class="steps"><li><a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener">LinkedIn Developers</a> → aplikacja panelu → Products → Community Management API → Request access.</li><li>Opis użycia: odczyt statystyk postów własnej strony firmowej (r_organization_social, rw_organization_admin), bez publikowania.</li><li>Po zgodzie: nowy token z tymi zakresami w Kanałach publikacji i tutaj „przyznany”.</li></ol></details>';
   if(lf.rodzaj==='profil')h+='<p class="note">Statystyk postów z profilu prywatnego API LinkedIn nie udostępnia: wpisujesz je ręcznie w publikacji.</p>';
   if(lf.reklamy)h+='<p class="note">Reklamy LinkedIn: Advertising API (r_ads_reporting) wymaga osobnego wniosku; do czasu zgody wyniki wpisujesz ręcznie.</p>';
-  h+='</div></section>';
+  h+='</div></section>';}
   /* Google Ads */
+  if(only&&only!=='google')return h;
   const sc=WYC.script[pid];
   h+='<section class="panel"><h2>Google Ads '+(G.ostatnio?st(true,'dane z '+dd(G.ostatnio.slice(0,10))):G.klucz?'<span class="lz yellow">czeka na skrypt</span>':st(false,'brak połączenia'))+'</h2><form class="dform pad wy-form" data-wygads="'+esc(pid)+'">'+
     '<label class="fl"><span>Identyfikator klienta</span><input class="fi" name="klient" inputmode="numeric" autocomplete="off" placeholder="np. 434-771-1860" value="'+esc(G.klient||'')+'"></label>'+
