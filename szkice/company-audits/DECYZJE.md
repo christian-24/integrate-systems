@@ -4,6 +4,11 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-26: Marketing: posty statyczne zamiast filmów
+- Kontekst: właściciel nie będzie nagrywał filmów; w kampanii „Pozyskanie klientów” było 6 filmów na 2–16.12 (decyzja z 24.11, podział z pola „nagrywa”) i ani jednego posta statycznego.
+- Decyzja (właściciel): wszystkie 6 filmów zamienione na posty statyczne na LinkedIn i Facebook, te same tematy i daty; grafikę i tekst przygotowuje agent, właściciel zatwierdza i publikuje. W karcie `nagrywa: panel` (bez nagrań właściciela i narzędzia AI) i pole `marketing: posty statyczne`.
+- Skutki: agenci planują posty statyczne, nie filmy. Scenariusz filmu z 2.12 przeniesiony do kopii (rozwoj/kopia-oprogramowani-2026-11-26).
+
 ## 2026-11-25: Strona: film w sekcji „Kto to robi”, kod zmieniony przed buildem
 - Kontekst: poprawka właściciela „Zrób to” do zadania „Dodaj na stronie miejsca na zdjęcia, LinkedIn, dane firmy i film”. Agent znów nie miał uprawnień do `npm` (build, zrzuty) ani gita w repozytorium strony. W karcie jest otwarte pytanie, więc nowego nie zadaję.
 - Decyzja: (1) zmieniam kod strony mimo braku builda (zmiana poprzedniej decyzji punkt 1), bo właściciel kazał to zrobić; zmiana jest mała i odwracalna, a na produkcję nie wyjdzie bez builda i obejrzenia; (2) film nie dostaje osobnej sekcji z tłem, tylko blok pod kartami osób w „Kto to robi”, żeby nie zmieniać rytmu jasnych i ciemnych sekcji na komputerze; (3) nagłówek „Poznaj nas, zanim zadzwonisz”, zdanie bez czasu trwania i bez obietnic; w DE, EN i IT dopisek, że film jest po polsku; napisy .vtt jako ścieżka „Polski”.

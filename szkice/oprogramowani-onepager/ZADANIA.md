@@ -94,20 +94,23 @@
   wynik: strona główna PL ma 1643 słowa zamiast 1909 (−14%; bez żółtych [UZUPEŁNIJ]). Po sekcjach przed → po: Pytania 442→372, Cennik 369→313, Oferta 154→132, Hero 145→138, Kontakt 140→135, Pewność 133→91, Czat 106→98, Jak pracujemy 102→79, Kalkulator 94→85, Dowody 86→72, O nas 84→74. Usunięte powtórzenia: „cena na piśmie” (zostaje w hero, krokach, cenniku i FAQ), licencje i pliki na Twoim koncie (tylko w „Bez uzależnienia” i FAQ), „60 minut, bez zobowiązań” (tylko w „Pierwsza rozmowa”). Punkty i kroki mają po jednym zdaniu. Ceny, dane firmy, zdania składane z danych firmy i miejsca [UZUPEŁNIJ] są bez zmian. Plik: site/src/jezyki/tresc-pl.js. Zrzuty 390 i 1440 px (/pl): układ się nie rozjechał, akapity w kartach i krokach są wyraźnie krótsze.
   zostało: produkcyjne `npm run build` nie było uruchamiane (brak uprawnień), a i tak zatrzyma się na pustych wymaganych polach w danych firmy; zrzut kończy się na 6000 px, więc Cennika, Pytań i Kontaktu nie oglądałem na obrazie (liczyłem je w kodzie); wersje DE, IT i EN nie są skrócone
   następne: Strona: skróć teksty w wersjach DE, IT i EN tak jak w PL | kto: agent | kiedy: 2026-11-26
-- [~] Strona: scal ofertę, połącz kroki z wiadomościami, usuń sekcję o osobach | kto: agent | gdzie: chmura | kiedy: 2026-11-26
+- [x] Strona: scal ofertę, połącz kroki z wiadomościami, usuń sekcję o osobach | kto: agent | gdzie: chmura | kiedy: 2026-11-26
   cel: strona prostsza według uwag właściciela z 26.11: jedna oferta, jedna sekcja kroków, mniej tekstu o kosztach, bez sekcji o osobach i bez informacji, gdzie działa automat
   gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel), zmiany są w PL, DE, IT i EN, zrzuty 390 i 1440 px obejrzane; w wynik: lista zmian sekcja po sekcji; ceny „od … zł”, kalkulator, „Bezpłatna wycena”, dane firmy i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone
   materiał: site/src/Strona.jsx
   materiał: site/src/jezyki/tresc-pl.js
   materiał: site/src/jezyki/wspolne-pl.js
   materiał: site/src/strona.css
-  - [ ] Scal „Budujemy integracje i małe automaty” oraz „Pilnujemy projektu, który robi ktoś inny” w jedną ofertę (jedna lista pozycji z cenami „od … zł”, bez dwóch grup); „Bezpłatna wycena” zostaje
-  - [ ] Połącz „Cztery kroki” z „Zamiast raportów na 20 stron” w jedną sekcję (kroki, a pod nimi krótka wiadomość zamiast raportów)
-  - [ ] Skróć „Co płacisz poza nami” do krótkiej wersji (np. jedno zdanie i krótka lista)
-  - [ ] W „To Twój automat. Nie jesteś skazany na nas” zmień nagłówek na sens „To automaty dla Ciebie”; usuń zdania o tym, czy automat działa u klienta, na jego serwerze albo lokalnie (decyzję zostawia właściciel)
-  - [ ] Usuń całkowicie sekcję „Dwie osoby” („Kto wdraża integracje”: karty Pawła i Krystiana, zdjęcia, film) razem z menu i stylami, których nic innego nie używa
-  - [ ] Zbuduj, zrób zrzuty, obejrzyj, popraw
+  - [x] Scal „Budujemy integracje i małe automaty” oraz „Pilnujemy projektu, który robi ktoś inny” w jedną ofertę (jedna lista pozycji z cenami „od … zł”, bez dwóch grup); „Bezpłatna wycena” zostaje
+  - [x] Połącz „Cztery kroki” z „Zamiast raportów na 20 stron” w jedną sekcję (kroki, a pod nimi krótka wiadomość zamiast raportów)
+  - [x] Skróć „Co płacisz poza nami” do krótkiej wersji (np. jedno zdanie i krótka lista)
+  - [x] W „To Twój automat. Nie jesteś skazany na nas” zmień nagłówek na sens „To automaty dla Ciebie”; usuń zdania o tym, czy automat działa u klienta, na jego serwerze albo lokalnie (decyzję zostawia właściciel)
+  - [x] Usuń całkowicie sekcję „Dwie osoby” („Kto wdraża integracje”: karty Pawła i Krystiana, zdjęcia, film) razem z menu i stylami, których nic innego nie używa
+  - [x] Zbuduj, zrób zrzuty, obejrzyj, popraw
   poprawka: Poprzednie uruchomienie przerwał restart panelu (2026-11-26 19:09). Twoja dotychczasowa praca jest na gałęzi agent/2026-11-26-strona-scal-oferte-polacz-kroki-z-wiadom: sprawdź ją (git log, git diff) i dokończ zadanie.
+  wynik: zmiany w site/src/Strona.jsx, site/src/strona.css oraz site/src/jezyki/tresc-pl.js, tresc-de.js, tresc-it.js, tresc-en.js (wszystkie cztery języki). Sekcja po sekcji: Menu: bez „O nas”. Oferta i ceny: zamiast dwóch grup (Wykonanie / Prowadzenie) jedna lista 7 pozycji (Integracja ERP od 3 500 zł, Koniec przepisywania od 2 000 zł, Mały automat od 2 000 zł, Przegląd oferty 290 zł, Karta projektu 690 zł, Prowadzenie projektu od 490 zł / mies., Opieka i poprawki), nad nią 4 przykłady z ptaszkami, wstęp mówi o obu rodzajach pracy; ceny, widełki, dopłaty, blok „Bezpłatna wycena” i warunki bez zmian. Co płacisz poza nami: jedno zdanie i 3 krótkie punkty (moduł ERP, abonament BaseLinkera, opłaty przewoźnika); usunięty punkt „Komputer albo serwer”. Jak pracujemy: cztery kroki, a pod nimi w tej samej sekcji „Zamiast raportów na 20 stron: krótka wiadomość.” z przykładową rozmową na telefonie (osobna sekcja usunięta). Bez uzależnienia: nagłówek „To automaty dla Ciebie.” (DE „Automatisierungen für Sie.”, IT „Automazioni per te.”, EN „Automations built for you.”); punkt „Automat działa u Ciebie” zamieniony na „Licencje na Twoją firmę” (tylko zdanie o licencjach, bez tego, gdzie działa automat). Kto wdraża integracje: sekcja usunięta w całości (karty Pawła i Krystiana, zdjęcia, film oraz ich style). Kalkulator, wstęp, kontakt i dane firmy bez zmian. Zrzuty 390 i 1440 px (PL i EN) obejrzane: oferta jako jedna lista, kroki z rozmową pod spodem, nic nie wychodzi poza ekran.
+  zostało: znikają żółte miejsca [UZUPEŁNIJ] związane wyłącznie z usuniętą sekcją o osobach (nazwisko i LinkedIn Pawła, zdjęcia, lata każdej osoby, film); pola w dane.js zostają bez zmian, a lata doświadczenia nadal są we wstępie
+  zmiany: poprzednia gałąź nie miała zapisanej pracy, więc zadanie zrobione od nowa w całości; poprawka: zrobione
 
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
