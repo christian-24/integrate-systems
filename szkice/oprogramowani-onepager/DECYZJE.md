@@ -2,6 +2,20 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-26: Wizytówka 2026-11: telefon i rola z poprzedniej wizytówki
+
+Kontekst: nowa wizytówka i stopka e-mail pod strategię „Najpierw demo. Potem płacisz.”; telefon i rola pod nazwiskiem mają pochodzić od właściciela, a w karcie jest już otwarte pytanie (ryczałt opieki), więc nowego pytania nie wolno dodać. Poprzednia wizytówka (23.11) leży tylko na swojej gałęzi i ma pliki o tych samych nazwach (przod.png, tyl.png).
+Decyzja: telefon 663 206 373 i rola „Procesy i rozmowa z klientem” wzięte z poprzedniej wizytówki, odebranej przez właściciela (telefon jest też w site/src/dane.js); właściciel potwierdza je przy odbiorze (wiersz decyzja:). Bez NIP i bez innych danych. Cztery linie oferty w skrócie jednym wierszem: „Planowanie produkcji · Integracje · Excel · IT i sprzęt”. Na przodzie hasło jak w nagłówku strony (druga część szara) i zdanie „Proste programy i dodatki dla małych firm.”. Poprzednia wizytówka zostaje bez zmian na swojej gałęzi; nowa ma treść w jednym pliku wizytowka/wizytowka-2026-11.js.
+Skutki: zmiana roli albo telefonu = jeden wiersz w wizytowka-2026-11.js i w stopka-email.html/.txt, potem render od nowa. Gałęzi starej wizytówki nie scalać bez zmiany nazw jej plików (kolizja przod.png, tyl.png).
+- Kto: agent
+
+## 2026-11-26: Strona PL pod strategię „Najpierw demo. Potem płacisz.”
+
+Kontekst: zadanie każe dać podstrony /planowanie-produkcji, /integracje, /excel, /it i usunąć z oferty to, co nie pasuje do czterech linii; adres /it jest już zajęty przez włoską wersję strony, a w cenniku były usługi doradcze (przegląd oferty 290 zł, karta projektu 690 zł, prowadzenie projektu od 490 zł / mies.) i opieka za stawkę godzinową.
+Decyzja: podstrony mają adresy pod językiem: /pl/planowanie-produkcji, /pl/integracje, /pl/excel, /pl/it (bez kolizji z /it). Usługi doradcze zniknęły z oferty (nie należą do żadnej z czterech linii); jedyna zostawiona kwota z dawnych to integracja od 3 500 zł, a na /integracje także „koniec przepisywania” i „mały dodatek” od 2 000 zł. Opieka zgodnie ze strategią w miesięcznym ryczałcie (pole DANE.ryczalt, puste = „cena w wycenie”) zamiast stawki godzinowej. Tematy w oknie wyceny: Planowanie produkcji / Integracja lub dodatek / Excel albo IT / Jeszcze nie wiem (zmienione we wszystkich 4 językach, żeby numeracja tematów się zgadzała). Przy IT „demo” to plan na piśmie (sieć, sprzęt, cena) przed zakupami. Kalkulator i lista programów przeszły na /integracje. DE/IT/EN zostają w starym układzie do następnego zadania. E-mail i telefon są w dane.js (DANE.kontakt).
+Skutki: powrót usług doradczych = dopisanie pozycji w tresc-pl.js; podstrony w DE/IT/EN wymagają tłumaczenia sekcji „podstrony” w kolejnym zadaniu.
+- Kto: agent
+
 ## 2026-11-25: Bez banera zgody; regulamin bez zmian treści
 
 Kontekst: uwagi z 25.11 każą dodać baner zgody z Consent Mode v2, jeśli strona ma tagi analityki lub reklam; strona przeszła z „darmowej godziny” na „bezpłatną wycenę”.
