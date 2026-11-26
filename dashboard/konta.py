@@ -307,14 +307,20 @@ class Konta:
         self.gtokens[rec["id"]] = (tok["access_token"], time.time() + int(tok.get("expires_in") or 3600) - 60)
         return tok["access_token"]
 
+    def _gads_headers(self, rec):
+        """Od 9.09.2026 Google Ads API nie wymaga tokenu dewelopera: poziom dostępu ma projekt Google Cloud klienta OAuth.
+        Zapisany wcześniej token wysyłamy dalej (Google go ignoruje)."""
+        h = {"Authorization": "Bearer " + self.google_access(rec)}
+        dev = (self.apps().get("google") or {}).get("developerToken")
+        if dev:
+            h["developer-token"] = dev
+        return h
+
     def gads_search(self, rec, customer, query, login_customer=""):
         """Wiersze GAQL (REST googleAds:search, wszystkie strony). Pola jak w skrypcie Google Ads (camelCase)."""
-        dev = (self.apps().get("google") or {}).get("developerToken")
-        if not dev:
-            raise ApiError("brak tokenu dewelopera Google Ads")
         cid = re.sub(r"\D", "", customer)
-        h = {"Authorization": "Bearer " + self.google_access(rec), "developer-token": dev,
-             "Content-Type": "application/json"}
+        h = self._gads_headers(rec)
+        h["Content-Type"] = "application/json"
         lc = re.sub(r"\D", "", login_customer or (self.apps().get("google") or {}).get("loginCustomer") or "")
         if lc:
             h["login-customer-id"] = lc
@@ -332,10 +338,7 @@ class Konta:
         return out
 
     def google_accounts(self, rec):
-        dev = (self.apps().get("google") or {}).get("developerToken")
-        if not dev:
-            raise ApiError("lista kont wymaga tokenu dewelopera Google Ads")
-        h = {"Authorization": "Bearer " + self.google_access(rec), "developer-token": dev}
+        h = self._gads_headers(rec)
         d = _load(*self.http("GET", GADS + "/customers:listAccessibleCustomers", h)[::2], what="Konta Google Ads")
         found = {}
         for rn in (d.get("resourceNames") or [])[:30]:
@@ -364,7 +367,7 @@ class Konta:
         return sorted(found.values(), key=lambda x: (x["name"].lower(), x["id"]))[:MAX_ACCOUNTS]
 
     def refresh(self, body):
-        """Ponowne odczytanie listy kont logowania (Google po dodaniu tokenu dewelopera)."""
+        """Ponowne odczytanie listy kont logowania (Google po zmianie poziomu dostępu projektu)."""
         prov, lid = str(body.get("provider") or ""), str(body.get("login") or "")
         if prov == "meta":                                   # strony i Instagram: ponowny odczyt /me/accounts tym samym tokenem
             with self.lock:
