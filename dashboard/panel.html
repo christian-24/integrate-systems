@@ -2215,6 +2215,7 @@ button.ap-row{cursor:pointer}button.ap-row:hover{background:var(--hover)}
 .ww-fit iframe{position:absolute;left:0;top:0;border:0;background:var(--on-color);transform-origin:0 0}
 .ww-empty{padding:48px 16px;text-align:center;color:var(--ink-3);display:grid;gap:10px;justify-items:center}
 .ww-side{display:grid;gap:var(--g-m);position:sticky;top:12px;min-width:0}
+.ww-main.ww-solo{grid-template-columns:minmax(0,1fr)}.ww-solo .ww-side{display:none}
 .ww-sel{border:1px dashed var(--ctl-line);border-radius:var(--r);padding:6px 9px;font-size:var(--fs-sm);display:grid;gap:2px;overflow-wrap:anywhere}
 .ww-sel code{font-size:var(--fs-xs);color:var(--ink-3)}
 .ww-notes{list-style:none;margin:0;padding:0 16px 14px;display:grid;gap:10px;max-height:60vh;overflow:auto}
@@ -6023,7 +6024,8 @@ function wwRoot(pid){return document.querySelector('.ww-root[data-ww="'+CSS.esca
 function wwMount(p){
   const root=wwRoot(p.id);if(!root)return;
   /* grupa strona 25.11: pasek tylko Telefon, Komputer, Wskaż, Zbuduj podgląd (stan budowania jako plakietka przy
-     przycisku); przy pracującym agencie przełącznik „Wersja w budowie / Ostatnia zbudowana”; jedna karta Uwagi */
+     przycisku); przy pracującym agencie przełącznik „Wersja w budowie / Ostatnia zbudowana”. Bez karty Uwagi
+     (właściciel 26.11): „Wskaż” otwiera Rozmowę projektu z elementem; podgląd na całą szerokość, gdy z boku nic nie ma */
   if(!root._m){root._m=1;
     root.innerHTML='<div class="ww-bar">'+
       '<span class="ww-seg ww-src" role="group" aria-label="Która wersja strony" data-wwsrc hidden><button type="button" class="seg" data-wwlv="live" data-k="wwlv-l" title="Z katalogu roboczego pracującego agenta">Wersja w budowie</button><button type="button" class="seg" data-wwlv="built" data-k="wwlv-b">Ostatnia zbudowana</button></span>'+
@@ -6034,14 +6036,7 @@ function wwMount(p){
       '<div class="ww-berr" data-wwberr hidden></div>'+
       '<div class="ww-main"><div class="ww-frame" data-wwframe><div class="ww-empty" data-wwempty></div><div class="ww-fit" hidden><iframe title="Podgląd strony" sandbox="allow-scripts allow-forms allow-popups" referrerpolicy="no-referrer"></iframe></div></div>'+
       '<aside class="ww-side"><section class="panel ww-live" data-wwlive hidden aria-live="polite"></section><div data-wwrepo hidden></div>'+
-      '<section class="panel ww-uw"><h2>Uwagi <small data-wwn></small></h2><div class="pad ww-uwp"><div data-wwsel></div>'+
-      '<div class="row"><button type="button" class="btn" data-wwnote data-k="wwnote" aria-controls="pchat">Napisz uwagę</button></div></div>'+
-      '<ol class="ww-notes" data-wwnotes></ol>'+
-      '<details class="ww-more" data-wwcondet><summary data-k="wwmore">Więcej</summary><div class="pad ww-morep"><p class="ww-open" data-wwopen hidden></p>'+
-      '<form class="ww-con" data-wwcon="'+esc(p.id)+'"><h3>Nowa wersja według koncepcji</h3>'+
-      '<label class="note" for="ww-cp">Plik albo folder koncepcji w repozytorium</label><input class="fi" id="ww-cp" name="path" list="ww-docs" autocomplete="off" placeholder="np. docs/koncepcja.md" data-k="wwcp"><datalist id="ww-docs"></datalist>'+
-      '<textarea class="fi" rows="2" maxlength="1000" name="text" data-k="wwct" placeholder="Uwagi (opcjonalnie)" aria-label="Uwagi do koncepcji"></textarea>'+
-      '<div class="row"><button class="btn" type="submit">Zleć wykonanie według koncepcji</button></div></form></div></details></section></aside></div>';
+      '</aside></div>';
     const fr=root.querySelector('[data-wwframe]');
     if(window.ResizeObserver){const ro=new ResizeObserver(()=>wwFit(p.id));ro.observe(fr)}
     wwLoad(p.id);
@@ -6136,16 +6131,17 @@ function wwPaint(pid){
   if(on){shown=d.live.url;const src=d.live.url+'?v='+encodeURIComponent(d.live.builtAt);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else if(d&&d.url){shown=d.url;const src=d.url+'?v='+(b.version||0);fit.hidden=false;em.hidden=true;if(ifr._src!==src){ifr._src=src;ifr.src=src}}
   else{fit.hidden=true;em.hidden=false;setHtml(em,!d?'<p>'+(s.err?esc(s.err):'Wczytuję…')+'</p>':b.state==='building'||!b.state?'<p>Buduję pierwszy podgląd…</p>':
-    '<p>Podglądu jeszcze nie ma.</p>'+(b.state==='error'?'<p class="ww-err">'+esc(b.error||'')+'</p>':'')+'<p class="note">Bez strony: „Nowa wersja według koncepcji” w karcie Uwagi, pod „Więcej”.</p>')}
-  const op=q('[data-wwopen]');op.hidden=!shown;setHtml(op,shown?'<a href="'+esc(shown)+'" target="_blank" rel="noopener noreferrer" data-k="wwopen">Otwórz podgląd w nowej karcie</a>':'');
+    '<p>Podglądu jeszcze nie ma.</p>'+(b.state==='error'?'<p class="ww-err">'+esc(b.error||'')+'</p>':''))}
+  const op=q('[data-wwopen]');if(op)op.hidden=!shown;setHtml(op,shown?'<a href="'+esc(shown)+'" target="_blank" rel="noopener noreferrer" data-k="wwopen">Otwórz podgląd w nowej karcie</a>':'');
   setHtml(q('[data-wwsel]'),s.sel?'<div class="ww-sel"><span>Wskazany element: <b>'+esc(s.sel.text?s.sel.text.slice(0,120):'<'+s.sel.tag+'>')+'</b></span><code>'+esc(s.sel.sel)+'</code><span class="note">'+esc((s.sel.page||'/')+' · '+s.view)+' · <button type="button" class="linkbtn" data-wwclear data-k="wwclear">Usuń wskazanie</button></span></div>':'');
   const L=d?d.notes||[]:[];
   const sb=q('[data-k="wwnote"]');if(sb)sb.textContent=L.some(n=>n.state==='pracuje')?'Napisz do pracującego agenta':'Napisz uwagę';
   setHtml(q('[data-wwn]'),L.length?dsCnt(L.length,pl(L.length,'uwaga','uwagi','uwag')):'');
-  const nl=q('[data-wwnotes]');nl.hidden=!L.length&&!d;
+  const nl=q('[data-wwnotes]');if(nl)nl.hidden=!L.length&&!d;
   setHtml(nl,L.length?L.map(wwNoteHtml).join(''):'<li class="ww-hint note" title="Uwaga trafia do Rozmowy projektu z podstroną i widokiem jako załącznikiem">Kliknij „Wskaż” i element w podglądzie albo od razu napisz uwagę.</li>');
   const dl=q('#ww-docs');if(d)setHtml(dl,(d.docs||[]).map(x=>'<option value="'+esc(x)+'">').join(''));
-  const cd=q('[data-wwcondet]');if(d&&!cd._set){cd._set=1;if(!d.url&&!L.length&&b.state==='error')cd.open=true}
+  const cd=q('[data-wwcondet]');if(cd&&d&&!cd._set){cd._set=1;if(!d.url&&!L.length&&b.state==='error')cd.open=true}
+  const mn=q('.ww-main');if(mn)mn.classList.toggle('ww-solo',lv.hidden&&rb.hidden);
   wwFit(pid);
 }
 function wwPost(pid,msg){const root=wwRoot(pid),ifr=root&&root.querySelector('.ww-fit iframe');if(ifr&&ifr.contentWindow)ifr.contentWindow.postMessage(msg,'*')}
