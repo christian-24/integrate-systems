@@ -3101,6 +3101,7 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
 .os-snav{position:absolute;top:60px;bottom:90px;width:40%;background:transparent;border:0;cursor:pointer;z-index:1}.os-sprev{left:0}.os-snext{right:0}
 .os-snote{position:absolute;bottom:8px;left:8px;right:8px;margin:0;text-align:center;font-size:11px;opacity:.8}
 .os-lnk{display:flex;gap:var(--g-s);align-items:flex-end;flex-wrap:wrap}.os-lnk .fl{flex:1 1 220px;display:grid;gap:4px}.os-lnk .fl span{font-size:var(--fs-xs);color:var(--ink-3)}
+.pjx-kanr{gap:14px;flex-wrap:wrap}.pjx-kanr .chk{display:inline-flex;align-items:center;gap:6px;min-height:40px}
 /* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
 .os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
 .os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
@@ -5807,12 +5808,25 @@ function pjxMeta(p){
     return h+'<div class="row"><button type="button" class="btn sec sm" data-nwchan="1" data-k="pjx:meta-pub">'+(fb?'Kanały publikacji':'Połącz Facebook i Instagram')+'</button></div>';
   });
 }
+/* kanały projektu (właściciel 26.11): które media społecznościowe projekt używa; panel nie czyta ani nie zgłasza pozostałych */
+const KAN=[['facebook','Facebook'],['instagram','Instagram'],['linkedin','LinkedIn'],['tiktok','TikTok']];
+const pjKan=p=>{const C=((D.wyniki||{}).projects||{})[p.id]||{};return Array.isArray(C.kanaly)&&C.kanaly.length?C.kanaly:null};
+function pjxKan(p){
+  const cur=pjKan(p)||[];
+  return '<section class="panel pjx-kan"><h2>Kanały projektu</h2><div class="pad"><p class="note">Zaznacz, gdzie projekt publikuje. Panel czyta wyniki i pokazuje ostrzeżenia tylko dla zaznaczonych.</p>'+
+    '<div class="row pjx-kanr" role="group" aria-label="Kanały projektu">'+KAN.map(([k,n])=>'<label class="chk"><input type="checkbox" data-pjkan="'+esc(p.id)+'" value="'+k+'"'+(cur.includes(k)?' checked':'')+'> '+n+'</label>').join('')+'</div>'+
+    (cur.length?'':'<p class="muted">Nic nie zaznaczone: panel traktuje projekt jak dotąd (wszystkie kanały).</p>')+'</div></section>';
+}
+document.addEventListener('change',ev=>{const el=ev.target;if(!el||!el.dataset||el.dataset.pjkan==null)return;if(!LIVE){say(PRV);return}
+  const pid=el.dataset.pjkan,ks=[...document.querySelectorAll('[data-pjkan="'+CSS.escape(pid)+'"]:checked')].map(x=>x.value);
+  enqueue(async()=>{const x=await post('/api/wyniki/polaczenie',{project:pid,kanaly:ks});say(x.ok?'Zapisano kanały projektu.':failMsg(x,'Nie zapisano.'))});
+});
 function pjxConView(p){
   /* Meta, Google Ads i LinkedIn: logowanie na stronie serwisu i konto dla projektu (kaCard); bez stanu logowań
      (panel przykładowy, stary serwer) dawna karta Meta i ręczne połączenia (wyConnCard) */
   const K=typeof kaCard==='function'&&(D.wyniki||{}).konta;
   if(K)return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+kaCard(p,'meta')+kaCard(p,'google')+kaCard(p,'linkedin')+'</div>';
-  return '<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
+  return pjxKan(p)+'<div class="pjx-con">'+pjxGh(p)+pjxDrive(p)+(pjxMetaHas(p)?pjxMeta(p):'')+'</div>'+
     (typeof wyConnCard==='function'?'<h2 class="kp-sh pjx-wyh">Wyniki reklam i statystyki</h2>'+wyConnCard(p,true):'');
 }
 /* przypisanie strony Facebook do projektu z karty Meta (ten sam zapis co w Kanałach publikacji) */
@@ -6450,7 +6464,9 @@ function wyAuto(t){
 }
 /* brakujące uprawnienia do odczytu wyników (Kanały publikacji) */
 function wyPermNote(){
-  const P=(D.wyniki||{}).perm||{},k=Object.keys(P);if(!k.length)return '';
+  const P0=(D.wyniki||{}).perm||{},PR=(D.wyniki||{}).projects||{},sets=Object.values(PR).map(c=>c.kanaly).filter(x=>Array.isArray(x)&&x.length);
+  const used=c=>!sets.length||sets.some(x=>x.includes(c));
+  const P={};Object.keys(P0).forEach(c=>{if(used(c))P[c]=P0[c]});const k=Object.keys(P);if(!k.length)return '';
   const need=[];if(P.facebook)need.push('read_insights');if(P.instagram)need.push('instagram_basic','instagram_manage_insights');
   return '<p class="warn">Panel nie może odczytać wyników ('+esc(k.map(c=>PUBN[c]||c).join(', '))+'): '+esc(k.map(c=>P[c])[0])+'. Brakuje uprawnień: '+esc(need.join(', '))+'. Połącz Facebook ponownie z tymi uprawnieniami.</p>';
 }
@@ -6582,7 +6598,8 @@ function kaCur(p,prov){
 }
 function kaCard(p,prov){
   const K=(D.wyniki||{}).konta;if(!K)return '';
-  const A=K.apps[prov]||{},L=K.logins[prov]||[],cur=kaCur(p,prov),nm=KANM[prov];
+  const A=K.apps[prov]||{},L=K.logins[prov]||[],cur=kaCur(p,prov),kk=pjKan(p);
+  const nm=prov==='meta'&&kk?['Meta Business',[kk.includes('facebook')?'Facebook':'',kk.includes('instagram')?'Instagram':'','reklamy'].filter(Boolean).join(', '),'Facebooka']:KANM[prov];
   const all=[];L.forEach(l=>l.accounts.forEach(a=>all.push({l:l,a:a})));
   const hit=all.find(x=>x.a.id===cur.acc&&(!cur.login||x.l.id===cur.login));
   const login='<button type="button" class="btn sm" data-kalogin="'+prov+'" data-pid="'+esc(p.id)+'" data-k="ka:in:'+prov+'">Zaloguj przez '+esc(nm[2])+'</button>';
@@ -6772,7 +6789,7 @@ function stOne(pid){
   });
   h+='</div>';
   /* posty: Facebook, Instagram (i LinkedIn, gdy są odczyty) */
-  const O=(OS.d[pid]||{}).posty||{},chs=['facebook','instagram'].concat(Object.values(O).some(x=>x.linkedin)?['linkedin']:[]);
+  const O=(OS.d[pid]||{}).posty||{},kk=P(pid)?pjKan(P(pid)):null,chs=kk?kk.filter(c=>c!=='tiktok'):['facebook','instagram'].concat(Object.values(O).some(x=>x.linkedin)?['linkedin']:[]);
   const NM={facebook:'Facebook',instagram:'Instagram',linkedin:'LinkedIn'};
   h+='<h3 class="st-h">Posty i filmy</h3><div class="st-grid">';
   chs.forEach(ch=>{
@@ -6823,7 +6840,7 @@ function osStats(t){
   const ch=(R.posty||{})[t.id];
   if(ch){const ev=[];Object.keys(ch).forEach(k=>(ch[k].odczyty||[]).forEach(o=>ev.push([o.at,k,+o.wyswietlenia||0])));ev.sort((x,y)=>x[0]<y[0]?-1:1);
     const last={},ser=ev.map(([,k,w])=>{last[k]=w;return Object.values(last).reduce((a,b)=>a+b,0)});
-    const err=Object.keys(ch).map(k=>ch[k].error?k+': '+ch[k].error:'').filter(Boolean);
+    const err=Object.keys(ch).map(k=>!ch[k].error?'':/pages_read_user_content|\(#10\)/.test(ch[k].error)?(k==='facebook'?'Facebook':k)+': brak uprawnienia do odczytu postów. Zaloguj się ponownie do Meta (Połączenia → Meta Business); panel prosi już o to uprawnienie.':k+': '+ch[k].error).filter(Boolean);
     return {n:ser.length?ser[ser.length-1]:0,ser,extra:[],src:Object.keys(ch).map(k=>k==='instagram'?'Instagram':k==='linkedin'?'LinkedIn':'Facebook').join(' + '),err}}
   const v=+(t.detail||{}).views;return v?{n:v,ser:[],extra:[],src:'wpisane ręcznie'}:null;
 }
