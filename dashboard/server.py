@@ -502,6 +502,30 @@ def update_detail(body):
     return (200, "") if ok else CONFLICT
 
 
+# ---------- draft posta albo reklamy w Meta (Facebook) z podglądu na osi publikacji ----------
+def ad_draft(body):
+    """{"project", "date", "kod"}: szkic posta na stronie Facebook projektu (Meta Business Suite → Szkice) z grafiką
+    albo filmem i tekstem z folderu posta. Nic nie publikuje: właściciel przegląda i publikuje sam."""
+    folder = ad_folder(str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("kod") or ""))
+    if not folder:
+        return 404, "Nie ma folderu posta na ten dzień."
+    import podglad
+    info = post_info(folder)
+    raw = ""
+    if os.path.isfile(os.path.join(folder, "post.md")):
+        with open(os.path.join(folder, "post.md"), encoding="utf-8", errors="replace") as f:
+            raw = f.read(20000)
+    tx = podglad.parse(raw)
+    text = (info.get("sections") or {}).get("Facebook") or tx["body"]
+    if not text.strip():
+        return 409, "Post nie ma jeszcze tekstu."
+    try:
+        out = get_publisher().draft(str(body.get("project") or ""), folder, text.strip())
+    except publikacja.ApiError as e:
+        return 400, "Nie utworzono szkicu: %s" % str(e)[:300]
+    return 200, "", out
+
+
 # ---------- kontrola serwera przy zadaniu (pole sprawdza:) ----------
 def task_check(task, srv, folder):
     """"check" zadania: {"key", "ok", "at"} z projekt.check_task (stan serwera albo plik w folderze projektu
@@ -2205,7 +2229,7 @@ WRITES = {"/api/task/cancel": cancel_task, "/api/task/restore": lambda b: cancel
           "/api/task/state": lambda b: change_task(b), "/api/task/update": lambda b: update_task(b),
           "/api/task/count": lambda b: count_task(b),
           "/api/task/close-checked": lambda b: close_checked(b),
-          "/api/task/detail": lambda b: update_detail(b),
+          "/api/task/detail": lambda b: update_detail(b), "/api/reklama/draft": lambda b: ad_draft(b),
           "/api/task/finish": lambda b: finish_task(b), "/api/task/pola": lambda b: task_fields(b),
           "/api/task/add": lambda b: add_task(b), "/api/stage/update": lambda b: update_stage(b),
           "/api/campaign/update": lambda b: update_campaign(b),
@@ -4286,36 +4310,6 @@ class Handler(BaseHTTPRequestHandler):
             code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
-        if path == "/api/reklama/paczka":          # ZIP posta/reklamy: grafiki, film, teksty i plik do wklejenia
-            q = parse_qs(url.query)
-            one = lambda k: (q.get(k) or [""])[0]
-            folder = ad_folder(one("project"), one("date"), one("kod"))
-            if not folder:
-                return self._send(404, "Nie ma folderu posta na ten dzień.", "text/plain; charset=utf-8")
-            import zipfile
-            import podglad
-            buf = io.BytesIO()
-            ok_ext = (".png", ".jpg", ".jpeg", ".webp", ".mp4", ".mov", ".md", ".txt", ".srt", ".vtt")
-            with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
-                raw = ""
-                for name in sorted(os.listdir(folder)):
-                    full = os.path.join(folder, name)
-                    if name.startswith(".") or os.path.islink(full) or not os.path.isfile(full):
-                        continue
-                    if not name.lower().endswith(ok_ext) or os.path.getsize(full) > 200 * 1024 * 1024:
-                        continue
-                    if name.startswith(("grafika-poprzednia", "wariant-")):
-                        continue
-                    z.write(full, name)
-                    if name == "post.md":
-                        with open(full, encoding="utf-8", errors="replace") as f:
-                            raw = f.read(20000)
-                tx = podglad.parse(raw)
-                lines = [("Tekst główny", tx["body"]), ("Nagłówek", tx["head"]), ("Opis", tx["desc"]), ("Przycisk", tx["cta"])]
-                z.writestr("do-wklejenia.txt", "\n\n".join("%s:\n%s" % (k, v) for k, v in lines if v) + "\n")
-            name = re.sub(r"[^A-Za-z0-9.-]+", "-", "%s-%s" % (one("kod") or "post", one("date")))[:60] + ".zip"
-            return self._send(200, buf.getvalue(), "application/zip",
-                              [("Content-Disposition", 'attachment; filename="%s"' % name), ("Cache-Control", "no-store")])
         if path == "/api/reklama/podglad":         # jeden PNG: Facebook, Instagram i Story obok siebie („Kopiuj obraz”)
             q = parse_qs(url.query)
             one = lambda k: (q.get(k) or [""])[0]
