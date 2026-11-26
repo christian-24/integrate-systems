@@ -2,7 +2,7 @@
 <style>
 /* Pulpit projektów: panel boczny (widoki + lista projektów z wyszukiwarką), obszar główny, szuflada szczegółów.
    Wygląd według ksiega/pulpit-projektow.html, dane z /api/data. Kontrakt: dashboard/PULPIT.md. */
-:root{/* podgląd jak w aplikacji Meta: zawsze jasny */--mx-blue:#1877f2;--mx-ink:#050505;--mx-line:#dadde1;--mx-mute:#65676b;--mx-sunk:#f0f2f5;--mx-btn:#e4e6eb;--mx-sep:#ced0d4;--mx-ig:#3797f0;--mx-gblue:#1a73e8;--mx-gline:#dadce0;--mx-av:#111;--mx-black:#000;--mx-white:#fff;--mx-ov:rgba(0,0,0,.55);--mx-shadow:0 20px 60px rgba(0,0,0,.4);--mx-st:rgba(255,255,255,.4);--mx-tsh:0 1px 2px rgba(0,0,0,.5);
+:root{--mx-sfa:#3a3f47;--mx-sfb:#0d0f12;/* podgląd jak w aplikacji Meta: zawsze jasny */--mx-blue:#1877f2;--mx-ink:#050505;--mx-line:#dadde1;--mx-mute:#65676b;--mx-sunk:#f0f2f5;--mx-btn:#e4e6eb;--mx-sep:#ced0d4;--mx-ig:#3797f0;--mx-gblue:#1a73e8;--mx-gline:#dadce0;--mx-av:#111;--mx-black:#000;--mx-white:#fff;--mx-ov:rgba(0,0,0,.55);--mx-shadow:0 20px 60px rgba(0,0,0,.4);--mx-st:rgba(255,255,255,.4);--mx-tsh:0 1px 2px rgba(0,0,0,.5);
   --bg:#f6f7f9; --surface:#ffffff; --sunk:#f0f2f5; --hover:#eef1f6; --line:#dde1e7; --line-2:#c9ced8;
   --ink:#1d2433; --ink-2:#465163; --ink-3:#5a6577; --accent:#2563c9; --accent-ink:#ffffff; --accent-soft:#e3ecfb;
   --l-grey-bg:#e4e7ec; --l-grey:#3b4454; --l-blue-bg:#dbe7fd; --l-blue:#1d4fa8; --l-green-bg:#d9f5e1; --l-green:#176a32;
@@ -3080,6 +3080,25 @@ details.mk-harm .mk-done,details.mk-harm>details{padding:0 var(--g-p) var(--g-s)
 .st-t td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
 .st-t td small{color:var(--ink-3)}
 @media (max-width:820px){.st-grid{grid-template-columns:minmax(0,1fr)}.st-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* film bez nagrania: story ze scenariusza */
+.os-sfilm{position:relative;aspect-ratio:9/16;background:radial-gradient(120% 80% at 30% 20%,var(--mx-sfa) 0%,var(--mx-sfb) 70%);color:var(--mx-white);overflow:hidden;display:grid;align-content:center}
+.os-fb .os-sfilm,.os-ig .os-sfilm{aspect-ratio:4/5}
+.os-sfull{height:100%}
+.os-sbars{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:3px}
+.os-sbars i{flex:1;height:3px;border-radius:2px;background:var(--mx-st)}.os-sbars i.done{background:var(--mx-white)}
+.os-sbars i.on{background:linear-gradient(90deg,var(--mx-white) 50%,var(--mx-st) 50%)}
+.os-shd{position:absolute;top:18px;left:10px;right:10px;display:flex;align-items:center;gap:8px;font-size:13px}.os-shd small{opacity:.75}
+.os-sbody{padding:0 22px;display:grid;gap:8px;text-align:center;justify-items:center}
+.os-sbig{margin:0;font-size:22px;line-height:1.25;font-weight:800;text-shadow:var(--mx-tsh)}
+.os-scta{background:var(--mx-white);color:var(--mx-ink);padding:10px 16px;border-radius:999px;font-size:17px}
+.os-sbody small{opacity:.75;font-size:12px}
+.os-sscene{display:grid;gap:6px;justify-items:center;border:1.5px dashed var(--mx-st);border-radius:12px;padding:16px 14px}
+.os-sscene p{margin:0;font-size:15px;line-height:1.35}
+.os-svar{position:absolute;bottom:44px;left:0;right:0;display:flex;justify-content:center;gap:6px;z-index:2}
+.os-svar button{min-width:34px;min-height:30px;border-radius:999px;border:1px solid var(--mx-st);background:transparent;color:var(--mx-white);font-weight:700;cursor:pointer}
+.os-svar button[aria-pressed=true]{background:var(--mx-white);color:var(--mx-ink)}
+.os-snav{position:absolute;top:60px;bottom:90px;width:40%;background:transparent;border:0;cursor:pointer;z-index:1}.os-sprev{left:0}.os-snext{right:0}
+.os-snote{position:absolute;bottom:8px;left:8px;right:8px;margin:0;text-align:center;font-size:11px;opacity:.8}
 /* oś publikacji (os-): rodzaj, stan, wyświetlenia z API, podgląd jak w aplikacji Meta */
 .os-leg{display:flex;flex-wrap:wrap;gap:var(--g-xs);margin:0 0 var(--g-m)}
 .os-b{display:inline-flex;align-items:center;flex:none;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap;border:1px solid transparent}
@@ -6764,7 +6783,8 @@ function osModal(){
   const tx=osParse(X&&X.text),pg=((D.publish||{}).fb||{pages:[]}).pages.find(g=>g.project===t.project),nm=pg?pg.name:pShort(P(t.project));
   const ini=esc(nm.split(/\s+/).filter(w=>/^[A-Za-zĄĆĘŁŃÓŚŹŻ&]/.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase());
   const img='/api/reklama/grafika?'+q,story=X&&X.story?img+'&wersja=story':img;
-  const media=typ==='film'?'<video class="os-media" src="/api/post/film?project='+encodeURIComponent(t.project)+'&date='+day+'" controls playsinline preload="metadata"></video>':
+  const noFilm=typ==='film'&&X&&!X.film;
+  const media=noFilm?osStory(t,X,nm,ini):typ==='film'?'<video class="os-media" src="/api/post/film?project='+encodeURIComponent(t.project)+'&date='+day+'" controls playsinline preload="metadata"></video>':
     '<img class="os-media" src="'+esc(img)+'" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'os-media os-nomedia\',textContent:\'Grafika jeszcze nie jest gotowa\'}))">';
   const body=tx.body||'Tekst posta pojawi się po przygotowaniu.',short=body.length>125?esc(body.slice(0,125))+'… <span class="os-more">Wyświetl więcej</span>':esc(body);
   const tab=(k,n)=>'<button type="button" class="seg" data-ostab="'+k+'" aria-pressed="'+(OS.tab===k)+'">'+n+'</button>';
@@ -6776,7 +6796,7 @@ function osModal(){
   else if(OS.tab==='ig')ph='<div class="os-ig"><div class="os-hd"><span class="os-av">'+ini+'</span><span><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b><small>'+(ad?'Sponsorowane':'')+'</small></span><span class="os-dots">···</span></div>'+media+
     (ad?'<div class="os-igcta"><span>'+esc(tx.cta)+'</span><span>›</span></div>':'')+
     '<div class="os-acts os-igacts"><span>♡</span><span>💬</span><span>➤</span><span class="os-sv">⌑</span></div><p class="os-txt"><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b> '+short.replace(/\n/g,' ')+'</p></div>';
-  else ph='<div class="os-st">'+(typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
+  else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
     (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':'')+'</div>';
   const S=osStats(t),link=(t.detail||{}).link||'';
   return '<div class="os-ov" data-osclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Podgląd w aplikacji Meta">'+
@@ -6788,6 +6808,31 @@ function osModal(){
     (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+'</div></div></div></div>';
 }
 const name0=t=>t.title.replace(/^(Opublikuj|Przygotuj)\s+\S+\s*/i,'');
+/* film bez nagrania: krótkie story ze scenariusza (hak, ujęcie, napis, wezwanie), plansze przełączane jak w Stories.
+   Warianty A/B/C ze scenariusza („- A · Hak: …”, „- A · Nagraj: …”, „- A · Napis: …”), „## Na koniec” jako wezwanie */
+function osScen(raw){
+  const V={},order=[];String(raw||'').split('\n').forEach(l=>{const m=/^-\s*([A-Z])\s*·\s*(Hak|Nagraj|Napis)\s*:\s*(.+)$/.exec(l.trim());
+    if(m){if(!V[m[1]]){V[m[1]]={};order.push(m[1])}V[m[1]][m[2].toLowerCase()]=m[3].replace(/^[„"]|[”"]$/g,'').trim()}});
+  const sec=n=>{const m=new RegExp('\n## '+n+'\\s*\n([\\s\\S]*?)(?=\n## |$)').exec(raw||'');return m?m[1].trim():''};
+  const end=sec('Na koniec')||'Napisz model auta';
+  if(!order.length){const hk=sec('Co powiedzieć')||sec('Hak'),nag=sec('Co nagrać').replace(/^- \[.\]\s*/gm,'');if(hk||nag){V.A={hak:hk,nagraj:nag,napis:''};order.push('A')}}
+  return {V,order,end};
+}
+function osStory(t,X,nm,ini,full){
+  const S=osScen(X&&X.scenario);
+  if(!S.order.length)return '<div class="os-media os-nomedia'+(full?' os-sfull':'')+'">Film jeszcze nie jest nagrany i nie ma scenariusza</div>';
+  const v=S.V[OS.sv]?OS.sv:S.order[0],x=S.V[v];
+  const F=[x.hak&&{k:'Hak',big:x.hak,sub:'lektor czyta hak'},x.nagraj&&{k:'Ujęcie',scene:x.nagraj},x.napis&&{k:'Napis',big:x.napis},{k:'Koniec',big:S.end,cta:1}].filter(Boolean);
+  const i=Math.min(OS.sf||0,F.length-1),f=F[i];
+  const bars='<div class="os-sbars">'+F.map((_,j)=>'<i class="'+(j<i?'done':j===i?'on':'')+'"></i>').join('')+'</div>';
+  const body=f.scene?'<div class="os-sscene"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3"/></svg><b>Ujęcie</b><p>'+esc(f.scene)+'</p></div>':
+    '<p class="os-sbig'+(f.cta?' os-scta':'')+'">'+esc(f.big)+'</p>'+(f.sub?'<small>'+esc(f.sub)+'</small>':'');
+  const vs=S.order.length>1?'<div class="os-svar" role="group" aria-label="Wariant">'+S.order.map(k=>'<button type="button" data-osv="'+k+'" aria-pressed="'+(k===v)+'">'+k+'</button>').join('')+'</div>':'';
+  return '<div class="os-sfilm'+(full?' os-sfull':'')+'">'+bars+'<div class="os-shd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>scenariusz · '+esc(f.k)+'</small></div>'+
+    '<div class="os-sbody">'+body+'</div>'+vs+
+    '<button type="button" class="os-snav os-sprev" data-osfr="-1" aria-label="Poprzednia plansza"></button><button type="button" class="os-snav os-snext" data-osfr="1" aria-label="Następna plansza"></button>'+
+    '<p class="os-snote">Film jeszcze nie jest nagrany: podgląd ze scenariusza ('+(i+1)+'/'+F.length+')</p></div>';
+}
 /* wybór posta z API: lista ostatnich postów strony Facebook i konta Instagram projektu */
 function osPicker(){
   const t=OS.pick&&D.tasks.find(x=>x.id===OS.pick);if(!t)return '';
@@ -6805,9 +6850,11 @@ function osPicker(){
     '<p class="note">Wybierz post, z którego panel ma czytać wyświetlenia (odczyt co 6 h przez 3 dni, potem raz dziennie).</p>'+b+'</div></div>';
 }
 document.addEventListener('click',ev=>{
+  const fr=ev.target.closest&&ev.target.closest('[data-osfr],[data-osv]');
+  if(fr){if(fr.dataset.osv){OS.sv=fr.dataset.osv;OS.sf=0}else OS.sf=Math.max(0,Math.min(3,(OS.sf||0)+(+fr.dataset.osfr)));osTick();render(true);return}
   const b=ev.target.closest&&ev.target.closest('[data-osopen],[data-osclose],[data-ostab],[data-ospick],[data-ospickclose],[data-osset],[data-osold]');if(!b)return;
   if(b.classList.contains('os-ov')&&b!==ev.target)return;   // klik w środek okna (także w inne przyciski) nie zamyka
-  if(b.dataset.osopen){OS.open=b.dataset.osopen;OS.tab='fb';render(true);return}
+  if(b.dataset.osopen){OS.open=b.dataset.osopen;const t=D.tasks.find(x=>x.id===OS.open);OS.tab=t&&osTyp(t)==='film'?'st':'fb';OS.sf=0;OS.sv='';osTick();render(true);return}
   if(b.dataset.osclose!=null){OS.open='';render(true);return}
   if(b.dataset.ostab){OS.tab=b.dataset.ostab;render(true);return}
   if(b.dataset.ospick){OS.pick=b.dataset.ospick;render(true);return}
@@ -6836,6 +6883,9 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
     .finally(()=>{b.disabled=false;b.textContent='Kopiuj obraz'});
 });
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&(OS.open||OS.pick)){OS.open='';OS.pick='';render(true)}});
+/* plansze story przełączają się same co 3,5 s (od ostatniego kliknięcia), z powrotem na początek po ostatniej */
+function osTick(){clearTimeout(OS.tm);OS.tm=setTimeout(()=>{if(!OS.open||!document.querySelector('.os-sfilm'))return;
+  const n=document.querySelectorAll('.os-sfilm .os-sbars i').length||4;OS.sf=((OS.sf||0)+1)%n;osTick();render(true)},3500)}
 
 async function wyLoad(pid,force){
   if(WY.busy[pid]||(WY.kl[pid]&&!force))return;

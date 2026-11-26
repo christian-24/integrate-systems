@@ -4300,11 +4300,15 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/reklama/tekst":           # treść post.md reklamy albo posta (podgląd jak w aplikacji Meta)
             q = parse_qs(url.query)
             folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
-            text = ""
+            text, scen = "", ""
             if folder and os.path.isfile(os.path.join(folder, "post.md")):
                 with open(os.path.join(folder, "post.md"), encoding="utf-8", errors="replace") as f:
                     text = f.read(20000)
-            return self._send(200 if folder else 404, json.dumps({"ok": bool(folder), "text": text,
+            if folder and os.path.isfile(os.path.join(folder, "scenariusz.md")):   # film bez nagrania: story ze scenariusza
+                with open(os.path.join(folder, "scenariusz.md"), encoding="utf-8", errors="replace") as f:
+                    scen = f.read(20000)
+            return self._send(200 if folder else 404, json.dumps({"ok": bool(folder), "text": text, "scenario": scen,
+                              "film": bool(folder and any(os.path.isfile(os.path.join(folder, n)) for n in ("film.mp4", "film.mov"))),
                               "story": bool(folder and os.path.isfile(os.path.join(folder, "grafika-story.png")))},
                               ensure_ascii=False), "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path == "/api/reklama/grafika":         # miniatura reklamy w przeglądzie kampanii; wersja=story: 9:16
