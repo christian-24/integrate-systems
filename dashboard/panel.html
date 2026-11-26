@@ -714,6 +714,14 @@ body.ed-open{overflow:hidden}
 .dv-c li span:first-of-type{flex:1;min-width:0;overflow-wrap:anywhere}
 .dv-b{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 .dv-l{font-size:13px;color:var(--ink-2)}
+.wd-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wd-bar .wd-t{flex:1 1 auto;min-width:0;color:var(--ink)}
+.wd-bar.bad .wd-t,.wd-bar.warn .wd-t{color:inherit}
+.wd-bar .wd-x{font-size:18px;line-height:1;padding:0 4px;min-width:28px;min-height:28px}
+.wd-fails{display:grid;gap:8px}
+.wd-fl li>div{display:grid;gap:4px;min-width:0;flex:1}
+.wd-fl .res{font-size:12px;max-height:120px}
+@media (max-width:620px){.wd-bar .wd-x{min-width:40px;min-height:40px}}
 .rs-row{display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;font-size:13px}
 .rs-row .track{height:10px}
 .rs-v{white-space:nowrap;color:var(--ink-2)}
@@ -7762,27 +7770,74 @@ function ghPanel(){
     '<li><div><b>'+esc(p.name)+'</b><div class="s">'+ghLine(p)+'</div></div><div class="r"><a class="btn sec sm" href="'+esc(phref(p))+'" data-pjgo="pcode">Połączenia</a></div></li>').join('')+
     '</ul><p class="note ds-pad">Wysyłanie na GitHub i usuwanie kopii: strona projektu, zakładka Połączenia.</p></section>';
 }
+/* pasek wdrożenia na górze każdego widoku: etap z D.deploy.progress (server.deploy_progress, z stan.json i dziennika
+   wdroz-panel.sh). Widoczny, gdy są zmiany do wdrożenia, wdrożenie trwa albo się nie udało; „gotowe” przez 2 min
+   albo do zamknięcia. Model: {t: tekst bez „Wdrożenie:”, cls, on (trwa), x (można zamknąć), key, left (ms do zniknięcia)} */
+const WD_OK_MS=120000;
+function wdFailT(p,L){
+  const t=p.tests,it=t&&Array.isArray(t.items)?t.items:[],n=t?+t.failed||it.length:0;
+  if(n)return n+' '+pl(n,'test','testy','testów')+(it[0]?' ('+it[0].name+')':'');
+  return String(L.text||'błąd').replace(/\s*\(dziennik wdrożenia\)$/,'');
+}
+function wdModel(d,now){
+  const p=d&&d.progress;if(!p||typeof p!=='object')return null;
+  const L=d.last||{},n=+d.ahead||0,at=tOf(p.since),hm=at?hhmm(at):'';
+  const key=p.stage+'|'+(L.at||'')+'|'+n;
+  switch(p.stage){
+    case 'pending':return n?{t:n+' '+pl(n,'zmiana czeka','zmiany czekają','zmian czeka')+(d.auto?' na start':' na wdrożenie')+(p.previous==='error'||p.previous==='rolledback'?' · poprzednie nieudane':p.previous==='stalled'?' · poprzednie przerwane':''),cls:'',key:key}:null;
+    case 'queued':return {t:'w kolejce',cls:'',on:1,key:key};
+    case 'check':return {t:'sprawdzanie zmian',cls:'',on:1,key:key};
+    case 'tests':return {t:'testy w toku'+(hm?' od '+hm:''),cls:'',on:1,key:key};
+    case 'agents':{const end=at&&p.agentsMax?hhmm(new Date(at.getTime()+p.agentsMax*60000)):'';
+      return {t:'czeka na agentów'+(p.agents?' ('+p.agents+' w toku)':'')+(end?', najdłużej do '+end:''),cls:'warn',on:1,key:key}}
+    case 'merge':case 'restart':case 'running':return {t:'scalanie i restart',cls:'',on:1,key:key};
+    case 'ok':{const left=at?WD_OK_MS-(now-at.getTime()):0;return left>0?{t:'gotowe'+(hm?' '+hm:''),cls:'ok',x:1,key:key,left:left}:null}
+    case 'error':case 'rolledback':return n?{t:(p.stage==='rolledback'?'cofnięte: ':'nieudane: ')+wdFailT(p,L),cls:'bad',x:1,key:key}:null;
+    case 'stalled':return {t:'brak postępu od '+(hm||'?')+' (wdrożenie przerwane?)',cls:'warn',key:key};
+  }
+  return null;
+}
+function wdHidden(k){if(A.wdHide===k)return true;try{return localStorage.getItem('panel-wd-ukryj')===k}catch(e){return false}}
+function wdBar(){
+  const d=D.deploy,m=wdModel(d,Date.now());clearTimeout(A.wdT);
+  if(!m||(m.x&&wdHidden(m.key)))return '';
+  if(m.left)A.wdT=setTimeout(renderTop,m.left+500);
+  const dot=m.cls==='ok'?'ok':m.cls==='bad'?'bad':m.cls==='warn'?'warn':'run';
+  return '<div class="banner wd-bar '+m.cls+'" role="status"><i class="dot '+dot+'" aria-hidden="true"></i><span class="wd-t">Wdrożenie: '+esc(m.t)+'</span>'+
+    '<a class="navlk" href="#koszty?k=rozwoj" data-wdgo="1">Szczegóły</a>'+(m.x?'<button type="button" class="lk wd-x" data-wdx="'+esc(m.key)+'" aria-label="Zamknij pasek wdrożenia" title="Zamknij">×</button>':'')+'</div>';
+}
+/* Serwer → Rozwój panelu przy nieudanym wdrożeniu: testy z błędem i pierwsze linie błędu z dziennika, bez rozwijania */
+function wdFails(d){
+  const t=d.progress&&d.progress.tests,it=t&&Array.isArray(t.items)?t.items:[];
+  if(!it.length)return '';
+  const n=+t.failed||it.length,rest=Math.max(0,n-it.length);
+  return '<div class="wd-fails"><p class="dv-l"><b>'+n+' '+pl(n,'test nie przeszedł','testy nie przeszły','testów nie przeszło')+'</b>'+(t.ran?' z '+t.ran:'')+':</p><ul class="dv-c wd-fl">'+
+    it.map(i=>'<li><div><b>'+esc(i.name)+'</b> <span class="muted">'+esc(i.test)+'</span>'+(i.lines&&i.lines.length?'<pre class="res">'+esc(i.lines.join('\n'))+'</pre>':'')+'</div></li>').join('')+'</ul>'+
+    (rest?'<p class="dv-l muted">'+(t.named>it.length?'Pozostałe ('+rest+') w dzienniku wdrożenia.':'Nazw pozostałych ('+rest+') nie ma w dzienniku: zapisuje on tylko 40 ostatnich linii wyniku testów.')+'</p>':'')+'</div>';
+}
 /* rozwój panelu na serwerze (ROZWOJ.md): zmiany na gałęzi rozwoj, panel testowy, przycisk „Wdróż” z potwierdzeniem */
-const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
+const WDS={queued:['blue','w kolejce'],running:['blue','trwa'],waiting:['yellow','czeka na agentów'],ok:['green','wdrożono'],error:['red','nieudane'],rolledback:['yellow','cofnięte']};
 function devPanel(){
   const d=D.deploy;if(!d)return '';
-  const L=d.last||null,on=!!(L&&(L.state==='queued'||L.state==='running'))||!!A.busy.wd,cm=Array.isArray(d.commits)?d.commits:[];
-  if(L&&!(L.state==='queued'||L.state==='running'))A.busy.wd=false;
+  /* waiting (czeka na agentów) też trwa; stan bez postępu od 40 min (stalled) już nie: można wdrożyć ponownie */
+  const wm=wdModel(d,Date.now()),stl=!!(d.progress&&(d.progress.stage==='stalled'||d.progress.previous==='stalled'));
+  const L=d.last||null,run=!stl&&!!(L&&(L.state==='queued'||L.state==='running'||L.state==='waiting')),on=run||!!A.busy.wd,cm=Array.isArray(d.commits)?d.commits:[];
+  if(L&&!run)A.busy.wd=false;
   const bad=!!(L&&!on&&(L.state==='error'||L.state==='rolledback')),can=!!d.ahead&&!d.error;
   /* jedno zdanie stanu; przycisk tylko, gdy jest co wdrożyć; reszta (panel testowy, dziennik, instrukcja) zwinięta */
   /* zwinięte (dla programisty); otwarte, gdy jest co wdrożyć, trwa wdrożenie albo ostatnie się nie udało */
   const dvo=!!d.ahead||on||bad||!!A.wdConf||!!(A.agDet&&A.agDet.dev);
-  let h='<details class="panel ag-ses" id="rozwoj" data-agdet="dev"'+(dvo?' open':'')+'><summary><b>Rozwój panelu</b><span class="muted">dla programisty</span></summary><div class="pad dv">';
+  let h='<details class="panel ag-ses" id="srv-rozwoj" tabindex="-1" data-agdet="dev"'+(dvo?' open':'')+'><summary><b>Rozwój panelu</b><span class="muted">dla programisty</span></summary><div class="pad dv">';
   if(d.error)h+='<p class="warn">'+esc(d.error)+'</p>';
   /* jedno zdanie: czy jest co wdrożyć; zmiany, których wersja rozwojowa nie ma, tylko w szczegółach (właściciel nic z nimi nie robi) */
   else h+='<p>'+(d.ahead?'<b>'+d.ahead+'</b> '+pl(d.ahead,'zmiana czeka','zmiany czekają','zmian czeka')+' na wdrożenie'+(d.stat?' <span class="muted">('+esc(d.stat)+')</span>':'')+'.':'Nic nie czeka na wdrożenie. Nie musisz nic robić.')+'</p>';
   if(cm.length)h+='<details class="ds-det"><summary>Lista zmian <small>· '+cm.length+'</small></summary><ul class="dv-c">'+cm.slice(0,10).map(c=>'<li><code>'+esc(c.sha)+'</code><span>'+esc(c.subject)+'</span><span class="muted">'+esc(whenT(c.at))+'</span></li>').join('')+(cm.length>10?'<li class="muted">i '+(cm.length-10)+' więcej</li>':'')+'</ul></details>';
   const b=[];
-  if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(L&&L.text?': '+esc(L.text):'')+'</span>');
+  if(on)b.push('<span class="lz blue" role="status">Wdrożenie trwa'+(wm&&wm.on?': '+esc(wm.t):L&&L.text?': '+esc(L.text):'')+'</span>');
   else if(A.wdConf)b.push('<span>Testy, scalenie, restart panelu (chwila przerwy), kontrola; przy błędzie powrót do obecnej wersji.</span><button class="btn sm" data-ag="wd-yes" data-k="wd-yes">Wdróż teraz</button><button class="btn sec sm" data-ag="wd-no" data-k="wd-no">Anuluj</button>');
   else if(can)b.push('<button class="'+(d.auto?'btn sec sm':'btn sm')+'" data-ag="wd" data-k="wd">'+(bad?'Wdróż ponownie':d.auto?'Wdróż teraz':'Wdróż')+'</button>');
   if(b.length)h+='<div class="row dv-b">'+b.join('')+'</div>';
-  if(bad){const w=WDS[L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'}
+  if(bad){const w=WDS[L.state];h+='<p class="dv-l">Ostatnie wdrożenie: <span class="lz '+w[0]+'">'+esc(w[1])+'</span> '+esc(whenT(L.at))+(L.text?' · '+esc(L.text):'')+'</p>'+wdFails(d)}
   const op=bad||!!(A.agDet&&A.agDet.dvdet);
   h+='<details class="ds-det" data-agdet="dvdet"'+(op?' open':'')+'><summary>Panel testowy i wdrożenia</summary>';
   if(d.behind)h+='<p class="dv-l">Działający panel ma '+d.behind+' '+pl(d.behind,'zmianę','zmiany','zmian')+', których wersja rozwojowa jeszcze nie ma; następne wdrożenie je połączy.</p>';
@@ -12305,6 +12360,7 @@ function renderTop(){
   const b=[];
   if(offline)b.push('<div class="banner bad">'+offBanner()+'</div>');
   else{const st=staleT();if(st)b.push('<div class="banner warn">'+esc(cap(st))+'. Agenci i Teraz mogą być nieaktualne; szczegóły w logu serwera.</div>')}
+  if(LIVE&&D){const w=wdBar();if(w)b.push(w)}
   setHtml($('#banner'),b.join(''));
 }
 /* komunikat zapisu: toast nad szufladą (z-index 40, role="status", aria-live), domyślnie 7 s; klik ukrywa */
@@ -12735,7 +12791,7 @@ const idle=()=>{if(!pending){A.starting={};A.busy.pm=A.busy.check=A.busy.add=fal
    Blokady pokazywałyby stare „nagrywa się film” i licznik „Twoje wstrzymują” */
 function applyAgents(raw){
   FX=null;
-  D.agents=normAgents(raw.agents);D.activity=normActivity(raw.activity);D.generatedAt=raw.generatedAt||D.generatedAt;D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;
+  D.agents=normAgents(raw.agents);D.activity=normActivity(raw.activity);if(raw.deploy&&typeof raw.deploy==='object'&&!Array.isArray(raw.deploy))D.deploy=raw.deploy;D.generatedAt=raw.generatedAt||D.generatedAt;D.stale=raw.stale&&typeof raw.stale==='object'?raw.stale:null;
   const m={};(raw.tasks||[]).forEach(z=>{m[z.id+'\n'+z.title]=z});
   D.tasks.forEach(t=>{const z=m[t.id+'\n'+t.title];if(z){t.runId=z.runId||'';t.runBlock=z.runBlock||''}});
   if(raw.pmNote)D.pmNote={date:raw.pmNote.date,text:String(raw.pmNote.text||''),at:typeof raw.pmNote.at==='string'?raw.pmNote.at:''};
@@ -12792,6 +12848,10 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   try{i.showPicker()}catch(e){dpkShow(i)}},true);
 /* bez showPicker (starsze przeglądarki): ukryte pole staje się widoczne i dostaje fokus */
 function dpkShow(i){i.removeAttribute('aria-hidden');i.tabIndex=0;i.style.cssText='position:static;opacity:1;pointer-events:auto;width:auto;height:auto';try{i.focus();i.click()}catch(e){}}
+/* pasek wdrożenia: „Szczegóły” rozwija Serwer → Rozwój panelu (#koszty?k=rozwoj przewija do sekcji), × ukrywa ten stan */
+document.addEventListener('click',ev=>{const t=ev.target;if(!t.closest)return;
+  if(t.closest('[data-wdgo]')){(A.agDet||(A.agDet={})).dev=true;if(D&&D.deploy&&D.deploy.progress&&/^(error|rolledback)$/.test(D.deploy.progress.stage))A.agDet.dvdet=true;return}
+  const x=t.closest('[data-wdx]');if(!x)return;ev.preventDefault();A.wdHide=x.dataset.wdx;try{localStorage.setItem('panel-wd-ukryj',A.wdHide)}catch(e){}renderTop()},true);
 /* Księga → „Poproś w rozmowie o projekcie”: rozwinięta rozmowa, kursor w polu. „Kod i pliki” (data-pjgo="pcode", stare
    odnośniki): zakładka Połączenia z rozwiniętą kartą GitHub (grupa projekt) */
 document.addEventListener('click',ev=>{const a=ev.target.closest&&ev.target.closest('[data-pjgo]');if(!a)return;
