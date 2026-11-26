@@ -4,6 +4,12 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-26: Plan marketingu na grudzień: podstrony, podział budżetu testu, karuzele
+- Kontekst: zadanie „Przygotuj plan marketingowy według strategii z 26.11”. Strategia wymaga podstrony dla każdej frazy Google Ads, ale strona to jeden ekran bez podstron; budżet 300 zł czeka na właściciela; w karcie są otwarte pytania 8 i 9, więc nowego pytania nie zadaję.
+- Decyzja: (1) adresy podstron: /planowanie-produkcji, /integracja-ksef, /makra-excel, /integracja-baselinker na oprogramowani.com; reklamy nie ruszają, dopóki podstrony nie działają; (2) 4 osobne kampanie po 5 zł dziennie (280 zł w 14 dni), 20 zł zapasu na przesunięcie po 7 dniach; (3) karuzele scenek zastępują 6 postów statycznych z kampanii w tych samych datach, bez nazw programów, firm i cen; szósta karuzela dotyczy linii IT i sprzęt; (4) zapytanie liczy się, gdy ktoś sam pisze albo dzwoni z prośbą o wycenę lub demo, kontakt lokalny to rozmowa z osobą decyzyjną albo wizyta z kartką; (5) telefon do firm oznaczony jako niesprawdzony prawnie, tak jak e-maile w strategii.
+- Skutki: plik marketing-plan-2026-12.md; przebudowa strony musi dać cztery podstrony z formularzem; panel potrzebuje zadań z licznikami zapytania, kontakty, dema, zlecenia. Wszystko odwracalne, nic nie uruchomione.
+- Kto: agent
+
 ## 2026-11-26: Strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty
 - Kontekst: od sierpnia integracje ERP dały 0 klientów; badanie rynku 26.11 (100 zleceń IT z Useme, 40 fraz z planera Google Ads) pokazało, że ludzie szukają funkcji („program do planowania produkcji”, „program magazynowy”, „ksef integracja”, „makra excel”), a nie „programu na zamówienie”, i że klienci sami proszą o działające demo.
 - Decyzja (właściciel): przyjęta strategia z pliku strategia-2026-11-26.md: obietnica „Najpierw demo. Potem płacisz.”, cztery linie (planowanie produkcji; integracje i dodatki Optima/Subiekt/enova/BaseLinker/Allegro/KSeF; Excel bez ręcznej pracy; IT i sprzęt jako usługa uzupełniająca), bez ogólnego CRM, stron i aplikacji. Kontakt: kontakt@oprogramowani.com.

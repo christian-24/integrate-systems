@@ -187,6 +187,12 @@ termin: 2026-12-18
   materiał: kampanie/pozyskanie-klientow.md
   materiał: DECYZJE.md
   materiał: research/analiza-rynku-zlecen-2026-08.md
-  - [ ] Przeczytaj strategię, kampanię i decyzje z 26.11
-  - [ ] Napisz sekcje 1–5 planu; liczby tylko z materiałów, bez wymyślonych wyników
-  - [ ] W zostało: wypisz, co wymaga decyzji właściciela (budżet, publikacja, kontakt z firmami)
+  - [x] Przeczytaj strategię, kampanię i decyzje z 26.11
+  - [x] Napisz sekcje 1–5 planu; liczby tylko z materiałów, bez wymyślonych wyników
+  - [x] W zostało: wypisz, co wymaga decyzji właściciela (budżet, publikacja, kontakt z firmami)
+  poprawka: Poprzednie uruchomienie przerwał restart panelu (2026-11-26 20:12). Twoja dotychczasowa praca jest na gałęzi agent/2026-11-26-przygotuj-plan-marketingowy-wedlug-strat: sprawdź ją (git log, git diff) i dokończ zadanie.
+  wynik: marketing-plan-2026-12.md: (1) Google Ads: 4 kampanie z frazami, po 15 nagłówków i 4 opisy, słowa wykluczające, adresy podstron, 5 zł dziennie na kampanię (280 zł w 14 dni, 20 zł zapasu); (2) Useme: 4 szablony z demo przed płatnością (do 900 znaków) i słowa do szukania zleceń; (3) scenariusz rozmowy na 2 min, kartka A5 i 8 kryteriów wyboru 20 firm; (4) 6 karuzel po 4 plansze w datach postów z kampanii; (5) miary na 30 dni z definicjami i licznikami w panelu; ustalenia w DECYZJE.md (2026-11-26)
+  decyzja: budżet testu Google Ads 300 zł na 14 dni i dzień startu; czy karuzele zastępują 6 postów z kampanii (2–16.12); czy dzwonić do firm bez ich zgody, czy zacząć od wizyt
+  zostało: decyzje właściciela: budżet 300 zł (dziś 0 zł), publikacja karuzel i reklam, oferty na Useme, telefon i wizyty w 20 firmach (wybór z listy LeadyV2 na Twoim dysku); reklamy nie mogą ruszyć, dopóki na stronie nie ma czterech podstron (dziś jest jedna strona); nie sprawdzono prawnie, czy wolno dzwonić z ofertą do firm bez zgody; liczniki zapytania, kontakty, dema, zlecenia nie mają jeszcze zadań w panelu
+  zmiany: poprzednia gałąź nie miała żadnej zapisanej pracy, więc plan powstał od początku; wszystkie pięć sekcji gotowe; długości nagłówków, opisów i szablonów policzone ręcznie, jeden za długi nagłówek skrócony
+  następne: Załóż zadania z licznikami zapytania, kontakty, dema i zlecenia według sekcji 5 planu marketingu | kto: agent | kiedy: 2026-11-27

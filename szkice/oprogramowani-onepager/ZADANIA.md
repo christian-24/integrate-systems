@@ -126,8 +126,9 @@
   - [x] W wynik: wpisz, co jest na karcie i gdzie leżą pliki
   wynik: w folderze wizytowka/ (gałąź agent/2026-11-23-przygotuj-wizytowke-oprogramowani-dla-kr, commit ae35241) są wizytowka.pdf (2 strony 91×61 mm: 85×55 mm plus 3 mm spadu, tekst 7 mm od cięcia), przod.png i tyl.png (1075 px, 300 dpi) oraz wizytowka.html. Przód: logo, „Budujemy integracje i małe automaty.”, „Pilnujemy projektu, który robi ktoś inny.” i zdanie o zamówieniach, stanach, fakturach i etykietach (teksty z sekcji oferty na stronie). Tył: Krystian Stryjakiewicz, „Procesy i rozmowa z klientem”, 663 206 373, kontakt@oprogramowani.com, oprogramowani.com, logo, NIP. Wszystkie dane ze strony.
   zostało: telefon i e-mail to ogólne dane firmy ze strony; osobnych dla Krystiana strona nie podaje.
-- [ ] Strona: nowa strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+- [~] Strona: nowa strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
   wykonawca: tylko claude
+  wygląd: bez zmian (właściciel 26.11: obecny wygląd mu się podoba). Te same kolory, czcionki, odstępy, komponenty i animacje; nowe elementy (kafelki, podstrony, sekcja kroków) budujesz z istniejących komponentów i stylów strony; nie przebudowujesz interfejsu, zmieniasz treść i kolejność sekcji
   cel: strona oprogramowani.com zgodna ze strategią przyjętą przez właściciela 26.11 (/home/panel/projekty/company-audits/strategia-2026-11-26.md); różnice względem obecnej wersji opisane w krokach poniżej; najpierw PL, pozostałe języki w następnym zadaniu
   gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel); zrzuty 390 i 1440 px strony głównej i każdej z 4 podstron obejrzane; w wynik: lista zmian sekcja po sekcji (było → jest); żadne dane firmy, ceny, opinie ani liczby nie są wymyślone; brakujące dane zostają jako [UZUPEŁNIJ]
   materiał: site/src/Strona.jsx
