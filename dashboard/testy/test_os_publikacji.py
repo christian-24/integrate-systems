@@ -25,6 +25,19 @@ class Os(unittest.TestCase):
         self.assertNotIn("mkCampList", body)
         self.assertIn("Kanały i studio", body)
 
+    def test_dwie_zakladki_bez_opisu(self):
+        self.assertIn("mkSub(", fn("wyTab"))
+        self.assertIn("stView(", fn("wyTab"))
+        self.assertIn("'Oś czasu'", HTML)
+        self.assertIn("'Statystyki'", HTML)
+        self.assertNotIn("Co i kiedy wychodzi albo wyszło", HTML)
+
+    def test_statystyki_reklamy_przed_postami(self):
+        body = fn("stOne")
+        self.assertLess(body.index("Reklamy"), body.index("Posty i filmy"))
+        self.assertLess(body.index("'Google Ads'"), body.index("'Meta'"))
+        self.assertIn("'facebook','instagram'", body)
+
     def test_rodzaje_i_podglad(self):
         for txt in ("'Film'", "'Post'", "'Reklama Meta'", "'Reklama Google'", "data-ospick", "data-ostab", "Sponsorowane"):
             self.assertIn(txt, HTML)
