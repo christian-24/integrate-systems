@@ -215,3 +215,57 @@ def ads_insights(act, token, since, until, http=None, daily=True):
         d = graph(nxt, {}, http)
         rows += d.get("data") or []
     return rows
+
+
+# ---------- połączenie pozycji osi publikacji z istniejącą reklamą (tylko odczyt) ----------
+ADS_MANAGER = "https://adsmanager.facebook.com/adsmanager/manage/ads"
+AD_LINK = re.compile(r"^https://adsmanager\.facebook\.com/adsmanager/manage/ads\?(?:[^#\s]*&)?selected_ad_ids=(\d{1,30})(?:[&#]|$)")
+AD_LIST_FIELDS = "id,name,effective_status,created_time,campaign{name},creative{thumbnail_url,title,body}"
+AD_STATES = {"ACTIVE": "aktywna", "PAUSED": "wstrzymana", "CAMPAIGN_PAUSED": "kampania wstrzymana",
+             "ADSET_PAUSED": "zestaw wstrzymany", "PENDING_REVIEW": "w weryfikacji", "IN_PROCESS": "w weryfikacji",
+             "PREAPPROVED": "wstępnie zatwierdzona", "DISAPPROVED": "odrzucona", "WITH_ISSUES": "z problemami",
+             "PENDING_BILLING_INFO": "brak płatności", "ARCHIVED": "zarchiwizowana", "DELETED": "usunięta"}
+
+
+def ad_link(act, ad_id):
+    """Link reklamy w Menedżerze reklam: zapisany w polu „link:” pozycji osi (jak link posta)."""
+    return "%s?%s" % (ADS_MANAGER, urllib.parse.urlencode({"act": str(act).replace("act_", ""), "selected_ad_ids": ad_id}))
+
+
+def ad_link_id(link):
+    """Id reklamy z linku Menedżera reklam albo ""."""
+    m = AD_LINK.match(str(link or "").strip())
+    return m.group(1) if m else ""
+
+
+def ad_list(act, token, http=None, limit=50):
+    """Ostatnie reklamy konta act_… (GET /act_…/ads): [{"id", "nazwa", "stan", "data", "kampania", "miniatura", "tytul", "tekst", "link"}]."""
+    d = graph("%s/ads" % act, {"fields": AD_LIST_FIELDS, "limit": limit, "access_token": token}, http)
+    out = []
+    for a in d.get("data") or []:
+        aid = str(a.get("id") or "")
+        if not aid.isdigit():
+            continue
+        cr = a.get("creative") or {}
+        st = str(a.get("effective_status") or "")
+        thumb = str(cr.get("thumbnail_url") or "")
+        out.append({"id": aid, "nazwa": str(a.get("name") or "")[:200], "stan": AD_STATES.get(st, st.lower().replace("_", " ")),
+                    "aktywna": st == "ACTIVE", "data": str(a.get("created_time") or "")[:10],
+                    "kampania": str((a.get("campaign") or {}).get("name") or "")[:200],
+                    "miniatura": thumb if thumb.startswith("https://") else "",
+                    "tytul": str(cr.get("title") or "")[:140], "tekst": str(cr.get("body") or "")[:140],
+                    "link": ad_link(act, aid)})
+    out.sort(key=lambda x: x["data"], reverse=True)
+    return out[:limit]
+
+
+def ad_totals(ad_id, token, http=None):
+    """Nazwa i wyniki jednej reklamy od początku (gdy panel nie ma jej dziennych wierszy): {"nazwa", "stan", liczby}."""
+    d = graph(str(ad_id), {"fields": "name,effective_status,insights.date_preset(maximum){spend,impressions,reach,clicks,actions}",
+                           "access_token": token}, http)
+    r = ((d.get("insights") or {}).get("data") or [{}])[0]
+    st = str(d.get("effective_status") or "")
+    return {"nazwa": str(d.get("name") or "")[:200], "stan": AD_STATES.get(st, st.lower().replace("_", " ")),
+            "wydano": round(_num(r.get("spend")), 2), "wyswietlenia": int(_num(r.get("impressions"))),
+            "zasieg": int(_num(r.get("reach"))), "klikniecia": int(_num(r.get("clicks"))),
+            "rozmowy": int(_action(r.get("actions"), CONVERSATION))}
