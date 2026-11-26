@@ -6797,8 +6797,8 @@ function osModal(){
   else if(OS.tab==='ig')ph='<div class="os-ig"><div class="os-hd"><span class="os-av">'+ini+'</span><span><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b><small>'+(ad?'Sponsorowane':'')+'</small></span><span class="os-dots">···</span></div>'+media+
     (ad?'<div class="os-igcta"><span>'+esc(tx.cta)+'</span><span>›</span></div>':'')+
     '<div class="os-acts os-igacts"><span>♡</span><span>💬</span><span>➤</span><span class="os-sv">⌑</span></div><p class="os-txt"><b>'+esc(nm.toLowerCase().replace(/[^a-z0-9ąćęłńóśźż]+/g,''))+'</b> '+short.replace(/\n/g,' ')+'</p></div>';
-  else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
-    (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':'')+'</div>';
+  else ph='<div class="os-st">'+(noFilm?osStory(t,X,nm,ini,true):typ==='film'?media:'<img class="os-stimg" src="'+esc(story)+'" alt="">')+(noFilm?'':'<div class="os-stbar"><i></i></div><div class="os-sthd"><span class="os-av">'+ini+'</span><b>'+esc(nm)+'</b><small>'+(ad?'Sponsorowane':'')+'</small></div>'+
+    (ad?'<div class="os-stcta"><span>⌃</span>'+esc(tx.cta)+'</div>':''))+'</div>';
   const S=osStats(t),link=(t.detail||{}).link||'';
   return '<div class="os-ov" data-osclose="1"><div class="os-dlg" role="dialog" aria-modal="true" aria-label="Podgląd w aplikacji Meta">'+
     '<div class="os-dh"><b>'+esc(t.title)+'</b><button type="button" class="btn sec sm" data-osclose="1" aria-label="Zamknij">✕</button></div>'+
