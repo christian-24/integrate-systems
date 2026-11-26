@@ -183,7 +183,7 @@
   wynik: site/src/jezyki/tresc-de.js, tresc-it.js, tresc-en.js przepisane na układ PL: „Erst die Demo. Dann zahlen Sie.” / „Prima la demo. Poi paghi.” / „Demo first. Then you pay.”, 4 kafelki, „Jak to działa” (4 kroki + wiadomość), ceny jak w PL, „To programy dla Ciebie”, kontakt z kontakt@oprogramowani.com; podstrony: DE /de/produktionsplanung, /de/integrationen, /de/excel, /de/it; IT /it/pianificazione-produzione, /it/integrazioni, /it/excel, /it/informatica; EN /en/production-planning, /en/integrations, /en/excel, /en/it; tytuły podstron z frazą w języku wersji (np. „Software für Produktionsplanung”, „Integrazione Optima, Subiekt, BaseLinker e KSeF”, „Excel macros and automation”); kwot nie dodano, brakujące dane jako żółte [UZUPEŁNIJ] jak w PL; site/src/Strona.jsx rozpoznaje podstronę z cennikiem po polu w treści, nie po polskim adresie; wersja robocza buduje się (npm run build:panel, 12 podstron DE/IT/EN); zrzuty 390 i 1440 px /de, /it, /en oraz /en/integrations i /it/pianificazione-produzione obejrzane: układ jak w PL; jedną usterkę (DE, „Produktionsplanung” łamane w środku słowa na komputerze) poprawiłem
   zostało: zrzutami obejrzałem 2 z 12 podstron DE/IT/EN (pozostałe mają ten sam układ, zbudowały się, ale ich nie oglądałem); tłumaczenia zrobione przeze mnie, nikt mówiący tymi językami od urodzenia ich nie sprawdzał
   następne: Strona: hreflang między podstronami PL/DE/IT/EN | kto: agent | kiedy: 2026-11-28
-- [~] Strona: cała strona główna według nowej strategii (stare sekcje ERP, cennik, projekty) | kto: agent | gdzie: chmura | kiedy: 2026-11-26 | wymaga: odbiór
+- [x] Strona: cała strona główna według nowej strategii (stare sekcje ERP, cennik, projekty) | kto: agent | gdzie: chmura | kiedy: 2026-11-26
   wykonawca: tylko claude
   wygląd: bez zmian; te same kolory, czcionki, komponenty; sekcje usuwasz albo zmieniasz treść, nie przebudowujesz interfejsu
   cel: po zadaniu „Strona: nowa strategia” nagłówek, kafelki, kroki i podstrony są nowe, ale niżej na stronie głównej zostały sekcje ze starej strategii (integracje ERP, ceny, usługi doradcze); właściciel 26.11: strona ma w całości mówić nową strategią z /home/panel/projekty/company-audits/strategia-2026-11-26.md, we wszystkich językach (PL, DE, IT, EN)
@@ -191,10 +191,12 @@
   materiał: site/src/Strona.jsx
   materiał: site/src/jezyki/
   materiał: site/src/dane.js
-  - [ ] Usuń sekcję „systemy” (lista ERP) i sekcję kalkulatora („policz”) ze strony głównej
-  - [ ] Zastąp stary cennik krótką sekcją „Ile to kosztuje”: wycena 0 zł, demo 0 zł, wdrożenie za stałą cenę ustaloną po demie; bez kwot (nowych nie wymyślaj)
-  - [ ] Usuń usługi doradcze (przegląd oferty innego wykonawcy, karta projektu, prowadzenie cudzego projektu) ze wszystkich sekcji i stopki
-  - [ ] Sekcję „pewność” przepisz pod demo przed płatnością i cztery linie oferty, bez ERP
-  - [ ] Pytania (FAQ): 5 pytań pod nową strategię: ile trwa demo; co, jeśli demo mi nie pasuje; jak liczycie cenę wdrożenia; czy muszę zmieniać program, którego używam; czy robicie też IT i sprzęt
-  - [ ] Teksty prawne i warunki: „producent ERP” zmień na „producent programu”; sens warunków bez zmian
-  - [ ] To samo w DE, IT i EN; zbuduj, zrób zrzuty całej strony, obejrzyj każdą sekcję, popraw
+  - [x] Usuń sekcję „systemy” (lista ERP) i sekcję kalkulatora („policz”) ze strony głównej
+  - [x] Zastąp stary cennik krótką sekcją „Ile to kosztuje”: wycena 0 zł, demo 0 zł, wdrożenie za stałą cenę ustaloną po demie; bez kwot (nowych nie wymyślaj)
+  - [x] Usuń usługi doradcze (przegląd oferty innego wykonawcy, karta projektu, prowadzenie cudzego projektu) ze wszystkich sekcji i stopki
+  - [x] Sekcję „pewność” przepisz pod demo przed płatnością i cztery linie oferty, bez ERP
+  - [x] Pytania (FAQ): 5 pytań pod nową strategię: ile trwa demo; co, jeśli demo mi nie pasuje; jak liczycie cenę wdrożenia; czy muszę zmieniać program, którego używam; czy robicie też IT i sprzęt
+  - [x] Teksty prawne i warunki: „producent ERP” zmień na „producent programu”; sens warunków bez zmian
+  - [x] To samo w DE, IT i EN; zbuduj, zrób zrzuty całej strony, obejrzyj każdą sekcję, popraw
+  wynik: strona główna PL/DE/IT/EN od góry (było → jest): Wstęp „Najpierw demo. Potem płacisz.” → bez zmian; Oferta (4 kafelki) → bez zmian; Jak to działa (4 kroki + wiadomość) → bez zmian; Oferta i ceny (5 pozycji, integracja od 3 500 zł) → „Ile to kosztuje”: bezpłatna wycena 0 zł, demo 0 zł, wdrożenie „stała cena po demie”, opieka „miesięczny ryczałt”, warunki, bez kwot; „To programy dla Ciebie” (licencje Optimy, Subiekta…) → „Najpierw widzisz, potem płacisz”: demo przed płatnością, stała cena po demie, zostajesz przy swoich programach, wszystko zostaje u Ciebie; (brak) → nowa sekcja „Pytania” z 5 rozwijanymi pytaniami; Kontakt i stopka → bez zmian, ze stopki znika WAPRO. Na podstronie /integracje (i jej odpowiednikach DE/IT/EN) zniknęły lista systemów, kalkulator i cennik z kwotami 3 500 / 2 000 / 2 000 zł; jest „Cenę podajemy w bezpłatnej wycenie” i „Co płacisz poza nami”. „ERP” zostało tylko w sekcji „Nie kupuj wielkiego ERP-a” (sprawdzone w zbudowanych stronach); „producent ERP” → „producent programu” we wszystkich językach; usług doradczych na stronie już nie było. Pliki: site/src/Strona.jsx, site/src/jezyki/tresc-pl.js, tresc-de.js, tresc-it.js, tresc-en.js, site/index.html (tytuł i opis bez ERP). Wersja robocza się buduje; obejrzałem zrzuty każdej sekcji w 390 i 1440 px w PL, DE, IT i EN (oraz /pl/integracje); jedna poprawka po zrzutach: krótszy szary nagłówek cen w DE/IT/EN, bo na telefonie dochodził do krawędzi
+  zostało: odpowiedzi w pytaniach i nowe teksty DE/IT/EN napisałem sam (bez kwot i bez obietnic spoza strategii); tłumaczeń nie sprawdzała osoba mówiąca tymi językami od urodzenia
