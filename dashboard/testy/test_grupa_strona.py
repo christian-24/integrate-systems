@@ -167,9 +167,8 @@ with sync_playwright() as p:
         ctx = b.new_context(viewport={"width": w, "height": 852 if w < 500 else 900}, is_mobile=w < 500, has_touch=w < 500)
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errs.append("%d: %s" % (w, e)))
         pg.goto(U + H); r = out[w] = {"zwykly": look(pg)}
-        pg.locator("[data-wwcondet] > summary").click(); pg.wait_for_timeout(200)
-        r["wiecej"] = pg.evaluate("document.querySelector('[data-wwcondet]').innerText")
-        r["sw-wiecej"] = pg.evaluate("document.documentElement.scrollWidth")
+        r["uwagi"] = pg.evaluate("!!document.querySelector('[data-wwcondet],.ww-uw,[data-k=wwnote]')")
+        r["solo"] = pg.evaluate("document.querySelector('.ww-main').classList.contains('ww-solo')")
         pg.route("**/api/strona?*", fake)
         pg.reload(); r["agent"] = look(pg)
         pg.locator("[data-wwlv=built]").click(); pg.wait_for_timeout(300)
@@ -215,19 +214,18 @@ class Wyglad(Duzy):
             z, a = o["zwykly"], o["agent"]
             self.assertEqual(z["bar"], ["Telefon", "Komputer", "Wskaż", "Zbuduj podgląd"], w)   # podgląd zbudował się sam
             self.assertEqual(z["txt"], {k: False for k in z["txt"]}, w)
-            self.assertEqual(z["cards"], ["Uwagi"], w)                                        # jedna karta
+            self.assertEqual(z["cards"], [], w)            # bez karty Uwagi (właściciel 26.11): podgląd na całą szerokość
+            self.assertFalse(o["uwagi"], w)
+            self.assertTrue(o["solo"], w)
             self.assertIn("/podglad/portal-www/", z["src"])
-            self.assertIn("Nowa wersja według koncepcji", o["wiecej"])                       # pod „Więcej”
-            self.assertIn("Otwórz podgląd w nowej karcie", o["wiecej"])
             self.assertEqual(a["bar"][:2], ["Wersja w budowie", "Ostatnia zbudowana"], w)
             self.assertIn("/~budowa/", a["src"])                                              # domyślnie wersja w budowie
             self.assertEqual(a["pressed"], ["live"])
-            self.assertEqual(a["cards"], ["Agent pracuje nad stroną", "Uwagi"], w)
+            self.assertEqual(a["cards"], ["Agent pracuje nad stroną"], w)
             self.assertNotIn("~budowa", o["po"]["src"])                                       # przełącznik
             self.assertEqual(o["po"]["pressed"], ["built"])
             for k in ("zwykly", "agent"):
                 self.assertLessEqual(o[k]["sw"], w, (w, k))                                   # bez poziomego przewijania
-            self.assertLessEqual(o["sw-wiecej"], w, w)
 
 
 if __name__ == "__main__":
