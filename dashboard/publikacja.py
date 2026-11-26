@@ -154,6 +154,14 @@ class Publisher:
             q = urllib.parse.urlencode({"grant_type": "fb_exchange_token", "client_id": app_id,
                                         "client_secret": secret, "fb_exchange_token": token})
             long = _json(*self.http("GET", FB + "/oauth/access_token?" + q)[::2], what="Wymiana tokenu")["access_token"]
+        except (ApiError, KeyError) as e:
+            return 409, "Facebook nie przyjął danych: %s" % e
+        return self.adopt_facebook(app_id, long)
+
+    def adopt_facebook(self, app_id, long, merge=False):
+        """Strony i konta Instagram widoczne dla długoterminowego tokenu użytkownika -> facebook.json.
+        merge=True (logowanie przez Facebooka, konta.py): strony innych logowań zostają."""
+        try:
             pages = None
             for fields in ("id,name,access_token,instagram_business_account{id,username}", "id,name,access_token"):
                 q = urllib.parse.urlencode({"fields": fields, "limit": 50, "access_token": long})
@@ -167,9 +175,11 @@ class Publisher:
             return 409, "Facebook nie przyjął danych: %s" % e
         if not pages:
             return 409, "Token nie daje dostępu do żadnej strony. W Graph API Explorer wybierz strony i uprawnienia pages_manage_posts."
-        old = {p["id"]: p.get("project", "") for p in self._read("facebook.json", {}).get("pages") or []}
+        prev = self._read("facebook.json", {}).get("pages") or []
+        old = {p["id"]: p.get("project", "") for p in prev}
         data, index = self.load_projects(resolve=False)
-        out = []
+        mine = {str(p["id"]) for p in pages}
+        out = [p for p in prev if merge and p.get("id") not in mine]
         for p in pages:
             proj = old.get(p["id"]) or self._guess_project(p.get("name", ""), data)
             ig = p.get("instagram_business_account") or {}

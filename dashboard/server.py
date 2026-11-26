@@ -135,6 +135,7 @@ import agents  # noqa: E402  (uruchamianie Claude Code i Codex, kontrakt w AGENC
 import koszty  # noqa: E402  (koszty Hetznera z API Hetzner Cloud)
 import publikacja  # noqa: E402  (publikacja postów: Facebook, LinkedIn)
 import wyniki  # noqa: E402  (wyniki marketingu: klienci, posty, reklamy; wyniki.py)
+import konta  # noqa: E402  (logowanie Meta, Google Ads, LinkedIn przez OAuth; konta.py)
 import film  # noqa: E402  (nagrywanie filmów ze scenariusza)
 import scenariusz  # noqa: E402  (scenariusz nagrania filmu właściciela: scenariusz.md w folderze posta)
 import pola  # noqa: E402  (pola formularza zadań właściciela: propozycja modelu, przejście)
@@ -2080,6 +2081,9 @@ def get_wyniki():
             _wyniki["obj"] = wyniki.Wyniki(load_projects, _write_lock, projekt, post_folder,
                                            notify=lambda text, link="#marketing": get_agents()._send_ntfy(text, link),
                                            publisher=get_publisher)
+            base = (os.environ.get("PANEL_PUBLIC_URL", "").strip() or publikacja.PUBLIC_URL or
+                    drive.REDIRECT_URI.rsplit("/api/", 1)[0]).rstrip("/")
+            _wyniki["obj"].konta = konta.Konta(get_publisher, google_client=lambda: get_drive().own_client(), base_url=base)
         return _wyniki["obj"]
 
 
@@ -3411,6 +3415,11 @@ DRIVE_BACK_PAGE = ('<!doctype html><html lang="pl"><head><meta charset="utf-8"><
 DRIVE_BACK_REDIRECT = ('<!doctype html><html lang="pl"><meta charset="utf-8"><title>Google Drive</title>'
                        '<meta http-equiv="refresh" content="0;url=%s">'
                        '<p>Google Drive połączony. <a href="%s">Wróć do panelu</a>.</p></html>')
+KONTA_BACK_REDIRECT = ('<!doctype html><html lang="pl"><meta charset="utf-8"><title>Zalogowano</title>'
+                       '<meta http-equiv="refresh" content="0;url=%s">'
+                       '<p>Zalogowano. <a href="%s">Wróć do panelu</a>.</p></html>')
+KONTA_BACK_PAGE = ('<!doctype html><html lang="pl"><meta charset="utf-8"><meta name="viewport" content="width=device-width">'
+                   '<title>Logowanie</title><p>%s</p><p><a href="/">Wróć do panelu</a></p></html>')
 _drive = {"obj": None}
 
 
@@ -4061,6 +4070,8 @@ class Handler(BaseHTTPRequestHandler):
             return False
         if self.command == "GET" and path == "/api/drive/powrot":    # powrót z Google: jednorazowy state logowania
             return True
+        if self.command == "GET" and path == "/api/konta/powrot":    # powrót z Facebooka, Google, LinkedIn (konta.py)
+            return True
         if self.command in ("GET", "OPTIONS") and path.startswith("/udostepnij/"):   # pakiet: token w ścieżce
             return True
         if path == "/terminy.ics":
@@ -4218,6 +4229,14 @@ class Handler(BaseHTTPRequestHandler):
                 get_drive().folders((q.get("account") or [""])[0], (q.get("odswiez") or [""])[0] == "1", pid)
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8")
+        if path == "/api/konta/powrot":         # logowanie Meta, Google Ads, LinkedIn; bez sesji: chroni jednorazowy state
+            code, text = get_wyniki().konta.back(url.query)
+            if code == 303:
+                target = html.escape(text, quote=True)
+                return self._send(200, KONTA_BACK_REDIRECT % (target, target), "text/html; charset=utf-8",
+                                  [("Referrer-Policy", "no-referrer")])
+            return self._send(code, KONTA_BACK_PAGE % (html.escape(text)), "text/html; charset=utf-8",
+                              [("Referrer-Policy", "no-referrer")])
         if path == "/api/drive/powrot":         # powrót z Google (własny klient OAuth); bez sesji: chroni state
             code, text = get_drive().oauth_back(url.query, redirect=True)
             if code == 303:
