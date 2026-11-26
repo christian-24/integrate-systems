@@ -2,6 +2,13 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-26: Jedna sekcja „Jak to działa” z kafelkami oferty, zdanie o licencji zamiast „Wszystko zostaje u Ciebie”
+
+Kontekst: uwagi właściciela po obejrzeniu strony 26.11: dwie czwórki („4 rzeczy” i „4 kroki”) mylą, sekcja „Zamiast raportów na 20 stron” jest za duża, a „Wszystko zostaje u Ciebie” jest nieprawdziwe, bo program jest na licencji (company-audits/DECYZJE.md, 2026-05-25).
+Decyzja: na stronie głównej jest jedna sekcja „Jak to działa: Od wyceny do opieki” z czterema krokami. Pod krokami jest mały nagłówek „Co robimy” (bez liczby) i cztery kafelki z linkami do podstron; menu: najpierw „Jak to działa”, potem „Oferta”. Sekcję o raportach razem z przykładową rozmową na telefonie usunąłem. Zostało z niej jedno zdanie w kroku 3, a zdanie „Dzwonisz i odbiera Paweł albo Krystian” jest teraz w kroku 4. Punkt „Wszystko zostaje u Ciebie” zastąpiłem punktem „Licencja na piśmie: Z programu korzystasz na licencji, a jej zasady spisujemy w umowie, zanim zaczniemy.”. Z kroków usunąłem „pliki i dostępy są u Ciebie”. To samo w DE, IT, EN.
+Skutki: zakres licencji (np. czy klient może zmienić wykonawcę) trzeba spisać we wzorze umowy; strona nic więcej nie obiecuje.
+- Kto: agent
+
 ## 2026-11-26: Adresy podstron DE, IT i EN w języku wersji
 
 Kontekst: wersje DE, IT i EN dostały nową strukturę z PL, w tym cztery podstrony linii oferty. Polskie adresy (/en/planowanie-produkcji) byłyby dla obcojęzycznego gościa i wyszukiwarki niezrozumiałe; regulamin i prywatność już mają adresy w języku wersji (/de/agb, /en/terms).
