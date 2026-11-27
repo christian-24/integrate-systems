@@ -32,11 +32,11 @@
 termin: 2026-12-18
 
 - [x] Lista firm z danych publicznych: LeadyV2 ocenił 145 firm meblarskich (2026-09-02)
-- [ ] Podłącz dysk z kopią PC do Maca (folder Reaserch) | kto: ty | gdzie: mac | kiedy: 2026-11-27 | czas: 2
+- [x] Podłącz dysk z kopią PC do Maca (folder Reaserch) | kto: ty | gdzie: mac | kiedy: 2026-11-27 | czas: 2
   cel: lista LeadyV2 trafia na serwer, żeby agent wybrał 10 firm
   gotowe gdy: dysk z folderem Migracja-PC-2026-11 jest podłączony do Maca, a Claude wgrał folder Reaserch na serwer
   Podłącz dysk i napisz w rozmowie z Claude: „dysk podłączony”. Wgranie (bez plików .env i kluczy) i commit robi Claude.
-- [ ] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Podłącz dysk z kopią PC do Maca
+- [!] Wybierz 10 firm z listy LeadyV2 i przygotuj szkice wiadomości | kto: claude | gdzie: chmura | kiedy: 2026-11-21 | po: Podłącz dysk z kopią PC do Maca | blokada: brak listy LeadyV2 na serwerze
   cel: 10 firm z listy LeadyV2 do pierwszego kontaktu, każda z uzasadnieniem wyboru i szkicem wiadomości
   gotowe gdy: w repozytorium projektu plik z 10 firmami (nazwa, powód wyboru, szkic pierwszej wiadomości); nic nie wysłane
   materiał: Reaserch/LeadyV2
@@ -46,6 +46,9 @@ termin: 2026-12-18
   Reaserch/LeadyV2: folder powstanie w repozytorium w zadaniu „Podłącz dysk z kopią PC do Maca (folder Reaserch)” (po:); dziś jest tylko na dysku zewnętrznym, Migracja-PC-2026-11/projekty/Reaserch.
   Zaczyna się po wgraniu folderu Reaserch na serwer (20.11). Gdy listy nadal nie ma w Reaserch/, agent oznacza [!] z blokadą „brak listy LeadyV2 na serwerze”.
   Wiadomość bez ceny; kontakt z firmami zatwierdzony 2026-11-14, wysyłka tylko przez właściciela.
+  wynik: nic nie powstało: na serwerze nie ma folderu Reaserch/ ani żadnego pliku z listą LeadyV2 (sprawdzone 2026-11-27 w folderze projektu i w folderze karty); jest tylko research/ z analizami rynku, bez listy firm
+  zostało: 10 firm i szkice wiadomości: nie zrobione, bo brak listy; zadanie „Podłącz dysk z kopią PC do Maca” jest odhaczone, ale folder Reaserch nie dotarł na serwer. Firm nie wybierałem z pamięci ani z sieci, żeby nie zgadywać nazw spoza listy LeadyV2
+  następne: Wgraj folder Reaserch (lista LeadyV2) z dysku Migracja-PC-2026-11 na serwer | kto: ty | kiedy: 2026-11-28
 - [ ] Napisz do 10 wybranych firm z listy LeadyV2 | kto: ty | kiedy: 2026-11-25 | czas: 30 | po: Wybierz 10 firm z listy LeadyV2
   cel: pierwsza wiadomość do 10 firm wysłana nowym kanałem właściciela
   gotowe gdy: 10 firm dostało pierwszą wiadomość bez ceny; data i kanał zapisane w notatce pod tym zadaniem

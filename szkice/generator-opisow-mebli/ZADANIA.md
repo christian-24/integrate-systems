@@ -120,13 +120,14 @@ termin: 2026-12-23
 - [x] Bramka ADR 0001 zastąpiona celami do 23.12 (2026-10-27; 200 adresów nie zebrano, Brevo wyłączył klucz SMTP 14.10)
 - [x] Metryki: metryki.md w repozytorium, pomiar startowy 2026-11-18: 0 kont, 0 aktywnych, 0 płacących
 - [x] Plan pierwszych 10 kont do 30.11: marketing/plan-10-kont.md, przyjęty wariant B (2026-11-18)
-- [ ] Zdecyduj go/no-go dla Opisarni | kto: ty | kiedy: 2026-12-23 | czas: 15
+- [x] Zdecyduj go/no-go dla Opisarni | kto: ty | kiedy: 2026-12-23 | czas: 15
   cel: decyzja go, zamrożenie albo pivot zapisana w DECYZJE.md
   gotowe gdy: w DECYZJE.md wpis z 2026-12-23 z liczbami z metryki.md (punkt 3) i wybraną drogą
   materiał: metryki.md#1
   materiał: metryki.md#3
   materiał: KARTA.md#Definicja ukończenia
   pyta: Wybrana droga [wybór: go | zamrożenie | pivot]
+  odpowiedź: Wybrana droga = go
   Reguła: co najmniej 3 płacących i 20 aktywnych → go; inaczej zamrożenie albo pivot.
 
 ## Etap: Pierwsze 10 kont (wariant B)
