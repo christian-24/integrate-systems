@@ -137,15 +137,24 @@
   materiał: site/src/Strona.jsx
   materiał: site/src/strona.css
 
-- [~] Strona: poprawki po audycie, runda 2 (codzienne problemy, cena, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 1
+- [x] Strona: poprawki po audycie, runda 2 (codzienne problemy, cena, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 1
   wykonawca: tylko claude
   gałąź: agent/2026-11-27-strona-zacznij-od-problemu-klienta-kazda
+  wynik: zmiany w site/src/jezyki/tresc-pl.js, tresc-de.js, tresc-it.js, tresc-en.js i site/src/Strona.jsx (nowy akapit pod „Brzmi znajomo?”), sekcja po sekcji (PL, DE, IT, EN): Meta: opis strony głównej „Stała cena przed startem” zamiast „na piśmie”; Hero: drobna linia „Opisz, co ma działać. Krystian, nie handlowiec, oddzwoni z widełkami ceny, zwykle w ciągu dnia roboczego.”; Brzmi znajomo?: nowe zdanie o Allegro i Subiekcie, kartce na hali i KSeF, karta 01 „część firmy” i „za stałą cenę”, karta 02 „Gdy widełki ceny Ci pasują… Termin całego wdrożenia podajemy w wycenie.”; Kafelki: „Integracje Allegro, BaseLinker, Subiekt, Optima, KSeF” (przecinki), „Makra i automatyzacja Excela”; Ceny: nagłówek „Jak ustalamy cenę.” (DE „So entsteht der Preis.”, IT „Come fissiamo il prezzo.”, EN „How we set the price.”), nowy lead bez „na piśmie”, Wdrożenie z licencjami innych firm (abonament BaseLinkera); Dokładamy, nie wymieniamy: nadtytuł „Bez przesiadki”, lead o danych i nauce od nowa, karta 1 kończy się „nie mamy interesu, żeby namawiać Cię na nowy system”; Kontakt: tylko „Programy piszą Krystian i Paweł…”; Podstrony: planowanie z „i stolarni” w tytule, nazwy integracji i Excela jak na kafelkach. Wersja robocza się buduje; w dist/pl/index.html „demo” 1 raz, „na piśmie” 2 razy. Zrzuty 390 i 1440 px PL i EN obejrzane: nowe zdanie pod „Brzmi znajomo?” jest na miejscu, kafelek integracji na 1440 px ma 4 krótkie linie, ale żadna nie zaczyna się od przecinka ani „·”. dane.js i [UZUPEŁNIJ] bez zmian, nic nie wymyślone.
+  zostało: nowe zdania DE, IT i EN przetłumaczyłem sam i nikt ich jeszcze nie czytał; w kontakcie nadal jest „odpisujemy zwykle w ciągu dnia roboczego” (specyfikacja kazała zostawić)
   cel: strona po rundzie 2 audytu (11 nowych ocen): pod „Brzmi znajomo?” zdanie o codziennych problemach (Allegro i Subiekt, kartka na hali, KSeF), „Jak ustalamy cenę” zamiast obietnicy kwoty, kafelek integracji bez łamania na „·”, mniej powtórzeń „na piśmie” i „Twoje programy zostają”, poprawki kontrolera rzetelności; dokładne zdania w strona-runda-2-2026-11-27.md
   gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN (strona główna i 4 podstrony); wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy i „na piśmie” najwyżej 3 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian sekcja po sekcji
   materiał: strona-runda-2-2026-11-27.md
   materiał: site/src/jezyki/tresc-pl.js
   materiał: site/src/Strona.jsx
   materiał: site/src/strona.css
+
+- [~] Strona: poprawki po audycie, runda 3 (spójność demo, widełek i kosztów) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 2
+  wykonawca: tylko claude
+  cel: ostatnie poprawki po rundzie 3 audytu: to samo zdanie o pokazie programu i widełkach na głównej i podstronach, demo w cenniku tylko dla programów, integracji i Excela, koszty innych firm na głównej, lepsze zdanie pod „Brzmi znajomo?”; dokładne zdania w strona-runda-3-2026-11-27.md
+  gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN; wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian
+  materiał: strona-runda-3-2026-11-27.md
+  materiał: site/src/jezyki/tresc-pl.js
 
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
