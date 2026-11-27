@@ -106,7 +106,7 @@ class Publikacja(unittest.TestCase):
         return {"tasks": tasks, "projects": [{"id": "inny", "name": "Inny projekt", "alias": None},
                                              {"id": "opis", "name": "Opisarnia (generator)", "alias": None}]}, {"opis": self.folder}
 
-    def post_folder(self, pid, day):
+    def post_folder(self, pid, day, index=None, tid=""):
         path = os.path.join(self.folder, "posty", day + "-start")
         return path if os.path.isdir(path) else None
 
