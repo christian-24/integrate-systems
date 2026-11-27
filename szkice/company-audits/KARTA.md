@@ -13,6 +13,7 @@
 
 Szkic uzupełniony danymi z PC (audyt 2026-11-14, `szkice/AUDYT-PC-2026-11-14.md`).
 Od sierpnia kierunek zmienił się na markę „Oprogramowani”: integracje ERP ↔ sprzedaż (strategia 24.08, MAPA-I-STRATEGIA 27.10).
+Od 26.11 obowiązuje strategia „Najpierw demo. Potem płacisz.” z czterema liniami oferty (strategia-2026-11-26.md, DECYZJE.md 26.11).
 Dawna nazwa projektu: Audyty firm meblarskich. Strona oprogramowani-onepager i zlecenia z Useme należą do tego projektu (właściciel, 2026-11-14).
 Stan na 2026-11-14: 0 klientów; pilotaż nie ruszył; oferta na Useme (2500 zł) bez odpowiedzi. Rozmowy z klientami będą prowadzone nowym kanałem.
 

@@ -3,10 +3,14 @@
 Plansza cennika ze zdjęciem z AI (ilustracja, decyzja właściciela 26.11). Pliki: grafika.png 1080×1350, grafika-story.png 1080×1920.
 Warunek startu: te same ceny na shieldnsilent.pl/wygluszanie.html.
 
-**Tekst główny:** Ceny wygłuszania bez „zadzwoń po wycenę”. Stałą cenę potwierdzamy po bezpłatnych oględzinach (15–20 min) i nic nie dodajemy bez Twojej zgody.
-Napisz model auta, a powiemy, od czego zacząć.
+Stan 26.11: wersja robocza w Menedżerze reklam (kampania „Wiadomości - Cisza”, zestaw „Wrocław 40 km - 25-60”, 12 zł/dzień). Tekst skrócony na prośbę właściciela.
 
-**Nagłówek:** Wygłuszanie: ceny od 890 zł
-**Opis:** Studio pod Wrocławiem
+**Tekst główny:** Wygłuszanie drzwi już od 1 590 zł.
+Zadzwoń 793 189 230 albo napisz i umów wizytę.
+
+**Nagłówek:** Wygłuszanie drzwi od 1 590 zł
 **Przycisk:** Wyślij wiadomość
-**Nazwa reklamy:** S5 · Cennik · 2026-11-28
+**Nazwa reklamy:** S5 · Cennik · 2026-11-26
+
+**Czat po kliknięciu:** „Dzień dobry! Jaki model auta chcesz wyciszyć? Podamy cenę i wolny termin oględzin.” Szybkie pytania: „Ile kosztuje wyciszenie mojego auta?”, „Chcę umówić oględziny”, „Jak długo trwa wygłuszanie?”. Przycisk połączenia 793 189 230 w Messengerze.
+**Ulepszenia Advantage+:** wszystkie wyłączone, bez wariantów obrazów z AI. Story w Stories i Reels: grafika-story.png (nie wersja Meta AI).

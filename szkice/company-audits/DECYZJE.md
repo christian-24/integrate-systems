@@ -4,6 +4,24 @@ Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-M
 
 > Uzupełnione danymi z PC (audyt 2026-11-14). Daty z plików, commitów i dokumentów.
 
+## 2026-11-27: Pokaz integracji: film na planszach i opis na jednej stronie
+- Kontekst: zadanie „Przygotuj scenariusz filmu i jednostronicowy opis pokazu integracji” (forma B). Działającego demo nie ma (odpowiedź na pytanie 7), właściciel nie nagrywa filmów (decyzja 26.11, `nagrywa: panel`), od 26.11 obowiązuje strategia „Najpierw demo. Potem płacisz.”. Plansza końcowa w studio/marka.json mówi jeszcze „Na początek audyt procesów”.
+- Decyzja: (1) film to objaśnienie z szablonu studia `porownanie-przed-po` (do 30 s, składa panel), bo pokaz jest schematem przed i po, a szablon `objasnienie-integracji` zostaje dla filmu serii z 1.12; (2) przykład: zamówienie z Allegro, 4 ręczne kroki zamiast 1 kroku zatwierdzenia, bez słowa „ERP” (uwaga właściciela z 23.11), bez liczb minut i złotówek; (3) opis A4 bierze obietnicę i 4 kroki współpracy ze strategii z 26.11, listę programów z linii „Integracje i dodatki”, z dopiskiem, że to przykład i termin ustalamy w wycenie; (4) studio/marka.json bez zmian, bo dotyczy wszystkich filmów; obietnica „demo” jest w opisie i w tekście posta; (5) publikacja 4.12 na LinkedIn jak w osi czasu form.
+- Skutki: pliki posty/2026-12-04-film-pokaz-integracji/ i pokaz-integracji/ w repozytorium; teksty da się zmienić w scenariusz.json i opis-pokazu.html. Nic nie opublikowane ani nie wysłane.
+- Kto: agent
+
+## 2026-11-26: Plan marketingu na grudzień: podstrony, podział budżetu testu, karuzele
+- Kontekst: zadanie „Przygotuj plan marketingowy według strategii z 26.11”. Strategia wymaga podstrony dla każdej frazy Google Ads, ale strona to jeden ekran bez podstron; budżet 300 zł czeka na właściciela; w karcie są otwarte pytania 8 i 9, więc nowego pytania nie zadaję.
+- Decyzja: (1) adresy podstron: /planowanie-produkcji, /integracja-ksef, /makra-excel, /integracja-baselinker na oprogramowani.com; reklamy nie ruszają, dopóki podstrony nie działają; (2) 4 osobne kampanie po 5 zł dziennie (280 zł w 14 dni), 20 zł zapasu na przesunięcie po 7 dniach; (3) karuzele scenek zastępują 6 postów statycznych z kampanii w tych samych datach, bez nazw programów, firm i cen; szósta karuzela dotyczy linii IT i sprzęt; (4) zapytanie liczy się, gdy ktoś sam pisze albo dzwoni z prośbą o wycenę lub demo, kontakt lokalny to rozmowa z osobą decyzyjną albo wizyta z kartką; (5) telefon do firm oznaczony jako niesprawdzony prawnie, tak jak e-maile w strategii.
+- Skutki: plik marketing-plan-2026-12.md; przebudowa strony musi dać cztery podstrony z formularzem; panel potrzebuje zadań z licznikami zapytania, kontakty, dema, zlecenia. Wszystko odwracalne, nic nie uruchomione.
+- Kto: agent
+
+## 2026-11-26: Strategia „Najpierw demo. Potem płacisz.” i cztery linie oferty
+- Kontekst: od sierpnia integracje ERP dały 0 klientów; badanie rynku 26.11 (100 zleceń IT z Useme, 40 fraz z planera Google Ads) pokazało, że ludzie szukają funkcji („program do planowania produkcji”, „program magazynowy”, „ksef integracja”, „makra excel”), a nie „programu na zamówienie”, i że klienci sami proszą o działające demo.
+- Decyzja (właściciel): przyjęta strategia z pliku strategia-2026-11-26.md: obietnica „Najpierw demo. Potem płacisz.”, cztery linie (planowanie produkcji; integracje i dodatki Optima/Subiekt/enova/BaseLinker/Allegro/KSeF; Excel bez ręcznej pracy; IT i sprzęt jako usługa uzupełniająca), bez ogólnego CRM, stron i aplikacji. Kontakt: kontakt@oprogramowani.com.
+- Do decyzji: budżet testu Google Ads (propozycja 300 zł na 2 tygodnie); zakres karty bez zmian (IT i sprzęt tylko w strategii).
+- Skutki: zadania dla agentów: plan marketingowy, przebudowa strony, wizytówka i kontakt (26.11).
+
 ## 2026-11-26: Marketing: posty statyczne zamiast filmów
 - Kontekst: właściciel nie będzie nagrywał filmów; w kampanii „Pozyskanie klientów” było 6 filmów na 2–16.12 (decyzja z 24.11, podział z pola „nagrywa”) i ani jednego posta statycznego.
 - Decyzja (właściciel): wszystkie 6 filmów zamienione na posty statyczne na LinkedIn i Facebook, te same tematy i daty; grafikę i tekst przygotowuje agent, właściciel zatwierdza i publikuje. W karcie `nagrywa: panel` (bez nagrań właściciela i narzędzia AI) i pole `marketing: posty statyczne`.

@@ -312,6 +312,14 @@ w tytule albo z kanałem Reels, TikTok, YouTube. Dzień nagrania: dzień przed p
 Pole `- sposób:` mówi, kto robi film: `ty` (nagrywasz telefonem; „Co nagrać” to ujęcia), `ai` (robisz w narzędziu AI;
 „Co nagrać” to gotowe polecenia scen do skopiowania, a ujęcia z prawdziwym produktem są oznaczone „nagraj telefonem”).
 
+Film zachowuje swój scenariusz po zmianie `kiedy:` (nazwa folderu zostaje ze starym dniem). Panel szuka folderu
+w tej kolejności: wiersz `materiał: posty/<folder>/scenariusz.md` pod publikacją (panel i agent dopisują go przy
+zakładaniu scenariusza i przy zapisie z panelu), folder, którego `# Scenariusz nagrania: <tytuł>` zgadza się z tytułem
+publikacji (bez „Opublikuj”, wielkości liter i cudzysłowów), na końcu dzień publikacji, tylko gdy nie ma wątpliwości
+(jeden film tego dnia albo nazwa folderu z tytułu). Film nie dostaje folderu innego posta z tą samą datą.
+Zapis z panelu tekstu dużo krótszego albo bez treści wcześniej wypełnionej sekcji wymaga potwierdzenia; poprzednia
+wersja zostaje w `.scenariusz-poprzedni.md`.
+
 ```
 # Scenariusz nagrania: Miernik w akcji
 

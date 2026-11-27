@@ -1,0 +1,23 @@
+1
+00:00:00,000 --> 00:00:02,850
+Ile razy przepisujesz jedno zamówienie?
+
+2
+00:00:03,000 --> 00:00:08,990
+Dziś: Allegro, Excel, magazyn, kartka na halę
+Cztery ręczne kroki, cztery okazje do pomyłki
+
+3
+00:00:09,140 --> 00:00:16,020
+Po integracji: zamówienie samo idzie do magazynu i na halę
+Jeden krok: ktoś w biurze sprawdza i zatwierdza
+
+4
+00:00:16,170 --> 00:00:19,460
+Biuro odpisuje klientom, zamiast przepisywać
+
+5
+00:00:19,510 --> 00:00:23,460
+Porozmawiajmy o Twoim procesie
+Na początek audyt procesów
+oprogramowani.com
