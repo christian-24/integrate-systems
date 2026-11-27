@@ -31,6 +31,7 @@ Cena na wierzchu i prawdziwe zdjęcia z wnętrza drzwi: „Wygłuszanie drzwi od
   cel: tryb „Zachowaj zdjęcie” (bez $imagegen); jasna plansza cennika z małym zdjęciem (-1.jpg z 22.11), dwa formaty
   materiał: meta-ads/Reklamy-statyczne-Meta.md#2
   materiał: meta-ads/Styl-reklam-i-zasady.md
+  link: https://adsmanager.facebook.com/adsmanager/manage/ads?act=1384744111805763&selected_ad_ids=120252311773120040
 - [ ] Popraw szablon grafik reklam (story i 1:1) | kto: codex | kiedy: 2026-11-27 | czas: 10 | wymaga: odbiór
   cel: polecenie dla Codexa (sekcja 4 stylu reklam, tryb „Zachowaj zdjęcie”, bez $imagegen) daje grafiki zgodne z regułami 1-4 z sekcji 5, zanim powstaną kolejne kreacje S1, S4 i B1
   gotowe gdy: sekcja 4 w meta-ads/Styl-reklam-i-zasady.md wymaga reguł 1-4 z sekcji 5 (story na cały kadr 9:16, dolne 250 px bez kluczowej treści; cena i nagłówek w środkowym kwadracie 1080×1080 albo grafika-1x1.png; każda cena z post.md na grafice; bez – i — w tekstach); S5 w posty/2026-11-26-reklama-s5/ (obok KARTA.md) zrobiona według niego: grafika-story.png bez szarego ani rozmytego tła, przy kadrze 1:1 grafiki widać 2 790 zł i „Stała cena po oględzinach”, ceny z nagłówka i tekstu post.md są na grafice
