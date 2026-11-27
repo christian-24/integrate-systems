@@ -1043,13 +1043,39 @@ def _script_ctx(body):
     proj = next((p for p in data["projects"] if p["id"] == pid), None)
     if not proj or pid not in index:
         return 404, "Nie ma takiego projektu."
-    pubs = [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"
-            and str(t.get("date") or "")[:10] == day]
-    pub = next((t for t in pubs if t["id"] == tid), None) or next((t for t in pubs if scenariusz.is_film(t)), None) \
+    own = [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"]
+    pubs = [t for t in own if str(t.get("date") or "")[:10] == day]
+    # id wskazuje publikację także po zmianie kiedy: (okno otwarte przed przeplanowaniem): dzień z publikacji
+    pub = next((t for t in own if tid and t["id"] == tid), None) or next((t for t in pubs if scenariusz.is_film(t)), None) \
         or (pubs[0] if pubs else None)
     if not pub:
         return 404, "Nie ma publikacji na ten dzień."
+    if POST_DAY.match(str(pub.get("date") or "")[:10]):
+        day = str(pub["date"])[:10]
     return data, index[pid], proj, pub, day
+
+
+def _cards(index, pid):
+    folder = index.get(pid)
+    return os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md"))) if folder else None
+
+
+def film_folders(data, index, pid):
+    """{id publikacji z filmem: folder posta} projektu niezależnie od daty (scenariusz.assign: materiał:, tytuł
+    w scenariusz.md, data bez wątpliwości)."""
+    cards = _cards(index, pid)
+    if not cards:
+        return {}
+    return scenariusz.assign(cards, [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"])
+
+
+def pub_folder(data, index, pub, films=None):
+    """Folder posta publikacji: film z film_folders (nie folder innego posta z tą samą datą), reszta po dacie."""
+    if scenariusz.is_film(pub) and pub.get("row") != "reklama":
+        if films is None:
+            films = film_folders(data, index, pub["project"])
+        return films.get(pub["id"])
+    return post_folder(pub["project"], str(pub.get("date") or "")[:10], index)
 
 
 MATERIAL_ROWS = ("reklama", "publikacja")    # rodzaje wierszy kampanii z materiałem do przygotowania (projekt.row_kind)
@@ -1097,7 +1123,7 @@ def publication_job(pub, jobs):
 
 def publication_jobs(data, index):
     owners = {p["id"] for p in data["projects"] if p.get("filmOwner")}
-    posts = {}
+    posts, films = {}, {}
     jobs = {(t["project"], t["title"]): t for t in data["tasks"] if t["file"] == "ZADANIA.md"
             and t["title"].startswith(("Przygotuj publikację na ", agents.POST_TASK, scenariusz.PREP_TASK))}
     for pub in data["tasks"]:
@@ -1110,6 +1136,10 @@ def publication_jobs(data, index):
             continue                    # krok właściciela albo przegląd: bez „Brak tekstu” i „Zleć”
         if pub.get("row") == "reklama":
             folder = ad_folder(pid, day, pub.get("adCode"), index)
+        elif scenariusz.is_film(pub):
+            if pid not in films:
+                films[pid] = film_folders(data, index, pid)
+            folder = films[pid].get(pub["id"])
         else:
             if (pid, day) not in posts:
                 posts[pid, day] = post_folder(pid, day, index)
@@ -1145,7 +1175,7 @@ def assign_publication(body):
         if job:
             return 200, "", {"task": job["id"]}
         owner = next((p.get("filmOwner") for p in data["projects"] if p["id"] == pid), False)
-        post = ad_folder(pid, day, pub.get("adCode"), index) if pub.get("row") == "reklama" else post_folder(pid, day, index)
+        post = ad_folder(pid, day, pub.get("adCode"), index) if pub.get("row") == "reklama" else pub_folder(data, index, pub)
         material = publication_material(pub, post, owner)
         if not material:
             return 409, "Materiał do tej publikacji jest już gotowy.", {}
@@ -1176,13 +1206,14 @@ def _script_tasks(data, pid, day, prefix):
     return [t for t in data["tasks"] if t["project"] == pid and t["title"].startswith(prefix + day)]
 
 
-def script_info(pid, day):
-    """GET /api/scenariusz?project=&date=: tekst i odczyt scenariusz.md posta, kto nagrywa, dzień nagrania."""
-    ctx = _script_ctx({"project": pid, "date": day})
+def script_info(pid, day, tid=""):
+    """GET /api/scenariusz?project=&date=&id=: tekst i odczyt scenariusz.md filmu (id: publikacja; folder
+    niezależny od daty, film_folders), kto nagrywa, dzień nagrania."""
+    ctx = _script_ctx({"project": pid, "date": day, "id": tid})
     if len(ctx) == 2:
         return ctx[0], ctx[1], {}
-    _, _, proj, pub, day = ctx
-    folder = post_folder(pid, day)
+    data, root, proj, pub, day = ctx
+    folder = _script_post(data, root, pub)
     text = scenariusz.read(folder) if folder else None
     return 200, "", {"exists": text is not None, "text": text or "", "version": scenariusz.version(text) if text else "",
                      "script": scenariusz.parse(text) if text is not None else None,
@@ -1190,7 +1221,29 @@ def script_info(pid, day):
                      "postReady": bool(folder) and os.path.isfile(os.path.join(folder, "post.md")),
                      "filmOwner": bool(proj.get("filmOwner")), "title": scenariusz.pub_title(pub),
                      "way": film_way(proj, day, scenariusz.parse(text) if text is not None else None),
-                     "task": pub["id"], "recDay": scenariusz.rec_day(day)}
+                     "task": pub["id"], "date": day, "recDay": scenariusz.rec_day(day)}
+
+
+def film_pub_folder(pid, tid):
+    """Folder posta publikacji z filmem o tym id ("" gdy go nie ma) albo None, gdy id nie wskazuje filmu."""
+    if not tid:
+        return None
+    data, index = load_projects()
+    pub = next((t for t in data["tasks"] if t["id"] == tid and t["project"] == pid and t.get("kind") == "publikacja"), None)
+    if not pub or not scenariusz.is_film(pub) or pub.get("row") == "reklama":
+        return None
+    return film_folders(data, index, pid).get(tid) or ""
+
+
+def _script_post(data, folder, pub):
+    """Folder posta ze scenariuszem tej publikacji (film_folders; publikacja bez filmu: po dacie). folder: projektu."""
+    return pub_folder(data, {pub["project"]: folder}, pub)
+
+
+def _prep_open(data, pid, pub, day):
+    """Otwarte zadanie „Przygotuj scenariusz nagrania na …” tej publikacji (ten sam tytuł, także ze starą datą)."""
+    return any(t["state"] not in projekt.CLOSED_TASK_STATES and scenariusz.prep_of(t["title"], pub)
+               for t in data["tasks"] if t["project"] == pid)
 
 
 def film_way(proj, day, script=None):
@@ -1229,9 +1282,9 @@ def script_prepare(body):
         return ctx
     data, folder, proj, pub, day = ctx
     again = body.get("od_nowa") is True
-    if any(t["state"] not in projekt.CLOSED_TASK_STATES for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK)):
+    if _prep_open(data, proj["id"], pub, day):
         return 409, "Agent już przygotowuje ten scenariusz."
-    post = post_folder(proj["id"], day)
+    post = _script_post(data, folder, pub)
     if post and os.path.isfile(os.path.join(post, scenariusz.FILE)) and not again:
         return 409, "Scenariusz już jest. Nowy przygotujesz w menu ⋯ (Przygotuj od nowa)."
     cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
@@ -1243,6 +1296,7 @@ def script_prepare(body):
                    for t in projekt.read_project(folder, proj["id"])["tasks"]):
                 return 409, "Agent już przygotowuje ten scenariusz."
             post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(pub))
+            scenariusz.link(projekt, folder, proj["id"], pub, post)   # materiał: pod publikacją, przed _add_task
             detail = get_agents().script_detail(folder, pub, "posty/" + os.path.basename(post),
                                                 scenariusz.rec_day(day))
             old = next((t for t in _script_tasks(data, proj["id"], day, scenariusz.PREP_TASK) if t["title"] == title),
@@ -1271,7 +1325,7 @@ def script_fix(body):
     note = str(body.get("uwaga") or "").strip()
     if not 3 <= len(note) <= 1000:
         return 400, "Napisz, co zmienić (do 1000 znaków)."
-    post = post_folder(proj["id"], day)
+    post = _script_post(data, folder, pub)
     if not post or not os.path.isfile(os.path.join(post, scenariusz.FILE)):
         return 404, "Scenariusza jeszcze nie ma. Najpierw go przygotuj."
     title = projekt._clean("%s%s: %s" % (scenariusz.FIX_TASK, day, note), 120)
@@ -1296,7 +1350,7 @@ def _script_file(body):
     ctx = _script_ctx(body)
     if len(ctx) == 2:
         return ctx
-    post = post_folder(ctx[2]["id"], ctx[4])
+    post = _script_post(ctx[0], ctx[1], ctx[3])
     text = scenariusz.read(post) if post else None
     if text is None:
         return 404, "Scenariusza jeszcze nie ma. Najpierw go przygotuj."
@@ -1306,19 +1360,27 @@ def _script_file(body):
 
 
 def script_text(body):
-    """POST /api/scenariusz/tekst {project, date, text, old}: tekst scenariusza wprost z panelu. Stan zostaje ten sam
-    (zmieniają go przyciski); old: wersja (scenariusz.version) z odczytu, inna wersja na dysku to 409."""
+    """POST /api/scenariusz/tekst {project, date, id?, text, old, potwierdz?}: tekst scenariusza wprost z panelu. Stan
+    zostaje ten sam (zmieniają go przyciski); old: wersja (scenariusz.version) z odczytu, inna wersja na dysku to 409.
+    Tekst dużo krótszy albo bez wypełnionych sekcji (scenariusz.shrink): 409 z confirm, zapis dopiero z potwierdz,
+    poprzednia wersja w .scenariusz-poprzedni.md."""
     got = _script_file(body)
     if len(got) == 2:
         return got
-    _, path, text = got
+    (_, folder, proj, pub, _), path, text = got
     new = str(body.get("text") or "").replace("\r\n", "\n").strip()
     if not 20 <= len(new) <= scenariusz.MAX_TEXT:
         return 400, "Scenariusz: od 20 do %d znaków." % scenariusz.MAX_TEXT
+    lost = scenariusz.shrink(text, new)
+    if lost and body.get("potwierdz") is not True:
+        return 409, "Nowy tekst %s. Zapisz jeszcze raz, żeby potwierdzić." % lost, {"confirm": True}
     state = scenariusz.parse(text)["state"]
     new = scenariusz.set_state(new, state if state in scenariusz.STATES else "propozycja") + "\n"
     with _write_lock:
+        if lost:                        # poprzednia wersja zostaje obok (plik ukryty, poza listą mediów)
+            projekt.write_atomic(os.path.join(os.path.dirname(path), scenariusz.BACKUP), text)
         projekt.write_atomic(path, new)
+        scenariusz.link(projekt, folder, proj["id"], pub, os.path.dirname(path))   # nowy tytuł nie zrywa powiązania
     return 200, "", {"version": scenariusz.version(new), "errors": scenariusz.parse(new)["errors"]}
 
 
@@ -1374,6 +1436,7 @@ def script_state(body):
                     if t["state"] not in projekt.CLOSED_TASK_STATES:
                         projekt.set_state(folder, t["file"], t["line"], t["title"], "done")
             projekt.write_atomic(path, scenariusz.set_state(text, want))
+            scenariusz.link(projekt, folder, proj["id"], pub, os.path.dirname(path))
     except (ValueError, OSError, StopIteration) as e:
         return 409, "Nie zapisano: %s" % e
     started = _script_run(task_title, proj["id"]) if want == "do realizacji" and not owner else False
@@ -1390,17 +1453,20 @@ def script_links(tasks, projects, index):
     owners = {p["id"] for p in projects if p.get("filmOwner")}
     film_days = {(t["project"], str(t.get("date") or "")[:10]) for t in tasks
                  if t.get("kind") == "publikacja" and scenariusz.is_film(t)}
-    cards = {}
+    films = {}
     for t in tasks:
         day = str(t.get("date") or "")[:10]
         if t.get("kind") != "publikacja" or not POST_DAY.match(day) or t["project"] not in index:
             continue
         pid = t["project"]
-        if pid not in cards:
-            cards[pid] = os.path.dirname(os.path.realpath(os.path.join(index[pid], "KARTA.md")))
-        if not scenariusz.is_film(t) and (pid, day) in film_days:
-            continue                    # folder posta jest jeden na dzień: scenariusz należy do filmu tego dnia
-        post = scenariusz.post_dir(cards[pid], day)
+        if pid not in films:
+            films[pid] = film_folders({"tasks": tasks}, index, pid)
+        if scenariusz.is_film(t) and t.get("row") != "reklama":
+            post = films[pid].get(t["id"])      # folder filmu niezależnie od daty (materiał:, tytuł, data)
+        elif (pid, day) in film_days:
+            continue                    # bez filmu, a tego dnia jest film: scenariusz należy do filmu
+        else:
+            post = scenariusz.post_dir(_cards(index, pid), day, set(films[pid].values()))
         info = scenariusz.summary(post) if post else None
         if info is None and not (pid in owners and scenariusz.is_film(t)):
             continue
@@ -4448,7 +4514,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_file(fpath, MEDIA_TYPES[os.path.splitext(fpath)[1].lower()], bool((q.get("pobierz") or [""])[0]))
         if path == "/api/scenariusz":
             q = parse_qs(url.query)
-            code, err, extra = script_info((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            code, err, extra = script_info((q.get("project") or [""])[0], (q.get("date") or [""])[0],
+                                           (q.get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path == "/api/post/warianty":
@@ -4470,6 +4537,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/reklama/tekst":           # treść post.md reklamy albo posta (podgląd jak w aplikacji Meta)
             q = parse_qs(url.query)
             folder = ad_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("kod") or [""])[0])
+            film_pub = film_pub_folder((q.get("project") or [""])[0], (q.get("id") or [""])[0])
+            if film_pub is not None:            # publikacja z filmem: jej folder, także po zmianie daty
+                folder = film_pub or None
             text, scen = "", ""
             if folder and os.path.isfile(os.path.join(folder, "post.md")):
                 with open(os.path.join(folder, "post.md"), encoding="utf-8", errors="replace") as f:
