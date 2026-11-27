@@ -6919,7 +6919,7 @@ function osParse(raw){
 }
 function osModal(){
   const t=OS.open&&D.tasks.find(x=>x.id===OS.open);if(!t)return '';
-  const typ=osTyp(t),ad=typ==='meta'||typ==='google',day=t.date.slice(0,10),kod=osCode(t),q='project='+encodeURIComponent(t.project)+'&date='+day+'&kod='+encodeURIComponent(kod);
+  const typ=osTyp(t),ad=typ==='meta'||typ==='google',day=t.date.slice(0,10),kod=osCode(t),q='project='+encodeURIComponent(t.project)+'&date='+day+'&kod='+encodeURIComponent(kod)+'&id='+encodeURIComponent(t.id);
   const X=OS.txt[t.id];if(X===undefined&&LIVE){OS.txt[t.id]=null;fetch('/api/reklama/tekst?'+q,{cache:'no-store'}).then(r=>r.json()).then(j=>{OS.txt[t.id]=j;render(true)}).catch(()=>{OS.txt[t.id]={text:''}})}
   const tx=osParse(X&&X.text),pg=((D.publish||{}).fb||{pages:[]}).pages.find(g=>g.project===t.project),nm=pg?pg.name:pShort(P(t.project));
   const ini=esc(nm.split(/\s+/).filter(w=>/^[A-Za-zĄĆĘŁŃÓŚŹŻ&]/.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase());
@@ -6947,6 +6947,7 @@ function osModal(){
     '<div class="os-info">'+(S&&S.n!=null?'<p><b class="num">'+fmtN(S.n)+'</b> wyświetleń · '+esc(S.src)+(S.extra.length?' · '+esc(S.extra.join(' · ')):'')+'</p>'+osSpark(S.ser):'<p class="muted">Brak wyświetleń z API.</p>')+
     '<div class="row"><button type="button" class="btn sm" data-oscopy="'+esc(t.id)+'" data-k="oscopy">Kopiuj obraz</button>'+
     '<button type="button" class="btn sec sm" data-ostxt="'+esc(t.id)+'" data-k="ostxt">Kopiuj tekst</button>'+
+    (X&&X.scenario?'<button type="button" class="btn sec sm" data-osscen="'+esc(t.id)+'" data-k="osscen">Kopiuj scenariusz</button>':'')+
     '<button type="button" class="btn sm" data-osdraft="'+esc(t.id)+'" data-k="osdraft">Wyślij jako draft do Meta</button>'+(link?'<a class="btn sec sm" href="'+esc(link)+'" target="_blank" rel="noopener noreferrer">'+(aid?'Otwórz w Menedżerze reklam':'Otwórz post')+'</a>':'')+
     (!ad&&LIVE?'<button type="button" class="btn sec sm" data-ospick="'+esc(t.id)+'">'+(link?'Zmień połączenie':'Połącz z postem')+'</button>':'')+
     (typ==='meta'&&LIVE?'<button type="button" class="btn sec sm" data-osadpick="'+esc(t.id)+'" data-k="osadpick">'+(aid?'Zmień reklamę':'Połącz z reklamą')+'</button>'+
@@ -7074,6 +7075,10 @@ document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.clos
   if(!out){say('Ten post nie ma jeszcze tekstu.');return}
   (navigator.clipboard?navigator.clipboard.writeText(out):Promise.reject()).then(()=>say('Skopiowano tekst.'),()=>say('Przeglądarka nie pozwoliła skopiować tekstu.'));
 });
+/* „Kopiuj scenariusz”: cały scenariusz.md filmu (folder po id publikacji, także po zmianie daty) */
+document.addEventListener('click',async ev=>{const b=ev.target.closest&&ev.target.closest('[data-osscen]');if(!b)return;
+  const X=OS.txt[b.dataset.osscen];if(!X||!X.scenario){say('Ten film nie ma jeszcze scenariusza.');return}
+  say(await copyText(X.scenario)?'Skopiowano scenariusz.':'Przeglądarka nie pozwoliła skopiować tekstu.')});
 /* „Wyślij jako draft do Meta”: szkic na stronie Facebook projektu; przeglądasz i publikujesz w Meta Business Suite */
 document.addEventListener('click',ev=>{const b=ev.target.closest&&ev.target.closest('[data-osdraft]');if(!b)return;
   const t=D.tasks.find(x=>x.id===b.dataset.osdraft);if(!t)return;if(!LIVE){say(PRV);return}
@@ -10331,7 +10336,7 @@ function openScript(key){
 function closeScript(){SC.cur=null;SC.d=null;scHost().innerHTML='';if(ED.cur)edActs();else{document.body.classList.remove('ed-open');render(true)}}
 async function scLoad(){
   const c=SC.cur;if(!c)return;let d={ok:false,error:''};
-  try{const r=await fetch('/api/scenariusz?project='+encodeURIComponent(c.pid)+'&date='+encodeURIComponent(c.day),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){d={ok:false,error:'Brak połączenia z panelem.'}}
+  try{const r=await fetch('/api/scenariusz?project='+encodeURIComponent(c.pid)+'&date='+encodeURIComponent(c.day)+'&id='+encodeURIComponent(c.tid||''),{cache:'no-store'});if(r.status===401){location.assign('/wejscie');return}d=await r.json()}catch(e){d={ok:false,error:'Brak połączenia z panelem.'}}
   if(SC.cur!==c)return;SC.d=d;scFill();
 }
 /* zmiana zadań scenariusza (agent skończył, nowe zadanie nagrania): wczytaj plik od nowa */
@@ -10415,7 +10420,8 @@ function scFill(){
   const st=d.ok&&d.exists?d.script.state:'';
   put('sc-meta',esc(projName(c.pid))+(d.ok?' · nagranie '+esc(ddl(d.recDay))+' · publikacja '+esc(ddl(c.day)):'')+' '+scLz(st));
   const pr=scPrimary(d,busy);
-  put('sc-acts',(pr?'<button type="button" class="btn sm" '+pr.attr+'>'+esc(pr.n)+'</button>':'')+scMenu(d,busy));
+  put('sc-acts',(pr?'<button type="button" class="btn sm" '+pr.attr+'>'+esc(pr.n)+'</button>':'')+
+    (d.ok&&d.exists&&!SC.edit?'<button type="button" class="btn sec sm" data-sccopy aria-label="Kopiuj cały tekst scenariusza">Kopiuj</button>':'')+scMenu(d,busy));
   put('sc-next',esc(scNext(d,busy)));
   const doc=document.getElementById('sc-doc');if(doc&&!(SC.edit&&doc.querySelector('[data-sctext]')))doc.innerHTML=scDoc(d);
   scChat();
@@ -10445,10 +10451,18 @@ async function scSend(f){
 }
 async function scSave(f){
   const c=SC.cur,d=SC.d,ta=f.querySelector('[data-sctext]');if(!c||!d||!ta)return;if(!LIVE){say(PRV);return}
-  const x=await post('/api/scenariusz/tekst',{project:c.pid,date:c.day,id:c.tid,text:ta.value,old:d.version});
+  const body={project:c.pid,date:c.day,id:c.tid,text:ta.value,old:d.version};
+  let x=await post('/api/scenariusz/tekst',body);
+  /* dużo krótszy tekst albo puste sekcje: zapis dopiero po potwierdzeniu (poprzednia wersja zostaje w folderze posta) */
+  if(!x.ok&&x.data&&x.data.confirm){if(!confirm(x.error+' Poprzednia wersja zostanie zapisana obok.'))return;
+    body.potwierdz=true;x=await post('/api/scenariusz/tekst',body)}
   if(x.ok){SC.edit=false;const e=(x.data&&x.data.errors)||[];say(e.length?'Zapisano. Do uzupełnienia: '+e.join('; ')+'.':'Zapisano scenariusz.');await scLoad();await load(true)}
   else say(failMsg(x,'Nie zapisano.'));
 }
+/* „Kopiuj”: cały tekst scenariusza do schowka (także dla filmu z przeniesioną datą: tekst z /api/scenariusz po id) */
+document.addEventListener('click',async ev=>{const b=ev.target.closest&&ev.target.closest('[data-sccopy]');if(!b)return;
+  const d=SC.d;if(!d||!d.exists||!d.text){say('Scenariusza jeszcze nie ma.');return}
+  say(await copyText(d.text)?'Skopiowano scenariusz.':'Przeglądarka nie pozwoliła skopiować tekstu.')});
 function scShot(i,on){const m=scDone();m[i]=on?1:0;try{localStorage.setItem(scKey(),JSON.stringify(m))}catch(e){}}
 /* ---------- edytor posta: sekcja „Grafika” (AGENCI.md „Grafiki (Codex)”); jedno wywołanie: cxFill() w edFill ----------
    Rozmowa o grafice z Codexem: polecenie w trybie „Zachowaj zdjęcie” (obróbka bez generowania) albo nowa grafika. Wynik

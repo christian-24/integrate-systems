@@ -4361,15 +4361,19 @@ class Manager:
             tasks = [t for t in data["tasks"] if t["project"] == pid]
             titles = {t["title"] for t in tasks}
             cards = os.path.dirname(os.path.realpath(os.path.join(folder, "KARTA.md")))
+            films = scenariusz.assign(cards, [t for t in tasks if t.get("kind") == "publikacja"])
             for t in tasks:
                 day = str(t.get("date") or "")[:10]
                 if t.get("kind") != "publikacja" or t["state"] in self.projekt.CLOSED_TASK_STATES or not scenariusz.is_film(t) \
                         or not material_row(t) or not (today.isoformat() <= day <= horizon):
                     continue
                 if publication_task_title(t, self.projekt) in titles or any(
-                        x.startswith(scenariusz.PREP_TASK + day) for x in titles):
-                    continue                    # zadanie już jest (także zrobione: agent nie zostawił pliku)
-                post = scenariusz.post_dir(cards, day)
+                        scenariusz.prep_of(x["title"], t) and (x["title"].startswith(scenariusz.PREP_TASK + day)
+                                                               or x["state"] not in self.projekt.CLOSED_TASK_STATES)
+                        for x in tasks):
+                    continue                    # zadanie już jest (także zrobione: agent nie zostawił pliku;
+                                                # otwarte ze starą datą: publikacja zmieniła kiedy:)
+                post = films.get(t["id"])       # folder filmu niezależnie od daty (scenariusz.assign)
                 if post and os.path.isfile(os.path.join(post, scenariusz.FILE)):
                     continue
                 key = "%s|%s" % (pid, day)
@@ -4389,6 +4393,7 @@ class Manager:
                         if self._has_publication_task(folder, pid, t):
                             continue
                         post = post or scenariusz.new_post_dir(cards, day, scenariusz.pub_title(t))
+                        scenariusz.link(self.projekt, folder, pid, t, post)   # materiał: pod publikacją, przed _add_task
                         title = self.projekt._clean("%s%s: %s" % (scenariusz.PREP_TASK, day,
                                                                    scenariusz.pub_title(t)), 120)
                         self._add_task(folder, pid, title,
@@ -4436,6 +4441,7 @@ class Manager:
                 folders = os.listdir(posts)
             except OSError:
                 folders = []
+            films = scenariusz.assign(os.path.dirname(posts), [t for t in tasks if t.get("kind") == "publikacja"])
             for t in tasks:
                 if t.get("kind") != "publikacja" or t.get("file") != RYTM_FILE:
                     continue
@@ -4450,7 +4456,8 @@ class Manager:
                 film = t["title"].startswith(FILM_TASK) or any(w.startswith(FILM_TASK) for w in self.projekt.waiting_titles(t))
                 if t["state"] not in self.projekt.CLOSED_TASK_STATES and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
                         and not any((n == day or n.startswith(day + "-")) and has_post(os.path.join(posts, n))
-                                    for n in folders):
+                                    for n in folders) \
+                        and not (films.get(t["id"]) and has_post(films[t["id"]])):   # film po zmianie kiedy:
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
                     if title not in titles and publication_task_title(t, self.projekt) not in titles:
                         new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
@@ -6132,7 +6139,7 @@ def secret_file(path):
 def has_post(folder):
     """Folder posty/<dzień>-… to post, chyba że leży w nim tylko scenariusz nagrania (to jeszcze nie post)."""
     try:
-        return os.listdir(folder) != [scenariusz.FILE]
+        return sorted(n for n in os.listdir(folder) if n != scenariusz.BACKUP) != [scenariusz.FILE]
     except OSError:
         return True
 
