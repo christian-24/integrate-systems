@@ -178,7 +178,7 @@ termin: 2026-11-30
   - [ ] ERMA Meble
   - [ ] ATB Meble
   - [ ] Alan Meble
-  - [ ] Meble North
+  - [x] Meble North
   - [ ] Shik
   - [ ] Miloni
   - [ ] VERYSIMPL
