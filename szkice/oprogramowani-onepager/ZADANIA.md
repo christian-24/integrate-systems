@@ -125,12 +125,24 @@
   zostało: nie sprawdziłem, czy główne drzewo jest czyste po scaleniu; stare zmiany z 26.11 są zastąpione tą wersją, więc przy scalaniu wygrywa ta wersja
   następne: Strona: obejrzyj podgląd z „Brzmi znajomo?” i zatwierdź teksty DE, IT, EN | kto: ty | kiedy: 2026-11-28
 
-- [~] Strona: poprawki po audycie, runda 1 (Paweł, ceny, słowa klientów, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: zacznij od problemu klienta
+- [x] Strona: poprawki po audycie, runda 1 (Paweł, ceny, słowa klientów, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: zacznij od problemu klienta
   wykonawca: tylko claude
   gałąź: agent/2026-11-27-strona-zacznij-od-problemu-klienta-kazda
+  wynik: zmiany w site/src/jezyki/tresc-pl.js, tresc-de.js, tresc-it.js, tresc-en.js, site/src/Strona.jsx, site/src/strona.css, sekcja po sekcji (PL, DE, IT, EN): Meta: nowy tytuł i opis z Allegro, BaseLinker, Subiekt GT, Optima, KSeF; Hero: lead z nazwami programów i nowa drobna linia pod przyciskiem („Opisz, co ma działać. W ciągu dnia roboczego oddzwonimy z widełkami ceny.”); Brzmi znajomo?: karta 02 z warunkiem „po wycenie i potwierdzeniu widełek”, karta 04 „dzwonisz do nas”; Kafelki: planowanie „zamiast kartek i Excela”, integracje „Integracje: Allegro · BaseLinker · Subiekt · Optima · KSeF” (nazwy nieskrócone); Ceny: nowy lead o widełkach i stałej cenie, wycena „Zadzwoń albo napisz. Do niczego nie zobowiązuje.”, Demo bez powtórzonego warunku, trzeci warunek tylko z zasadą rozmowy z dane.js (pusta = punkt znika); Pewność: nagłówek „Twoje programy zostają” zamiast „Bez ryzyka”, zdanie o ERP, którego nie ruszamy; Kontakt: nowy tekst o programach i ręcznej pracy, zdanie „Programy piszą Krystian i Paweł…” z nazwiskiem i formą z dane.js (dziś żółte [UZUPEŁNIJ]), zdanie o widełkach przeniesione do hero; Stopka: bez „symulacji”; Podstrony: „Co zobaczysz przed decyzją” zamiast „Jak wygląda demo”, widełki w ciągu dnia roboczego i stała cena na piśmie; planowanie z przykładem stolarni i punktem o handlowcu z telefonem; integracje z nowym tytułem, opisem, H1, nazwą i punktem „Faktury z KSeF do Optimy albo Subiekta i z powrotem”. Wersja robocza się buduje; w dist/pl/index.html „demo” 1 raz, „zobowiązuje” 1 raz. Obejrzane zrzuty 390 i 1440 px: strona główna PL i EN, podstrona integracji PL (390) i EN (1440); nowe zdania są na miejscu, na komputerze nagłówek kafelka integracji zajmuje 4 linie. dane.js bez zmian, nic nie wymyślone.
+  zostało: zdanie o Pawle pokaże nazwisko i formę współpracy dopiero po wpisaniu ich do danych firmy (do tego czasu na produkcji: „Programy piszą Krystian i Paweł.”)
   cel: strona po rundzie 1 audytu (11 ocen): Paweł przedstawiony w kontakcie z danymi z dane.js, ceny bez obietnicy kwoty, hero i kafelki ze słowami klientów (Allegro, BaseLinker, Subiekt, Optima, KSeF, Excel), poprawki kontrolera rzetelności (warunek przy „1–2 dni”, IT bez „demo”, widełki zamiast ceny w ciągu dnia, bez „Bez ryzyka” i podwójnego „bez zobowiązań”); dokładne zdania w strona-runda-1-2026-11-27.md
   gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN (strona główna i 4 podstrony); wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian sekcja po sekcji
   materiał: strona-runda-1-2026-11-27.md
+  materiał: site/src/jezyki/tresc-pl.js
+  materiał: site/src/Strona.jsx
+  materiał: site/src/strona.css
+
+- [~] Strona: poprawki po audycie, runda 2 (codzienne problemy, cena, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 1
+  wykonawca: tylko claude
+  gałąź: agent/2026-11-27-strona-zacznij-od-problemu-klienta-kazda
+  cel: strona po rundzie 2 audytu (11 nowych ocen): pod „Brzmi znajomo?” zdanie o codziennych problemach (Allegro i Subiekt, kartka na hali, KSeF), „Jak ustalamy cenę” zamiast obietnicy kwoty, kafelek integracji bez łamania na „·”, mniej powtórzeń „na piśmie” i „Twoje programy zostają”, poprawki kontrolera rzetelności; dokładne zdania w strona-runda-2-2026-11-27.md
+  gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN (strona główna i 4 podstrony); wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy i „na piśmie” najwyżej 3 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian sekcja po sekcji
+  materiał: strona-runda-2-2026-11-27.md
   materiał: site/src/jezyki/tresc-pl.js
   materiał: site/src/Strona.jsx
   materiał: site/src/strona.css
