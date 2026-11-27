@@ -2,7 +2,7 @@
  "kanaly": {
   "facebook": {
    "link": "https://www.facebook.com/1416011748262183_122115016131539109",
-   "at": "2026-11-26T22:09:00",
+   "at": "2026-11-27T22:10:16",
    "error": "",
    "stop": false,
    "conn": "2026-11-19T19:30:50",
@@ -27,6 +27,16 @@
      "udostepnienia": 0,
      "interakcje": 0,
      "at": "2026-11-26T22:09:00"
+    },
+    {
+     "wyswietlenia": 4,
+     "zasieg": 0,
+     "klikniecia": 2,
+     "reakcje": 0,
+     "komentarze": 0,
+     "udostepnienia": 0,
+     "interakcje": 0,
+     "at": "2026-11-27T22:10:16"
     }
    ]
   }
