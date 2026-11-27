@@ -182,11 +182,11 @@ termin: 2026-11-30
   - [ ] Shik
   - [ ] Miloni
   - [ ] VERYSIMPL
-  - [ ] Lano Meble
+  - [x] Lano Meble
   - [ ] Meble Emilia
   - [ ] Brattex
   - [ ] Vilmax
-  - [ ] OneLoft
+  - [x] OneLoft
   - [ ] Ramaro
   - [ ] New Elegance
   - [ ] Comforteo
