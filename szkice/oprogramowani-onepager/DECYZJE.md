@@ -2,6 +2,13 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-27: „Brzmi znajomo?” bez widocznego nagłówka nad kafelkami, demo tylko w cenniku
+
+Kontekst: uwagi właściciela 27.11 (strona-uwagi-2026-11-27.md) pozwalały zamienić nagłówek „Co robimy” na „Planowanie, integracje, Excel, IT” albo go usunąć; „demo” najwyżej 2 razy na stronie głównej; pozycje cennika „bez zmian”, ale cena wdrożenia brzmiała „Stała cena po demie”.
+Decyzja: nad kafelkami nie ma widocznego nagłówka (kafelki same mówią, co robimy), tekst „Planowanie, integracje, Excel, IT” jest tylko dla czytników ekranu. Menu: „Problemy” (do „Brzmi znajomo?”), „Oferta”, „Ceny”, „Kontakt”. W cenniku zostały te same pozycje i kwoty, zmienione tylko opisy: wdrożenie „Stała cena” (bez „po demie”), opis „Cały spisany zakres. Bez stawki godzinowej.”; pierwszy warunek bez zdania o cenie po demie. Zdanie o płatności za etap (GWAR_ETAP) jest w 4. karcie problemu, więc pod blokiem „Bezpłatna wycena” na stronie głównej już go nie ma (na podstronach zostaje). Niezatwierdzone zmiany z 26.11 (strona-bez-powtorzen-2026-11-26.diff) zastąpione: kroki i pytania usunięte, z diffu przejęte „Dokładamy, nie wymieniamy” i krótszy warunek o zmianach. To samo w DE, IT, EN.
+Skutki: słowo „demo” pada na stronie głównej PL raz (nazwa pozycji w cenniku; przedtem 30 razy w HTML). Łatwo przywrócić widoczny nagłówek, jeśli właściciel woli.
+- Kto: agent
+
 ## 2026-11-27: Kalendarz i ntfy dla rezerwacji: minimum danych, osobny temat ntfy, bez nowego pytania w karcie
 
 Kontekst: koncepcja koncepcja-rezerwacje-kalendarz.md (rezerwacje ze strony do kalendarza Apple i ntfy). W karcie czeka pytanie o ryczałt, więc nowego pytania nie wolno dodać. Przy czytaniu kodu wyszło, że od zmiany „Repairs” (19.08.2026) contact.sh nie zapisuje rezerwacji do rezerwacje.jsonl i nie obsługuje GET /api/terminy.
