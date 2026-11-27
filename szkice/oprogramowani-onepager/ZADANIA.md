@@ -149,12 +149,25 @@
   materiał: site/src/Strona.jsx
   materiał: site/src/strona.css
 
-- [~] Strona: poprawki po audycie, runda 3 (spójność demo, widełek i kosztów) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 2
+- [x] Strona: poprawki po audycie, runda 3 (spójność demo, widełek i kosztów) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: poprawki po audycie, runda 2
   wykonawca: tylko claude
   cel: ostatnie poprawki po rundzie 3 audytu: to samo zdanie o pokazie programu i widełkach na głównej i podstronach, demo w cenniku tylko dla programów, integracji i Excela, koszty innych firm na głównej, lepsze zdanie pod „Brzmi znajomo?”; dokładne zdania w strona-runda-3-2026-11-27.md
   gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN; wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian
   materiał: strona-runda-3-2026-11-27.md
   materiał: site/src/jezyki/tresc-pl.js
+  wynik: zmiany w site/src/jezyki/tresc-pl.js, tresc-de.js, tresc-it.js, tresc-en.js (każda w 4 językach): 1) pod „Brzmi znajomo?” nowe zdanie „A może u Ciebie wygląda to tak: … ręcznie?”; 2) cennik, Demo: dopisane „Dotyczy programów, integracji i Excela.”; 3) cennik, Wdrożenie: „Licencje i opłaty innych firm (np. abonament BaseLinkera albo moduł integracyjny Subiekta) …”; 4) podstrony, cena: „zwykle w ciągu dnia roboczego”; 5) zdanie o pokazie na podstronach planowania, integracji i Excela zaczyna się od „Gdy widełki ceny Ci pasują, w 1–2 dni”, tak jak karta 02 na głównej (Excel: nowy szyk zdania ze specyfikacji). Build przechodzi, w dist/pl/index.html „demo” pada 1 raz. Zrzuty 390 i 1440 px PL i EN obejrzane: nowe zdania widać, układ się nie rozjechał. dane.js i [UZUPEŁNIJ] bez zmian
+  zostało: podstron DE i IT nie oglądałem na zrzutach, zmiany sprawdziłem tylko w zbudowanym tekście
+- [!] Strona: dodaj sekcję o bólu klientów z animacjami wyglądającymi jak prawdziwe ekrany | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | blokada: npm ci kończy się błędem uprawnień esbuild (EPERM)
+  wynik: Bezpośrednio po wstępie, przed „Brzmi znajomo?” i ofertą, dodano dwa animowane przykłady w PL, DE, IT i EN: rozmowę z wdrożeniowcem bez odpowiedzi oraz panel z zerem logowań i zamówieniami wpisywanymi ręcznie. Sekcja linkuje do oferty. Pliki: site/src/Strona.jsx, site/src/strona.css, site/src/jezyki/tresc-pl.js, site/src/jezyki/tresc-de.js, site/src/jezyki/tresc-it.js, site/src/jezyki/tresc-en.js.
+  zostało: Budowa strony, oględziny zrzutów przy 390 i 1440 px oraz sprawdzenie animacji i ograniczenia ruchu w przeglądarce. npm ci zgłasza EPERM, a npm run build:panel nie znajduje Vite.
+  cel: nowa sekcja pokazuje ból firm, które już coś wdrożyły (np. wydane 30 tys. zł na program, z którego załoga nie korzysta; wdrożeniowiec przestaje odpisywać), w animowanych scenach wyglądających jak prawdziwe ekrany, a nie jak kolorowe klocki: robią wrażenie i są czytelne na telefonie
+  gotowe gdy: wersja robocza buduje się poleceniem z karty (npm run build:panel); sekcja jest w PL, DE, IT i EN, ma 2–3 sceny (np. rozmowa w telefonie, w której wiadomości do wdrożeniowca zostają bez odpowiedzi, a mijają dni; ekran programu, w którym nikt się nie loguje i dane nadal przepisuje się ręcznie) i krótkie zdanie łączące z ofertą; ruch jest płynny, stoi przy prefers-reduced-motion i działa na 390 i 1440 px; zrzuty obejrzane; w wynik: opis scen i miejsce sekcji na stronie
+  materiał: site/src/Strona.jsx
+  materiał: site/src/strona.css
+  materiał: site/src/jezyki/tresc-pl.js
+  - [x] Wybierz miejsce sekcji (po wstępie, przed ofertą) i napisz teksty bólu bez wymyślonych opinii, liczb i klientów: kwoty i sytuacje to przykłady, oznaczone jako „przykład”
+  - [x] Zbuduj sceny z kodu (HTML, CSS, SVG), bez gotowych obrazków i bez nazw prawdziwych firm i programów
+  - [ ] Przetłumacz na DE, IT i EN, zbuduj, zrób zrzuty, obejrzyj, popraw
 
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
