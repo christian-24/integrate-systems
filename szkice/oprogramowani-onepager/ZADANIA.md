@@ -125,6 +125,16 @@
   zostało: nie sprawdziłem, czy główne drzewo jest czyste po scaleniu; stare zmiany z 26.11 są zastąpione tą wersją, więc przy scalaniu wygrywa ta wersja
   następne: Strona: obejrzyj podgląd z „Brzmi znajomo?” i zatwierdź teksty DE, IT, EN | kto: ty | kiedy: 2026-11-28
 
+- [~] Strona: poprawki po audycie, runda 1 (Paweł, ceny, słowa klientów, rzetelność) | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | po: Strona: zacznij od problemu klienta
+  wykonawca: tylko claude
+  gałąź: agent/2026-11-27-strona-zacznij-od-problemu-klienta-kazda
+  cel: strona po rundzie 1 audytu (11 ocen): Paweł przedstawiony w kontakcie z danymi z dane.js, ceny bez obietnicy kwoty, hero i kafelki ze słowami klientów (Allegro, BaseLinker, Subiekt, Optima, KSeF, Excel), poprawki kontrolera rzetelności (warunek przy „1–2 dni”, IT bez „demo”, widełki zamiast ceny w ciągu dnia, bez „Bez ryzyka” i podwójnego „bez zobowiązań”); dokładne zdania w strona-runda-1-2026-11-27.md
+  gotowe gdy: zmiany ze specyfikacji są w PL, DE, IT i EN (strona główna i 4 podstrony); wersja robocza buduje się poleceniem z karty (npm ci && npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; w dist/pl/index.html „demo” najwyżej 2 razy; dane.js i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik lista zmian sekcja po sekcji
+  materiał: strona-runda-1-2026-11-27.md
+  materiał: site/src/jezyki/tresc-pl.js
+  materiał: site/src/Strona.jsx
+  materiał: site/src/strona.css
+
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
   cel: wizytówka Krystiana Stryjakiewicza (Oprogramowani) w stylu nowej strony: biel, czerń, jeden czerwony akcent z logo, Inter, dużo powietrza

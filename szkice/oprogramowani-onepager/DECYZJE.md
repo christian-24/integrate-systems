@@ -2,6 +2,13 @@
 
 Każda decyzja to osobny wpis, najnowsze na górze. Nagłówek wpisu: `## RRRR-MM-DD: krótki tytuł`.
 
+## 2026-11-27: Poprawki po audycie strony na jednej gałęzi agenta
+
+Kontekst: zadanie „Strona: zacznij od problemu klienta…” skończyło się [x], ale jego gałąź (agent/2026-11-27-strona-zacznij-od-problemu-klienta-kazda) czeka na „Scal” w panelu, a nowe zadania panel zaczyna od nowa-koncepcja. Rundy audytu (audyt-strony-2026-11-27.md) muszą budować na tej pracy.
+Decyzja: zadania „Strona: poprawki po audycie, runda N” mają pole `gałąź:` z tą samą gałęzią, więc panel pracuje dalej na niej i poprawki się sumują. Audyt buduje stronę w osobnym klonie (nowa-koncepcja + ta gałąź), a w repozytorium projektu nic nie scala.
+Skutki: jedno „Scal” tej gałęzi w panelu wnosi do nowa-koncepcja całą pracę z 27.11 (problem klienta i wszystkie rundy). Jeśli właściciel nie chce którejś rundy, cofa jej commit na gałęzi przed scaleniem.
+- Kto: agent
+
 ## 2026-11-27: „Brzmi znajomo?” bez widocznego nagłówka nad kafelkami, demo tylko w cenniku
 
 Kontekst: uwagi właściciela 27.11 (strona-uwagi-2026-11-27.md) pozwalały zamienić nagłówek „Co robimy” na „Planowanie, integracje, Excel, IT” albo go usunąć; „demo” najwyżej 2 razy na stronie głównej; pozycje cennika „bez zmian”, ale cena wdrożenia brzmiała „Stała cena po demie”.
