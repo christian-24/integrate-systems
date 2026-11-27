@@ -112,6 +112,16 @@
   zostało: znikają żółte miejsca [UZUPEŁNIJ] związane wyłącznie z usuniętą sekcją o osobach (nazwisko i LinkedIn Pawła, zdjęcia, lata każdej osoby, film); pola w dane.js zostają bez zmian, a lata doświadczenia nadal są we wstępie
   zmiany: poprzednia gałąź nie miała zapisanej pracy, więc zadanie zrobione od nowa w całości; poprawka: zrobione
 
+- [~] Strona: zacznij od problemu klienta, każda obietnica raz | kto: agent | gdzie: chmura | kiedy: 2026-11-27
+  wykonawca: tylko claude
+  cel: według uwag właściciela z 27.11: strona zaczyna od jego chwytów (koszty ERP, integrator na 3 miesiące, cena jak za system za jeden moduł, integracja znowu nie działa), bez powtarzania „demo”, „najpierw widzisz, potem płacisz”, „Od wyceny do opieki”, „Co robimy”, „Zanim zadzwonisz”; dokładna treść sekcja po sekcji w strona-uwagi-2026-11-27.md
+  gotowe gdy: strona główna i 4 podstrony mają treść z pliku uwag we wszystkich językach (PL, DE, IT, EN); na stronie głównej PL słowo „demo” najwyżej 2 razy (policz w zbudowanym HTML); niezatwierdzone zmiany z 26.11 w głównym drzewie (strona-bez-powtorzen-2026-11-26.diff) są przejęte albo zastąpione, a drzewo czyste po scaleniu; wersja robocza buduje się poleceniem z karty (npm run build:panel); zrzuty 390 i 1440 px PL i EN obejrzane; dane firmy, ceny i miejsca [UZUPEŁNIJ] bez zmian, nic nie wymyślone; w wynik: lista zmian sekcja po sekcji i liczba „demo” przed i po
+  materiał: strona-uwagi-2026-11-27.md
+  materiał: strona-bez-powtorzen-2026-11-26.diff
+  materiał: site/src/jezyki/tresc-pl.js
+  materiał: site/src/Strona.jsx
+  materiał: site/src/strona.css
+
 ## Do rozplanowania
 - [x] Przygotuj wizytówkę Oprogramowani dla Krystiana | kto: claude | gdzie: chmura | kiedy: 2026-11-23 | wymaga: odbiór
   cel: wizytówka Krystiana Stryjakiewicza (Oprogramowani) w stylu nowej strony: biel, czerń, jeden czerwony akcent z logo, Inter, dużo powietrza

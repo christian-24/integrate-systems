@@ -1,0 +1,412 @@
+drwxr-xr-x 7 panel panel 4096 Nov 26 22:33 .git
+agent
+ M site/src/Strona.jsx
+ M site/src/jezyki/tresc-de.js
+ M site/src/jezyki/tresc-en.js
+ M site/src/jezyki/tresc-it.js
+ M site/src/jezyki/tresc-pl.js
+diff --git a/site/src/Strona.jsx b/site/src/Strona.jsx
+index e480330..8da7495 100644
+--- a/site/src/Strona.jsx
++++ b/site/src/Strona.jsx
+@@ -474,7 +474,7 @@ export default function Strona({ jezykStart: jezyk, podstrona = null }) {
+             {blokWyceny(3)}
+             <div className="cennik oferta">
+               <Pozycje poz={s.cennik.oferta.poz} jezyk={jezyk} />
+-              <p className="cennik-dop rv"><Tx s={s.cennik.oferta.dop} /></p>
++              {s.cennik.oferta.dop && <p className="cennik-dop rv"><Tx s={s.cennik.oferta.dop} /></p>}
+             </div>
+             {/* Warunki: trzy punkty zwykłym rozmiarem (teksty składane z dane.js). */}
+             <div className="cennik-warunki rv">
+@@ -508,7 +508,7 @@ export default function Strona({ jezykStart: jezyk, podstrona = null }) {
+           </section>
+         )}
+ 
+-        {/* ===== NAJPIERW WIDZISZ, POTEM PŁACISZ: demo przed płatnością, bez uzależnienia ===== */}
++        {/* ===== BEZ RYZYKA: tylko to, czego nie ma wyżej (programy zostają, licencja na piśmie) ===== */}
+         {!pod && (
+         <section className="sekcja ciemna" id="pewnosc" aria-labelledby="h-pewnosc">
+           <div className="wrap">
+@@ -527,7 +527,7 @@ export default function Strona({ jezykStart: jezyk, podstrona = null }) {
+         </section>
+         )}
+ 
+-        {/* ===== PYTANIA: pięć pytań pod nową strategię (rozwijane, bez JS) ===== */}
++        {/* ===== PYTANIA: bez powtarzania sekcji wyżej (rozwijane, bez JS) ===== */}
+         {!pod && s.faq && (
+           <section className="sekcja" id="pytania" aria-labelledby="h-pytania">
+             <div className="wrap">
+diff --git a/site/src/jezyki/tresc-de.js b/site/src/jezyki/tresc-de.js
+index 6881fb1..759d7e0 100644
+--- a/site/src/jezyki/tresc-de.js
++++ b/site/src/jezyki/tresc-de.js
+@@ -111,13 +111,13 @@ const DE = {
+   jak: {
+     eyebrow: "So läuft es ab",
+     h2a: "Vom Angebot bis zur Betreuung.",
+-    h2b: "Sie zahlen erst, wenn die Demo Sie überzeugt.",
++    h2b: "Sie wissen bei jedem Schritt, wie es weitergeht.",
+     // Strategia 26.11, „Jak to działa dla klienta”.
+     kroki: [
+-      { h: "Kostenloses Angebot", m: "innerhalb eines Tages", p: "Sie beschreiben, was funktionieren soll. Innerhalb eines Tages bekommen Sie eine Preisspanne und einen Termin. Lohnt es sich nicht, sagen wir das offen." },
++      { h: "Kostenloses Angebot", m: "innerhalb eines Tages", p: "Sie beschreiben, was funktionieren soll. Innerhalb eines Tages bekommen Sie eine Preisspanne und einen Demo-Termin. Lohnt es sich nicht, sagen wir das offen." },
+       { h: "Demo in 1–2 Tagen", m: "mit Beispieldaten", p: `Wir zeigen Ihnen ein laufendes Programm mit Beispieldaten. Wollen Sie nicht weitermachen, zahlen Sie nichts. ${DEMO_WARUNEK}` },
+-      { h: "Umsetzung zum Festpreis", m: "ohne Stundensatz", p: "Preis und Umfang halten wir vor dem Start schriftlich fest. Sie nehmen in Etappen ab, geprüft mit Ihren eigenen Daten. Statt Berichten eine kurze Nachricht, wenn etwas passiert, und einmal pro Woche ein Überblick: Umfang, Budget, Termin." },
+-      { h: "Betreuung, wenn Sie möchten", m: "monatliche Pauschale", p: "Nach dem Start Änderungen und Hilfe zum festen Monatsbetrag. Wenn Sie anrufen, geht Paweł oder Krystian ran, keine Hotline." },
++      { h: "Umsetzung zum Festpreis", m: "Abnahme in Etappen", p: "Sie nehmen in Etappen ab, geprüft mit Ihren eigenen Daten. Statt Berichten eine kurze Nachricht, wenn etwas passiert, und einmal pro Woche ein Überblick: Umfang, Budget, Termin." },
++      { h: "Betreuung, wenn Sie möchten", m: "monatliche Pauschale", p: "Nach dem Start Änderungen und Hilfe, wenn Sie sie brauchen. Wenn Sie anrufen, geht Paweł oder Krystian ran, keine Hotline." },
+     ],
+   },
+   // „Ile to kosztuje” (strategia 26.11): bez kwot wdrożeń, jak w PL.
+@@ -125,15 +125,16 @@ const DE = {
+     eyebrow: "Preise",
+     h2a: "Was es kostet.",
+     h2b: "Den Festpreis kennen Sie nach der Demo.",
+-    lead: "Angebot und Demo sind kostenlos. Sie zahlen erst für die Umsetzung, zu einem Festpreis, den wir nach der Demo vereinbaren.",
+-    wycena: { n: "Kostenloses Angebot", o: "Rufen Sie an, schreiben Sie oder hinterlassen Sie eine Anfrage. Innerhalb eines Tages bekommen Sie eine Preisspanne und einen Demo-Termin. Unverbindlich.", c: "0 zł" },
++    lead: "Angebot und Demo sind kostenlos. Sie zahlen für die Umsetzung und für die Betreuung nur, wenn Sie sie möchten.",
++    wycena: { n: "Kostenloses Angebot", o: "Rufen Sie an, schreiben Sie oder hinterlassen Sie eine Anfrage. Unverbindlich.", c: "0 zł" },
+     oferta: {
+       poz: [
+-        { n: "Demo", o: "1–2 Tage nach dem Angebot zeigen wir Ihnen ein laufendes Programm mit Beispieldaten. Wollen Sie nicht weitermachen, zahlen Sie nichts.", c: "0 zł" },
+-        { n: "Umsetzung", o: "Festpreis für den ganzen Umfang, nach der Demo vereinbart und vor dem Start schriftlich festgehalten. Ohne Stundensatz. Abnahme in Etappen.", c: "Festpreis nach der Demo" },
++        { n: "Demo", o: "Ein laufendes Programm mit Beispieldaten, bevor Sie über die Umsetzung entscheiden.", c: "0 zł" },
++        { n: "Umsetzung", o: "Festpreis für den ganzen Umfang, nach der Demo schriftlich genannt, bevor wir anfangen. Ohne Stundensatz.", c: "Festpreis nach der Demo" },
+         { n: "Betreuung", o: "Nach dem Start, nur wenn Sie möchten: Änderungen und Hilfe zum festen Monatsbetrag.", c: jest(DANE.ryczalt) ? RYCZALT : "Monatliche Pauschale", w: zd([DANE.gwarancja], `${v(DANE.gwarancja, "liczba dni")} Tage Korrekturen ohne Aufpreis nach der Abnahme`), t: jest(DANE.reakcja) ? `Reaktion auf Störungen in ${dniRob(DANE.reakcja)}` : U("czas reakcji na awarię (DANE.reakcja)") },
+       ],
+-      dop: DEMO_WARUNEK,
++      // Warunek dema jest w kroku 2 „Jak to działa”; tu bez powtórzenia.
++      dop: "",
+     },
+     poza: {
+       h: "Was Sie außerhalb unserer Rechnung zahlen",
+@@ -143,7 +144,7 @@ const DE = {
+     vat: VAT,
+     warunkiH: "Bedingungen",
+     warunki: [
+-      "Den Preis der Umsetzung nennen wir nach der Demo schriftlich, zusammen mit dem Umfang, bevor wir anfangen. Änderungen außerhalb des Umfangs bepreisen wir separat und setzen sie erst nach Ihrer Zustimmung um.",
++      "Änderungen außerhalb des vereinbarten Umfangs bepreisen wir separat und setzen sie erst nach Ihrer Zustimmung um.",
+       (PLATNOSC_KROTKO.trim() || "Die Zahlungsbedingungen stehen im Vertrag, zusammen mit dem Umfang.") + KARA,
+       "Das Angebot ist kostenlos und unverbindlich." + ZASADA,
+     ],
+@@ -156,30 +157,26 @@ const DE = {
+     protokol: "Muster des Übergabeprotokolls",
+     pdf: "PDF, Polnisch",
+   },
+-  // Strategia 26.11: demo przed płatnością i cztery linie oferty.
++  // „Bez ryzyka”: tylko to, czego nie ma w krokach i cenach (demo, stała cena i ryczałt są wyżej).
+   pewnosc: {
+     eyebrow: "Ohne Risiko",
+-    h2a: "Erst sehen Sie es, dann zahlen Sie.",
++    h2a: "Wir ergänzen, wir ersetzen nicht.",
+     h2b: "",
+-    lead: "Die häufigste Frage einer kleinen Firma: Was, wenn ich zahle und es nicht funktioniert? Deshalb beginnen wir mit der Demo.",
++    lead: "Ihre Programme bleiben, und die Bedingungen für die Nutzung dessen, was wir bauen, halten wir im Vertrag fest.",
+     punkty: [
+-      { h: "Demo vor der Zahlung", p: `Bevor Sie zahlen, sehen Sie die laufende Auftragstafel, die Erweiterung, das Makro oder den Netzwerkplan. Passt es nicht, zahlen Sie nichts. ${DEMO_WARUNEK}` },
+-      { h: "Festpreis nach der Demo", p: "Nach der Demo halten wir Umfang und Festpreis der Umsetzung fest, bevor wir anfangen. Ohne Stundensatz und ohne Aufpreise ohne Ihre Zustimmung." },
+-      { h: "Sie behalten Ihre Programme", p: "Rechnungsprogramm, Excel und Geräte bleiben. Wir ergänzen eine Tafel, eine Erweiterung oder ein Makro. Lizenzen anderer Firmen kaufen Sie selbst, auf Ihre Firma." },
++      { h: "Sie behalten Ihre Programme", p: "Optima, Subiekt, enova, BaseLinker, Allegro, KSeF oder Excel bleiben. Wir ergänzen eine Tafel, eine Erweiterung oder ein Makro. Wenn ein neues Programm wirklich sinnvoll ist, sagen wir es offen." },
+       // Program jest na licencji (decyzja właściciela): bez obietnic, że po zapłacie należy do klienta.
+-      { h: "Lizenz schriftlich geregelt", p: "Sie nutzen das Programm mit einer Lizenz, deren Bedingungen wir vor dem Start im Vertrag festhalten." + zd([DANE.gwarancja], ` Fehler im vereinbarten Umfang beheben wir ${v(DANE.gwarancja, "liczba dni")} Tage nach der Abnahme ohne Aufpreis.`) },
++      { h: "Lizenz schriftlich geregelt", p: "Sie nutzen das Programm mit einer Lizenz, deren Bedingungen wir vor dem Start im Vertrag festhalten." },
+     ],
+   },
+-  // Pytania (strategia 26.11): pięć pytań, odpowiedzi bez kwot.
++  // Pytania: tylko to, czego nie ma w sekcjach wyżej (bez powtarzania kroków, cen i „Bez ryzyka”).
+   faq: {
+     eyebrow: "Fragen",
+     h2a: "Bevor Sie anrufen.",
+     pyt: [
+-      { q: "Wie lange dauert die Demo?", a: `Die Demo bereiten wir in 1–2 Tagen nach dem Angebot vor. Wir zeigen sie online oder bei Ihnen im Betrieb, mit Beispieldaten, und Sie können selbst klicken. ${DEMO_WARUNEK}` },
+-      { q: "Was, wenn mir die Demo nicht passt?", a: "Sie zahlen weder für das Angebot noch für die Demo. Sie können sagen, was wir ändern sollen, oder an dieser Stelle aufhören, ohne Verpflichtung." },
+-      { q: "Wie berechnen Sie den Preis der Umsetzung?", a: "Nach der Demo wissen wir genau, was funktionieren soll. Dann nennen wir schriftlich einen Festpreis für den ganzen Umfang, bevor wir anfangen. Ohne Stundensatz. Änderungen außerhalb des Umfangs bepreisen wir separat und setzen sie erst nach Ihrer Zustimmung um." + VAT_FAQ },
+-      { q: "Muss ich mein bisheriges Programm wechseln?", a: "Nein. Wir arbeiten mit dem, was Sie schon haben: Optima, Subiekt, enova, BaseLinker, Allegro, KSeF oder Excel. Wir ergänzen eine Tafel, eine Erweiterung oder ein Makro. Wenn ein neues Programm wirklich sinnvoll ist, sagen wir es offen." },
+-      { q: "Machen Sie auch IT und Technik?", a: "Ja. Netzwerk und WLAN in der Halle, Computer und Backups, E-Mail, Etikettendrucker, Scanner, Tablets und Bildschirm in der Produktion. Bevor Sie etwas kaufen, zeigen wir Ihnen einen schriftlichen Plan." },
++      { q: "Wie sieht die Demo aus?", a: "Wir zeigen sie online oder bei Ihnen im Betrieb. Sie können selbst klicken und sagen, was wir ändern sollen, bevor Sie über die Umsetzung entscheiden." },
++      { q: "Brauchen Sie für die Demo Zugriff auf meine Programme?", a: "Nein. Die Demo bauen wir mit Beispieldaten. Zugriff auf Ihre Programme brauchen wir erst bei der Umsetzung." },
++      { q: "Machen Sie auch IT und Technik?", a: "Ja, als Ergänzung zu den Programmen. Den Umfang beschreiben wir auf der Seite „IT und Technik im Betrieb“." },
+     ],
+   },
+   kontakt: {
+diff --git a/site/src/jezyki/tresc-en.js b/site/src/jezyki/tresc-en.js
+index f4e16a2..581a45b 100644
+--- a/site/src/jezyki/tresc-en.js
++++ b/site/src/jezyki/tresc-en.js
+@@ -111,13 +111,13 @@ const EN = {
+   jak: {
+     eyebrow: "How it works",
+     h2a: "From quote to support.",
+-    h2b: "You pay only once you’re happy with the demo.",
++    h2b: "Each step, you know what comes next.",
+     // Strategia 26.11, „Jak to działa dla klienta”.
+     kroki: [
+-      { h: "Free quote", m: "within a day", p: "You describe what needs to work. Within a day you get a price range and a date. If it isn’t worth doing, we’ll tell you straight." },
++      { h: "Free quote", m: "within a day", p: "You describe what needs to work. Within a day you get a price range and a demo date. If it isn’t worth doing, we’ll tell you straight." },
+       { h: "Demo in 1–2 days", m: "on sample data", p: `We show you working software on sample data. If you don’t want to go ahead, you don’t pay. ${DEMO_WARUNEK}` },
+-      { h: "Fixed-price implementation", m: "no hourly rate", p: "We put the price and scope in writing before we start. You sign off in stages, tested on your own data. Instead of reports, a short message when something happens and a weekly summary: scope, budget, deadline." },
+-      { h: "Support if you want it", m: "monthly flat fee", p: "After launch, changes and help for a fixed monthly fee. When you call, Paweł or Krystian picks up, not a call centre." },
++      { h: "Fixed-price implementation", m: "sign-off in stages", p: "You sign off in stages, tested on your own data. Instead of reports, a short message when something happens and a weekly summary: scope, budget, deadline." },
++      { h: "Support if you want it", m: "monthly flat fee", p: "After launch, changes and help when you need them. When you call, Paweł or Krystian picks up, not a call centre." },
+     ],
+   },
+   // „Ile to kosztuje” (strategia 26.11): bez kwot wdrożeń, jak w PL.
+@@ -125,15 +125,16 @@ const EN = {
+     eyebrow: "Prices",
+     h2a: "What it costs.",
+     h2b: "You get the fixed price after the demo.",
+-    lead: "The quote and the demo are free. You only pay for the implementation, at a fixed price we agree after the demo.",
+-    wycena: { n: "Free quote", o: "Call, write or leave a request. Within a day you get a price range and a demo date. No obligation.", c: "0 zł" },
++    lead: "The quote and the demo are free. You pay for the implementation, and for support only if you want it.",
++    wycena: { n: "Free quote", o: "Call, write or leave a request. No obligation.", c: "0 zł" },
+     oferta: {
+       poz: [
+-        { n: "Demo", o: "1–2 days after the quote we show you working software on sample data. If you don’t want to go ahead, you don’t pay.", c: "0 zł" },
+-        { n: "Implementation", o: "A fixed price for the whole scope, agreed after the demo and put in writing before we start. No hourly rate. You sign off in stages.", c: "Fixed price after the demo" },
++        { n: "Demo", o: "Working software on sample data, before you decide on the implementation.", c: "0 zł" },
++        { n: "Implementation", o: "A fixed price for the whole scope, given in writing after the demo, before we start. No hourly rate.", c: "Fixed price after the demo" },
+         { n: "Support", o: "After launch, only if you want it: changes and help for a fixed monthly fee.", c: jest(DANE.ryczalt) ? RYCZALT : "Monthly flat fee", w: zd([DANE.gwarancja], `${v(DANE.gwarancja, "liczba dni")} days of free fixes after sign-off`), t: jest(DANE.reakcja) ? `failure response within ${dniRob(DANE.reakcja)}` : U("czas reakcji na awarię (DANE.reakcja)") },
+       ],
+-      dop: DEMO_WARUNEK,
++      // Warunek dema jest w kroku 2 „Jak to działa”; tu bez powtórzenia.
++      dop: "",
+     },
+     poza: {
+       h: "What you pay outside our invoice",
+@@ -143,7 +144,7 @@ const EN = {
+     vat: VAT,
+     warunkiH: "Terms",
+     warunki: [
+-      "We give you the implementation price in writing after the demo, together with the scope, before we start. Changes outside the scope are quoted separately and done only once you agree.",
++      "Changes outside the agreed scope are quoted separately and done only once you agree.",
+       (PLATNOSC_KROTKO.trim() || "Payment terms go into the contract together with the scope.") + KARA,
+       "The quote is free and doesn’t oblige you to anything." + ZASADA,
+     ],
+@@ -156,30 +157,26 @@ const EN = {
+     protokol: "Sample handover report",
+     pdf: "PDF, Polish",
+   },
+-  // Strategia 26.11: demo przed płatnością i cztery linie oferty.
++  // „Bez ryzyka”: tylko to, czego nie ma w krokach i cenach (demo, stała cena i ryczałt są wyżej).
+   pewnosc: {
+     eyebrow: "No risk",
+-    h2a: "You see it first, then you pay.",
++    h2a: "We add, we don’t replace.",
+     h2b: "",
+-    lead: "The question small firms ask most: what if I pay and it doesn’t work? That’s why we start with a demo.",
++    lead: "Your software stays, and the terms for using what we build go into the contract.",
+     punkty: [
+-      { h: "Demo before payment", p: `Before you pay, you see the working job board, add-on, macro or network plan. If it doesn’t fit, you don’t pay. ${DEMO_WARUNEK}` },
+-      { h: "Fixed price after the demo", p: "After the demo we put the scope and the fixed implementation price in writing, before we start. No hourly rate and no extra charges without your consent." },
+-      { h: "Keep the software you use", p: "Your invoicing software, Excel and hardware stay. We add a job board, an add-on or a macro. Other companies’ licences you buy yourself, in your company’s name." },
++      { h: "Keep the software you use", p: "Optima, Subiekt, enova, BaseLinker, Allegro, KSeF or Excel stay. We add a job board, an add-on or a macro. If new software really makes sense, we’ll tell you straight." },
+       // Program jest na licencji (decyzja właściciela): bez obietnic, że po zapłacie należy do klienta.
+-      { h: "Licence in writing", p: "You use the software under a licence, and we put its terms in the contract before we start." + zd([DANE.gwarancja], ` Bugs within the agreed scope are fixed free of charge for ${v(DANE.gwarancja, "liczba dni")} days after sign-off.`) },
++      { h: "Licence in writing", p: "You use the software under a licence, and we put its terms in the contract before we start." },
+     ],
+   },
+-  // Pytania (strategia 26.11): pięć pytań, odpowiedzi bez kwot.
++  // Pytania: tylko to, czego nie ma w sekcjach wyżej (bez powtarzania kroków, cen i „Bez ryzyka”).
+   faq: {
+     eyebrow: "Questions",
+     h2a: "Before you call.",
+     pyt: [
+-      { q: "How long does the demo take?", a: `We prepare the demo within 1–2 days of the quote. We show it online or at your premises, on sample data, and you can click through it yourself. ${DEMO_WARUNEK}` },
+-      { q: "What if the demo doesn’t suit me?", a: "You pay for neither the quote nor the demo. You can tell us what to change, or stop there, with no obligation." },
+-      { q: "How do you price the implementation?", a: "After the demo we know exactly what needs to work. Then we give you a fixed price for the whole scope in writing, before we start. No hourly rate. Changes outside the scope are quoted separately and done only once you agree." + VAT_FAQ },
+-      { q: "Do I have to change the software I use?", a: "No. We work with what you already have: Optima, Subiekt, enova, BaseLinker, Allegro, KSeF or Excel. We add a job board, an add-on or a macro. If new software really makes sense, we’ll tell you straight." },
+-      { q: "Do you also do IT and hardware?", a: "Yes. Network and Wi-Fi on the shop floor, computers and backups, email, label printers, scanners, tablets and a screen in production. Before you buy anything, we show you a plan in writing." },
++      { q: "What does the demo look like?", a: "We show it online or at your premises. You can click through it yourself and tell us what to change before you decide on the implementation." },
++      { q: "Do you need access to my software for the demo?", a: "No. We build the demo on sample data. Access to your software is only needed for the implementation." },
++      { q: "Do you also do IT and hardware?", a: "Yes, alongside the software. The scope is described on the “IT and hardware for your business” page." },
+     ],
+   },
+   kontakt: {
+diff --git a/site/src/jezyki/tresc-it.js b/site/src/jezyki/tresc-it.js
+index abcce7e..2d75248 100644
+--- a/site/src/jezyki/tresc-it.js
++++ b/site/src/jezyki/tresc-it.js
+@@ -111,13 +111,13 @@ const IT = {
+   jak: {
+     eyebrow: "Come funziona",
+     h2a: "Dal preventivo all’assistenza.",
+-    h2b: "Paghi solo se la demo ti convince.",
++    h2b: "A ogni passo sai cosa succede dopo.",
+     // Strategia 26.11, „Jak to działa dla klienta”.
+     kroki: [
+-      { h: "Preventivo gratuito", m: "entro un giorno", p: "Ci descrivi cosa deve funzionare. Entro un giorno ricevi una fascia di prezzo e una data. Se non conviene, te lo diciamo chiaramente." },
++      { h: "Preventivo gratuito", m: "entro un giorno", p: "Ci descrivi cosa deve funzionare. Entro un giorno ricevi una fascia di prezzo e la data della demo. Se non conviene, te lo diciamo chiaramente." },
+       { h: "Demo in 1–2 giorni", m: "su dati di esempio", p: `Ti mostriamo un programma funzionante su dati di esempio. Se non vuoi andare avanti, non paghi. ${DEMO_WARUNEK}` },
+-      { h: "Realizzazione a prezzo fisso", m: "senza tariffa oraria", p: "Prezzo e perimetro li mettiamo per iscritto prima di iniziare. Collaudi per fasi, verificate sui tuoi dati. Invece dei report, un messaggio breve quando succede qualcosa e una volta alla settimana un riepilogo: perimetro, budget, scadenza." },
+-      { h: "Assistenza, se la vuoi", m: "canone mensile", p: "Dopo l’avvio modifiche e aiuto a canone mensile fisso. Quando chiami risponde Paweł o Krystian, non un call center." },
++      { h: "Realizzazione a prezzo fisso", m: "collaudo per fasi", p: "Collaudi per fasi, verificate sui tuoi dati. Invece dei report, un messaggio breve quando succede qualcosa e una volta alla settimana un riepilogo: perimetro, budget, scadenza." },
++      { h: "Assistenza, se la vuoi", m: "canone mensile", p: "Dopo l’avvio modifiche e aiuto quando ti servono. Quando chiami risponde Paweł o Krystian, non un call center." },
+     ],
+   },
+   // „Ile to kosztuje” (strategia 26.11): bez kwot wdrożeń, jak w PL.
+@@ -125,15 +125,16 @@ const IT = {
+     eyebrow: "Prezzi",
+     h2a: "Quanto costa.",
+     h2b: "Il prezzo fisso lo conosci dopo la demo.",
+-    lead: "Preventivo e demo sono gratuiti. Paghi solo la realizzazione, a un prezzo fisso che concordiamo dopo la demo.",
+-    wycena: { n: "Preventivo gratuito", o: "Chiama, scrivi o lascia una richiesta. Entro un giorno ricevi una fascia di prezzo e la data della demo. Senza impegno.", c: "0 zł" },
++    lead: "Il preventivo e la demo sono gratuiti. Paghi la realizzazione, e l’assistenza solo se la vuoi.",
++    wycena: { n: "Preventivo gratuito", o: "Chiama, scrivi o lascia una richiesta. Senza impegno.", c: "0 zł" },
+     oferta: {
+       poz: [
+-        { n: "Demo", o: "1–2 giorni dopo il preventivo ti mostriamo un programma funzionante su dati di esempio. Se non vuoi andare avanti, non paghi.", c: "0 zł" },
+-        { n: "Realizzazione", o: "Prezzo fisso per tutto il perimetro, concordato dopo la demo e messo per iscritto prima di iniziare. Senza tariffa oraria. Collaudi per fasi.", c: "Prezzo fisso dopo la demo" },
++        { n: "Demo", o: "Un programma funzionante su dati di esempio, prima di decidere sulla realizzazione.", c: "0 zł" },
++        { n: "Realizzazione", o: "Prezzo fisso per tutto il perimetro, dato per iscritto dopo la demo, prima di iniziare. Senza tariffa oraria.", c: "Prezzo fisso dopo la demo" },
+         { n: "Assistenza", o: "Dopo l’avvio, solo se la vuoi: modifiche e aiuto a canone mensile fisso.", c: jest(DANE.ryczalt) ? RYCZALT : "Canone mensile", w: zd([DANE.gwarancja], `${v(DANE.gwarancja, "liczba dni")} giorni di correzioni gratuite dopo il collaudo`), t: jest(DANE.reakcja) ? `risposta ai guasti entro ${dniRob(DANE.reakcja)}` : U("czas reakcji na awarię (DANE.reakcja)") },
+       ],
+-      dop: DEMO_WARUNEK,
++      // Warunek dema jest w kroku 2 „Jak to działa”; tu bez powtórzenia.
++      dop: "",
+     },
+     poza: {
+       h: "Cosa paghi oltre a noi",
+@@ -143,7 +144,7 @@ const IT = {
+     vat: VAT,
+     warunkiH: "Condizioni",
+     warunki: [
+-      "Il prezzo della realizzazione te lo diamo per iscritto dopo la demo, insieme al perimetro, prima di iniziare. Le modifiche fuori perimetro le preventiviamo a parte e le facciamo solo dopo la tua approvazione.",
++      "Le modifiche fuori dal perimetro concordato le preventiviamo a parte e le facciamo solo dopo la tua approvazione.",
+       (PLATNOSC_KROTKO.trim() || "Le condizioni di pagamento sono nel contratto, insieme al perimetro.") + KARA,
+       "Il preventivo è gratuito e senza impegno." + ZASADA,
+     ],
+@@ -156,30 +157,26 @@ const IT = {
+     protokol: "Modello del verbale di consegna",
+     pdf: "PDF, in polacco",
+   },
+-  // Strategia 26.11: demo przed płatnością i cztery linie oferty.
++  // „Bez ryzyka”: tylko to, czego nie ma w krokach i cenach (demo, stała cena i ryczałt są wyżej).
+   pewnosc: {
+     eyebrow: "Senza rischi",
+-    h2a: "Prima lo vedi, poi paghi.",
++    h2a: "Aggiungiamo, non sostituiamo.",
+     h2b: "",
+-    lead: "La domanda più frequente di una piccola azienda: e se pago e non funziona? Per questo partiamo dalla demo.",
++    lead: "I tuoi programmi restano, e le condizioni d’uso di ciò che realizziamo le mettiamo nel contratto.",
+     punkty: [
+-      { h: "Demo prima del pagamento", p: `Prima di pagare vedi la bacheca degli ordini, il componente aggiuntivo, la macro o il piano della rete funzionanti. Se non va bene, non paghi. ${DEMO_WARUNEK}` },
+-      { h: "Prezzo fisso dopo la demo", p: "Dopo la demo mettiamo per iscritto perimetro e prezzo fisso della realizzazione, prima di iniziare. Senza tariffa oraria e senza supplementi senza il tuo consenso." },
+-      { h: "Tieni i tuoi programmi", p: "Programma di fatturazione, Excel e hardware restano. Aggiungiamo una bacheca, un componente o una macro. Le licenze di altre aziende le acquisti tu, a nome della tua azienda." },
++      { h: "Tieni i tuoi programmi", p: "Optima, Subiekt, enova, BaseLinker, Allegro, KSeF o Excel restano. Aggiungiamo una bacheca, un componente o una macro. Se un nuovo programma ha davvero senso, te lo diciamo chiaramente." },
+       // Program jest na licencji (decyzja właściciela): bez obietnic, że po zapłacie należy do klienta.
+-      { h: "Licenza per iscritto", p: "Usi il programma con una licenza, le cui condizioni mettiamo nel contratto prima di iniziare." + zd([DANE.gwarancja], ` Gli errori nel perimetro concordato li correggiamo senza costi per ${v(DANE.gwarancja, "liczba dni")} giorni dopo il collaudo.`) },
++      { h: "Licenza per iscritto", p: "Usi il programma con una licenza, le cui condizioni mettiamo nel contratto prima di iniziare." },
+     ],
+   },
+-  // Pytania (strategia 26.11): pięć pytań, odpowiedzi bez kwot.
++  // Pytania: tylko to, czego nie ma w sekcjach wyżej (bez powtarzania kroków, cen i „Bez ryzyka”).
+   faq: {
+     eyebrow: "Domande",
+     h2a: "Prima di chiamarci.",
+     pyt: [
+-      { q: "Quanto dura la demo?", a: `Prepariamo la demo in 1–2 giorni dal preventivo. Te la mostriamo online o nella tua azienda, su dati di esempio, e puoi provarla tu stesso. ${DEMO_WARUNEK}` },
+-      { q: "E se la demo non mi convince?", a: "Non paghi né il preventivo né la demo. Puoi dirci cosa cambiare oppure fermarti qui, senza impegno." },
+-      { q: "Come calcolate il prezzo della realizzazione?", a: "Dopo la demo sappiamo esattamente cosa deve funzionare. Allora ti diamo per iscritto un prezzo fisso per tutto il perimetro, prima di iniziare. Senza tariffa oraria. Le modifiche fuori perimetro le preventiviamo a parte e le facciamo solo dopo la tua approvazione." + VAT_FAQ },
+-      { q: "Devo cambiare il programma che uso?", a: "No. Lavoriamo con quello che hai già: Optima, Subiekt, enova, BaseLinker, Allegro, KSeF o Excel. Aggiungiamo una bacheca, un componente o una macro. Se un nuovo programma ha davvero senso, te lo diciamo chiaramente." },
+-      { q: "Vi occupate anche di informatica e hardware?", a: "Sì. Rete e Wi-Fi in reparto, computer e backup, posta, stampanti di etichette, lettori, tablet e schermo in produzione. Prima che tu compri qualcosa, ti mostriamo un piano per iscritto." },
++      { q: "Come si svolge la demo?", a: "Te la mostriamo online o nella tua azienda. Puoi provarla tu stesso e dirci cosa cambiare, prima di decidere sulla realizzazione." },
++      { q: "Per la demo vi serve l’accesso ai miei programmi?", a: "No. La demo la prepariamo su dati di esempio. L’accesso ai tuoi programmi serve solo per la realizzazione." },
++      { q: "Vi occupate anche di informatica e hardware?", a: "Sì, come complemento ai programmi. Il perimetro è descritto nella pagina “Informatica e hardware in azienda”." },
+     ],
+   },
+   kontakt: {
+diff --git a/site/src/jezyki/tresc-pl.js b/site/src/jezyki/tresc-pl.js
+index 7ee0563..55196dc 100644
+--- a/site/src/jezyki/tresc-pl.js
++++ b/site/src/jezyki/tresc-pl.js
+@@ -121,13 +121,15 @@ const PL = {
+   jak: {
+     eyebrow: "Jak to działa",
+     h2a: "Od wyceny do opieki.",
+-    h2b: "Płacisz dopiero, gdy demo Ci pasuje.",
++    h2b: "Wiesz, co dalej, na każdym etapie.",
+     // Strategia 26.11, „Jak to działa dla klienta”. Dawna sekcja „Zamiast raportów” jest teraz w krokach 3 i 4.
++    // Podział obietnic (bez powtórzeń): demo i „nie płacisz, jeśli nie chcesz dalej” opisuje krok 2;
++    // stałą cenę i ryczałt opisuje „Ile to kosztuje”, tu zostają tylko nazwy kroków.
+     kroki: [
+-      { h: "Bezpłatna wycena", m: "w ciągu dnia", p: "Opisujesz, co ma działać. W ciągu dnia dostajesz widełki ceny i termin. Mówimy wprost, jeśli nie warto." },
++      { h: "Bezpłatna wycena", m: "w ciągu dnia", p: "Opisujesz, co ma działać. W ciągu dnia dostajesz widełki ceny i termin dema. Mówimy wprost, jeśli nie warto." },
+       { h: "Demo w 1–2 dni", m: "na przykładowych danych", p: `Pokazujemy działający program na przykładowych danych. Nie płacisz, jeśli nie chcesz dalej. ${DEMO_WARUNEK}` },
+-      { h: "Wdrożenie za stałą cenę", m: "bez stawki godzinowej", p: "Cenę i zakres spisujemy przed startem. Odbierasz etapami, sprawdzone na Twoich danych. Zamiast raportów krótka wiadomość, gdy coś się dzieje, a raz w tygodniu podsumowanie: zakres, budżet, termin." },
+-      { h: "Opieka, gdy chcesz", m: "miesięczny ryczałt", p: "Po wdrożeniu zmiany i pomoc w stałej miesięcznej kwocie. Dzwonisz i odbiera Paweł albo Krystian, a nie infolinia." },
++      { h: "Wdrożenie za stałą cenę", m: "odbiór etapami", p: "Odbierasz etapami, sprawdzone na Twoich danych. Zamiast raportów krótka wiadomość, gdy coś się dzieje, a raz w tygodniu podsumowanie: zakres, budżet, termin." },
++      { h: "Opieka, gdy chcesz", m: "miesięczny ryczałt", p: "Po wdrożeniu zmiany i pomoc, gdy ich potrzebujesz. Dzwonisz i odbiera Paweł albo Krystian, a nie infolinia." },
+     ],
+   },
+   // „Ile to kosztuje” (strategia 26.11): wycena 0 zł, demo 0 zł, wdrożenie za stałą cenę ustaloną po demie.
+@@ -136,15 +138,16 @@ const PL = {
+     eyebrow: "Ceny",
+     h2a: "Ile to kosztuje.",
+     h2b: "Cenę wdrożenia znasz po demie, zanim zaczniemy.",
+-    lead: "Wycena i demo są bezpłatne. Płacisz dopiero za wdrożenie, za stałą cenę, którą ustalamy po demie.",
+-    wycena: { n: "Bezpłatna wycena", o: "Zadzwoń, napisz albo zostaw prośbę. W ciągu dnia dostajesz widełki ceny i termin dema. Bez zobowiązań.", c: "0 zł" },
++    lead: "Wycena i demo są bezpłatne. Płacisz za wdrożenie, a za opiekę tylko wtedy, gdy jej chcesz.",
++    wycena: { n: "Bezpłatna wycena", o: "Zadzwoń, napisz albo zostaw prośbę. Bez zobowiązań.", c: "0 zł" },
+     oferta: {
+       poz: [
+-        { n: "Demo", o: "W 1–2 dni po wycenie pokazujemy działający program na przykładowych danych. Nie płacisz, jeśli nie chcesz dalej.", c: "0 zł" },
+-        { n: "Wdrożenie", o: "Stała cena za cały zakres, ustalona po demie i spisana przed startem. Bez stawki godzinowej. Odbierasz etapami.", c: "Stała cena po demie" },
++        { n: "Demo", o: "Działający program na przykładowych danych, zanim zdecydujesz o wdrożeniu.", c: "0 zł" },
++        { n: "Wdrożenie", o: "Stała cena za cały zakres, podana na piśmie po demie, zanim zaczniemy. Bez stawki godzinowej.", c: "Stała cena po demie" },
+         { n: "Opieka", o: "Po wdrożeniu, tylko gdy chcesz: zmiany i pomoc w stałej miesięcznej kwocie.", c: jest(DANE.ryczalt) ? RYCZALT : "Miesięczny ryczałt", w: zd([DANE.gwarancja], `${v(DANE.gwarancja, "liczba dni")} dni poprawek bez dopłaty po odbiorze`), t: jest(DANE.reakcja) ? `reakcja na awarię do ${dniRob(DANE.reakcja)}` : U("czas reakcji na awarię (DANE.reakcja)") },
+       ],
+-      dop: DEMO_WARUNEK,
++      // Warunek dema jest w kroku 2 „Jak to działa”; tu bez powtórzenia.
++      dop: "",
+     },
+     poza: {
+       h: "Co płacisz poza nami",
+@@ -154,7 +157,7 @@ const PL = {
+     vat: VAT,
+     warunkiH: "Warunki",
+     warunki: [
+-      "Cenę wdrożenia podajemy na piśmie po demie, razem z zakresem, zanim zaczniemy. Zmiany poza zakresem wyceniamy osobno i robimy dopiero po Twojej zgodzie.",
++      "Zmiany poza spisanym zakresem wyceniamy osobno i robimy dopiero po Twojej zgodzie.",
+       (PLATNOSC_KROTKO.trim() || "Warunki płatności zapisujemy w umowie razem z zakresem.") + KARA,
+       "Wycena jest bezpłatna i do niczego nie zobowiązuje." + ZASADA,
+     ],
+@@ -167,30 +170,26 @@ const PL = {
+     protokol: "Wzór protokołu przekazania",
+     pdf: "PDF",
+   },
+-  // Strategia 26.11: demo przed płatnością i cztery linie oferty.
++  // „Bez ryzyka”: tylko to, czego nie ma w krokach i cenach (demo, stała cena i ryczałt są wyżej).
+   pewnosc: {
+     eyebrow: "Bez ryzyka",
+-    h2a: "Najpierw widzisz, potem płacisz.",
++    h2a: "Dokładamy, nie wymieniamy.",
+     h2b: "",
+-    lead: "Mała firma pyta najczęściej: a jeśli zapłacę, a to nie zadziała? Dlatego zaczynamy od dema.",
++    lead: "Twoje programy zostają, a zasady korzystania z tego, co zrobimy, spisujemy w umowie.",
+     punkty: [
+-      { h: "Demo przed płatnością", p: `Zanim zapłacisz, widzisz działającą tablicę zleceń, dodatek do programu, makro albo plan sieci. Nie pasuje, to nie płacisz. ${DEMO_WARUNEK}` },
+-      { h: "Stała cena po demie", p: "Po demie spisujemy zakres i stałą cenę wdrożenia, zanim zaczniemy. Bez stawki godzinowej i bez dopłat bez Twojej zgody." },
+-      { h: "Zostajesz przy swoich programach", p: "Program do faktur, Excel i sprzęt zostają. Dokładamy tablicę, dodatek albo makro. Licencje innych firm kupujesz sam, na swoją firmę." },
++      { h: "Zostajesz przy swoich programach", p: "Optima, Subiekt, enova, BaseLinker, Allegro, KSeF albo Excel zostają. Dokładamy tablicę, dodatek albo makro. Jeśli nowy program naprawdę ma sens, powiemy to wprost." },
+       // Program jest na licencji (decyzja właściciela, company-audits/DECYZJE.md): bez obietnic, że po zapłacie należy do klienta.
+-      { h: "Licencja na piśmie", p: "Z programu korzystasz na licencji, a jej zasady spisujemy w umowie, zanim zaczniemy." + zd([DANE.gwarancja], ` Błędy z zakresu poprawiamy bez dopłaty przez ${v(DANE.gwarancja, "liczba dni")} dni po odbiorze.`) },
++      { h: "Licencja na piśmie", p: "Z programu korzystasz na licencji, a jej zasady spisujemy w umowie, zanim zaczniemy." },
+     ],
+   },
+-  // Pytania (strategia 26.11): pięć pytań, odpowiedzi bez kwot.
++  // Pytania: tylko to, czego nie ma w sekcjach wyżej (bez powtarzania kroków, cen i „Bez ryzyka”).
+   faq: {
+     eyebrow: "Pytania",
+     h2a: "Zanim zadzwonisz.",
+     pyt: [
+-      { q: "Ile trwa demo?", a: `Demo przygotowujemy w 1–2 dni od wyceny. Pokazujemy je online albo u Ciebie w firmie, na przykładowych danych, i możesz sam poklikać. ${DEMO_WARUNEK}` },
+-      { q: "Co, jeśli demo mi nie pasuje?", a: "Nie płacisz ani za wycenę, ani za demo. Możesz powiedzieć, co zmienić, albo zakończyć na tym etapie, bez zobowiązań." },
+-      { q: "Jak liczycie cenę wdrożenia?", a: "Po demie wiemy, co dokładnie ma działać. Wtedy podajemy na piśmie stałą cenę za cały zakres, zanim zaczniemy. Bez stawki godzinowej. Zmiany poza zakresem wyceniamy osobno i robimy dopiero po Twojej zgodzie." + VAT_FAQ },
+-      { q: "Czy muszę zmieniać program, którego używam?", a: "Nie. Pracujemy na tym, co już masz: Optima, Subiekt, enova, BaseLinker, Allegro, KSeF albo Excel. Dokładamy tablicę, dodatek albo makro. Jeśli nowy program naprawdę ma sens, powiemy to wprost." },
+-      { q: "Czy robicie też IT i sprzęt?", a: "Tak. Sieć i Wi-Fi na hali, komputery i kopie zapasowe, poczta, drukarki etykiet, czytniki, tablety i ekran na produkcji. Zanim cokolwiek kupisz, pokazujemy plan na piśmie." },
++      { q: "Jak wygląda demo?", a: "Pokazujemy je online albo u Ciebie w firmie. Możesz sam poklikać i powiedzieć, co zmienić, zanim zdecydujesz o wdrożeniu." },
++      { q: "Czy do dema potrzebujecie dostępu do moich programów?", a: "Nie. Demo robimy na przykładowych danych. Dostęp do Twoich programów jest potrzebny dopiero przy wdrożeniu." },
++      { q: "Czy robicie też IT i sprzęt?", a: "Tak, jako uzupełnienie programów. Zakres opisujemy na stronie „IT i sprzęt w firmie”." },
+     ],
+   },
+   kontakt: {
