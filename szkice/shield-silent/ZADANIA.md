@@ -175,10 +175,11 @@ termin: 2027-01-28
   materiał: Plan-filmow-do-28-stycznia.md
 
 ## Do rozplanowania
-- [~] Rozszerz scenariusze filmów o luźne filmiki: uczące i dla beki | kto: agent | gdzie: chmura | kiedy: 2026-11-27
+- [~] Rozszerz scenariusze filmów o luźne filmiki: uczące i dla beki | kto: agent | gdzie: chmura | kiedy: 2026-11-27 | wymaga: odbiór
   cel: dopisać do planu filmów nową serię luźnych, krótkich filmików (reels, tiktok, youtube): część uczy czegoś o wygłuszaniu i audio w aucie, część jest dla beki, lekko kontrowersyjna, ale zabawna; z gotowymi scenariuszami nagrania telefonem (co nagrać, jak, napisy, opis)
   gotowe gdy: w kampanii jest co najmniej 6 nowych pozycji filmów (3 uczące, 3 dla beki) z terminami, a w posty/ dla każdej scenariusz.md; żarty z mitów, marketingu i błędów w branży, nie z klientów ani konkurencji z nazwy; bez obietnic spoza karty i bez cen niezgodnych ze stroną; niczego nie publikuj
   materiał: KARTA.md
+  wynik: 6 scenariuszy (3 uczące, 3 dla beki) z terminami w kampanie/zima-bez-kompromisow.md i Plan-filmow-do-28-stycznia.md. Pliki: posty/2026-12-04-film-mata-i-pianka/scenariusz.md, posty/2026-12-11-film-cisza-absolutna/scenariusz.md, posty/2026-12-18-film-audio-balans-fader/scenariusz.md, posty/2027-01-08-film-wiecej-maty/scenariusz.md, posty/2027-01-15-film-brzeczy-schowek/scenariusz.md, posty/2027-01-22-film-premium-naklejka/scenariusz.md.
 - [x] Przygotuj 3 warianty grafiki „Grand Silent Auto V / VI” (przed i po) | kto: agent | gdzie: chmura | kiedy: 2026-11-25
   cel: 3 zabawne grafiki w formacie memu „GTA V kontra GTA VI”: po lewej albo u góry „V” = auto przed, po prawej albo na dole „VI” = to samo auto po Shield & Silent; do posta na Instagram i Facebook
   gotowe gdy: w posty/2026-11-25-grand-silent-auto/ są 3 pliki PNG 1080×1350 (wariant-1.png, wariant-2.png, wariant-3.png), każdy z innej pary zdjęć przed/po, oraz opis.md z 3 krótkimi podpisami do posta (po jednym na wariant, najwyżej 2 zdania, bez cen i obietnic spoza karty)

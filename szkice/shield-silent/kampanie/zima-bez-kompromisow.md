@@ -10,7 +10,7 @@
 - koniec: 2027-01-28
 - budżet: 1 500 zł/mies. (Google 1 000, Meta 500)
 
-Filmy 2 razy w tygodniu (pn wygłuszanie, śr auto klienta; serial usunięty 25.11), publikacja 18:00–20:00, scenariusze w Plan-filmow-do-28-stycznia.md (sekcja 6).
+Stałe filmy w poniedziałki (wygłuszanie) i środy (auto klienta), a w sześć wybranych piątków seria „Luźno o wygłuszaniu i audio”. Publikacja 18:00–20:00. Scenariusze stałych filmów w Plan-filmow-do-28-stycznia.md (sekcja 6), scenariusze serii pod jej pozycjami w harmonogramie.
 Nagrywasz i publikujesz Ty. Reklamy, wizytówka i kontrole są w ZADANIA.md. Bez rabatów i gratisów.
 
 ## Grupa docelowa
@@ -32,14 +32,23 @@ To samo auto, dwa dźwięki: drzwi wygłuszone i fabryczne. Jawne ceny (drzwi pr
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta (archiwum 2) | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-02 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Mata i pianka mają różne zadania” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-04 | czas: 15
+  materiał: posty/2026-12-04-film-mata-i-pianka/scenariusz.md
+  Odcinek 1/6 · uczący.
 - [ ] Opublikuj film Wygłuszanie: „Ile kosztuje cisza w tych drzwiach? 590 / 1 590 / 3 000 zł?” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-07 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-09 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Cisza absolutna w trzech kliknięciach” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-11 | czas: 15
+  materiał: posty/2026-12-11-film-cisza-absolutna/scenariusz.md
+  Odcinek 2/6 · dla beki.
 - [ ] Opublikuj film Wygłuszanie: „Co wkładamy w drzwi za 1 590 zł?” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-14 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-16 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Który głośnik brzęczy?” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-18 | czas: 15
+  materiał: posty/2026-12-18-film-audio-balans-fader/scenariusz.md
+  Odcinek 3/6 · uczący.
 - [ ] Opublikuj film Wygłuszanie: „[Model klienta]: fabryka vs moje wygłuszone drzwi” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-21 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Wygłuszanie: „Puknij w drzwi swojego auta. Brzmią jak to… czy jak to?” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2026-12-28 | czas: 15
@@ -50,14 +59,23 @@ To samo auto, dwa dźwięki: drzwi wygłuszone i fabryczne. Jawne ceny (drzwi pr
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-06 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Jeszcze jedna warstwa i będzie dobrze” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-08 | czas: 15
+  materiał: posty/2027-01-08-film-wiecej-maty/scenariusz.md
+  Odcinek 4/6 · dla beki.
 - [ ] Opublikuj film Wygłuszanie: „Po wygłuszeniu drzwi będą trzeszczeć?” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-11 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-13 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Brzęczy w aucie? Zacznij od schowka” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-15 | czas: 15
+  materiał: posty/2027-01-15-film-brzeczy-schowek/scenariusz.md
+  Odcinek 5/6 · uczący.
 - [ ] Opublikuj film Wygłuszanie: „Woda w drzwiach? Musi wypłynąć.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-18 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film „Ceramika po 2 miesiącach zimy” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-20 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
+- [ ] Opublikuj film Luźno o wygłuszaniu i audio: „Naklejka premium. Blacha bez zmian.” | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-22 | czas: 15
+  materiał: posty/2027-01-22-film-premium-naklejka/scenariusz.md
+  Odcinek 6/6 · dla beki.
 - [ ] Opublikuj film Wygłuszanie | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-25 | czas: 15
   materiał: Plan-filmow-do-28-stycznia.md#6
 - [ ] Opublikuj film Auto klienta | kto: ty | kanał: reels, tiktok, youtube | kiedy: 2027-01-27 | czas: 15

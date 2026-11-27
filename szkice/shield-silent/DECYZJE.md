@@ -1,5 +1,12 @@
 # Decyzje: Shield & Silent – marketing
 
+## 2026-11-27: Terminy serii „Luźno o wygłuszaniu i audio”
+
+- Kontekst: kampania potrzebuje sześciu dodatkowych krótkich filmów z edukacją i humorem.
+- Decyzja: wpisać po jednym odcinku w wolne piątki 4, 11 i 18 grudnia oraz 8, 15 i 22 stycznia, naprzemiennie edukacja i humor. Nagranie dzień przed publikacją.
+- Skutki: dotychczasowe daty kampanii są zachowane. Każdy nowy odcinek ma własny scenariusz w panelu.
+- Kto: agent
+
 ## 2026-11-25: Serial wycofany z planu filmów
 - Kontekst: plan „Zima bez kompromisów” miał co piątek odcinek serialu („[Imię]…”, odc. 2–9 do 22.01).
 - Decyzja: właściciel wycofał serial na teraz; może wrócić w przyszłości. Zostają filmy w poniedziałki (wygłuszanie) i środy (auto klienta).
