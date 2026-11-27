@@ -469,12 +469,36 @@ def update_task(body):
         return error
     try:
         with _write_lock:
+            changes = body.get("changes")
+            if isinstance(changes, dict) and ("date" in changes or "title" in changes):
+                pin_post(str(body.get("id", "")), str(body.get("title", "")), where[0])
             ok = projekt.update_task(where[0], where[1], where[2], str(body.get("title", "")), body.get("changes"))
     except ValueError as e:
         return 400, "Nie zapisano: %s." % e
     except OSError:
         return 400, "Nie udało się zapisać zmiany."
     return (200, "") if ok else CONFLICT
+
+
+POST_FILES = ("post.md", "scenariusz.md", "scenariusz.json", "film.mp4", "film.mov")
+
+
+def pin_post(tid, title, folder):
+    """Przed zmianą kiedy: albo tytułu publikacji: `materiał: posty/<folder posta>/…` pod nią (scenariusz.link), żeby
+    edytor, nagranie i wgranie filmu znalazły ten sam post po zmianie. Wywołujący trzyma _write_lock. True: dopisano."""
+    try:
+        data, index = load_projects(resolve=False)
+        pub = next((t for t in data["tasks"] if t["id"] == tid and t["title"] == title
+                    and t.get("kind") == "publikacja" and t.get("row") != "reklama"), None)
+        if not pub or not (scenariusz.is_film(pub) or scenariusz.post_row(pub)):
+            return False
+        post = find_post(pub["project"], "", tid, data, index)
+        if not post:
+            return False
+        name = next((n for n in POST_FILES if os.path.isfile(os.path.join(post, n))), POST_FILES[0])
+        return scenariusz.link(projekt, folder, pub["project"], pub, post, name)
+    except (OSError, ValueError, KeyError):
+        return False
 
 
 DETAIL_KEYS = ("wykonawca", "cel", "gotowe gdy", "materiał", "wynik", "decyzja", "zostało", "poprawka", "następne", "krok",
@@ -977,8 +1001,8 @@ def get_recorder():
 
 def record_film(body):
     """POST /api/film/nagraj {project, date}: nagranie filmu posta w tle (widok Teraz widzi je od razu)."""
-    res = get_recorder().start(post_folder(str(body.get("project") or ""), str(body.get("date") or "")),
-                               str(body.get("title") or ""))
+    res = get_recorder().start(find_post(str(body.get("project") or ""), str(body.get("date") or ""),
+                                         str(body.get("id") or "")), str(body.get("title") or ""))
     with _films_lock:
         _films_cache["at"] = 0.0
     return res
@@ -996,7 +1020,7 @@ def film_account(body):
 def fix_post(body):
     """POST /api/post/popraw {project, date, uwaga}: zadanie dla agenta „Popraw post na …” z uwagą właściciela."""
     pid, day, note = str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("uwaga") or "").strip()
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, str(body.get("id") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     if not 3 <= len(note) <= 1000:
@@ -1069,13 +1093,57 @@ def film_folders(data, index, pid):
     return scenariusz.assign(cards, [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"])
 
 
+def post_folders(data, index, pid):
+    """{id publikacji: folder posta} projektu, z filmem i bez (scenariusz.assign_posts: materiał:, tytuł, data bez
+    wątpliwości). Reklamy mają ad_folder."""
+    cards = _cards(index, pid)
+    if not cards:
+        return {}
+    return scenariusz.assign_posts(cards, [t for t in data["tasks"] if t["project"] == pid and t.get("kind") == "publikacja"])
+
+
 def pub_folder(data, index, pub, films=None):
-    """Folder posta publikacji: film z film_folders (nie folder innego posta z tą samą datą), reszta po dacie."""
-    if scenariusz.is_film(pub) and pub.get("row") != "reklama":
-        if films is None:
-            films = film_folders(data, index, pub["project"])
-        return films.get(pub["id"])
-    return post_folder(pub["project"], str(pub.get("date") or "")[:10], index)
+    """Folder posta publikacji z post_folders (nie folder innego posta z tą samą datą). films: wynik post_folders
+    albo film_folders projektu (gdy już policzony). Reklama: po dacie i kodzie (ad_folder)."""
+    if pub.get("row") == "reklama":
+        return ad_folder(pub["project"], str(pub.get("date") or "")[:10], pub.get("adCode"), index)
+    if films is None or (not scenariusz.is_film(pub) and pub["id"] not in films):
+        films = post_folders(data, index, pub["project"])
+    return films.get(pub["id"])
+
+
+def find_post(pid, day, tid="", data=None, index=None):
+    """Folder posta z tras edytora, nagrania i wgrania filmu. tid (id publikacji): jej folder także po zmianie daty;
+    id zadania „Nagraj film …”: folder z film_link.
+    Bez tid: jedyna publikacja tego dnia (albo kilka ze wspólnym postem); dzień bez publikacji: folder tego dnia,
+    którego nie ma żadna publikacja. Przy kilku publikacjach z różnymi postami bez tid: None."""
+    if index is None:
+        data, index = load_projects(resolve=False)
+    if pid not in index:
+        return None
+    if data is None:                            # tylko ten projekt (wyniki i publikacja podają index)
+        try:
+            data = {"tasks": projekt.read_project(index[pid], pid)["tasks"]}
+        except (OSError, ValueError):
+            return None
+    pubs = [dict(t, date=resolve_date(t.get("date") or "")) for t in data["tasks"]
+            if t["project"] == pid and t.get("kind") == "publikacja"]
+    pub = next((t for t in pubs if tid and t["id"] == tid), None)
+    task = next((t for t in data["tasks"] if tid and not pub and t["id"] == tid and t["project"] == pid), None)
+    if task and FILM_TASK.match(task.get("title") or ""):     # „Nagraj film …”: post z materiał: albo po: publikacji
+        return film_link(task, [t for t in data["tasks"] if t["project"] == pid], index)
+    if pub and pub.get("row") == "reklama":
+        return ad_folder(pid, str(pub.get("date") or "")[:10], pub.get("adCode"), index)
+    folders = post_folders({"tasks": pubs}, index, pid)
+    if pub:
+        return folders.get(pub["id"])
+    if not POST_DAY.match(day or ""):
+        return None
+    same = [t for t in pubs if str(t.get("date") or "")[:10] == day and t.get("row") != "reklama" and scenariusz.post_row(t)]
+    if not same:
+        return scenariusz.post_dir(_cards(index, pid), day, set(folders.values()))
+    hits = {folders.get(t["id"]) for t in same}
+    return hits.pop() if len(hits) == 1 else None
 
 
 MATERIAL_ROWS = ("reklama", "publikacja")    # rodzaje wierszy kampanii z materiałem do przygotowania (projekt.row_kind)
@@ -1123,7 +1191,7 @@ def publication_job(pub, jobs):
 
 def publication_jobs(data, index):
     owners = {p["id"] for p in data["projects"] if p.get("filmOwner")}
-    posts, films = {}, {}
+    films = {}
     jobs = {(t["project"], t["title"]): t for t in data["tasks"] if t["file"] == "ZADANIA.md"
             and t["title"].startswith(("Przygotuj publikację na ", agents.POST_TASK, scenariusz.PREP_TASK))}
     for pub in data["tasks"]:
@@ -1136,14 +1204,10 @@ def publication_jobs(data, index):
             continue                    # krok właściciela albo przegląd: bez „Brak tekstu” i „Zleć”
         if pub.get("row") == "reklama":
             folder = ad_folder(pid, day, pub.get("adCode"), index)
-        elif scenariusz.is_film(pub):
+        else:                           # film i post bez filmu: folder tej publikacji, nie pierwszy z dnia
             if pid not in films:
-                films[pid] = film_folders(data, index, pid)
+                films[pid] = post_folders(data, index, pid)
             folder = films[pid].get(pub["id"])
-        else:
-            if (pid, day) not in posts:
-                posts[pid, day] = post_folder(pid, day, index)
-            folder = posts[pid, day]
         material = publication_material(pub, folder, pid in owners)
         if material:
             pub["missingMaterial"] = material[0]
@@ -1225,18 +1289,19 @@ def script_info(pid, day, tid=""):
 
 
 def film_pub_folder(pid, tid):
-    """Folder posta publikacji z filmem o tym id ("" gdy go nie ma) albo None, gdy id nie wskazuje filmu."""
+    """Folder posta publikacji o tym id, z filmem albo bez ("" gdy go nie ma), albo None, gdy id nie wskazuje
+    publikacji z postem (reklama: ad_folder)."""
     if not tid:
         return None
     data, index = load_projects()
     pub = next((t for t in data["tasks"] if t["id"] == tid and t["project"] == pid and t.get("kind") == "publikacja"), None)
-    if not pub or not scenariusz.is_film(pub) or pub.get("row") == "reklama":
+    if not pub or pub.get("row") == "reklama" or not (scenariusz.is_film(pub) or scenariusz.post_row(pub)):
         return None
-    return film_folders(data, index, pid).get(tid) or ""
+    return post_folders(data, index, pid).get(tid) or ""
 
 
 def _script_post(data, folder, pub):
-    """Folder posta ze scenariuszem tej publikacji (film_folders; publikacja bez filmu: po dacie). folder: projektu."""
+    """Folder posta ze scenariuszem tej publikacji (post_folders, niezależnie od daty). folder: projektu."""
     return pub_folder(data, {pub["project"]: folder}, pub)
 
 
@@ -1460,13 +1525,13 @@ def script_links(tasks, projects, index):
             continue
         pid = t["project"]
         if pid not in films:
-            films[pid] = film_folders({"tasks": tasks}, index, pid)
+            films[pid] = post_folders({"tasks": tasks}, index, pid)
         if scenariusz.is_film(t) and t.get("row") != "reklama":
             post = films[pid].get(t["id"])      # folder filmu niezależnie od daty (materiał:, tytuł, data)
-        elif (pid, day) in film_days:
+        elif (pid, day) in film_days or t.get("row") == "reklama":
             continue                    # bez filmu, a tego dnia jest film: scenariusz należy do filmu
         else:
-            post = scenariusz.post_dir(_cards(index, pid), day, set(films[pid].values()))
+            post = films[pid].get(t["id"])
         info = scenariusz.summary(post) if post else None
         if info is None and not (pid in owners and scenariusz.is_film(t)):
             continue
@@ -1480,7 +1545,7 @@ def film_change(body):
     film), w kolejce nagrywarki zaraz po bieżącym nagraniu (Recorder.start). Panel bez nagrywarki: nagra Automat
     nagrań na serwerze (wersja scenariusza jest nowsza niż film)."""
     pid, day = str(body.get("project") or ""), str(body.get("date") or "")
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, str(body.get("id") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     params, slides, music = body.get("params"), body.get("slides"), body.get("music", film.UNSET)
@@ -1735,10 +1800,10 @@ def studio_music_file(pid, name):
 AUDIO_TYPES = {"mp3": "audio/mpeg", "m4a": "audio/mp4", "aac": "audio/aac", "wav": "audio/wav", "ogg": "audio/ogg"}
 
 
-def post_add_image(pid, day, param, ctype, data):
+def post_add_image(pid, day, param, ctype, data, tid=""):
     """Zrzut ekranu albo zdjęcie do filmu posta (POST /api/post/obraz): plik w folderze posta i od razu w parametrze
     szablonu, który jest obrazem planszy (np. „Zrzut 1”), potem nagranie od nowa. (kod, błąd, dane)."""
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, tid)
     if not folder:
         return 404, "Nie ma posta na ten dzień.", {}
     ext = STUDIO_TYPES["logo"].get(ctype)
@@ -1789,7 +1854,7 @@ def post_set_text(body):
     ten sam podział, który czytają post_info, publikacja.py i udostepnij.caption). Brakującą sekcję dopisuje na końcu.
     old: tekst sekcji, od którego właściciel zaczął edycję; gdy plik zmienił się w międzyczasie (np. poprawił go
     agent), nic nie zapisuje i zwraca 409. (kod, błąd)."""
-    folder = post_folder(str(body.get("project") or ""), str(body.get("date") or ""))
+    folder = find_post(str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("id") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     name = str(body.get("section") or "")
@@ -1827,11 +1892,11 @@ def post_set_text(body):
     return 200, ""
 
 
-def post_set_image(pid, day, ctype, data):
+def post_set_image(pid, day, ctype, data, tid=""):
     """POST /api/post/grafika?project=&date=: nowa grafika posta (PNG albo JPG) jako grafika.png. Poprzednia zostaje
     w ukrytym .grafika-poprzednia.png. grafika.svg zostaje, ale jest starsza, więc post_image jej nie nadpisze.
     JPG zamienia na PNG ffmpeg (jest na serwerze z nagrywarką). (kod, błąd)."""
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, tid)
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     ext = STUDIO_TYPES["logo"].get(ctype)
@@ -1919,7 +1984,8 @@ def film_link(task, tasks, index):
                 or not y.get("channel"):
             continue
         if any(str(a).strip() and title.startswith(str(a).strip().lower()) for a in y.get("after") or []):
-            folder = post_folder(task["project"], str(resolve_date(y.get("date") or "") or "")[:10])
+            folder = find_post(task["project"], str(resolve_date(y.get("date") or "") or "")[:10], y["id"],
+                               {"tasks": tasks}, index)
             if folder:
                 return folder
     return None
@@ -2055,7 +2121,7 @@ def auto_record():
         if rec.busy:
             return
     data, index = load_projects(resolve=False)
-    published = published_days(data["tasks"])
+    published = published_days(data["tasks"], index)
     with rec.lock:
         busy = set(os.path.realpath(b) for b in rec.busy)
     now = datetime.datetime.now()
@@ -2132,7 +2198,7 @@ def get_publisher():
     global _publisher
     with _agents_lock:
         if _publisher is None:
-            _publisher = publikacja.Publisher(load_projects, _write_lock, projekt, post_folder, post_info, post_image,
+            _publisher = publikacja.Publisher(load_projects, _write_lock, projekt, task_post, post_info, post_image,
                                               notify=lambda text, link="#marketing": get_agents()._send_ntfy(text, link))
         return _publisher
 
@@ -2144,7 +2210,7 @@ def get_wyniki():
     """Wyniki marketingu (wyniki.py): dziennik klientów, odczyt postów i reklam; jeden na proces."""
     with _agents_lock:
         if _wyniki["obj"] is None:
-            _wyniki["obj"] = wyniki.Wyniki(load_projects, _write_lock, projekt, post_folder,
+            _wyniki["obj"] = wyniki.Wyniki(load_projects, _write_lock, projekt, task_post,
                                            notify=lambda text, link="#marketing": get_agents()._send_ntfy(text, link),
                                            publisher=get_publisher)
             base = (os.environ.get("PANEL_PUBLIC_URL", "").strip() or publikacja.PUBLIC_URL or
@@ -2171,7 +2237,7 @@ def post_share(body):
     channel = str(t.get("channel") or "").lower()
     if t.get("kind") != "publikacja" or not re.search(SHARE_CHANNELS[platform], channel):
         return 400, "To nie jest publikacja z kanałem %s." % name
-    pf = post_folder(t["project"], str(t.get("date") or "")[:10])
+    pf = find_post(t["project"], str(t.get("date") or "")[:10], t["id"])
     if not pf:
         return 404, "Nie ma przygotowanego posta na dzień publikacji."
     info = post_info(pf)
@@ -2202,9 +2268,9 @@ def _post_project_name(pid):
     return p.get("alias") or p.get("name") or pid
 
 
-def graphic_state(pid, day):
+def graphic_state(pid, day, tid=""):
     """GET /api/post/warianty: warianty, obrazy do wyboru, zlecenia Codex i stan Codexa dla edytora posta."""
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, tid)
     if not folder:
         return 404, "Nie ma posta na ten dzień.", {}
     names = grafiki.variants(folder)
@@ -2227,7 +2293,7 @@ def graphic_order(body):
     """POST /api/post/grafika-codex {project, date, polecenie, tryb: zachowaj | nowa, zrodlo: grafika.png | zdjęcie}:
     polecenie w rozmowie o grafice. Przy oczekującej wersji Codex poprawia ją (zrodlo bez znaczenia)."""
     pid, day = str(body.get("project") or ""), str(body.get("date") or "")
-    folder = post_folder(pid, day)
+    folder = find_post(pid, day, str(body.get("id") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     post_image(folder)                       # grafika.svg → grafika.png, żeby było co poprawiać
@@ -2238,7 +2304,7 @@ def graphic_order(body):
 def graphic_variant(body):
     """POST /api/post/wariant {project, date, name, akcja}: oczekująca wersja z rozmowy: akceptuj | odrzuc | karuzela;
     dowolny wariant: grafika | usun."""
-    folder = post_folder(str(body.get("project") or ""), str(body.get("date") or ""))
+    folder = find_post(str(body.get("project") or ""), str(body.get("date") or ""), str(body.get("id") or ""))
     if not folder:
         return 404, "Nie ma posta na ten dzień."
     do = {"akceptuj": grafiki.accept, "odrzuc": grafiki.reject, "karuzela": grafiki.to_carousel,
@@ -2589,14 +2655,23 @@ def studio_stale(pf, fm=None):
     return sv is not None and v is not None and sv <= t < v
 
 
-def published_days(tasks):
-    """{(projekt, dzień)} postów opublikowanych: publikacja z kampanii w stanie zrobione."""
-    out = set()
+def published_days(tasks, index=None):
+    """{(projekt, dzień)} postów opublikowanych: publikacja z kampanii w stanie zrobione. Z index także
+    (projekt, nazwa folderu posta) z post_folders: post przeniesiony na inny dzień też jest opublikowany."""
+    out, pids = set(), set()
     for t in tasks or []:
         if t.get("kind") == "publikacja" and t.get("state") == "done":
             day = str(resolve_date(t.get("date") or "") or "")[:10]
             if POST_DAY.match(day):
                 out.add((t.get("project"), day))
+            pids.add(t.get("project"))
+    for pid in sorted(p for p in pids if index and p in index):
+        try:
+            folders = post_folders({"tasks": tasks}, index, pid)
+        except (OSError, ValueError):
+            continue
+        out |= {(pid, os.path.basename(f)) for k, f in folders.items()
+                if f and any(t["id"] == k and t.get("state") == "done" for t in tasks)}
     return out
 
 
@@ -2607,7 +2682,7 @@ def film_queue(index, today=None, published=None):
     published = published or set()
     for pid, n, pf in _post_dirs(index, (film.SCENARIO,)):
         try:
-            mt = film_pending(pf, today=today, published=(pid, n[:10]) in published)
+            mt = film_pending(pf, today=today, published=(pid, n[:10]) in published or (pid, n) in published)
         except Exception as e:  # noqa: BLE001  (jeden uszkodzony post nie zatrzymuje kolejki pozostałych)
             _film_skip(pf, e)
             continue
@@ -2899,7 +2974,7 @@ def activity(out, index, manager):
             busy = set(rec.busy)
         res["recorder"] = bool(part("nagrywarka", rec.available, False))
     res["films"] = part("filmy", lambda: films_cached(index, busy, queue=True,
-                                                      published=published_days(out["tasks"])), [])
+                                                      published=published_days(out["tasks"], index)), [])
     res["chats"] = part("rozmowy", manager.chat_pending, [])
     done = getattr(manager, "chat_recent", None)
     res["chatsDone"] = part("rozmowy", lambda: done(RECENT_HOURS), []) if done else []
@@ -3982,6 +4057,11 @@ def media_file(pid, rel):
     return path
 
 
+def task_post(pid, day, index=None, tid=""):
+    """Folder posta publikacji tid dla publikacja.py i wyniki.py (find_post; bez tid: po dniu bez wątpliwości)."""
+    return find_post(pid, day, tid, None, index)
+
+
 def post_folder(pid, day, index=None):
     """Folder posta: <karta projektu>/posty/<dzień>-<nazwa>/. None, gdy go nie ma albo dane są niepoprawne."""
     if not POST_DAY.match(day or ""):
@@ -4520,7 +4600,8 @@ class Handler(BaseHTTPRequestHandler):
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path == "/api/post/warianty":
             q = parse_qs(url.query)
-            code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            code, err, extra = graphic_state((q.get("project") or [""])[0], (q.get("date") or [""])[0],
+                                             (q.get("id") or [""])[0])
             return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                               "application/json; charset=utf-8", [("Cache-Control", "no-store")])
         if path == "/api/reklama/podglad":         # jeden PNG: Facebook, Instagram i Story obok siebie („Kopiuj obraz”)
@@ -4563,7 +4644,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(200, f.read(), "image/png", [("Cache-Control", "no-store")])
         if path in ("/api/post", "/api/post/grafika", "/api/post/film", "/api/post/bladfilmu", "/api/post/napisy"):
             q = parse_qs(url.query)
-            folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+            folder = find_post((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("id") or [""])[0])
             if folder and not agents.has_post(folder):     # sam scenariusz nagrania: posta jeszcze nie ma
                 folder = None
             if not folder:
@@ -4737,7 +4818,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False),
                               "application/json; charset=utf-8")
         code, err, extra = post_add_image((q.get("project") or [""])[0], (q.get("date") or [""])[0],
-                                          (q.get("param") or [""])[0], ctype, data)
+                                          (q.get("param") or [""])[0], ctype, data, (q.get("id") or [""])[0])
         data_invalidate()
         return self._send(code, json.dumps(dict(extra, ok=code == 200, error=err), ensure_ascii=False),
                           "application/json; charset=utf-8")
@@ -4750,7 +4831,8 @@ class Handler(BaseHTTPRequestHandler):
         if data is None:
             return self._send(400, json.dumps({"ok": False, "error": err}, ensure_ascii=False),
                               "application/json; charset=utf-8")
-        code, err = post_set_image((q.get("project") or [""])[0], (q.get("date") or [""])[0], ctype, data)
+        code, err = post_set_image((q.get("project") or [""])[0], (q.get("date") or [""])[0], ctype, data,
+                                   (q.get("id") or [""])[0])
         return self._send(code, json.dumps({"ok": code == 200, "error": err}, ensure_ascii=False),
                           "application/json; charset=utf-8")
 
@@ -4854,7 +4936,7 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(query)
         ctype = (self.headers.get("Content-Type") or "").split(";")[0].strip().lower()
         ext = {"video/mp4": ".mp4", "video/quicktime": ".mov"}.get(ctype)
-        folder = post_folder((q.get("project") or [""])[0], (q.get("date") or [""])[0])
+        folder = find_post((q.get("project") or [""])[0], (q.get("date") or [""])[0], (q.get("id") or [""])[0])
         try:
             size = int(self.headers.get("Content-Length") or 0)
         except ValueError:

@@ -664,7 +664,7 @@ class Wyniki:
             nums = [c.get("liczby") or {} for c in rec.values()]
             d = t.get("detail") or {}
             views = sum(n.get("wyswietlenia") or 0 for n in nums) or (d.get("views") or 0)
-            pf = self.post_folder(pid, day, index) if self.post_folder and index is not None else None
+            pf = self.post_folder(pid, day, index, tid=t.get("id", "")) if self.post_folder and index is not None else None
             img = bool(pf and any(os.path.isfile(os.path.join(pf, n)) for n in ("grafika.png", "grafika.jpg")))
             row(post_code(t), tytul=t["title"], data=day, kanal=t.get("channel") or "", rodzaj="post",
                 link=str(d.get("link") or "") or next((c.get("link") for c in rec.values() if c.get("link")), ""),
@@ -826,7 +826,7 @@ class Wyniki:
 
     def _org_file(self, t, day, index):
         """(ścieżka, klucz): wyniki.json w folderze posta, a bez folderu plik projektu w katalogu reklam."""
-        pf = self.post_folder(t["project"], day, index) if self.post_folder else None
+        pf = self.post_folder(t["project"], day, index, tid=t.get("id", "")) if self.post_folder else None
         if pf:
             return os.path.join(pf, "wyniki.json"), None
         return self._ads_path("organiczne-%s.json" % t["project"]), "%s|%s" % (day, t["title"])

@@ -283,7 +283,7 @@ class Publisher:
             return "Facebook nie jest połączony ze stroną tego projektu (Marketing → Kanały publikacji)."
         if "linkedin" in chans and not st["linkedin"]["connected"]:
             return "LinkedIn nie jest połączony albo token wygasł (Marketing → Kanały publikacji)."
-        folder = self.post_folder(t["project"], str(t.get("date") or "")[:10])
+        folder = self.post_folder(t["project"], str(t.get("date") or "")[:10], tid=t.get("id", ""))
         if not folder:
             return "Nie ma przygotowanego posta na dzień publikacji."
         if "reels" in chans and not self.film(folder):
@@ -349,7 +349,7 @@ class Publisher:
             if problem:
                 errors.append(problem)
         if not errors:
-            pf = self.post_folder(t["project"], str(t.get("date") or "")[:10])
+            pf = self.post_folder(t["project"], str(t.get("date") or "")[:10], tid=t.get("id", ""))
             info = self.post_info(pf)
             for ch in chans:
                 if (done.get(ch) or {}).get("ok"):

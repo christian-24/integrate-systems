@@ -99,7 +99,7 @@ class Posty(unittest.TestCase):
             camp, tasks = projekt.parse_campaign(f.read(), "shield", "kampanie/staly-rytm.md")
         return {"tasks": tasks, "projects": [{"id": "shield", "name": "Shield"}], "campaigns": [camp]}, {"shield": self.folder}
 
-    def post_folder(self, pid, day, index=None):
+    def post_folder(self, pid, day, index=None, tid=""):
         return self.post if day == DAY else None
 
     def tick(self):

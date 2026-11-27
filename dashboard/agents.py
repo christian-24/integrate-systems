@@ -4441,7 +4441,8 @@ class Manager:
                 folders = os.listdir(posts)
             except OSError:
                 folders = []
-            films = scenariusz.assign(os.path.dirname(posts), [t for t in tasks if t.get("kind") == "publikacja"])
+            # folder posta każdej publikacji niezależnie od daty; folder dnia bez właściciela liczy się jak dotąd
+            films = scenariusz.assign_posts(os.path.dirname(posts), [t for t in tasks if t.get("kind") == "publikacja"])
             for t in tasks:
                 if t.get("kind") != "publikacja" or t.get("file") != RYTM_FILE:
                     continue
@@ -4455,17 +4456,15 @@ class Manager:
                 # nagranie to nie publikacja; opis pod film dopiero po nagraniu
                 film = t["title"].startswith(FILM_TASK) or any(w.startswith(FILM_TASK) for w in self.projekt.waiting_titles(t))
                 if t["state"] not in self.projekt.CLOSED_TASK_STATES and today.isoformat() <= day <= horizon and not detail.get("refs") and not film \
-                        and not any((n == day or n.startswith(day + "-")) and has_post(os.path.join(posts, n))
-                                    for n in folders) \
-                        and not (films.get(t["id"]) and has_post(films[t["id"]])):   # film po zmianie kiedy:
+                        and not any(has_post(f) for f in day_posts(posts, folders, day, films, t["id"])):
                     title = self.projekt._clean("%s%s: %s" % (POST_TASK, day, t["title"]), 160)
                     if title not in titles and publication_task_title(t, self.projekt) not in titles:
                         new = (title, {"executor": "claude", "machine": self.machine, "date": today.isoformat(),
                                        "minutes": POST_REVIEW_MINUTES},
                                self.post_detail(folder, day, t.get("channel") or "", t["title"]))
                 elif t["state"] == "done" and day < old and not has_result(detail) \
-                        and not any((n == day or n.startswith(day + "-")) and os.path.isfile(os.path.join(posts, n, "wyniki.json"))
-                                    for n in folders):      # wyniki odczytuje panel sam (wyniki.py)
+                        and not any(os.path.isfile(os.path.join(f, "wyniki.json"))
+                                    for f in day_posts(posts, folders, day, films, t["id"])):  # wyniki: panel (wyniki.py)
                     key = "%s|%s|%s" % (pid, day, t["title"])
                     title = self.projekt._clean("%s%s" % (RESULT_TASK, t["title"]), 160)
                     if key not in done_keys:
@@ -6134,6 +6133,16 @@ def secret_file(path):
     """Plik, którego panel nie scala: nazwa .env* albo rozszerzenie .key, .pem (bez wielkości liter)."""
     name = os.path.basename(str(path).replace("\\", "/").rstrip("/")).lower()
     return name.startswith(".env") or name.endswith((".key", ".pem"))
+
+
+def day_posts(base, names, day, owned, tid):
+    """Foldery posta publikacji tid: przypisany (scenariusz.assign_posts, także po zmianie kiedy:) i foldery jej dnia,
+    których nie ma żadna inna publikacja (np. post innej publikacji z tą samą datą się nie liczy)."""
+    others = {v for k, v in owned.items() if k != tid}
+    out = [owned[tid]] if owned.get(tid) else []
+    out += [os.path.join(base, n) for n in names if (n == day or n.startswith(day + "-"))
+            and os.path.join(base, n) not in others and os.path.join(base, n) not in out]
+    return out
 
 
 def has_post(folder):
