@@ -102,7 +102,19 @@ class TrasyPlatform(ti.Trasy):
         for n, body in (("film.mp4", b"MP4"), ("post.md", "# Film\n\n## Reels\nOpis rolki\n".encode("utf-8"))):
             with open(os.path.join(post, n), "wb") as f:
                 f.write(body)
+        # „Inny” ma kanały filmowe: własny post (grafika i zdjęcie, bez filmu); post „Start” tego dnia nie jest jego
+        inny = os.path.join(self.folder, "posty", self.DAY + "-post-inny")
+        shutil.copytree(os.path.join(self.folder, "posty", self.DAY + "-start"), inny)
         self.karta("- instagram: @Shield.Silent\n- facebook: Shield & Silent\n- linkedin: Shield Silent sp. z o.o.\n- tiktok: @Shield.Silent")
+
+    def test_zdjecia_w_danych_posta(self):
+        # dwie publikacje tego dnia z różnymi postami: folder po id publikacji, sama data jest niejednoznaczna
+        pid = self.data()["projects"][0]["id"]
+        t = self.task("Opublikuj post „Start”")
+        status, _, text = self.request("GET", "/api/post?project=%s&date=%s&id=%s" % (pid, self.DAY, urllib.parse.quote(t["id"])))
+        self.assertEqual(json.loads(text)["photos"], ["zdjecie-1.jpg"])
+        status, _, text = self.request("GET", "/api/post?project=%s&date=%s" % (pid, self.DAY))
+        self.assertEqual(status, 404)
 
     def karta(self, line):
         path = os.path.join(self.folder, "KARTA.md")

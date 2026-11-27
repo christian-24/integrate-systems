@@ -173,6 +173,10 @@ i tekstem, `GET /api/post/film`) i „Kopiuj i otwórz LinkedIn” (edytor z wpi
   Reels, Instagram) z `grafika.png` albo `film.mp4|mov` (wgranie w poście, `POST /api/post/film`, do 300 MB).
   Po sukcesie: link, wynik, stan zrobione i powiadomienie; po błędzie `zostało:` i powiadomienie; opublikowany
   kanał nie wychodzi drugi raz (`stan.json`).
+- Folder posta: trasy posta i filmu (`/api/post*`, `/api/film/nagraj`, `/api/film/zmien`, `/api/post/popraw`) biorą
+  parametr `id` publikacji i szukają folderu jak scenariusz (`materiał:`, nazwa i tytuł, data tylko bez wątpliwości),
+  także po zmianie `kiedy:`. Bez `id` sama data działa tylko wtedy, gdy tego dnia jest jeden post. Zmiana daty albo
+  tytułu w panelu dopisuje pod publikacją `materiał: posty/<folder>/…`.
 - Instagram pobiera pliki z publicznego adresu `/media/<token>/…` (token na godzinę); wymaga `PANEL_PUBLIC_URL`
   i biblioteki Pillow (`python3-pil`) do JPEG. TikTok: jeszcze nie (wymaga audytu aplikacji przez TikTok).
 - „Udostępnij na …” przez rozszerzenie Chrome (edytor posta, zakładka platformy bez publikacji przez API): Instagram

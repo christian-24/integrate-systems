@@ -287,17 +287,33 @@ def _named(entry, slug, day):
 
 
 def assign(cards, pubs):
-    """Foldery posta publikacji z filmem jednego projektu: {id publikacji: ścieżka folderu}. pubs: publikacje
+    """Foldery posta publikacji z filmem (assign_posts bez publikacji bez filmu)."""
+    films = {p["id"] for p in pubs if is_film(p) and p.get("row") != "reklama"}
+    return {k: v for k, v in assign_posts(cards, pubs).items() if k in films}
+
+
+def post_row(p):
+    """Wiersz publikacji z własnym postem: publikacja (bez reklam, kroków właściciela i przeglądów)."""
+    return p.get("row", "publikacja") in ("publikacja", "", None)
+
+
+def assign_posts(cards, pubs):
+    """Foldery posta publikacji jednego projektu: {id publikacji: ścieżka folderu}. pubs: publikacje
     projektu (wszystkie rodzaje, z detail.refs). Kolejność rozpoznania, folder raz przypisany nie trafia do drugiej:
     a) wiersz `materiał: posty/<folder>/…` pod publikacją (istniejący folder);
     b) folder, którego scenariusz.md ma tytuł publikacji (same_title z pub_title); przy kilku: dzień w nazwie równy
        dniowi publikacji, potem pole `- publikacja:`, potem najbliższy dzień;
     c) folder dnia publikacji, bez scenariusza z innym tytułem: z nazwą z tytułu (new_post_dir), z filmem panelu,
        gdy to jedyny film tego dnia, albo dowolny, gdy to jedyna publikacja tego dnia.
-    Post innej publikacji z tą samą datą (np. post ze zdjęciami) nie przechodzi do filmu."""
+    Publikacje bez filmu (post ze zdjęciami, tekst): a) materiał; b) nazwa folderu z tytułu (także z inną datą, gdy
+    tytuł jest jeden w projekcie); c) folder dnia publikacji bez filmu i scenariusza, gdy tego dnia jest film, i tylko
+    gdy nie ma wątpliwości (jeden pasujący folder; kilka publikacji bez filmu dzieli jedyny folder dnia).
+    Post innej publikacji z tą samą datą nie przechodzi do filmu i odwrotnie."""
     day_of = lambda p: str(p.get("date") or "")[:10]
-    films = sorted((p for p in pubs if is_film(p) and p.get("row") != "reklama"), key=lambda p: (day_of(p), str(p.get("id") or "")))
-    if not films:
+    order = lambda p: (day_of(p), str(p.get("id") or ""))
+    films = sorted((p for p in pubs if is_film(p) and p.get("row") != "reklama"), key=order)
+    posts = sorted((p for p in pubs if not is_film(p) and post_row(p)), key=order)
+    if not films and not posts:
         return {}
     base = os.path.join(cards, "posty")
     entries = _entries(base)
@@ -308,7 +324,7 @@ def assign(cards, pubs):
         out[p["id"]] = e["path"]
         taken.add(e["path"])
 
-    for p in films:                                          # a) materiał
+    for p in films + posts:                                  # a) materiał
         e = next((by_name[n] for n in ref_posts(p) if n in by_name and by_name[n]["path"] not in taken), None)
         if e:
             give(p, e)
@@ -326,6 +342,18 @@ def assign(cards, pubs):
                 c.sort(key=lambda e: (_gap(e["day"] or e["pubday"], day), e["name"]))
             if c:
                 give(p, c[0])
+    titles = {}
+    for p in films + posts:
+        titles[norm_title(pub_title(p))] = titles.get(norm_title(pub_title(p)), 0) + 1
+    for p in posts:                                          # b) nazwa folderu z tytułu, dzień dowolny
+        title, day = pub_title(p), day_of(p)
+        if p["id"] in out or titles.get(norm_title(title)) != 1:
+            continue
+        c = [e for e in entries if e["path"] not in taken and e["day"] and not e["title"] and "-reklama-" not in e["name"]
+             and _named(e, os.path.basename(new_post_dir(cards, e["day"], title)), e["day"])]
+        c.sort(key=lambda e: (_gap(e["day"], day), e["name"]))
+        if c:
+            give(p, c[0])
     per_day, films_day = {}, {}
     for p in pubs:
         if p.get("row", "publikacja") in ("publikacja", ""):
@@ -347,6 +375,29 @@ def assign(cards, pubs):
             pick = [e for e in c if "-reklama-" not in e["name"]]
         if pick:
             give(p, pick[0])
+    for p in posts:                                          # c) data, bez filmu
+        day = day_of(p)
+        if p["id"] in out or not DAY.match(day):
+            continue
+        title = pub_title(p)
+        slug = os.path.basename(new_post_dir(cards, day, title))
+        c = [e for e in entries if e["path"] not in taken and e["day"] == day and "-reklama-" not in e["name"]
+             and not (e["title"] and not same_title(e["title"], title))]
+        pick = [e for e in c if _named(e, slug, day)]
+        if pick:
+            give(p, pick[0])
+    for day in sorted({day_of(p) for p in posts if p["id"] not in out and DAY.match(day_of(p))}):
+        left = [p for p in posts if p["id"] not in out and day_of(p) == day]
+        c = [e for e in entries if e["path"] not in taken and e["day"] == day and "-reklama-" not in e["name"]
+             and not (e["title"] and not any(same_title(e["title"], pub_title(p)) for p in left))]
+        if films_day.get(day):              # tego dnia jest film: jego folder (film, scenariusz) nie jest postem
+            c = [e for e in c if not e["film"] and not e["script"]]
+        if len(c) > 1 and len(left) == 1:
+            c = [e for e in c if os.path.isfile(os.path.join(e["path"], "post.md"))] or c
+        if len(c) == 1:
+            for p in left:                  # kilka publikacji bez filmu tego dnia: jeden wspólny post
+                out[p["id"]] = c[0]["path"]
+            taken.add(c[0]["path"])
     return out
 
 
@@ -378,7 +429,7 @@ def prep_of(task_title, pub):
     return DAY.match(rest[:10]) is not None and rest[10:12] == ": " and same_title(rest[12:], pub_title(pub))
 
 
-def link(projekt, folder, pid, pub, post):
+def link(projekt, folder, pid, pub, post, name_file=None):
     """Dopisuje pod publikacją `materiał: posty/<folder posta>/scenariusz.md`, gdy go nie ma: film zostaje powiązany
     ze scenariuszem niezależnie od kiedy:. Wiersz publikacji czytany od nowa (wcześniejsze dopisania przesuwają
     wiersze). Wywołujący trzyma blokadę zapisu. True, gdy dopisano."""
@@ -396,7 +447,7 @@ def link(projekt, folder, pid, pub, post):
             for r in (pub.get("detail") or {}).get("refs") or []]
     try:
         return projekt.set_detail(folder, pub["file"], pub["line"], pub["title"], "materiał",
-                                  refs + ["posty/%s/%s" % (name, FILE)]) is True
+                                  refs + ["posty/%s/%s" % (name, name_file or FILE)]) is True
     except (ValueError, OSError):
         return False
 
