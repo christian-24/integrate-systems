@@ -1738,7 +1738,7 @@ class Manager:
         mcp = (self.site.mcp_args(priv, cwd) if t["tool"] == "claude" else self.site.mcp_codex_args(priv, cwd)) \
             if site else []
         prompt = self.task_prompt(t["tool"], t["name"], t["file"], t["line"], t["title"], t["stage"], t["detail"],
-                                  git=info, site_rules=(self.site.rules(site, cwd) + self.site.mcp_rules(priv))
+                                  git=info, site_rules=(self.site.rules(site, cwd, t["tool"]) + self.site.mcp_rules(priv))
                                   if site else (), drive=mnt, parts=parts)
         if t["tool"] == "codex":
             args = _command(t["path"]) + ["exec", "--json", "--sandbox", "workspace-write", "--skip-git-repo-check",
@@ -5211,6 +5211,11 @@ class Manager:
                 cwd = tempfile.gettempdir()     # agent nie musi mieć dostępu do katalogu uruchomień
             if (priv.get("task") or {}).get("site"):
                 self._site_live_open(rec, priv)
+                if rec.get("tool") == "codex":
+                    ok, note = self.site.install_deps(priv["cwd"], priv["task"]["site"])
+                    if ok is not None:
+                        self._step(rec, ("Zależności strony zainstalowane przez panel (%s)" if ok else
+                                         "Zależności strony: nie zainstalowano (%s)") % note)
             try:
                 if detached:
                     proc = self._spawn_detached(rec, priv, cwd)

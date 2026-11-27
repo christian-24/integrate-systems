@@ -274,6 +274,29 @@ class Reguly(unittest.TestCase):
         site.update(build="npm run build", customBuild=False)
         self.assertIn("Bash(npm run build:*)", strona.Site.tools(None, site))
 
+    def test_codex_zaleznosci_instaluje_panel(self):
+        """Piaskownica Codexa bez sieci blokuje spawnSync z potokami (npm ci → esbuild EPERM): npm ci robi panel."""
+        import tempfile, types
+        site = {"dir": "site", "build": "npm ci && npm run build:panel", "out": "dist", "customBuild": True,
+                "shot": "python3 zrzut.py"}
+        self.assertIn("Nie uruchamiaj `npm ci`", "\n".join(strona.Site.rules(site, "/r", "codex")))
+        self.assertNotIn("Nie uruchamiaj `npm ci`", "\n".join(strona.Site.rules(site, "/r")))
+        with tempfile.TemporaryDirectory() as d:
+            sdir = os.path.join(d, "site")
+            os.makedirs(sdir)
+            fake = types.SimpleNamespace(m=types.SimpleNamespace(env={}), build_timeout=30,
+                                         _build_args=lambda folder, cmd: ["/bin/sh", "-c", "echo %s > ran.txt" % cmd])
+            self.assertEqual(strona.Site.install_deps(fake, d, site), (None, ""))       # bez package.json
+            open(os.path.join(sdir, "package.json"), "w").write("{}")
+            open(os.path.join(sdir, "package-lock.json"), "w").write("{}")
+            self.assertEqual(strona.Site.install_deps(fake, d, site), (True, "npm ci"))
+            self.assertEqual(open(os.path.join(sdir, "ran.txt")).read().strip(), "npm ci")
+            os.makedirs(os.path.join(sdir, "node_modules"))
+            self.assertEqual(strona.Site.install_deps(fake, d, site), (None, ""))       # już zainstalowane
+            fake._build_args = lambda folder, cmd: ["/bin/sh", "-c", "echo blad; exit 3"]
+            os.rmdir(os.path.join(sdir, "node_modules"))
+            self.assertEqual(strona.Site.install_deps(fake, d, site), (False, "npm ci: kod 3: blad"))
+
 
 @unittest.skipUnless(GIT, "brak git")
 class Galaz(Wspolne):

@@ -325,6 +325,34 @@ class Site:
             return ["cmd", "/c", command]
         return ["/bin/sh", "-c", command]
 
+    def install_deps(self, cwd, site):
+        """Zależności strony przed zadaniem Codexa: w piaskownicy Codexa bez sieci Node nie może uruchomić
+        spawnSync z potokami (seccomp blokuje shutdown, EPERM), a tego używa `npm ci` (esbuild install.js).
+        Panel robi więc `npm ci` (bez package-lock.json: `npm install`) jako agent, poza piaskownicą; samo
+        budowanie (`npm run …`) w piaskownicy działa. (None, "") gdy nic do zrobienia, (True|False, opis)."""
+        sdir = os.path.realpath(os.path.join(cwd, site["dir"]))
+        if not _inside(cwd, sdir) or not os.path.isfile(os.path.join(sdir, "package.json")):
+            return None, ""
+        if os.path.isdir(os.path.join(sdir, "node_modules")):
+            return None, ""
+        command = "npm ci" if os.path.isfile(os.path.join(sdir, "package-lock.json")) else "npm install"
+        import agents   # moduł już wczytany (agents importuje strona)
+        env = agents.child_env(self.m.env)
+        env["CI"] = "1"
+        try:
+            proc = subprocess.run(self._build_args(sdir, command), cwd=sdir, stdin=subprocess.DEVNULL,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, encoding="utf-8",
+                                  errors="replace", timeout=self.build_timeout,
+                                  **({} if os.name == "nt" else {"start_new_session": True}))
+        except subprocess.TimeoutExpired:
+            return False, "%s przekroczyło %d min" % (command, self.build_timeout // 60)
+        except OSError as e:
+            return False, "%s: %s" % (command, e.strerror or e)
+        if proc.returncode != 0:
+            last = [x for x in (proc.stdout or "").splitlines() if x.strip()][-1:]
+            return False, "%s: kod %s%s" % (command, proc.returncode, (": " + last[0][:160]) if last else "")
+        return True, command
+
     def build_api(self, pid):
         """POST /api/strona/zbuduj."""
         p, _ = self.project(pid)
@@ -887,7 +915,7 @@ class Site:
         return rules + ["Bash(%s:*)" % site["shot"], "Bash(git merge:*)"]
 
     @staticmethod
-    def rules(site, cwd):
+    def rules(site, cwd, tool="claude"):
         sdir = os.path.normpath(os.path.join(cwd, site["dir"]))
         out = os.path.join(sdir, site["out"])
         shots = os.path.join(cwd, ".zrzuty")
@@ -906,6 +934,11 @@ class Site:
                     % (sdir, sdir)
         more = ["- Tych członów polecenia budowania z karty nie uruchamiaj (brak uprawnienia): %s. Opisz je "
                 "w `zostało:`." % ", ".join("`%s`" % s for s in skipped)] if skipped else []
+        if tool == "codex":
+            more.append("- Zależności (node_modules) zainstalował panel przed Twoją pracą. Nie uruchamiaj `npm ci` "
+                        "ani `npm install`: w Twojej piaskownicy kończą się błędem EPERM (esbuild). Buduj samymi "
+                        "poleceniami `npm run …` z powyższego polecenia. Gdy node_modules nie ma, wpisz to "
+                        "w `zostało:`.")
         return [
             "- Zadanie strony WWW. Folder strony: %s. Kod zmieniaj w tym folderze (inne pliki tylko, gdy wymaga "
             "tego uwaga)." % sdir,
